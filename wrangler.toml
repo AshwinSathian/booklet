@@ -1,0 +1,8 @@
+name = "readable"
+compatibility_date = "2026-01-31"
+pages_build_output_dir = ".open-next/assets"
+
+# KV for published documents
+kv_namespaces = [
+  { binding = "READABLE_DOCS", id = "205fe067b23840c3ac012db2772ef61a" }
+]
