@@ -20,7 +20,9 @@ export function PasteInput({
     }
   }, [onFocusShortcutRequested]);
 
-  const isMac = navigator.platform.toLowerCase().includes("mac");
+  const isMac =
+    typeof navigator !== "undefined" &&
+    navigator.platform.toLowerCase().includes("mac");
 
   return (
     <div className="flex h-full max-h-full min-h-0 flex-col overflow-hidden w-full">
