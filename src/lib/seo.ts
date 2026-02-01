@@ -4,12 +4,8 @@ import type { Metadata } from "next";
 const FALLBACK_ORIGIN = "https://readable.ashwinsathian.com";
 
 export function getSiteOrigin() {
-  const env = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL;
+  const env = process.env.NEXT_PUBLIC_SITE_URL;
   if (env && /^https?:\/\//i.test(env)) return env.replace(/\/$/, "");
-
-  const vercelHost = process.env.VERCEL_URL;
-  if (vercelHost) return `https://${vercelHost}`;
-
   return FALLBACK_ORIGIN;
 }
 
@@ -24,8 +20,6 @@ type BuildMetaArgs = {
   description?: string;
   pathname?: string;
   noIndex?: boolean;
-  openGraph?: Metadata["openGraph"];
-  twitter?: Metadata["twitter"];
 };
 
 export function buildMetadata({
@@ -33,11 +27,7 @@ export function buildMetadata({
   description,
   pathname,
   noIndex,
-  openGraph,
-  twitter,
 }: BuildMetaArgs): Metadata {
-  const base = new URL(getSiteOrigin());
-
   const resolvedTitle =
     title && title !== APP_NAME
       ? `${title} — ${APP_NAME}`
@@ -45,28 +35,25 @@ export function buildMetadata({
 
   const resolvedDesc =
     description ??
-    "Turn pasted tech-heavy text into clean, confidently shareable pages for non-technical readers.";
+    "Turn pasted text into clean, confidently shareable pages for non-technical readers.";
 
-  const canonicalPath = pathname ?? ROUTES.home;
-  const url = absoluteUrl(canonicalPath);
+  const url = absoluteUrl(pathname ?? ROUTES.home);
 
-  // Force explicit image URLs so crawlers don’t rely on framework conventions.
   const ogImage = absoluteUrl("/opengraph-image");
-  const twImage = absoluteUrl("/twitter-image");
+  const twitterImage = absoluteUrl("/twitter-image");
 
   return {
-    metadataBase: base,
     title: resolvedTitle,
     description: resolvedDesc,
     applicationName: APP_NAME,
-    alternates: { canonical: url },
+
+    alternates: {
+      canonical: url,
+    },
+
     robots: noIndex
-      ? {
-          index: false,
-          follow: false,
-          googleBot: { index: false, follow: false },
-        }
-      : { index: true, follow: true, googleBot: { index: true, follow: true } },
+      ? { index: false, follow: false }
+      : { index: true, follow: true },
 
     openGraph: {
       type: "website",
@@ -74,16 +61,28 @@ export function buildMetadata({
       title: resolvedTitle,
       description: resolvedDesc,
       url,
-      images: [{ url: ogImage, width: 1200, height: 630, alt: APP_NAME }],
-      ...(openGraph ?? {}),
+      images: [
+        {
+          url: ogImage,
+          width: 1200,
+          height: 630,
+          alt: `${APP_NAME} preview`,
+        },
+      ],
     },
 
     twitter: {
       card: "summary_large_image",
       title: resolvedTitle,
       description: resolvedDesc,
-      images: [twImage],
-      ...(twitter ?? {}),
+      images: [
+        {
+          url: twitterImage,
+          width: 1200,
+          height: 630,
+          alt: `${APP_NAME} preview`,
+        },
+      ],
     },
   };
 }
