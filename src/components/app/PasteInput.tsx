@@ -20,10 +20,12 @@ export function PasteInput({
     }
   }, [onFocusShortcutRequested]);
 
+  const isMac = navigator.platform.toLowerCase().includes("mac");
+
   return (
     <div className="flex h-full max-h-full min-h-0 flex-col overflow-hidden w-full">
       <div className="shrink-0 px-3 py-2 text-xs text-text-primary text-sm uppercase tracking-wide">
-        Shortcut: Cmd/Ctrl+K focuses this box.
+        {isMac ? "Cmd" : "Ctrl"}+K focuses this box.
       </div>
 
       <div className="flex-1 min-h-0 overflow-hidden w-full">

@@ -1,8 +1,8 @@
 "use client";
 
 import { APP_NAME, ROUTES } from "@/lib/constants";
+import type { Easing, Variants } from "framer-motion";
 import { motion, useReducedMotion } from "framer-motion";
-import type { Variants, Easing } from "framer-motion";
 import Link from "next/link";
 import { Accordion, AccordionTab } from "primereact/accordion";
 import { Button } from "primereact/button";
@@ -153,12 +153,10 @@ export function Landing() {
         <div className="mx-auto flex max-w-[70vw] items-center justify-between px-4 py-3">
           <div className="leading-tight uppercase">
             <Link href={ROUTES.home}>
-              <div className="text-[13px] uppercase font-semibold tracking-wide text-[rgb(var(--rl-text))]">
-                {APP_NAME}
-              </div>
+              <div className="font-semibold tracking-wide">{APP_NAME}</div>
             </Link>
-            <div className="hidden sm:block text-[12px] text-[rgb(var(--rl-muted))] tracking-widest">
-              Calm, readable sharing
+            <div className="text-xs text-[rgb(var(--muted))] tracking-widest">
+              Paste. Preview. Share.
             </div>
           </div>
 

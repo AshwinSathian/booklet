@@ -37,14 +37,12 @@ export function TopBar({
   return (
     <div className="sticky top-0 z-20 border-b border-outline bg-bg-glass/85 backdrop-blur">
       <div className="w-[90vw] mx-auto px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-2 w-[90vw]">
-          <div className="leading-tight uppercase">
-            <Link href={ROUTES.home}>
-              <div className="font-semibold tracking-wide">{APP_NAME}</div>
-            </Link>
-            <div className="text-xs text-[rgb(var(--muted))] tracking-widest">
-              Paste. Preview. Share.
-            </div>
+        <div className="leading-tight uppercase">
+          <Link href={ROUTES.home}>
+            <div className="font-semibold tracking-wide">{APP_NAME}</div>
+          </Link>
+          <div className="text-xs text-[rgb(var(--muted))] tracking-widest">
+            Paste. Preview. Share.
           </div>
         </div>
 

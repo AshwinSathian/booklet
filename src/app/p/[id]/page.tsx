@@ -26,7 +26,7 @@ export default async function SharePage({
               <div className="font-semibold tracking-wide">{APP_NAME}</div>
             </Link>
             <div className="text-xs text-[rgb(var(--muted))] tracking-widest">
-              Shared page
+              Paste. Preview. Share.
             </div>
           </div>
 
@@ -45,6 +45,10 @@ export default async function SharePage({
           ))
         )}
       </main>
+
+      <div className="mt-8 flex items-center justify-center gap-4 text-[12px] text-[rgb(var(--rl-muted))]">
+        © {new Date().getFullYear()} {APP_NAME}. Built for clarity.
+      </div>
     </div>
   );
 }

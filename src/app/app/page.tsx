@@ -8,7 +8,7 @@ import { TopBar } from "@/components/app/TopBar";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { DEFAULT_SETTINGS, type DocSettings } from "@/lib/blocks";
-import { API, UI } from "@/lib/constants";
+import { API, APP_NAME, UI } from "@/lib/constants";
 import { parseToBlocks } from "@/lib/parse";
 import { normalizeInput, stripDangerousSequences } from "@/lib/sanitize";
 
@@ -165,6 +165,10 @@ export default function AppPage() {
           />
         }
       />
+
+      <div className="mt-8 flex items-center justify-center gap-4 text-[12px] text-[rgb(var(--rl-muted))]">
+        © {new Date().getFullYear()} {APP_NAME}. Built for clarity.
+      </div>
     </div>
   );
 }

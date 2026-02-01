@@ -31,7 +31,7 @@ export function ConfidenceControls({
         value={value.spacing}
         options={SPACING}
         onChange={(e) => onChange({ ...value, spacing: e.value })}
-        className="min-w-fit"
+        className="ltmd:w-full min-w-fit"
         checkmark={true}
         highlightOnSelect={true}
       />
@@ -39,7 +39,7 @@ export function ConfidenceControls({
         value={value.width}
         options={WIDTH}
         onChange={(e) => onChange({ ...value, width: e.value })}
-        className="min-w-fit"
+        className="ltmd:w-full min-w-fit"
         checkmark={true}
         highlightOnSelect={true}
       />
@@ -47,7 +47,7 @@ export function ConfidenceControls({
         value={value.code}
         options={CODE}
         onChange={(e) => onChange({ ...value, code: e.value })}
-        className="min-w-fit"
+        className="ltmd:w-full min-w-fit"
         checkmark={true}
         highlightOnSelect={true}
       />
