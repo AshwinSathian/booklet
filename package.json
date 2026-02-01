@@ -11,8 +11,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "preview": "wrangler dev",
-    "deploy": "wrangler deploy",
+    "preview": "opennextjs-cloudflare build && wrangler dev",
+    "deploy": "opennextjs-cloudflare build && wrangler deploy",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv ./cloudflare-env.d.ts"
   },
   "dependencies": {
@@ -38,6 +38,7 @@
     "autoprefixer": "^10.4.24",
     "eslint": "^9",
     "eslint-config-next": "15.4.6",
+    "opennextjs-cloudflare": "^1.0.0",
     "tailwindcss": "^4",
     "typescript": "^5.7.4",
     "wrangler": "^4.61.1"
