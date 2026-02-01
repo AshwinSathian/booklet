@@ -37,7 +37,7 @@ export function TopBar({
 
   return (
     <div className="sticky top-0 z-20 border-b border-outline bg-bg-glass/85 backdrop-blur">
-      <div className="w-[90vw] mx-auto px-4 py-3 flex items-center justify-between">
+      <div className="mx-auto w-full max-w-6xl px-4 py-3 flex items-center justify-between">
         <div className="leading-tight uppercase">
           <Link href={ROUTES.home}>
             <div className="font-semibold tracking-wide">{APP_NAME}</div>

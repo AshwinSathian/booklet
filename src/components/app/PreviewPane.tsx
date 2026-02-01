@@ -63,7 +63,7 @@ export function PreviewPane({
 
   return (
     <div className="flex h-full max-h-full min-h-0 flex-col w-full overflow-hidden">
-      <div className="shrink-0 px-3 py-2 text-text-primary text-sm uppercase tracking-wide">
+      <div className="shrink-0 px-3 py-2 text-text-primary text-xs uppercase tracking-wide">
         This is a preview. Publish to make this public and accessible by link.
       </div>
 
@@ -99,7 +99,7 @@ export function PreviewPane({
                     severity={copyState === "failed" ? "danger" : "secondary"}
                     text
                     raised
-                    className="text-md uppercase tracking-widest"
+                    className="text-xs uppercase tracking-widest"
                   />
                 </div>
 

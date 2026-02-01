@@ -23,7 +23,7 @@ export function AppShell({
   );
 
   return (
-    <div className="w-[90vw] mx-auto h-[80vh] max-h-[80vh] grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div className="mx-auto w-full max-w-6xl px-4 pb-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
       {/* Mobile toggle */}
       <div className="lg:hidden mb-3">
         <SelectButton
@@ -41,10 +41,21 @@ export function AppShell({
         />
       </div>
 
-      <div className="flex h-full max-h-full min-h-0 overflow-hidden w-full">
+      <div
+        className={
+          "flex min-h-0 overflow-hidden w-full" +
+          (pane === "edit" ? "" : " hidden lg:flex")
+        }
+      >
         {left}
       </div>
-      <div className="flex h-full max-h-full min-h-0 overflow-hidden w-full">
+
+      <div
+        className={
+          "flex min-h-0 overflow-hidden w-full" +
+          (pane === "preview" ? "" : " hidden lg:flex")
+        }
+      >
         {right}
       </div>
     </div>

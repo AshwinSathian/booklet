@@ -26,7 +26,7 @@ export function PasteInput({
 
   return (
     <div className="flex h-full max-h-full min-h-0 flex-col overflow-hidden w-full">
-      <div className="shrink-0 px-3 py-2 text-text-primary text-sm uppercase tracking-wide">
+      <div className="shrink-0 px-3 py-2 text-text-primary text-xs uppercase tracking-wide">
         {isMac ? "Cmd" : "Ctrl"}+K focuses this box.
       </div>
 
