@@ -94,7 +94,12 @@ export default async function SharePage({
   return (
     <div className="min-h-screen bg-bg text-text-primary">
       <header className="sticky top-0 z-20 border-b border-outline bg-bg-glass/85 backdrop-blur">
-        <div className="mx-auto w-full max-w-6xl px-4 py-3 flex items-center justify-between gap-4">
+        <div
+          className={[
+            "mx-auto w-full px-4 py-3 flex items-center justify-between gap-4",
+            doc.settings?.width === "wide" ? "max-w-4xl" : "max-w-3xl",
+          ].join(" ")}
+        >
           <div className="leading-tight uppercase min-w-0">
             <Link href={ROUTES.home}>
               <div className="font-semibold tracking-wide">{APP_NAME}</div>
@@ -114,7 +119,12 @@ export default async function SharePage({
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-6xl flex-1 min-h-0 overflow-y-auto p-3 mb-5">
+      <main
+        className={[
+          "mx-auto w-full flex-1 min-h-0 overflow-y-auto p-3 mb-5",
+          doc.settings?.width === "wide" ? "max-w-4xl" : "max-w-3xl",
+        ].join(" ")}
+      >
         {doc?.blocks ? (
           <BlockRenderer blocks={doc.blocks} settings={doc.settings} />
         ) : (

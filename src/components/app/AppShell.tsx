@@ -23,7 +23,7 @@ export function AppShell({
   );
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 pb-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div className="mx-auto w-full max-w-6xl px-4 grid grid-cols-1 lg:grid-cols-2 gap-4 h-full min-h-0 overflow-hidden">
       <div className="lg:hidden sticky top-2 z-10">
         <div className="rounded-xl border border-outline bg-bg-glass/85 backdrop-blur p-2 shadow-glass">
           <SelectButton

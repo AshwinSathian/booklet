@@ -150,7 +150,7 @@ function AppPageContent() {
   const isEmpty = !normalized.trim();
 
   return (
-    <div className="min-h-screen">
+    <div className="h-screen min-h-screen flex flex-col overflow-hidden">
       <TopBar
         status={status}
         canPublish={canPublish}
@@ -187,27 +187,29 @@ function AppPageContent() {
         </div>
       </div>
 
-      <AppShell
-        left={
-          <PasteInput
-            value={raw}
-            onChange={(v) => setRaw(v)}
-            onInsertSample={onInsertSample}
-            onFocusShortcutRequested={(fn) => {
-              focusFnRef.current = fn;
-            }}
-          />
-        }
-        right={
-          <PreviewPane
-            blocks={blocks}
-            settings={settings}
-            isBusy={isBusy}
-            isEmpty={isEmpty}
-            onInsertSample={onInsertSample}
-          />
-        }
-      />
+      <div className="flex-1 min-h-0">
+        <AppShell
+          left={
+            <PasteInput
+              value={raw}
+              onChange={(v) => setRaw(v)}
+              onInsertSample={onInsertSample}
+              onFocusShortcutRequested={(fn) => {
+                focusFnRef.current = fn;
+              }}
+            />
+          }
+          right={
+            <PreviewPane
+              blocks={blocks}
+              settings={settings}
+              isBusy={isBusy}
+              isEmpty={isEmpty}
+              onInsertSample={onInsertSample}
+            />
+          }
+        />
+      </div>
 
       <div className="mt-6 pb-6 flex items-center justify-center gap-4 text-[12px] text-[rgb(var(--muted))]">
         © {new Date().getFullYear()} {APP_NAME}. Built for clarity.
