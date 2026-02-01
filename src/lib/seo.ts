@@ -3,14 +3,17 @@ import type { Metadata } from "next";
 
 const FALLBACK_ORIGIN = "https://readable.ashwinsathian.com";
 
-export function getSiteOrigin() {
+export function getEnvOrigin() {
   const env = process.env.NEXT_PUBLIC_SITE_URL;
   if (env && /^https?:\/\//i.test(env)) return env.replace(/\/$/, "");
-  return FALLBACK_ORIGIN;
+  return null;
 }
 
-export function absoluteUrl(pathname: string) {
-  const origin = getSiteOrigin();
+export function absoluteUrl(pathname: string, originOverride?: string) {
+  const origin = (originOverride ?? getEnvOrigin() ?? FALLBACK_ORIGIN).replace(
+    /\/$/,
+    "",
+  );
   const path = pathname.startsWith("/") ? pathname : `/${pathname}`;
   return `${origin}${path}`;
 }
@@ -20,6 +23,7 @@ type BuildMetaArgs = {
   description?: string;
   pathname?: string;
   noIndex?: boolean;
+  origin?: string; // <- important
 };
 
 export function buildMetadata({
@@ -27,6 +31,7 @@ export function buildMetadata({
   description,
   pathname,
   noIndex,
+  origin,
 }: BuildMetaArgs): Metadata {
   const resolvedTitle =
     title && title !== APP_NAME
@@ -37,20 +42,17 @@ export function buildMetadata({
     description ??
     "Turn pasted text into clean, confidently shareable pages for non-technical readers.";
 
-  const url = absoluteUrl(pathname ?? ROUTES.home);
+  const canonicalPath = pathname ?? ROUTES.home;
+  const url = absoluteUrl(canonicalPath, origin);
 
-  const ogImage = absoluteUrl("/opengraph-image");
-  const twitterImage = absoluteUrl("/twitter-image");
+  const ogImage = absoluteUrl("/opengraph-image", origin);
+  const twitterImage = absoluteUrl("/twitter-image", origin);
 
   return {
     title: resolvedTitle,
     description: resolvedDesc,
     applicationName: APP_NAME,
-
-    alternates: {
-      canonical: url,
-    },
-
+    alternates: { canonical: url },
     robots: noIndex
       ? { index: false, follow: false }
       : { index: true, follow: true },

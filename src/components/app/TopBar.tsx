@@ -45,7 +45,7 @@ export function TopBar({
   ].join(" ");
 
   return (
-    <div className="sticky top-0 z-20 border-b border-outline bg-bg-glass/85 backdrop-blur">
+    <header className="sticky top-0 z-20 border-b border-outline bg-bg-glass/85 backdrop-blur">
       <div className="mx-auto w-full max-w-6xl px-4 py-3 flex items-center justify-between">
         <div className="leading-tight uppercase">
           <Link href={ROUTES.home}>
@@ -146,6 +146,6 @@ export function TopBar({
           <ThemeToggle />
         </div>
       </div>
-    </div>
+    </header>
   );
 }

@@ -72,7 +72,7 @@ export function PreviewPane({
                       severity="secondary"
                       text
                       raised
-                      className="text-xs uppercase tracking-widest"
+                      className="text-xs uppercase tracking-widest p-1"
                       disabled={!onInsertSample}
                     />
                     <Button
@@ -82,7 +82,7 @@ export function PreviewPane({
                       severity={copyState === "failed" ? "danger" : "secondary"}
                       text
                       raised
-                      className="text-xs uppercase tracking-widest"
+                      className="text-xs uppercase tracking-widest p-1"
                     />
                   </div>
                 </div>

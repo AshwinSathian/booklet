@@ -146,7 +146,7 @@ export function Landing() {
   return (
     <div className="relative min-h-screen bg-bg text-text-primary">
       {/* Top bar */}
-      <div className="sticky top-0 z-30 border-b border-outline bg-bg-glass/85 backdrop-blur">
+      <header className="sticky top-0 z-20 border-b border-outline bg-bg-glass/85 backdrop-blur">
         <Container>
           <div className="flex items-center justify-between py-3">
             <div className="leading-tight">
@@ -188,7 +188,7 @@ export function Landing() {
             </div>
           </div>
         </Container>
-      </div>
+      </header>
 
       {/* HERO */}
       <Container>

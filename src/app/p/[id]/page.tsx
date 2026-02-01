@@ -1,6 +1,7 @@
 import { BlockRenderer } from "@/components/blocks/BlockRenderer";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import { APP_NAME, ROUTES, STORAGE } from "@/lib/constants";
+import { getRequestOrigin } from "@/lib/origin";
 import { absoluteUrl, buildMetadata } from "@/lib/seo";
 import { getDoc } from "@/lib/storage";
 import type { Metadata } from "next";
@@ -35,13 +36,15 @@ export async function generateMetadata({
   const ogImage = absoluteUrl("/opengraph-image");
   const twImage = absoluteUrl("/twitter-image");
 
+  const origin = (await getRequestOrigin()) ?? undefined;
+
   return {
     ...buildMetadata({
       title,
       description,
       pathname: `/p/${id}`,
-      // Indexable by default for share pages (you can set noIndex true if needed)
       noIndex: false,
+      origin,
     }),
     openGraph: {
       type: "article",
@@ -90,7 +93,7 @@ export default async function SharePage({
 
   return (
     <div className="min-h-screen bg-bg text-text-primary">
-      <div className="sticky top-0 z-20 border-b border-outline bg-bg-glass/85 backdrop-blur">
+      <header className="sticky top-0 z-20 border-b border-outline bg-bg-glass/85 backdrop-blur">
         <div className="mx-auto w-full max-w-6xl px-4 py-3 flex items-center justify-between gap-4">
           <div className="leading-tight uppercase min-w-0">
             <Link href={ROUTES.home}>
@@ -109,7 +112,7 @@ export default async function SharePage({
             <ThemeToggle />
           </div>
         </div>
-      </div>
+      </header>
 
       <main className="mx-auto w-full max-w-6xl flex-1 min-h-0 overflow-y-auto p-3 mb-5">
         {doc?.blocks ? (

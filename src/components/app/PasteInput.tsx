@@ -32,7 +32,7 @@ export function PasteInput({
   return (
     <div className="flex h-full max-h-full min-h-0 flex-col overflow-hidden w-full">
       <div className="shrink-0 px-3 py-2 flex items-center justify-between gap-3">
-        <div className="text-text-primary text-xs uppercase tracking-wide">
+        <div className="hidden md:block text-text-primary text-xs uppercase tracking-wide">
           {isMac ? "Cmd" : "Ctrl"}+K focuses this box.
         </div>
 
@@ -45,7 +45,7 @@ export function PasteInput({
             severity="secondary"
             text
             raised
-            className="text-xs uppercase tracking-widest"
+            className="text-xs uppercase tracking-widest p-1"
             disabled={!onInsertSample}
           />
         ) : null}
