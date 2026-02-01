@@ -1,26 +1,75 @@
 @import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap");
 @import "tailwindcss";
 
+/*
+  Theme strategy (minimal change):
+  - Default (:root) is LIGHT to make "system/light" actually valid.
+  - .dark overrides provide your existing dark palette.
+  - next-themes toggles html class: "light" | "dark" (or no class for system pre-hydration).
+  - PrimeReact theme is swapped in PrimeStyles based on html.dark.
+*/
+
 :root {
-  color-scheme: dark;
-  --font-heading: "Open Sans", "Space Grotesk", "Inter", "Manrope", system-ui, sans-serif;
+  color-scheme: light dark;
+
+  --font-heading:
+    "Open Sans", "Space Grotesk", "Inter", "Manrope", system-ui, sans-serif;
   --font-body: "Open Sans", "Inter", "Manrope", system-ui, sans-serif;
 
-  /* PrimeReact / PrimeOne theme variables (Lara Dark overrides) */
+  /* -------- Tailwind v4 @theme variables (LIGHT defaults) -------- */
+  --color-bg: #f8fafc;
+  --color-bg-soft: #ffffff;
+  --color-bg-glass: rgba(255, 255, 255, 0.72);
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #334155;
+  --color-text-muted: #64748b;
+  --color-accent: #8b5cf6;
+  --color-accent-hover: #7c3aed;
+  --color-accent-soft: #a78bfa;
+  --color-accent-warm: #f59e0b;
+  --color-outline: rgba(15, 23, 42, 0.12);
+  --shadow-soft: 0 8px 24px rgba(139, 92, 246, 0.12);
+  --shadow-glass: 0 4px 30px rgba(15, 23, 42, 0.08);
+  --shadow-glow: 0 0 30px rgba(139, 92, 246, 0.18);
+
+  /* -------- Renderer variables used by BlockRenderer/InlineRenderer -------- */
+  /* Format: "R G B" for rgb(var(--x)) usage */
+  --fg: 15 23 42;
+  --muted: 100 116 139;
+  --border: 15 23 42;
+
+  /* -------- Landing / marketing variables (rgb(var(--rl-*))) -------- */
+  --rl-bg: 248 250 252;
+  --rl-text: 15 23 42;
+  --rl-subtext: 51 65 85;
+  --rl-muted: 100 116 139;
+  --rl-surface: 255 255 255;
+  --rl-surfaceSubtle: 248 250 252;
+  --rl-accent: 139 92 246;
+
+  /* -------- PrimeReact theme variables (LIGHT) -------- */
   --p-primary-color: #8b5cf6;
   --p-primary-contrast-color: #ffffff;
 
-  --p-surface-card: rgba(15, 21, 48, 0.45);
-  --p-surface-ground: #0b1020;
-  --p-content-border-color: rgba(255, 255, 255, 0.06);
+  --p-surface-ground: #f8fafc;
+  --p-surface-card: rgba(255, 255, 255, 0.9);
+  --p-content-border-color: rgba(15, 23, 42, 0.12);
 
-  --p-text-color: #e9ecf2;
-  --p-text-muted-color: #b4bdd1;
+  --p-text-color: #0f172a;
+  --p-text-muted-color: #64748b;
 
   --p-focus-ring: 0 0 0 2px rgba(167, 139, 250, 0.35);
 }
 
-@theme {
+/* Explicit light class is fine (next-themes uses it when user selects Light) */
+html.light {
+  color-scheme: light;
+}
+
+/* DARK overrides (your current palette, preserved) */
+html.dark {
+  color-scheme: dark;
+
   --color-bg: #0b1020;
   --color-bg-soft: #0f1530;
   --color-bg-glass: rgba(15, 21, 48, 0.4);
@@ -35,6 +84,48 @@
   --shadow-soft: 0 8px 24px rgba(139, 92, 246, 0.15);
   --shadow-glass: 0 4px 30px rgba(139, 92, 246, 0.15);
   --shadow-glow: 0 0 30px rgba(139, 92, 246, 0.2);
+
+  --fg: 233 236 242;
+  --muted: 180 189 209;
+  --border: 35 48 78;
+
+  --rl-bg: 11 16 32;
+  --rl-text: 233 236 242;
+  --rl-subtext: 180 189 209;
+  --rl-muted: 140 148 170;
+  --rl-surface: 15 21 48;
+  --rl-surfaceSubtle: 17 24 56;
+  --rl-accent: 139 92 246;
+
+  --p-primary-color: #8b5cf6;
+  --p-primary-contrast-color: #ffffff;
+
+  --p-surface-ground: #0b1020;
+  --p-surface-card: rgba(15, 21, 48, 0.45);
+  --p-content-border-color: rgba(255, 255, 255, 0.06);
+
+  --p-text-color: #e9ecf2;
+  --p-text-muted-color: #b4bdd1;
+
+  --p-focus-ring: 0 0 0 2px rgba(167, 139, 250, 0.35);
+}
+
+/* Tailwind v4 theme vars */
+@theme {
+  --color-bg: var(--color-bg);
+  --color-bg-soft: var(--color-bg-soft);
+  --color-bg-glass: var(--color-bg-glass);
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-muted: var(--color-text-muted);
+  --color-accent: var(--color-accent);
+  --color-accent-hover: var(--color-accent-hover);
+  --color-accent-soft: var(--color-accent-soft);
+  --color-accent-warm: var(--color-accent-warm);
+  --color-outline: var(--color-outline);
+  --shadow-soft: var(--shadow-soft);
+  --shadow-glass: var(--shadow-glass);
+  --shadow-glow: var(--shadow-glow);
 }
 
 body {
@@ -55,4 +146,12 @@ button {
 
 ::selection {
   @apply bg-accent-soft text-bg;
+}
+
+/* Prime SelectButton sizing polish (minimal + local) */
+.readable-theme-toggle .p-selectbutton .p-button {
+  padding: 0.5rem 0.6rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }

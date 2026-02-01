@@ -1,5 +1,6 @@
 "use client";
 
+import ThemeToggle from "@/components/ui/ThemeToggle";
 import { APP_NAME, ROUTES } from "@/lib/constants";
 import Link from "next/link";
 import { Button } from "primereact/button";
@@ -41,7 +42,7 @@ export function TopBar({
           <Link href={ROUTES.home}>
             <div className="font-semibold tracking-wide">{APP_NAME}</div>
           </Link>
-          <div className="text-xs text-[rgb(var(--muted))] tracking-widest">
+          <div className="hidden sm:inline-flex text-xs text-[rgb(var(--muted))] tracking-widest">
             Paste. Preview. Share.
           </div>
         </div>
@@ -53,27 +54,56 @@ export function TopBar({
             severity={severity as any}
             rounded
           />
-          <Button
-            label="New"
-            icon="pi pi-plus"
-            severity="secondary"
-            onClick={onNew}
-            className="min-w-fit uppercase tracking-wide"
-            size="small"
-            text
-            raised
-          />
-          <Button
-            label="Publish"
-            icon="pi pi-upload"
-            onClick={onPublish}
-            disabled={!canPublish || status === "publishing"}
-            className="min-w-fit uppercase tracking-wide"
-            size="small"
-            severity="success"
-            text
-            raised
-          />
+          <div className="hidden md:inline-flex">
+            <Button
+              label="New"
+              icon="pi pi-plus"
+              severity="secondary"
+              onClick={onNew}
+              className="min-w-fit uppercase tracking-wide"
+              size="small"
+              text
+              raised
+            />
+          </div>
+          <div className="md:hidden">
+            <Button
+              aria-label="New"
+              icon="pi pi-plus"
+              severity="secondary"
+              onClick={onNew}
+              className="min-w-fit"
+              size="small"
+              text
+              raised
+            />
+          </div>
+          <div className="hidden md:inline-flex">
+            <Button
+              label="Publish"
+              icon="pi pi-upload"
+              onClick={onPublish}
+              disabled={!canPublish || status === "publishing"}
+              className="min-w-fit uppercase tracking-wide"
+              size="small"
+              severity="success"
+              text
+              raised
+            />
+          </div>
+          <div className="md:hidden">
+            <Button
+              aria-label="Publish"
+              icon="pi pi-upload"
+              onClick={onPublish}
+              disabled={!canPublish || status === "publishing"}
+              className="min-w-fit"
+              size="small"
+              severity="success"
+              text
+              raised
+            />
+          </div>
           {hasLink ? (
             <Button
               label="Copy link"
@@ -86,6 +116,8 @@ export function TopBar({
               raised
             />
           ) : null}
+
+          <ThemeToggle />
         </div>
       </div>
     </div>

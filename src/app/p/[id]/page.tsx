@@ -25,7 +25,7 @@ export default async function SharePage({
             <Link href={ROUTES.home}>
               <div className="font-semibold tracking-wide">{APP_NAME}</div>
             </Link>
-            <div className="text-xs text-[rgb(var(--muted))] tracking-widest">
+            <div className="hidden sm:inline-flex text-xs text-[rgb(var(--muted))] tracking-widest">
               Paste. Preview. Share.
             </div>
           </div>

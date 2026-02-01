@@ -61,10 +61,7 @@ function Section({
         >
           <motion.div
             variants={reduce ? undefined : fadeUp}
-            className={cn(
-              "mx-auto",
-              narrow ? "max-w-[720px]" : "max-w-[920px]",
-            )}
+            className={cn("mx-auto", narrow ? "max-w-180" : "max-w-230")}
           >
             {eyebrow ? (
               <div className="text-[11px] tracking-[0.28em] text-[rgb(var(--rl-muted))]">
@@ -83,7 +80,7 @@ function Section({
             ) : null}
           </motion.div>
 
-          <div className={cn("mt-10", narrow ? "mx-auto max-w-[720px]" : "")}>
+          <div className={cn("mt-10", narrow ? "mx-auto max-w-180" : "")}>
             {children}
           </div>
         </motion.div>
@@ -155,7 +152,7 @@ export function Landing() {
             <Link href={ROUTES.home}>
               <div className="font-semibold tracking-wide">{APP_NAME}</div>
             </Link>
-            <div className="text-xs text-[rgb(var(--muted))] tracking-widest">
+            <div className="hidden sm:inline-flex text-xs text-[rgb(var(--muted))] tracking-widest">
               Paste. Preview. Share.
             </div>
           </div>
@@ -172,7 +169,7 @@ export function Landing() {
             </button>
 
             <Link href={ROUTES.app}>
-              <Button label="Try the app" rounded />
+              <Button label="Try the app" rounded className="min-w-fit" />
             </Link>
           </div>
         </div>
@@ -229,7 +226,7 @@ export function Landing() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
       >
-        <div className="mx-auto max-w-[1040px] rounded-xl border border-[rgba(255,255,255,0.06)] bg-[rgb(var(--rl-surface))] p-4 sm:p-5">
+        <div className="mx-auto max-w-260 rounded-xl border border-[rgba(255,255,255,0.06)] bg-[rgb(var(--rl-surface))] p-4 sm:p-5">
           <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
             {/* Left: raw */}
             <div className="rounded-lg border border-[rgba(255,255,255,0.06)] bg-[rgb(var(--rl-surfaceSubtle))]">
@@ -242,7 +239,7 @@ export function Landing() {
                 </div>
               </div>
               <div className="h-px bg-[rgba(255,255,255,0.06)]" />
-              <div className="max-h-[320px] overflow-auto p-4 font-mono text-[12px] leading-[1.65] text-[rgba(230,232,238,0.78)]">
+              <div className="max-h-80 overflow-auto p-4 font-mono text-[12px] leading-[1.65] text-[rgba(230,232,238,0.78)]">
                 <pre className="whitespace-pre-wrap">
                   {`## Incident Summary
 
@@ -282,15 +279,15 @@ async function retry() {
 
                 <ul className="mt-4 space-y-2 text-[14px] leading-[1.7] text-[rgb(var(--rl-subtext))]">
                   <li className="flex gap-3">
-                    <span className="mt-[9px] h-1 w-1 rounded-full bg-[rgba(255,255,255,0.22)]" />
+                    <span className="mt-2.25 h-1 w-1 rounded-full bg-[rgba(255,255,255,0.22)]" />
                     What happened and what we did
                   </li>
                   <li className="flex gap-3">
-                    <span className="mt-[9px] h-1 w-1 rounded-full bg-[rgba(255,255,255,0.22)]" />
+                    <span className="mt-2.25 h-1 w-1 rounded-full bg-[rgba(255,255,255,0.22)]" />
                     Key timestamps and actions
                   </li>
                   <li className="flex gap-3">
-                    <span className="mt-[9px] h-1 w-1 rounded-full bg-[rgba(255,255,255,0.22)]" />
+                    <span className="mt-2.25 h-1 w-1 rounded-full bg-[rgba(255,255,255,0.22)]" />
                     Next steps in plain language
                   </li>
                 </ul>
@@ -354,7 +351,7 @@ async function retry() {
               key={f}
               className="flex items-start gap-3 text-[15px] leading-[1.75] text-[rgb(var(--rl-subtext))]"
             >
-              <span className="mt-[11px] h-1 w-1 flex-none rounded-full bg-[rgb(var(--rl-accent))]" />
+              <span className="mt-2.75 h-1 w-1 flex-none rounded-full bg-[rgb(var(--rl-accent))]" />
               <div>{f}</div>
             </div>
           ))}
@@ -467,15 +464,15 @@ async function retry() {
             </div>
             <ul className="mt-4 space-y-2 text-[14px] leading-[1.7] text-[rgb(var(--rl-subtext))]">
               <li className="flex gap-3">
-                <span className="mt-[9px] h-1 w-1 rounded-full bg-[rgba(255,255,255,0.22)]" />
+                <span className="mt-2.25 h-1 w-1 rounded-full bg-[rgba(255,255,255,0.22)]" />
                 Public share pages
               </li>
               <li className="flex gap-3">
-                <span className="mt-[9px] h-1 w-1 rounded-full bg-[rgba(255,255,255,0.22)]" />
+                <span className="mt-2.25 h-1 w-1 rounded-full bg-[rgba(255,255,255,0.22)]" />
                 Clean, readable formatting
               </li>
               <li className="flex gap-3">
-                <span className="mt-[9px] h-1 w-1 rounded-full bg-[rgba(255,255,255,0.22)]" />
+                <span className="mt-2.25 h-1 w-1 rounded-full bg-[rgba(255,255,255,0.22)]" />
                 No pressure
               </li>
             </ul>
@@ -487,15 +484,15 @@ async function retry() {
             </div>
             <ul className="mt-4 space-y-2 text-[14px] leading-[1.7] text-[rgb(var(--rl-subtext))]">
               <li className="flex gap-3">
-                <span className="mt-[9px] h-1 w-1 rounded-full bg-[rgba(255,255,255,0.22)]" />
+                <span className="mt-2.25 h-1 w-1 rounded-full bg-[rgba(255,255,255,0.22)]" />
                 Private links
               </li>
               <li className="flex gap-3">
-                <span className="mt-[9px] h-1 w-1 rounded-full bg-[rgba(255,255,255,0.22)]" />
+                <span className="mt-2.25 h-1 w-1 rounded-full bg-[rgba(255,255,255,0.22)]" />
                 Exports
               </li>
               <li className="flex gap-3">
-                <span className="mt-[9px] h-1 w-1 rounded-full bg-[rgba(255,255,255,0.22)]" />
+                <span className="mt-2.25 h-1 w-1 rounded-full bg-[rgba(255,255,255,0.22)]" />
                 Branding removal
               </li>
             </ul>
@@ -535,7 +532,7 @@ async function retry() {
       <div className="border-t border-[rgba(255,255,255,0.06)]">
         <div className="mx-auto max-w-[70vw] px-4 py-16">
           <div className="rounded-xl border border-[rgba(255,255,255,0.06)] bg-[rgb(var(--rl-surface))] p-8">
-            <div className="mx-auto max-w-[720px] text-center">
+            <div className="mx-auto max-w-180 text-center">
               <div className="text-balance text-[24px] sm:text-[28px] font-semibold tracking-tight text-[rgb(var(--rl-text))]">
                 Make your next update instantly share-ready.
               </div>
