@@ -2,65 +2,21 @@
 @import "tailwindcss";
 
 /*
-  Theme strategy (minimal change):
-  - Default (:root) is LIGHT to make "system/light" actually valid.
-  - .dark overrides provide your existing dark palette.
-  - next-themes toggles html class: "light" | "dark" (or no class for system pre-hydration).
-  - PrimeReact theme is swapped in PrimeStyles based on html.dark.
+  Theme strategy (dark-first, avoids white flash):
+  - :root is DARK (pre-hydration background is dark)
+  - html.light overrides to LIGHT when user chooses light or system is light
+  - next-themes toggles html class: "light" | "dark"
+  - PrimeReact theme is swapped in PrimeStyles based on html.dark
 */
 
 :root {
-  color-scheme: light dark;
+  color-scheme: dark;
 
   --font-heading:
     "Open Sans", "Space Grotesk", "Inter", "Manrope", system-ui, sans-serif;
   --font-body: "Open Sans", "Inter", "Manrope", system-ui, sans-serif;
 
-  /* -------- Tailwind v4 @theme variables (LIGHT defaults) -------- */
-  --color-bg: #f8fafc;
-  --color-bg-soft: #ffffff;
-  --color-bg-glass: rgba(255, 255, 255, 0.72);
-  --color-text-primary: #0f172a;
-  --color-text-secondary: #334155;
-  --color-text-muted: #64748b;
-  --color-accent: #8b5cf6;
-  --color-accent-hover: #7c3aed;
-  --color-accent-soft: #a78bfa;
-  --color-accent-warm: #f59e0b;
-  --color-outline: rgba(15, 23, 42, 0.12);
-  --shadow-soft: 0 8px 24px rgba(139, 92, 246, 0.12);
-  --shadow-glass: 0 4px 30px rgba(15, 23, 42, 0.08);
-  --shadow-glow: 0 0 30px rgba(139, 92, 246, 0.18);
-
-  /* -------- Renderer variables used by BlockRenderer/InlineRenderer -------- */
-  /* Format: "R G B" for rgb(var(--x)) usage */
-  --fg: 15 23 42;
-  --muted: 100 116 139;
-  --border: 15 23 42;
-
-  /* -------- PrimeReact theme variables (LIGHT) -------- */
-  --p-primary-color: #8b5cf6;
-  --p-primary-contrast-color: #ffffff;
-
-  --p-surface-ground: #f8fafc;
-  --p-surface-card: rgba(255, 255, 255, 0.9);
-  --p-content-border-color: rgba(15, 23, 42, 0.12);
-
-  --p-text-color: #0f172a;
-  --p-text-muted-color: #64748b;
-
-  --p-focus-ring: 0 0 0 2px rgba(167, 139, 250, 0.35);
-}
-
-/* Explicit light class is fine (next-themes uses it when user selects Light) */
-html.light {
-  color-scheme: light;
-}
-
-/* DARK overrides (your current palette, preserved) */
-html.dark {
-  color-scheme: dark;
-
+  /* -------- Tailwind v4 @theme variables (DARK defaults) -------- */
   --color-bg: #0b1020;
   --color-bg-soft: #0f1530;
   --color-bg-glass: rgba(15, 21, 48, 0.4);
@@ -76,10 +32,12 @@ html.dark {
   --shadow-glass: 0 4px 30px rgba(139, 92, 246, 0.15);
   --shadow-glow: 0 0 30px rgba(139, 92, 246, 0.2);
 
+  /* -------- Renderer variables used by BlockRenderer/InlineRenderer -------- */
   --fg: 233 236 242;
   --muted: 180 189 209;
   --border: 35 48 78;
 
+  /* -------- PrimeReact theme variables (DARK) -------- */
   --p-primary-color: #8b5cf6;
   --p-primary-contrast-color: #ffffff;
 
@@ -91,6 +49,47 @@ html.dark {
   --p-text-muted-color: #b4bdd1;
 
   --p-focus-ring: 0 0 0 2px rgba(167, 139, 250, 0.35);
+}
+
+/* LIGHT override */
+html.light {
+  color-scheme: light;
+
+  --color-bg: #f8fafc;
+  --color-bg-soft: #ffffff;
+  --color-bg-glass: rgba(255, 255, 255, 0.72);
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #334155;
+  --color-text-muted: #64748b;
+  --color-accent: #8b5cf6;
+  --color-accent-hover: #7c3aed;
+  --color-accent-soft: #a78bfa;
+  --color-accent-warm: #f59e0b;
+  --color-outline: rgba(15, 23, 42, 0.12);
+  --shadow-soft: 0 8px 24px rgba(139, 92, 246, 0.12);
+  --shadow-glass: 0 4px 30px rgba(15, 23, 42, 0.08);
+  --shadow-glow: 0 0 30px rgba(139, 92, 246, 0.18);
+
+  --fg: 15 23 42;
+  --muted: 100 116 139;
+  --border: 15 23 42;
+
+  --p-primary-color: #8b5cf6;
+  --p-primary-contrast-color: #ffffff;
+
+  --p-surface-ground: #f8fafc;
+  --p-surface-card: rgba(255, 255, 255, 0.9);
+  --p-content-border-color: rgba(15, 23, 42, 0.12);
+
+  --p-text-color: #0f172a;
+  --p-text-muted-color: #64748b;
+
+  --p-focus-ring: 0 0 0 2px rgba(167, 139, 250, 0.35);
+}
+
+/* Optional explicit dark class (same as :root, harmless) */
+html.dark {
+  color-scheme: dark;
 }
 
 /* Tailwind v4 theme vars */
@@ -120,6 +119,12 @@ body {
     BlinkMacSystemFont,
     "Segoe UI",
     sans-serif;
+}
+
+/* Prevents any default white canvas while CSS loads in some browsers */
+html,
+body {
+  background: var(--color-bg);
 }
 
 a,
