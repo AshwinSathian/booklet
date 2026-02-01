@@ -51,7 +51,7 @@ export default async function SharePage({
         )}
       </main>
 
-      <div className="mt-6 text-xs text-[rgb(var(--muted))]">
+      <div className="mt-5 text-sm text-[rgb(var(--muted))] text-center">
         Generated with Readable.
       </div>
 
