@@ -7,20 +7,21 @@ import { PreviewPane } from "@/components/app/PreviewPane";
 import { TopBar } from "@/components/app/TopBar";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { ToastProvider, useToast } from "@/components/ui/ToastProvider";
 import { DEFAULT_SETTINGS, type DocSettings } from "@/lib/blocks";
 import { API, APP_NAME, UI } from "@/lib/constants";
 import { parseToBlocks } from "@/lib/parse";
 import { normalizeInput, stripDangerousSequences } from "@/lib/sanitize";
 
-export default function AppPage() {
+function AppPageContent() {
   const [raw, setRaw] = useState("");
   const [settings, setSettings] = useState<DocSettings>(DEFAULT_SETTINGS);
-
   const [status, setStatus] = useState<
     "idle" | "typing" | "publishing" | "published" | "error"
   >("idle");
-
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
+
+  const toast = useToast();
 
   const focusFnRef = useRef<null | (() => void)>(null);
   const normalized = useMemo(
@@ -37,7 +38,6 @@ export default function AppPage() {
     }
   }, [normalized]);
 
-  // Typing status: small debounce for calmer UX
   useEffect(() => {
     if (!raw.trim()) {
       setStatus("idle");
@@ -54,43 +54,55 @@ export default function AppPage() {
     setRaw("");
     setPublishedUrl(null);
     setStatus("idle");
+    toast.info("New draft", "Fresh slate.");
     setSettings(DEFAULT_SETTINGS);
     focusFnRef.current?.();
-  }, []);
+  }, [toast]);
 
   const onPublish = useCallback(async () => {
-    if (!canPublish) return;
-    setStatus("publishing");
+    if (!canPublish) {
+      toast.info("Nothing to publish", "Paste some content first.");
+      return;
+    }
 
     try {
+      setStatus("publishing");
+
       const res = await fetch(API.publishPath, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ blocks, settings }),
       });
 
-      if (!res.ok) throw new Error("Publish failed");
+      if (!res.ok) {
+        const msg = await safeReadText(res);
+        throw new Error(msg || `Publish failed (${res.status})`);
+      }
+
       const data = (await res.json()) as { id: string; url: string };
 
       setPublishedUrl(data.url);
       setStatus("published");
-    } catch {
+    } catch (e) {
       setStatus("error");
+      toast.error("Publish failed", toErrorMessage(e));
     }
-  }, [canPublish, blocks, settings]);
+  }, [blocks, settings, toast, canPublish]);
 
   const onCopyLink = useCallback(async () => {
-    if (!publishedUrl) return;
+    if (!publishedUrl) {
+      toast.info("No link yet", "Publish first to get a share link.");
+      return;
+    }
+
     try {
       await navigator.clipboard.writeText(publishedUrl);
-    } catch {
-      // ignore
+      toast.success("Copied", "Link copied to clipboard.");
+    } catch (e) {
+      toast.error("Copy failed", toErrorMessage(e));
     }
-  }, [publishedUrl]);
+  }, [publishedUrl, toast]);
 
-  // Keyboard shortcuts:
-  // Cmd/Ctrl+Enter => publish
-  // Cmd/Ctrl+K => focus paste input
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       const isMac = navigator.platform.toLowerCase().includes("mac");
@@ -112,6 +124,8 @@ export default function AppPage() {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [onPublish]);
+
+  const isBusy = status === "typing" || status === "publishing";
 
   return (
     <div className="h-screen">
@@ -161,14 +175,40 @@ export default function AppPage() {
           <PreviewPane
             blocks={blocks}
             settings={settings}
+            isBusy={isBusy}
             isEmpty={!normalized.trim()}
           />
         }
       />
 
-      <div className="mt-8 flex items-center justify-center gap-4 text-[12px] text-[rgb(var(--rl-muted))]">
+      <div className="mt-5 flex items-center justify-center gap-4 text-[12px] text-[rgb(var(--rl-muted))]">
         © {new Date().getFullYear()} {APP_NAME}. Built for clarity.
       </div>
     </div>
   );
+}
+
+export default function AppPage() {
+  return (
+    <ToastProvider>
+      <AppPageContent />
+    </ToastProvider>
+  );
+}
+
+async function safeReadText(res: Response) {
+  try {
+    return await res.text();
+  } catch {
+    return "";
+  }
+}
+
+function toErrorMessage(e: unknown) {
+  if (e instanceof Error) return e.message;
+  try {
+    return JSON.stringify(e);
+  } catch {
+    return String(e);
+  }
 }

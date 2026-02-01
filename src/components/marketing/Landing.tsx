@@ -158,18 +158,12 @@ export function Landing() {
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              className="hidden sm:inline-flex rounded-lg border border-[rgba(255,255,255,0.06)] bg-transparent px-3 py-2 text-[12px] text-[rgb(var(--rl-subtext))] hover:text-[rgb(var(--rl-text))] transition"
-              onClick={() => {
-                const el = document.getElementById("how-it-works");
-                el?.scrollIntoView({ behavior: "smooth", block: "start" });
-              }}
-            >
-              How it works
-            </button>
-
             <Link href={ROUTES.app}>
-              <Button label="Try the app" rounded className="min-w-fit" />
+              <Button
+                label="Try the app"
+                rounded
+                className="min-w-fit uppercase tracking-wide"
+              />
             </Link>
           </div>
         </div>
@@ -196,10 +190,15 @@ export function Landing() {
 
               <div className="mt-8 flex flex-wrap items-center justify-center gap-3 mx-auto min-w-fit">
                 <Link href={ROUTES.app}>
-                  <Button label="Try the app" rounded />
+                  <Button
+                    label="Try the app"
+                    rounded
+                    className="min-w-fit uppercase tracking-wide"
+                  />
                 </Link>
                 <Button
                   label="See how it works"
+                  className="min-w-fit uppercase tracking-wide"
                   severity="secondary"
                   outlined
                   onClick={() => {
@@ -541,13 +540,17 @@ async function retry() {
               </div>
               <div className="mt-7 flex justify-center">
                 <Link href={ROUTES.app}>
-                  <Button label="Try the app" rounded />
+                  <Button
+                    label="Try the app"
+                    rounded
+                    className="min-w-fit uppercase tracking-wide"
+                  />
                 </Link>
               </div>
             </div>
           </div>
 
-          <div className="mt-8 flex items-center justify-center gap-4 text-[12px] text-[rgb(var(--rl-muted))]">
+          <div className="mt-5 flex items-center justify-center gap-4 text-[12px] text-[rgb(var(--rl-muted))]">
             © {new Date().getFullYear()} {APP_NAME}. Built for clarity.
           </div>
         </div>

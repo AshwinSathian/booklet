@@ -3,6 +3,7 @@ import { APP_NAME, ROUTES } from "@/lib/constants";
 import { getDoc } from "@/lib/storage";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Button } from "primereact/button";
 import { Skeleton } from "primereact/skeleton";
 
 export const runtime = "nodejs";
@@ -14,6 +15,10 @@ export default async function SharePage({
 }) {
   const { id } = await params;
   const doc = await getDoc(id);
+
+  if (!doc) {
+    return <NotFoundOrExpired />;
+  }
 
   if (!doc) return notFound();
 
@@ -46,10 +51,46 @@ export default async function SharePage({
         )}
       </main>
 
-      <div className="mt-8 flex items-center justify-center gap-4 text-[12px] text-[rgb(var(--rl-muted))]">
+      <div className="mt-6 text-xs text-[rgb(var(--muted))]">
+        Generated with Readable.
+      </div>
+
+      <div className="mt-5 flex items-center justify-center gap-4 text-[12px] text-[rgb(var(--rl-muted))]">
         © {new Date().getFullYear()} {APP_NAME}. Built for clarity.
       </div>
     </div>
+  );
+}
+
+function NotFoundOrExpired() {
+  return (
+    <main className="w-screen h-screen flex items-center justify-center">
+      <div className="p-8 text-center flex flex-col gap-2">
+        <div className="text-lg font-semibold uppercase tracking-wide">
+          Not found
+        </div>
+        <div className="text-sm text-[rgb(var(--muted))] uppercase tracking-widest">
+          This page doesn’t exist or it has expired.
+        </div>
+        <Link href={ROUTES.app}>
+          <Button
+            label="Create a Readable page"
+            rounded
+            className="min-w-fit uppercase tracking-wide"
+            size="small"
+          />
+        </Link>
+
+        <div className="leading-tight uppercase mt-10">
+          <Link href={ROUTES.home}>
+            <div className="font-semibold tracking-wide">{APP_NAME}</div>
+          </Link>
+          <div className="hidden sm:inline-flex text-xs text-[rgb(var(--muted))] tracking-widest">
+            Paste. Preview. Share.
+          </div>
+        </div>
+      </div>
+    </main>
   );
 }
 
