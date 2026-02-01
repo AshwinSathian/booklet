@@ -13,6 +13,7 @@ export function TopBar({
   onPublish,
   onCopyLink,
   hasLink,
+  copyLinkPulse,
 }: {
   status: "idle" | "typing" | "publishing" | "published" | "error";
   canPublish: boolean;
@@ -20,6 +21,7 @@ export function TopBar({
   onPublish: () => void;
   onCopyLink: () => void;
   hasLink: boolean;
+  copyLinkPulse?: boolean;
 }) {
   const statusLabel =
     status === "idle"
@@ -35,6 +37,13 @@ export function TopBar({
   const severity =
     status === "published" ? "success" : status === "error" ? "danger" : "info";
 
+  const copyBtnClass = [
+    "min-w-fit uppercase tracking-wide",
+    copyLinkPulse
+      ? "animate-pulse ring-2 ring-accent-soft ring-offset-2 ring-offset-bg rounded-full"
+      : "",
+  ].join(" ");
+
   return (
     <div className="sticky top-0 z-20 border-b border-outline bg-bg-glass/85 backdrop-blur">
       <div className="mx-auto w-full max-w-6xl px-4 py-3 flex items-center justify-between">
@@ -47,7 +56,7 @@ export function TopBar({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <Tag
             className="hidden md:block"
             value={statusLabel}
@@ -104,17 +113,34 @@ export function TopBar({
               raised
             />
           </div>
+
           {hasLink ? (
-            <Button
-              label="Copy link"
-              icon="pi pi-copy"
-              severity="secondary"
-              onClick={onCopyLink}
-              className="min-w-fit uppercase tracking-wide"
-              size="small"
-              text
-              raised
-            />
+            <div className="hidden md:inline-flex">
+              <Button
+                label="Copy link"
+                icon="pi pi-copy"
+                severity="secondary"
+                onClick={onCopyLink}
+                className={copyBtnClass}
+                size="small"
+                text
+                raised
+              />
+            </div>
+          ) : null}
+
+          {hasLink ? (
+            <div className="md:hidden">
+              <Button
+                icon="pi pi-copy"
+                severity="secondary"
+                onClick={onCopyLink}
+                className={copyBtnClass}
+                size="small"
+                text
+                raised
+              />
+            </div>
           ) : null}
 
           <ThemeToggle />

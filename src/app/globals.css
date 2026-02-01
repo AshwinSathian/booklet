@@ -38,15 +38,6 @@
   --muted: 100 116 139;
   --border: 15 23 42;
 
-  /* -------- Landing / marketing variables (rgb(var(--rl-*))) -------- */
-  --rl-bg: 248 250 252;
-  --rl-text: 15 23 42;
-  --rl-subtext: 51 65 85;
-  --rl-muted: 100 116 139;
-  --rl-surface: 255 255 255;
-  --rl-surfaceSubtle: 248 250 252;
-  --rl-accent: 139 92 246;
-
   /* -------- PrimeReact theme variables (LIGHT) -------- */
   --p-primary-color: #8b5cf6;
   --p-primary-contrast-color: #ffffff;
@@ -88,14 +79,6 @@ html.dark {
   --fg: 233 236 242;
   --muted: 180 189 209;
   --border: 35 48 78;
-
-  --rl-bg: 11 16 32;
-  --rl-text: 233 236 242;
-  --rl-subtext: 180 189 209;
-  --rl-muted: 140 148 170;
-  --rl-surface: 15 21 48;
-  --rl-surfaceSubtle: 17 24 56;
-  --rl-accent: 139 92 246;
 
   --p-primary-color: #8b5cf6;
   --p-primary-contrast-color: #ffffff;

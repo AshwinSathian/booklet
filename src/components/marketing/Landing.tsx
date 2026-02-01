@@ -98,7 +98,7 @@ function Card({
   return (
     <div
       className={cn(
-        "rounded-2xl border border-outline bg-bg-soft p-5 shadow-[var(--shadow-glass)]",
+        "rounded-2xl border border-outline bg-bg-soft p-5 shadow-glass",
         className,
       )}
     >
@@ -198,8 +198,8 @@ export function Landing() {
             aria-hidden
             className="pointer-events-none absolute inset-0 overflow-hidden"
           >
-            <div className="absolute -top-28 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-[rgb(var(--rl-accent))] opacity-[0.12] blur-3xl" />
-            <div className="absolute top-32 right-[-80px] h-56 w-56 rounded-full bg-[rgb(var(--rl-accent))] opacity-[0.08] blur-3xl" />
+            <div className="absolute -top-28 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-accent opacity-[0.12] blur-3xl" />
+            <div className="absolute top-32 -right-20 h-56 w-56 rounded-full bg-accent opacity-[0.08] blur-3xl" />
           </div>
 
           <motion.div variants={container} initial="hidden" animate="show">
@@ -254,7 +254,7 @@ export function Landing() {
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          className="rounded-2xl border border-outline bg-bg-soft shadow-[var(--shadow-glass)]"
+          className="rounded-2xl border border-outline bg-bg-soft shadow-glass"
         >
           <div className="p-4 sm:p-5">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -430,7 +430,7 @@ async function retry() {
         title="Quick answers"
         subtitle="The basics, without the marketing fog."
       >
-        <div className="rounded-2xl border border-outline bg-bg-soft p-2 shadow-[var(--shadow-glass)]">
+        <div className="rounded-2xl border border-outline bg-bg-soft p-2 shadow-glass">
           <Accordion multiple={false} activeIndex={0}>
             <AccordionTab header="Do I need an account?">
               <div className="text-[14px] leading-[1.7] text-text-secondary">
@@ -456,7 +456,7 @@ async function retry() {
       <div className="border-t border-outline">
         <Container>
           <div className="py-14">
-            <div className="rounded-2xl border border-outline bg-bg-soft p-8 shadow-[var(--shadow-glass)]">
+            <div className="rounded-2xl border border-outline bg-bg-soft p-8 shadow-glass">
               <div className="mx-auto max-w-2xl text-center">
                 <div className="text-balance text-[24px] sm:text-[28px] font-semibold tracking-tight">
                   Make your next update instantly share-ready.

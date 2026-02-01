@@ -12,7 +12,7 @@ function spacingClass(settings: DocSettings): string {
 }
 
 function proseWidthClass(settings: DocSettings): string {
-  return settings.width === "wide" ? "max-w-[920px]" : "max-w-[760px]";
+  return settings.width === "wide" ? "max-w-4xl" : "max-w-3xl";
 }
 
 function CodeBlock({

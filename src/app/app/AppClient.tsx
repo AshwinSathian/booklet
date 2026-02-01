@@ -11,6 +11,7 @@ import { ToastProvider, useToast } from "@/components/ui/ToastProvider";
 import { DEFAULT_SETTINGS, type DocSettings } from "@/lib/blocks";
 import { API, APP_NAME, UI } from "@/lib/constants";
 import { parseToBlocks } from "@/lib/parse";
+import { SAMPLE_MARKDOWN } from "@/lib/sample";
 import { normalizeInput, stripDangerousSequences } from "@/lib/sanitize";
 
 function AppPageContent() {
@@ -20,23 +21,32 @@ function AppPageContent() {
     "idle" | "typing" | "publishing" | "published" | "error"
   >("idle");
   const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
+  const [copyLinkPulse, setCopyLinkPulse] = useState(false);
 
   const toast = useToast();
 
   const focusFnRef = useRef<null | (() => void)>(null);
+
   const normalized = useMemo(
     () => stripDangerousSequences(normalizeInput(raw)),
     [raw],
   );
 
+  // Debounce parsing (perf): smoother typing on slower devices.
+  const [debouncedNormalized, setDebouncedNormalized] = useState(normalized);
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedNormalized(normalized), 200);
+    return () => clearTimeout(t);
+  }, [normalized]);
+
   const blocks = useMemo(() => {
-    if (!normalized.trim()) return [];
+    if (!debouncedNormalized.trim()) return [];
     try {
-      return parseToBlocks(normalized);
+      return parseToBlocks(debouncedNormalized);
     } catch {
       return [];
     }
-  }, [normalized]);
+  }, [debouncedNormalized]);
 
   useEffect(() => {
     if (!raw.trim()) {
@@ -48,7 +58,7 @@ function AppPageContent() {
     return () => clearTimeout(t);
   }, [raw]);
 
-  const canPublish = normalized.trim().length > 0 && blocks.length > 0;
+  const canPublish = debouncedNormalized.trim().length > 0 && blocks.length > 0;
 
   const onNew = useCallback(() => {
     setRaw("");
@@ -56,6 +66,13 @@ function AppPageContent() {
     setStatus("idle");
     toast.info("New draft", "Fresh slate.");
     setSettings(DEFAULT_SETTINGS);
+    focusFnRef.current?.();
+  }, [toast]);
+
+  const onInsertSample = useCallback(() => {
+    setRaw(SAMPLE_MARKDOWN);
+    setPublishedUrl(null);
+    toast.info("Inserted sample", "Edit it and publish when ready.");
     focusFnRef.current?.();
   }, [toast]);
 
@@ -84,6 +101,9 @@ function AppPageContent() {
       setPublishedUrl(data.url);
       setStatus("published");
       toast.success("Published", "Your share link is ready.");
+
+      setCopyLinkPulse(true);
+      setTimeout(() => setCopyLinkPulse(false), 1600);
     } catch (e) {
       setStatus("error");
       toast.error("Publish failed", toErrorMessage(e));
@@ -127,6 +147,7 @@ function AppPageContent() {
   }, [onPublish]);
 
   const isBusy = status === "typing" || status === "publishing";
+  const isEmpty = !normalized.trim();
 
   return (
     <div className="min-h-screen">
@@ -137,9 +158,10 @@ function AppPageContent() {
         onPublish={onPublish}
         onCopyLink={onCopyLink}
         hasLink={Boolean(publishedUrl)}
+        copyLinkPulse={copyLinkPulse}
       />
 
-      <div className="mx-auto w-full max-w-6xl px-4 py-4">
+      <div className="mx-auto w-full max-w-6xl">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="hidden md:block">
             <ConfidenceControls value={settings} onChange={setSettings} />
@@ -170,6 +192,7 @@ function AppPageContent() {
           <PasteInput
             value={raw}
             onChange={(v) => setRaw(v)}
+            onInsertSample={onInsertSample}
             onFocusShortcutRequested={(fn) => {
               focusFnRef.current = fn;
             }}
@@ -180,7 +203,8 @@ function AppPageContent() {
             blocks={blocks}
             settings={settings}
             isBusy={isBusy}
-            isEmpty={!normalized.trim()}
+            isEmpty={isEmpty}
+            onInsertSample={onInsertSample}
           />
         }
       />

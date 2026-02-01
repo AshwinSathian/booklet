@@ -24,21 +24,22 @@ export function AppShell({
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 pb-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
-      {/* Mobile toggle */}
-      <div className="lg:hidden mb-3">
-        <SelectButton
-          value={pane}
-          options={options}
-          optionLabel="label"
-          optionValue="value"
-          allowEmpty={false}
-          onChange={(e) => {
-            const next = e.value as MobilePane | null | undefined;
-            if (!next) return;
-            setPane(next);
-          }}
-          className="w-full uppercase tracking-wide"
-        />
+      <div className="lg:hidden sticky top-2 z-10">
+        <div className="rounded-xl border border-outline bg-bg-glass/85 backdrop-blur p-2 shadow-glass">
+          <SelectButton
+            value={pane}
+            options={options}
+            optionLabel="label"
+            optionValue="value"
+            allowEmpty={false}
+            onChange={(e) => {
+              const next = e.value as MobilePane | null | undefined;
+              if (!next) return;
+              setPane(next);
+            }}
+            className="w-full uppercase tracking-wide readable-theme-toggle"
+          />
+        </div>
       </div>
 
       <div

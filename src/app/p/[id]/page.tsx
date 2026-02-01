@@ -1,5 +1,5 @@
 import { BlockRenderer } from "@/components/blocks/BlockRenderer";
-import { APP_NAME, ROUTES } from "@/lib/constants";
+import { APP_NAME, ROUTES, STORAGE } from "@/lib/constants";
 import { buildMetadata } from "@/lib/seo";
 import { getDoc } from "@/lib/storage";
 import type { Metadata } from "next";
@@ -58,14 +58,16 @@ export default async function SharePage({
     return <NotFoundOrExpired />;
   }
 
-  // (kept for future: if you switch getDoc to throw on missing)
   if (!doc) return notFound();
+
+  const createdAt = new Date(doc.createdAt);
+  const expiresAt = new Date(createdAt.getTime() + STORAGE.ttlSeconds * 1000);
 
   return (
     <div className="min-h-screen">
       <div className="sticky top-0 z-20 border-b border-outline bg-bg-glass/85 backdrop-blur">
-        <div className="mx-auto w-full max-w-6xl px-4 py-3 flex items-center justify-between">
-          <div className="leading-tight uppercase">
+        <div className="mx-auto w-full max-w-6xl px-4 py-3 flex items-center justify-between gap-4">
+          <div className="leading-tight uppercase min-w-0">
             <Link href={ROUTES.home}>
               <div className="font-semibold tracking-wide">{APP_NAME}</div>
             </Link>
@@ -74,8 +76,9 @@ export default async function SharePage({
             </div>
           </div>
 
-          <div className="text-xs text-[rgb(var(--muted))] uppercase tracking-widest">
-            Published {new Date(doc.createdAt).toLocaleString()}
+          <div className="text-right text-[11px] sm:text-xs text-[rgb(var(--muted))] uppercase tracking-widest">
+            <div>Published {createdAt.toLocaleString()}</div>
+            <div>Expires {formatRelative(expiresAt)}</div>
           </div>
         </div>
       </div>
@@ -85,13 +88,16 @@ export default async function SharePage({
           <BlockRenderer blocks={doc.blocks} settings={doc.settings} />
         ) : (
           [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((_) => (
-            <Skeleton className="my-2 w-full"></Skeleton>
+            <Skeleton key={_} className="my-2 w-full"></Skeleton>
           ))
         )}
       </main>
 
       <div className="mt-5 text-sm text-[rgb(var(--muted))] text-center">
-        Generated with Readable.
+        Generated with{" "}
+        <Link href={ROUTES.home}>
+          <div className="font-semibold tracking-wide">{APP_NAME}</div>
+        </Link>
       </div>
 
       <div className="mt-5 flex items-center justify-center gap-4 text-[12px] text-[rgb(var(--muted))]">
@@ -99,6 +105,22 @@ export default async function SharePage({
       </div>
     </div>
   );
+}
+
+function formatRelative(dt: Date): string {
+  const now = Date.now();
+  const diff = dt.getTime() - now;
+
+  if (diff <= 0) return "already expired";
+
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `in ${mins} minute${mins === 1 ? "" : "s"}`;
+
+  const hours = Math.floor(mins / 60);
+  if (hours < 48) return `in ${hours} hour${hours === 1 ? "" : "s"}`;
+
+  const days = Math.floor(hours / 24);
+  return `in ${days} day${days === 1 ? "" : "s"}`;
 }
 
 function extractTitle(blocks: any[]): string | null {

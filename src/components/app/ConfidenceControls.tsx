@@ -26,7 +26,7 @@ export function ConfidenceControls({
   onChange: (next: DocSettings) => void;
 }) {
   return (
-    <div className="flex flex-wrap gap-2 items-center">
+    <div className="flex flex-wrap gap-1 items-center">
       <Dropdown
         value={value.spacing}
         options={SPACING}
