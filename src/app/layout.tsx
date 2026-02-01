@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     pathname: "/",
   }),
   icons: {
-    icon: [{ url: "/favicon.ico" }],
+    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
   },
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#f8fafc" },

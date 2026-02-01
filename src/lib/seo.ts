@@ -1,17 +1,12 @@
 import { APP_NAME, ROUTES } from "@/lib/constants";
 import type { Metadata } from "next";
 
-// Centralized SEO helpers (MVP-safe):
-// - Works without any env vars.
-// - If you set NEXT_PUBLIC_SITE_URL in Cloudflare/Vercel/etc, OG URLs become absolute.
-
-const FALLBACK_ORIGIN = "http://localhost:3000";
+const FALLBACK_ORIGIN = "https://readable.ashwinsathian.com";
 
 export function getSiteOrigin() {
   const env = process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_URL;
   if (env && /^https?:\/\//i.test(env)) return env.replace(/\/$/, "");
 
-  // Vercel-style host envs (harmless elsewhere)
   const vercelHost = process.env.VERCEL_URL;
   if (vercelHost) return `https://${vercelHost}`;
 
@@ -52,16 +47,19 @@ export function buildMetadata({
     description ??
     "Turn pasted tech-heavy text into clean, confidently shareable pages for non-technical readers.";
 
-  const url = absoluteUrl(pathname ?? ROUTES.home);
+  const canonicalPath = pathname ?? ROUTES.home;
+  const url = absoluteUrl(canonicalPath);
+
+  // Force explicit image URLs so crawlers don’t rely on framework conventions.
+  const ogImage = absoluteUrl("/opengraph-image");
+  const twImage = absoluteUrl("/twitter-image");
 
   return {
     metadataBase: base,
     title: resolvedTitle,
     description: resolvedDesc,
     applicationName: APP_NAME,
-    alternates: {
-      canonical: url,
-    },
+    alternates: { canonical: url },
     robots: noIndex
       ? {
           index: false,
@@ -69,18 +67,22 @@ export function buildMetadata({
           googleBot: { index: false, follow: false },
         }
       : { index: true, follow: true, googleBot: { index: true, follow: true } },
+
     openGraph: {
       type: "website",
       siteName: APP_NAME,
       title: resolvedTitle,
       description: resolvedDesc,
       url,
+      images: [{ url: ogImage, width: 1200, height: 630, alt: APP_NAME }],
       ...(openGraph ?? {}),
     },
+
     twitter: {
       card: "summary_large_image",
       title: resolvedTitle,
       description: resolvedDesc,
+      images: [twImage],
       ...(twitter ?? {}),
     },
   };
