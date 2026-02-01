@@ -140,7 +140,10 @@ function AppPageContent() {
 
       <div className="w-[90vw] mx-auto p-4">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <ConfidenceControls value={settings} onChange={setSettings} />
+          <div className="hidden md:block">
+            <ConfidenceControls value={settings} onChange={setSettings} />
+          </div>
+
           <div className="text-sm text-[rgb(var(--muted))] uppercase tracking-wide">
             {publishedUrl ? (
               <span>
