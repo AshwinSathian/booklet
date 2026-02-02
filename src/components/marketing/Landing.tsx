@@ -1,6 +1,7 @@
 "use client";
 
 import { AppLogo } from "@/components/ui/AppLogo";
+import { trackEvent } from "@/lib/analytics";
 import { APP_NAME, ROUTES } from "@/lib/constants";
 import type { Easing, Variants } from "framer-motion";
 import { motion, useReducedMotion } from "framer-motion";
@@ -195,6 +196,9 @@ export function Landing() {
                 text
                 raised
                 outlined
+                onClick={() =>
+                  trackEvent("example_clicked", { example: "incident" })
+                }
               />
             </a>
           </>
@@ -218,6 +222,9 @@ export function Landing() {
                 className="min-w-full uppercase tracking-wide py-1"
                 icon="pi pi-arrow-right"
                 iconPos="right"
+                onClick={() =>
+                  trackEvent("example_clicked", { example: "adr" })
+                }
               />
             </a>
           </>
@@ -241,6 +248,9 @@ export function Landing() {
                 className="min-w-full uppercase tracking-wide py-1"
                 icon="pi pi-arrow-right"
                 iconPos="right"
+                onClick={() =>
+                  trackEvent("example_clicked", { example: "readme" })
+                }
               />
             </a>
           </>
@@ -259,18 +269,6 @@ export function Landing() {
             <AppLogo />
 
             <div className="flex items-center gap-2">
-              <a
-                className="hidden md:inline text-xs text-text-muted hover:text-text-primary transition"
-                href="#how"
-              >
-                How it works
-              </a>
-              <a
-                className="hidden md:inline text-xs text-text-muted hover:text-text-primary transition"
-                href="#use-cases"
-              >
-                Use cases
-              </a>
               <Link href={ROUTES.app}>
                 <Button
                   label="Try it now"
@@ -278,6 +276,9 @@ export function Landing() {
                   className="min-w-fit uppercase tracking-wide"
                   icon="pi pi-arrow-right"
                   iconPos="right"
+                  onClick={() =>
+                    trackEvent("open_editor_clicked", { location: "topbar" })
+                  }
                 />
               </Link>
             </div>
@@ -321,6 +322,9 @@ export function Landing() {
                     label="Try it now"
                     rounded
                     className="min-w-fit uppercase tracking-wide"
+                    onClick={() =>
+                      trackEvent("open_editor_clicked", { location: "hero" })
+                    }
                   />
                 </Link>
                 <Button
@@ -330,6 +334,16 @@ export function Landing() {
                   outlined
                   onClick={() => {
                     const el = document.getElementById("how");
+                    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }}
+                />
+                <Button
+                  label="See use cases"
+                  className="min-w-fit uppercase tracking-wide"
+                  severity="secondary"
+                  outlined
+                  onClick={() => {
+                    const el = document.getElementById("use-cases");
                     el?.scrollIntoView({ behavior: "smooth", block: "start" });
                   }}
                 />

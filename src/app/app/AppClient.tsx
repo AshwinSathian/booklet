@@ -8,6 +8,7 @@ import { TopBar } from "@/components/app/TopBar";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { ToastProvider, useToast } from "@/components/ui/ToastProvider";
+import { trackEvent } from "@/lib/analytics";
 import { DEFAULT_SETTINGS, type DocSettings } from "@/lib/blocks";
 import { API, APP_NAME, UI } from "@/lib/constants";
 import { parseToBlocks } from "@/lib/parse";
@@ -102,11 +103,19 @@ function AppPageContent() {
       setStatus("published");
       toast.success("Published", "Your share link is ready.");
 
+      trackEvent("publish_success", {
+        blocks_count: blocks.length,
+      });
+
       setCopyLinkPulse(true);
       setTimeout(() => setCopyLinkPulse(false), 1600);
     } catch (e) {
       setStatus("error");
       toast.error("Publish failed", toErrorMessage(e));
+
+      trackEvent("publish_error", {
+        stage: "api",
+      });
     }
   }, [blocks, settings, toast, canPublish]);
 

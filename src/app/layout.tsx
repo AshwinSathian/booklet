@@ -1,7 +1,9 @@
+import { Analytics } from "@/components/analytics/Analytics";
 import PrimeStyles from "@/components/ui/PrimeStyles";
 import { APP_NAME } from "@/lib/constants";
 import type { Metadata } from "next";
 import { ThemeProvider } from "next-themes";
+import { Suspense } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -22,6 +24,9 @@ export default function RootLayout({
       </head>
       <body>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+          <Suspense fallback={null}>
+            <Analytics />
+          </Suspense>
           {children}
         </ThemeProvider>
       </body>

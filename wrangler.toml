@@ -6,3 +6,7 @@ main = ".open-next/worker.js"
 kv_namespaces = [
   { binding = "READABLE_DOCS", id = "205fe067b23840c3ac012db2772ef61a" }
 ]
+
+[vars]
+NEXT_PUBLIC_SITE_URL = "https://readable.ashwinsathian.com"
+NEXT_PUBLIC_GA_MEASUREMENT_ID = "G-Q8YDP8LXZ3"
