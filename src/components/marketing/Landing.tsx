@@ -121,23 +121,67 @@ function Badge({ children }: { children: React.ReactNode }) {
 export function Landing() {
   const reduce = useReducedMotion();
 
-  const features = useMemo(
+  const steps = useMemo(
     () => [
       {
-        title: "Paste anything",
-        desc: "Markdown, incident notes, proposal drafts, or raw logs. The messy stuff.",
+        title: "Paste your Markdown",
+        desc: "Drop in notes, READMEs, incident updates, proposals — anything Markdown-shaped.",
       },
       {
-        title: "Preview instantly",
-        desc: "A typography-first page that holds structure (headings, tables, code) without fuss.",
+        title: "Preview it instantly",
+        desc: "Readable keeps headings, lists, tables, and code structured and calm.",
       },
       {
         title: "Publish a link",
-        desc: "Share a clean page that reads well on phones, tablets, and desktops.",
+        desc: "Get a clean, read-only page that looks good on phones and desktops.",
       },
       {
-        title: "Stay in control",
-        desc: "Adjust width, spacing, and code behavior — without turning this into a design tool.",
+        title: "Share without friction",
+        desc: "Send the link in Slack, email, or a ticket — your reader just reads.",
+      },
+    ],
+    [],
+  );
+
+  const reasons = useMemo(
+    () => [
+      {
+        title: "Markdown is great for writing. Not always for reading.",
+        desc: "Readable is the small step between raw Markdown and “please open this tool to understand it.”",
+      },
+      {
+        title: "A link that feels finished",
+        desc: "Spacing, typography, and layout are handled for you — so your content lands the way you meant it.",
+      },
+      {
+        title: "Built for forwarding",
+        desc: "When your message gets copied into a thread or escalated, the structure stays intact.",
+      },
+      {
+        title: "Opinionated, intentionally simple",
+        desc: "No collaboration, no comments, no feeds. Just clean reading.",
+      },
+    ],
+    [],
+  );
+
+  const useCases = useMemo(
+    () => [
+      {
+        title: "Incident summaries",
+        desc: "Timelines, impact, root cause, next steps — readable enough to forward.",
+      },
+      {
+        title: "Design notes & ADRs",
+        desc: "Tradeoffs and decisions that make sense even to someone outside the repo.",
+      },
+      {
+        title: "README-style docs",
+        desc: "Documentation you can share without sending someone to GitHub first.",
+      },
+      {
+        title: "Async handoffs",
+        desc: "Clear context for teammates across time zones — less back-and-forth.",
       },
     ],
     [],
@@ -178,7 +222,7 @@ export function Landing() {
               </a>
               <Link href={ROUTES.app}>
                 <Button
-                  label="Open editor"
+                  label="Try it now"
                   rounded
                   className="min-w-fit uppercase tracking-wide"
                   icon="pi pi-arrow-right"
@@ -205,30 +249,31 @@ export function Landing() {
           <motion.div variants={container} initial="hidden" animate="show">
             <motion.div variants={reduce ? undefined : fadeUp}>
               <div className="flex flex-wrap items-center gap-2">
+                <Badge>No signup</Badge>
                 <Badge>Typography-first</Badge>
-                <Badge>Mobile-readable</Badge>
                 <Badge>Share with a link</Badge>
               </div>
 
               <h1 className="mt-5 text-balance text-[38px] leading-[1.12] sm:text-[48px] font-bold tracking-tight">
-                Your updates shouldn’t lose meaning when you hit “paste”.
+                Make Markdown readable. Instantly.
               </h1>
 
               <p className="mt-4 max-w-2xl text-pretty text-[15px] sm:text-[16px] leading-[1.7] text-text-secondary">
-                {APP_NAME} turns technical text into calm, readable pages — then
-                gives you a share link that looks professional on every device.
+                Paste your Markdown. {APP_NAME} turns it into a clean, shareable
+                reading page — without asking your reader to open a repo, doc
+                tool, or thread for context.
               </p>
 
               <div className="mt-8 flex flex-wrap items-center gap-3">
                 <Link href={ROUTES.app}>
                   <Button
-                    label="Open editor"
+                    label="Try it now"
                     rounded
                     className="min-w-fit uppercase tracking-wide"
                   />
                 </Link>
                 <Button
-                  label="See the flow"
+                  label="See how it works"
                   className="min-w-fit uppercase tracking-wide"
                   severity="secondary"
                   outlined
@@ -261,9 +306,9 @@ export function Landing() {
               <div className="rounded-xl border border-outline bg-bg-glass">
                 <div className="flex items-center justify-between px-4 py-3">
                   <div className="text-[12px] font-semibold">
-                    Pasted content
+                    Pasted Markdown
                   </div>
-                  <div className="text-[11px] text-text-muted">monospace</div>
+                  <div className="text-[11px] text-text-muted">raw</div>
                 </div>
                 <div className="h-px bg-outline" />
                 <div className="max-h-80 overflow-auto p-4 font-mono text-[12px] leading-[1.65] text-text-secondary">
@@ -286,9 +331,7 @@ async function retry() {
               <div className="rounded-xl border border-outline bg-bg">
                 <div className="flex items-center justify-between px-4 py-3">
                   <div className="text-[12px] font-semibold">Readable page</div>
-                  <div className="text-[11px] text-text-muted">
-                    typography-first
-                  </div>
+                  <div className="text-[11px] text-text-muted">clean</div>
                 </div>
                 <div className="h-px bg-outline" />
                 <div className="p-4">
@@ -296,7 +339,7 @@ async function retry() {
                     Incident Summary
                   </div>
                   <div className="mt-2 text-[14px] leading-[1.7] text-text-secondary">
-                    Clear enough to forward. Calm enough to trust.
+                    Ready to forward. Easy to read. Calm by default.
                   </div>
 
                   <ul className="mt-4 space-y-2 text-[14px] leading-[1.7] text-text-secondary">
@@ -314,16 +357,18 @@ async function retry() {
 
                   <div className="mt-4 rounded-xl border border-outline bg-bg-soft p-3">
                     <div className="flex items-center justify-between gap-3">
-                      <div className="text-[12px] text-text-muted">Code</div>
+                      <div className="text-[12px] text-text-muted">
+                        Share link
+                      </div>
                       <button
                         className="rounded-md border border-outline bg-transparent px-2 py-1 text-[11px] text-text-secondary hover:text-text-primary transition"
                         type="button"
                       >
-                        View code
+                        Copy
                       </button>
                     </div>
                     <div className="mt-2 font-mono text-[12px] text-text-secondary">
-                      POST /publish → /p/Ab3k91QxZp
+                      /publish → /p/Ab3k91QxZp
                     </div>
                   </div>
                 </div>
@@ -342,26 +387,13 @@ async function retry() {
       {/* VALUE */}
       <Section
         eyebrow="Why Readable"
-        title="Clarity is a product feature. So is presentation."
-        subtitle="The moment your text gets forwarded, formatting becomes part of the message. Readable keeps structure, spacing, and code intact — without turning you into a designer."
+        title="Markdown, but easier to consume."
+        subtitle="Readable is for the moment your text leaves your editor — when someone else has to understand it quickly."
       >
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Card
-            title="Made for the non-technical reader"
-            desc="Your update can be understood without the context of Slack threads, docs, or tools."
-          />
-          <Card
-            title="A page that looks intentional"
-            desc="Instead of apologizing for messy formatting, send a link that feels finished."
-          />
-          <Card
-            title="Mobile-first by default"
-            desc="Tables, lists, and code blocks are laid out to read well on phones."
-          />
-          <Card
-            title="Fast workflow"
-            desc="Paste, adjust a couple of knobs, publish. Your brain stays on the content."
-          />
+          {reasons.map((r) => (
+            <Card key={r.title} title={r.title} desc={r.desc} />
+          ))}
         </div>
       </Section>
 
@@ -376,10 +408,10 @@ async function retry() {
         id="how"
         eyebrow="How it works"
         title="Paste → preview → publish → share"
-        subtitle="A tiny workflow that matches how you already work — the output is just calmer."
+        subtitle="A tiny workflow that matches how you already work."
       >
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {features.map((f) => (
+          {steps.map((f) => (
             <Card key={f.title} title={f.title} desc={f.desc} />
           ))}
         </div>
@@ -395,25 +427,40 @@ async function retry() {
       <Section
         id="use-cases"
         eyebrow="Use cases"
-        title="Great for updates, explanations, and handoffs"
-        subtitle="If it’s currently a paste into Slack, email, or a doc… it probably belongs here."
+        title="For updates, explanations, and handoffs"
+        subtitle="If it currently gets pasted into Slack, email, or a ticket… it probably belongs here."
       >
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {useCases.map((c) => (
+            <Card key={c.title} title={c.title} desc={c.desc} />
+          ))}
+        </div>
+      </Section>
+
+      <div className="py-2">
+        <Container>
+          <Rule />
+        </Container>
+      </div>
+
+      {/* INTENTIONAL SIMPLICITY */}
+      <Section
+        eyebrow="Designed to be simple"
+        title="Readable is intentionally not a doc platform."
+        subtitle="No accounts, no collaboration, no endless settings. Just clean reading pages you can share."
+      >
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <Card
-            title="Incident summaries"
-            desc="Clear timelines. Calm explanations. No formatting chaos."
+            title="No signup"
+            desc="Try it in seconds. If it helps, keep using it. If not, no baggage."
           />
           <Card
-            title="Technical proposals"
-            desc="Structured thinking that reads well for non-technical reviewers."
+            title="Read-only pages"
+            desc="Published pages are for reading and sharing — not for managing a workspace."
           />
           <Card
-            title="Support escalations"
-            desc="Context preserved. Easy to forward. Less back-and-forth."
-          />
-          <Card
-            title="Async explanations"
-            desc="Thoughtful writing, without presentation anxiety."
+            title="Small surface area"
+            desc="Fewer knobs, fewer surprises. The content stays the main character."
           />
         </div>
       </Section>
@@ -428,19 +475,25 @@ async function retry() {
       <Section
         eyebrow="FAQ"
         title="Quick answers"
-        subtitle="The basics, without the marketing fog."
+        subtitle="Clear, practical, and to the point."
       >
         <div className="rounded-2xl border border-outline bg-bg-soft p-2 shadow-glass">
           <Accordion multiple={false} activeIndex={0}>
             <AccordionTab header="Do I need an account?">
               <div className="text-[14px] leading-[1.7] text-text-secondary">
-                No. You can try it immediately. Accounts can come later for
-                saving and managing pages.
+                No. You can use {APP_NAME} immediately.
               </div>
             </AccordionTab>
-            <AccordionTab header="Is the share page public?">
+            <AccordionTab header="Are published pages public?">
               <div className="text-[14px] leading-[1.7] text-text-secondary">
-                Yes — by default. Private links are a sensible next step.
+                Yes — they’re shareable by link. If you publish it, assume it
+                can be forwarded.
+              </div>
+            </AccordionTab>
+            <AccordionTab header="Can I edit after publishing?">
+              <div className="text-[14px] leading-[1.7] text-text-secondary">
+                Not right now. The goal is a simple “publish a clean reading
+                link” flow.
               </div>
             </AccordionTab>
             <AccordionTab header="Can I export to PDF or Doc?">
@@ -459,23 +512,23 @@ async function retry() {
             <div className="rounded-2xl border border-outline bg-bg-soft p-8 shadow-glass">
               <div className="mx-auto max-w-2xl text-center">
                 <div className="text-balance text-[24px] sm:text-[28px] font-semibold tracking-tight">
-                  Make your next update instantly share-ready.
+                  Paste once. Share a page people actually read.
                 </div>
                 <div className="mt-3 text-[15px] leading-[1.7] text-text-secondary">
-                  Paste content. Preview it. Publish a clean page. Send a link.
+                  Paste your Markdown, preview instantly, publish a clean
+                  reading link.
                 </div>
                 <div className="mt-7 flex justify-center">
                   <Link href={ROUTES.app}>
                     <Button
-                      label="Open editor"
+                      label="Try it now"
                       rounded
                       className="min-w-fit uppercase tracking-wide"
                     />
                   </Link>
                 </div>
                 <div className="mt-4 text-[12px] text-text-muted">
-                  Pages expire automatically after a while. This is a sharing
-                  tool — not a document warehouse.
+                  {APP_NAME} is a sharing tool — not a document warehouse.
                 </div>
               </div>
             </div>
