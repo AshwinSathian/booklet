@@ -1,7 +1,7 @@
 import { BlockRenderer } from "@/components/blocks/BlockRenderer";
+import { AppLogo } from "@/components/ui/AppLogo";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import { APP_NAME, ROUTES, STORAGE } from "@/lib/constants";
-import { getRequestOrigin } from "@/lib/origin";
 import { absoluteUrl, buildMetadata } from "@/lib/seo";
 import { getDoc } from "@/lib/storage";
 import type { Metadata } from "next";
@@ -11,6 +11,7 @@ import { Button } from "primereact/button";
 import { Skeleton } from "primereact/skeleton";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,
@@ -36,15 +37,12 @@ export async function generateMetadata({
   const ogImage = absoluteUrl("/opengraph-image");
   const twImage = absoluteUrl("/twitter-image");
 
-  const origin = (await getRequestOrigin()) ?? undefined;
-
   return {
     ...buildMetadata({
       title,
       description,
       pathname: `/p/${id}`,
       noIndex: false,
-      origin,
     }),
     openGraph: {
       type: "article",
@@ -100,14 +98,7 @@ export default async function SharePage({
             doc.settings?.width === "wide" ? "max-w-4xl" : "max-w-3xl",
           ].join(" ")}
         >
-          <div className="leading-tight uppercase min-w-0">
-            <Link href={ROUTES.home}>
-              <div className="font-semibold tracking-wide">{APP_NAME}</div>
-            </Link>
-            <div className="hidden sm:inline-flex text-xs text-[rgb(var(--muted))] tracking-widest">
-              Paste. Preview. Share.
-            </div>
-          </div>
+          <AppLogo />
 
           <div className="flex items-center gap-3 shrink-0">
             <div className="hidden sm:block text-right text-[11px] text-[rgb(var(--muted))] uppercase tracking-widest">
@@ -216,14 +207,7 @@ function NotFoundOrExpired() {
           />
         </Link>
 
-        <div className="leading-tight uppercase mt-10">
-          <Link href={ROUTES.home}>
-            <div className="font-semibold tracking-wide">{APP_NAME}</div>
-          </Link>
-          <div className="hidden sm:inline-flex text-xs text-[rgb(var(--muted))] tracking-widest">
-            Paste. Preview. Share.
-          </div>
-        </div>
+        <AppLogo />
       </div>
     </main>
   );

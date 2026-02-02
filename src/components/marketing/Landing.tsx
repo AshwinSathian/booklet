@@ -1,5 +1,6 @@
 "use client";
 
+import { AppLogo } from "@/components/ui/AppLogo";
 import { APP_NAME, ROUTES } from "@/lib/constants";
 import type { Easing, Variants } from "framer-motion";
 import { motion, useReducedMotion } from "framer-motion";
@@ -193,19 +194,7 @@ export function Landing() {
       <header className="sticky top-0 z-20 border-b border-outline bg-bg-glass/85 backdrop-blur">
         <Container>
           <div className="flex items-center justify-between py-3">
-            <div className="leading-tight">
-              <Link
-                href={ROUTES.home}
-                className="inline-flex items-baseline gap-2"
-              >
-                <div className="font-semibold tracking-wide uppercase">
-                  {APP_NAME}
-                </div>
-                <div className="hidden sm:inline text-xs text-text-muted tracking-widest uppercase">
-                  Paste. Preview. Share.
-                </div>
-              </Link>
-            </div>
+            <AppLogo />
 
             <div className="flex items-center gap-2">
               <a

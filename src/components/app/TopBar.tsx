@@ -1,8 +1,7 @@
 "use client";
 
+import { AppLogo } from "@/components/ui/AppLogo";
 import ThemeToggle from "@/components/ui/ThemeToggle";
-import { APP_NAME, ROUTES } from "@/lib/constants";
-import Link from "next/link";
 import { Button } from "primereact/button";
 import { Tag } from "primereact/tag";
 
@@ -47,14 +46,7 @@ export function TopBar({
   return (
     <header className="sticky top-0 z-20 border-b border-outline bg-bg-glass/85 backdrop-blur">
       <div className="mx-auto w-full max-w-6xl px-4 py-3 flex items-center justify-between">
-        <div className="leading-tight uppercase">
-          <Link href={ROUTES.home}>
-            <div className="font-semibold tracking-wide">{APP_NAME}</div>
-          </Link>
-          <div className="hidden sm:inline-flex text-xs text-[rgb(var(--muted))] tracking-widest">
-            Paste. Preview. Share.
-          </div>
-        </div>
+        <AppLogo />
 
         <div className="flex items-center gap-1">
           <Tag
