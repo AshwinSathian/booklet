@@ -90,10 +90,12 @@ function Section({
 function Card({
   title,
   desc,
+  footer,
   className,
 }: {
   title: string;
-  desc: string;
+  desc?: React.ReactNode;
+  footer?: React.ReactNode;
   className?: string;
 }) {
   return (
@@ -104,9 +106,16 @@ function Card({
       )}
     >
       <div className="text-[15px] font-semibold tracking-tight">{title}</div>
-      <div className="mt-2 text-[14px] leading-[1.7] text-text-secondary">
-        {desc}
-      </div>
+      {desc ? (
+        <div className="mt-2 text-[14px] leading-[1.7] text-text-secondary">
+          {desc}
+        </div>
+      ) : null}
+      {footer ? (
+        <div className="mt-4 border-t border-outline pt-4 text-center">
+          {footer}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -171,18 +180,71 @@ export function Landing() {
       {
         title: "Incident summaries",
         desc: "Timelines, impact, root cause, next steps — readable enough to forward.",
+        footer: (
+          <>
+            <a
+              target="_blank"
+              href="https://readable.ashwinsathian.com/p/GqfTrJQg0t"
+            >
+              <Button
+                label="View Readable Sample"
+                size="small"
+                className="min-w-full uppercase tracking-wide py-1"
+                icon="pi pi-arrow-right"
+                iconPos="right"
+                text
+                raised
+                outlined
+              />
+            </a>
+          </>
+        ),
       },
       {
         title: "Design notes & ADRs",
         desc: "Tradeoffs and decisions that make sense even to someone outside the repo.",
+        footer: (
+          <>
+            <a
+              target="_blank"
+              href="https://readable.ashwinsathian.com/p/Vmm78unhPg"
+            >
+              <Button
+                label="View Readable Sample"
+                text
+                raised
+                outlined
+                size="small"
+                className="min-w-full uppercase tracking-wide py-1"
+                icon="pi pi-arrow-right"
+                iconPos="right"
+              />
+            </a>
+          </>
+        ),
       },
       {
         title: "README-style docs",
         desc: "Documentation you can share without sending someone to GitHub first.",
-      },
-      {
-        title: "Async handoffs",
-        desc: "Clear context for teammates across time zones — less back-and-forth.",
+        footer: (
+          <>
+            <a
+              target="_blank"
+              href="https://readable.ashwinsathian.com/p/6MTZfx3M6q"
+            >
+              <Button
+                label="View Readable Sample"
+                text
+                raised
+                outlined
+                size="small"
+                className="min-w-full uppercase tracking-wide py-1"
+                icon="pi pi-arrow-right"
+                iconPos="right"
+              />
+            </a>
+          </>
+        ),
       },
     ],
     [],
@@ -419,9 +481,14 @@ async function retry() {
         title="For updates, explanations, and handoffs"
         subtitle="If it currently gets pasted into Slack, email, or a ticket… it probably belongs here."
       >
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {useCases.map((c) => (
-            <Card key={c.title} title={c.title} desc={c.desc} />
+            <Card
+              key={c.title}
+              title={c.title}
+              desc={c.desc}
+              footer={c.footer}
+            />
           ))}
         </div>
       </Section>
