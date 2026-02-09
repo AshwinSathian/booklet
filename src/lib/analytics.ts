@@ -1,6 +1,11 @@
+import type { AnalyticsEventName } from "./analytics-events";
+
 export type AnalyticsEventParams = Record<string, string | number | boolean>;
 
-export function trackEvent(name: string, params?: AnalyticsEventParams) {
+export function trackEvent(
+  name: AnalyticsEventName,
+  params?: AnalyticsEventParams,
+) {
   if (typeof window === "undefined") return;
   const gtag = (window as any).gtag as undefined | ((...args: any[]) => void);
   if (!gtag) return;

@@ -1,5 +1,7 @@
 "use client";
 
+import { trackEvent } from "@/lib/analytics";
+import { ANALYTICS_EVENTS, hashId } from "@/lib/analytics-events";
 import {
   DRAFTS_STORAGE_KEYS,
   deleteDraft,
@@ -54,8 +56,8 @@ export function DraftsDialog({
   visible: boolean;
   activeDraftId: string | null;
   onHide: () => void;
-  onOpenDraft: (id: string) => void;
-  onCreateDraft: () => string;
+  onOpenDraft: (id: string, origin?: "drafts_dialog") => void;
+  onCreateDraft: (origin?: "drafts_dialog") => string;
 }) {
   const [drafts, setDrafts] = useState<DraftMeta[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -104,14 +106,26 @@ export function DraftsDialog({
     if (!editingId) return;
     const next = editingTitle.trim();
     if (!isValidTitle(next)) return;
+
     updateDraft(editingId, { title: next });
+
+    trackEvent(ANALYTICS_EVENTS.draft_renamed, {
+      draft_hash: hashId(editingId),
+    });
+
     cancelRename();
     refresh();
   }, [cancelRename, editingId, editingTitle, refresh]);
 
   const onDuplicate = useCallback(
     (id: string) => {
-      duplicateDraft(id);
+      const copy = duplicateDraft(id);
+
+      trackEvent(ANALYTICS_EVENTS.draft_duplicated, {
+        draft_hash: hashId(id),
+        new_draft_hash: copy ? hashId(copy.id) : "",
+      });
+
       refresh();
     },
     [refresh],
@@ -124,6 +138,12 @@ export function DraftsDialog({
 
       const deletingActive = id === activeDraftId;
       deleteDraft(id);
+
+      trackEvent(ANALYTICS_EVENTS.draft_deleted, {
+        draft_hash: hashId(id),
+        deleting_active: deletingActive,
+      });
+
       cancelRename();
 
       const nextDrafts = listDrafts();
@@ -133,13 +153,13 @@ export function DraftsDialog({
 
       const nextId = nextDrafts[0]?.id;
       if (nextId) {
-        onOpenDraft(nextId);
+        onOpenDraft(nextId, "drafts_dialog");
         onHide();
         return;
       }
 
       // If the last draft was deleted, ensure the app remains usable.
-      onCreateDraft();
+      onCreateDraft("drafts_dialog");
       onHide();
     },
     [activeDraftId, cancelRename, onCreateDraft, onHide, onOpenDraft],
@@ -152,7 +172,11 @@ export function DraftsDialog({
         icon="pi pi-plus"
         severity="success"
         onClick={() => {
-          onCreateDraft();
+          const id = onCreateDraft("drafts_dialog");
+          trackEvent(ANALYTICS_EVENTS.draft_created, {
+            draft_hash: hashId(id),
+            origin: "drafts_dialog",
+          });
           onHide();
         }}
         className="uppercase"
@@ -233,7 +257,12 @@ export function DraftsDialog({
                         size="small"
                         icon="pi pi-folder-open"
                         onClick={() => {
-                          onOpenDraft(d.id);
+                          trackEvent(ANALYTICS_EVENTS.draft_opened, {
+                            draft_hash: hashId(d.id),
+                            origin: "drafts_dialog",
+                            is_active: isActive,
+                          });
+                          onOpenDraft(d.id, "drafts_dialog");
                           onHide();
                         }}
                         className="uppercase"

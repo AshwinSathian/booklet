@@ -6,6 +6,7 @@ import { PreviewPane } from "@/components/app/PreviewPane";
 import { TopBar } from "@/components/app/TopBar";
 import { ToastProvider, useToast } from "@/components/ui/ToastProvider";
 import { trackEvent } from "@/lib/analytics";
+import { ANALYTICS_EVENTS, hashId } from "@/lib/analytics-events";
 import { DEFAULT_SETTINGS, type DocSettings } from "@/lib/blocks";
 import { API, APP_NAME, UI } from "@/lib/constants";
 import {
@@ -23,6 +24,9 @@ import { normalizeInput, stripDangerousSequences } from "@/lib/sanitize";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type SaveState = "saved" | "saving";
+type DraftEventOrigin = "hydrate" | "topbar_new" | "drafts_dialog" | "unknown";
+
+const AUTOSAVE_ANALYTICS_THROTTLE_MS = 60_000;
 
 function AppPageContent() {
   const [activeDraftId, setActiveDraftIdState] = useState<string | null>(null);
@@ -41,6 +45,27 @@ function AppPageContent() {
   const focusFnRef = useRef<null | (() => void)>(null);
   const autosaveTimerRef = useRef<number | null>(null);
   const skipNextAutosaveRef = useRef(true);
+
+  const autosaveLastTrackedAtByDraftRef = useRef<Map<string, number>>(
+    new Map(),
+  );
+
+  const maybeTrackAutosave = useCallback(
+    (draftId: string, blocksCount: number) => {
+      const now = Date.now();
+      const last = autosaveLastTrackedAtByDraftRef.current.get(draftId) ?? 0;
+      if (now - last < AUTOSAVE_ANALYTICS_THROTTLE_MS) return;
+
+      autosaveLastTrackedAtByDraftRef.current.set(draftId, now);
+
+      trackEvent(ANALYTICS_EVENTS.draft_autosave, {
+        draft_hash: hashId(draftId),
+        raw_len: raw.length,
+        blocks_count: blocksCount,
+      });
+    },
+    [raw.length],
+  );
 
   const flushPendingAutosave = useCallback(() => {
     if (!isReady) return;
@@ -75,37 +100,13 @@ function AppPageContent() {
 
     // Avoid an immediate write triggered by hydration.
     skipNextAutosaveRef.current = true;
+
+    trackEvent(ANALYTICS_EVENTS.draft_opened, {
+      draft_hash: hashId(draft.id),
+      origin: "hydrate",
+      has_last_published: Boolean(draft.lastPublished),
+    });
   }, []);
-
-  // Debounced autosave on raw/settings changes.
-  useEffect(() => {
-    if (!isReady) return;
-    if (!activeDraftId) return;
-
-    if (skipNextAutosaveRef.current) {
-      skipNextAutosaveRef.current = false;
-      return;
-    }
-
-    setSaveState("saving");
-
-    if (autosaveTimerRef.current !== null) {
-      window.clearTimeout(autosaveTimerRef.current);
-    }
-
-    autosaveTimerRef.current = window.setTimeout(() => {
-      updateDraft(activeDraftId, { raw, settings });
-      setSaveState("saved");
-      autosaveTimerRef.current = null;
-    }, AUTOSAVE.debounceMs);
-
-    return () => {
-      if (autosaveTimerRef.current !== null) {
-        window.clearTimeout(autosaveTimerRef.current);
-        autosaveTimerRef.current = null;
-      }
-    };
-  }, [raw, settings, activeDraftId, isReady]);
 
   const normalized = useMemo(
     () => stripDangerousSequences(normalizeInput(raw)),
@@ -128,6 +129,46 @@ function AppPageContent() {
     }
   }, [debouncedNormalized]);
 
+  // Debounced autosave on raw/settings changes.
+  useEffect(() => {
+    if (!isReady) return;
+    if (!activeDraftId) return;
+
+    if (skipNextAutosaveRef.current) {
+      skipNextAutosaveRef.current = false;
+      return;
+    }
+
+    setSaveState("saving");
+
+    if (autosaveTimerRef.current !== null) {
+      window.clearTimeout(autosaveTimerRef.current);
+    }
+
+    autosaveTimerRef.current = window.setTimeout(() => {
+      updateDraft(activeDraftId, { raw, settings });
+      setSaveState("saved");
+      autosaveTimerRef.current = null;
+
+      // Intentionally uses the last computed blocks for a close-enough metric.
+      maybeTrackAutosave(activeDraftId, blocks.length);
+    }, AUTOSAVE.debounceMs);
+
+    return () => {
+      if (autosaveTimerRef.current !== null) {
+        window.clearTimeout(autosaveTimerRef.current);
+        autosaveTimerRef.current = null;
+      }
+    };
+  }, [
+    raw,
+    settings,
+    activeDraftId,
+    isReady,
+    maybeTrackAutosave,
+    blocks.length,
+  ]);
+
   useEffect(() => {
     if (!raw.trim()) {
       setStatus("idle");
@@ -140,30 +181,40 @@ function AppPageContent() {
 
   const canPublish = debouncedNormalized.trim().length > 0 && blocks.length > 0;
 
-  const onCreateDraft = useCallback((): string => {
-    flushPendingAutosave();
+  const onCreateDraft = useCallback(
+    (origin: DraftEventOrigin = "unknown"): string => {
+      flushPendingAutosave();
 
-    const draft = createDraft({ raw: "", settings: DEFAULT_SETTINGS });
-    setActiveDraftId(draft.id);
-    setActiveDraftIdState(draft.id);
+      const draft = createDraft({ raw: "", settings: DEFAULT_SETTINGS });
+      setActiveDraftId(draft.id);
+      setActiveDraftIdState(draft.id);
 
-    // Avoid an immediate write triggered by switching drafts.
-    skipNextAutosaveRef.current = true;
+      // Avoid an immediate write triggered by switching drafts.
+      skipNextAutosaveRef.current = true;
 
-    setRaw("");
-    setLastPublishedUrl(null);
-    setStatus("idle");
-    setSettings(DEFAULT_SETTINGS);
-    setSaveState("saved");
+      setRaw("");
+      setLastPublishedUrl(null);
+      setStatus("idle");
+      setSettings(DEFAULT_SETTINGS);
+      setSaveState("saved");
 
-    toast.info("New draft", "Fresh slate.");
-    focusFnRef.current?.();
+      toast.info("New draft", "Fresh slate.");
+      focusFnRef.current?.();
 
-    return draft.id;
-  }, [flushPendingAutosave, toast]);
+      if (origin !== "drafts_dialog") {
+        trackEvent(ANALYTICS_EVENTS.draft_created, {
+          draft_hash: hashId(draft.id),
+          origin,
+        });
+      }
+
+      return draft.id;
+    },
+    [flushPendingAutosave, toast],
+  );
 
   const onSwitchDraft = useCallback(
-    (id: string) => {
+    (id: string, origin: DraftEventOrigin = "unknown") => {
       if (!id.trim()) return;
 
       flushPendingAutosave();
@@ -184,12 +235,20 @@ function AppPageContent() {
       setLastPublishedUrl(draft.lastPublished?.url ?? null);
       setStatus("idle");
       setCopyLinkPulse(false);
+
+      if (origin !== "drafts_dialog") {
+        trackEvent(ANALYTICS_EVENTS.draft_opened, {
+          draft_hash: hashId(draft.id),
+          origin,
+          has_last_published: Boolean(draft.lastPublished),
+        });
+      }
     },
     [flushPendingAutosave, settings],
   );
 
   const onNew = useCallback(() => {
-    onCreateDraft();
+    onCreateDraft("topbar_new");
   }, [onCreateDraft]);
 
   const onInsertSample = useCallback(() => {
@@ -228,13 +287,21 @@ function AppPageContent() {
           url: data.url,
           createdAt,
         });
+
+        trackEvent(ANALYTICS_EVENTS.publish_from_draft, {
+          draft_hash: hashId(activeDraftId),
+          published_hash: hashId(data.id),
+          blocks_count: blocks.length,
+          raw_len: raw.length,
+        });
       }
 
       setLastPublishedUrl(data.url);
       setStatus("published");
       toast.success("Published", "Your share link is ready.");
 
-      trackEvent("publish_success", {
+      // Keep existing Phase 1 event for continuity.
+      trackEvent(ANALYTICS_EVENTS.publish_success, {
         blocks_count: blocks.length,
       });
 
@@ -244,11 +311,11 @@ function AppPageContent() {
       setStatus("error");
       toast.error("Publish failed", toErrorMessage(e));
 
-      trackEvent("publish_error", {
+      trackEvent(ANALYTICS_EVENTS.publish_error, {
         stage: "api",
       });
     }
-  }, [activeDraftId, blocks, settings, toast, canPublish]);
+  }, [activeDraftId, blocks, settings, toast, canPublish, raw.length]);
 
   const onCopyLink = useCallback(async () => {
     if (!lastPublishedUrl) {
@@ -310,8 +377,8 @@ function AppPageContent() {
         raw={raw}
         onNew={onNew}
         activeDraftId={activeDraftId}
-        onCreateDraft={onCreateDraft}
-        onSwitchDraft={onSwitchDraft}
+        onCreateDraft={(origin) => onCreateDraft(origin ?? "unknown")}
+        onSwitchDraft={(id, origin) => onSwitchDraft(id, origin ?? "unknown")}
         onPublish={onPublish}
         onCopyLink={onCopyLink}
         onOpenPublished={onOpenPublished}

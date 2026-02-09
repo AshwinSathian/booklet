@@ -1,5 +1,7 @@
 "use client";
 
+import { trackEvent } from "@/lib/analytics";
+import { ANALYTICS_EVENTS } from "@/lib/analytics-events";
 import { DocSettings } from "@/lib/blocks";
 import { copyTextToClipboard, markdownToHtml } from "@/lib/export";
 import { Button } from "primereact/button";
@@ -64,8 +66,8 @@ export function TopBar({
   raw: string;
   onNew: () => void;
   activeDraftId: string | null;
-  onSwitchDraft: (id: string) => void;
-  onCreateDraft: () => string;
+  onSwitchDraft: (id: string, origin?: "drafts_dialog") => void;
+  onCreateDraft: (origin?: "drafts_dialog") => string;
   onPublish: () => void;
   onCopyLink: () => void;
   onOpenPublished: () => void;
@@ -84,6 +86,10 @@ export function TopBar({
     try {
       await copyTextToClipboard(raw ?? "");
       toast.success("Copied", "Markdown copied to clipboard.");
+
+      trackEvent(ANALYTICS_EVENTS.export_copy_markdown, {
+        raw_len: (raw ?? "").length,
+      });
     } catch (e) {
       toast.error("Copy failed", toErrorMessage(e));
     }
@@ -94,6 +100,11 @@ export function TopBar({
       const html = markdownToHtml(raw ?? "");
       await copyTextToClipboard(html);
       toast.success("Copied", "HTML copied to clipboard.");
+
+      trackEvent(ANALYTICS_EVENTS.export_copy_html, {
+        raw_len: (raw ?? "").length,
+        html_len: html.length,
+      });
     } catch (e) {
       toast.error("Copy failed", toErrorMessage(e));
     }
@@ -310,7 +321,7 @@ export function TopBar({
         activeDraftId={activeDraftId}
         onCreateDraft={onCreateDraft}
         onOpenDraft={(id) => {
-          onSwitchDraft(id);
+          onSwitchDraft(id, "drafts_dialog");
           setVisibleDrafts(false);
         }}
         onHide={() => setVisibleDrafts(false)}
@@ -336,44 +347,47 @@ export function TopBar({
             <div className="text-sm uppercase">Letter Spacing</div>
             <Dropdown
               value={confidenceValue.spacing}
-              options={SPACING}
               onChange={(e) =>
                 onConfidenceValueChange({
                   ...confidenceValue,
                   spacing: e.value,
                 })
               }
+              options={SPACING}
+              placeholder="Select spacing"
               className="w-full"
-              checkmark={true}
-              highlightOnSelect={true}
             />
           </div>
 
           <div className="flex flex-col gap-1">
-            <div className="text-sm uppercase">Block Width</div>
+            <div className="text-sm uppercase">Width</div>
             <Dropdown
               value={confidenceValue.width}
-              options={WIDTH}
               onChange={(e) =>
-                onConfidenceValueChange({ ...confidenceValue, width: e.value })
+                onConfidenceValueChange({
+                  ...confidenceValue,
+                  width: e.value,
+                })
               }
+              options={WIDTH}
+              placeholder="Select width"
               className="w-full"
-              checkmark={true}
-              highlightOnSelect={true}
             />
           </div>
 
           <div className="flex flex-col gap-1">
-            <div className="text-sm uppercase">Code Blocks</div>
+            <div className="text-sm uppercase">Code blocks</div>
             <Dropdown
               value={confidenceValue.code}
-              options={CODE}
               onChange={(e) =>
-                onConfidenceValueChange({ ...confidenceValue, code: e.value })
+                onConfidenceValueChange({
+                  ...confidenceValue,
+                  code: e.value,
+                })
               }
+              options={CODE}
+              placeholder="Select code mode"
               className="w-full"
-              checkmark={true}
-              highlightOnSelect={true}
             />
           </div>
         </div>
