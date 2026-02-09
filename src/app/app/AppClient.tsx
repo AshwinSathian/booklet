@@ -4,8 +4,6 @@ import { AppShell } from "@/components/app/AppShell";
 import { PasteInput } from "@/components/app/PasteInput";
 import { PreviewPane } from "@/components/app/PreviewPane";
 import { TopBar } from "@/components/app/TopBar";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-
 import { ToastProvider, useToast } from "@/components/ui/ToastProvider";
 import { trackEvent } from "@/lib/analytics";
 import { DEFAULT_SETTINGS, type DocSettings } from "@/lib/blocks";
@@ -21,6 +19,7 @@ import {
 import { parseToBlocks } from "@/lib/parse";
 import { SAMPLE_MARKDOWN } from "@/lib/sample";
 import { normalizeInput, stripDangerousSequences } from "@/lib/sanitize";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type SaveState = "saved" | "saving";
 
@@ -41,6 +40,18 @@ function AppPageContent() {
   const focusFnRef = useRef<null | (() => void)>(null);
   const autosaveTimerRef = useRef<number | null>(null);
   const skipNextAutosaveRef = useRef(true);
+
+  const flushPendingAutosave = useCallback(() => {
+    if (!isReady) return;
+    if (!activeDraftId) return;
+    if (autosaveTimerRef.current === null) return;
+
+    window.clearTimeout(autosaveTimerRef.current);
+    autosaveTimerRef.current = null;
+
+    updateDraft(activeDraftId, { raw, settings });
+    setSaveState("saved");
+  }, [activeDraftId, isReady, raw, settings]);
 
   // Hydrate active draft on mount.
   useEffect(() => {
@@ -126,7 +137,9 @@ function AppPageContent() {
 
   const canPublish = debouncedNormalized.trim().length > 0 && blocks.length > 0;
 
-  const onNew = useCallback(() => {
+  const onCreateDraft = useCallback((): string => {
+    flushPendingAutosave();
+
     const draft = createDraft({ raw: "", settings: DEFAULT_SETTINGS });
     setActiveDraftId(draft.id);
     setActiveDraftIdState(draft.id);
@@ -142,7 +155,39 @@ function AppPageContent() {
 
     toast.info("New draft", "Fresh slate.");
     focusFnRef.current?.();
-  }, [toast]);
+
+    return draft.id;
+  }, [flushPendingAutosave, toast]);
+
+  const onSwitchDraft = useCallback(
+    (id: string) => {
+      if (!id.trim()) return;
+
+      flushPendingAutosave();
+
+      const draft = getDraft(id) ?? createDraft({ raw: "", settings });
+
+      setActiveDraftId(draft.id);
+      setActiveDraftIdState(draft.id);
+
+      // Avoid an immediate write triggered by switching drafts.
+      skipNextAutosaveRef.current = true;
+
+      setRaw(draft.raw);
+      setSettings(draft.settings);
+      setSaveState("saved");
+
+      // Publishing state is per-editor session.
+      setPublishedUrl(null);
+      setStatus("idle");
+      setCopyLinkPulse(false);
+    },
+    [flushPendingAutosave, settings],
+  );
+
+  const onNew = useCallback(() => {
+    onCreateDraft();
+  }, [onCreateDraft]);
 
   const onInsertSample = useCallback(() => {
     setRaw(SAMPLE_MARKDOWN);
@@ -238,6 +283,9 @@ function AppPageContent() {
         status={status}
         canPublish={canPublish}
         onNew={onNew}
+        activeDraftId={activeDraftId}
+        onCreateDraft={onCreateDraft}
+        onSwitchDraft={onSwitchDraft}
         onPublish={onPublish}
         onCopyLink={onCopyLink}
         hasLink={Boolean(publishedUrl)}

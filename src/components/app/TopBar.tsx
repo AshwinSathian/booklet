@@ -9,6 +9,7 @@ import { Tag } from "primereact/tag";
 import { useState } from "react";
 import { AppLogo } from "../ui/AppLogo";
 import ThemeToggle from "../ui/ThemeToggle";
+import { DraftsDialog } from "./DraftsDialog";
 
 type EditorStatus = "idle" | "typing" | "publishing" | "published" | "error";
 export type SaveState = "saved" | "saving";
@@ -23,10 +24,24 @@ const SAVE_SEVERITY: Record<SaveState, "success" | "warning"> = {
   saving: "warning",
 } as const;
 
+const TOPBAR_LABELS = {
+  file: "File",
+  newDraft: "New",
+  myDrafts: "My drafts",
+  insertSample: "Insert sample",
+  quit: "Quit",
+  settings: "Settings",
+  appSettings: "App Settings",
+  done: "Done",
+} as const;
+
 export function TopBar({
   status,
   canPublish,
   onNew,
+  activeDraftId,
+  onSwitchDraft,
+  onCreateDraft,
   onPublish,
   onCopyLink,
   hasLink,
@@ -39,6 +54,9 @@ export function TopBar({
   status: EditorStatus;
   canPublish: boolean;
   onNew: () => void;
+  activeDraftId: string | null;
+  onSwitchDraft: (id: string) => void;
+  onCreateDraft: () => string;
   onPublish: () => void;
   onCopyLink: () => void;
   hasLink: boolean;
@@ -49,6 +67,7 @@ export function TopBar({
   saveState: SaveState;
 }) {
   const [visibleSettings, setVisibleSettings] = useState(false);
+  const [visibleDrafts, setVisibleDrafts] = useState(false);
 
   const SPACING = [
     { label: "Compact spacing", value: "compact" as const },
@@ -88,21 +107,25 @@ export function TopBar({
 
   const items = [
     {
-      label: "File",
+      label: TOPBAR_LABELS.file,
       items: [
         {
-          label: "New",
+          label: TOPBAR_LABELS.newDraft,
           command: () => onNew(),
           shortcut: "⌘+B",
         },
         {
-          label: "Insert sample",
+          label: TOPBAR_LABELS.myDrafts,
+          command: () => setVisibleDrafts(true),
+        },
+        {
+          label: TOPBAR_LABELS.insertSample,
           command: () => onInsertSample(),
         },
-        { label: "Quit", url: "/" },
+        { label: TOPBAR_LABELS.quit, url: "/" },
       ],
     },
-    { label: "Settings", command: () => setVisibleSettings(true) },
+    { label: TOPBAR_LABELS.settings, command: () => setVisibleSettings(true) },
   ];
 
   const start = <AppLogo onlyIcon={true} />;
@@ -184,7 +207,7 @@ export function TopBar({
 
   const settingsFooter = (
     <Button
-      label="Done"
+      label={TOPBAR_LABELS.done}
       text
       onClick={() => {
         if (!visibleSettings) return;
@@ -203,8 +226,19 @@ export function TopBar({
         className="mx-auto w-full max-w-7xl"
       />
 
+      <DraftsDialog
+        visible={visibleDrafts}
+        activeDraftId={activeDraftId}
+        onCreateDraft={onCreateDraft}
+        onOpenDraft={(id) => {
+          onSwitchDraft(id);
+          setVisibleDrafts(false);
+        }}
+        onHide={() => setVisibleDrafts(false)}
+      />
+
       <Dialog
-        header="App Settings"
+        header={TOPBAR_LABELS.appSettings}
         visible={visibleSettings}
         className="w-[75vw] md:w-[50vw]"
         footer={settingsFooter}
