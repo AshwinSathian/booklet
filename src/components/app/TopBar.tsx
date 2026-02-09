@@ -30,6 +30,7 @@ const TOPBAR_LABELS = {
   myDrafts: "My drafts",
   insertSample: "Insert sample",
   quit: "Quit",
+  edit: "Edit",
   settings: "Settings",
   appSettings: "App Settings",
   done: "Done",
@@ -120,11 +121,17 @@ export function TopBar({
           label: TOPBAR_LABELS.myDrafts,
           command: () => setVisibleDrafts(true),
         },
+        { seperator: true },
+        { label: TOPBAR_LABELS.quit, url: "/" },
+      ],
+    },
+    {
+      label: TOPBAR_LABELS.edit,
+      items: [
         {
           label: TOPBAR_LABELS.insertSample,
           command: () => onInsertSample(),
         },
-        { label: TOPBAR_LABELS.quit, url: "/" },
       ],
     },
     { label: TOPBAR_LABELS.settings, command: () => setVisibleSettings(true) },
