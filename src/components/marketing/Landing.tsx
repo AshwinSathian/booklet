@@ -34,7 +34,7 @@ function Rule() {
 }
 
 function Container({ children }: { children: React.ReactNode }) {
-  return <div className="mx-auto w-full max-w-6xl px-4">{children}</div>;
+  return <div className="mx-auto w-full max-w-7xl px-4">{children}</div>;
 }
 
 function Section({
@@ -266,7 +266,7 @@ export function Landing() {
       <header className="sticky top-0 z-20 border-b border-outline bg-bg-glass/85 backdrop-blur">
         <Container>
           <div className="flex items-center justify-between py-3">
-            <AppLogo />
+            <AppLogo onlyIcon={false} />
 
             <div className="flex items-center gap-2">
               <Link href={ROUTES.app}>

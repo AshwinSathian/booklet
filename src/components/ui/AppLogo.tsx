@@ -3,7 +3,7 @@
 import { APP_NAME, ROUTES } from "@/lib/constants";
 import Link from "next/link";
 
-export function AppLogo() {
+export function AppLogo({ onlyIcon = false }: { onlyIcon: boolean }) {
   return (
     <Link href={ROUTES.home}>
       <div className="flex items-center gap-1 m-0 p-0">
@@ -13,14 +13,16 @@ export function AppLogo() {
           className="h-15 w-15"
           aria-hidden="true"
         />
-        <div className="flex flex-col gap-0">
-          <div className="font-semibold tracking-wide uppercase">
-            {APP_NAME}
+        {!onlyIcon ? (
+          <div className="flex flex-col gap-0">
+            <div className="font-semibold tracking-wide uppercase">
+              {APP_NAME}
+            </div>
+            <div className="hidden sm:inline text-xs text-text-muted tracking-widest uppercase">
+              Paste. Preview. Share.
+            </div>
           </div>
-          <div className="hidden sm:inline text-xs text-text-muted tracking-widest uppercase">
-            Paste. Preview. Share.
-          </div>
-        </div>
+        ) : null}
       </div>
     </Link>
   );

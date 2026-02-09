@@ -98,7 +98,7 @@ export default async function SharePage({
             doc.settings?.width === "wide" ? "max-w-4xl" : "max-w-3xl",
           ].join(" ")}
         >
-          <AppLogo />
+          <AppLogo onlyIcon={false} />
 
           <div className="flex items-center gap-3 shrink-0">
             <div className="hidden sm:block text-right text-[11px] text-[rgb(var(--muted))] uppercase tracking-widest">
@@ -207,7 +207,7 @@ function NotFoundOrExpired() {
           />
         </Link>
 
-        <AppLogo />
+        <AppLogo onlyIcon={false} />
       </div>
     </main>
   );

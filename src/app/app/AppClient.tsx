@@ -1,7 +1,6 @@
 "use client";
 
 import { AppShell } from "@/components/app/AppShell";
-import { ConfidenceControls } from "@/components/app/ConfidenceControls";
 import { PasteInput } from "@/components/app/PasteInput";
 import { PreviewPane } from "@/components/app/PreviewPane";
 import { TopBar } from "@/components/app/TopBar";
@@ -168,15 +167,14 @@ function AppPageContent() {
         onCopyLink={onCopyLink}
         hasLink={Boolean(publishedUrl)}
         copyLinkPulse={copyLinkPulse}
+        confidenceValue={settings}
+        onConfidenceValueChange={setSettings}
+        onInsertSample={onInsertSample}
       />
 
-      <div className="mx-auto w-full max-w-6xl">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="hidden md:block">
-            <ConfidenceControls value={settings} onChange={setSettings} />
-          </div>
-
-          <div className="text-sm text-[rgb(var(--muted))] uppercase tracking-wide">
+      <div className="mx-auto w-full max-w-7xl">
+        <div className="flex items-center justify-center p-3">
+          <div className="text-xs text-[rgb(var(--muted))] uppercase tracking-wide">
             {publishedUrl ? (
               <span>
                 Share link:{" "}
@@ -189,9 +187,7 @@ function AppPageContent() {
                   {publishedUrl.replace(window.location.origin, "")}
                 </a>
               </span>
-            ) : (
-              <span>Publish to generate a shareable link</span>
-            )}
+            ) : null}
           </div>
         </div>
       </div>
@@ -202,7 +198,6 @@ function AppPageContent() {
             <PasteInput
               value={raw}
               onChange={(v) => setRaw(v)}
-              onInsertSample={onInsertSample}
               onFocusShortcutRequested={(fn) => {
                 focusFnRef.current = fn;
               }}

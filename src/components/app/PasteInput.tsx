@@ -1,6 +1,5 @@
 "use client";
 
-import { Button } from "primereact/button";
 import { InputTextarea } from "primereact/inputtextarea";
 import { useEffect, useMemo, useRef } from "react";
 
@@ -8,12 +7,10 @@ export function PasteInput({
   value,
   onChange,
   onFocusShortcutRequested,
-  onInsertSample,
 }: {
   value: string;
   onChange: (v: string) => void;
   onFocusShortcutRequested?: (focusFn: () => void) => void;
-  onInsertSample?: () => void;
 }) {
   const ref = useRef<HTMLTextAreaElement | null>(null);
 
@@ -35,20 +32,6 @@ export function PasteInput({
         <div className="hidden md:block text-text-primary text-xs uppercase tracking-wide">
           {isMac ? "Cmd" : "Ctrl"}+K focuses this box.
         </div>
-
-        {isEmpty ? (
-          <Button
-            label="Insert sample"
-            icon="pi pi-file-import"
-            size="small"
-            onClick={onInsertSample}
-            severity="secondary"
-            text
-            raised
-            className="text-xs uppercase tracking-widest p-1"
-            disabled={!onInsertSample}
-          />
-        ) : null}
       </div>
 
       <div className="flex-1 min-h-0 overflow-hidden w-full">
