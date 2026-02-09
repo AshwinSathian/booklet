@@ -1,5 +1,14 @@
 import type { DocSettings } from "@/lib/blocks";
 
+export type PublishedSnapshotRef = {
+  /** Published document id (immutable snapshot). */
+  id: string;
+  /** Absolute share URL for the published document. */
+  url: string;
+  /** ISO timestamp captured when the publish completed on the client. */
+  createdAt: string;
+};
+
 export type DraftDoc = {
   /** Primary identifier for the draft (local only). */
   id: string;
@@ -19,6 +28,12 @@ export type DraftDoc = {
 
   /** Rendering + layout preferences. */
   settings: DocSettings;
+
+  /** Linkage to the most recent published snapshot for this draft (if any). */
+  lastPublished?: PublishedSnapshotRef;
+
+  /** Recent publish history for this draft (most recent first). */
+  publishHistory?: PublishedSnapshotRef[];
 };
 
 export type DraftMeta = Pick<
@@ -31,7 +46,10 @@ export type DraftCreateInput = Partial<
 >;
 
 export type DraftUpdatePatch = Partial<
-  Pick<DraftDoc, "title" | "raw" | "settings">
+  Pick<
+    DraftDoc,
+    "title" | "raw" | "settings" | "lastPublished" | "publishHistory"
+  >
 >;
 
 /**

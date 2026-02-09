@@ -44,7 +44,8 @@ export function TopBar({
   onCreateDraft,
   onPublish,
   onCopyLink,
-  hasLink,
+  onOpenPublished,
+  publishedUrl,
   copyLinkPulse,
   confidenceValue,
   onConfidenceValueChange,
@@ -59,7 +60,8 @@ export function TopBar({
   onCreateDraft: () => string;
   onPublish: () => void;
   onCopyLink: () => void;
-  hasLink: boolean;
+  onOpenPublished: () => void;
+  publishedUrl: string | null;
   copyLinkPulse?: boolean;
   confidenceValue: DocSettings;
   onConfidenceValueChange: (next: DocSettings) => void;
@@ -146,62 +148,88 @@ export function TopBar({
         rounded
       />
 
-      {hasLink ? (
-        <>
-          <div className="hidden md:inline-flex">
-            <Button
-              label="Copy link"
-              icon="pi pi-copy"
-              severity="secondary"
-              onClick={onCopyLink}
-              className={copyBtnClass}
-              size="small"
-              text
-              raised
-            />
-          </div>
-          <div className="md:hidden">
-            <Button
-              icon="pi pi-copy"
-              severity="secondary"
-              onClick={onCopyLink}
-              className={copyBtnClass}
-              size="small"
-              text
-              raised
-            />
-          </div>
-        </>
-      ) : (
-        <>
-          <div className="hidden md:inline-flex">
-            <Button
-              label="Publish"
-              icon="pi pi-upload"
-              onClick={onPublish}
-              disabled={!canPublish || status === "publishing"}
-              className="min-w-fit uppercase tracking-wide"
-              size="small"
-              severity="success"
-              text
-              raised
-            />
-          </div>
-          <div className="md:hidden">
-            <Button
-              aria-label="Publish"
-              icon="pi pi-upload"
-              onClick={onPublish}
-              disabled={!canPublish || status === "publishing"}
-              className="min-w-fit"
-              size="small"
-              severity="success"
-              text
-              raised
-            />
-          </div>
-        </>
-      )}
+      <>
+        <div className="hidden md:inline-flex">
+          <Button
+            label="Publish"
+            icon="pi pi-upload"
+            onClick={onPublish}
+            disabled={!canPublish || status === "publishing"}
+            className="min-w-fit uppercase tracking-wide"
+            size="small"
+            severity="success"
+            text
+            raised
+          />
+        </div>
+        <div className="md:hidden">
+          <Button
+            aria-label="Publish"
+            icon="pi pi-upload"
+            onClick={onPublish}
+            disabled={!canPublish || status === "publishing"}
+            className="min-w-fit"
+            size="small"
+            severity="success"
+            text
+            raised
+          />
+        </div>
+
+        {publishedUrl ? (
+          <>
+            <div className="hidden md:inline-flex">
+              <Button
+                label="Copy link"
+                icon="pi pi-copy"
+                severity="secondary"
+                onClick={onCopyLink}
+                className={copyBtnClass}
+                size="small"
+                text
+                raised
+              />
+            </div>
+            <div className="md:hidden">
+              <Button
+                aria-label="Copy link"
+                icon="pi pi-copy"
+                severity="secondary"
+                onClick={onCopyLink}
+                className={copyBtnClass}
+                size="small"
+                text
+                raised
+              />
+            </div>
+
+            <div className="hidden md:inline-flex">
+              <Button
+                label="Open"
+                icon="pi pi-external-link"
+                severity="secondary"
+                onClick={onOpenPublished}
+                className="min-w-fit uppercase tracking-wide"
+                size="small"
+                text
+                raised
+              />
+            </div>
+            <div className="md:hidden">
+              <Button
+                aria-label="Open"
+                icon="pi pi-external-link"
+                severity="secondary"
+                onClick={onOpenPublished}
+                className="min-w-fit"
+                size="small"
+                text
+                raised
+              />
+            </div>
+          </>
+        ) : null}
+      </>
     </div>
   );
 

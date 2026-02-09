@@ -1,6 +1,12 @@
 import { DEFAULT_SETTINGS } from "@/lib/blocks";
-import { DRAFTS_DB, DRAFT_DOC } from "./constants";
-import type { DraftDoc, DraftsDb, DraftsDbV1, DraftsDbV2 } from "./types";
+import { DRAFTS_DB, DRAFT_DOC, PUBLISH_LINKAGE } from "./constants";
+import type {
+  DraftDoc,
+  DraftsDb,
+  DraftsDbV1,
+  DraftsDbV2,
+  PublishedSnapshotRef,
+} from "./types";
 
 function isPlainObject(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
@@ -12,6 +18,42 @@ function isString(v: unknown): v is string {
 
 function isNumber(v: unknown): v is number {
   return typeof v === "number" && Number.isFinite(v);
+}
+
+function isArray(v: unknown): v is unknown[] {
+  return Array.isArray(v);
+}
+
+function isPublishedSnapshotRef(v: unknown): v is PublishedSnapshotRef {
+  if (!isPlainObject(v)) return false;
+  return isString(v.id) && isString(v.url) && isString(v.createdAt);
+}
+
+function coercePublishedSnapshotRef(
+  v: unknown,
+): PublishedSnapshotRef | undefined {
+  if (!isPlainObject(v)) return undefined;
+
+  const id = isString(v.id) ? v.id : "";
+  const url = isString(v.url) ? v.url : "";
+  const createdAt = isString(v.createdAt) ? v.createdAt : "";
+
+  if (!id.trim() || !url.trim() || !createdAt.trim()) return undefined;
+  return { id, url, createdAt };
+}
+
+function coercePublishHistory(v: unknown): PublishedSnapshotRef[] | undefined {
+  if (!isArray(v)) return undefined;
+
+  const refs: PublishedSnapshotRef[] = [];
+  for (const item of v) {
+    const ref = coercePublishedSnapshotRef(item);
+    if (!ref) continue;
+    refs.push(ref);
+    if (refs.length >= PUBLISH_LINKAGE.historyLimit) break;
+  }
+
+  return refs.length ? refs : undefined;
 }
 
 function coerceSettings(v: unknown): DraftDoc["settings"] {
@@ -65,6 +107,10 @@ function coerceDbV2(raw: unknown): DraftsDbV2 {
       title: doc.title || DRAFT_DOC.defaultTitle,
       raw: doc.raw ?? "",
       settings: coerceSettings(doc.settings),
+      lastPublished: coercePublishedSnapshotRef(
+        (doc as DraftDoc).lastPublished,
+      ),
+      publishHistory: coercePublishHistory((doc as DraftDoc).publishHistory),
     };
   }
 

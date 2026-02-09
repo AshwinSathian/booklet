@@ -14,6 +14,7 @@ import {
   getActiveDraftId,
   getDraft,
   setActiveDraftId,
+  setDraftLastPublished,
   updateDraft,
 } from "@/lib/drafts";
 import { parseToBlocks } from "@/lib/parse";
@@ -33,7 +34,7 @@ function AppPageContent() {
   const [status, setStatus] = useState<
     "idle" | "typing" | "publishing" | "published" | "error"
   >("idle");
-  const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
+  const [lastPublishedUrl, setLastPublishedUrl] = useState<string | null>(null);
   const [copyLinkPulse, setCopyLinkPulse] = useState(false);
 
   const toast = useToast();
@@ -66,6 +67,8 @@ function AppPageContent() {
 
     setRaw(draft.raw);
     setSettings(draft.settings);
+
+    setLastPublishedUrl(draft.lastPublished?.url ?? null);
 
     setSaveState("saved");
     setIsReady(true);
@@ -148,7 +151,7 @@ function AppPageContent() {
     skipNextAutosaveRef.current = true;
 
     setRaw("");
-    setPublishedUrl(null);
+    setLastPublishedUrl(null);
     setStatus("idle");
     setSettings(DEFAULT_SETTINGS);
     setSaveState("saved");
@@ -178,7 +181,7 @@ function AppPageContent() {
       setSaveState("saved");
 
       // Publishing state is per-editor session.
-      setPublishedUrl(null);
+      setLastPublishedUrl(draft.lastPublished?.url ?? null);
       setStatus("idle");
       setCopyLinkPulse(false);
     },
@@ -191,7 +194,6 @@ function AppPageContent() {
 
   const onInsertSample = useCallback(() => {
     setRaw(SAMPLE_MARKDOWN);
-    setPublishedUrl(null);
     toast.info("Inserted sample", "Edit it and publish when ready.");
     focusFnRef.current?.();
   }, [toast]);
@@ -218,7 +220,17 @@ function AppPageContent() {
 
       const data = (await res.json()) as { id: string; url: string };
 
-      setPublishedUrl(data.url);
+      const createdAt = new Date().toISOString();
+
+      if (activeDraftId) {
+        setDraftLastPublished(activeDraftId, {
+          id: data.id,
+          url: data.url,
+          createdAt,
+        });
+      }
+
+      setLastPublishedUrl(data.url);
       setStatus("published");
       toast.success("Published", "Your share link is ready.");
 
@@ -236,21 +248,34 @@ function AppPageContent() {
         stage: "api",
       });
     }
-  }, [blocks, settings, toast, canPublish]);
+  }, [activeDraftId, blocks, settings, toast, canPublish]);
 
   const onCopyLink = useCallback(async () => {
-    if (!publishedUrl) {
+    if (!lastPublishedUrl) {
       toast.info("No link yet", "Publish first to get a share link.");
       return;
     }
 
     try {
-      await navigator.clipboard.writeText(publishedUrl);
+      await navigator.clipboard.writeText(lastPublishedUrl);
       toast.success("Copied", "Link copied to clipboard.");
     } catch (e) {
       toast.error("Copy failed", toErrorMessage(e));
     }
-  }, [publishedUrl, toast]);
+  }, [lastPublishedUrl, toast]);
+
+  const onOpenPublished = useCallback(() => {
+    if (!lastPublishedUrl) {
+      toast.info("No link yet", "Publish first to get a share link.");
+      return;
+    }
+
+    try {
+      window.open(lastPublishedUrl, "_blank", "noopener,noreferrer");
+    } catch {
+      // ignore
+    }
+  }, [lastPublishedUrl, toast]);
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -288,7 +313,8 @@ function AppPageContent() {
         onSwitchDraft={onSwitchDraft}
         onPublish={onPublish}
         onCopyLink={onCopyLink}
-        hasLink={Boolean(publishedUrl)}
+        onOpenPublished={onOpenPublished}
+        publishedUrl={lastPublishedUrl}
         copyLinkPulse={copyLinkPulse}
         confidenceValue={settings}
         onConfidenceValueChange={setSettings}
@@ -299,16 +325,16 @@ function AppPageContent() {
       <div className="mx-auto w-full max-w-7xl">
         <div className="flex items-center justify-center p-3">
           <div className="text-xs text-[rgb(var(--muted))] uppercase tracking-wide">
-            {publishedUrl ? (
+            {lastPublishedUrl ? (
               <span>
-                Share link:{" "}
+                Last published:{" "}
                 <a
                   className="underline underline-offset-4"
-                  href={publishedUrl}
+                  href={lastPublishedUrl}
                   target="_blank"
                   rel="noreferrer"
                 >
-                  {publishedUrl.replace(window.location.origin, "")}
+                  {lastPublishedUrl.replace(window.location.origin, "")}
                 </a>
               </span>
             ) : null}

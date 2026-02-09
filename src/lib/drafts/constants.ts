@@ -28,3 +28,8 @@ export const DRAFT_DOC = {
 export const AUTOSAVE = {
   debounceMs: 450,
 } as const;
+
+export const PUBLISH_LINKAGE = {
+  /** How many recent publish snapshots to keep per draft (most recent first). */
+  historyLimit: 5,
+} as const;

@@ -1,5 +1,10 @@
 import { DEFAULT_SETTINGS } from "@/lib/blocks";
-import { DRAFT_DOC, DRAFTS_DB, DRAFTS_STORAGE_KEYS } from "./constants";
+import {
+  DRAFT_DOC,
+  DRAFTS_DB,
+  DRAFTS_STORAGE_KEYS,
+  PUBLISH_LINKAGE,
+} from "./constants";
 import { migrateDraftsDb } from "./migrate";
 import type {
   DraftCreateInput,
@@ -7,6 +12,7 @@ import type {
   DraftMeta,
   DraftsDbV2,
   DraftUpdatePatch,
+  PublishedSnapshotRef,
 } from "./types";
 
 function isBrowser(): boolean {
@@ -110,8 +116,21 @@ function applyPatch(doc: DraftDoc, patch: DraftUpdatePatch): DraftDoc {
   if (patch.title !== undefined) next.title = patch.title;
   if (patch.raw !== undefined) next.raw = patch.raw;
   if (patch.settings !== undefined) next.settings = patch.settings;
+  if (patch.lastPublished !== undefined) {
+    next.lastPublished = patch.lastPublished;
+  }
+  if (patch.publishHistory !== undefined)
+    next.publishHistory = patch.publishHistory;
 
   return next;
+}
+
+function normalizePublishHistory(
+  next: PublishedSnapshotRef[],
+): PublishedSnapshotRef[] {
+  // Enforce ordering and cap (most recent first).
+  const capped = next.slice(0, PUBLISH_LINKAGE.historyLimit);
+  return capped;
 }
 
 export function listDrafts(): DraftMeta[] {
@@ -202,8 +221,42 @@ export function duplicateDraft(id: string): DraftDoc | null {
     createdAt: ts,
     updatedAt: ts,
     title: `${original.title}${DRAFT_DOC.duplicateSuffix}`,
+    lastPublished: undefined,
+    publishHistory: undefined,
   };
 
   upsertAndPersist(db, copy);
   return copy;
+}
+
+/**
+ * Persist linkage between a draft and a newly created published snapshot.
+ * Stores only id/url/timestamp (no document content).
+ */
+export function setDraftLastPublished(
+  draftId: string,
+  published: PublishedSnapshotRef,
+): DraftDoc | null {
+  const db = readDb();
+  const existing = db.drafts[draftId];
+  if (!existing) return null;
+
+  const prevHistory = Array.isArray(existing.publishHistory)
+    ? existing.publishHistory
+    : [];
+
+  const nextHistory = normalizePublishHistory([
+    published,
+    ...prevHistory.filter((h) => h.id !== published.id),
+  ]);
+
+  const saved: DraftDoc = {
+    ...existing,
+    updatedAt: nowIso(),
+    lastPublished: published,
+    publishHistory: nextHistory.length ? nextHistory : undefined,
+  };
+
+  upsertAndPersist(db, saved);
+  return saved;
 }
