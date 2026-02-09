@@ -1,0 +1,214 @@
+import { DEFAULT_SETTINGS } from "@/lib/blocks";
+import { DRAFT_DOC, DRAFTS_DB, DRAFTS_STORAGE_KEYS } from "./constants";
+import { migrateDraftsDb } from "./migrate";
+import type {
+  DraftCreateInput,
+  DraftDoc,
+  DraftMeta,
+  DraftsDbV1,
+  DraftUpdatePatch,
+} from "./types";
+
+function isBrowser(): boolean {
+  return typeof window !== "undefined";
+}
+
+function hasLocalStorage(): boolean {
+  if (!isBrowser()) return false;
+  try {
+    return typeof window.localStorage !== "undefined";
+  } catch {
+    return false;
+  }
+}
+
+function nowIso(): string {
+  return new Date().toISOString();
+}
+
+function safeJsonParse(raw: string): unknown {
+  try {
+    return JSON.parse(raw) as unknown;
+  } catch {
+    return null;
+  }
+}
+
+function getCrypto(): Crypto | null {
+  const c = (globalThis as unknown as { crypto?: Crypto }).crypto;
+  return c ?? null;
+}
+
+function uuidv4FromRandomBytes(bytes: Uint8Array): string {
+  // Per RFC 4122 section 4.4
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+
+  const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, "0"));
+  return [
+    hex.slice(0, 4).join(""),
+    hex.slice(4, 6).join(""),
+    hex.slice(6, 8).join(""),
+    hex.slice(8, 10).join(""),
+    hex.slice(10, 16).join(""),
+  ].join("-");
+}
+
+function createDraftId(): string {
+  const c = getCrypto();
+  if (c && typeof c.randomUUID === "function") {
+    return c.randomUUID();
+  }
+
+  if (c && typeof c.getRandomValues === "function") {
+    const bytes = new Uint8Array(16);
+    c.getRandomValues(bytes);
+    return uuidv4FromRandomBytes(bytes);
+  }
+
+  // Last-resort fallback (still collision-resistant for small volumes).
+  const ts = Date.now().toString(16);
+  const rnd = Math.random().toString(16).slice(2);
+  return `${ts}-${rnd}`;
+}
+
+function emptyDb(): DraftsDbV1 {
+  return { schemaVersion: DRAFTS_DB.schemaVersion, drafts: {} };
+}
+
+function readDb(): DraftsDbV1 {
+  if (!hasLocalStorage()) return emptyDb();
+
+  const raw = window.localStorage.getItem(DRAFTS_STORAGE_KEYS.db);
+  if (!raw) return emptyDb();
+
+  const parsed = safeJsonParse(raw);
+  const migrated = migrateDraftsDb(parsed);
+
+  // Ensure we only ever operate on the current concrete version.
+  // Today this is v1.
+  const db = migrated as DraftsDbV1;
+  if (db.schemaVersion !== DRAFTS_DB.schemaVersion) {
+    return emptyDb();
+  }
+
+  return db;
+}
+
+function writeDb(db: DraftsDbV1): void {
+  if (!hasLocalStorage()) return;
+  try {
+    window.localStorage.setItem(DRAFTS_STORAGE_KEYS.db, JSON.stringify(db));
+  } catch {
+    // Quota or serialization errors should not crash the app.
+  }
+}
+
+function upsertAndPersist(db: DraftsDbV1, doc: DraftDoc): void {
+  db.drafts[doc.id] = doc;
+  writeDb(db);
+}
+
+function applyPatch(doc: DraftDoc, patch: DraftUpdatePatch): DraftDoc {
+  const next: DraftDoc = { ...doc };
+
+  if (patch.title !== undefined) next.title = patch.title;
+  if (patch.settings !== undefined) next.settings = patch.settings;
+  if (patch.blocks !== undefined) next.blocks = patch.blocks;
+
+  return next;
+}
+
+export function listDrafts(): DraftMeta[] {
+  const db = readDb();
+  const out: DraftMeta[] = Object.values(db.drafts).map((d) => ({
+    id: d.id,
+    title: d.title,
+    createdAt: d.createdAt,
+    updatedAt: d.updatedAt,
+  }));
+
+  // Most-recent first; ISO strings compare lexicographically.
+  out.sort((a, b) =>
+    a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0,
+  );
+
+  return out;
+}
+
+export function getDraft(id: string): DraftDoc | null {
+  const db = readDb();
+  return db.drafts[id] ?? null;
+}
+
+export function createDraft(initial?: DraftCreateInput): DraftDoc {
+  const db = readDb();
+  const id = createDraftId();
+  const ts = nowIso();
+
+  const doc: DraftDoc = {
+    id,
+    v: DRAFT_DOC.version,
+    createdAt: ts,
+    updatedAt: ts,
+    title: initial?.title ?? DRAFT_DOC.defaultTitle,
+    settings: initial?.settings ?? DEFAULT_SETTINGS,
+    blocks: initial?.blocks ?? [],
+  };
+
+  upsertAndPersist(db, doc);
+  return doc;
+}
+
+export function updateDraft(
+  id: string,
+  patch: DraftUpdatePatch,
+): DraftDoc | null {
+  const db = readDb();
+  const existing = db.drafts[id];
+  if (!existing) return null;
+
+  const next = applyPatch(existing, patch);
+  const saved: DraftDoc = {
+    ...next,
+    id: existing.id,
+    v: existing.v,
+    createdAt: existing.createdAt,
+    updatedAt: nowIso(),
+  };
+
+  upsertAndPersist(db, saved);
+  return saved;
+}
+
+export function touchDraft(id: string): DraftDoc | null {
+  return updateDraft(id, {});
+}
+
+export function deleteDraft(id: string): boolean {
+  const db = readDb();
+  if (!db.drafts[id]) return false;
+  delete db.drafts[id];
+  writeDb(db);
+  return true;
+}
+
+export function duplicateDraft(id: string): DraftDoc | null {
+  const original = getDraft(id);
+  if (!original) return null;
+
+  const db = readDb();
+  const newId = createDraftId();
+  const ts = nowIso();
+
+  const copy: DraftDoc = {
+    ...original,
+    id: newId,
+    createdAt: ts,
+    updatedAt: ts,
+    title: `${original.title}${DRAFT_DOC.duplicateSuffix}`,
+  };
+
+  upsertAndPersist(db, copy);
+  return copy;
+}
