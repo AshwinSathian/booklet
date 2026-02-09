@@ -1,7 +1,7 @@
 "use client";
 
 import { InputTextarea } from "primereact/inputtextarea";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef } from "react";
 
 export function PasteInput({
   value,
@@ -20,17 +20,11 @@ export function PasteInput({
     }
   }, [onFocusShortcutRequested]);
 
-  const platform =
-    typeof navigator !== "undefined" ? (navigator.platform ?? "") : "";
-  const isMac = platform.toLowerCase().includes("mac");
-
-  const isEmpty = useMemo(() => !value.trim(), [value]);
-
   return (
     <div className="flex h-full max-h-full min-h-0 flex-col overflow-hidden w-full">
       <div className="shrink-0 px-3 py-2 flex items-center justify-between gap-3">
         <div className="hidden md:block text-text-primary text-xs uppercase tracking-wide">
-          {isMac ? "Cmd" : "Ctrl"}+K focuses this box.
+          Cmd/Ctrl+K focuses this box.
         </div>
       </div>
 

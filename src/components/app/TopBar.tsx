@@ -156,33 +156,6 @@ export function TopBar({
       />
 
       <>
-        <div className="hidden md:inline-flex">
-          <Button
-            label="Publish"
-            icon="pi pi-upload"
-            onClick={onPublish}
-            disabled={!canPublish || status === "publishing"}
-            className="min-w-fit uppercase tracking-wide"
-            size="small"
-            severity="success"
-            text
-            raised
-          />
-        </div>
-        <div className="md:hidden">
-          <Button
-            aria-label="Publish"
-            icon="pi pi-upload"
-            onClick={onPublish}
-            disabled={!canPublish || status === "publishing"}
-            className="min-w-fit"
-            size="small"
-            severity="success"
-            text
-            raised
-          />
-        </div>
-
         {publishedUrl ? (
           <>
             <div className="hidden md:inline-flex">
@@ -235,7 +208,36 @@ export function TopBar({
               />
             </div>
           </>
-        ) : null}
+        ) : (
+          <>
+            <div className="hidden md:inline-flex">
+              <Button
+                label="Publish"
+                icon="pi pi-upload"
+                onClick={onPublish}
+                disabled={!canPublish || status === "publishing"}
+                className="min-w-fit uppercase tracking-wide"
+                size="small"
+                severity="success"
+                text
+                raised
+              />
+            </div>
+            <div className="md:hidden">
+              <Button
+                aria-label="Publish"
+                icon="pi pi-upload"
+                onClick={onPublish}
+                disabled={!canPublish || status === "publishing"}
+                className="min-w-fit"
+                size="small"
+                severity="success"
+                text
+                raised
+              />
+            </div>
+          </>
+        )}
       </>
     </div>
   );
@@ -258,7 +260,7 @@ export function TopBar({
         model={items}
         start={start}
         end={end}
-        className="mx-auto w-full max-w-7xl"
+        className="mx-auto w-full max-w-7xl bg-bg-glass/85! backdrop-blur!"
       />
 
       <DraftsDialog

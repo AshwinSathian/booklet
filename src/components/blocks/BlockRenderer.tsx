@@ -87,9 +87,13 @@ function CodeBlock({
 export function BlockRenderer({
   blocks,
   settings,
+  headingAnchors,
+  keyPrefix,
 }: {
   blocks: Block[];
   settings: DocSettings;
+  headingAnchors?: Record<string, string>;
+  keyPrefix?: string;
 }) {
   return (
     <div className={["w-full", proseWidthClass(settings)].join(" ")}>
@@ -97,6 +101,8 @@ export function BlockRenderer({
         className={["flex flex-col w-full", spacingClass(settings)].join(" ")}
       >
         {blocks.map((b, idx) => {
+          const blockKey = keyPrefix ? `${keyPrefix}.${idx}` : String(idx);
+
           switch (b.t) {
             case "heading": {
               const Tag = (
@@ -118,9 +124,37 @@ export function BlockRenderer({
                       ? "text-xl sm:text-2xl font-semibold leading-snug"
                       : "text-lg font-semibold leading-snug";
 
+              const anchorId = headingAnchors?.[blockKey];
+
               return (
-                <Tag key={idx} className={cls}>
-                  <InlineRenderer inl={b.inl} />
+                <Tag
+                  key={idx}
+                  id={anchorId}
+                  className={[
+                    "group scroll-mt-24",
+                    cls,
+                    anchorId ? "relative" : "",
+                  ].join(" ")}
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <InlineRenderer inl={b.inl} />
+                    {anchorId ? (
+                      <a
+                        href={`#${anchorId}`}
+                        className={[
+                          "text-[rgb(var(--muted))]",
+                          "opacity-0 group-hover:opacity-70",
+                          "focus:opacity-100",
+                          "underline-offset-4 hover:underline",
+                          "rounded-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--border))]",
+                          "px-1",
+                        ].join(" ")}
+                        aria-label="Link to this section"
+                      >
+                        #
+                      </a>
+                    ) : null}
+                  </span>
                 </Tag>
               );
             }
@@ -167,7 +201,12 @@ export function BlockRenderer({
                   className="rounded-xl border border-[rgb(var(--border))]/80 bg-[rgb(var(--border))]/10 px-4 py-3"
                 >
                   <div className="border-l-4 border-[rgb(var(--border))] pl-4">
-                    <BlockRenderer blocks={b.blocks} settings={settings} />
+                    <BlockRenderer
+                      blocks={b.blocks}
+                      settings={settings}
+                      headingAnchors={headingAnchors}
+                      keyPrefix={blockKey}
+                    />
                   </div>
                 </div>
               );

@@ -4,6 +4,7 @@ import ThemeToggle from "@/components/ui/ThemeToggle";
 import { APP_NAME, ROUTES, STORAGE } from "@/lib/constants";
 import { absoluteUrl, buildMetadata } from "@/lib/seo";
 import { getDoc } from "@/lib/storage";
+import { buildToc, MIN_TOC_HEADINGS, type TocItem } from "@/lib/toc";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -89,6 +90,9 @@ export default async function SharePage({
   const createdAt = new Date(doc.createdAt);
   const expiresAt = new Date(createdAt.getTime() + STORAGE.ttlSeconds * 1000);
 
+  const { toc, anchorMap } = buildToc(doc.blocks ?? []);
+  const showToc = toc.length >= MIN_TOC_HEADINGS;
+
   return (
     <div className="min-h-screen bg-bg text-text-primary">
       <header className="sticky top-0 z-20 border-b border-outline bg-bg-glass/85 backdrop-blur">
@@ -112,17 +116,29 @@ export default async function SharePage({
 
       <main
         className={[
-          "mx-auto w-full flex-1 min-h-0 overflow-y-auto p-3 mb-5",
+          "mx-auto w-full flex-1 min-h-0 overflow-y-auto px-4 py-6",
           doc.settings?.width === "wide" ? "max-w-4xl" : "max-w-3xl",
         ].join(" ")}
       >
-        {doc?.blocks ? (
-          <BlockRenderer blocks={doc.blocks} settings={doc.settings} />
-        ) : (
-          [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-            <Skeleton key={n} className="my-2 w-full"></Skeleton>
-          ))
-        )}
+        {showToc ? <MobileToc toc={toc} /> : null}
+
+        <div className="flex flex-col lg:flex-row gap-10">
+          <div className="min-w-0 flex-1">
+            {doc?.blocks ? (
+              <BlockRenderer
+                blocks={doc.blocks}
+                settings={doc.settings}
+                headingAnchors={anchorMap}
+              />
+            ) : (
+              [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+                <Skeleton key={n} className="my-2 w-full"></Skeleton>
+              ))
+            )}
+          </div>
+
+          {showToc ? <DesktopToc toc={toc} /> : null}
+        </div>
       </main>
 
       <div className="mt-5 text-sm text-[rgb(var(--muted))] text-center">
@@ -133,6 +149,68 @@ export default async function SharePage({
         © {new Date().getFullYear()} {APP_NAME}. Built for clarity.
       </div>
     </div>
+  );
+}
+
+function MobileToc({ toc }: { toc: TocItem[] }) {
+  return (
+    <div className="lg:hidden mb-6">
+      <details className="rounded-xl border border-outline bg-bg-glass/40">
+        <summary className="cursor-pointer select-none px-4 py-3 text-sm font-semibold tracking-wide">
+          Table of contents
+        </summary>
+        <nav aria-label="Table of contents" className="px-4 pb-4">
+          <ul className="flex flex-col gap-2 text-sm">
+            {toc.map((item) => (
+              <li
+                key={item.id}
+                className={
+                  item.level === 1 ? "pl-0" : item.level === 2 ? "pl-3" : "pl-6"
+                }
+              >
+                <a
+                  href={`#${item.id}`}
+                  className="text-[rgb(var(--muted))] hover:text-[rgb(var(--fg))] underline-offset-4 hover:underline focus:outline-none focus:ring-2 focus:ring-[rgb(var(--border))] rounded-sm"
+                >
+                  {item.text}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </details>
+    </div>
+  );
+}
+
+function DesktopToc({ toc }: { toc: TocItem[] }) {
+  return (
+    <aside className="hidden lg:block w-64 shrink-0">
+      <div className="sticky top-24">
+        <div className="text-[11px] text-[rgb(var(--muted))] uppercase tracking-widest mb-3">
+          On this page
+        </div>
+        <nav aria-label="Table of contents">
+          <ul className="flex flex-col gap-2 text-sm">
+            {toc.map((item) => (
+              <li
+                key={item.id}
+                className={
+                  item.level === 1 ? "pl-0" : item.level === 2 ? "pl-3" : "pl-6"
+                }
+              >
+                <a
+                  href={`#${item.id}`}
+                  className="text-[rgb(var(--muted))] hover:text-[rgb(var(--fg))] underline-offset-4 hover:underline focus:outline-none focus:ring-2 focus:ring-[rgb(var(--border))] rounded-sm"
+                >
+                  {item.text}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </div>
+    </aside>
   );
 }
 
