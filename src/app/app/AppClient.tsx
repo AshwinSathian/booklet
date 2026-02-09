@@ -307,6 +307,7 @@ function AppPageContent() {
       <TopBar
         status={status}
         canPublish={canPublish}
+        raw={raw}
         onNew={onNew}
         activeDraftId={activeDraftId}
         onCreateDraft={onCreateDraft}

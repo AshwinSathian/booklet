@@ -1,6 +1,7 @@
 "use client";
 
 import { DocSettings } from "@/lib/blocks";
+import { copyTextToClipboard, markdownToHtml } from "@/lib/export";
 import { Button } from "primereact/button";
 import { Dialog } from "primereact/dialog";
 import { Dropdown } from "primereact/dropdown";
@@ -9,6 +10,7 @@ import { Tag } from "primereact/tag";
 import { useState } from "react";
 import { AppLogo } from "../ui/AppLogo";
 import ThemeToggle from "../ui/ThemeToggle";
+import { useToast } from "../ui/ToastProvider";
 import { DraftsDialog } from "./DraftsDialog";
 
 type EditorStatus = "idle" | "typing" | "publishing" | "published" | "error";
@@ -28,6 +30,9 @@ const TOPBAR_LABELS = {
   file: "File",
   newDraft: "New",
   myDrafts: "My drafts",
+  copyAs: "Copy as",
+  copyAsMarkdown: "Markdown",
+  copyAsHtml: "HTML",
   insertSample: "Insert sample",
   quit: "Quit",
   edit: "Edit",
@@ -39,6 +44,7 @@ const TOPBAR_LABELS = {
 export function TopBar({
   status,
   canPublish,
+  raw,
   onNew,
   activeDraftId,
   onSwitchDraft,
@@ -55,6 +61,7 @@ export function TopBar({
 }: {
   status: EditorStatus;
   canPublish: boolean;
+  raw: string;
   onNew: () => void;
   activeDraftId: string | null;
   onSwitchDraft: (id: string) => void;
@@ -71,6 +78,26 @@ export function TopBar({
 }) {
   const [visibleSettings, setVisibleSettings] = useState(false);
   const [visibleDrafts, setVisibleDrafts] = useState(false);
+  const toast = useToast();
+
+  const onCopyMarkdown = async () => {
+    try {
+      await copyTextToClipboard(raw ?? "");
+      toast.success("Copied", "Markdown copied to clipboard.");
+    } catch (e) {
+      toast.error("Copy failed", toErrorMessage(e));
+    }
+  };
+
+  const onCopyHtml = async () => {
+    try {
+      const html = markdownToHtml(raw ?? "");
+      await copyTextToClipboard(html);
+      toast.success("Copied", "HTML copied to clipboard.");
+    } catch (e) {
+      toast.error("Copy failed", toErrorMessage(e));
+    }
+  };
 
   const SPACING = [
     { label: "Compact spacing", value: "compact" as const },
@@ -120,6 +147,21 @@ export function TopBar({
         {
           label: TOPBAR_LABELS.myDrafts,
           command: () => setVisibleDrafts(true),
+        },
+        {
+          label: TOPBAR_LABELS.copyAs,
+          items: [
+            {
+              label: TOPBAR_LABELS.copyAsMarkdown,
+              icon: "pi pi-file",
+              command: () => void onCopyMarkdown(),
+            },
+            {
+              label: TOPBAR_LABELS.copyAsHtml,
+              icon: "pi pi-code",
+              command: () => void onCopyHtml(),
+            },
+          ],
         },
         { seperator: true },
         { label: TOPBAR_LABELS.quit, url: "/" },
@@ -338,4 +380,13 @@ export function TopBar({
       </Dialog>
     </header>
   );
+}
+
+function toErrorMessage(e: unknown) {
+  if (e instanceof Error) return e.message;
+  try {
+    return JSON.stringify(e);
+  } catch {
+    return String(e);
+  }
 }
