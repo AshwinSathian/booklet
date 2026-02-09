@@ -1,4 +1,4 @@
-import type { Block, DocSettings } from "@/lib/blocks";
+import type { DocSettings } from "@/lib/blocks";
 
 export type DraftDoc = {
   /** Primary identifier for the draft (local only). */
@@ -14,11 +14,11 @@ export type DraftDoc = {
   /** Human-editable title (explicitly stored). */
   title: string;
 
+  /** Raw markdown source (editor input). */
+  raw: string;
+
   /** Rendering + layout preferences. */
   settings: DocSettings;
-
-  /** Structured block content. */
-  blocks: Block[];
 };
 
 export type DraftMeta = Pick<
@@ -27,20 +27,29 @@ export type DraftMeta = Pick<
 >;
 
 export type DraftCreateInput = Partial<
-  Pick<DraftDoc, "title" | "settings" | "blocks">
+  Pick<DraftDoc, "title" | "raw" | "settings">
 >;
 
 export type DraftUpdatePatch = Partial<
-  Pick<DraftDoc, "title" | "settings" | "blocks">
+  Pick<DraftDoc, "title" | "raw" | "settings">
 >;
 
 /**
- * Drafts DB V1 persisted shape.
+ * Drafts DB V1 persisted shape (Epic 2A initial draft) — supported for migration.
  * Stored as JSON in localStorage.
  */
 export type DraftsDbV1 = {
   schemaVersion: 1;
+  drafts: Record<string, unknown>;
+};
+
+/**
+ * Drafts DB V2 persisted shape.
+ * Stored as JSON in localStorage.
+ */
+export type DraftsDbV2 = {
+  schemaVersion: 2;
   drafts: Record<string, DraftDoc>;
 };
 
-export type DraftsDb = DraftsDbV1;
+export type DraftsDb = DraftsDbV2;

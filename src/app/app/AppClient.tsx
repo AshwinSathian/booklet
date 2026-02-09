@@ -10,13 +10,27 @@ import { ToastProvider, useToast } from "@/components/ui/ToastProvider";
 import { trackEvent } from "@/lib/analytics";
 import { DEFAULT_SETTINGS, type DocSettings } from "@/lib/blocks";
 import { API, APP_NAME, UI } from "@/lib/constants";
+import {
+  AUTOSAVE,
+  createDraft,
+  getActiveDraftId,
+  getDraft,
+  setActiveDraftId,
+  updateDraft,
+} from "@/lib/drafts";
 import { parseToBlocks } from "@/lib/parse";
 import { SAMPLE_MARKDOWN } from "@/lib/sample";
 import { normalizeInput, stripDangerousSequences } from "@/lib/sanitize";
 
+type SaveState = "saved" | "saving";
+
 function AppPageContent() {
+  const [activeDraftId, setActiveDraftIdState] = useState<string | null>(null);
   const [raw, setRaw] = useState("");
   const [settings, setSettings] = useState<DocSettings>(DEFAULT_SETTINGS);
+  const [saveState, setSaveState] = useState<SaveState>("saved");
+  const [isReady, setIsReady] = useState(false);
+
   const [status, setStatus] = useState<
     "idle" | "typing" | "publishing" | "published" | "error"
   >("idle");
@@ -24,8 +38,60 @@ function AppPageContent() {
   const [copyLinkPulse, setCopyLinkPulse] = useState(false);
 
   const toast = useToast();
-
   const focusFnRef = useRef<null | (() => void)>(null);
+  const autosaveTimerRef = useRef<number | null>(null);
+  const skipNextAutosaveRef = useRef(true);
+
+  // Hydrate active draft on mount.
+  useEffect(() => {
+    const storedId = getActiveDraftId();
+    const storedDraft = storedId ? getDraft(storedId) : null;
+
+    const draft =
+      storedDraft ?? createDraft({ raw: "", settings: DEFAULT_SETTINGS });
+
+    setActiveDraftId(draft.id);
+    setActiveDraftIdState(draft.id);
+
+    setRaw(draft.raw);
+    setSettings(draft.settings);
+
+    setSaveState("saved");
+    setIsReady(true);
+
+    // Avoid an immediate write triggered by hydration.
+    skipNextAutosaveRef.current = true;
+  }, []);
+
+  // Debounced autosave on raw/settings changes.
+  useEffect(() => {
+    if (!isReady) return;
+    if (!activeDraftId) return;
+
+    if (skipNextAutosaveRef.current) {
+      skipNextAutosaveRef.current = false;
+      return;
+    }
+
+    setSaveState("saving");
+
+    if (autosaveTimerRef.current !== null) {
+      window.clearTimeout(autosaveTimerRef.current);
+    }
+
+    autosaveTimerRef.current = window.setTimeout(() => {
+      updateDraft(activeDraftId, { raw, settings });
+      setSaveState("saved");
+      autosaveTimerRef.current = null;
+    }, AUTOSAVE.debounceMs);
+
+    return () => {
+      if (autosaveTimerRef.current !== null) {
+        window.clearTimeout(autosaveTimerRef.current);
+        autosaveTimerRef.current = null;
+      }
+    };
+  }, [raw, settings, activeDraftId, isReady]);
 
   const normalized = useMemo(
     () => stripDangerousSequences(normalizeInput(raw)),
@@ -61,11 +127,20 @@ function AppPageContent() {
   const canPublish = debouncedNormalized.trim().length > 0 && blocks.length > 0;
 
   const onNew = useCallback(() => {
+    const draft = createDraft({ raw: "", settings: DEFAULT_SETTINGS });
+    setActiveDraftId(draft.id);
+    setActiveDraftIdState(draft.id);
+
+    // Avoid an immediate write triggered by switching drafts.
+    skipNextAutosaveRef.current = true;
+
     setRaw("");
     setPublishedUrl(null);
     setStatus("idle");
-    toast.info("New draft", "Fresh slate.");
     setSettings(DEFAULT_SETTINGS);
+    setSaveState("saved");
+
+    toast.info("New draft", "Fresh slate.");
     focusFnRef.current?.();
   }, [toast]);
 
@@ -170,6 +245,7 @@ function AppPageContent() {
         confidenceValue={settings}
         onConfidenceValueChange={setSettings}
         onInsertSample={onInsertSample}
+        saveState={saveState}
       />
 
       <div className="mx-auto w-full max-w-7xl">

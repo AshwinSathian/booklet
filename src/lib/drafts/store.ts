@@ -5,7 +5,7 @@ import type {
   DraftCreateInput,
   DraftDoc,
   DraftMeta,
-  DraftsDbV1,
+  DraftsDbV2,
   DraftUpdatePatch,
 } from "./types";
 
@@ -72,11 +72,11 @@ function createDraftId(): string {
   return `${ts}-${rnd}`;
 }
 
-function emptyDb(): DraftsDbV1 {
+function emptyDb(): DraftsDbV2 {
   return { schemaVersion: DRAFTS_DB.schemaVersion, drafts: {} };
 }
 
-function readDb(): DraftsDbV1 {
+function readDb(): DraftsDbV2 {
   if (!hasLocalStorage()) return emptyDb();
 
   const raw = window.localStorage.getItem(DRAFTS_STORAGE_KEYS.db);
@@ -85,17 +85,12 @@ function readDb(): DraftsDbV1 {
   const parsed = safeJsonParse(raw);
   const migrated = migrateDraftsDb(parsed);
 
-  // Ensure we only ever operate on the current concrete version.
-  // Today this is v1.
-  const db = migrated as DraftsDbV1;
-  if (db.schemaVersion !== DRAFTS_DB.schemaVersion) {
-    return emptyDb();
-  }
-
+  const db = migrated as DraftsDbV2;
+  if (db.schemaVersion !== DRAFTS_DB.schemaVersion) return emptyDb();
   return db;
 }
 
-function writeDb(db: DraftsDbV1): void {
+function writeDb(db: DraftsDbV2): void {
   if (!hasLocalStorage()) return;
   try {
     window.localStorage.setItem(DRAFTS_STORAGE_KEYS.db, JSON.stringify(db));
@@ -104,7 +99,7 @@ function writeDb(db: DraftsDbV1): void {
   }
 }
 
-function upsertAndPersist(db: DraftsDbV1, doc: DraftDoc): void {
+function upsertAndPersist(db: DraftsDbV2, doc: DraftDoc): void {
   db.drafts[doc.id] = doc;
   writeDb(db);
 }
@@ -113,8 +108,8 @@ function applyPatch(doc: DraftDoc, patch: DraftUpdatePatch): DraftDoc {
   const next: DraftDoc = { ...doc };
 
   if (patch.title !== undefined) next.title = patch.title;
+  if (patch.raw !== undefined) next.raw = patch.raw;
   if (patch.settings !== undefined) next.settings = patch.settings;
-  if (patch.blocks !== undefined) next.blocks = patch.blocks;
 
   return next;
 }
@@ -152,8 +147,8 @@ export function createDraft(initial?: DraftCreateInput): DraftDoc {
     createdAt: ts,
     updatedAt: ts,
     title: initial?.title ?? DRAFT_DOC.defaultTitle,
+    raw: initial?.raw ?? "",
     settings: initial?.settings ?? DEFAULT_SETTINGS,
-    blocks: initial?.blocks ?? [],
   };
 
   upsertAndPersist(db, doc);

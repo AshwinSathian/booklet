@@ -10,6 +10,19 @@ import { useState } from "react";
 import { AppLogo } from "../ui/AppLogo";
 import ThemeToggle from "../ui/ThemeToggle";
 
+type EditorStatus = "idle" | "typing" | "publishing" | "published" | "error";
+export type SaveState = "saved" | "saving";
+
+const SAVE_LABEL: Record<SaveState, string> = {
+  saved: "Saved",
+  saving: "Saving…",
+} as const;
+
+const SAVE_SEVERITY: Record<SaveState, "success" | "warning"> = {
+  saved: "success",
+  saving: "warning",
+} as const;
+
 export function TopBar({
   status,
   canPublish,
@@ -21,8 +34,9 @@ export function TopBar({
   confidenceValue,
   onConfidenceValueChange,
   onInsertSample,
+  saveState,
 }: {
-  status: "idle" | "typing" | "publishing" | "published" | "error";
+  status: EditorStatus;
   canPublish: boolean;
   onNew: () => void;
   onPublish: () => void;
@@ -32,6 +46,7 @@ export function TopBar({
   confidenceValue: DocSettings;
   onConfidenceValueChange: (next: DocSettings) => void;
   onInsertSample: () => void;
+  saveState: SaveState;
 }) {
   const [visibleSettings, setVisibleSettings] = useState(false);
 
@@ -97,7 +112,14 @@ export function TopBar({
       <Tag
         className="hidden md:block"
         value={statusLabel}
-        severity={severity as any}
+        severity={severity as never}
+        rounded
+      />
+
+      <Tag
+        className="hidden md:block"
+        value={SAVE_LABEL[saveState]}
+        severity={SAVE_SEVERITY[saveState] as never}
         rounded
       />
 
