@@ -10,6 +10,7 @@ import {
   updateDraft,
   type DraftMeta,
 } from "@/lib/drafts";
+import { formatRelativeTimeFromIso, formatUpdatedAtLong } from "@/lib/ui/time";
 import { Button } from "primereact/button";
 import { Dialog } from "primereact/dialog";
 import { InputText } from "primereact/inputtext";
@@ -17,30 +18,25 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 const LABELS = {
   header: "My drafts",
-  empty: "No drafts yet.",
+
+  emptyTitle: "No drafts yet.",
+  emptyBody:
+    "Drafts live on this device and autosave as you type. Publish creates a shareable snapshot; your draft stays editable.",
+
   updated: "Updated",
   open: "Open",
   rename: "Rename",
   duplicate: "Duplicate",
   delete: "Delete",
+
   newDraft: "New draft",
+  importMarkdown: "Import Markdown",
   close: "Close",
+
   deleteConfirm: "Delete this draft? This cannot be undone.",
   titlePlaceholder: "Untitled",
   titleEmptyError: "Title cannot be empty.",
 } as const;
-
-function formatUpdatedAt(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
 
 function isValidTitle(title: string): boolean {
   return title.trim().length > 0;
@@ -52,12 +48,14 @@ export function DraftsDialog({
   onHide,
   onOpenDraft,
   onCreateDraft,
+  onRequestImportMarkdown,
 }: {
   visible: boolean;
   activeDraftId: string | null;
   onHide: () => void;
   onOpenDraft: (id: string, origin?: "drafts_dialog") => void;
   onCreateDraft: (origin?: "drafts_dialog") => string;
+  onRequestImportMarkdown: () => void;
 }) {
   const [drafts, setDrafts] = useState<DraftMeta[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -167,20 +165,31 @@ export function DraftsDialog({
 
   const footer = (
     <div className="flex items-center justify-between gap-2 w-full">
-      <Button
-        label={LABELS.newDraft}
-        icon="pi pi-plus"
-        severity="success"
-        onClick={() => {
-          const id = onCreateDraft("drafts_dialog");
-          trackEvent(ANALYTICS_EVENTS.draft_created, {
-            draft_hash: hashId(id),
-            origin: "drafts_dialog",
-          });
-          onHide();
-        }}
-        className="uppercase"
-      />
+      <div className="flex items-center gap-2">
+        <Button
+          label={LABELS.newDraft}
+          icon="pi pi-plus"
+          severity="success"
+          onClick={() => {
+            const id = onCreateDraft("drafts_dialog");
+            trackEvent(ANALYTICS_EVENTS.draft_created, {
+              draft_hash: hashId(id),
+              origin: "drafts_dialog",
+            });
+            onHide();
+          }}
+          className="uppercase"
+        />
+
+        <Button
+          label={LABELS.importMarkdown}
+          icon="pi pi-file-import"
+          severity="secondary"
+          onClick={() => onRequestImportMarkdown()}
+          className="uppercase"
+          outlined
+        />
+      </div>
 
       <Button
         label={LABELS.close}
@@ -201,20 +210,58 @@ export function DraftsDialog({
     >
       <div className="px-1 py-2">
         {drafts.length === 0 ? (
-          <div className="text-sm text-[rgb(var(--muted))]">{LABELS.empty}</div>
+          <div className="rounded-2xl border border-[rgb(var(--border))] bg-bg-glass/40 p-4 md:p-5">
+            <div className="text-base font-semibold">{LABELS.emptyTitle}</div>
+            <div className="mt-2 text-sm text-[rgb(var(--muted))] leading-relaxed">
+              {LABELS.emptyBody}
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <Button
+                label={LABELS.newDraft}
+                icon="pi pi-plus"
+                severity="success"
+                onClick={() => {
+                  const id = onCreateDraft("drafts_dialog");
+                  trackEvent(ANALYTICS_EVENTS.draft_created, {
+                    draft_hash: hashId(id),
+                    origin: "drafts_dialog",
+                  });
+                  onHide();
+                }}
+                className="uppercase"
+              />
+
+              <Button
+                label={LABELS.importMarkdown}
+                icon="pi pi-file-import"
+                severity="secondary"
+                onClick={() => onRequestImportMarkdown()}
+                className="uppercase"
+                outlined
+              />
+            </div>
+          </div>
         ) : (
           <div className="flex flex-col gap-2">
             {drafts.map((d) => {
               const isActive = d.id === activeDraftId;
               const isEditing = editingId === d.id;
-              const updated = formatUpdatedAt(d.updatedAt);
+
+              const updatedLong = formatUpdatedAtLong(d.updatedAt);
+              const updatedRel = formatRelativeTimeFromIso(d.updatedAt);
+
+              const updated =
+                updatedRel && updatedRel !== updatedLong
+                  ? `${updatedRel} • ${updatedLong}`
+                  : updatedLong;
 
               return (
                 <div
                   key={d.id}
                   className={[
                     "rounded-xl border border-[rgb(var(--border))] p-3",
-                    "flex flex-col gap-2",
+                    "flex flex-col gap-2 transition-colors",
                     isActive ? "ring-1 ring-accent-soft" : "",
                   ].join(" ")}
                 >

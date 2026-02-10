@@ -33,3 +33,10 @@ export const PUBLISH_LINKAGE = {
   /** How many recent publish snapshots to keep per draft (most recent first). */
   historyLimit: 5,
 } as const;
+
+export const DRAFTS_PERSIST = {
+  errorCode: {
+    quota: "quota",
+    unknown: "unknown",
+  },
+} as const;

@@ -16,6 +16,25 @@ export const STORAGE = {
 export const UI = {
   previewDebounceMs: 120,
   maxCodeCollapseLines: 18,
+
+  /**
+   * Save status smoothing to avoid flicker during fast typing.
+   * These are UI-only timings; storage semantics remain unchanged.
+   */
+  saveStatus: {
+    minShowSavingMs: 420,
+    minShowSavedMs: 650,
+  },
+
+  /** Coalescing window for repeated transient actions (copy/export). */
+  toastCoalesceMs: 900,
+
+  /** File import configuration. */
+  importMarkdown: {
+    accept: ".md,text/markdown",
+    maxFileBytes: 500_000,
+    defaultTitle: "Imported draft",
+  },
 } as const;
 
 export const API = {

@@ -2,6 +2,7 @@ import { DEFAULT_SETTINGS } from "@/lib/blocks";
 import {
   DRAFT_DOC,
   DRAFTS_DB,
+  DRAFTS_PERSIST,
   DRAFTS_STORAGE_KEYS,
   PUBLISH_LINKAGE,
 } from "./constants";
@@ -14,6 +15,19 @@ import type {
   DraftUpdatePatch,
   PublishedSnapshotRef,
 } from "./types";
+
+type DraftsPersistErrorCode =
+  (typeof DRAFTS_PERSIST)["errorCode"][keyof (typeof DRAFTS_PERSIST)["errorCode"]];
+
+let lastPersistError: DraftsPersistErrorCode | null = null;
+
+export function getLastDraftsPersistError(): DraftsPersistErrorCode | null {
+  return lastPersistError;
+}
+
+export function clearLastDraftsPersistError(): void {
+  lastPersistError = null;
+}
 
 function isBrowser(): boolean {
   return typeof window !== "undefined";
@@ -96,18 +110,50 @@ function readDb(): DraftsDbV2 {
   return db;
 }
 
-function writeDb(db: DraftsDbV2): void {
-  if (!hasLocalStorage()) return;
+function isQuotaExceededError(e: unknown): boolean {
+  if (typeof e !== "object" || e === null) return false;
+
+  const rec = e as Record<string, unknown>;
+  const name = rec["name"];
+  const code = rec["code"];
+
+  const nameStr = typeof name === "string" ? name : "";
+  const codeNum = typeof code === "number" ? code : -1;
+
+  // Browsers vary:
+  // - QuotaExceededError (most)
+  // - NS_ERROR_DOM_QUOTA_REACHED (Firefox legacy)
+  // - code 22 / 1014 (some legacy implementations)
+  if (nameStr === "QuotaExceededError") return true;
+  if (nameStr === "NS_ERROR_DOM_QUOTA_REACHED") return true;
+  if (codeNum === 22) return true;
+  if (codeNum === 1014) return true;
+
+  return false;
+}
+
+function classifyPersistError(e: unknown): DraftsPersistErrorCode {
+  if (isQuotaExceededError(e)) return DRAFTS_PERSIST.errorCode.quota;
+  return DRAFTS_PERSIST.errorCode.unknown;
+}
+
+function writeDb(db: DraftsDbV2): boolean {
+  if (!hasLocalStorage()) return true;
+
   try {
     window.localStorage.setItem(DRAFTS_STORAGE_KEYS.db, JSON.stringify(db));
-  } catch {
+    lastPersistError = null;
+    return true;
+  } catch (e) {
     // Quota or serialization errors should not crash the app.
+    lastPersistError = classifyPersistError(e);
+    return false;
   }
 }
 
-function upsertAndPersist(db: DraftsDbV2, doc: DraftDoc): void {
+function upsertAndPersist(db: DraftsDbV2, doc: DraftDoc): boolean {
   db.drafts[doc.id] = doc;
-  writeDb(db);
+  return writeDb(db);
 }
 
 function applyPatch(doc: DraftDoc, patch: DraftUpdatePatch): DraftDoc {
@@ -203,8 +249,7 @@ export function deleteDraft(id: string): boolean {
   const db = readDb();
   if (!db.drafts[id]) return false;
   delete db.drafts[id];
-  writeDb(db);
-  return true;
+  return writeDb(db);
 }
 
 export function duplicateDraft(id: string): DraftDoc | null {

@@ -8,12 +8,14 @@ import { ToastProvider, useToast } from "@/components/ui/ToastProvider";
 import { trackEvent } from "@/lib/analytics";
 import { ANALYTICS_EVENTS, hashId } from "@/lib/analytics-events";
 import { DEFAULT_SETTINGS, type DocSettings } from "@/lib/blocks";
-import { API, APP_NAME, UI } from "@/lib/constants";
+import { API, APP_NAME, STORAGE, UI } from "@/lib/constants";
 import {
   AUTOSAVE,
+  clearLastDraftsPersistError,
   createDraft,
   getActiveDraftId,
   getDraft,
+  getLastDraftsPersistError,
   setActiveDraftId,
   setDraftLastPublished,
   updateDraft,
@@ -21,18 +23,29 @@ import {
 import { parseToBlocks } from "@/lib/parse";
 import { SAMPLE_MARKDOWN } from "@/lib/sample";
 import { normalizeInput, stripDangerousSequences } from "@/lib/sanitize";
+import { formatTimeHHMM } from "@/lib/ui/time";
+import { Message } from "primereact/message";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type SaveState = "saved" | "saving";
-type DraftEventOrigin = "hydrate" | "topbar_new" | "drafts_dialog" | "unknown";
+type DraftEventOrigin =
+  | "hydrate"
+  | "topbar_new"
+  | "drafts_dialog"
+  | "import_markdown"
+  | "unknown";
 
 const AUTOSAVE_ANALYTICS_THROTTLE_MS = 60_000;
+
+const SAVE_WARNING_TOAST_KEY = "save_warning";
 
 function AppPageContent() {
   const [activeDraftId, setActiveDraftIdState] = useState<string | null>(null);
   const [raw, setRaw] = useState("");
   const [settings, setSettings] = useState<DocSettings>(DEFAULT_SETTINGS);
   const [saveState, setSaveState] = useState<SaveState>("saved");
+  const [lastSavedAtLabel, setLastSavedAtLabel] = useState<string | null>(null);
+  const [showSaveWarning, setShowSaveWarning] = useState(false);
   const [isReady, setIsReady] = useState(false);
 
   const [status, setStatus] = useState<
@@ -43,8 +56,14 @@ function AppPageContent() {
 
   const toast = useToast();
   const focusFnRef = useRef<null | (() => void)>(null);
+
   const autosaveTimerRef = useRef<number | null>(null);
   const skipNextAutosaveRef = useRef(true);
+
+  const saveUiTimerRef = useRef<number | null>(null);
+  const saveUiLastChangedAtRef = useRef<number>(Date.now());
+
+  const saveWarningWasShownRef = useRef(false);
 
   const autosaveLastTrackedAtByDraftRef = useRef<Map<string, number>>(
     new Map(),
@@ -67,17 +86,114 @@ function AppPageContent() {
     [raw.length],
   );
 
+  const setSaveStateSmoothed = useCallback(
+    (next: SaveState) => {
+      const now = Date.now();
+      const current = saveState;
+      if (current === next) return;
+
+      const lastChanged = saveUiLastChangedAtRef.current;
+      const elapsed = now - lastChanged;
+
+      const clearTimer = () => {
+        if (saveUiTimerRef.current !== null) {
+          window.clearTimeout(saveUiTimerRef.current);
+          saveUiTimerRef.current = null;
+        }
+      };
+
+      const commit = (value: SaveState) => {
+        clearTimer();
+        saveUiLastChangedAtRef.current = Date.now();
+        setSaveState(value);
+      };
+
+      if (current === "saving" && next === "saved") {
+        const remaining = UI.saveStatus.minShowSavingMs - elapsed;
+        if (remaining > 0) {
+          clearTimer();
+          saveUiTimerRef.current = window.setTimeout(
+            () => commit("saved"),
+            remaining,
+          );
+          return;
+        }
+        commit("saved");
+        return;
+      }
+
+      if (current === "saved" && next === "saving") {
+        const remaining = UI.saveStatus.minShowSavedMs - elapsed;
+        if (remaining > 0) {
+          clearTimer();
+          saveUiTimerRef.current = window.setTimeout(
+            () => commit("saving"),
+            remaining,
+          );
+          return;
+        }
+        commit("saving");
+        return;
+      }
+
+      commit(next);
+    },
+    [saveState],
+  );
+
+  const handlePersistOutcome = useCallback(
+    (savedAtIso: string | null) => {
+      const err = getLastDraftsPersistError();
+      if (err) {
+        setShowSaveWarning(true);
+
+        if (!saveWarningWasShownRef.current) {
+          saveWarningWasShownRef.current = true;
+          toast.showCoalesced(
+            SAVE_WARNING_TOAST_KEY,
+            "warn",
+            "Save issue",
+            "Could not save locally. Your browser storage may be full.",
+          );
+        }
+        return;
+      }
+
+      clearLastDraftsPersistError();
+      setShowSaveWarning(false);
+      saveWarningWasShownRef.current = false;
+
+      if (savedAtIso) {
+        const d = new Date(savedAtIso);
+        if (!Number.isNaN(d.getTime())) {
+          setLastSavedAtLabel(formatTimeHHMM(d));
+        }
+      }
+    },
+    [toast],
+  );
+
+  const persistNow = useCallback(
+    (draftId: string) => {
+      const saved = updateDraft(draftId, { raw, settings });
+      setSaveStateSmoothed("saved");
+      handlePersistOutcome(saved?.updatedAt ?? null);
+      return saved;
+    },
+    [handlePersistOutcome, raw, settings, setSaveStateSmoothed],
+  );
+
   const flushPendingAutosave = useCallback(() => {
     if (!isReady) return;
     if (!activeDraftId) return;
-    if (autosaveTimerRef.current === null) return;
 
-    window.clearTimeout(autosaveTimerRef.current);
-    autosaveTimerRef.current = null;
+    if (autosaveTimerRef.current !== null) {
+      window.clearTimeout(autosaveTimerRef.current);
+      autosaveTimerRef.current = null;
+    }
 
-    updateDraft(activeDraftId, { raw, settings });
-    setSaveState("saved");
-  }, [activeDraftId, isReady, raw, settings]);
+    persistNow(activeDraftId);
+  }, [activeDraftId, isReady, persistNow]);
 
   // Hydrate active draft on mount.
   useEffect(() => {
@@ -96,6 +212,10 @@ function AppPageContent() {
     setLastPublishedUrl(draft.lastPublished?.url ?? null);
 
     setSaveState("saved");
+    setLastSavedAtLabel(
+      draft.updatedAt ? formatTimeHHMM(new Date(draft.updatedAt)) : null,
+    );
+    setShowSaveWarning(false);
     setIsReady(true);
 
     // Avoid an immediate write triggered by hydration.
@@ -139,16 +259,18 @@ function AppPageContent() {
       return;
     }
 
-    setSaveState("saving");
+    setSaveStateSmoothed("saving");
 
     if (autosaveTimerRef.current !== null) {
       window.clearTimeout(autosaveTimerRef.current);
     }
 
     autosaveTimerRef.current = window.setTimeout(() => {
-      updateDraft(activeDraftId, { raw, settings });
-      setSaveState("saved");
+      const saved = updateDraft(activeDraftId, { raw, settings });
+      setSaveStateSmoothed("saved");
       autosaveTimerRef.current = null;
+
+      handlePersistOutcome(saved?.updatedAt ?? null);
 
       // Intentionally uses the last computed blocks for a close-enough metric.
       maybeTrackAutosave(activeDraftId, blocks.length);
@@ -167,6 +289,8 @@ function AppPageContent() {
     isReady,
     maybeTrackAutosave,
     blocks.length,
+    handlePersistOutcome,
+    setSaveStateSmoothed,
   ]);
 
   useEffect(() => {
@@ -196,7 +320,8 @@ function AppPageContent() {
       setLastPublishedUrl(null);
       setStatus("idle");
       setSettings(DEFAULT_SETTINGS);
-      setSaveState("saved");
+      setSaveStateSmoothed("saved");
+      setLastSavedAtLabel(formatTimeHHMM(new Date(draft.updatedAt)));
 
       toast.info("New draft", "Fresh slate.");
       focusFnRef.current?.();
@@ -210,7 +335,7 @@ function AppPageContent() {
 
       return draft.id;
     },
-    [flushPendingAutosave, toast],
+    [flushPendingAutosave, toast, setSaveStateSmoothed],
   );
 
   const onSwitchDraft = useCallback(
@@ -229,7 +354,8 @@ function AppPageContent() {
 
       setRaw(draft.raw);
       setSettings(draft.settings);
-      setSaveState("saved");
+      setSaveStateSmoothed("saved");
+      setLastSavedAtLabel(formatTimeHHMM(new Date(draft.updatedAt)));
 
       // Publishing state is per-editor session.
       setLastPublishedUrl(draft.lastPublished?.url ?? null);
@@ -244,7 +370,7 @@ function AppPageContent() {
         });
       }
     },
-    [flushPendingAutosave, settings],
+    [flushPendingAutosave, settings, setSaveStateSmoothed],
   );
 
   const onNew = useCallback(() => {
@@ -256,6 +382,45 @@ function AppPageContent() {
     toast.info("Inserted sample", "Edit it and publish when ready.");
     focusFnRef.current?.();
   }, [toast]);
+
+  const onImportMarkdown = useCallback(
+    (title: string, nextRaw: string) => {
+      flushPendingAutosave();
+
+      const trimmedTitle =
+        title.trim().slice(0, 140) || UI.importMarkdown.defaultTitle;
+      const safeRaw = nextRaw.slice(0, STORAGE.maxInputChars);
+
+      const draft = createDraft({
+        title: trimmedTitle,
+        raw: safeRaw,
+        settings: DEFAULT_SETTINGS,
+      });
+
+      setActiveDraftId(draft.id);
+      setActiveDraftIdState(draft.id);
+
+      // Avoid an immediate write triggered by switching drafts.
+      skipNextAutosaveRef.current = true;
+
+      setRaw(draft.raw);
+      setSettings(draft.settings);
+      setSaveStateSmoothed("saved");
+      setLastSavedAtLabel(formatTimeHHMM(new Date(draft.updatedAt)));
+
+      setLastPublishedUrl(null);
+      setStatus("idle");
+      setCopyLinkPulse(false);
+
+      trackEvent(ANALYTICS_EVENTS.draft_created, {
+        draft_hash: hashId(draft.id),
+        origin: "import_markdown",
+      });
+
+      focusFnRef.current?.();
+    },
+    [flushPendingAutosave, setSaveStateSmoothed],
+  );
 
   const onPublish = useCallback(async () => {
     if (!canPublish) {
@@ -298,7 +463,13 @@ function AppPageContent() {
 
       setLastPublishedUrl(data.url);
       setStatus("published");
-      toast.success("Published", "Your share link is ready.");
+
+      toast.showCoalesced(
+        "publish_ok",
+        "success",
+        "Published",
+        "Your share link is ready.",
+      );
 
       // Keep existing Phase 1 event for continuity.
       trackEvent(ANALYTICS_EVENTS.publish_success, {
@@ -325,7 +496,12 @@ function AppPageContent() {
 
     try {
       await navigator.clipboard.writeText(lastPublishedUrl);
-      toast.success("Copied", "Link copied to clipboard.");
+      toast.showCoalesced(
+        "copy_link",
+        "success",
+        "Copied",
+        "Link copied to clipboard.",
+      );
     } catch (e) {
       toast.error("Copy failed", toErrorMessage(e));
     }
@@ -349,6 +525,12 @@ function AppPageContent() {
       const isMac = navigator.platform.toLowerCase().includes("mac");
       const mod = isMac ? e.metaKey : e.ctrlKey;
 
+      if (mod && (e.key === "s" || e.key === "S")) {
+        e.preventDefault();
+        if (activeDraftId) persistNow(activeDraftId);
+        return;
+      }
+
       if (mod && e.key === "Enter") {
         e.preventDefault();
         void onPublish();
@@ -364,10 +546,24 @@ function AppPageContent() {
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onPublish]);
+  }, [activeDraftId, onPublish, persistNow]);
 
   const isBusy = status === "typing" || status === "publishing";
   const isEmpty = !normalized.trim();
+
+  const content = (
+    <span>
+      Last published:{" "}
+      <a
+        className="underline underline-offset-4"
+        href={lastPublishedUrl || ""}
+        target="_blank"
+        rel="noreferrer"
+      >
+        {lastPublishedUrl?.replace(window.location.origin, "")}
+      </a>
+    </span>
+  );
 
   return (
     <div className="h-screen min-h-screen flex flex-col overflow-hidden">
@@ -388,23 +584,20 @@ function AppPageContent() {
         onConfidenceValueChange={setSettings}
         onInsertSample={onInsertSample}
         saveState={saveState}
+        lastSavedAtLabel={lastSavedAtLabel}
+        showSaveWarning={showSaveWarning}
+        onImportMarkdown={onImportMarkdown}
       />
 
       <div className="mx-auto w-full max-w-7xl">
-        <div className="flex items-center justify-center p-3">
-          <div className="text-xs text-[rgb(var(--muted))] uppercase tracking-wide">
+        <div className="w-full flex items-center justify-center p-3">
+          <div className="text-xs text-[rgb(var(--muted))] w-full">
             {lastPublishedUrl ? (
-              <span>
-                Last published:{" "}
-                <a
-                  className="underline underline-offset-4"
-                  href={lastPublishedUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  {lastPublishedUrl.replace(window.location.origin, "")}
-                </a>
-              </span>
+              <Message
+                className="w-full flex items-center justify-center"
+                severity="success"
+                content={content}
+              />
             ) : null}
           </div>
         </div>
@@ -416,6 +609,7 @@ function AppPageContent() {
             <PasteInput
               value={raw}
               onChange={(v) => setRaw(v)}
+              showEmptyHint={Boolean(activeDraftId)}
               onFocusShortcutRequested={(fn) => {
                 focusFnRef.current = fn;
               }}
