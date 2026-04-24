@@ -1,5 +1,6 @@
-@import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap");
 @import "tailwindcss";
+@import "primereact/resources/primereact.min.css";
+@import "primeicons/primeicons.css";
 
 /*
   Theme strategy (dark-first, avoids white flash):

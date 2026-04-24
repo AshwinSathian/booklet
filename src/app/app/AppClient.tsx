@@ -522,7 +522,10 @@ function AppPageContent() {
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      const isMac = navigator.platform.toLowerCase().includes("mac");
+      const platform =
+        (navigator as Navigator & { userAgentData?: { platform?: string } })
+          .userAgentData?.platform ?? navigator.userAgent;
+      const isMac = /mac/i.test(platform);
       const mod = isMac ? e.metaKey : e.ctrlKey;
 
       if (mod && (e.key === "s" || e.key === "S")) {
@@ -542,11 +545,17 @@ function AppPageContent() {
         focusFnRef.current?.();
         return;
       }
+
+      if (mod && (e.key === "b" || e.key === "B")) {
+        e.preventDefault();
+        onNew();
+        return;
+      }
     }
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [activeDraftId, onPublish, persistNow]);
+  }, [activeDraftId, onNew, onPublish, persistNow]);
 
   const isBusy = status === "typing" || status === "publishing";
   const isEmpty = !normalized.trim();

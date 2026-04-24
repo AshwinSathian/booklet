@@ -62,7 +62,7 @@ function CodeBlock({
         className={[
           "p-3 text-sm leading-6 overflow-auto",
           "font-mono",
-          isCollapsed ? "max-h-90" : "",
+          isCollapsed ? "max-h-96" : "",
         ].join(" ")}
       >
         <code>{code}</code>
@@ -228,7 +228,7 @@ export function BlockRenderer({
                   className="rounded-xl border border-[rgb(var(--border))] overflow-hidden"
                 >
                   <div className="overflow-auto">
-                    <table className="min-w-170 w-full text-sm">
+                    <table className="min-w-2xl w-full text-sm">
                       <thead className="bg-[rgb(var(--border))]/20">
                         <tr>
                           {b.head.map((cell, i) => (

@@ -7,7 +7,6 @@ import { getDoc } from "@/lib/storage";
 import { buildToc, MIN_TOC_HEADINGS, type TocItem } from "@/lib/toc";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { Button } from "primereact/button";
 import { Skeleton } from "primereact/skeleton";
 
@@ -85,7 +84,6 @@ export default async function SharePage({
   const doc = await getDoc(id);
 
   if (!doc) return <NotFoundOrExpired />;
-  if (!doc) return notFound();
 
   const createdAt = new Date(doc.createdAt);
   const expiresAt = new Date(createdAt.getTime() + STORAGE.ttlSeconds * 1000);

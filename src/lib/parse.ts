@@ -126,7 +126,6 @@ function blocksFromChildren(children: Content[]): Block[] {
 
       case "table": {
         const head: Inline[][] = [];
-        const rows: Inline[][][] = [];
 
         const rowNodes = node.children ?? [];
         const headRow = rowNodes[0];
@@ -137,26 +136,11 @@ function blocksFromChildren(children: Content[]): Block[] {
           );
         }
 
-        for (let r = 1; r < rowNodes.length; r += 1) {
-          const tr = rowNodes[r];
-          if (tr?.type !== "tableRow") continue;
-          const cells = (tr.children ?? []).map((c: any) =>
-            inlineFromNodes(c.children ?? []),
-          );
-          rows.push([cells].flat());
-        }
+        const rows: Inline[][][] = rowNodes.slice(1).map((tr: any) =>
+          (tr.children ?? []).map((c: any) => inlineFromNodes(c.children ?? [])),
+        );
 
-        // Normalize rows: rows is Inline[][][] where each row is Inline[][]
-        const normalizedRows: Inline[][][] = rowNodes
-          .slice(1)
-          .map((tr: any) => {
-            const cells = (tr.children ?? []).map((c: any) =>
-              inlineFromNodes(c.children ?? []),
-            );
-            return cells;
-          });
-
-        blocks.push({ t: "table", head, rows: normalizedRows });
+        blocks.push({ t: "table", head, rows });
         break;
       }
 

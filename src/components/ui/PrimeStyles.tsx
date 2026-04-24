@@ -1,8 +1,6 @@
 "use client";
 
 import {
-  PRIME_CORE_CSS_HREF,
-  PRIME_ICONS_CSS_HREF,
   PRIME_THEME_DARK_HREF,
   PRIME_THEME_LIGHT_HREF,
   PRIME_THEME_LINK_ID,
@@ -17,16 +15,11 @@ function upsertLink(id: string, href: string) {
     link.rel = "stylesheet";
     document.head.appendChild(link);
   }
-  if (link.href !== href) link.href = href;
+  if (link.href !== new URL(href, location.href).href) link.href = href;
 }
 
 export default function PrimeStyles() {
   useEffect(() => {
-    // base styles (safe to load once)
-    upsertLink("prime-core-css", PRIME_CORE_CSS_HREF);
-    upsertLink("prime-icons-css", PRIME_ICONS_CSS_HREF);
-
-    // theme follows html.dark class (set by next-themes)
     const applyTheme = () => {
       const isDark = document.documentElement.classList.contains("dark");
       upsertLink(
