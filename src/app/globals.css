@@ -13,90 +13,89 @@
 :root {
   color-scheme: dark;
 
-  --font-heading:
-    "Open Sans", "Space Grotesk", "Inter", "Manrope", system-ui, sans-serif;
-  --font-body: "Open Sans", "Inter", "Manrope", system-ui, sans-serif;
+  --font-body: var(--font-inter), "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", ui-monospace, "SF Mono", monospace;
 
-  /* -------- Tailwind v4 @theme variables (DARK defaults) -------- */
-  --color-bg: #0b1020;
-  --color-bg-soft: #0f1530;
-  --color-bg-glass: rgba(15, 21, 48, 0.4);
-  --color-text-primary: #e9ecf2;
-  --color-text-secondary: #b4bdd1;
-  --color-text-muted: #8c94aa;
-  --color-accent: #8b5cf6;
-  --color-accent-hover: #7c3aed;
+  /* -------- Palette (DARK) -------- */
+  --color-bg: #07090f;
+  --color-bg-soft: #0d1117;
+  --color-bg-elevated: #131720;
+  --color-bg-glass: rgba(13, 17, 23, 0.5);
+  --color-text-primary: #f0f2f8;
+  --color-text-secondary: #a8b3cc;
+  --color-text-muted: #6b7591;
+  --color-accent: #7c5cfc;
+  --color-accent-hover: #6b47f5;
   --color-accent-soft: #a78bfa;
-  --color-accent-warm: #fcd34d;
-  --color-outline: #23304e;
-  --shadow-soft: 0 8px 24px rgba(139, 92, 246, 0.15);
-  --shadow-glass: 0 4px 30px rgba(139, 92, 246, 0.15);
-  --shadow-glow: 0 0 30px rgba(139, 92, 246, 0.2);
+  --color-accent-warm: #f59e0b;
+  --color-outline: #1e2840;
+  --color-outline-soft: rgba(255, 255, 255, 0.06);
+  --shadow-soft: 0 8px 32px rgba(124, 92, 252, 0.18);
+  --shadow-glass: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --shadow-glow: 0 0 40px rgba(124, 92, 252, 0.22);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.4), 0 4px 16px rgba(0, 0, 0, 0.3);
 
-  /* -------- Renderer variables used by BlockRenderer/InlineRenderer -------- */
-  --fg: 233 236 242;
-  --muted: 180 189 209;
-  --border: 35 48 78;
+  /* -------- Renderer variables (RGB channels for opacity compositing) -------- */
+  --fg: 240 242 248;
+  --muted: 107 117 145;
+  --border: 30 40 64;
 
-  /* -------- PrimeReact theme variables (DARK) -------- */
-  --p-primary-color: #8b5cf6;
+  /* -------- PrimeReact overrides (DARK) -------- */
+  --p-primary-color: #7c5cfc;
   --p-primary-contrast-color: #ffffff;
-
-  --p-surface-ground: #0b1020;
-  --p-surface-card: rgba(15, 21, 48, 0.45);
+  --p-surface-ground: #07090f;
+  --p-surface-card: rgba(13, 17, 23, 0.6);
   --p-content-border-color: rgba(255, 255, 255, 0.06);
-
-  --p-text-color: #e9ecf2;
-  --p-text-muted-color: #b4bdd1;
-
-  --p-focus-ring: 0 0 0 2px rgba(167, 139, 250, 0.35);
+  --p-text-color: #f0f2f8;
+  --p-text-muted-color: #a8b3cc;
+  --p-focus-ring: 0 0 0 2px rgba(167, 139, 250, 0.4);
 }
 
 /* LIGHT override */
 html.light {
   color-scheme: light;
 
-  --color-bg: #f8fafc;
+  --color-bg: #f6f8fc;
   --color-bg-soft: #ffffff;
-  --color-bg-glass: rgba(255, 255, 255, 0.72);
-  --color-text-primary: #0f172a;
-  --color-text-secondary: #334155;
-  --color-text-muted: #64748b;
-  --color-accent: #8b5cf6;
-  --color-accent-hover: #7c3aed;
-  --color-accent-soft: #a78bfa;
-  --color-accent-warm: #f59e0b;
-  --color-outline: rgba(15, 23, 42, 0.12);
-  --shadow-soft: 0 8px 24px rgba(139, 92, 246, 0.12);
-  --shadow-glass: 0 4px 30px rgba(15, 23, 42, 0.08);
-  --shadow-glow: 0 0 30px rgba(139, 92, 246, 0.18);
+  --color-bg-elevated: #ffffff;
+  --color-bg-glass: rgba(255, 255, 255, 0.82);
+  --color-text-primary: #0a0e1a;
+  --color-text-secondary: #3d4a6b;
+  --color-text-muted: #6b7591;
+  --color-accent: #6d46f8;
+  --color-accent-hover: #5b37e6;
+  --color-accent-soft: #8b6cf7;
+  --color-accent-warm: #d97706;
+  --color-outline: rgba(10, 14, 26, 0.1);
+  --color-outline-soft: rgba(10, 14, 26, 0.06);
+  --shadow-soft: 0 8px 32px rgba(109, 70, 248, 0.12);
+  --shadow-glass: 0 4px 24px rgba(10, 14, 26, 0.08);
+  --shadow-glow: 0 0 40px rgba(109, 70, 248, 0.16);
+  --shadow-card: 0 1px 3px rgba(10, 14, 26, 0.08), 0 4px 16px rgba(10, 14, 26, 0.06);
 
-  --fg: 15 23 42;
-  --muted: 100 116 139;
-  --border: 15 23 42;
+  --fg: 10 14 26;
+  --muted: 107 117 145;
+  --border: 10 14 26;
 
-  --p-primary-color: #8b5cf6;
+  --p-primary-color: #6d46f8;
   --p-primary-contrast-color: #ffffff;
-
-  --p-surface-ground: #f8fafc;
-  --p-surface-card: rgba(255, 255, 255, 0.9);
-  --p-content-border-color: rgba(15, 23, 42, 0.12);
-
-  --p-text-color: #0f172a;
-  --p-text-muted-color: #64748b;
-
-  --p-focus-ring: 0 0 0 2px rgba(167, 139, 250, 0.35);
+  --p-surface-ground: #f6f8fc;
+  --p-surface-card: rgba(255, 255, 255, 0.95);
+  --p-content-border-color: rgba(10, 14, 26, 0.08);
+  --p-text-color: #0a0e1a;
+  --p-text-muted-color: #6b7591;
+  --p-focus-ring: 0 0 0 2px rgba(139, 108, 247, 0.4);
 }
 
-/* Optional explicit dark class (same as :root, harmless) */
 html.dark {
   color-scheme: dark;
 }
 
-/* Tailwind v4 theme vars */
+/* Tailwind v4 theme — bind CSS vars to utilities */
 @theme {
   --color-bg: var(--color-bg);
   --color-bg-soft: var(--color-bg-soft);
+  --color-bg-elevated: var(--color-bg-elevated);
   --color-bg-glass: var(--color-bg-glass);
   --color-text-primary: var(--color-text-primary);
   --color-text-secondary: var(--color-text-secondary);
@@ -106,26 +105,26 @@ html.dark {
   --color-accent-soft: var(--color-accent-soft);
   --color-accent-warm: var(--color-accent-warm);
   --color-outline: var(--color-outline);
+  --color-outline-soft: var(--color-outline-soft);
   --shadow-soft: var(--shadow-soft);
   --shadow-glass: var(--shadow-glass);
   --shadow-glow: var(--shadow-glow);
+  --shadow-card: var(--shadow-card);
+  --font-body: var(--font-body);
+  --font-mono: var(--font-mono);
+}
+
+html,
+body {
+  background: var(--color-bg);
 }
 
 body {
   @apply bg-bg text-text-primary antialiased;
-  font-family:
-    var(--font-body),
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-}
-
-/* Prevents any default white canvas while CSS loads in some browsers */
-html,
-body {
-  background: var(--color-bg);
+  font-family: var(--font-body);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 a,
@@ -134,13 +133,38 @@ button {
 }
 
 ::selection {
-  @apply bg-accent-soft text-bg;
+  background: rgba(124, 92, 252, 0.25);
+  color: inherit;
 }
 
-/* Prime SelectButton sizing polish (minimal + local) */
+/* ---- Transitions ---- */
+*,
+*::before,
+*::after {
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ---- Scrollbar (Webkit) ---- */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(var(--border), 0.6);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--border), 0.9);
+}
+
+/* ---- PrimeReact: SelectButton (mobile pane toggle) ---- */
 .readable-theme-toggle .p-selectbutton .p-button {
-  padding: 0.5rem 0.6rem;
-  font-size: 0.75rem;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
 }
