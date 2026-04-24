@@ -1,9 +1,10 @@
 "use client";
 
-import type { Block, DocSettings } from "@/lib/blocks";
+import type { Block, DocSettings, ListItem } from "@/lib/blocks";
 import { UI } from "@/lib/constants";
 import type { JSX } from "react";
 import { useMemo, useState } from "react";
+import { DiagramBlock } from "./DiagramBlock";
 import { InlineRenderer } from "./InlineRenderer";
 
 function spacingClass(settings: DocSettings): string {
@@ -177,26 +178,59 @@ export function BlockRenderer({
                 </p>
               );
 
-            case "list":
+            case "list": {
+              const renderItem = (it: ListItem | unknown[], i: number) => {
+                // Backwards compat: old published docs stored items as Inline[]
+                if (Array.isArray(it)) {
+                  return <li key={i}><InlineRenderer inl={it as never} /></li>;
+                }
+                const item = it as ListItem;
+                const isTask = item.checked != null;
+                return (
+                  <li key={i} className={isTask ? "list-none" : ""}>
+                    {isTask ? (
+                      <span className="flex items-start gap-2">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(item.checked)}
+                          readOnly
+                          className="mt-1 shrink-0 cursor-default accent-accent"
+                        />
+                        <span className={item.checked ? "line-through text-[rgb(var(--muted))]" : ""}>
+                          <InlineRenderer inl={item.inl} />
+                        </span>
+                      </span>
+                    ) : (
+                      <InlineRenderer inl={item.inl} />
+                    )}
+                    {item.children?.length ? (
+                      <BlockRenderer
+                        blocks={item.children}
+                        settings={settings}
+                        headingAnchors={headingAnchors}
+                        keyPrefix={`${blockKey}.${i}`}
+                      />
+                    ) : null}
+                  </li>
+                );
+              };
+
               return b.ordered ? (
                 <ol
                   key={idx}
                   className="list-decimal pl-6 space-y-2 text-[15px] sm:text-[16px] leading-[1.8] text-[rgb(var(--fg))]"
                 >
-                  {b.items.map((it, i) => (
-                    <li key={i}><InlineRenderer inl={it} /></li>
-                  ))}
+                  {b.items.map(renderItem)}
                 </ol>
               ) : (
                 <ul
                   key={idx}
                   className="list-disc pl-6 space-y-2 text-[15px] sm:text-[16px] leading-[1.8] text-[rgb(var(--fg))]"
                 >
-                  {b.items.map((it, i) => (
-                    <li key={i}><InlineRenderer inl={it} /></li>
-                  ))}
+                  {b.items.map(renderItem)}
                 </ul>
               );
+            }
 
             case "quote":
               return (
@@ -263,6 +297,28 @@ export function BlockRenderer({
 
             case "hr":
               return <hr key={idx} className="border-[rgb(var(--border))]/50" />;
+
+            case "image": {
+              const src = /^https?:\/\//i.test(b.src) ? b.src : "";
+              if (!src) return null;
+              return (
+                <figure key={idx} className="my-0">
+                  <img
+                    src={src}
+                    alt={b.alt}
+                    className="max-w-full rounded-lg border border-[rgb(var(--border))]/30"
+                  />
+                  {b.alt ? (
+                    <figcaption className="mt-1.5 text-[13px] text-center text-[rgb(var(--muted))] italic">
+                      {b.alt}
+                    </figcaption>
+                  ) : null}
+                </figure>
+              );
+            }
+
+            case "diagram":
+              return <DiagramBlock key={idx} lang={b.lang} code={b.code} />;
 
             default:
               return null;

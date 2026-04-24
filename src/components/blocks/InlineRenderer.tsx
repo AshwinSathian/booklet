@@ -2,11 +2,15 @@ import type { Inline } from "@/lib/blocks";
 import React from "react";
 
 function safeHref(href: string): string {
-  // Keep links safe: allow http(s) and mailto only.
   const trimmed = href.trim();
   if (/^https?:\/\//i.test(trimmed)) return trimmed;
   if (/^mailto:/i.test(trimmed)) return trimmed;
   return "#";
+}
+
+function safeSrc(src: string): string {
+  const trimmed = (src ?? "").trim();
+  return /^https?:\/\//i.test(trimmed) ? trimmed : "";
 }
 
 export function InlineRenderer({ inl }: { inl: Inline[] }) {
@@ -27,6 +31,12 @@ export function InlineRenderer({ inl }: { inl: Inline[] }) {
               <em key={i} className="italic text-[rgb(var(--fg))]">
                 <InlineRenderer inl={node.c} />
               </em>
+            );
+          case "del":
+            return (
+              <s key={i} className="text-[rgb(var(--muted))]">
+                <InlineRenderer inl={node.c} />
+              </s>
             );
           case "code":
             return (
@@ -49,6 +59,18 @@ export function InlineRenderer({ inl }: { inl: Inline[] }) {
                 <InlineRenderer inl={node.c} />
               </a>
             );
+          case "image": {
+            const src = safeSrc(node.src);
+            if (!src) return null;
+            return (
+              <img
+                key={i}
+                src={src}
+                alt={node.alt}
+                className="inline-block max-w-full align-middle rounded"
+              />
+            );
+          }
           default:
             return null;
         }

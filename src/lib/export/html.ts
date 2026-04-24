@@ -42,7 +42,17 @@ function renderBlock(b: Block): string {
     case "list": {
       const tag = b.ordered ? "ol" : "ul";
       const items = b.items
-        .map((it) => `<li>${renderInlines(it)}</li>`)
+        .map((it) => {
+          // Backwards compat: old published docs stored items as Inline[]
+          if (Array.isArray(it)) return `<li>${renderInlines(it as never)}</li>`;
+          const checkbox =
+            it.checked != null
+              ? `<input type="checkbox"${it.checked ? " checked" : ""} disabled />`
+              : "";
+          const text = renderInlines(it.inl);
+          const nested = it.children?.length ? blocksToHtml(it.children) : "";
+          return `<li>${checkbox}${text}${nested}</li>`;
+        })
         .join("");
       return `<${tag}>${items}</${tag}>`;
     }
@@ -74,8 +84,16 @@ function renderBlock(b: Block): string {
     }
     case "hr":
       return `<hr />`;
+    case "image": {
+      const safeSrc = sanitizeHref(b.src);
+      if (!safeSrc || safeSrc === "#") return "";
+      return `<figure><img src="${escapeAttr(safeSrc)}" alt="${escapeAttr(b.alt)}" />${b.alt ? `<figcaption>${escapeHtml(b.alt)}</figcaption>` : ""}</figure>`;
+    }
+    case "diagram": {
+      const langClass = ` class="language-${escapeAttr(b.lang)}"`;
+      return `<pre><code${langClass}>${escapeHtml(b.code)}</code></pre>`;
+    }
     default:
-      // Exhaustive guard for future block types.
       return "";
   }
 }
@@ -97,10 +115,14 @@ function renderInline(i: Inline): string {
     case "link": {
       const href = sanitizeHref(i.href);
       const safeHref = escapeAttr(href);
-      // `rel` is good hygiene for copied HTML; harmless in emails/docs.
-      return `<a href="${safeHref}" rel="noopener noreferrer">${renderInlines(
-        i.c,
-      )}</a>`;
+      return `<a href="${safeHref}" rel="noopener noreferrer">${renderInlines(i.c)}</a>`;
+    }
+    case "del":
+      return `<del>${renderInlines(i.c)}</del>`;
+    case "image": {
+      const safeSrc = sanitizeHref(i.src);
+      if (!safeSrc || safeSrc === "#") return "";
+      return `<img src="${escapeAttr(safeSrc)}" alt="${escapeAttr(i.alt)}" />`;
     }
     default:
       return "";
