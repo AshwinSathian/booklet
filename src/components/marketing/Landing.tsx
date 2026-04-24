@@ -338,7 +338,7 @@ max_connections=5 # was 50
           <ul className="mt-1.5 space-y-0.5">
             {["Pool size misconfigured", "Health check delayed", "Alert threshold too high"].map((t) => (
               <li key={t} className="flex items-start gap-1.5 text-[10px] text-text-secondary">
-                <span className="mt-[5px] h-1 w-1 shrink-0 rounded-full bg-accent" />
+                <span className="mt-1.25 h-1 w-1 shrink-0 rounded-full bg-accent" />
                 {t}
               </li>
             ))}
@@ -476,7 +476,7 @@ export function Landing() {
       <section className="relative py-20 sm:py-28 overflow-hidden">
         {/* Background mesh */}
         <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="absolute -top-40 left-1/2 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-accent opacity-[0.09] blur-[80px]" />
+          <div className="absolute -top-40 left-1/2 h-125 w-125 -translate-x-1/2 rounded-full bg-accent opacity-[0.09] blur-[80px]" />
           <div className="absolute top-40 -right-24 h-80 w-80 rounded-full bg-accent-warm opacity-[0.05] blur-[60px]" />
           <div className="absolute bottom-0 -left-20 h-72 w-72 rounded-full bg-accent opacity-[0.06] blur-[60px]" />
         </div>
@@ -502,7 +502,7 @@ export function Landing() {
               className="mt-5 text-balance text-[40px] leading-[1.08] sm:text-[58px] font-bold tracking-[-0.03em] max-w-3xl"
             >
               Your Markdown,{" "}
-              <span className="bg-gradient-to-r from-accent to-accent-soft bg-clip-text text-transparent">
+              <span className="bg-linear-to-r from-accent to-accent-soft bg-clip-text text-transparent">
                 beautifully readable.
               </span>
             </motion.h1>
