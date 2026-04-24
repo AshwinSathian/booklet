@@ -241,10 +241,6 @@ export function updateDraft(
   return saved;
 }
 
-export function touchDraft(id: string): DraftDoc | null {
-  return updateDraft(id, {});
-}
-
 export function deleteDraft(id: string): boolean {
   const db = readDb();
   if (!db.drafts[id]) return false;

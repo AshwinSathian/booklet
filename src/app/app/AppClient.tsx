@@ -589,8 +589,8 @@ function AppPageContent() {
         onOpenPublished={onOpenPublished}
         publishedUrl={lastPublishedUrl}
         copyLinkPulse={copyLinkPulse}
-        confidenceValue={settings}
-        onConfidenceValueChange={setSettings}
+        settings={settings}
+        onSettingsChange={setSettings}
         onInsertSample={onInsertSample}
         saveState={saveState}
         lastSavedAtLabel={lastSavedAtLabel}

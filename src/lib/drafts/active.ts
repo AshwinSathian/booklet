@@ -32,11 +32,3 @@ export function setActiveDraftId(id: string): void {
   }
 }
 
-export function clearActiveDraftId(): void {
-  if (!hasLocalStorage()) return;
-  try {
-    window.localStorage.removeItem(DRAFTS_STORAGE_KEYS.activeDraftId);
-  } catch {
-    // ignore
-  }
-}

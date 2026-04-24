@@ -72,8 +72,8 @@ export function TopBar({
   onOpenPublished,
   publishedUrl,
   copyLinkPulse,
-  confidenceValue,
-  onConfidenceValueChange,
+  settings,
+  onSettingsChange,
   onInsertSample,
   saveState,
   lastSavedAtLabel,
@@ -92,8 +92,8 @@ export function TopBar({
   onOpenPublished: () => void;
   publishedUrl: string | null;
   copyLinkPulse?: boolean;
-  confidenceValue: DocSettings;
-  onConfidenceValueChange: (next: DocSettings) => void;
+  settings: DocSettings;
+  onSettingsChange: (next: DocSettings) => void;
   onInsertSample: () => void;
   saveState: SaveState;
   lastSavedAtLabel?: string | null;
@@ -504,10 +504,10 @@ export function TopBar({
           <div className="flex flex-col gap-1">
             <div className="text-sm uppercase">Letter Spacing</div>
             <Dropdown
-              value={confidenceValue.spacing}
+              value={settings.spacing}
               onChange={(e) =>
-                onConfidenceValueChange({
-                  ...confidenceValue,
+                onSettingsChange({
+                  ...settings,
                   spacing: e.value,
                 })
               }
@@ -520,10 +520,10 @@ export function TopBar({
           <div className="flex flex-col gap-1">
             <div className="text-sm uppercase">Width</div>
             <Dropdown
-              value={confidenceValue.width}
+              value={settings.width}
               onChange={(e) =>
-                onConfidenceValueChange({
-                  ...confidenceValue,
+                onSettingsChange({
+                  ...settings,
                   width: e.value,
                 })
               }
@@ -536,10 +536,10 @@ export function TopBar({
           <div className="flex flex-col gap-1">
             <div className="text-sm uppercase">Code blocks</div>
             <Dropdown
-              value={confidenceValue.code}
+              value={settings.code}
               onChange={(e) =>
-                onConfidenceValueChange({
-                  ...confidenceValue,
+                onSettingsChange({
+                  ...settings,
                   code: e.value,
                 })
               }

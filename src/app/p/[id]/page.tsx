@@ -1,6 +1,7 @@
 import { BlockRenderer } from "@/components/blocks/BlockRenderer";
 import { AppLogo } from "@/components/ui/AppLogo";
 import ThemeToggle from "@/components/ui/ThemeToggle";
+import type { Block } from "@/lib/blocks";
 import { APP_NAME, ROUTES, STORAGE } from "@/lib/constants";
 import { absoluteUrl, buildMetadata } from "@/lib/seo";
 import { getDoc } from "@/lib/storage";
@@ -228,7 +229,7 @@ function formatRelative(dt: Date): string {
   return `in ${days} day${days === 1 ? "" : "s"}`;
 }
 
-function extractTitle(blocks: any[]): string | null {
+function extractTitle(blocks: Block[]): string | null {
   for (const b of blocks ?? []) {
     if (b?.t === "heading" && (b?.level === 1 || b?.level === 2)) {
       const t = inlineToText(b?.inl);
@@ -238,7 +239,7 @@ function extractTitle(blocks: any[]): string | null {
   return null;
 }
 
-function extractDescription(blocks: any[]): string {
+function extractDescription(blocks: Block[]): string {
   for (const b of blocks ?? []) {
     if (b?.t === "paragraph") {
       const t = inlineToText(b?.inl);
