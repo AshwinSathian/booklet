@@ -8,8 +8,9 @@ import { getDoc } from "@/lib/storage";
 import { buildToc, MIN_TOC_HEADINGS, type TocItem } from "@/lib/toc";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Button } from "primereact/button";
 import { Skeleton } from "primereact/skeleton";
+import { DesktopTocClient, MobileTocClient } from "@/components/share/TocClient";
+import { PrintButton } from "@/components/share/PrintButton";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,7 +26,7 @@ export async function generateMetadata({
   if (!doc) {
     return buildMetadata({
       title: "Not found",
-      description: "This page doesn’t exist or it has expired.",
+      description: "This page doesn't exist or it has expired.",
       pathname: `/p/${id}`,
       noIndex: true,
     });
@@ -34,7 +35,6 @@ export async function generateMetadata({
   const title = extractTitle(doc.blocks) ?? "Shared page";
   const description = extractDescription(doc.blocks);
 
-  // Force explicit, absolute images (prevents localhost leaks and satisfies Meta).
   const ogImage = absoluteUrl("/opengraph-image");
   const twImage = absoluteUrl("/twitter-image");
 
@@ -51,27 +51,13 @@ export async function generateMetadata({
       title: `${title} — ${APP_NAME}`,
       description,
       url: absoluteUrl(`/p/${id}`),
-      images: [
-        {
-          url: ogImage,
-          width: 1200,
-          height: 630,
-          alt: `${APP_NAME} preview`,
-        },
-      ],
+      images: [{ url: ogImage, width: 1200, height: 630, alt: `${APP_NAME} preview` }],
     },
     twitter: {
       card: "summary_large_image",
       title: `${title} — ${APP_NAME}`,
       description,
-      images: [
-        {
-          url: twImage,
-          width: 1200,
-          height: 630,
-          alt: `${APP_NAME} preview`,
-        },
-      ],
+      images: [{ url: twImage, width: 1200, height: 630, alt: `${APP_NAME} preview` }],
     },
   };
 }
@@ -88,40 +74,47 @@ export default async function SharePage({
 
   const createdAt = new Date(doc.createdAt);
   const expiresAt = new Date(createdAt.getTime() + STORAGE.ttlSeconds * 1000);
+  const daysLeft = Math.ceil((expiresAt.getTime() - Date.now()) / 86_400_000);
 
   const { toc, anchorMap } = buildToc(doc.blocks ?? []);
   const showToc = toc.length >= MIN_TOC_HEADINGS;
 
+  const maxW = doc.settings?.width === "wide" ? "max-w-4xl" : "max-w-3xl";
+
   return (
     <div className="min-h-screen bg-bg text-text-primary">
-      <header className="sticky top-0 z-20 border-b border-outline bg-bg-glass/85 backdrop-blur">
-        <div
-          className={[
-            "mx-auto w-full px-4 py-3 flex items-center justify-between gap-4",
-            doc.settings?.width === "wide" ? "max-w-4xl" : "max-w-3xl",
-          ].join(" ")}
-        >
+      {/* ── Sticky header ── */}
+      <header className="sticky top-0 z-20 border-b border-outline/70 bg-bg/85 backdrop-blur-xl print:hidden">
+        <div className={`mx-auto w-full px-4 py-3 flex items-center justify-between gap-4 ${maxW}`}>
           <AppLogo onlyIcon={false} />
 
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="hidden sm:block text-right text-[11px] text-[rgb(var(--muted))] uppercase tracking-widest">
-              <div>Published {createdAt.toLocaleString()}</div>
-              <div>Expires {formatRelative(expiresAt)}</div>
-            </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Expiry badge */}
+            <ExpiryBadge daysLeft={daysLeft} />
+
+            <PrintButton />
+
             <ThemeToggle />
+
+            {/* "Make your own" CTA */}
+            <Link
+              href={ROUTES.app}
+              className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-accent px-3.5 py-1.5 text-[11px] font-semibold text-white transition hover:bg-accent-hover"
+            >
+              Make your own
+              <svg width="11" height="11" fill="none" viewBox="0 0 11 11" aria-hidden>
+                <path d="M2 9 9 2M9 2H4.5M9 2v4.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </Link>
           </div>
         </div>
       </header>
 
-      <main
-        className={[
-          "mx-auto w-full flex-1 min-h-0 overflow-y-auto px-4 py-6",
-          doc.settings?.width === "wide" ? "max-w-4xl" : "max-w-3xl",
-        ].join(" ")}
-      >
-        {showToc ? <MobileToc toc={toc} /> : null}
+      {/* ── Main content ── */}
+      <main className={`mx-auto w-full flex-1 min-h-0 px-4 py-8 ${maxW}`}>
+        {showToc ? <MobileTocClient toc={toc} /> : null}
 
-        <div className="flex flex-col lg:flex-row gap-10">
+        <div className="flex flex-col lg:flex-row gap-12">
           <div className="min-w-0 flex-1">
             {doc?.blocks ? (
               <BlockRenderer
@@ -131,108 +124,115 @@ export default async function SharePage({
               />
             ) : (
               [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-                <Skeleton key={n} className="my-2 w-full"></Skeleton>
+                <Skeleton key={n} className="my-2 w-full" />
               ))
             )}
           </div>
 
-          {showToc ? <DesktopToc toc={toc} /> : null}
+          {showToc ? <DesktopTocClient toc={toc} /> : null}
         </div>
       </main>
 
-      <div className="mt-5 text-sm text-[rgb(var(--muted))] text-center">
-        Generated with Readable.
-      </div>
-
-      <div className="mt-5 pb-6 flex items-center justify-center gap-4 text-[12px] text-[rgb(var(--muted))]">
-        © {new Date().getFullYear()} {APP_NAME}. Built for clarity.
-      </div>
-    </div>
-  );
-}
-
-function MobileToc({ toc }: { toc: TocItem[] }) {
-  return (
-    <div className="lg:hidden mb-6">
-      <details className="rounded-xl border border-outline bg-bg-glass/40">
-        <summary className="cursor-pointer select-none px-4 py-3 text-sm font-semibold tracking-wide">
-          Table of contents
-        </summary>
-        <nav aria-label="Table of contents" className="px-4 pb-4">
-          <ul className="flex flex-col gap-2 text-sm">
-            {toc.map((item) => (
-              <li
-                key={item.id}
-                className={
-                  item.level === 1 ? "pl-0" : item.level === 2 ? "pl-3" : "pl-6"
-                }
-              >
-                <a
-                  href={`#${item.id}`}
-                  className="text-[rgb(var(--muted))] hover:text-[rgb(var(--fg))] underline-offset-4 hover:underline focus:outline-none focus:ring-2 focus:ring-[rgb(var(--border))] rounded-sm"
-                >
-                  {item.text}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </nav>
-      </details>
-    </div>
-  );
-}
-
-function DesktopToc({ toc }: { toc: TocItem[] }) {
-  return (
-    <aside className="hidden lg:block w-64 shrink-0">
-      <div className="sticky top-24">
-        <div className="text-[11px] text-[rgb(var(--muted))] uppercase tracking-widest mb-3">
-          On this page
+      {/* ── Footer ── */}
+      <footer className="mt-12 border-t border-outline/50 print:hidden">
+        <div className={`mx-auto w-full px-4 py-6 ${maxW}`}>
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-[12px] text-text-muted">
+            <div className="flex items-center gap-2">
+              <AppLogo onlyIcon={true} />
+              <span>Published via {APP_NAME}</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <span>
+                Published {createdAt.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
+              </span>
+              <Link href={ROUTES.app} className="text-accent transition hover:text-accent-soft">
+                Create your own →
+              </Link>
+            </div>
+          </div>
         </div>
-        <nav aria-label="Table of contents">
-          <ul className="flex flex-col gap-2 text-sm">
-            {toc.map((item) => (
-              <li
-                key={item.id}
-                className={
-                  item.level === 1 ? "pl-0" : item.level === 2 ? "pl-3" : "pl-6"
-                }
-              >
-                <a
-                  href={`#${item.id}`}
-                  className="text-[rgb(var(--muted))] hover:text-[rgb(var(--fg))] underline-offset-4 hover:underline focus:outline-none focus:ring-2 focus:ring-[rgb(var(--border))] rounded-sm"
-                >
-                  {item.text}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </nav>
-      </div>
-    </aside>
+      </footer>
+    </div>
   );
 }
 
-function formatRelative(dt: Date): string {
-  const now = Date.now();
-  const diff = dt.getTime() - now;
+// ---------------------------------------------------------------------------
+// Expiry badge
+// ---------------------------------------------------------------------------
 
-  if (diff <= 0) return "already expired";
+function ExpiryBadge({ daysLeft }: { daysLeft: number }) {
+  if (daysLeft <= 0) {
+    return (
+      <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-red-500/30 bg-red-500/10 px-2.5 py-0.5 text-[10px] font-medium text-red-400">
+        Expired
+      </span>
+    );
+  }
 
-  const mins = Math.floor(diff / 60000);
-  if (mins < 60) return `in ${mins} minute${mins === 1 ? "" : "s"}`;
+  if (daysLeft <= 7) {
+    return (
+      <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-amber-400/30 bg-amber-400/10 px-2.5 py-0.5 text-[10px] font-medium text-amber-400">
+        <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+        Expires in {daysLeft} {daysLeft === 1 ? "day" : "days"}
+      </span>
+    );
+  }
 
-  const hours = Math.floor(mins / 60);
-  if (hours < 48) return `in ${hours} hour${hours === 1 ? "" : "s"}`;
-
-  const days = Math.floor(hours / 24);
-  return `in ${days} day${days === 1 ? "" : "s"}`;
+  return (
+    <span className="hidden sm:inline-flex items-center rounded-full border border-outline/60 px-2.5 py-0.5 text-[10px] text-text-muted">
+      Expires in {daysLeft} days
+    </span>
+  );
 }
+
+// ---------------------------------------------------------------------------
+// Not found
+// ---------------------------------------------------------------------------
+
+function NotFoundOrExpired() {
+  return (
+    <main className="w-screen h-screen flex items-center justify-center bg-bg text-text-primary">
+      <div className="p-8 text-center flex flex-col items-center gap-4">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-outline/30 text-2xl">
+          🔍
+        </div>
+        <div>
+          <div className="text-[16px] font-semibold">Page not found</div>
+          <div className="mt-1 text-[13px] text-text-secondary">
+            This page doesn&apos;t exist or has expired after 30 days.
+          </div>
+        </div>
+        <Link
+          href={ROUTES.app}
+          className="inline-flex items-center gap-1.5 rounded-full bg-accent px-5 py-2.5 text-[13px] font-semibold text-white transition hover:bg-accent-hover"
+        >
+          Create a Readable page
+          <svg width="12" height="12" fill="none" viewBox="0 0 12 12" aria-hidden>
+            <path d="M2.5 9.5 9.5 2.5M9.5 2.5H4M9.5 2.5V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </Link>
+        <AppLogo onlyIcon={false} />
+      </div>
+    </main>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Static params
+// ---------------------------------------------------------------------------
+
+export async function generateStaticParams(): Promise<{ id: string }[]> {
+  return [];
+}
+
+// ---------------------------------------------------------------------------
+// Metadata helpers
+// ---------------------------------------------------------------------------
 
 function extractTitle(blocks: Block[]): string | null {
   for (const b of blocks ?? []) {
     if (b?.t === "heading" && (b?.level === 1 || b?.level === 2)) {
-      const t = inlineToText(b?.inl);
+      const t = inlineToText((b as any)?.inl);
       if (t) return clamp(t, 64);
     }
   }
@@ -242,20 +242,22 @@ function extractTitle(blocks: Block[]): string | null {
 function extractDescription(blocks: Block[]): string {
   for (const b of blocks ?? []) {
     if (b?.t === "paragraph") {
-      const t = inlineToText(b?.inl);
+      const t = inlineToText((b as any)?.inl);
       if (t) return clamp(t, 160);
     }
   }
   return "A clean, readable share page.";
 }
 
-function inlineToText(inl: any): string {
+function inlineToText(inl: unknown): string {
   if (!inl) return "";
   if (Array.isArray(inl)) return inl.map(inlineToText).join("").trim();
   if (typeof inl === "string") return inl;
-  if (inl.t === "text" || inl.t === "code") return String(inl.v ?? "");
-  if (inl.t === "link") return inlineToText(inl.c);
-  if (inl.t === "strong" || inl.t === "em") return inlineToText(inl.c);
+  if (typeof inl !== "object" || inl === null) return "";
+  const o = inl as Record<string, unknown>;
+  if (o.t === "text" || o.t === "code") return String(o.v ?? "");
+  if (o.t === "link") return inlineToText(o.c);
+  if (o.t === "strong" || o.t === "em") return inlineToText(o.c);
   return "";
 }
 
@@ -263,33 +265,4 @@ function clamp(s: string, n: number) {
   const t = s.replace(/\s+/g, " ").trim();
   if (t.length <= n) return t;
   return t.slice(0, Math.max(0, n - 1)).trimEnd() + "…";
-}
-
-function NotFoundOrExpired() {
-  return (
-    <main className="w-screen h-screen flex items-center justify-center bg-bg text-text-primary">
-      <div className="p-8 text-center flex flex-col gap-2">
-        <div className="text-lg font-semibold uppercase tracking-wide">
-          Not found
-        </div>
-        <div className="text-sm text-[rgb(var(--muted))] uppercase tracking-widest">
-          This page doesn’t exist or it has expired.
-        </div>
-        <Link href={ROUTES.app}>
-          <Button
-            label="Create a Readable page"
-            rounded
-            className="min-w-fit uppercase tracking-wide"
-            size="small"
-          />
-        </Link>
-
-        <AppLogo onlyIcon={false} />
-      </div>
-    </main>
-  );
-}
-
-export async function generateStaticParams(): Promise<{ id: string }[]> {
-  return [];
 }

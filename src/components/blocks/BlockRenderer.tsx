@@ -2,7 +2,6 @@
 
 import type { Block, DocSettings } from "@/lib/blocks";
 import { UI } from "@/lib/constants";
-import { ScrollTop } from "primereact/scrolltop";
 import type { JSX } from "react";
 import { useMemo, useState } from "react";
 import { InlineRenderer } from "./InlineRenderer";
@@ -25,43 +24,67 @@ function CodeBlock({
   settings: DocSettings;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [copyState, setCopyState] = useState<"idle" | "copied">("idle");
 
   const lines = useMemo(() => code.split("\n").length, [code]);
-  const shouldCollapse =
-    settings.code === "collapse" && lines > UI.maxCodeCollapseLines;
-
+  const shouldCollapse = settings.code === "collapse" && lines > UI.maxCodeCollapseLines;
   const isCollapsed = shouldCollapse && !expanded;
 
+  async function onCopy() {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopyState("copied");
+      setTimeout(() => setCopyState("idle"), 1600);
+    } catch {
+      // silently ignore — clipboard may not be available
+    }
+  }
+
   return (
-    <div className="rounded-xl border border-outline overflow-hidden bg-bg-glass">
-      <div className="flex items-center justify-between px-3 py-2 text-xs text-[rgb(var(--muted))] bg-[rgb(var(--border))]/20">
+    <div className="rounded-xl border border-[rgb(var(--border))] overflow-hidden bg-bg-elevated">
+      {/* Header bar */}
+      <div className="flex items-center justify-between px-3 py-2 border-b border-[rgb(var(--border))]/60 bg-[rgb(var(--border))]/12">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="inline-block w-2 h-2 rounded-full bg-[rgb(var(--muted))]/55" />
-          <span className="truncate">{lang ? lang : "code"}</span>
+          <div className="flex gap-1">
+            <span className="h-2 w-2 rounded-full bg-[rgb(var(--muted))]/30" />
+            <span className="h-2 w-2 rounded-full bg-[rgb(var(--muted))]/30" />
+            <span className="h-2 w-2 rounded-full bg-[rgb(var(--muted))]/30" />
+          </div>
+          <span className="truncate text-[11px] font-mono text-[rgb(var(--muted))]">
+            {lang ?? "code"}
+          </span>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
-          <span className="tabular-nums">{lines} lines</span>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="tabular-nums text-[10px] text-[rgb(var(--muted))]">{lines} lines</span>
 
           {shouldCollapse ? (
             <button
               type="button"
               onClick={() => setExpanded((v) => !v)}
-              className="rounded-md border border-outline px-2 py-1 text-[10px] uppercase tracking-widest hover:bg-[rgb(var(--border))]/15"
-              aria-label={
-                expanded ? "Collapse code block" : "Expand code block"
-              }
+              className="rounded-md border border-[rgb(var(--border))]/60 px-2 py-0.5 text-[10px] font-medium text-[rgb(var(--muted))] transition hover:bg-[rgb(var(--border))]/20 hover:text-[rgb(var(--fg))]"
+              aria-label={expanded ? "Collapse code block" : "Expand code block"}
             >
               {expanded ? "Collapse" : "Expand"}
             </button>
           ) : null}
+
+          <button
+            type="button"
+            onClick={() => void onCopy()}
+            className="rounded-md border border-[rgb(var(--border))]/60 px-2 py-0.5 text-[10px] font-medium text-[rgb(var(--muted))] transition hover:bg-[rgb(var(--border))]/20 hover:text-[rgb(var(--fg))]"
+            aria-label="Copy code"
+          >
+            {copyState === "copied" ? "✓ Copied" : "Copy"}
+          </button>
         </div>
       </div>
 
+      {/* Code body */}
       <pre
         className={[
-          "p-3 text-sm leading-6 overflow-auto",
-          "font-mono",
+          "p-4 text-[13px] leading-[1.65] overflow-auto",
+          "font-mono text-[rgb(var(--fg))]",
           isCollapsed ? "max-h-96" : "",
         ].join(" ")}
       >
@@ -69,17 +92,10 @@ function CodeBlock({
       </pre>
 
       {isCollapsed ? (
-        <div className="px-3 py-2 text-xs text-[rgb(var(--muted))] border-t border-[rgb(var(--border))]/70 bg-[rgb(var(--border))]/10">
-          Collapsed for readability. Use Expand to view the full block.
+        <div className="px-3 py-2 text-[11px] text-[rgb(var(--muted))] border-t border-[rgb(var(--border))]/50 bg-[rgb(var(--border))]/8">
+          Collapsed — use Expand to view the full block.
         </div>
       ) : null}
-
-      <ScrollTop
-        target="parent"
-        threshold={120}
-        className="w-2rem h-2rem border-round-md bg-primary"
-        icon="pi pi-arrow-up text-base"
-      />
     </div>
   );
 }
@@ -97,32 +113,24 @@ export function BlockRenderer({
 }) {
   return (
     <div className={["w-full", proseWidthClass(settings)].join(" ")}>
-      <div
-        className={["flex flex-col w-full", spacingClass(settings)].join(" ")}
-      >
+      <div className={["flex flex-col w-full", spacingClass(settings)].join(" ")}>
         {blocks.map((b, idx) => {
           const blockKey = keyPrefix ? `${keyPrefix}.${idx}` : String(idx);
 
           switch (b.t) {
             case "heading": {
               const Tag = (
-                b.level === 1
-                  ? "h1"
-                  : b.level === 2
-                    ? "h2"
-                    : b.level === 3
-                      ? "h3"
-                      : "h4"
+                b.level === 1 ? "h1" : b.level === 2 ? "h2" : b.level === 3 ? "h3" : "h4"
               ) as keyof JSX.IntrinsicElements;
 
               const cls =
                 b.level === 1
-                  ? "text-3xl sm:text-4xl font-semibold tracking-tight leading-tight"
+                  ? "text-[28px] sm:text-[34px] font-bold tracking-[-0.02em] leading-[1.12]"
                   : b.level === 2
-                    ? "text-2xl sm:text-3xl font-semibold tracking-tight leading-tight"
+                    ? "text-[22px] sm:text-[26px] font-semibold tracking-[-0.015em] leading-[1.2]"
                     : b.level === 3
-                      ? "text-xl sm:text-2xl font-semibold leading-snug"
-                      : "text-lg font-semibold leading-snug";
+                      ? "text-[18px] sm:text-[20px] font-semibold leading-snug"
+                      : "text-[16px] font-semibold leading-snug";
 
               const anchorId = headingAnchors?.[blockKey];
 
@@ -131,7 +139,7 @@ export function BlockRenderer({
                   key={idx}
                   id={anchorId}
                   className={[
-                    "group scroll-mt-24",
+                    "group scroll-mt-24 text-[rgb(var(--fg))]",
                     cls,
                     anchorId ? "relative" : "",
                   ].join(" ")}
@@ -143,11 +151,11 @@ export function BlockRenderer({
                         href={`#${anchorId}`}
                         className={[
                           "text-[rgb(var(--muted))]",
-                          "opacity-0 group-hover:opacity-70",
+                          "opacity-0 group-hover:opacity-60",
                           "focus:opacity-100",
-                          "underline-offset-4 hover:underline",
                           "rounded-sm focus:outline-none focus:ring-2 focus:ring-[rgb(var(--border))]",
-                          "px-1",
+                          "text-[0.7em] px-1",
+                          "transition",
                         ].join(" ")}
                         aria-label="Link to this section"
                       >
@@ -163,7 +171,7 @@ export function BlockRenderer({
               return (
                 <p
                   key={idx}
-                  className="text-[15px] sm:text-base leading-7 text-[rgb(var(--fg))]"
+                  className="text-[15px] sm:text-[16px] leading-[1.8] text-[rgb(var(--fg))]"
                 >
                   <InlineRenderer inl={b.inl} />
                 </p>
@@ -173,23 +181,19 @@ export function BlockRenderer({
               return b.ordered ? (
                 <ol
                   key={idx}
-                  className="list-decimal pl-6 space-y-2 text-[15px] sm:text-base leading-7 text-[rgb(var(--fg))]"
+                  className="list-decimal pl-6 space-y-2 text-[15px] sm:text-[16px] leading-[1.8] text-[rgb(var(--fg))]"
                 >
                   {b.items.map((it, i) => (
-                    <li key={i}>
-                      <InlineRenderer inl={it} />
-                    </li>
+                    <li key={i}><InlineRenderer inl={it} /></li>
                   ))}
                 </ol>
               ) : (
                 <ul
                   key={idx}
-                  className="list-disc pl-6 space-y-2 text-[15px] sm:text-base leading-7 text-[rgb(var(--fg))]"
+                  className="list-disc pl-6 space-y-2 text-[15px] sm:text-[16px] leading-[1.8] text-[rgb(var(--fg))]"
                 >
                   {b.items.map((it, i) => (
-                    <li key={i}>
-                      <InlineRenderer inl={it} />
-                    </li>
+                    <li key={i}><InlineRenderer inl={it} /></li>
                   ))}
                 </ul>
               );
@@ -198,9 +202,11 @@ export function BlockRenderer({
               return (
                 <div
                   key={idx}
-                  className="rounded-xl border border-[rgb(var(--border))]/80 bg-[rgb(var(--border))]/10 px-4 py-3"
+                  className="relative pl-4 py-0.5"
                 >
-                  <div className="border-l-4 border-[rgb(var(--border))] pl-4">
+                  {/* Accent left border */}
+                  <div className="absolute left-0 top-0 bottom-0 w-0.75 rounded-full bg-accent/50" />
+                  <div className="text-[15px] leading-[1.8] text-[rgb(var(--muted))] italic">
                     <BlockRenderer
                       blocks={b.blocks}
                       settings={settings}
@@ -213,12 +219,7 @@ export function BlockRenderer({
 
             case "code":
               return (
-                <CodeBlock
-                  key={idx}
-                  lang={b.lang}
-                  code={b.code}
-                  settings={settings}
-                />
+                <CodeBlock key={idx} lang={b.lang} code={b.code} settings={settings} />
               );
 
             case "table":
@@ -228,13 +229,13 @@ export function BlockRenderer({
                   className="rounded-xl border border-[rgb(var(--border))] overflow-hidden"
                 >
                   <div className="overflow-auto">
-                    <table className="min-w-2xl w-full text-sm">
-                      <thead className="bg-[rgb(var(--border))]/20">
+                    <table className="min-w-2xl w-full text-[14px]">
+                      <thead className="bg-[rgb(var(--border))]/15">
                         <tr>
                           {b.head.map((cell, i) => (
                             <th
                               key={i}
-                              className="text-left px-3 py-2 font-semibold text-[rgb(var(--fg))] border-b border-[rgb(var(--border))]"
+                              className="text-left px-4 py-2.5 font-semibold text-[rgb(var(--fg))] border-b border-[rgb(var(--border))]"
                             >
                               <InlineRenderer inl={cell} />
                             </th>
@@ -243,11 +244,11 @@ export function BlockRenderer({
                       </thead>
                       <tbody>
                         {b.rows.map((row, r) => (
-                          <tr key={r} className="odd:bg-[rgb(var(--border))]/8">
+                          <tr key={r} className="odd:bg-[rgb(var(--border))]/6 transition hover:bg-[rgb(var(--border))]/12">
                             {row.map((cell, c) => (
                               <td
                                 key={c}
-                                className="px-3 py-2 align-top border-b border-[rgb(var(--border))]/50 text-[rgb(var(--fg))]"
+                                className="px-4 py-2.5 align-top border-b border-[rgb(var(--border))]/40 text-[rgb(var(--fg))]"
                               >
                                 <InlineRenderer inl={cell} />
                               </td>
@@ -257,16 +258,11 @@ export function BlockRenderer({
                       </tbody>
                     </table>
                   </div>
-                  <div className="px-3 py-2 text-xs text-[rgb(var(--muted))] bg-[rgb(var(--border))]/10 border-t border-[rgb(var(--border))]">
-                    Tip: tables scroll horizontally on small screens.
-                  </div>
                 </div>
               );
 
             case "hr":
-              return (
-                <hr key={idx} className="border-[rgb(var(--border))]/70" />
-              );
+              return <hr key={idx} className="border-[rgb(var(--border))]/50" />;
 
             default:
               return null;

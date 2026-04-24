@@ -168,3 +168,21 @@ button {
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
+
+/* ---- Print styles ---- */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  .print\:hidden {
+    display: none !important;
+  }
+
+  pre,
+  code {
+    white-space: pre-wrap !important;
+    word-break: break-all !important;
+  }
+}
