@@ -1,26 +1,15 @@
 "use client";
 
-import { InputTextarea } from "primereact/inputtextarea";
-import type { Ref } from "react";
-import { useEffect, useRef } from "react";
-
-const LABELS = {
-  shortcutHint: "Cmd/Ctrl+K focuses this box.",
-  emptyHint: "Start writing… Autosave keeps your draft safe.",
-  placeholder:
-    "Paste anything that looks technical: an explanation, a checklist, logs, tables, code…",
-} as const;
+import { useEffect, useMemo, useRef } from "react";
 
 export function PasteInput({
   value,
   onChange,
   onFocusShortcutRequested,
-  showEmptyHint,
 }: {
   value: string;
   onChange: (v: string) => void;
   onFocusShortcutRequested?: (focusFn: () => void) => void;
-  showEmptyHint?: boolean;
 }) {
   const ref = useRef<HTMLTextAreaElement | null>(null);
 
@@ -30,28 +19,54 @@ export function PasteInput({
     }
   }, [onFocusShortcutRequested]);
 
+  const wordCount = useMemo(() => {
+    const trimmed = value.trim();
+    if (!trimmed) return 0;
+    return trimmed.split(/\s+/).length;
+  }, [value]);
+
+  const charCount = value.length;
+
   return (
     <div className="flex h-full max-h-full min-h-0 flex-col overflow-hidden w-full">
-      <div className="shrink-0 px-3 py-2 flex flex-col gap-1">
-        <div className="hidden md:block text-text-primary text-xs uppercase tracking-wide">
-          {LABELS.shortcutHint}
-        </div>
-        {showEmptyHint && !value.trim() ? (
-          <div className="text-xs text-[rgb(var(--muted))]">
-            {LABELS.emptyHint}
-          </div>
-        ) : null}
+      {/* Pane label */}
+      <div className="shrink-0 flex items-center justify-between px-3 py-2 border-b border-outline/50">
+        <span className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">
+          Editor
+        </span>
+        <span className="text-[10px] text-text-muted">
+          <kbd className="rounded border border-outline bg-bg-elevated px-1 py-0.5 font-mono text-[9px]">⌘K</kbd>
+          {" "}focus
+        </span>
       </div>
 
+      {/* Textarea */}
       <div className="flex-1 min-h-0 overflow-hidden w-full">
-        <InputTextarea
-          ref={ref as unknown as Ref<HTMLTextAreaElement>}
+        <textarea
+          ref={ref}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          autoResize={false}
-          placeholder={LABELS.placeholder}
-          className="h-full w-full min-h-0 min-w-0 overflow-y-auto rounded-xl border border-outline p-3 text-xs leading-tight font-mono!"
+          placeholder="Paste anything Markdown-shaped: notes, READMEs, incident summaries, tables, code…"
+          spellCheck={false}
+          className={[
+            "h-full w-full min-h-0 min-w-0",
+            "resize-none overflow-y-auto",
+            "bg-bg text-text-primary",
+            "font-mono text-[13px] leading-[1.65]",
+            "p-3 pt-4",
+            "placeholder:text-text-muted/50",
+            "focus:outline-none",
+            "caret-accent",
+          ].join(" ")}
         />
+      </div>
+
+      {/* Footer: word/char count */}
+      <div className="shrink-0 flex items-center gap-3 border-t border-outline/50 px-3 py-1.5">
+        <span className="text-[10px] text-text-muted">
+          {wordCount} {wordCount === 1 ? "word" : "words"}
+        </span>
+        <span className="text-[10px] text-text-muted">{charCount} chars</span>
       </div>
     </div>
   );

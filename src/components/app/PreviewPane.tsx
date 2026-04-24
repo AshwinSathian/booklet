@@ -3,7 +3,6 @@
 import { BlockRenderer } from "@/components/blocks/BlockRenderer";
 import type { Block, DocSettings } from "@/lib/blocks";
 import { SAMPLE_MARKDOWN } from "@/lib/sample";
-import { Button } from "primereact/button";
 import { useState } from "react";
 
 export function PreviewPane({
@@ -19,9 +18,7 @@ export function PreviewPane({
   isBusy: boolean;
   onInsertSample?: () => void;
 }) {
-  const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">(
-    "idle",
-  );
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
 
   async function onCopySample() {
     try {
@@ -36,68 +33,109 @@ export function PreviewPane({
 
   return (
     <div className="flex h-full max-h-full min-h-0 flex-col w-full overflow-hidden">
-      <div className="shrink-0 px-3 py-2 text-text-primary text-xs uppercase tracking-wide">
-        This is a preview. Publish to make this public and accessible by link.
+      {/* Pane label */}
+      <div className="shrink-0 flex items-center justify-between px-3 py-2 border-b border-outline/50">
+        <span className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">
+          Preview
+        </span>
+        <span className="text-[10px] text-text-muted">
+          Live · ⌘↵ to publish
+        </span>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto rounded-sm border border-outline bg-bg-glass p-3">
+      <div className="flex-1 min-h-0 overflow-y-auto bg-bg-soft/40 border-l border-outline/30">
         {isBusy ? (
-          <div className="text-xs text-[rgb(var(--muted))] uppercase tracking-widest">
-            Updating…
+          <div className="flex h-full items-start p-4">
+            <span className="text-[10px] font-medium uppercase tracking-widest text-text-muted animate-pulse">
+              Updating…
+            </span>
           </div>
         ) : isEmpty ? (
-          <div className="flex h-full w-full items-center justify-center px-6 py-4 text-center text-sm text-[rgb(var(--muted))]">
-            <div className="max-w-lg">
-              <div className="uppercase tracking-wide">
-                <div className="text-lg font-semibold mb-2 text-text-primary">
-                  Paste. Preview. Publish. Share.
-                </div>
-                <div className="leading-6">
-                  Paste Markdown on the left. Preview on the right. Publish for
-                  a link.
-                </div>
-              </div>
-
-              <div className="mt-5 rounded-xl border border-outline bg-bg-soft text-left p-3">
-                <div className="w-full flex items-center justify-between gap-2">
-                  <div className="text-md uppercase tracking-widest text-[rgb(var(--muted))]">
-                    Sample
-                  </div>
-
-                  <div className="flex items-center gap-1">
-                    <Button
-                      icon="pi pi-file-import"
-                      size="small"
-                      onClick={onInsertSample}
-                      severity="secondary"
-                      text
-                      raised
-                      className="text-xs uppercase tracking-widest p-1"
-                      disabled={!onInsertSample}
-                    />
-                    <Button
-                      icon="pi pi-copy"
-                      size="small"
-                      onClick={onCopySample}
-                      severity={copyState === "failed" ? "danger" : "secondary"}
-                      text
-                      raised
-                      className="text-xs uppercase tracking-widest p-1"
-                    />
-                  </div>
-                </div>
-
-                <pre className="mt-3 text-xs leading-5 font-mono whitespace-pre-wrap">
-                  {SAMPLE_MARKDOWN.slice(0, 260)}…
-                </pre>
-              </div>
-            </div>
-          </div>
+          <EmptyState onInsertSample={onInsertSample} onCopySample={onCopySample} copyState={copyState} />
         ) : (
-          <div className="h-full w-full overflow-y-auto px-3 py-2">
+          <div className="h-full w-full overflow-y-auto px-4 py-5">
             <BlockRenderer blocks={blocks} settings={settings} />
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function EmptyState({
+  onInsertSample,
+  onCopySample,
+  copyState,
+}: {
+  onInsertSample?: () => void;
+  onCopySample: () => void;
+  copyState: "idle" | "copied" | "failed";
+}) {
+  return (
+    <div className="flex h-full items-center justify-center p-6">
+      <div className="w-full max-w-sm text-center">
+        <div className="mb-4 flex justify-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/10 text-2xl">
+            📄
+          </div>
+        </div>
+        <div className="text-[15px] font-semibold tracking-tight">
+          Paste. Preview. Publish.
+        </div>
+        <div className="mt-2 text-[13px] leading-[1.7] text-text-secondary">
+          Type or paste Markdown on the left. Your formatted preview appears here live.
+        </div>
+
+        {/* Sample Markdown teaser */}
+        <div className="mt-5 rounded-xl border border-outline bg-bg-elevated text-left overflow-hidden">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-outline">
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">
+              Sample
+            </span>
+            <div className="flex items-center gap-1">
+              {onInsertSample ? (
+                <button
+                  type="button"
+                  onClick={onInsertSample}
+                  title="Insert sample"
+                  className="rounded-md px-2 py-1 text-[10px] font-medium text-text-muted transition hover:bg-outline/30 hover:text-text-primary"
+                >
+                  Insert
+                </button>
+              ) : null}
+              <button
+                type="button"
+                onClick={onCopySample}
+                title="Copy sample"
+                className={[
+                  "rounded-md px-2 py-1 text-[10px] font-medium transition",
+                  copyState === "copied"
+                    ? "text-emerald-400"
+                    : copyState === "failed"
+                      ? "text-red-400"
+                      : "text-text-muted hover:bg-outline/30 hover:text-text-primary",
+                ].join(" ")}
+              >
+                {copyState === "copied" ? "Copied!" : copyState === "failed" ? "Failed" : "Copy"}
+              </button>
+            </div>
+          </div>
+          <pre className="p-3 font-mono text-[11px] leading-[1.65] text-text-secondary whitespace-pre-wrap">
+            {SAMPLE_MARKDOWN.slice(0, 260)}…
+          </pre>
+        </div>
+
+        {/* Keyboard hint */}
+        <div className="mt-4 text-[11px] text-text-muted">
+          <kbd className="rounded border border-outline bg-bg-elevated px-1 py-0.5 font-mono text-[9px]">⌘</kbd>
+          {" + "}
+          <kbd className="rounded border border-outline bg-bg-elevated px-1 py-0.5 font-mono text-[9px]">K</kbd>
+          {" "}to focus editor ·{" "}
+          <kbd className="rounded border border-outline bg-bg-elevated px-1 py-0.5 font-mono text-[9px]">⌘</kbd>
+          {" + "}
+          <kbd className="rounded border border-outline bg-bg-elevated px-1 py-0.5 font-mono text-[9px]">↵</kbd>
+          {" "}to publish
+        </div>
       </div>
     </div>
   );

@@ -5,53 +5,463 @@ import { ANALYTICS_EVENTS } from "@/lib/analytics-events";
 import { DocSettings } from "@/lib/blocks";
 import { UI } from "@/lib/constants";
 import { copyTextToClipboard, markdownToHtml } from "@/lib/export";
-import { Button } from "primereact/button";
-import { Dialog } from "primereact/dialog";
-import { Dropdown } from "primereact/dropdown";
-import { Menubar } from "primereact/menubar";
-import { Tag } from "primereact/tag";
-import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AppLogo } from "../ui/AppLogo";
 import ThemeToggle from "../ui/ThemeToggle";
 import { useToast } from "../ui/ToastProvider";
 import { DraftsDialog } from "./DraftsDialog";
 
-type EditorStatus = "idle" | "typing" | "publishing" | "published" | "error";
 export type SaveState = "saved" | "saving";
+type EditorStatus = "idle" | "typing" | "publishing" | "published" | "error";
 
-const LABELS = {
-  file: "File",
-  newDraft: "New",
-  myDrafts: "My drafts",
-  importMarkdown: "Import Markdown",
-  copyAs: "Copy as",
-  copyAsMarkdown: "Markdown",
-  copyAsHtml: "HTML",
-  insertSample: "Insert sample",
-  quit: "Quit",
-  edit: "Edit",
-  settings: "Settings",
-  appSettings: "App Settings",
-  done: "Done",
+// ---------------------------------------------------------------------------
+// Icon primitives
+// ---------------------------------------------------------------------------
 
-  saveSaved: "Saved",
-  saveSaving: "Saving…",
-  saveSavedAt: "Saved at",
+function Icon({ d, size = 16 }: { d: string; size?: number }) {
+  return (
+    <svg width={size} height={size} fill="none" viewBox={`0 0 ${size} ${size}`} aria-hidden>
+      <path d={d} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
 
-  saveWarning: "Could not save locally. Your browser storage may be full.",
-  saveWarningAction: "Export Markdown",
+const ICONS = {
+  plus: "M8 3v10M3 8h10",
+  list: "M3 4h10M3 8h10M3 12h6",
+  upload: "M8 11V3M4 7l4-4 4 4M3 13h10",
+  copy: "M5 5h6v6H5zM9 5V3h4v4h-2M5 9H3v4h4v-2",
+  code: "M10 12 13 9 10 6M6 6 3 9l3 3",
+  import: "M8 3v8M5 8l3 3 3-3M3 13h10",
+  link: "M7 9 5 7a2 2 0 1 1 3-3l2 2M9 7l2 2a2 2 0 1 1-3 3L6 10M10 6l-4 4",
+  external: "M11 5H5a1 1 0 0 0-1 1v6M13 3v4M9 3h4v4M7 9l5-5",
+  home: "M2 8 8 3l6 5M4 7v7h3v-4h2v4h3V7",
+  gear: "M8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3 3l1 1M11 11l1 1M3 13l1-1M11 5l1-1",
+  dots: "M4 8a1 1 0 1 0 2 0 1 1 0 0 0-2 0zM7 8a1 1 0 1 0 2 0 1 1 0 0 0-2 0zM10 8a1 1 0 1 0 2 0 1 1 0 0 0-2 0",
+  check: "M3 8l4 4 6-7",
+  pencil: "M11 3 13 5 5 13H3v-2L11 3z",
+  spinner: "M8 2a6 6 0 0 1 0 12",
+};
 
-  publish: "Publish",
-  retryPublish: "Retry",
-  publishing: "Publishing",
-  copyLink: "Copy link",
-  open: "Open",
-} as const;
+// ---------------------------------------------------------------------------
+// Icon button
+// ---------------------------------------------------------------------------
 
-const SAVE_SEVERITY: Record<SaveState, "success" | "warning"> = {
-  saved: "success",
-  saving: "warning",
-} as const;
+function IconBtn({
+  label,
+  icon,
+  onClick,
+  active,
+}: {
+  label: string;
+  icon: string;
+  onClick?: () => void;
+  active?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      onClick={onClick}
+      className={[
+        "flex h-8 w-8 items-center justify-center rounded-lg transition",
+        "text-text-muted hover:text-text-primary hover:bg-outline/40",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-1 focus-visible:ring-offset-bg",
+        active ? "bg-outline/30 text-text-primary" : "",
+      ].join(" ")}
+    >
+      <Icon d={ICONS[icon as keyof typeof ICONS] ?? ""} />
+    </button>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Overflow menu (⋯)
+// ---------------------------------------------------------------------------
+
+type MenuItem =
+  | { type: "item"; label: string; icon?: string; shortcut?: string; onClick: () => void }
+  | { type: "separator" };
+
+function OverflowMenu({
+  items,
+  trigger,
+}: {
+  items: MenuItem[];
+  trigger: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onDown(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <div onClick={() => setOpen((v) => !v)}>{trigger}</div>
+      {open ? (
+        <div className="absolute left-0 top-full mt-1.5 z-50 min-w-50 rounded-xl border border-outline bg-bg-elevated shadow-glass py-1">
+          {items.map((item, i) =>
+            item.type === "separator" ? (
+              <div key={i} className="my-1 h-px bg-outline" />
+            ) : (
+              <button
+                key={i}
+                type="button"
+                className="flex w-full items-center gap-3 px-3 py-2 text-[13px] text-text-secondary transition hover:bg-outline/30 hover:text-text-primary"
+                onClick={() => {
+                  item.onClick();
+                  setOpen(false);
+                }}
+              >
+                {item.icon ? (
+                  <span className="text-text-muted">
+                    <Icon d={ICONS[item.icon as keyof typeof ICONS] ?? ""} size={14} />
+                  </span>
+                ) : null}
+                <span className="flex-1 text-left">{item.label}</span>
+                {item.shortcut ? (
+                  <kbd className="text-[10px] text-text-muted font-mono">{item.shortcut}</kbd>
+                ) : null}
+              </button>
+            ),
+          )}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Settings panel (slide-over)
+// ---------------------------------------------------------------------------
+
+function SegmentedControl<T extends string>({
+  value,
+  options,
+  onChange,
+}: {
+  value: T;
+  options: { label: string; value: T }[];
+  onChange: (v: T) => void;
+}) {
+  return (
+    <div className="flex rounded-lg border border-outline bg-bg p-0.5 gap-0.5">
+      {options.map((opt) => (
+        <button
+          key={opt.value}
+          type="button"
+          onClick={() => onChange(opt.value)}
+          className={[
+            "flex-1 rounded-md px-3 py-1.5 text-[12px] font-medium transition",
+            value === opt.value
+              ? "bg-accent text-white shadow-sm"
+              : "text-text-muted hover:text-text-primary",
+          ].join(" ")}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function SettingsPanel({
+  settings,
+  onSettingsChange,
+  onClose,
+}: {
+  settings: DocSettings;
+  onSettingsChange: (next: DocSettings) => void;
+  onClose: () => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    function onDown(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+    }
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("mousedown", onDown);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("mousedown", onDown);
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      ref={ref}
+      className="absolute right-0 top-full mt-1.5 z-50 w-72 rounded-2xl border border-outline bg-bg-elevated shadow-glass p-4"
+    >
+      <div className="flex items-center justify-between mb-4">
+        <div className="text-[13px] font-semibold">Settings</div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="flex h-6 w-6 items-center justify-center rounded-md text-text-muted hover:text-text-primary transition"
+          aria-label="Close settings"
+        >
+          <svg width="12" height="12" fill="none" viewBox="0 0 12 12" aria-hidden>
+            <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        </button>
+      </div>
+
+      <div className="flex flex-col gap-4">
+        <div>
+          <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-text-muted">
+            Theme
+          </div>
+          <ThemeToggle />
+        </div>
+
+        <div>
+          <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-text-muted">
+            Spacing
+          </div>
+          <SegmentedControl
+            value={settings.spacing}
+            options={[
+              { label: "Compact", value: "compact" },
+              { label: "Comfortable", value: "comfortable" },
+            ]}
+            onChange={(v) => onSettingsChange({ ...settings, spacing: v })}
+          />
+        </div>
+
+        <div>
+          <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-text-muted">
+            Width
+          </div>
+          <SegmentedControl
+            value={settings.width}
+            options={[
+              { label: "Normal", value: "normal" },
+              { label: "Wide", value: "wide" },
+            ]}
+            onChange={(v) => onSettingsChange({ ...settings, width: v })}
+          />
+        </div>
+
+        <div>
+          <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-text-muted">
+            Code blocks
+          </div>
+          <SegmentedControl
+            value={settings.code}
+            options={[
+              { label: "Show", value: "show" },
+              { label: "Collapse", value: "collapse" },
+            ]}
+            onChange={(v) => onSettingsChange({ ...settings, code: v })}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Inline title editor
+// ---------------------------------------------------------------------------
+
+function DraftTitle({
+  title,
+  onRename,
+}: {
+  title: string;
+  onRename: (next: string) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const begin = () => {
+    setDraft(title);
+    setEditing(true);
+    setTimeout(() => inputRef.current?.select(), 0);
+  };
+
+  const commit = () => {
+    const next = draft.trim();
+    if (next) onRename(next);
+    setEditing(false);
+  };
+
+  const cancel = () => setEditing(false);
+
+  if (editing) {
+    return (
+      <input
+        ref={inputRef}
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") { e.preventDefault(); commit(); }
+          if (e.key === "Escape") { e.preventDefault(); cancel(); }
+        }}
+        autoFocus
+        className="min-w-0 max-w-50 rounded-md border border-accent-soft bg-bg px-2 py-0.5 text-[13px] font-medium text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-soft"
+        aria-label="Draft title"
+      />
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={begin}
+      title="Click to rename"
+      className="group flex items-center gap-1.5 min-w-0 max-w-50 rounded-md px-1.5 py-0.5 transition hover:bg-outline/30"
+    >
+      <span className="truncate text-[13px] font-medium text-text-secondary group-hover:text-text-primary transition">
+        {title || "Untitled"}
+      </span>
+      <span className="shrink-0 text-text-muted opacity-0 group-hover:opacity-100 transition">
+        <Icon d={ICONS.pencil} size={11} />
+      </span>
+    </button>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Publish / post-publish button group
+// ---------------------------------------------------------------------------
+
+function PublishArea({
+  status,
+  canPublish,
+  publishedUrl,
+  copyLinkPulse,
+  onPublish,
+  onCopyLink,
+  onOpenPublished,
+}: {
+  status: EditorStatus;
+  canPublish: boolean;
+  publishedUrl: string | null;
+  copyLinkPulse: boolean;
+  onPublish: () => void;
+  onCopyLink: () => void;
+  onOpenPublished: () => void;
+}) {
+  const isPublishing = status === "publishing";
+
+  if (publishedUrl) {
+    return (
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          onClick={onCopyLink}
+          title="Copy share link"
+          className={[
+            "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-semibold transition",
+            "border border-outline text-text-secondary hover:border-accent-soft/50 hover:text-text-primary",
+            copyLinkPulse ? "ring-2 ring-accent-soft ring-offset-1 ring-offset-bg" : "",
+          ].join(" ")}
+        >
+          <Icon d={ICONS.link} size={13} />
+          <span className="hidden sm:inline">Copy link</span>
+        </button>
+        <button
+          type="button"
+          onClick={onOpenPublished}
+          title="Open published page"
+          className="flex h-8 w-8 items-center justify-center rounded-lg border border-outline text-text-muted transition hover:border-accent-soft/50 hover:text-text-primary"
+          aria-label="Open published page"
+        >
+          <Icon d={ICONS.external} size={14} />
+        </button>
+      </div>
+    );
+  }
+
+  const label = status === "error" ? "Retry" : "Publish";
+
+  return (
+    <button
+      type="button"
+      onClick={onPublish}
+      disabled={!canPublish || isPublishing}
+      className={[
+        "flex items-center gap-1.5 rounded-full px-4 py-1.5 text-[12px] font-semibold transition",
+        "bg-accent text-white shadow-soft",
+        "hover:bg-accent-hover active:scale-[0.96]",
+        "disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-1 focus-visible:ring-offset-bg",
+      ].join(" ")}
+    >
+      {isPublishing ? (
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" className="animate-spin" aria-hidden>
+          <path d="M6.5 1a5.5 5.5 0 1 0 5.5 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
+      ) : (
+        <Icon d={ICONS.upload} size={13} />
+      )}
+      <span className="hidden sm:inline">{label}</span>
+    </button>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Save state indicator
+// ---------------------------------------------------------------------------
+
+function SaveIndicator({
+  saveState,
+  lastSavedAtLabel,
+  showSaveWarning,
+}: {
+  saveState: SaveState;
+  lastSavedAtLabel?: string | null;
+  showSaveWarning?: boolean;
+}) {
+  if (showSaveWarning) {
+    return (
+      <span className="hidden sm:inline text-[11px] font-medium text-amber-400">
+        Save issue
+      </span>
+    );
+  }
+
+  if (saveState === "saving") {
+    return (
+      <span className="hidden sm:inline text-[11px] text-text-muted animate-pulse">
+        Saving…
+      </span>
+    );
+  }
+
+  return (
+    <span className="hidden sm:inline text-[11px] text-text-muted">
+      {lastSavedAtLabel ? `Saved ${lastSavedAtLabel}` : "Saved"}
+    </span>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main TopBar
+// ---------------------------------------------------------------------------
 
 const TOAST_KEYS = {
   copyMd: "copy_md",
@@ -63,7 +473,9 @@ export function TopBar({
   status,
   canPublish,
   raw,
+  draftTitle,
   onNew,
+  onRenameCurrentDraft,
   activeDraftId,
   onSwitchDraft,
   onCreateDraft,
@@ -83,7 +495,9 @@ export function TopBar({
   status: EditorStatus;
   canPublish: boolean;
   raw: string;
+  draftTitle: string;
   onNew: () => void;
+  onRenameCurrentDraft: (next: string) => void;
   activeDraftId: string | null;
   onSwitchDraft: (id: string, origin?: "drafts_dialog") => void;
   onCreateDraft: (origin?: "drafts_dialog") => string;
@@ -104,371 +518,185 @@ export function TopBar({
   const [visibleDrafts, setVisibleDrafts] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const settingsBtnRef = useRef<HTMLDivElement>(null);
   const toast = useToast();
 
-  const saveLabel = useMemo(() => {
-    if (saveState === "saving") return LABELS.saveSaving;
-    if (lastSavedAtLabel?.trim())
-      return `${LABELS.saveSavedAt} ${lastSavedAtLabel}`;
-    return LABELS.saveSaved;
-  }, [lastSavedAtLabel, saveState]);
-
-  const onCopyMarkdown = async () => {
+  const onCopyMarkdown = useCallback(async () => {
     try {
       await copyTextToClipboard(raw ?? "");
-      toast.showCoalesced(
-        TOAST_KEYS.copyMd,
-        "success",
-        "Copied",
-        "Markdown copied.",
-      );
-
-      trackEvent(ANALYTICS_EVENTS.export_copy_markdown, {
-        raw_len: (raw ?? "").length,
-      });
+      toast.showCoalesced(TOAST_KEYS.copyMd, "success", "Copied", "Markdown copied.");
+      trackEvent(ANALYTICS_EVENTS.export_copy_markdown, { raw_len: (raw ?? "").length });
     } catch (e) {
       toast.error("Copy failed", toErrorMessage(e));
     }
-  };
+  }, [raw, toast]);
 
-  const onCopyHtml = async () => {
+  const onCopyHtml = useCallback(async () => {
     try {
       const html = markdownToHtml(raw ?? "");
       await copyTextToClipboard(html);
-      toast.showCoalesced(
-        TOAST_KEYS.copyHtml,
-        "success",
-        "Copied",
-        "HTML copied.",
-      );
-
-      trackEvent(ANALYTICS_EVENTS.export_copy_html, {
-        raw_len: (raw ?? "").length,
-        html_len: html.length,
-      });
+      toast.showCoalesced(TOAST_KEYS.copyHtml, "success", "Copied", "HTML copied.");
+      trackEvent(ANALYTICS_EVENTS.export_copy_html, { raw_len: (raw ?? "").length, html_len: html.length });
     } catch (e) {
       toast.error("Copy failed", toErrorMessage(e));
     }
-  };
+  }, [raw, toast]);
 
-  const openImportPicker = () => {
+  const openImportPicker = useCallback(() => {
     fileInputRef.current?.click();
-  };
+  }, []);
 
-  const onFilePicked = async (file: File | null) => {
+  const onFilePicked = useCallback(async (file: File | null) => {
     if (!file) return;
-
     try {
       if (file.size > UI.importMarkdown.maxFileBytes) {
         toast.warn("File too large", "Please import a smaller Markdown file.");
         return;
       }
-
       const text = await file.text();
-
       const baseName = file.name.replace(/\.md$/i, "").trim();
       const title = baseName || UI.importMarkdown.defaultTitle;
-
       onImportMarkdown(title, text);
       setVisibleDrafts(false);
-
-      toast.showCoalesced(
-        TOAST_KEYS.importMd,
-        "success",
-        "Imported",
-        "Draft created from Markdown.",
-      );
+      toast.showCoalesced(TOAST_KEYS.importMd, "success", "Imported", "Draft created from Markdown.");
     } catch (e) {
       toast.error("Import failed", toErrorMessage(e));
     } finally {
-      // Allow picking the same file again.
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
-  };
+  }, [onImportMarkdown, toast]);
 
-  useEffect(() => {
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key !== "Escape") return;
-      const shouldClose = visibleDrafts || visibleSettings;
-      if (!shouldClose) return;
-
-      e.preventDefault();
-      if (visibleDrafts) setVisibleDrafts(false);
-      if (visibleSettings) setVisibleSettings(false);
-
-      const el = document.activeElement as HTMLElement | null;
-      el?.blur?.();
-    }
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [visibleDrafts, visibleSettings]);
-
-  const SPACING = [
-    { label: "Compact spacing", value: "compact" as const },
-    { label: "Comfortable spacing", value: "comfortable" as const },
-  ];
-
-  const WIDTH = [
-    { label: "Normal width", value: "normal" as const },
-    { label: "Wide width", value: "wide" as const },
-  ];
-
-  const CODE = [
-    { label: "Show code", value: "show" as const },
-    { label: "Collapse long code", value: "collapse" as const },
-  ];
-
-  const statusLabel =
-    status === "idle"
-      ? "Ready"
-      : status === "typing"
-        ? "Updating preview"
-        : status === "publishing"
-          ? LABELS.publishing
-          : status === "published"
-            ? "Published"
-            : "Something went wrong";
-
-  const severity =
-    status === "published" ? "success" : status === "error" ? "danger" : "info";
-
-  const copyBtnClass = [
-    "min-w-fit uppercase tracking-wide transition",
-    copyLinkPulse
-      ? "animate-pulse ring-2 ring-accent-soft ring-offset-2 ring-offset-bg rounded-full"
-      : "",
-  ].join(" ");
-
-  const publishLabel =
-    status === "error" ? LABELS.retryPublish : LABELS.publish;
-  const publishIcon =
-    status === "publishing" ? "pi pi-spinner pi-spin" : "pi pi-upload";
-
-  const items = [
+  const menuItems: MenuItem[] = [
     {
-      label: LABELS.file,
-      items: [
-        {
-          label: LABELS.newDraft,
-          command: () => onNew(),
-          shortcut: "⌘+B",
-        },
-        {
-          label: LABELS.myDrafts,
-          command: () => setVisibleDrafts(true),
-        },
-        {
-          label: LABELS.importMarkdown,
-          icon: "pi pi-file-import",
-          command: () => openImportPicker(),
-        },
-        {
-          label: LABELS.copyAs,
-          items: [
-            {
-              label: LABELS.copyAsMarkdown,
-              icon: "pi pi-file",
-              command: () => void onCopyMarkdown(),
-            },
-            {
-              label: LABELS.copyAsHtml,
-              icon: "pi pi-code",
-              command: () => void onCopyHtml(),
-            },
-          ],
-        },
-        { separator: true },
-        { label: LABELS.quit, url: "/" },
-      ],
+      type: "item",
+      label: "New draft",
+      icon: "plus",
+      shortcut: "⌘B",
+      onClick: onNew,
     },
     {
-      label: LABELS.edit,
-      items: [
-        {
-          label: LABELS.insertSample,
-          command: () => onInsertSample(),
-        },
-      ],
+      type: "item",
+      label: "My drafts",
+      icon: "list",
+      onClick: () => setVisibleDrafts(true),
     },
-    { label: LABELS.settings, command: () => setVisibleSettings(true) },
+    {
+      type: "item",
+      label: "Import Markdown",
+      icon: "import",
+      onClick: openImportPicker,
+    },
+    { type: "separator" },
+    {
+      type: "item",
+      label: "Copy as Markdown",
+      icon: "copy",
+      onClick: () => void onCopyMarkdown(),
+    },
+    {
+      type: "item",
+      label: "Copy as HTML",
+      icon: "code",
+      onClick: () => void onCopyHtml(),
+    },
+    {
+      type: "item",
+      label: "Insert sample",
+      icon: "import",
+      onClick: onInsertSample,
+    },
+    { type: "separator" },
+    {
+      type: "item",
+      label: "Go to homepage",
+      icon: "home",
+      onClick: () => { window.location.href = "/"; },
+    },
   ];
-
-  const start = <AppLogo onlyIcon={true} />;
-
-  const end = (
-    <div className="flex items-center gap-1">
-      <Tag
-        className="hidden md:block"
-        value={statusLabel}
-        severity={severity as never}
-        rounded
-      />
-
-      <div aria-live="polite" className="hidden md:block">
-        <Tag
-          value={saveLabel}
-          severity={SAVE_SEVERITY[saveState] as never}
-          rounded
-        />
-      </div>
-
-      {showSaveWarning ? (
-        <div className="hidden lg:flex items-center gap-2 ml-1">
-          <Tag
-            value="Save issue"
-            severity={"danger" as never}
-            className="uppercase"
-            rounded
-          />
-          <Button
-            label={LABELS.saveWarningAction}
-            icon="pi pi-file"
-            severity="secondary"
-            size="small"
-            onClick={() => void onCopyMarkdown()}
-            className="min-w-fit uppercase tracking-wide"
-            text
-            raised
-          />
-        </div>
-      ) : null}
-
-      <>
-        {publishedUrl ? (
-          <>
-            <div className="hidden md:inline-flex">
-              <Button
-                label={LABELS.copyLink}
-                icon="pi pi-copy"
-                severity="secondary"
-                onClick={onCopyLink}
-                className={copyBtnClass}
-                size="small"
-                text
-                raised
-              />
-            </div>
-            <div className="md:hidden">
-              <Button
-                aria-label={LABELS.copyLink}
-                icon="pi pi-copy"
-                severity="secondary"
-                onClick={onCopyLink}
-                className={copyBtnClass}
-                size="small"
-                text
-                raised
-              />
-            </div>
-
-            <div className="hidden md:inline-flex">
-              <Button
-                label={LABELS.open}
-                icon="pi pi-external-link"
-                severity="secondary"
-                onClick={onOpenPublished}
-                className="min-w-fit uppercase tracking-wide"
-                size="small"
-                text
-                raised
-              />
-            </div>
-            <div className="md:hidden">
-              <Button
-                aria-label={LABELS.open}
-                icon="pi pi-external-link"
-                severity="secondary"
-                onClick={onOpenPublished}
-                className="min-w-fit"
-                size="small"
-                text
-                raised
-              />
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="hidden md:inline-flex">
-              <Button
-                label={publishLabel}
-                icon={publishIcon}
-                onClick={onPublish}
-                disabled={!canPublish || status === "publishing"}
-                className="min-w-fit uppercase tracking-wide"
-                size="small"
-                severity="success"
-                text
-                raised
-              />
-            </div>
-            <div className="md:hidden">
-              <Button
-                aria-label={publishLabel}
-                icon={publishIcon}
-                onClick={onPublish}
-                disabled={!canPublish || status === "publishing"}
-                className="min-w-fit"
-                size="small"
-                severity="success"
-                text
-                raised
-              />
-            </div>
-          </>
-        )}
-      </>
-    </div>
-  );
-
-  const settingsFooter = (
-    <Button
-      label={LABELS.done}
-      text
-      onClick={() => {
-        if (!visibleSettings) return;
-        setVisibleSettings(false);
-      }}
-      className="p-button-text uppercase w-full"
-    />
-  );
 
   return (
-    <header id="header" className="sticky top-0 z-20">
-      <Menubar
-        model={items}
-        start={start}
-        end={end}
-        className="mx-auto w-full max-w-7xl bg-bg-glass/85! backdrop-blur!"
-      />
+    <header id="header" className="sticky top-0 z-20 border-b border-outline/70 bg-bg/85 backdrop-blur-xl">
+      <div className="mx-auto flex h-12 w-full max-w-7xl items-center gap-2 px-3">
 
-      {/* Hidden file input to keep imports local and client-only */}
+        {/* ── Left zone ── */}
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <Link href="/" aria-label="Home">
+            <AppLogo onlyIcon={true} />
+          </Link>
+
+          <div className="h-4 w-px bg-outline shrink-0" />
+
+          <DraftTitle title={draftTitle} onRename={onRenameCurrentDraft} />
+        </div>
+
+        {/* ── Right zone ── */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          <SaveIndicator
+            saveState={saveState}
+            lastSavedAtLabel={lastSavedAtLabel}
+            showSaveWarning={showSaveWarning}
+          />
+
+          <div className="mx-1 h-4 w-px bg-outline" />
+
+          <OverflowMenu
+            items={menuItems}
+            trigger={<IconBtn label="More options" icon="dots" />}
+          />
+
+          <div ref={settingsBtnRef} className="relative">
+            <IconBtn
+              label="Settings"
+              icon="gear"
+              onClick={() => setVisibleSettings((v) => !v)}
+              active={visibleSettings}
+            />
+            {visibleSettings ? (
+              <SettingsPanel
+                settings={settings}
+                onSettingsChange={onSettingsChange}
+                onClose={() => setVisibleSettings(false)}
+              />
+            ) : null}
+          </div>
+
+          <div className="mx-1 h-4 w-px bg-outline" />
+
+          <PublishArea
+            status={status}
+            canPublish={canPublish}
+            publishedUrl={publishedUrl ?? null}
+            copyLinkPulse={copyLinkPulse ?? false}
+            onPublish={onPublish}
+            onCopyLink={onCopyLink}
+            onOpenPublished={onOpenPublished}
+          />
+        </div>
+      </div>
+
+      {/* Hidden file input */}
       <input
         ref={fileInputRef}
         type="file"
         accept={UI.importMarkdown.accept}
         className="hidden"
-        onChange={(e) => {
-          const file = e.target.files?.[0] ?? null;
-          void onFilePicked(file);
-        }}
+        onChange={(e) => { void onFilePicked(e.target.files?.[0] ?? null); }}
       />
 
+      {/* Save warning banner */}
       {showSaveWarning ? (
-        <div className="mx-auto w-full max-w-7xl px-3 pt-2 lg:hidden">
-          <div className="rounded-xl border border-[rgb(var(--border))] bg-bg-glass/50 p-3 flex flex-col gap-2">
-            <div className="text-sm">{LABELS.saveWarning}</div>
-            <div className="flex items-center gap-2">
-              <Button
-                label={LABELS.saveWarningAction}
-                icon="pi pi-file"
-                severity="secondary"
-                size="small"
-                onClick={() => void onCopyMarkdown()}
-                className="uppercase"
-                outlined
-              />
-            </div>
+        <div className="mx-auto w-full max-w-7xl px-3 pb-2">
+          <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-400/30 bg-amber-400/8 px-3 py-2">
+            <span className="text-[12px] text-amber-400">
+              Could not save locally — browser storage may be full.
+            </span>
+            <button
+              type="button"
+              onClick={() => void onCopyMarkdown()}
+              className="text-[11px] font-semibold text-amber-400 underline underline-offset-2 transition hover:text-amber-300"
+            >
+              Export Markdown
+            </button>
           </div>
         </div>
       ) : null}
@@ -477,88 +705,18 @@ export function TopBar({
         visible={visibleDrafts}
         activeDraftId={activeDraftId}
         onCreateDraft={onCreateDraft}
-        onRequestImportMarkdown={() => openImportPicker()}
+        onRequestImportMarkdown={openImportPicker}
         onOpenDraft={(id) => {
           onSwitchDraft(id, "drafts_dialog");
           setVisibleDrafts(false);
         }}
         onHide={() => setVisibleDrafts(false)}
       />
-
-      <Dialog
-        header={LABELS.appSettings}
-        visible={visibleSettings}
-        className="w-[75vw] md:w-[50vw]"
-        footer={settingsFooter}
-        onHide={() => {
-          if (!visibleSettings) return;
-          setVisibleSettings(false);
-        }}
-      >
-        <div className="p-5 flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <div className="text-sm uppercase">Theme</div>
-            <ThemeToggle />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <div className="text-sm uppercase">Letter Spacing</div>
-            <Dropdown
-              value={settings.spacing}
-              onChange={(e) =>
-                onSettingsChange({
-                  ...settings,
-                  spacing: e.value,
-                })
-              }
-              options={SPACING}
-              placeholder="Select spacing"
-              className="w-full"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <div className="text-sm uppercase">Width</div>
-            <Dropdown
-              value={settings.width}
-              onChange={(e) =>
-                onSettingsChange({
-                  ...settings,
-                  width: e.value,
-                })
-              }
-              options={WIDTH}
-              placeholder="Select width"
-              className="w-full"
-            />
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <div className="text-sm uppercase">Code blocks</div>
-            <Dropdown
-              value={settings.code}
-              onChange={(e) =>
-                onSettingsChange({
-                  ...settings,
-                  code: e.value,
-                })
-              }
-              options={CODE}
-              placeholder="Select code mode"
-              className="w-full"
-            />
-          </div>
-        </div>
-      </Dialog>
     </header>
   );
 }
 
 function toErrorMessage(e: unknown) {
   if (e instanceof Error) return e.message;
-  try {
-    return JSON.stringify(e);
-  } catch {
-    return String(e);
-  }
+  try { return JSON.stringify(e); } catch { return String(e); }
 }

@@ -11,35 +11,45 @@ import {
   type DraftMeta,
 } from "@/lib/drafts";
 import { formatRelativeTimeFromIso, formatUpdatedAtLong } from "@/lib/ui/time";
-import { Button } from "primereact/button";
 import { Dialog } from "primereact/dialog";
-import { InputText } from "primereact/inputtext";
 import { useCallback, useEffect, useRef, useState } from "react";
-
-const LABELS = {
-  header: "My drafts",
-
-  emptyTitle: "No drafts yet.",
-  emptyBody:
-    "Drafts live on this device and autosave as you type. Publish creates a shareable snapshot; your draft stays editable.",
-
-  updated: "Updated",
-  open: "Open",
-  rename: "Rename",
-  duplicate: "Duplicate",
-  delete: "Delete",
-
-  newDraft: "New draft",
-  importMarkdown: "Import Markdown",
-  close: "Close",
-
-  deleteConfirm: "Delete this draft? This cannot be undone.",
-  titlePlaceholder: "Untitled",
-  titleEmptyError: "Title cannot be empty.",
-} as const;
 
 function isValidTitle(title: string): boolean {
   return title.trim().length > 0;
+}
+
+function IconBtn({
+  label,
+  onClick,
+  children,
+  danger,
+  active,
+}: {
+  label: string;
+  onClick?: () => void;
+  children: React.ReactNode;
+  danger?: boolean;
+  active?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      onClick={onClick}
+      className={[
+        "flex h-7 w-7 items-center justify-center rounded-md transition text-[12px]",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft",
+        danger
+          ? "text-red-400 hover:bg-red-500/12 hover:text-red-300"
+          : active
+            ? "bg-outline/30 text-text-primary"
+            : "text-text-muted hover:bg-outline/30 hover:text-text-primary",
+      ].join(" ")}
+    >
+      {children}
+    </button>
+  );
 }
 
 export function DraftsDialog({
@@ -60,39 +70,25 @@ export function DraftsDialog({
   const [drafts, setDrafts] = useState<DraftMeta[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState<string>("");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
-  const refreshTimerRef = useRef<number | null>(null);
-
-  const refresh = useCallback(() => {
-    setDrafts(listDrafts());
-  }, []);
+  const refresh = useCallback(() => setDrafts(listDrafts()), []);
 
   useEffect(() => {
     if (!visible) return;
     refresh();
 
-    // Keep the list fresh while open (autosaves update timestamps).
-    refreshTimerRef.current = window.setInterval(() => refresh(), 1200);
-
     const onStorage = (e: StorageEvent) => {
-      if (!e.key) return;
       if (e.key === DRAFTS_STORAGE_KEYS.db) refresh();
     };
-
     window.addEventListener("storage", onStorage);
-
-    return () => {
-      window.removeEventListener("storage", onStorage);
-      if (refreshTimerRef.current !== null) {
-        window.clearInterval(refreshTimerRef.current);
-        refreshTimerRef.current = null;
-      }
-    };
+    return () => window.removeEventListener("storage", onStorage);
   }, [refresh, visible]);
 
   const beginRename = useCallback((d: DraftMeta) => {
     setEditingId(d.id);
     setEditingTitle(d.title);
+    setConfirmDeleteId(null);
   }, []);
 
   const cancelRename = useCallback(() => {
@@ -104,255 +100,203 @@ export function DraftsDialog({
     if (!editingId) return;
     const next = editingTitle.trim();
     if (!isValidTitle(next)) return;
-
     updateDraft(editingId, { title: next });
-
-    trackEvent(ANALYTICS_EVENTS.draft_renamed, {
-      draft_hash: hashId(editingId),
-    });
-
+    trackEvent(ANALYTICS_EVENTS.draft_renamed, { draft_hash: hashId(editingId) });
     cancelRename();
     refresh();
   }, [cancelRename, editingId, editingTitle, refresh]);
 
-  const onDuplicate = useCallback(
-    (id: string) => {
-      const copy = duplicateDraft(id);
+  const onDuplicate = useCallback((id: string) => {
+    const copy = duplicateDraft(id);
+    trackEvent(ANALYTICS_EVENTS.draft_duplicated, {
+      draft_hash: hashId(id),
+      new_draft_hash: copy ? hashId(copy.id) : "",
+    });
+    refresh();
+  }, [refresh]);
 
-      trackEvent(ANALYTICS_EVENTS.draft_duplicated, {
-        draft_hash: hashId(id),
-        new_draft_hash: copy ? hashId(copy.id) : "",
-      });
+  const onDelete = useCallback((id: string) => {
+    if (confirmDeleteId !== id) {
+      setConfirmDeleteId(id);
+      return;
+    }
 
-      refresh();
-    },
-    [refresh],
-  );
+    const deletingActive = id === activeDraftId;
+    deleteDraft(id);
+    trackEvent(ANALYTICS_EVENTS.draft_deleted, {
+      draft_hash: hashId(id),
+      deleting_active: deletingActive,
+    });
+    cancelRename();
+    setConfirmDeleteId(null);
 
-  const onDelete = useCallback(
-    (id: string) => {
-      const ok = window.confirm(LABELS.deleteConfirm);
-      if (!ok) return;
+    const nextDrafts = listDrafts();
+    setDrafts(nextDrafts);
 
-      const deletingActive = id === activeDraftId;
-      deleteDraft(id);
+    if (!deletingActive) return;
 
-      trackEvent(ANALYTICS_EVENTS.draft_deleted, {
-        draft_hash: hashId(id),
-        deleting_active: deletingActive,
-      });
-
-      cancelRename();
-
-      const nextDrafts = listDrafts();
-      setDrafts(nextDrafts);
-
-      if (!deletingActive) return;
-
-      const nextId = nextDrafts[0]?.id;
-      if (nextId) {
-        onOpenDraft(nextId, "drafts_dialog");
-        onHide();
-        return;
-      }
-
-      // If the last draft was deleted, ensure the app remains usable.
-      onCreateDraft("drafts_dialog");
+    const nextId = nextDrafts[0]?.id;
+    if (nextId) {
+      onOpenDraft(nextId, "drafts_dialog");
       onHide();
-    },
-    [activeDraftId, cancelRename, onCreateDraft, onHide, onOpenDraft],
-  );
+      return;
+    }
+    onCreateDraft("drafts_dialog");
+    onHide();
+  }, [activeDraftId, cancelRename, confirmDeleteId, onCreateDraft, onHide, onOpenDraft]);
 
-  const footer = (
-    <div className="flex items-center justify-between gap-2 w-full">
+  const header = (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-[14px] font-semibold">My drafts</span>
       <div className="flex items-center gap-2">
-        <Button
-          label={LABELS.newDraft}
-          icon="pi pi-plus"
-          severity="success"
+        <button
+          type="button"
+          onClick={() => onRequestImportMarkdown()}
+          className="flex items-center gap-1.5 rounded-lg border border-outline px-2.5 py-1 text-[11px] font-medium text-text-secondary transition hover:border-accent-soft/50 hover:text-text-primary"
+        >
+          <svg width="12" height="12" fill="none" viewBox="0 0 12 12" aria-hidden>
+            <path d="M6 2v6M3 5l3 3 3-3M2 10h8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          Import
+        </button>
+        <button
+          type="button"
           onClick={() => {
             const id = onCreateDraft("drafts_dialog");
-            trackEvent(ANALYTICS_EVENTS.draft_created, {
-              draft_hash: hashId(id),
-              origin: "drafts_dialog",
-            });
+            trackEvent(ANALYTICS_EVENTS.draft_created, { draft_hash: hashId(id), origin: "drafts_dialog" });
             onHide();
           }}
-          className="uppercase"
-        />
-
-        <Button
-          label={LABELS.importMarkdown}
-          icon="pi pi-file-import"
-          severity="secondary"
-          onClick={() => onRequestImportMarkdown()}
-          className="uppercase"
-          outlined
-        />
+          className="flex items-center gap-1.5 rounded-lg bg-accent px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-accent-hover"
+        >
+          <svg width="12" height="12" fill="none" viewBox="0 0 12 12" aria-hidden>
+            <path d="M6 2v8M2 6h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+          New draft
+        </button>
       </div>
-
-      <Button
-        label={LABELS.close}
-        text
-        onClick={onHide}
-        className="uppercase"
-      />
     </div>
   );
 
   return (
     <Dialog
-      header={LABELS.header}
+      header={header}
       visible={visible}
       className="w-[92vw] md:w-[56vw]"
-      footer={footer}
       onHide={onHide}
+      footer={null}
     >
       <div className="px-1 py-2">
         {drafts.length === 0 ? (
-          <div className="rounded-2xl border border-[rgb(var(--border))] bg-bg-glass/40 p-4 md:p-5">
-            <div className="text-base font-semibold">{LABELS.emptyTitle}</div>
-            <div className="mt-2 text-sm text-[rgb(var(--muted))] leading-relaxed">
-              {LABELS.emptyBody}
-            </div>
-
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              <Button
-                label={LABELS.newDraft}
-                icon="pi pi-plus"
-                severity="success"
-                onClick={() => {
-                  const id = onCreateDraft("drafts_dialog");
-                  trackEvent(ANALYTICS_EVENTS.draft_created, {
-                    draft_hash: hashId(id),
-                    origin: "drafts_dialog",
-                  });
-                  onHide();
-                }}
-                className="uppercase"
-              />
-
-              <Button
-                label={LABELS.importMarkdown}
-                icon="pi pi-file-import"
-                severity="secondary"
-                onClick={() => onRequestImportMarkdown()}
-                className="uppercase"
-                outlined
-              />
+          <div className="rounded-2xl border border-outline/60 bg-bg-glass/40 p-5">
+            <div className="text-[14px] font-semibold">No drafts yet.</div>
+            <div className="mt-1.5 text-[13px] leading-relaxed text-text-secondary">
+              Drafts live on this device and autosave as you type. Publish creates a shareable
+              snapshot; your draft stays editable.
             </div>
           </div>
         ) : (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1.5">
             {drafts.map((d) => {
               const isActive = d.id === activeDraftId;
               const isEditing = editingId === d.id;
+              const isConfirmingDelete = confirmDeleteId === d.id;
 
               const updatedLong = formatUpdatedAtLong(d.updatedAt);
               const updatedRel = formatRelativeTimeFromIso(d.updatedAt);
-
-              const updated =
-                updatedRel && updatedRel !== updatedLong
-                  ? `${updatedRel} • ${updatedLong}`
-                  : updatedLong;
+              const updated = updatedRel && updatedRel !== updatedLong
+                ? `${updatedRel} · ${updatedLong}`
+                : updatedLong;
 
               return (
                 <div
                   key={d.id}
                   className={[
-                    "rounded-xl border border-[rgb(var(--border))] p-3",
-                    "flex flex-col gap-2 transition-colors",
-                    isActive ? "ring-1 ring-accent-soft" : "",
+                    "group rounded-xl border p-3 transition",
+                    "flex flex-col gap-2",
+                    isActive
+                      ? "border-accent-soft/40 bg-accent/5"
+                      : "border-outline hover:border-outline/80",
                   ].join(" ")}
                 >
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       {isEditing ? (
-                        <InputText
+                        <input
                           value={editingTitle}
                           onChange={(e) => setEditingTitle(e.target.value)}
                           onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                              commitRename();
-                            }
-                            if (e.key === "Escape") {
-                              e.preventDefault();
-                              cancelRename();
-                            }
+                            if (e.key === "Enter") { e.preventDefault(); commitRename(); }
+                            if (e.key === "Escape") { e.preventDefault(); cancelRename(); }
                           }}
-                          onBlur={() => commitRename()}
-                          className="w-full"
+                          onBlur={commitRename}
                           autoFocus
+                          className="w-full rounded-md border border-accent-soft bg-bg px-2 py-0.5 text-[13px] font-medium focus:outline-none focus:ring-2 focus:ring-accent-soft"
+                          aria-label="Draft title"
                         />
                       ) : (
-                        <div className="font-medium truncate">
-                          {d.title?.trim() ? d.title : LABELS.titlePlaceholder}
+                        <div className="text-[13px] font-medium truncate">
+                          {d.title?.trim() ? d.title : "Untitled"}
                         </div>
                       )}
-
                       {updated ? (
-                        <div className="mt-1 text-xs text-[rgb(var(--muted))]">
-                          {LABELS.updated}: {updated}
+                        <div className="mt-0.5 text-[11px] text-text-muted">
+                          {updated}
                         </div>
                       ) : null}
                     </div>
 
-                    <div className="flex items-center gap-1">
-                      <Button
-                        label={LABELS.open}
-                        size="small"
-                        icon="pi pi-folder-open"
-                        onClick={() => {
-                          trackEvent(ANALYTICS_EVENTS.draft_opened, {
-                            draft_hash: hashId(d.id),
-                            origin: "drafts_dialog",
-                            is_active: isActive,
-                          });
+                    <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition">
+                      {isEditing ? (
+                        <IconBtn label="Save rename" onClick={commitRename} active>
+                          ✓
+                        </IconBtn>
+                      ) : (
+                        <IconBtn label="Open draft" onClick={() => {
+                          trackEvent(ANALYTICS_EVENTS.draft_opened, { draft_hash: hashId(d.id), origin: "drafts_dialog", is_active: isActive });
                           onOpenDraft(d.id, "drafts_dialog");
                           onHide();
-                        }}
-                        className="uppercase"
-                        text
-                      />
-
-                      {isEditing ? (
-                        <Button
-                          icon="pi pi-check"
-                          size="small"
-                          onClick={() => commitRename()}
-                          disabled={!isValidTitle(editingTitle)}
-                          text
-                        />
-                      ) : (
-                        <Button
-                          icon="pi pi-pencil"
-                          size="small"
-                          onClick={() => beginRename(d)}
-                          text
-                        />
+                        }}>
+                          ↗
+                        </IconBtn>
                       )}
 
-                      <Button
-                        icon="pi pi-clone"
-                        size="small"
-                        onClick={() => onDuplicate(d.id)}
-                        text
-                      />
+                      <IconBtn label="Rename" onClick={() => isEditing ? cancelRename() : beginRename(d)}>
+                        ✎
+                      </IconBtn>
 
-                      <Button
-                        icon="pi pi-trash"
-                        size="small"
-                        severity="danger"
-                        onClick={() => onDelete(d.id)}
-                        text
-                      />
+                      <IconBtn label="Duplicate" onClick={() => onDuplicate(d.id)}>
+                        ⎘
+                      </IconBtn>
+
+                      <IconBtn label="Delete" danger onClick={() => onDelete(d.id)}>
+                        ✕
+                      </IconBtn>
                     </div>
                   </div>
 
                   {isEditing && !isValidTitle(editingTitle) ? (
-                    <div className="text-xs text-red-500">
-                      {LABELS.titleEmptyError}
+                    <div className="text-[11px] text-red-400">Title cannot be empty.</div>
+                  ) : null}
+
+                  {isConfirmingDelete ? (
+                    <div className="flex items-center justify-between gap-2 rounded-lg border border-red-500/20 bg-red-500/8 px-3 py-2">
+                      <span className="text-[12px] text-red-400">Delete this draft? This cannot be undone.</span>
+                      <div className="flex gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDeleteId(null)}
+                          className="rounded-md px-2 py-0.5 text-[11px] font-medium text-text-muted transition hover:text-text-primary"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onDelete(d.id)}
+                          className="rounded-md bg-red-500 px-2 py-0.5 text-[11px] font-semibold text-white transition hover:bg-red-600"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </div>
                   ) : null}
                 </div>

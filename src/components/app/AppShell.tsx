@@ -1,7 +1,6 @@
 "use client";
 
-import { SelectButton } from "primereact/selectbutton";
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 
 type MobilePane = "edit" | "preview";
 
@@ -14,49 +13,36 @@ export function AppShell({
 }) {
   const [pane, setPane] = useState<MobilePane>("edit");
 
-  const options = useMemo(
-    () => [
-      { label: "Edit", value: "edit" as const },
-      { label: "Preview", value: "preview" as const },
-    ],
-    [],
-  );
-
   return (
     <div className="mx-auto w-full max-w-7xl px-4 grid grid-cols-1 lg:grid-cols-2 gap-4 h-full min-h-0 overflow-hidden">
+      {/* Mobile pane toggle */}
       <div className="lg:hidden sticky top-2 z-10">
-        <div className="rounded-xl border border-outline bg-bg-glass/85 backdrop-blur p-2 shadow-glass">
-          <SelectButton
-            value={pane}
-            options={options}
-            optionLabel="label"
-            optionValue="value"
-            allowEmpty={false}
-            onChange={(e) => {
-              const next = e.value as MobilePane | null | undefined;
-              if (!next) return;
-              setPane(next);
-            }}
-            className="w-full uppercase tracking-wide readable-theme-toggle"
-          />
+        <div className="flex items-center justify-center">
+          <div className="flex rounded-full border border-outline bg-bg-elevated p-0.5 shadow-card">
+            {(["edit", "preview"] as const).map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setPane(p)}
+                className={[
+                  "rounded-full px-5 py-1.5 text-[11px] font-semibold uppercase tracking-wider transition",
+                  pane === p
+                    ? "bg-accent text-white shadow-sm"
+                    : "text-text-muted hover:text-text-primary",
+                ].join(" ")}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
-      <div
-        className={
-          "flex min-h-0 overflow-hidden w-full" +
-          (pane === "edit" ? "" : " hidden lg:flex")
-        }
-      >
+      <div className={["flex min-h-0 overflow-hidden w-full", pane === "edit" ? "" : "hidden lg:flex"].join(" ")}>
         {left}
       </div>
 
-      <div
-        className={
-          "flex min-h-0 overflow-hidden w-full" +
-          (pane === "preview" ? "" : " hidden lg:flex")
-        }
-      >
+      <div className={["flex min-h-0 overflow-hidden w-full", pane === "preview" ? "" : "hidden lg:flex"].join(" ")}>
         {right}
       </div>
     </div>

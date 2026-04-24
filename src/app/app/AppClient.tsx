@@ -24,7 +24,6 @@ import { parseToBlocks } from "@/lib/parse";
 import { SAMPLE_MARKDOWN } from "@/lib/sample";
 import { normalizeInput, stripDangerousSequences } from "@/lib/sanitize";
 import { formatTimeHHMM } from "@/lib/ui/time";
-import { Message } from "primereact/message";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type SaveState = "saved" | "saving";
@@ -41,6 +40,7 @@ const SAVE_WARNING_TOAST_KEY = "save_warning";
 
 function AppPageContent() {
   const [activeDraftId, setActiveDraftIdState] = useState<string | null>(null);
+  const [draftTitle, setDraftTitle] = useState<string>("");
   const [raw, setRaw] = useState("");
   const [settings, setSettings] = useState<DocSettings>(DEFAULT_SETTINGS);
   const [saveState, setSaveState] = useState<SaveState>("saved");
@@ -207,6 +207,7 @@ function AppPageContent() {
     setActiveDraftIdState(draft.id);
 
     setRaw(draft.raw);
+    setDraftTitle(draft.title ?? "");
     setSettings(draft.settings);
 
     setLastPublishedUrl(draft.lastPublished?.url ?? null);
@@ -317,6 +318,7 @@ function AppPageContent() {
       skipNextAutosaveRef.current = true;
 
       setRaw("");
+      setDraftTitle(draft.title ?? "");
       setLastPublishedUrl(null);
       setStatus("idle");
       setSettings(DEFAULT_SETTINGS);
@@ -353,6 +355,7 @@ function AppPageContent() {
       skipNextAutosaveRef.current = true;
 
       setRaw(draft.raw);
+      setDraftTitle(draft.title ?? "");
       setSettings(draft.settings);
       setSaveStateSmoothed("saved");
       setLastSavedAtLabel(formatTimeHHMM(new Date(draft.updatedAt)));
@@ -376,6 +379,13 @@ function AppPageContent() {
   const onNew = useCallback(() => {
     onCreateDraft("topbar_new");
   }, [onCreateDraft]);
+
+  const onRenameCurrentDraft = useCallback((next: string) => {
+    if (!activeDraftId) return;
+    updateDraft(activeDraftId, { title: next });
+    setDraftTitle(next);
+    trackEvent(ANALYTICS_EVENTS.draft_renamed, { draft_hash: hashId(activeDraftId) });
+  }, [activeDraftId]);
 
   const onInsertSample = useCallback(() => {
     setRaw(SAMPLE_MARKDOWN);
@@ -404,6 +414,7 @@ function AppPageContent() {
       skipNextAutosaveRef.current = true;
 
       setRaw(draft.raw);
+      setDraftTitle(draft.title ?? "");
       setSettings(draft.settings);
       setSaveStateSmoothed("saved");
       setLastSavedAtLabel(formatTimeHHMM(new Date(draft.updatedAt)));
@@ -560,27 +571,15 @@ function AppPageContent() {
   const isBusy = status === "typing" || status === "publishing";
   const isEmpty = !normalized.trim();
 
-  const content = (
-    <span>
-      Last published:{" "}
-      <a
-        className="underline underline-offset-4"
-        href={lastPublishedUrl || ""}
-        target="_blank"
-        rel="noreferrer"
-      >
-        {lastPublishedUrl?.replace(window.location.origin, "")}
-      </a>
-    </span>
-  );
-
   return (
     <div className="h-screen min-h-screen flex flex-col overflow-hidden">
       <TopBar
         status={status}
         canPublish={canPublish}
         raw={raw}
+        draftTitle={draftTitle}
         onNew={onNew}
+        onRenameCurrentDraft={onRenameCurrentDraft}
         activeDraftId={activeDraftId}
         onCreateDraft={(origin) => onCreateDraft(origin ?? "unknown")}
         onSwitchDraft={(id, origin) => onSwitchDraft(id, origin ?? "unknown")}
@@ -598,27 +597,12 @@ function AppPageContent() {
         onImportMarkdown={onImportMarkdown}
       />
 
-      <div className="mx-auto w-full max-w-7xl">
-        <div className="w-full flex items-center justify-center p-3">
-          <div className="text-xs text-[rgb(var(--muted))] w-full">
-            {lastPublishedUrl ? (
-              <Message
-                className="w-full flex items-center justify-center"
-                severity="success"
-                content={content}
-              />
-            ) : null}
-          </div>
-        </div>
-      </div>
-
       <div className="flex-1 min-h-0">
         <AppShell
           left={
             <PasteInput
               value={raw}
               onChange={(v) => setRaw(v)}
-              showEmptyHint={Boolean(activeDraftId)}
               onFocusShortcutRequested={(fn) => {
                 focusFnRef.current = fn;
               }}
