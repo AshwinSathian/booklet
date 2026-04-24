@@ -1,41 +1,123 @@
 "use client";
 
 import { AppLogo } from "@/components/ui/AppLogo";
+import ThemeToggle from "@/components/ui/ThemeToggle";
 import { trackEvent } from "@/lib/analytics";
 import { APP_NAME, ROUTES } from "@/lib/constants";
 import type { Easing, Variants } from "framer-motion";
 import { motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
-import { Accordion, AccordionTab } from "primereact/accordion";
-import { Button } from "primereact/button";
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
+
+// ---------------------------------------------------------------------------
+// Utilities
+// ---------------------------------------------------------------------------
 
 function cn(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
 }
 
-const container: Variants = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.08, delayChildren: 0.05 } },
-};
+const ease: Easing = [0.16, 1, 0.3, 1];
 
 const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 14, filter: "blur(6px)" },
+  hidden: { opacity: 0, y: 16, filter: "blur(4px)" },
   show: {
     opacity: 1,
     y: 0,
     filter: "blur(0px)",
-    transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] as Easing },
+    transition: { duration: 0.6, ease },
   },
 };
 
-function Rule() {
+const stagger: Variants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.07, delayChildren: 0.04 } },
+};
+
+// ---------------------------------------------------------------------------
+// Primitive layout
+// ---------------------------------------------------------------------------
+
+function Container({ children, className }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div className={cn("mx-auto w-full max-w-6xl px-5 sm:px-6", className)}>
+      {children}
+    </div>
+  );
+}
+
+function Divider() {
   return <div className="h-px w-full bg-outline" />;
 }
 
-function Container({ children }: { children: React.ReactNode }) {
-  return <div className="mx-auto w-full max-w-7xl px-4">{children}</div>;
+// ---------------------------------------------------------------------------
+// Buttons (custom — no PrimeReact)
+// ---------------------------------------------------------------------------
+
+function PrimaryButton({
+  href,
+  onClick,
+  children,
+}: {
+  href?: string;
+  onClick?: () => void;
+  children: React.ReactNode;
+}) {
+  const cls =
+    "inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:bg-accent-hover active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg";
+
+  if (href) {
+    return (
+      <Link href={href} className={cls} onClick={onClick}>
+        {children}
+      </Link>
+    );
+  }
+  return (
+    <button type="button" className={cls} onClick={onClick}>
+      {children}
+    </button>
+  );
 }
+
+function GhostButton({
+  href,
+  onClick,
+  children,
+  external,
+}: {
+  href?: string;
+  onClick?: () => void;
+  children: React.ReactNode;
+  external?: boolean;
+}) {
+  const cls =
+    "inline-flex items-center gap-2 rounded-full border border-outline bg-transparent px-5 py-2.5 text-sm font-semibold text-text-secondary transition hover:border-accent-soft/50 hover:text-text-primary active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg";
+
+  if (external && href) {
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" className={cls} onClick={onClick}>
+        {children}
+      </a>
+    );
+  }
+  if (href) {
+    return (
+      <Link href={href} className={cls} onClick={onClick}>
+        {children}
+      </Link>
+    );
+  }
+  return (
+    <button type="button" className={cls} onClick={onClick}>
+      {children}
+    </button>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section wrapper
+// ---------------------------------------------------------------------------
 
 function Section({
   id,
@@ -44,6 +126,7 @@ function Section({
   subtitle,
   children,
   className,
+  center,
 }: {
   id?: string;
   eyebrow?: string;
@@ -51,83 +134,236 @@ function Section({
   subtitle?: string;
   children: React.ReactNode;
   className?: string;
+  center?: boolean;
 }) {
   const reduce = useReducedMotion();
 
   return (
-    <section id={id} className={cn("py-14 sm:py-20", className)}>
+    <section id={id} className={cn("py-16 sm:py-24", className)}>
       <Container>
         <motion.div
-          variants={container}
+          variants={stagger}
           initial="hidden"
           whileInView="show"
-          viewport={{ once: true, margin: "-120px" }}
+          viewport={{ once: true, margin: "-100px" }}
         >
-          <motion.div variants={reduce ? undefined : fadeUp}>
+          <motion.div variants={reduce ? undefined : fadeUp} className={center ? "text-center" : ""}>
             {eyebrow ? (
-              <div className="text-[11px] tracking-[0.28em] text-text-muted">
-                {eyebrow.toUpperCase()}
+              <div className="text-[10px] font-semibold tracking-[0.22em] uppercase text-accent">
+                {eyebrow}
               </div>
             ) : null}
-
-            <h2 className="mt-4 text-balance text-[28px] leading-[1.2] sm:text-[34px] font-semibold tracking-tight">
+            <h2 className={cn(
+              "mt-3 text-balance text-[26px] leading-[1.18] sm:text-[32px] font-bold tracking-[-0.02em]",
+              center ? "mx-auto max-w-2xl" : "max-w-3xl",
+            )}>
               {title}
             </h2>
-
             {subtitle ? (
-              <p className="mt-4 text-pretty text-[15px] sm:text-[16px] leading-[1.7] text-text-secondary">
+              <p className={cn(
+                "mt-4 text-pretty text-[15px] leading-[1.72] text-text-secondary",
+                center ? "mx-auto max-w-xl" : "max-w-2xl",
+              )}>
                 {subtitle}
               </p>
             ) : null}
           </motion.div>
 
-          <div className="mt-10">{children}</div>
+          <motion.div variants={reduce ? undefined : fadeUp} className="mt-10">
+            {children}
+          </motion.div>
         </motion.div>
       </Container>
     </section>
   );
 }
 
-function Card({
+// ---------------------------------------------------------------------------
+// Cards
+// ---------------------------------------------------------------------------
+
+function ValueCard({ icon, title, desc }: { icon: string; title: string; desc: string }) {
+  return (
+    <div className="flex flex-col gap-3 rounded-2xl border border-outline bg-bg-elevated p-5 shadow-card transition hover:border-outline/60">
+      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent/10 text-lg">
+        {icon}
+      </div>
+      <div className="text-[14px] font-semibold tracking-tight">{title}</div>
+      <div className="text-[13px] leading-[1.72] text-text-secondary">{desc}</div>
+    </div>
+  );
+}
+
+function ExampleCard({
   title,
   desc,
-  footer,
-  className,
+  href,
+  tag,
 }: {
   title: string;
-  desc?: React.ReactNode;
-  footer?: React.ReactNode;
-  className?: string;
+  desc: string;
+  href: string;
+  tag: string;
 }) {
   return (
-    <div
-      className={cn(
-        "rounded-2xl border border-outline bg-bg-soft p-5 shadow-glass",
-        className,
-      )}
-    >
-      <div className="text-[15px] font-semibold tracking-tight">{title}</div>
-      {desc ? (
-        <div className="mt-2 text-[14px] leading-[1.7] text-text-secondary">
-          {desc}
+    <div className="group flex flex-col gap-4 rounded-2xl border border-outline bg-bg-elevated p-5 shadow-card transition hover:border-accent-soft/30">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="inline-flex items-center rounded-full bg-accent/10 px-2.5 py-0.5 text-[10px] font-semibold tracking-widest uppercase text-accent">
+            {tag}
+          </div>
+          <div className="mt-2 text-[14px] font-semibold tracking-tight">{title}</div>
         </div>
-      ) : null}
-      {footer ? (
-        <div className="mt-4 border-t border-outline pt-4 text-center">
-          {footer}
+      </div>
+      <div className="text-[13px] leading-[1.72] text-text-secondary">{desc}</div>
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-accent transition hover:text-accent-soft"
+        onClick={() => trackEvent("example_clicked", { example: tag })}
+      >
+        View example
+        <svg width="12" height="12" fill="none" viewBox="0 0 12 12" aria-hidden>
+          <path d="M2.5 9.5 9.5 2.5M9.5 2.5H4M9.5 2.5V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </a>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// FAQ (native details/summary, no PrimeReact)
+// ---------------------------------------------------------------------------
+
+function FaqItem({ question, children }: { question: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className={cn(
+      "border-b border-outline last:border-0 transition",
+    )}>
+      <button
+        type="button"
+        className="flex w-full items-center justify-between gap-4 py-4 text-left text-[14px] font-semibold tracking-tight transition hover:text-accent focus-visible:outline-none"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+      >
+        <span>{question}</span>
+        <span className={cn(
+          "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-outline text-text-muted transition",
+          open && "rotate-180",
+        )}>
+          <svg width="10" height="10" fill="none" viewBox="0 0 10 10" aria-hidden>
+            <path d="M2 3.5 5 6.5 8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </span>
+      </button>
+      {open ? (
+        <div className="pb-4 text-[13px] leading-[1.75] text-text-secondary">
+          {children}
         </div>
       ) : null}
     </div>
   );
 }
 
-function Badge({ children }: { children: React.ReactNode }) {
+// ---------------------------------------------------------------------------
+// Hero product mock
+// ---------------------------------------------------------------------------
+
+function HeroMock() {
   return (
-    <span className="inline-flex items-center rounded-full border border-outline bg-bg-glass px-3 py-1 text-[12px] text-text-secondary">
-      {children}
-    </span>
+    <div className="rounded-2xl border border-outline bg-bg-elevated shadow-glass overflow-hidden">
+      {/* Mock topbar */}
+      <div className="flex items-center gap-2 border-b border-outline px-4 py-3 bg-bg-soft">
+        <div className="flex gap-1.5">
+          <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
+          <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
+          <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
+        </div>
+        <div className="flex-1 flex justify-center">
+          <div className="rounded-md bg-bg-glass px-8 py-0.5 text-[11px] text-text-muted">
+            readable.app
+          </div>
+        </div>
+        <div className="rounded-full bg-accent px-3 py-1 text-[10px] font-semibold text-white">
+          Publish
+        </div>
+      </div>
+
+      {/* Mock editor/preview split */}
+      <div className="grid grid-cols-2 divide-x divide-outline">
+        {/* Editor */}
+        <div className="p-4">
+          <div className="mb-2 text-[9px] font-semibold uppercase tracking-widest text-text-muted">
+            Editor
+          </div>
+          <pre className="font-mono text-[11px] leading-[1.65] text-text-secondary whitespace-pre-wrap overflow-hidden">
+{`## Incident Summary
+
+**Impact:** API degraded
+**Duration:** 22 min
+
+### Root cause
+
+Database connection pool
+exhausted after deploy.
+
+- Pool size misconfigured
+- Health check delayed
+- Alert threshold too high
+
+\`\`\`bash
+max_connections=5 # was 50
+\`\`\``}
+          </pre>
+        </div>
+
+        {/* Preview */}
+        <div className="p-4 bg-bg">
+          <div className="mb-2 text-[9px] font-semibold uppercase tracking-widest text-text-muted">
+            Preview
+          </div>
+          <div className="text-[13px] font-semibold tracking-tight">Incident Summary</div>
+          <div className="mt-1.5 text-[11px] leading-[1.7] text-text-secondary">
+            <span className="font-semibold text-text-primary">Impact:</span> API degraded
+          </div>
+          <div className="text-[11px] leading-[1.7] text-text-secondary">
+            <span className="font-semibold text-text-primary">Duration:</span> 22 min
+          </div>
+          <div className="mt-2.5 text-[11px] font-semibold">Root cause</div>
+          <div className="mt-1 text-[11px] leading-[1.7] text-text-secondary">
+            Database connection pool exhausted after deploy.
+          </div>
+          <ul className="mt-1.5 space-y-0.5">
+            {["Pool size misconfigured", "Health check delayed", "Alert threshold too high"].map((t) => (
+              <li key={t} className="flex items-start gap-1.5 text-[10px] text-text-secondary">
+                <span className="mt-[5px] h-1 w-1 shrink-0 rounded-full bg-accent" />
+                {t}
+              </li>
+            ))}
+          </ul>
+          <div className="mt-2.5 rounded-lg bg-bg-soft border border-outline p-2 font-mono text-[10px] text-text-muted">
+            max_connections=5
+          </div>
+        </div>
+      </div>
+
+      {/* Publish bar */}
+      <div className="flex items-center gap-2 border-t border-outline px-4 py-2.5 bg-bg-soft">
+        <div className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+        <div className="flex-1 font-mono text-[10px] text-text-muted truncate">
+          readable.app/p/Ab3k91QxZp
+        </div>
+        <div className="text-[10px] font-semibold text-accent">Copy link</div>
+      </div>
+    </div>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Main component
+// ---------------------------------------------------------------------------
 
 export function Landing() {
   const reduce = useReducedMotion();
@@ -135,42 +371,50 @@ export function Landing() {
   const steps = useMemo(
     () => [
       {
+        n: "01",
         title: "Paste your Markdown",
         desc: "Drop in notes, READMEs, incident updates, proposals — anything Markdown-shaped.",
       },
       {
-        title: "Preview it instantly",
+        n: "02",
+        title: "Preview instantly",
         desc: "Readable keeps headings, lists, tables, and code structured and calm.",
       },
       {
+        n: "03",
         title: "Publish a link",
-        desc: "Get a clean, read-only page that looks good on phones and desktops.",
+        desc: "One click creates a clean, read-only URL. No account needed.",
       },
       {
+        n: "04",
         title: "Share without friction",
-        desc: "Send the link in Slack, email, or a ticket — your reader just reads.",
+        desc: "Send in Slack, email, or a ticket. Your reader just reads.",
       },
     ],
     [],
   );
 
-  const reasons = useMemo(
+  const values = useMemo(
     () => [
       {
-        title: "Markdown is great for writing. Not always for reading.",
-        desc: "Readable is the small step between raw Markdown and “please open this tool to understand it.”",
+        icon: "⚡",
+        title: "Works in seconds",
+        desc: "No signup, no onboarding. Paste and you're in the editor.",
       },
       {
+        icon: "🔗",
         title: "A link that feels finished",
-        desc: "Spacing, typography, and layout are handled for you — so your content lands the way you meant it.",
+        desc: "Typography, spacing, and layout are handled so your content lands the way you meant it.",
       },
       {
+        icon: "📤",
         title: "Built for forwarding",
-        desc: "When your message gets copied into a thread or escalated, the structure stays intact.",
+        desc: "When your message gets escalated or copied into a thread, the structure stays intact.",
       },
       {
-        title: "Opinionated, intentionally simple",
-        desc: "No collaboration, no comments, no feeds. Just clean reading.",
+        icon: "🧘",
+        title: "Intentionally simple",
+        desc: "No collaboration, no comments, no feeds. Just a clean reading page.",
       },
     ],
     [],
@@ -179,82 +423,22 @@ export function Landing() {
   const useCases = useMemo(
     () => [
       {
+        tag: "Incident",
         title: "Incident summaries",
-        desc: "Timelines, impact, root cause, next steps — readable enough to forward.",
-        footer: (
-          <>
-            <a
-              target="_blank"
-              href="https://readable.ashwinsathian.com/p/GqfTrJQg0t"
-            >
-              <Button
-                label="View Readable Sample"
-                size="small"
-                className="min-w-full uppercase tracking-wide py-1"
-                icon="pi pi-arrow-right"
-                iconPos="right"
-                text
-                raised
-                outlined
-                onClick={() =>
-                  trackEvent("example_clicked", { example: "incident" })
-                }
-              />
-            </a>
-          </>
-        ),
+        desc: "Timelines, impact, root cause, next steps — structured enough to forward.",
+        href: "https://readable.ashwinsathian.com/p/GqfTrJQg0t",
       },
       {
-        title: "Design notes & ADRs",
+        tag: "ADR",
+        title: "Design notes & decisions",
         desc: "Tradeoffs and decisions that make sense even to someone outside the repo.",
-        footer: (
-          <>
-            <a
-              target="_blank"
-              href="https://readable.ashwinsathian.com/p/Vmm78unhPg"
-            >
-              <Button
-                label="View Readable Sample"
-                text
-                raised
-                outlined
-                size="small"
-                className="min-w-full uppercase tracking-wide py-1"
-                icon="pi pi-arrow-right"
-                iconPos="right"
-                onClick={() =>
-                  trackEvent("example_clicked", { example: "adr" })
-                }
-              />
-            </a>
-          </>
-        ),
+        href: "https://readable.ashwinsathian.com/p/Vmm78unhPg",
       },
       {
+        tag: "Docs",
         title: "README-style docs",
         desc: "Documentation you can share without sending someone to GitHub first.",
-        footer: (
-          <>
-            <a
-              target="_blank"
-              href="https://readable.ashwinsathian.com/p/6MTZfx3M6q"
-            >
-              <Button
-                label="View Readable Sample"
-                text
-                raised
-                outlined
-                size="small"
-                className="min-w-full uppercase tracking-wide py-1"
-                icon="pi pi-arrow-right"
-                iconPos="right"
-                onClick={() =>
-                  trackEvent("example_clicked", { example: "readme" })
-                }
-              />
-            </a>
-          </>
-        ),
+        href: "https://readable.ashwinsathian.com/p/6MTZfx3M6q",
       },
     ],
     [],
@@ -262,428 +446,310 @@ export function Landing() {
 
   return (
     <div className="relative min-h-screen bg-bg text-text-primary">
-      {/* Top bar */}
-      <header className="sticky top-0 z-20 border-b border-outline bg-bg-glass/85 backdrop-blur">
-        <Container>
-          <div className="flex items-center justify-between py-3">
-            <AppLogo onlyIcon={false} />
 
+      {/* ------------------------------------------------------------------ */}
+      {/* Sticky nav                                                           */}
+      {/* ------------------------------------------------------------------ */}
+      <header className="sticky top-0 z-20 border-b border-outline/70 bg-bg/80 backdrop-blur-xl">
+        <Container>
+          <div className="flex items-center justify-between py-3.5">
+            <AppLogo onlyIcon={false} />
             <div className="flex items-center gap-2">
-              <Link href={ROUTES.app}>
-                <Button
-                  label="Try it now"
-                  rounded
-                  className="min-w-fit uppercase tracking-wide"
-                  icon="pi pi-arrow-right"
-                  iconPos="right"
-                  onClick={() =>
-                    trackEvent("open_editor_clicked", { location: "topbar" })
-                  }
-                />
-              </Link>
+              <ThemeToggle />
+              <PrimaryButton
+                href={ROUTES.app}
+                onClick={() => trackEvent("open_editor_clicked", { location: "topbar" })}
+              >
+                Open editor
+                <svg width="12" height="12" fill="none" viewBox="0 0 12 12" aria-hidden>
+                  <path d="M2.5 9.5 9.5 2.5M9.5 2.5H4M9.5 2.5V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </PrimaryButton>
             </div>
           </div>
         </Container>
       </header>
 
-      {/* HERO */}
-      <Container>
-        <div className="relative py-14 sm:py-20">
-          {/* Decorative glow */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 overflow-hidden"
+      {/* ------------------------------------------------------------------ */}
+      {/* Hero                                                                 */}
+      {/* ------------------------------------------------------------------ */}
+      <section className="relative py-20 sm:py-28 overflow-hidden">
+        {/* Background mesh */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute -top-40 left-1/2 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-accent opacity-[0.09] blur-[80px]" />
+          <div className="absolute top-40 -right-24 h-80 w-80 rounded-full bg-accent-warm opacity-[0.05] blur-[60px]" />
+          <div className="absolute bottom-0 -left-20 h-72 w-72 rounded-full bg-accent opacity-[0.06] blur-[60px]" />
+        </div>
+
+        <Container>
+          <motion.div
+            variants={stagger}
+            initial="hidden"
+            animate="show"
+            className="relative z-10"
           >
-            <div className="absolute -top-28 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-accent opacity-[0.12] blur-3xl" />
-            <div className="absolute top-32 -right-20 h-56 w-56 rounded-full bg-accent opacity-[0.08] blur-3xl" />
-          </div>
-
-          <motion.div variants={container} initial="hidden" animate="show">
+            {/* Eyebrow */}
             <motion.div variants={reduce ? undefined : fadeUp}>
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge>No signup</Badge>
-                <Badge>Typography-first</Badge>
-                <Badge>Share with a link</Badge>
-              </div>
-
-              <h1 className="mt-5 text-balance text-[38px] leading-[1.12] sm:text-[48px] font-bold tracking-tight">
-                Make Markdown readable. Instantly.
-              </h1>
-
-              <p className="mt-4 max-w-2xl text-pretty text-[15px] sm:text-[16px] leading-[1.7] text-text-secondary">
-                Paste your Markdown. {APP_NAME} turns it into a clean, shareable
-                reading page — without asking your reader to open a repo, doc
-                tool, or thread for context.
-              </p>
-
-              <div className="mt-8 flex flex-wrap items-center gap-3">
-                <Link href={ROUTES.app}>
-                  <Button
-                    label="Try it now"
-                    rounded
-                    className="min-w-fit uppercase tracking-wide"
-                    onClick={() =>
-                      trackEvent("open_editor_clicked", { location: "hero" })
-                    }
-                  />
-                </Link>
-                <Button
-                  label="See how it works"
-                  className="min-w-fit uppercase tracking-wide"
-                  severity="secondary"
-                  outlined
-                  onClick={() => {
-                    const el = document.getElementById("how");
-                    el?.scrollIntoView({ behavior: "smooth", block: "start" });
-                  }}
-                />
-                <Button
-                  label="See use cases"
-                  className="min-w-fit uppercase tracking-wide"
-                  severity="secondary"
-                  outlined
-                  onClick={() => {
-                    const el = document.getElementById("use-cases");
-                    el?.scrollIntoView({ behavior: "smooth", block: "start" });
-                  }}
-                />
-                <div className="text-xs text-text-muted tracking-wide">
-                  Tip: In the editor, press{" "}
-                  <span className="font-semibold">⌘/Ctrl</span>+
-                  <span className="font-semibold">Enter</span> to publish.
-                </div>
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-accent/25 bg-accent/8 px-3.5 py-1 text-[11px] font-semibold tracking-wide text-accent">
+                <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                No signup · Free · Expires in 30 days
               </div>
             </motion.div>
+
+            {/* Headline */}
+            <motion.h1
+              variants={reduce ? undefined : fadeUp}
+              className="mt-5 text-balance text-[40px] leading-[1.08] sm:text-[58px] font-bold tracking-[-0.03em] max-w-3xl"
+            >
+              Your Markdown,{" "}
+              <span className="bg-gradient-to-r from-accent to-accent-soft bg-clip-text text-transparent">
+                beautifully readable.
+              </span>
+            </motion.h1>
+
+            {/* Subtitle */}
+            <motion.p
+              variants={reduce ? undefined : fadeUp}
+              className="mt-5 max-w-xl text-pretty text-[16px] leading-[1.75] text-text-secondary"
+            >
+              Paste your Markdown. Get a clean, shareable reading page instantly — without asking
+              your reader to open a repo, doc tool, or thread for context.
+            </motion.p>
+
+            {/* CTAs */}
+            <motion.div
+              variants={reduce ? undefined : fadeUp}
+              className="mt-8 flex flex-wrap items-center gap-3"
+            >
+              <PrimaryButton
+                href={ROUTES.app}
+                onClick={() => trackEvent("open_editor_clicked", { location: "hero" })}
+              >
+                Try it now — it&apos;s free
+                <svg width="13" height="13" fill="none" viewBox="0 0 12 12" aria-hidden>
+                  <path d="M2.5 9.5 9.5 2.5M9.5 2.5H4M9.5 2.5V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </PrimaryButton>
+              <GhostButton onClick={() => {
+                document.getElementById("how")?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}>
+                How it works
+              </GhostButton>
+            </motion.div>
+
+            <motion.div
+              variants={reduce ? undefined : fadeUp}
+              className="mt-4 text-[12px] text-text-muted"
+            >
+              Press <kbd className="rounded border border-outline bg-bg-elevated px-1.5 py-0.5 font-mono text-[10px]">⌘</kbd>{" "}
+              +{" "}
+              <kbd className="rounded border border-outline bg-bg-elevated px-1.5 py-0.5 font-mono text-[10px]">↵</kbd>{" "}
+              to publish from the editor
+            </motion.div>
           </motion.div>
-        </div>
-      </Container>
 
-      {/* HERO PREVIEW */}
+          {/* Product mock */}
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.25, ease }}
+            className="relative mt-14 z-10"
+          >
+            <HeroMock />
+          </motion.div>
+        </Container>
+      </section>
+
       <Container>
-        <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          className="rounded-2xl border border-outline bg-bg-soft shadow-glass"
-        >
-          <div className="p-4 sm:p-5">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div className="rounded-xl border border-outline bg-bg-glass">
-                <div className="flex items-center justify-between px-4 py-3">
-                  <div className="text-[12px] font-semibold">
-                    Pasted Markdown
-                  </div>
-                  <div className="text-[11px] text-text-muted">raw</div>
-                </div>
-                <div className="h-px bg-outline" />
-                <div className="max-h-80 overflow-auto p-4 font-mono text-[12px] leading-[1.65] text-text-secondary">
-                  <pre className="whitespace-pre-wrap">{`## Incident Summary
-
-Root cause analysis below:
-
-- Service A timed out
-- Retry logic failed
-- Database pool exhausted
-
-\`\`\`js
-async function retry() {
-  // ...
-}
-\`\`\``}</pre>
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-outline bg-bg">
-                <div className="flex items-center justify-between px-4 py-3">
-                  <div className="text-[12px] font-semibold">Readable page</div>
-                  <div className="text-[11px] text-text-muted">clean</div>
-                </div>
-                <div className="h-px bg-outline" />
-                <div className="p-4">
-                  <div className="text-[18px] font-semibold tracking-tight">
-                    Incident Summary
-                  </div>
-                  <div className="mt-2 text-[14px] leading-[1.7] text-text-secondary">
-                    Ready to forward. Easy to read. Calm by default.
-                  </div>
-
-                  <ul className="mt-4 space-y-2 text-[14px] leading-[1.7] text-text-secondary">
-                    {[
-                      "What happened and what we did",
-                      "Key timestamps and actions",
-                      "Next steps in plain language",
-                    ].map((t) => (
-                      <li key={t} className="flex gap-3">
-                        <span className="mt-2.5 h-1 w-1 rounded-full bg-accent" />
-                        {t}
-                      </li>
-                    ))}
-                  </ul>
-
-                  <div className="mt-4 rounded-xl border border-outline bg-bg-soft p-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="text-[12px] text-text-muted">
-                        Share link
-                      </div>
-                      <button
-                        className="rounded-md border border-outline bg-transparent px-2 py-1 text-[11px] text-text-secondary hover:text-text-primary transition"
-                        type="button"
-                      >
-                        Copy
-                      </button>
-                    </div>
-                    <div className="mt-2 font-mono text-[12px] text-text-secondary">
-                      /publish → /p/Ab3k91QxZp
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </motion.div>
+        <Divider />
       </Container>
 
-      <div className="py-10">
-        <Container>
-          <Rule />
-        </Container>
-      </div>
-
-      {/* VALUE */}
-      <Section
-        eyebrow="Why Readable"
-        title="Markdown, but easier to consume."
-        subtitle="Readable is for the moment your text leaves your editor — when someone else has to understand it quickly."
-      >
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {reasons.map((r) => (
-            <Card key={r.title} title={r.title} desc={r.desc} />
-          ))}
-        </div>
-      </Section>
-
-      <div className="py-2">
-        <Container>
-          <Rule />
-        </Container>
-      </div>
-
-      {/* HOW */}
+      {/* ------------------------------------------------------------------ */}
+      {/* How it works                                                         */}
+      {/* ------------------------------------------------------------------ */}
       <Section
         id="how"
         eyebrow="How it works"
         title="Paste → preview → publish → share"
-        subtitle="A tiny workflow that matches how you already work."
+        subtitle="A four-step workflow that fits inside your existing process."
       >
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {steps.map((f) => (
-            <Card key={f.title} title={f.title} desc={f.desc} />
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {steps.map((s) => (
+            <motion.div
+              key={s.n}
+              variants={reduce ? undefined : fadeUp}
+              className="flex flex-col gap-3 rounded-2xl border border-outline bg-bg-elevated p-5 shadow-card"
+            >
+              <div className="font-mono text-[11px] font-semibold text-accent">{s.n}</div>
+              <div className="text-[14px] font-semibold tracking-tight">{s.title}</div>
+              <div className="text-[13px] leading-[1.72] text-text-secondary">{s.desc}</div>
+            </motion.div>
           ))}
         </div>
       </Section>
 
-      <div className="py-2">
-        <Container>
-          <Rule />
-        </Container>
-      </div>
+      <Container>
+        <Divider />
+      </Container>
 
-      {/* USE CASES */}
+      {/* ------------------------------------------------------------------ */}
+      {/* Use cases                                                            */}
+      {/* ------------------------------------------------------------------ */}
       <Section
         id="use-cases"
         eyebrow="Use cases"
         title="For updates, explanations, and handoffs"
-        subtitle="If it currently gets pasted into Slack, email, or a ticket… it probably belongs here."
+        subtitle="If it currently gets pasted into Slack, email, or a ticket — it probably belongs here."
       >
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           {useCases.map((c) => (
-            <Card
-              key={c.title}
-              title={c.title}
-              desc={c.desc}
-              footer={c.footer}
-            />
+            <motion.div key={c.tag} variants={reduce ? undefined : fadeUp}>
+              <ExampleCard {...c} />
+            </motion.div>
           ))}
         </div>
       </Section>
 
-      <div className="py-2">
-        <Container>
-          <Rule />
-        </Container>
-      </div>
+      <Container>
+        <Divider />
+      </Container>
 
-      {/* INTENTIONAL SIMPLICITY */}
+      {/* ------------------------------------------------------------------ */}
+      {/* Value props                                                          */}
+      {/* ------------------------------------------------------------------ */}
       <Section
-        eyebrow="Designed to be simple"
-        title="Readable is intentionally not a doc platform."
-        subtitle="No accounts, no collaboration, no endless settings. Just clean reading pages you can share."
+        eyebrow="Why Readable"
+        title="Markdown is great for writing. Not always for reading."
+        subtitle={'Readable is the small step between raw Markdown and “please open this tool to understand it.”'}
       >
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <Card
-            title="No signup"
-            desc="Try it in seconds. If it helps, keep using it. If not, no baggage."
-          />
-          <Card
-            title="Read-only pages"
-            desc="Published pages are for reading and sharing — not for managing a workspace."
-          />
-          <Card
-            title="Small surface area"
-            desc="Fewer knobs, fewer surprises. The content stays the main character."
-          />
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {values.map((v) => (
+            <motion.div key={v.title} variants={reduce ? undefined : fadeUp}>
+              <ValueCard {...v} />
+            </motion.div>
+          ))}
         </div>
       </Section>
 
-      <div className="py-2">
-        <Container>
-          <Rule />
-        </Container>
-      </div>
+      <Container>
+        <Divider />
+      </Container>
 
-      {/* FAQ */}
+      {/* ------------------------------------------------------------------ */}
+      {/* FAQ                                                                  */}
+      {/* ------------------------------------------------------------------ */}
       <Section
         eyebrow="FAQ"
         title="Quick answers"
-        subtitle="Clear, practical, and to the point."
+        center
       >
-        <div className="rounded-2xl border border-outline bg-bg-soft p-2 shadow-glass">
-          <Accordion multiple={false} activeIndex={0}>
-            <AccordionTab header="Do I need an account?">
-              <div className="text-[14px] leading-[1.7] text-text-secondary">
-                No. You can use {APP_NAME} immediately.
-              </div>
-            </AccordionTab>
-            <AccordionTab header="Are published pages public?">
-              <div className="text-[14px] leading-[1.7] text-text-secondary">
-                Yes — they’re shareable by link. If you publish it, assume it
-                can be forwarded.
-              </div>
-            </AccordionTab>
-            <AccordionTab header="Can I edit after publishing?">
-              <div className="text-[14px] leading-[1.7] text-text-secondary">
-                Not right now. The goal is a simple “publish a clean reading
-                link” flow.
-              </div>
-            </AccordionTab>
-            <AccordionTab header="Can I export to PDF or Doc?">
-              <div className="text-[14px] leading-[1.7] text-text-secondary">
-                Not yet. Sharing a link is the primary experience.
-              </div>
-            </AccordionTab>
-          </Accordion>
+        <div className="mx-auto max-w-2xl rounded-2xl border border-outline bg-bg-elevated px-6 shadow-card">
+          <FaqItem question="Do I need an account?">
+            No. {APP_NAME} works immediately — no signup, no email, no password.
+          </FaqItem>
+          <FaqItem question="Are published pages public?">
+            Yes — they&apos;re accessible by anyone with the link. If you publish it, assume it can
+            be forwarded.
+          </FaqItem>
+          <FaqItem question="How long do pages last?">
+            30 days from the time of publishing. The page shows an expiry countdown at the top.
+          </FaqItem>
+          <FaqItem question="Can I edit after publishing?">
+            Not right now. Published snapshots are immutable. You can edit your local draft and
+            republish — which creates a new link.
+          </FaqItem>
+          <FaqItem question="Can I export to PDF?">
+            Use your browser&apos;s print function on the published page (File → Print or Ctrl/⌘+P).
+            It produces a clean PDF with no chrome.
+          </FaqItem>
+          <FaqItem question="Where are drafts stored?">
+            Entirely in your browser&apos;s localStorage — nothing is sent to the server until you
+            publish.
+          </FaqItem>
         </div>
       </Section>
 
-      {/* FINAL CTA */}
-      <div className="border-t border-outline">
+      <Container>
+        <Divider />
+      </Container>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Final CTA                                                            */}
+      {/* ------------------------------------------------------------------ */}
+      <section className="py-16 sm:py-24">
         <Container>
-          <div className="py-14">
-            <div className="rounded-2xl border border-outline bg-bg-soft p-8 shadow-glass">
-              <div className="mx-auto max-w-2xl text-center">
-                <div className="text-balance text-[24px] sm:text-[28px] font-semibold tracking-tight">
-                  Paste once. Share a page people actually read.
-                </div>
-                <div className="mt-3 text-[15px] leading-[1.7] text-text-secondary">
-                  Paste your Markdown, preview instantly, publish a clean
-                  reading link.
-                </div>
-                <div className="mt-7 flex justify-center">
-                  <Link href={ROUTES.app}>
-                    <Button
-                      label="Try it now"
-                      rounded
-                      className="min-w-fit uppercase tracking-wide"
-                    />
-                  </Link>
-                </div>
-                <div className="mt-4 text-[12px] text-text-muted">
-                  {APP_NAME} is a sharing tool — not a document warehouse.
-                </div>
-              </div>
+          <motion.div
+            variants={stagger}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, margin: "-80px" }}
+            className="relative overflow-hidden rounded-3xl border border-accent/20 bg-bg-elevated px-8 py-14 text-center shadow-glow"
+          >
+            {/* Glow */}
+            <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+              <div className="absolute -top-20 left-1/2 h-60 w-60 -translate-x-1/2 rounded-full bg-accent opacity-[0.12] blur-3xl" />
             </div>
 
-            <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[12px] text-text-muted">
-              <div>
-                © {new Date().getFullYear()} {APP_NAME}. Built for clarity.
+            <motion.div variants={reduce ? undefined : fadeUp} className="relative z-10">
+              <div className="text-[10px] font-semibold tracking-[0.22em] uppercase text-accent">
+                Get started
               </div>
-              <div className="flex items-center gap-3">
-                <Link
-                  className="hover:text-text-primary transition"
+              <h2 className="mt-3 text-balance text-[28px] leading-[1.15] sm:text-[36px] font-bold tracking-[-0.02em]">
+                Paste once. Share a page people actually read.
+              </h2>
+              <p className="mx-auto mt-4 max-w-md text-[15px] leading-[1.72] text-text-secondary">
+                Free. No account. Takes 30 seconds.
+              </p>
+              <div className="mt-8 flex justify-center">
+                <PrimaryButton
                   href={ROUTES.app}
+                  onClick={() => trackEvent("open_editor_clicked", { location: "cta" })}
                 >
-                  Editor
-                </Link>
-                <a className="hover:text-text-primary transition" href="#how">
-                  How it works
-                </a>
+                  Open the editor
+                  <svg width="13" height="13" fill="none" viewBox="0 0 12 12" aria-hidden>
+                    <path d="M2.5 9.5 9.5 2.5M9.5 2.5H4M9.5 2.5V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </PrimaryButton>
               </div>
+            </motion.div>
+          </motion.div>
+        </Container>
+      </section>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Footer                                                               */}
+      {/* ------------------------------------------------------------------ */}
+      <footer className="border-t border-outline">
+        <Container>
+          <div className="flex flex-col items-center justify-between gap-4 py-8 sm:flex-row">
+            <div className="flex items-center gap-3">
+              <AppLogo onlyIcon={true} />
+              <span className="text-[12px] text-text-muted">
+                © {new Date().getFullYear()} {APP_NAME}. Built for clarity.
+              </span>
             </div>
+            <nav className="flex items-center gap-5 text-[12px] text-text-muted" aria-label="Footer navigation">
+              <Link href={ROUTES.app} className="transition hover:text-text-primary">
+                Editor
+              </Link>
+              <button
+                type="button"
+                className="transition hover:text-text-primary"
+                onClick={() => document.getElementById("how")?.scrollIntoView({ behavior: "smooth" })}
+              >
+                How it works
+              </button>
+              <button
+                type="button"
+                className="transition hover:text-text-primary"
+                onClick={() => document.getElementById("use-cases")?.scrollIntoView({ behavior: "smooth" })}
+              >
+                Examples
+              </button>
+            </nav>
           </div>
         </Container>
-      </div>
-
-      {/* Component-scoped PrimeReact polish */}
-      <style jsx>{`
-        :global(.p-button) {
-          border-radius: 999px;
-          padding: 0.62rem 1rem;
-          font-weight: 600;
-          letter-spacing: -0.01em;
-          box-shadow: none;
-        }
-
-        :global(.p-button.p-component) {
-          background: var(--p-primary-color);
-          border: 1px solid rgba(255, 255, 255, 0.08);
-          color: var(--p-primary-contrast-color);
-        }
-
-        :global(.p-button.p-component:hover) {
-          filter: brightness(1.03);
-        }
-
-        :global(.p-button.p-button-outlined) {
-          background: transparent !important;
-          border: 1px solid var(--color-outline) !important;
-          color: var(--p-text-color) !important;
-        }
-
-        :global(.p-accordion .p-accordion-header-link) {
-          background: transparent;
-          border: 0;
-          box-shadow: none;
-          color: var(--p-text-color);
-          padding: 0.9rem 0.85rem;
-          border-radius: 14px;
-        }
-
-        :global(.p-accordion .p-accordion-content) {
-          background: transparent;
-          border: 0;
-          color: var(--p-text-muted-color);
-          padding: 0 0.85rem 0.95rem 0.85rem;
-        }
-
-        :global(.p-accordion .p-accordion-tab) {
-          border-radius: 16px;
-          border: 1px solid var(--color-outline);
-          margin: 0.5rem;
-          overflow: hidden;
-          background: var(--p-surface-card);
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          :global(*),
-          :global(*::before),
-          :global(*::after) {
-            scroll-behavior: auto !important;
-            transition-duration: 0.001ms !important;
-            animation-duration: 0.001ms !important;
-            animation-iteration-count: 1 !important;
-          }
-        }
-      `}</style>
+      </footer>
     </div>
   );
 }
