@@ -8,7 +8,6 @@ import { getDoc } from "@/lib/storage";
 import { buildToc, MIN_TOC_HEADINGS, type TocItem } from "@/lib/toc";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Skeleton } from "primereact/skeleton";
 import { DesktopTocClient, MobileTocClient } from "@/components/share/TocClient";
 import { PrintButton } from "@/components/share/PrintButton";
 
@@ -84,22 +83,17 @@ export default async function SharePage({
   return (
     <div className="min-h-screen bg-bg text-text-primary">
       {/* ── Sticky header ── */}
-      <header className="sticky top-0 z-20 border-b border-outline/70 bg-bg/85 backdrop-blur-xl print:hidden">
+      <header className="sticky top-0 z-20 border-b border-border-subtle bg-bg/85 backdrop-blur-xl print:hidden">
         <div className={`mx-auto w-full px-4 py-3 flex items-center justify-between gap-4 ${maxW}`}>
           <AppLogo onlyIcon={false} />
 
           <div className="flex items-center gap-2 shrink-0">
-            {/* Expiry badge */}
             <ExpiryBadge daysLeft={daysLeft} />
-
             <PrintButton />
-
             <ThemeToggle />
-
-            {/* "Make your own" CTA */}
             <Link
               href={ROUTES.app}
-              className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-accent px-3.5 py-1.5 text-[11px] font-semibold text-white transition hover:bg-accent-hover"
+              className="hidden sm:inline-flex items-center gap-1.5 rounded-pill bg-accent px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-accent-hover"
             >
               Make your own
               <svg width="11" height="11" fill="none" viewBox="0 0 11 11" aria-hidden>
@@ -116,27 +110,20 @@ export default async function SharePage({
 
         <div className="flex flex-col lg:flex-row gap-12">
           <div className="min-w-0 flex-1">
-            {doc?.blocks ? (
-              <BlockRenderer
-                blocks={doc.blocks}
-                settings={doc.settings}
-                headingAnchors={anchorMap}
-              />
-            ) : (
-              [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-                <Skeleton key={n} className="my-2 w-full" />
-              ))
-            )}
+            <BlockRenderer
+              blocks={doc.blocks}
+              settings={doc.settings}
+              headingAnchors={anchorMap}
+            />
           </div>
-
           {showToc ? <DesktopTocClient toc={toc} /> : null}
         </div>
       </main>
 
       {/* ── Footer ── */}
-      <footer className="mt-12 border-t border-outline/50 print:hidden">
+      <footer className="mt-12 border-t border-border-subtle print:hidden">
         <div className={`mx-auto w-full px-4 py-6 ${maxW}`}>
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-[12px] text-text-muted">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-text-muted">
             <div className="flex items-center gap-2">
               <AppLogo onlyIcon={true} />
               <span>Published via {APP_NAME}</span>
@@ -163,7 +150,7 @@ export default async function SharePage({
 function ExpiryBadge({ daysLeft }: { daysLeft: number }) {
   if (daysLeft <= 0) {
     return (
-      <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-red-500/30 bg-red-500/10 px-2.5 py-0.5 text-[10px] font-medium text-red-400">
+      <span className="hidden sm:inline-flex items-center gap-1.5 rounded-pill border border-red-500/30 bg-red-500/10 px-2.5 py-0.5 text-2xs font-medium text-red-400">
         Expired
       </span>
     );
@@ -171,49 +158,59 @@ function ExpiryBadge({ daysLeft }: { daysLeft: number }) {
 
   if (daysLeft <= 7) {
     return (
-      <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-amber-400/30 bg-amber-400/10 px-2.5 py-0.5 text-[10px] font-medium text-amber-400">
-        <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+      <span className="hidden sm:inline-flex items-center gap-1.5 rounded-pill border border-amber-400/30 bg-amber-400/10 px-2.5 py-0.5 text-2xs font-medium text-amber-400">
+        <span className="h-1.5 w-1.5 rounded-full bg-amber-400 shrink-0" />
         Expires in {daysLeft} {daysLeft === 1 ? "day" : "days"}
       </span>
     );
   }
 
   return (
-    <span className="hidden sm:inline-flex items-center rounded-full border border-outline/60 px-2.5 py-0.5 text-[10px] text-text-muted">
+    <span className="hidden sm:inline-flex items-center rounded-pill border border-border-default px-2.5 py-0.5 text-2xs text-text-muted">
       Expires in {daysLeft} days
     </span>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Not found
+// Not found / expired — proper page structure with header
 // ---------------------------------------------------------------------------
 
 function NotFoundOrExpired() {
   return (
-    <main className="w-screen h-screen flex items-center justify-center bg-bg text-text-primary">
-      <div className="p-8 text-center flex flex-col items-center gap-4">
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-outline/30 text-2xl">
-          🔍
+    <div className="min-h-screen bg-bg text-text-primary flex flex-col">
+      <header className="border-b border-border-subtle">
+        <div className="mx-auto w-full max-w-2xl px-4 py-3">
+          <AppLogo onlyIcon={false} />
         </div>
-        <div>
-          <div className="text-[16px] font-semibold">Page not found</div>
-          <div className="mt-1 text-[13px] text-text-secondary">
-            This page doesn&apos;t exist or has expired after 30 days.
+      </header>
+
+      <main className="flex-1 flex items-center justify-center px-4 py-16">
+        <div className="text-center max-w-sm">
+          <div className="mb-6 flex justify-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-card bg-fill-2 text-text-muted">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <rect x="4" y="2" width="16" height="20" rx="2" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M9 9l6 6M15 9l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            </div>
           </div>
+          <h1 className="text-lg font-semibold">Page not found</h1>
+          <p className="mt-2 text-sm text-text-secondary">
+            This page doesn&apos;t exist or has expired after 30 days.
+          </p>
+          <Link
+            href={ROUTES.app}
+            className="mt-6 inline-flex items-center gap-1.5 rounded-pill bg-accent px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover active:scale-[0.97]"
+          >
+            Create a Readable page
+            <svg width="12" height="12" fill="none" viewBox="0 0 12 12" aria-hidden>
+              <path d="M2.5 9.5 9.5 2.5M9.5 2.5H4M9.5 2.5V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </Link>
         </div>
-        <Link
-          href={ROUTES.app}
-          className="inline-flex items-center gap-1.5 rounded-full bg-accent px-5 py-2.5 text-[13px] font-semibold text-white transition hover:bg-accent-hover"
-        >
-          Create a Readable page
-          <svg width="12" height="12" fill="none" viewBox="0 0 12 12" aria-hidden>
-            <path d="M2.5 9.5 9.5 2.5M9.5 2.5H4M9.5 2.5V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </Link>
-        <AppLogo onlyIcon={false} />
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }
 
