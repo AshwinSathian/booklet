@@ -30,17 +30,17 @@ export function PasteInput({
   return (
     <div className="flex h-full max-h-full min-h-0 flex-col overflow-hidden w-full">
       {/* Pane label */}
-      <div className="shrink-0 flex items-center justify-between px-3 py-2 border-b border-outline/50">
-        <span className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">
+      <div className="shrink-0 flex items-center justify-between px-3 py-2 border-b border-border-subtle">
+        <span className="text-2xs font-semibold uppercase tracking-widest text-text-muted">
           Editor
         </span>
-        <span className="text-[10px] text-text-muted">
-          <kbd className="rounded border border-outline bg-bg-elevated px-1 py-0.5 font-mono text-[9px]">⌘K</kbd>
+        <span className="text-2xs text-text-muted">
+          <kbd className="rounded border border-border-default bg-fill-2 px-1 py-0.5 font-mono text-2xs">⌘K</kbd>
           {" "}focus
         </span>
       </div>
 
-      {/* Textarea */}
+      {/* Textarea — bg-bg creates contrast against the preview pane's bg-bg-soft */}
       <div className="flex-1 min-h-0 overflow-hidden w-full">
         <textarea
           ref={ref}
@@ -52,9 +52,9 @@ export function PasteInput({
             "h-full w-full min-h-0 min-w-0",
             "resize-none overflow-y-auto",
             "bg-bg text-text-primary",
-            "font-mono text-[13px] leading-[1.65]",
-            "p-3 pt-4",
-            "placeholder:text-text-muted/50",
+            "font-mono text-sm leading-[1.65]",
+            "p-4",
+            "placeholder:text-text-muted/60",
             "focus:outline-none",
             "caret-accent",
           ].join(" ")}
@@ -62,11 +62,12 @@ export function PasteInput({
       </div>
 
       {/* Footer: word/char count */}
-      <div className="shrink-0 flex items-center gap-3 border-t border-outline/50 px-3 py-1.5">
-        <span className="text-[10px] text-text-muted">
+      <div className="shrink-0 flex items-center gap-1.5 border-t border-border-subtle px-3 py-1.5">
+        <span className="text-2xs text-text-muted">
           {wordCount} {wordCount === 1 ? "word" : "words"}
         </span>
-        <span className="text-[10px] text-text-muted">{charCount} chars</span>
+        <span className="text-2xs text-text-muted opacity-40">·</span>
+        <span className="text-2xs text-text-muted">{charCount} chars</span>
       </div>
     </div>
   );

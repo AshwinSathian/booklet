@@ -14,18 +14,18 @@ export function AppShell({
   const [pane, setPane] = useState<MobilePane>("edit");
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 grid grid-cols-1 lg:grid-cols-2 gap-4 h-full min-h-0 overflow-hidden">
+    <div className="mx-auto w-full max-w-7xl px-4 grid grid-cols-1 lg:grid-cols-2 gap-0 h-full min-h-0 overflow-hidden">
       {/* Mobile pane toggle */}
-      <div className="lg:hidden sticky top-2 z-10">
+      <div className="lg:hidden sticky top-2 z-10 col-span-1">
         <div className="flex items-center justify-center">
-          <div className="flex rounded-full border border-outline bg-bg-elevated p-0.5 shadow-card">
+          <div className="flex rounded-pill border border-outline bg-bg-elevated p-0.5 shadow-card">
             {(["edit", "preview"] as const).map((p) => (
               <button
                 key={p}
                 type="button"
                 onClick={() => setPane(p)}
                 className={[
-                  "rounded-full px-5 py-1.5 text-[11px] font-semibold uppercase tracking-wider transition",
+                  "rounded-pill px-5 py-1.5 text-xs font-semibold uppercase tracking-wider transition",
                   pane === p
                     ? "bg-accent text-white shadow-sm"
                     : "text-text-muted hover:text-text-primary",

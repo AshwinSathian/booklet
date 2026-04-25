@@ -34,19 +34,20 @@ export function PreviewPane({
   return (
     <div className="flex h-full max-h-full min-h-0 flex-col w-full overflow-hidden">
       {/* Pane label */}
-      <div className="shrink-0 flex items-center justify-between px-3 py-2 border-b border-outline/50">
-        <span className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">
+      <div className="shrink-0 flex items-center justify-between px-3 py-2 border-b border-border-subtle">
+        <span className="text-2xs font-semibold uppercase tracking-widest text-text-muted">
           Preview
         </span>
-        <span className="text-[10px] text-text-muted">
-          Live · ⌘↵ to publish
+        <span className="text-2xs text-text-muted">
+          Live · ⌘↵ publish
         </span>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto bg-bg-soft/40 border-l border-outline/30">
+      {/* Preview surface — bg-bg-soft differentiates it from the editor pane */}
+      <div className="flex-1 min-h-0 overflow-y-auto bg-bg-soft border-l border-border-subtle">
         {isBusy ? (
           <div className="flex h-full items-start p-4">
-            <span className="text-[10px] font-medium uppercase tracking-widest text-text-muted animate-pulse">
+            <span className="text-2xs font-medium uppercase tracking-widest text-text-muted animate-pulse">
               Updating…
             </span>
           </div>
@@ -59,6 +60,15 @@ export function PreviewPane({
         )}
       </div>
     </div>
+  );
+}
+
+function PageIcon() {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <rect x="4" y="2" width="16" height="20" rx="2" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
   );
 }
 
@@ -75,21 +85,21 @@ function EmptyState({
     <div className="flex h-full items-center justify-center p-6">
       <div className="w-full max-w-sm text-center">
         <div className="mb-4 flex justify-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/10 text-2xl">
-            📄
+          <div className="flex h-11 w-11 items-center justify-center rounded-card bg-accent-dim text-accent-soft">
+            <PageIcon />
           </div>
         </div>
         <div className="text-[15px] font-semibold tracking-tight">
           Paste. Preview. Publish.
         </div>
-        <div className="mt-2 text-[13px] leading-[1.7] text-text-secondary">
+        <div className="mt-2 text-sm leading-[1.7] text-text-secondary">
           Type or paste Markdown on the left. Your formatted preview appears here live.
         </div>
 
         {/* Sample Markdown teaser */}
-        <div className="mt-5 rounded-xl border border-outline bg-bg-elevated text-left overflow-hidden">
-          <div className="flex items-center justify-between px-3 py-2 border-b border-outline">
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-text-muted">
+        <div className="mt-5 rounded-xl border border-border-default bg-bg-elevated text-left overflow-hidden">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-border-default">
+            <span className="text-2xs font-semibold uppercase tracking-widest text-text-muted">
               Sample
             </span>
             <div className="flex items-center gap-1">
@@ -98,7 +108,7 @@ function EmptyState({
                   type="button"
                   onClick={onInsertSample}
                   title="Insert sample"
-                  className="rounded-md px-2 py-1 text-[10px] font-medium text-text-muted transition hover:bg-outline/30 hover:text-text-primary"
+                  className="rounded-md px-2 py-1 text-2xs font-medium text-text-muted transition hover:bg-fill-2 hover:text-text-primary"
                 >
                   Insert
                 </button>
@@ -108,32 +118,36 @@ function EmptyState({
                 onClick={onCopySample}
                 title="Copy sample"
                 className={[
-                  "rounded-md px-2 py-1 text-[10px] font-medium transition",
+                  "rounded-md px-2 py-1 text-2xs font-medium transition",
                   copyState === "copied"
                     ? "text-emerald-400"
                     : copyState === "failed"
                       ? "text-red-400"
-                      : "text-text-muted hover:bg-outline/30 hover:text-text-primary",
+                      : "text-text-muted hover:bg-fill-2 hover:text-text-primary",
                 ].join(" ")}
               >
                 {copyState === "copied" ? "Copied!" : copyState === "failed" ? "Failed" : "Copy"}
               </button>
             </div>
           </div>
-          <pre className="p-3 font-mono text-[11px] leading-[1.65] text-text-secondary whitespace-pre-wrap">
-            {SAMPLE_MARKDOWN.slice(0, 260)}…
-          </pre>
+          {/* Fade out the bottom of the sample preview */}
+          <div className="relative">
+            <pre className="p-3 font-mono text-xs leading-[1.65] text-text-secondary whitespace-pre-wrap">
+              {SAMPLE_MARKDOWN.slice(0, 260)}
+            </pre>
+            <div className="absolute bottom-0 left-0 right-0 h-10 bg-linear-to-t from-bg-elevated to-transparent pointer-events-none" />
+          </div>
         </div>
 
         {/* Keyboard hint */}
-        <div className="mt-4 text-[11px] text-text-muted">
-          <kbd className="rounded border border-outline bg-bg-elevated px-1 py-0.5 font-mono text-[9px]">⌘</kbd>
+        <div className="mt-4 text-xs text-text-muted">
+          <kbd className="rounded border border-border-default bg-fill-2 px-1 py-0.5 font-mono text-2xs">⌘</kbd>
           {" + "}
-          <kbd className="rounded border border-outline bg-bg-elevated px-1 py-0.5 font-mono text-[9px]">K</kbd>
+          <kbd className="rounded border border-border-default bg-fill-2 px-1 py-0.5 font-mono text-2xs">K</kbd>
           {" "}to focus editor ·{" "}
-          <kbd className="rounded border border-outline bg-bg-elevated px-1 py-0.5 font-mono text-[9px]">⌘</kbd>
+          <kbd className="rounded border border-border-default bg-fill-2 px-1 py-0.5 font-mono text-2xs">⌘</kbd>
           {" + "}
-          <kbd className="rounded border border-outline bg-bg-elevated px-1 py-0.5 font-mono text-[9px]">↵</kbd>
+          <kbd className="rounded border border-border-default bg-fill-2 px-1 py-0.5 font-mono text-2xs">↵</kbd>
           {" "}to publish
         </div>
       </div>
