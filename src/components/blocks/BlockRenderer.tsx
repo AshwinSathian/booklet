@@ -153,8 +153,8 @@ export function BlockRenderer({
                         className={[
                           "text-text-muted",
                           "opacity-0 group-hover:opacity-60",
-                          "focus:opacity-100",
-                          "rounded-sm focus:outline-none focus:ring-2 focus:ring-accent-soft/50",
+                          "focus-visible:opacity-100",
+                          "rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft/50",
                           "text-[0.7em] px-1",
                           "transition",
                         ].join(" ")}

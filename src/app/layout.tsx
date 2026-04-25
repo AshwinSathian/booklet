@@ -1,5 +1,4 @@
 import { Analytics } from "@/components/analytics/Analytics";
-import PrimeStyles from "@/components/ui/PrimeStyles";
 import { APP_NAME } from "@/lib/constants";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
@@ -27,9 +26,6 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning className={inter.variable}>
-      <head>
-        <PrimeStyles />
-      </head>
       <body>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
           <Suspense fallback={null}>

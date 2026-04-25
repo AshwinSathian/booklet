@@ -1,6 +1,4 @@
 @import "tailwindcss";
-@import "primereact/resources/primereact.min.css";
-@import "primeicons/primeicons.css";
 
 /*
   Theme strategy (dark-first, avoids white flash):

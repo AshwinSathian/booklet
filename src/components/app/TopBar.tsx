@@ -290,7 +290,7 @@ function DraftTitle({
           if (e.key === "Escape") { e.preventDefault(); cancel(); }
         }}
         autoFocus
-        className="min-w-0 max-w-52 rounded-md border border-accent-soft bg-bg px-2 py-0.5 text-sm font-medium text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-soft"
+        className="min-w-0 max-w-52 rounded-md border border-accent-soft bg-bg px-2 py-0.5 text-sm font-medium text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft"
         aria-label="Draft title"
       />
     );

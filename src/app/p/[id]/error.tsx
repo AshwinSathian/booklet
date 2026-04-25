@@ -2,7 +2,6 @@
 
 import { ROUTES } from "@/lib/constants";
 import Link from "next/link";
-import { Button } from "primereact/button";
 
 export default function ShareError({
   error,
@@ -15,36 +14,35 @@ export default function ShareError({
     <main className="min-h-screen flex items-center justify-center px-6">
       <div className="w-full max-w-lg rounded-2xl border border-outline bg-bg-soft p-6 text-center shadow-glass">
         <div className="text-lg font-semibold uppercase tracking-wide">
-          Couldn’t load this page
+          Couldn&apos;t load this page
         </div>
         <div className="mt-3 text-sm text-text-secondary">
           This can happen if the link expired, the backend is unavailable, or
           the page failed to render.
         </div>
 
-        <div className="mt-6 flex justify-center gap-2">
-          <Button
-            label="Retry"
-            icon="pi pi-refresh"
+        <div className="mt-6 flex justify-center gap-3">
+          <button
+            type="button"
             onClick={reset}
-            rounded
-            className="uppercase tracking-wide"
-          />
-          <Link href={ROUTES.app}>
-            <Button
-              label="Open editor"
-              icon="pi pi-pencil"
-              severity="secondary"
-              outlined
-              rounded
-              className="uppercase tracking-wide"
-            />
+            className="inline-flex items-center gap-2 rounded-pill bg-accent px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+          >
+            <svg width="14" height="14" fill="none" viewBox="0 0 14 14" aria-hidden>
+              <path d="M12 7A5 5 0 1 1 7 2a5 5 0 0 0 3.54 1.46M12 2v3.5H8.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Retry
+          </button>
+          <Link
+            href={ROUTES.app}
+            className="inline-flex items-center gap-2 rounded-pill border border-border-default px-5 py-2.5 text-sm font-semibold text-text-secondary transition hover:border-border-strong hover:text-text-primary active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+          >
+            Open editor
           </Link>
         </div>
 
-        <div className="mt-5 text-[12px] text-text-muted">
-          {error?.digest ? `Ref: ${error.digest}` : null}
-        </div>
+        {error?.digest ? (
+          <div className="mt-5 text-xs text-text-muted">Ref: {error.digest}</div>
+        ) : null}
       </div>
     </main>
   );
