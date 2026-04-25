@@ -22,19 +22,19 @@ export function InlineRenderer({ inl }: { inl: Inline[] }) {
             return <React.Fragment key={i}>{node.v}</React.Fragment>;
           case "strong":
             return (
-              <strong key={i} className="font-semibold text-[rgb(var(--fg))]">
+              <strong key={i} className="font-semibold text-text-primary">
                 <InlineRenderer inl={node.c} />
               </strong>
             );
           case "em":
             return (
-              <em key={i} className="italic text-[rgb(var(--fg))]">
+              <em key={i} className="italic text-text-primary">
                 <InlineRenderer inl={node.c} />
               </em>
             );
           case "del":
             return (
-              <s key={i} className="text-[rgb(var(--muted))]">
+              <s key={i} className="text-text-muted">
                 <InlineRenderer inl={node.c} />
               </s>
             );
@@ -42,7 +42,7 @@ export function InlineRenderer({ inl }: { inl: Inline[] }) {
             return (
               <code
                 key={i}
-                className="px-1.5 py-0.5 rounded bg-[rgb(var(--border))]/40 border border-[rgb(var(--border))] text-[0.92em]"
+                className="px-1.5 py-0.5 rounded-sm bg-accent-dim border border-border-default font-mono text-[0.9em] text-accent-soft"
               >
                 {node.v}
               </code>
@@ -54,7 +54,7 @@ export function InlineRenderer({ inl }: { inl: Inline[] }) {
                 href={safeHref(node.href)}
                 target={safeHref(node.href) === "#" ? "_self" : "_blank"}
                 rel="noreferrer"
-                className="underline decoration-[rgb(var(--muted))] underline-offset-4 hover:decoration-[rgb(var(--fg))]"
+                className="text-accent-soft underline decoration-accent/40 underline-offset-4 transition hover:decoration-accent-soft"
               >
                 <InlineRenderer inl={node.c} />
               </a>

@@ -16,29 +16,47 @@
   --font-body: var(--font-inter), "Inter", system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", ui-monospace, "SF Mono", monospace;
 
-  /* -------- Palette (DARK) -------- */
+  /* -------- Surface palette (DARK) -------- */
   --color-bg: #07090f;
   --color-bg-soft: #0d1117;
   --color-bg-elevated: #131720;
   --color-bg-glass: rgba(13, 17, 23, 0.5);
+
+  /* -------- Text (DARK) -------- */
   --color-text-primary: #f0f2f8;
   --color-text-secondary: #a8b3cc;
   --color-text-muted: #6b7591;
+
+  /* -------- Accent (DARK) -------- */
   --color-accent: #7c5cfc;
   --color-accent-hover: #6b47f5;
   --color-accent-soft: #a78bfa;
   --color-accent-warm: #f59e0b;
+  --color-accent-dim: rgba(124, 92, 252, 0.10);
+
+  /* -------- Borders — pre-computed, never composed (DARK) -------- */
+  --color-border-strong: rgba(255, 255, 255, 0.13);
+  --color-border-default: rgba(255, 255, 255, 0.07);
+  --color-border-subtle: rgba(255, 255, 255, 0.04);
+
+  /* -------- Surface fills (DARK) -------- */
+  --color-fill-1: rgba(255, 255, 255, 0.04);   /* table row alternates */
+  --color-fill-2: rgba(255, 255, 255, 0.07);   /* code block header, inset panels */
+  --color-fill-3: rgba(255, 255, 255, 0.12);   /* table header, button hover bg */
+
+  /* -------- Legacy outline (used in app chrome — keep for backward compat) -------- */
   --color-outline: #1e2840;
   --color-outline-soft: rgba(255, 255, 255, 0.06);
+
+  /* -------- Shadows (DARK) -------- */
   --shadow-soft: 0 8px 32px rgba(124, 92, 252, 0.18);
   --shadow-glass: 0 4px 24px rgba(0, 0, 0, 0.4);
   --shadow-glow: 0 0 40px rgba(124, 92, 252, 0.22);
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.4), 0 4px 16px rgba(0, 0, 0, 0.3);
 
-  /* -------- Renderer variables (RGB channels for opacity compositing) -------- */
-  --fg: 240 242 248;
-  --muted: 107 117 145;
-  --border: 30 40 64;
+  /* -------- Scrollbar (DARK) -------- */
+  --scrollbar-thumb: rgba(255, 255, 255, 0.12);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.22);
 
   /* -------- PrimeReact overrides (DARK) -------- */
   --p-primary-color: #7c5cfc;
@@ -55,27 +73,47 @@
 html.light {
   color-scheme: light;
 
+  /* -------- Surface palette (LIGHT) -------- */
   --color-bg: #f6f8fc;
   --color-bg-soft: #ffffff;
-  --color-bg-elevated: #ffffff;
+  --color-bg-elevated: #f0f3fa;          /* was #ffffff — now distinct from bg-soft */
   --color-bg-glass: rgba(255, 255, 255, 0.82);
+
+  /* -------- Text (LIGHT) -------- */
   --color-text-primary: #0a0e1a;
   --color-text-secondary: #3d4a6b;
-  --color-text-muted: #6b7591;
+  --color-text-muted: #545e78;           /* was #6b7591 — improved WCAG AA on #f6f8fc */
+
+  /* -------- Accent (LIGHT) -------- */
   --color-accent: #6d46f8;
   --color-accent-hover: #5b37e6;
   --color-accent-soft: #8b6cf7;
   --color-accent-warm: #d97706;
+  --color-accent-dim: rgba(109, 70, 248, 0.10);
+
+  /* -------- Borders (LIGHT) -------- */
+  --color-border-strong: rgba(10, 14, 26, 0.14);
+  --color-border-default: rgba(10, 14, 26, 0.09);
+  --color-border-subtle: rgba(10, 14, 26, 0.05);
+
+  /* -------- Surface fills (LIGHT) -------- */
+  --color-fill-1: rgba(10, 14, 26, 0.03);
+  --color-fill-2: rgba(10, 14, 26, 0.06);
+  --color-fill-3: rgba(10, 14, 26, 0.10);
+
+  /* -------- Legacy outline (LIGHT) -------- */
   --color-outline: rgba(10, 14, 26, 0.1);
   --color-outline-soft: rgba(10, 14, 26, 0.06);
+
+  /* -------- Shadows (LIGHT) -------- */
   --shadow-soft: 0 8px 32px rgba(109, 70, 248, 0.12);
   --shadow-glass: 0 4px 24px rgba(10, 14, 26, 0.08);
   --shadow-glow: 0 0 40px rgba(109, 70, 248, 0.16);
   --shadow-card: 0 1px 3px rgba(10, 14, 26, 0.08), 0 4px 16px rgba(10, 14, 26, 0.06);
 
-  --fg: 10 14 26;
-  --muted: 107 117 145;
-  --border: 10 14 26;
+  /* -------- Scrollbar (LIGHT) -------- */
+  --scrollbar-thumb: rgba(10, 14, 26, 0.16);
+  --scrollbar-thumb-hover: rgba(10, 14, 26, 0.30);
 
   --p-primary-color: #6d46f8;
   --p-primary-contrast-color: #ffffff;
@@ -83,7 +121,7 @@ html.light {
   --p-surface-card: rgba(255, 255, 255, 0.95);
   --p-content-border-color: rgba(10, 14, 26, 0.08);
   --p-text-color: #0a0e1a;
-  --p-text-muted-color: #6b7591;
+  --p-text-muted-color: #545e78;
   --p-focus-ring: 0 0 0 2px rgba(139, 108, 247, 0.4);
 }
 
@@ -91,25 +129,47 @@ html.dark {
   color-scheme: dark;
 }
 
-/* Tailwind v4 theme — bind CSS vars to utilities */
+/* Tailwind v4 theme — bind CSS vars to utility classes */
 @theme {
+  /* Surfaces */
   --color-bg: var(--color-bg);
   --color-bg-soft: var(--color-bg-soft);
   --color-bg-elevated: var(--color-bg-elevated);
   --color-bg-glass: var(--color-bg-glass);
+
+  /* Text */
   --color-text-primary: var(--color-text-primary);
   --color-text-secondary: var(--color-text-secondary);
   --color-text-muted: var(--color-text-muted);
+
+  /* Accent */
   --color-accent: var(--color-accent);
   --color-accent-hover: var(--color-accent-hover);
   --color-accent-soft: var(--color-accent-soft);
   --color-accent-warm: var(--color-accent-warm);
+  --color-accent-dim: var(--color-accent-dim);
+
+  /* Semantic borders */
+  --color-border-strong: var(--color-border-strong);
+  --color-border-default: var(--color-border-default);
+  --color-border-subtle: var(--color-border-subtle);
+
+  /* Surface fills */
+  --color-fill-1: var(--color-fill-1);
+  --color-fill-2: var(--color-fill-2);
+  --color-fill-3: var(--color-fill-3);
+
+  /* Legacy outline (app chrome) */
   --color-outline: var(--color-outline);
   --color-outline-soft: var(--color-outline-soft);
+
+  /* Shadows */
   --shadow-soft: var(--shadow-soft);
   --shadow-glass: var(--shadow-glass);
   --shadow-glow: var(--shadow-glow);
   --shadow-card: var(--shadow-card);
+
+  /* Fonts */
   --font-body: var(--font-body);
   --font-mono: var(--font-mono);
 }
@@ -137,7 +197,7 @@ button {
   color: inherit;
 }
 
-/* ---- Transitions ---- */
+/* ---- Transitions — scoped to color/opacity only to avoid layout jank ---- */
 *,
 *::before,
 *::after {
@@ -153,11 +213,11 @@ button {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(var(--border), 0.6);
+  background: var(--scrollbar-thumb);
   border-radius: 999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(var(--border), 0.9);
+  background: var(--scrollbar-thumb-hover);
 }
 
 /* ---- PrimeReact: SelectButton (mobile pane toggle) ---- */
