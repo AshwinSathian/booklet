@@ -7,41 +7,13 @@ import { UI } from "@/lib/constants";
 import { copyTextToClipboard, markdownToHtml } from "@/lib/export";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AppLogo } from "../ui/AppLogo";
+import { Icon, type IconName } from "../ui/Icon";
 import ThemeToggle from "../ui/ThemeToggle";
 import { useToast } from "../ui/ToastProvider";
 import { DraftsDialog } from "./DraftsDialog";
 
 export type SaveState = "saved" | "saving";
 type EditorStatus = "idle" | "typing" | "publishing" | "published" | "error";
-
-// ---------------------------------------------------------------------------
-// Icon primitives
-// ---------------------------------------------------------------------------
-
-function Icon({ d, size = 16 }: { d: string; size?: number }) {
-  return (
-    <svg width={size} height={size} fill="none" viewBox={`0 0 ${size} ${size}`} aria-hidden>
-      <path d={d} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-const ICONS = {
-  plus: "M8 3v10M3 8h10",
-  list: "M3 4h10M3 8h10M3 12h6",
-  upload: "M8 11V3M4 7l4-4 4 4M3 13h10",
-  copy: "M5 5h6v6H5zM9 5V3h4v4h-2M5 9H3v4h4v-2",
-  code: "M10 12 13 9 10 6M6 6 3 9l3 3",
-  import: "M8 3v8M5 8l3 3 3-3M3 13h10",
-  link: "M7 9 5 7a2 2 0 1 1 3-3l2 2M9 7l2 2a2 2 0 1 1-3 3L6 10M10 6l-4 4",
-  external: "M11 5H5a1 1 0 0 0-1 1v6M13 3v4M9 3h4v4M7 9l5-5",
-  home: "M2 8 8 3l6 5M4 7v7h3v-4h2v4h3V7",
-  gear: "M8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3 3l1 1M11 11l1 1M3 13l1-1M11 5l1-1",
-  dots: "M4 8a1 1 0 1 0 2 0 1 1 0 0 0-2 0zM7 8a1 1 0 1 0 2 0 1 1 0 0 0-2 0zM10 8a1 1 0 1 0 2 0 1 1 0 0 0-2 0",
-  check: "M3 8l4 4 6-7",
-  pencil: "M11 3 13 5 5 13H3v-2L11 3z",
-  spinner: "M8 2a6 6 0 0 1 0 12",
-};
 
 // ---------------------------------------------------------------------------
 // Icon button
@@ -54,7 +26,7 @@ function IconBtn({
   active,
 }: {
   label: string;
-  icon: string;
+  icon: IconName;
   onClick?: () => void;
   active?: boolean;
 }) {
@@ -67,11 +39,11 @@ function IconBtn({
       className={[
         "flex h-8 w-8 items-center justify-center rounded-lg transition",
         "text-text-muted hover:text-text-primary hover:bg-outline/40",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-1 focus-visible:ring-offset-bg",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
         active ? "bg-outline/30 text-text-primary" : "",
       ].join(" ")}
     >
-      <Icon d={ICONS[icon as keyof typeof ICONS] ?? ""} />
+      <Icon name={icon} />
     </button>
   );
 }
@@ -81,7 +53,7 @@ function IconBtn({
 // ---------------------------------------------------------------------------
 
 type MenuItem =
-  | { type: "item"; label: string; icon?: string; shortcut?: string; onClick: () => void }
+  | { type: "item"; label: string; icon?: IconName; shortcut?: string; onClick: () => void }
   | { type: "separator" };
 
 function OverflowMenu({
@@ -114,23 +86,23 @@ function OverflowMenu({
     <div ref={ref} className="relative">
       <div onClick={() => setOpen((v) => !v)}>{trigger}</div>
       {open ? (
-        <div className="absolute left-0 top-full mt-1.5 z-50 min-w-50 rounded-xl border border-outline bg-bg-elevated shadow-glass py-1">
+        <div className="absolute left-0 top-full mt-1.5 z-(--z-dropdown,20) min-w-52 rounded-xl border border-outline bg-bg-elevated shadow-glass py-1 animate-dropdown-in">
           {items.map((item, i) =>
             item.type === "separator" ? (
-              <div key={i} className="my-1 h-px bg-outline" />
+              <div key={i} className="my-1 h-px bg-border-subtle" />
             ) : (
               <button
                 key={i}
                 type="button"
-                className="flex w-full items-center gap-3 px-3 py-2 text-[13px] text-text-secondary transition hover:bg-outline/30 hover:text-text-primary"
+                className="flex w-full items-center gap-3 px-3 py-2 text-sm text-text-secondary transition hover:bg-fill-2 hover:text-text-primary"
                 onClick={() => {
                   item.onClick();
                   setOpen(false);
                 }}
               >
                 {item.icon ? (
-                  <span className="text-text-muted">
-                    <Icon d={ICONS[item.icon as keyof typeof ICONS] ?? ""} size={14} />
+                  <span className="text-text-muted shrink-0">
+                    <Icon name={item.icon} size={14} />
                   </span>
                 ) : null}
                 <span className="flex-1 text-left">{item.label}</span>
@@ -147,7 +119,7 @@ function OverflowMenu({
 }
 
 // ---------------------------------------------------------------------------
-// Settings panel (slide-over)
+// Settings panel
 // ---------------------------------------------------------------------------
 
 function SegmentedControl<T extends string>({
@@ -160,17 +132,17 @@ function SegmentedControl<T extends string>({
   onChange: (v: T) => void;
 }) {
   return (
-    <div className="flex rounded-lg border border-outline bg-bg p-0.5 gap-0.5">
+    <div className="flex rounded-lg border border-outline bg-bg-soft p-0.5 gap-0.5">
       {options.map((opt) => (
         <button
           key={opt.value}
           type="button"
           onClick={() => onChange(opt.value)}
           className={[
-            "flex-1 rounded-md px-3 py-1.5 text-[12px] font-medium transition",
+            "flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition",
             value === opt.value
               ? "bg-accent text-white shadow-sm"
-              : "text-text-muted hover:text-text-primary",
+              : "text-text-muted hover:bg-fill-2 hover:text-text-primary",
           ].join(" ")}
         >
           {opt.label}
@@ -209,32 +181,30 @@ function SettingsPanel({
   return (
     <div
       ref={ref}
-      className="absolute right-0 top-full mt-1.5 z-50 w-72 rounded-2xl border border-outline bg-bg-elevated shadow-glass p-4"
+      className="absolute right-0 top-full mt-1.5 z-(--z-dropdown,20) w-72 rounded-card border border-outline bg-bg-elevated shadow-glass p-4 animate-dropdown-in"
     >
       <div className="flex items-center justify-between mb-4">
-        <div className="text-[13px] font-semibold">Settings</div>
+        <div className="text-sm font-semibold">Settings</div>
         <button
           type="button"
           onClick={onClose}
-          className="flex h-6 w-6 items-center justify-center rounded-md text-text-muted hover:text-text-primary transition"
+          className="flex h-7 w-7 items-center justify-center rounded-lg text-text-muted hover:bg-outline/40 hover:text-text-primary transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
           aria-label="Close settings"
         >
-          <svg width="12" height="12" fill="none" viewBox="0 0 12 12" aria-hidden>
-            <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
+          <Icon name="close" size={13} />
         </button>
       </div>
 
       <div className="flex flex-col gap-4">
         <div>
-          <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-text-muted">
+          <div className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-text-muted">
             Theme
           </div>
           <ThemeToggle />
         </div>
 
         <div>
-          <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-text-muted">
+          <div className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-text-muted">
             Spacing
           </div>
           <SegmentedControl
@@ -248,7 +218,7 @@ function SettingsPanel({
         </div>
 
         <div>
-          <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-text-muted">
+          <div className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-text-muted">
             Width
           </div>
           <SegmentedControl
@@ -262,7 +232,7 @@ function SettingsPanel({
         </div>
 
         <div>
-          <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-text-muted">
+          <div className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-text-muted">
             Code blocks
           </div>
           <SegmentedControl
@@ -320,7 +290,7 @@ function DraftTitle({
           if (e.key === "Escape") { e.preventDefault(); cancel(); }
         }}
         autoFocus
-        className="min-w-0 max-w-50 rounded-md border border-accent-soft bg-bg px-2 py-0.5 text-[13px] font-medium text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-soft"
+        className="min-w-0 max-w-52 rounded-md border border-accent-soft bg-bg px-2 py-0.5 text-sm font-medium text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-soft"
         aria-label="Draft title"
       />
     );
@@ -331,13 +301,13 @@ function DraftTitle({
       type="button"
       onClick={begin}
       title="Click to rename"
-      className="group flex items-center gap-1.5 min-w-0 max-w-50 rounded-md px-1.5 py-0.5 transition hover:bg-outline/30"
+      className="group flex items-center gap-1.5 min-w-0 max-w-52 rounded-md px-1.5 py-0.5 transition hover:bg-outline/30"
     >
-      <span className="truncate text-[13px] font-medium text-text-secondary group-hover:text-text-primary transition">
+      <span className="truncate text-sm font-medium text-text-secondary group-hover:text-text-primary transition">
         {title || "Untitled"}
       </span>
       <span className="shrink-0 text-text-muted opacity-0 group-hover:opacity-100 transition">
-        <Icon d={ICONS.pencil} size={11} />
+        <Icon name="pencil" size={11} />
       </span>
     </button>
   );
@@ -369,27 +339,28 @@ function PublishArea({
   if (publishedUrl) {
     return (
       <div className="flex items-center gap-1">
+        {/* Post-publish: same pill shape as the Publish button */}
         <button
           type="button"
           onClick={onCopyLink}
           title="Copy share link"
           className={[
-            "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-semibold transition",
+            "flex items-center gap-1.5 rounded-pill px-3.5 py-1.5 text-xs font-semibold transition",
             "border border-outline text-text-secondary hover:border-accent-soft/50 hover:text-text-primary",
             copyLinkPulse ? "ring-2 ring-accent-soft ring-offset-1 ring-offset-bg" : "",
           ].join(" ")}
         >
-          <Icon d={ICONS.link} size={13} />
+          <Icon name="link" size={13} />
           <span className="hidden sm:inline">Copy link</span>
         </button>
         <button
           type="button"
           onClick={onOpenPublished}
           title="Open published page"
-          className="flex h-8 w-8 items-center justify-center rounded-lg border border-outline text-text-muted transition hover:border-accent-soft/50 hover:text-text-primary"
+          className="flex h-8 w-8 items-center justify-center rounded-pill border border-outline text-text-muted transition hover:border-accent-soft/50 hover:text-text-primary"
           aria-label="Open published page"
         >
-          <Icon d={ICONS.external} size={14} />
+          <Icon name="external" size={14} />
         </button>
       </div>
     );
@@ -403,11 +374,11 @@ function PublishArea({
       onClick={onPublish}
       disabled={!canPublish || isPublishing}
       className={[
-        "flex items-center gap-1.5 rounded-full px-4 py-1.5 text-[12px] font-semibold transition",
+        "flex items-center gap-1.5 rounded-pill px-4 py-1.5 text-xs font-semibold transition",
         "bg-accent text-white shadow-soft",
-        "hover:bg-accent-hover active:scale-[0.96]",
+        "hover:bg-accent-hover active:scale-[0.97]",
         "disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-1 focus-visible:ring-offset-bg",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
       ].join(" ")}
     >
       {isPublishing ? (
@@ -415,7 +386,7 @@ function PublishArea({
           <path d="M6.5 1a5.5 5.5 0 1 0 5.5 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
         </svg>
       ) : (
-        <Icon d={ICONS.upload} size={13} />
+        <Icon name="upload" size={13} />
       )}
       <span className="hidden sm:inline">{label}</span>
     </button>
@@ -437,7 +408,7 @@ function SaveIndicator({
 }) {
   if (showSaveWarning) {
     return (
-      <span className="hidden sm:inline text-[11px] font-medium text-amber-400">
+      <span className="hidden sm:inline text-xs font-medium text-amber-400">
         Save issue
       </span>
     );
@@ -445,14 +416,14 @@ function SaveIndicator({
 
   if (saveState === "saving") {
     return (
-      <span className="hidden sm:inline text-[11px] text-text-muted animate-pulse">
+      <span className="hidden sm:inline text-xs text-text-muted animate-pulse">
         Saving…
       </span>
     );
   }
 
   return (
-    <span className="hidden sm:inline text-[11px] text-text-muted">
+    <span className="hidden sm:inline text-xs text-text-muted">
       {lastSavedAtLabel ? `Saved ${lastSavedAtLabel}` : "Saved"}
     </span>
   );
@@ -517,7 +488,6 @@ export function TopBar({
   const [visibleDrafts, setVisibleDrafts] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const settingsBtnRef = useRef<HTMLDivElement>(null);
   const toast = useToast();
 
   const onCopyMarkdown = useCallback(async () => {
@@ -566,51 +536,15 @@ export function TopBar({
   }, [onImportMarkdown, toast]);
 
   const menuItems: MenuItem[] = [
-    {
-      type: "item",
-      label: "New draft",
-      icon: "plus",
-      shortcut: "⌘B",
-      onClick: onNew,
-    },
-    {
-      type: "item",
-      label: "My drafts",
-      icon: "list",
-      onClick: () => setVisibleDrafts(true),
-    },
-    {
-      type: "item",
-      label: "Import Markdown",
-      icon: "import",
-      onClick: openImportPicker,
-    },
+    { type: "item", label: "New draft",        icon: "plus",     shortcut: "⌘B", onClick: onNew },
+    { type: "item", label: "My drafts",        icon: "list",                     onClick: () => setVisibleDrafts(true) },
+    { type: "item", label: "Import Markdown",  icon: "import",                   onClick: openImportPicker },
     { type: "separator" },
-    {
-      type: "item",
-      label: "Copy as Markdown",
-      icon: "copy",
-      onClick: () => void onCopyMarkdown(),
-    },
-    {
-      type: "item",
-      label: "Copy as HTML",
-      icon: "code",
-      onClick: () => void onCopyHtml(),
-    },
-    {
-      type: "item",
-      label: "Insert sample",
-      icon: "import",
-      onClick: onInsertSample,
-    },
+    { type: "item", label: "Copy as Markdown", icon: "copy",                     onClick: () => void onCopyMarkdown() },
+    { type: "item", label: "Copy as HTML",     icon: "code",                     onClick: () => void onCopyHtml() },
+    { type: "item", label: "Insert sample",    icon: "markdown",                 onClick: onInsertSample },
     { type: "separator" },
-    {
-      type: "item",
-      label: "Go to homepage",
-      icon: "home",
-      onClick: () => { window.location.href = "/"; },
-    },
+    { type: "item", label: "Go to homepage",   icon: "home",                     onClick: () => { window.location.href = "/"; } },
   ];
 
   return (
@@ -620,9 +554,7 @@ export function TopBar({
         {/* ── Left zone ── */}
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <AppLogo onlyIcon={true} />
-
           <div className="h-4 w-px bg-outline shrink-0" />
-
           <DraftTitle title={draftTitle} onRename={onRenameCurrentDraft} />
         </div>
 
@@ -641,7 +573,7 @@ export function TopBar({
             trigger={<IconBtn label="More options" icon="dots" />}
           />
 
-          <div ref={settingsBtnRef} className="relative">
+          <div className="relative">
             <IconBtn
               label="Settings"
               icon="gear"
@@ -680,20 +612,22 @@ export function TopBar({
         onChange={(e) => { void onFilePicked(e.target.files?.[0] ?? null); }}
       />
 
-      {/* Save warning banner */}
+      {/* Save warning — absolutely positioned so it doesn't shift header height */}
       {showSaveWarning ? (
-        <div className="mx-auto w-full max-w-7xl px-3 pb-2">
-          <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-400/30 bg-amber-400/8 px-3 py-2">
-            <span className="text-[12px] text-amber-400">
-              Could not save locally — browser storage may be full.
-            </span>
-            <button
-              type="button"
-              onClick={() => void onCopyMarkdown()}
-              className="text-[11px] font-semibold text-amber-400 underline underline-offset-2 transition hover:text-amber-300"
-            >
-              Export Markdown
-            </button>
+        <div className="absolute top-full left-0 right-0 px-3 py-2 bg-bg/95 backdrop-blur-xl">
+          <div className="mx-auto w-full max-w-7xl">
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-400/30 bg-amber-400/8 px-3 py-2">
+              <span className="text-xs text-amber-400">
+                Could not save locally — browser storage may be full.
+              </span>
+              <button
+                type="button"
+                onClick={() => void onCopyMarkdown()}
+                className="text-xs font-semibold text-amber-400 underline underline-offset-2 transition hover:text-amber-300"
+              >
+                Export Markdown
+              </button>
+            </div>
           </div>
         </div>
       ) : null}
