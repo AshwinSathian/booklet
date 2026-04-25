@@ -149,7 +149,7 @@ function Section({
         >
           <motion.div variants={reduce ? undefined : fadeUp} className={center ? "text-center" : ""}>
             {eyebrow ? (
-              <div className="text-[10px] font-semibold tracking-[0.22em] uppercase text-accent">
+              <div className="text-2xs font-semibold tracking-[0.22em] uppercase text-accent">
                 {eyebrow}
               </div>
             ) : null}
@@ -184,12 +184,12 @@ function Section({
 
 function ValueCard({ icon, title, desc }: { icon: string; title: string; desc: string }) {
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-outline bg-bg-elevated p-5 shadow-card transition hover:border-outline/60">
-      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent/10 text-lg">
+    <div className="flex flex-col gap-3 rounded-2xl border border-outline bg-bg-elevated p-5 shadow-card transition hover:bg-bg-soft hover:border-border-strong">
+      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent-dim text-lg">
         {icon}
       </div>
       <div className="text-[14px] font-semibold tracking-tight">{title}</div>
-      <div className="text-[13px] leading-[1.72] text-text-secondary">{desc}</div>
+      <div className="text-sm leading-[1.72] text-text-secondary">{desc}</div>
     </div>
   );
 }
@@ -206,16 +206,16 @@ function ExampleCard({
   tag: string;
 }) {
   return (
-    <div className="group flex flex-col gap-4 rounded-2xl border border-outline bg-bg-elevated p-5 shadow-card transition hover:border-accent-soft/30">
+    <div className="group flex flex-col gap-4 rounded-2xl border border-outline bg-bg-elevated p-5 shadow-card transition hover:bg-bg-soft hover:border-accent-soft/40">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="inline-flex items-center rounded-full bg-accent/10 px-2.5 py-0.5 text-[10px] font-semibold tracking-widest uppercase text-accent">
+          <div className="inline-flex items-center rounded-full bg-accent-dim px-2.5 py-0.5 text-2xs font-semibold tracking-widest uppercase text-accent">
             {tag}
           </div>
           <div className="mt-2 text-[14px] font-semibold tracking-tight">{title}</div>
         </div>
       </div>
-      <div className="text-[13px] leading-[1.72] text-text-secondary">{desc}</div>
+      <div className="text-sm leading-[1.72] text-text-secondary">{desc}</div>
       <a
         href={href}
         target="_blank"
@@ -239,18 +239,16 @@ function ExampleCard({
 function FaqItem({ question, children }: { question: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className={cn(
-      "border-b border-outline last:border-0 transition",
-    )}>
+    <div className="border-b border-outline last:border-0">
       <button
         type="button"
-        className="flex w-full items-center justify-between gap-4 py-4 text-left text-[14px] font-semibold tracking-tight transition hover:text-accent focus-visible:outline-none"
+        className="flex w-full items-center justify-between gap-4 py-4 text-left text-[14px] font-semibold tracking-tight transition hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
       >
         <span>{question}</span>
         <span className={cn(
-          "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-outline text-text-muted transition",
+          "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-outline text-text-muted transition-transform duration-normal ease-spring",
           open && "rotate-180",
         )}>
           <svg width="10" height="10" fill="none" viewBox="0 0 10 10" aria-hidden>
@@ -258,11 +256,16 @@ function FaqItem({ question, children }: { question: string; children: React.Rea
           </svg>
         </span>
       </button>
-      {open ? (
-        <div className="pb-4 text-[13px] leading-[1.75] text-text-secondary">
-          {children}
+      <div
+        className="grid transition-all duration-normal ease-spring"
+        style={{ gridTemplateRows: open ? "1fr" : "0fr" }}
+      >
+        <div className="overflow-hidden">
+          <div className="pb-4 text-sm leading-[1.75] text-text-secondary">
+            {children}
+          </div>
         </div>
-      ) : null}
+      </div>
     </div>
   );
 }
@@ -282,11 +285,11 @@ function HeroMock() {
           <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
         </div>
         <div className="flex-1 flex justify-center">
-          <div className="rounded-md bg-bg-glass px-8 py-0.5 text-[11px] text-text-muted">
+          <div className="rounded-md bg-bg-glass px-8 py-0.5 text-xs text-text-muted">
             readable.app
           </div>
         </div>
-        <div className="rounded-full bg-accent px-3 py-1 text-[10px] font-semibold text-white">
+        <div className="rounded-full bg-accent px-3 py-1 text-2xs font-semibold text-white">
           Publish
         </div>
       </div>
@@ -298,7 +301,7 @@ function HeroMock() {
           <div className="mb-2 text-[9px] font-semibold uppercase tracking-widest text-text-muted">
             Editor
           </div>
-          <pre className="font-mono text-[11px] leading-[1.65] text-text-secondary whitespace-pre-wrap overflow-hidden">
+          <pre className="font-mono text-xs leading-[1.65] text-text-secondary whitespace-pre-wrap overflow-hidden">
 {`## Incident Summary
 
 **Impact:** API degraded
@@ -324,26 +327,26 @@ max_connections=5 # was 50
           <div className="mb-2 text-[9px] font-semibold uppercase tracking-widest text-text-muted">
             Preview
           </div>
-          <div className="text-[13px] font-semibold tracking-tight">Incident Summary</div>
-          <div className="mt-1.5 text-[11px] leading-[1.7] text-text-secondary">
+          <div className="text-sm font-semibold tracking-tight">Incident Summary</div>
+          <div className="mt-1.5 text-xs leading-[1.7] text-text-secondary">
             <span className="font-semibold text-text-primary">Impact:</span> API degraded
           </div>
-          <div className="text-[11px] leading-[1.7] text-text-secondary">
+          <div className="text-xs leading-[1.7] text-text-secondary">
             <span className="font-semibold text-text-primary">Duration:</span> 22 min
           </div>
-          <div className="mt-2.5 text-[11px] font-semibold">Root cause</div>
-          <div className="mt-1 text-[11px] leading-[1.7] text-text-secondary">
+          <div className="mt-2.5 text-xs font-semibold">Root cause</div>
+          <div className="mt-1 text-xs leading-[1.7] text-text-secondary">
             Database connection pool exhausted after deploy.
           </div>
           <ul className="mt-1.5 space-y-0.5">
             {["Pool size misconfigured", "Health check delayed", "Alert threshold too high"].map((t) => (
-              <li key={t} className="flex items-start gap-1.5 text-[10px] text-text-secondary">
+              <li key={t} className="flex items-start gap-1.5 text-2xs text-text-secondary">
                 <span className="mt-1.25 h-1 w-1 shrink-0 rounded-full bg-accent" />
                 {t}
               </li>
             ))}
           </ul>
-          <div className="mt-2.5 rounded-lg bg-bg-soft border border-outline p-2 font-mono text-[10px] text-text-muted">
+          <div className="mt-2.5 rounded-lg bg-bg-soft border border-outline p-2 font-mono text-2xs text-text-muted">
             max_connections=5
           </div>
         </div>
@@ -352,10 +355,10 @@ max_connections=5 # was 50
       {/* Publish bar */}
       <div className="flex items-center gap-2 border-t border-outline px-4 py-2.5 bg-bg-soft">
         <div className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-        <div className="flex-1 font-mono text-[10px] text-text-muted truncate">
+        <div className="flex-1 font-mono text-2xs text-text-muted truncate">
           readable.app/p/Ab3k91QxZp
         </div>
-        <div className="text-[10px] font-semibold text-accent">Copy link</div>
+        <div className="text-2xs font-semibold text-accent">Copy link</div>
       </div>
     </div>
   );
@@ -490,7 +493,7 @@ export function Landing() {
           >
             {/* Eyebrow */}
             <motion.div variants={reduce ? undefined : fadeUp}>
-              <div className="inline-flex items-center gap-1.5 rounded-full border border-accent/25 bg-accent/8 px-3.5 py-1 text-[11px] font-semibold tracking-wide text-accent">
+              <div className="inline-flex items-center gap-1.5 rounded-full border border-accent/25 bg-accent-dim px-3.5 py-1 text-xs font-semibold tracking-wide text-accent">
                 <span className="h-1.5 w-1.5 rounded-full bg-accent" />
                 No signup · Free · Expires in 30 days
               </div>
@@ -541,9 +544,9 @@ export function Landing() {
               variants={reduce ? undefined : fadeUp}
               className="mt-4 text-[12px] text-text-muted"
             >
-              Press <kbd className="rounded border border-outline bg-bg-elevated px-1.5 py-0.5 font-mono text-[10px]">⌘</kbd>{" "}
+              Press <kbd className="rounded border border-outline bg-bg-elevated px-1.5 py-0.5 font-mono text-2xs">⌘</kbd>{" "}
               +{" "}
-              <kbd className="rounded border border-outline bg-bg-elevated px-1.5 py-0.5 font-mono text-[10px]">↵</kbd>{" "}
+              <kbd className="rounded border border-outline bg-bg-elevated px-1.5 py-0.5 font-mono text-2xs">↵</kbd>{" "}
               to publish from the editor
             </motion.div>
           </motion.div>
@@ -578,11 +581,11 @@ export function Landing() {
             <motion.div
               key={s.n}
               variants={reduce ? undefined : fadeUp}
-              className="flex flex-col gap-3 rounded-2xl border border-outline bg-bg-elevated p-5 shadow-card"
+              className="flex flex-col gap-3 rounded-2xl border border-outline bg-bg-elevated p-5 shadow-card transition hover:bg-bg-soft hover:border-border-strong"
             >
-              <div className="font-mono text-[11px] font-semibold text-accent">{s.n}</div>
+              <div className="font-mono text-xs font-semibold text-accent">{s.n}</div>
               <div className="text-[14px] font-semibold tracking-tight">{s.title}</div>
-              <div className="text-[13px] leading-[1.72] text-text-secondary">{s.desc}</div>
+              <div className="text-sm leading-[1.72] text-text-secondary">{s.desc}</div>
             </motion.div>
           ))}
         </div>
@@ -691,7 +694,7 @@ export function Landing() {
             </div>
 
             <motion.div variants={reduce ? undefined : fadeUp} className="relative z-10">
-              <div className="text-[10px] font-semibold tracking-[0.22em] uppercase text-accent">
+              <div className="text-2xs font-semibold tracking-[0.22em] uppercase text-accent">
                 Get started
               </div>
               <h2 className="mt-3 text-balance text-[28px] leading-[1.15] sm:text-[36px] font-bold tracking-[-0.02em]">
@@ -732,20 +735,12 @@ export function Landing() {
               <Link href={ROUTES.app} className="transition hover:text-text-primary">
                 Editor
               </Link>
-              <button
-                type="button"
-                className="transition hover:text-text-primary"
-                onClick={() => document.getElementById("how")?.scrollIntoView({ behavior: "smooth" })}
-              >
+              <a href="#how" className="transition hover:text-text-primary">
                 How it works
-              </button>
-              <button
-                type="button"
-                className="transition hover:text-text-primary"
-                onClick={() => document.getElementById("use-cases")?.scrollIntoView({ behavior: "smooth" })}
-              >
+              </a>
+              <a href="#use-cases" className="transition hover:text-text-primary">
                 Examples
-              </button>
+              </a>
             </nav>
           </div>
         </Container>
