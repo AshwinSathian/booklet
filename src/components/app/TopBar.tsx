@@ -5,7 +5,6 @@ import { ANALYTICS_EVENTS } from "@/lib/analytics-events";
 import { DocSettings } from "@/lib/blocks";
 import { UI } from "@/lib/constants";
 import { copyTextToClipboard, markdownToHtml } from "@/lib/export";
-import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AppLogo } from "../ui/AppLogo";
 import ThemeToggle from "../ui/ThemeToggle";
@@ -136,7 +135,7 @@ function OverflowMenu({
                 ) : null}
                 <span className="flex-1 text-left">{item.label}</span>
                 {item.shortcut ? (
-                  <kbd className="text-[10px] text-text-muted font-mono">{item.shortcut}</kbd>
+                  <kbd className="text-2xs text-text-muted font-mono">{item.shortcut}</kbd>
                 ) : null}
               </button>
             ),
@@ -620,9 +619,7 @@ export function TopBar({
 
         {/* ── Left zone ── */}
         <div className="flex items-center gap-2 min-w-0 flex-1">
-          <Link href="/" aria-label="Home">
-            <AppLogo onlyIcon={true} />
-          </Link>
+          <AppLogo onlyIcon={true} />
 
           <div className="h-4 w-px bg-outline shrink-0" />
 

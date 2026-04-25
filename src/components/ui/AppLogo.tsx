@@ -3,27 +3,40 @@
 import { APP_NAME, ROUTES } from "@/lib/constants";
 import Link from "next/link";
 
-export function AppLogo({ onlyIcon = false }: { onlyIcon: boolean }) {
+function ReadableMark({ size = 28 }: { size?: number }) {
   return (
-    <Link href={ROUTES.home}>
-      <div className="flex items-center gap-1 m-0 p-0">
-        <img
-          src="/favicon.png"
-          alt={APP_NAME}
-          className="h-15 w-15"
-          aria-hidden="true"
-        />
-        {!onlyIcon ? (
-          <div className="flex flex-col gap-0">
-            <div className="font-semibold tracking-wide uppercase">
-              {APP_NAME}
-            </div>
-            <div className="hidden sm:inline text-xs text-text-muted tracking-widest uppercase">
-              Paste. Preview. Share.
-            </div>
-          </div>
-        ) : null}
-      </div>
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden
+    >
+      <rect width="24" height="24" rx="5.5" fill="var(--color-accent)" />
+      <path
+        d="M 6.5 5 L 6.5 19 M 6.5 5 L 13 5 Q 17 5 17 9 Q 17 13 13 13 L 6.5 13 M 11.5 13 L 17 19"
+        stroke="white"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function AppLogo({ onlyIcon = false }: { onlyIcon?: boolean }) {
+  return (
+    <Link
+      href={ROUTES.home}
+      aria-label={`${APP_NAME} — go to homepage`}
+      className="flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg rounded-sm"
+    >
+      <ReadableMark size={28} />
+      {!onlyIcon ? (
+        <span className="text-sm font-semibold tracking-tight text-text-primary">
+          {APP_NAME}
+        </span>
+      ) : null}
     </Link>
   );
 }
