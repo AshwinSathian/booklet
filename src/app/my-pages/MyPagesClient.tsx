@@ -3,6 +3,10 @@
 import { Icon } from "@/components/ui/Icon";
 import { useCallback, useRef, useState } from "react";
 
+// Mirrors server-side validation.
+const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,58}[a-z0-9]$|^[a-z0-9]{1,60}$/;
+function isValidSlug(s: string) { return SLUG_RE.test(s) && !s.includes("--"); }
+
 type PageRow = {
   id: string;
   slug: string | null;
@@ -57,9 +61,14 @@ function SlugEditor({
     setError(null);
   };
 
-  const save = useCallback(async () => {
+  const save = async () => {
     const value = draft.trim().toLowerCase() || null;
     if (value === slug) { cancel(); return; }
+
+    if (value !== null && !isValidSlug(value)) {
+      setError("1-60 chars, lowercase letters/numbers/hyphens only.");
+      return;
+    }
 
     setSaving(true);
     setError(null);
@@ -80,7 +89,7 @@ function SlugEditor({
     } finally {
       setSaving(false);
     }
-  }, [draft, slug, pageId, onSlugSaved]);
+  };
 
   if (!editing) {
     return (
