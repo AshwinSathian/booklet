@@ -1,11 +1,12 @@
 import { AppLogo } from "@/components/ui/AppLogo";
 import { ROUTES } from "@/lib/constants";
-import { getPagesByUser } from "@/lib/db";
+import { getApiKeysByUser, getPagesByUser } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
 import { UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { headers } from "next/headers";
 import { MyPagesList } from "./MyPagesClient";
+import { ApiKeysSection } from "./ApiKeysClient";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,7 +27,10 @@ export default async function MyPagesPage() {
 
   const hdrs = await headers();
   const baseUrl = getBaseUrl(hdrs);
-  const pages = await getPagesByUser(userId);
+  const [pages, apiKeys] = await Promise.all([
+    getPagesByUser(userId),
+    getApiKeysByUser(userId),
+  ]);
 
   return (
     <div className="min-h-screen bg-bg text-text-primary flex flex-col">
@@ -78,6 +82,15 @@ export default async function MyPagesPage() {
             updated_at: p.updated_at,
           }))}
           baseUrl={baseUrl}
+        />
+
+        <ApiKeysSection
+          initialKeys={apiKeys.map((k) => ({
+            id: k.id,
+            label: k.label,
+            created_at: k.created_at,
+            last_used_at: k.last_used_at,
+          }))}
         />
       </main>
     </div>
