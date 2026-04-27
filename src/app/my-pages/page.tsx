@@ -72,6 +72,7 @@ export default async function MyPagesPage() {
         <MyPagesList
           initialPages={pages.map((p) => ({
             id: p.id,
+            slug: p.slug,
             view_count: p.view_count,
             created_at: p.created_at,
             updated_at: p.updated_at,

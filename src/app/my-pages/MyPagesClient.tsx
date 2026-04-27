@@ -1,35 +1,204 @@
 "use client";
 
 import { Icon } from "@/components/ui/Icon";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 type PageRow = {
   id: string;
-  url: string;
+  slug: string | null;
   view_count: number;
   created_at: string;
   updated_at: string;
+  baseUrl: string;
 };
+
+function pageUrl(page: PageRow) {
+  const path = page.slug ? `/p/${page.slug}` : `/p/${page.id}`;
+  return `${page.baseUrl}${path}`;
+}
 
 function formatDate(iso: string) {
   const d = new Date(iso);
   return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
 }
 
-function PageCard({ page, onDeleted }: { page: PageRow; onDeleted: (id: string) => void }) {
+// ---------------------------------------------------------------------------
+// Slug editor
+// ---------------------------------------------------------------------------
+
+function SlugEditor({
+  pageId,
+  slug,
+  baseUrl,
+  onSlugSaved,
+}: {
+  pageId: string;
+  slug: string | null;
+  baseUrl: string;
+  onSlugSaved: (next: string | null) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const hostLabel = baseUrl.replace(/^https?:\/\//, "");
+
+  const beginEdit = () => {
+    setDraft(slug ?? "");
+    setError(null);
+    setEditing(true);
+    setTimeout(() => inputRef.current?.focus(), 0);
+  };
+
+  const cancel = () => {
+    setEditing(false);
+    setError(null);
+  };
+
+  const save = useCallback(async () => {
+    const value = draft.trim().toLowerCase() || null;
+    if (value === slug) { cancel(); return; }
+
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/pages/${pageId}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ slug: value }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? "Failed to save slug");
+      }
+      onSlugSaved(value);
+      setEditing(false);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to save");
+    } finally {
+      setSaving(false);
+    }
+  }, [draft, slug, pageId, onSlugSaved]);
+
+  if (!editing) {
+    return (
+      <div className="flex items-center gap-1.5 mt-1">
+        {slug ? (
+          <span className="flex items-center gap-1 text-xs text-text-muted">
+            <span className="text-text-muted/60">{hostLabel}/p/</span>
+            <span className="font-medium text-accent">{slug}</span>
+          </span>
+        ) : (
+          <span className="text-xs text-text-muted/50 italic">No custom slug</span>
+        )}
+        <button
+          type="button"
+          onClick={beginEdit}
+          title={slug ? "Edit slug" : "Add custom slug"}
+          className="flex items-center justify-center h-5 w-5 rounded text-text-muted/50 transition hover:text-text-muted hover:bg-fill-2"
+        >
+          <Icon name="pencil" size={10} />
+        </button>
+        {slug && (
+          <button
+            type="button"
+            onClick={async () => {
+              setSaving(true);
+              try {
+                const res = await fetch(`/api/pages/${pageId}`, {
+                  method: "PATCH",
+                  headers: { "content-type": "application/json" },
+                  body: JSON.stringify({ slug: null }),
+                });
+                if (res.ok) onSlugSaved(null);
+              } finally {
+                setSaving(false);
+              }
+            }}
+            disabled={saving}
+            title="Remove slug"
+            className="flex items-center justify-center h-5 w-5 rounded text-text-muted/40 transition hover:text-red-400 hover:bg-red-400/8 disabled:opacity-40"
+          >
+            <Icon name="close" size={9} />
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-1.5 flex flex-col gap-1">
+      <div className="flex items-center gap-0">
+        <span className="text-xs text-text-muted/60 px-2 py-1 bg-bg-soft border border-r-0 border-outline rounded-l-md whitespace-nowrap">
+          {hostLabel}/p/
+        </span>
+        <input
+          ref={inputRef}
+          value={draft}
+          onChange={(e) => { setDraft(e.target.value); setError(null); }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") { e.preventDefault(); void save(); }
+            if (e.key === "Escape") { e.preventDefault(); cancel(); }
+          }}
+          placeholder="my-custom-slug"
+          className="min-w-0 w-40 px-2 py-1 text-xs bg-bg border border-outline rounded-r-md text-text-primary placeholder:text-text-muted/40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft"
+          aria-label="Custom slug"
+        />
+        <button
+          type="button"
+          onClick={() => void save()}
+          disabled={saving}
+          className="ml-1.5 flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium text-white bg-accent hover:bg-accent-hover transition disabled:opacity-50"
+        >
+          {saving ? (
+            <svg width="11" height="11" viewBox="0 0 13 13" fill="none" className="animate-spin" aria-hidden>
+              <path d="M6.5 1a5.5 5.5 0 1 0 5.5 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          ) : "Save"}
+        </button>
+        <button
+          type="button"
+          onClick={cancel}
+          className="ml-1 flex h-7 w-7 items-center justify-center rounded-md text-text-muted transition hover:bg-fill-2 hover:text-text-primary"
+        >
+          <Icon name="close" size={11} />
+        </button>
+      </div>
+      {error && <p className="text-xs text-red-400">{error}</p>}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Page card
+// ---------------------------------------------------------------------------
+
+function PageCard({
+  page,
+  onDeleted,
+  onSlugSaved,
+}: {
+  page: PageRow;
+  onDeleted: (id: string) => void;
+  onSlugSaved: (id: string, slug: string | null) => void;
+}) {
   const [copying, setCopying] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  const url = pageUrl(page);
+
   const handleCopy = useCallback(async () => {
     try {
-      await navigator.clipboard.writeText(page.url);
+      await navigator.clipboard.writeText(url);
       setCopying(true);
       setTimeout(() => setCopying(false), 1400);
     } catch {
       // ignore
     }
-  }, [page.url]);
+  }, [url]);
 
   const handleDelete = useCallback(async () => {
     setDeleting(true);
@@ -44,101 +213,124 @@ function PageCard({ page, onDeleted }: { page: PageRow; onDeleted: (id: string) 
   }, [page.id, onDeleted]);
 
   return (
-    <div className="group flex flex-col sm:flex-row sm:items-center gap-3 rounded-xl border border-outline bg-bg-elevated px-4 py-3.5 transition hover:border-accent-soft/40">
-      {/* ── Info ── */}
-      <div className="min-w-0 flex-1">
-        <a
-          href={page.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block truncate text-sm font-medium text-text-primary hover:text-accent transition"
-        >
-          {page.url.replace(/^https?:\/\//, "")}
-        </a>
-        <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-text-muted">
-          <span>{page.view_count === 1 ? "1 view" : `${page.view_count} views`}</span>
-          <span className="h-3 w-px bg-outline" aria-hidden />
-          <span>Published {formatDate(page.created_at)}</span>
-          {page.updated_at !== page.created_at && (
-            <>
-              <span className="h-3 w-px bg-outline" aria-hidden />
-              <span>Updated {formatDate(page.updated_at)}</span>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* ── Actions ── */}
-      <div className="flex items-center gap-1.5 shrink-0">
-        <button
-          type="button"
-          onClick={() => void handleCopy()}
-          title="Copy share link"
-          className={[
-            "flex h-8 w-8 items-center justify-center rounded-lg transition",
-            copying
-              ? "text-accent bg-accent-dim"
-              : "text-text-muted hover:text-text-primary hover:bg-fill-2",
-          ].join(" ")}
-        >
-          <Icon name={copying ? "check" : "copy"} size={14} />
-        </button>
-
-        <a
-          href={page.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          title="Open page"
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-text-muted transition hover:text-text-primary hover:bg-fill-2"
-        >
-          <Icon name="external" size={14} />
-        </a>
-
-        {confirming ? (
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => void handleDelete()}
-              disabled={deleting}
-              className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-red-400 border border-red-400/30 hover:bg-red-400/10 transition disabled:opacity-50"
-            >
-              {deleting ? (
-                <svg width="12" height="12" viewBox="0 0 13 13" fill="none" className="animate-spin" aria-hidden>
-                  <path d="M6.5 1a5.5 5.5 0 1 0 5.5 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-              ) : null}
-              Delete
-            </button>
-            <button
-              type="button"
-              onClick={() => setConfirming(false)}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-text-muted transition hover:bg-fill-2 hover:text-text-primary"
-            >
-              <Icon name="close" size={13} />
-            </button>
+    <div className="group flex flex-col gap-2 rounded-xl border border-outline bg-bg-elevated px-4 py-3.5 transition hover:border-accent-soft/40">
+      <div className="flex flex-col sm:flex-row sm:items-start gap-3">
+        {/* ── Info ── */}
+        <div className="min-w-0 flex-1">
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block truncate text-sm font-medium text-text-primary hover:text-accent transition"
+          >
+            {url.replace(/^https?:\/\//, "")}
+          </a>
+          <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-text-muted">
+            <span>{page.view_count === 1 ? "1 view" : `${page.view_count} views`}</span>
+            <span className="h-3 w-px bg-outline" aria-hidden />
+            <span>Published {formatDate(page.created_at)}</span>
+            {page.updated_at !== page.created_at && (
+              <>
+                <span className="h-3 w-px bg-outline" aria-hidden />
+                <span>Updated {formatDate(page.updated_at)}</span>
+              </>
+            )}
           </div>
-        ) : (
+
+          <SlugEditor
+            pageId={page.id}
+            slug={page.slug}
+            baseUrl={page.baseUrl}
+            onSlugSaved={(next) => onSlugSaved(page.id, next)}
+          />
+        </div>
+
+        {/* ── Actions ── */}
+        <div className="flex items-center gap-1.5 shrink-0 self-start">
           <button
             type="button"
-            onClick={() => setConfirming(true)}
-            title="Delete page"
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-text-muted transition hover:text-red-400 hover:bg-red-400/8 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100"
+            onClick={() => void handleCopy()}
+            title="Copy share link"
+            className={[
+              "flex h-8 w-8 items-center justify-center rounded-lg transition",
+              copying
+                ? "text-accent bg-accent-dim"
+                : "text-text-muted hover:text-text-primary hover:bg-fill-2",
+            ].join(" ")}
           >
-            <Icon name="trash" size={14} />
+            <Icon name={copying ? "check" : "copy"} size={14} />
           </button>
-        )}
+
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Open page"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-text-muted transition hover:text-text-primary hover:bg-fill-2"
+          >
+            <Icon name="external" size={14} />
+          </a>
+
+          {confirming ? (
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => void handleDelete()}
+                disabled={deleting}
+                className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-red-400 border border-red-400/30 hover:bg-red-400/10 transition disabled:opacity-50"
+              >
+                {deleting ? (
+                  <svg width="12" height="12" viewBox="0 0 13 13" fill="none" className="animate-spin" aria-hidden>
+                    <path d="M6.5 1a5.5 5.5 0 1 0 5.5 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                ) : null}
+                Delete
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirming(false)}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-text-muted transition hover:bg-fill-2 hover:text-text-primary"
+              >
+                <Icon name="close" size={13} />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setConfirming(true)}
+              title="Delete page"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-text-muted transition hover:text-red-400 hover:bg-red-400/8 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100"
+            >
+              <Icon name="trash" size={14} />
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
-export function MyPagesList({ initialPages, baseUrl }: { initialPages: Array<{ id: string; view_count: number; created_at: string; updated_at: string }>; baseUrl: string }) {
-  const [pages, setPages] = useState(() =>
-    initialPages.map((p) => ({ ...p, url: `${baseUrl}/p/${p.id}` }))
+// ---------------------------------------------------------------------------
+// List
+// ---------------------------------------------------------------------------
+
+export function MyPagesList({
+  initialPages,
+  baseUrl,
+}: {
+  initialPages: Array<{ id: string; slug: string | null; view_count: number; created_at: string; updated_at: string }>;
+  baseUrl: string;
+}) {
+  const [pages, setPages] = useState<PageRow[]>(() =>
+    initialPages.map((p) => ({ ...p, baseUrl }))
   );
 
   const handleDeleted = useCallback((id: string) => {
     setPages((prev) => prev.filter((p) => p.id !== id));
+  }, []);
+
+  const handleSlugSaved = useCallback((id: string, slug: string | null) => {
+    setPages((prev) => prev.map((p) => (p.id === id ? { ...p, slug } : p)));
   }, []);
 
   if (pages.length === 0) {
@@ -153,7 +345,12 @@ export function MyPagesList({ initialPages, baseUrl }: { initialPages: Array<{ i
   return (
     <div className="flex flex-col gap-2">
       {pages.map((page) => (
-        <PageCard key={page.id} page={page} onDeleted={handleDeleted} />
+        <PageCard
+          key={page.id}
+          page={page}
+          onDeleted={handleDeleted}
+          onSlugSaved={handleSlugSaved}
+        />
       ))}
     </div>
   );
