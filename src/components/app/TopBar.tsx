@@ -326,6 +326,7 @@ function PublishArea({
   publishedOwned,
   copyLinkPulse,
   onPublish,
+  onUpdatePage,
   onCopyLink,
   onOpenPublished,
 }: {
@@ -335,12 +336,14 @@ function PublishArea({
   publishedOwned: boolean;
   copyLinkPulse: boolean;
   onPublish: () => void;
+  onUpdatePage: () => void;
   onCopyLink: () => void;
   onOpenPublished: () => void;
 }) {
   const isPublishing = status === "publishing";
 
-  if (publishedUrl) {
+  // Post-publish state: show copy + open buttons.
+  if (status === "published" && publishedUrl) {
     return (
       <div className="flex items-center gap-1">
         <button
@@ -374,6 +377,63 @@ function PublishArea({
         >
           <Icon name="external" size={14} />
         </button>
+      </div>
+    );
+  }
+
+  // Owned draft with an existing page: split "Update page" + "Publish as new".
+  if (publishedOwned && publishedUrl && status !== "error") {
+    return (
+      <div className="flex items-center">
+        <button
+          type="button"
+          onClick={onUpdatePage}
+          disabled={!canPublish || isPublishing}
+          title="Update published page in place"
+          className={[
+            "flex items-center gap-1.5 rounded-l-pill px-4 py-1.5 text-xs font-semibold transition",
+            "bg-accent text-white shadow-soft",
+            "hover:bg-accent-hover active:scale-[0.97]",
+            "disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
+          ].join(" ")}
+        >
+          {isPublishing ? (
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" className="animate-spin" aria-hidden>
+              <path d="M6.5 1a5.5 5.5 0 1 0 5.5 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          ) : (
+            <Icon name="upload" size={13} />
+          )}
+          <span className="hidden sm:inline">Update page</span>
+        </button>
+        {/* Divider + "Publish as new" trigger */}
+        <OverflowMenu
+          items={[
+            {
+              type: "item",
+              label: "Publish as new link",
+              icon: "plus",
+              onClick: onPublish,
+            },
+          ]}
+          trigger={
+            <button
+              type="button"
+              title="More publish options"
+              disabled={isPublishing}
+              className={[
+                "flex h-8 w-8 items-center justify-center rounded-r-pill transition",
+                "bg-accent text-white border-l border-accent-hover",
+                "hover:bg-accent-hover active:scale-[0.97]",
+                "disabled:opacity-40 disabled:cursor-not-allowed",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
+              ].join(" ")}
+            >
+              <Icon name="chevron-down" size={11} />
+            </button>
+          }
+        />
       </div>
     );
   }
@@ -464,6 +524,7 @@ export function TopBar({
   onPublish,
   onCopyLink,
   onOpenPublished,
+  onUpdatePage,
   publishedUrl,
   publishedOwned,
   copyLinkPulse,
@@ -485,6 +546,7 @@ export function TopBar({
   onSwitchDraft: (id: string, origin?: "drafts_dialog") => void;
   onCreateDraft: (origin?: "drafts_dialog") => string;
   onPublish: () => void;
+  onUpdatePage: () => void;
   onCopyLink: () => void;
   onOpenPublished: () => void;
   publishedUrl: string | null;
@@ -638,6 +700,7 @@ export function TopBar({
             publishedOwned={publishedOwned ?? false}
             copyLinkPulse={copyLinkPulse ?? false}
             onPublish={onPublish}
+            onUpdatePage={onUpdatePage}
             onCopyLink={onCopyLink}
             onOpenPublished={onOpenPublished}
           />

@@ -52,6 +52,7 @@ function AppPageContent() {
     "idle" | "typing" | "publishing" | "published" | "error"
   >("idle");
   const [lastPublishedUrl, setLastPublishedUrl] = useState<string | null>(null);
+  const [lastPublishedId, setLastPublishedId] = useState<string | null>(null);
   const [lastPublishedOwned, setLastPublishedOwned] = useState(false);
   const [copyLinkPulse, setCopyLinkPulse] = useState(false);
 
@@ -212,6 +213,7 @@ function AppPageContent() {
     setSettings(draft.settings);
 
     setLastPublishedUrl(draft.lastPublished?.url ?? null);
+    setLastPublishedId(draft.lastPublished?.id ?? null);
     setLastPublishedOwned(draft.lastPublished?.owned ?? false);
 
     setSaveState("saved");
@@ -322,6 +324,7 @@ function AppPageContent() {
       setRaw("");
       setDraftTitle(draft.title ?? "");
       setLastPublishedUrl(null);
+      setLastPublishedId(null);
       setLastPublishedOwned(false);
       setStatus("idle");
       setSettings(DEFAULT_SETTINGS);
@@ -365,6 +368,7 @@ function AppPageContent() {
 
       // Publishing state is per-editor session.
       setLastPublishedUrl(draft.lastPublished?.url ?? null);
+      setLastPublishedId(draft.lastPublished?.id ?? null);
       setLastPublishedOwned(draft.lastPublished?.owned ?? false);
       setStatus("idle");
       setCopyLinkPulse(false);
@@ -424,6 +428,8 @@ function AppPageContent() {
       setLastSavedAtLabel(formatTimeHHMM(new Date(draft.updatedAt)));
 
       setLastPublishedUrl(null);
+      setLastPublishedId(null);
+      setLastPublishedOwned(false);
       setStatus("idle");
       setCopyLinkPulse(false);
 
@@ -478,6 +484,7 @@ function AppPageContent() {
       }
 
       setLastPublishedUrl(data.url);
+      setLastPublishedId(data.id);
       setLastPublishedOwned(data.owned ?? false);
       setStatus("published");
 
@@ -504,6 +511,47 @@ function AppPageContent() {
       });
     }
   }, [activeDraftId, blocks, settings, toast, canPublish, raw.length]);
+
+  const onUpdatePage = useCallback(async () => {
+    if (!canPublish) {
+      toast.info("Nothing to publish", "Paste some content first.");
+      return;
+    }
+    if (!lastPublishedId || !lastPublishedOwned || !activeDraftId) return;
+
+    try {
+      setStatus("publishing");
+
+      const res = await fetch(`/api/publish/${lastPublishedId}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ blocks, settings }),
+      });
+
+      if (!res.ok) {
+        const msg = await safeReadText(res);
+        throw new Error(msg || `Update failed (${res.status})`);
+      }
+
+      setStatus("published");
+
+      toast.showCoalesced(
+        "publish_ok",
+        "success",
+        "Updated",
+        "Your page has been updated.",
+      );
+
+      setCopyLinkPulse(true);
+      setTimeout(() => setCopyLinkPulse(false), 1600);
+
+      trackEvent(ANALYTICS_EVENTS.publish_success, { blocks_count: blocks.length });
+    } catch (e) {
+      setStatus("error");
+      toast.error("Update failed", toErrorMessage(e));
+      trackEvent(ANALYTICS_EVENTS.publish_error, { stage: "api" });
+    }
+  }, [activeDraftId, blocks, settings, toast, canPublish, lastPublishedId, lastPublishedOwned]);
 
   const onCopyLink = useCallback(async () => {
     if (!lastPublishedUrl) {
@@ -590,6 +638,7 @@ function AppPageContent() {
         onCreateDraft={(origin) => onCreateDraft(origin ?? "unknown")}
         onSwitchDraft={(id, origin) => onSwitchDraft(id, origin ?? "unknown")}
         onPublish={onPublish}
+        onUpdatePage={onUpdatePage}
         onCopyLink={onCopyLink}
         onOpenPublished={onOpenPublished}
         publishedUrl={lastPublishedUrl}
