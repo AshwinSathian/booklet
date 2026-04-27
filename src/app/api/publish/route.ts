@@ -1,8 +1,9 @@
 import type { PublishedDoc } from "@/lib/blocks";
 import { DEFAULT_SETTINGS } from "@/lib/blocks";
 import { BLOCKS, ROUTES, STORAGE } from "@/lib/constants";
-import { createPageRecord } from "@/lib/db";
+import { countUserPages, createPageRecord } from "@/lib/db";
 import { ensureDbUser } from "@/lib/db/ensure-user";
+import { FREE_PAGE_LIMIT, isPro } from "@/lib/db/gates";
 import { createId } from "@/lib/id";
 import { putDoc } from "@/lib/storage";
 import { auth } from "@clerk/nextjs/server";
@@ -81,6 +82,25 @@ export async function POST(req: Request) {
     }
   } catch {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+  }
+
+  // Enforce free-tier page limit for authenticated users.
+  if (isAuthenticated && userId) {
+    try {
+      const [count, pro] = await Promise.all([countUserPages(userId), isPro(userId)]);
+      if (!pro && count >= FREE_PAGE_LIMIT) {
+        return NextResponse.json(
+          {
+            error: `Free plan limit reached (${FREE_PAGE_LIMIT} pages). Upgrade to Pro for unlimited pages.`,
+            code: "page_limit_reached",
+          },
+          { status: 402 },
+        );
+      }
+    } catch {
+      // Gate check failure should not block the publish; log only.
+      console.error("[publish] gate check failed");
+    }
   }
 
   const id = createId(10);
