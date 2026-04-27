@@ -10,6 +10,7 @@ function isValidSlug(s: string) { return SLUG_RE.test(s) && !s.includes("--"); }
 type PageRow = {
   id: string;
   slug: string | null;
+  visibility: "public" | "unlisted";
   view_count: number;
   created_at: string;
   updated_at: string;
@@ -188,16 +189,34 @@ function PageCard({
   page,
   onDeleted,
   onSlugSaved,
+  onVisibilityChanged,
 }: {
   page: PageRow;
   onDeleted: (id: string) => void;
   onSlugSaved: (id: string, slug: string | null) => void;
+  onVisibilityChanged: (id: string, v: "public" | "unlisted") => void;
 }) {
   const [copying, setCopying] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [togglingVisibility, setTogglingVisibility] = useState(false);
 
   const url = pageUrl(page);
+
+  const handleToggleVisibility = useCallback(async () => {
+    const next = page.visibility === "public" ? "unlisted" : "public";
+    setTogglingVisibility(true);
+    try {
+      const res = await fetch(`/api/pages/${page.id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ visibility: next }),
+      });
+      if (res.ok) onVisibilityChanged(page.id, next);
+    } finally {
+      setTogglingVisibility(false);
+    }
+  }, [page.id, page.visibility, onVisibilityChanged]);
 
   const handleCopy = useCallback(async () => {
     try {
@@ -244,6 +263,12 @@ function PageCard({
                 <span>Updated {formatDate(page.updated_at)}</span>
               </>
             )}
+            {page.visibility === "unlisted" && (
+              <>
+                <span className="h-3 w-px bg-outline" aria-hidden />
+                <span className="text-amber-400/80">Unlisted</span>
+              </>
+            )}
           </div>
 
           <SlugEditor
@@ -279,6 +304,21 @@ function PageCard({
           >
             <Icon name="external" size={14} />
           </a>
+
+          <button
+            type="button"
+            onClick={() => void handleToggleVisibility()}
+            disabled={togglingVisibility}
+            title={page.visibility === "public" ? "Make unlisted" : "Make public"}
+            className={[
+              "flex h-8 w-8 items-center justify-center rounded-lg transition disabled:opacity-40",
+              page.visibility === "unlisted"
+                ? "text-amber-400 bg-amber-400/8 hover:bg-amber-400/15"
+                : "text-text-muted hover:text-text-primary hover:bg-fill-2 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100",
+            ].join(" ")}
+          >
+            <Icon name={page.visibility === "unlisted" ? "moon" : "moon"} size={14} />
+          </button>
 
           {confirming ? (
             <div className="flex items-center gap-1">
@@ -327,7 +367,7 @@ export function MyPagesList({
   initialPages,
   baseUrl,
 }: {
-  initialPages: Array<{ id: string; slug: string | null; view_count: number; created_at: string; updated_at: string }>;
+  initialPages: Array<{ id: string; slug: string | null; visibility: "public" | "unlisted"; view_count: number; created_at: string; updated_at: string }>;
   baseUrl: string;
 }) {
   const [pages, setPages] = useState<PageRow[]>(() =>
@@ -340,6 +380,10 @@ export function MyPagesList({
 
   const handleSlugSaved = useCallback((id: string, slug: string | null) => {
     setPages((prev) => prev.map((p) => (p.id === id ? { ...p, slug } : p)));
+  }, []);
+
+  const handleVisibilityChanged = useCallback((id: string, visibility: "public" | "unlisted") => {
+    setPages((prev) => prev.map((p) => (p.id === id ? { ...p, visibility } : p)));
   }, []);
 
   if (pages.length === 0) {
@@ -359,6 +403,7 @@ export function MyPagesList({
           page={page}
           onDeleted={handleDeleted}
           onSlugSaved={handleSlugSaved}
+          onVisibilityChanged={handleVisibilityChanged}
         />
       ))}
     </div>

@@ -34,43 +34,60 @@ export async function PATCH(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  let body: { slug?: string | null } = {};
+  let body: { slug?: string | null; visibility?: string } = {};
   try {
-    body = (await req.json()) as { slug?: string | null };
+    body = (await req.json()) as { slug?: string | null; visibility?: string };
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  // slug: null clears it; string sets it.
-  const rawSlug = body.slug;
-  if (rawSlug === undefined) {
-    return NextResponse.json({ error: "Missing slug field" }, { status: 400 });
-  }
+  const patch: Parameters<typeof updatePageRecord>[1] = {};
 
-  const slug = rawSlug === null ? null : rawSlug.trim().toLowerCase();
+  // Handle slug update.
+  if (body.slug !== undefined) {
+    const rawSlug = body.slug;
+    const slug = rawSlug === null ? null : rawSlug.trim().toLowerCase();
 
-  if (slug !== null && !isValidSlug(slug)) {
-    return NextResponse.json(
-      { error: "Invalid slug. Use 1-60 lowercase letters, numbers, or hyphens." },
-      { status: 422 },
-    );
-  }
-
-  if (slug !== null) {
-    const existing = await getPageBySlug(slug);
-    if (existing && existing.id !== id) {
-      return NextResponse.json({ error: "Slug is already taken." }, { status: 409 });
+    if (slug !== null && !isValidSlug(slug)) {
+      return NextResponse.json(
+        { error: "Invalid slug. Use 1-60 lowercase letters, numbers, or hyphens." },
+        { status: 422 },
+      );
     }
+
+    if (slug !== null) {
+      const existing = await getPageBySlug(slug);
+      if (existing && existing.id !== id) {
+        return NextResponse.json({ error: "Slug is already taken." }, { status: 409 });
+      }
+    }
+
+    patch.slug = slug;
+  }
+
+  // Handle visibility update.
+  if (body.visibility !== undefined) {
+    if (body.visibility !== "public" && body.visibility !== "unlisted") {
+      return NextResponse.json(
+        { error: "visibility must be 'public' or 'unlisted'" },
+        { status: 422 },
+      );
+    }
+    patch.visibility = body.visibility;
+  }
+
+  if (Object.keys(patch).length === 0) {
+    return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
   }
 
   try {
-    await updatePageRecord(id, { slug });
+    await updatePageRecord(id, patch);
   } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : "Failed to update slug";
+    const msg = e instanceof Error ? e.message : "Failed to update";
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 
-  return NextResponse.json({ id, slug });
+  return NextResponse.json({ id, ...patch });
 }
 
 export async function DELETE(
