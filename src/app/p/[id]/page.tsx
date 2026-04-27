@@ -3,7 +3,7 @@ import { AppLogo } from "@/components/ui/AppLogo";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import type { Block } from "@/lib/blocks";
 import { APP_NAME, ROUTES, STORAGE } from "@/lib/constants";
-import { incrementViewCount } from "@/lib/db";
+import { getPageBySlug, incrementViewCount } from "@/lib/db";
 import { absoluteUrl, buildMetadata } from "@/lib/seo";
 import { getDoc } from "@/lib/storage";
 import { buildToc, MIN_TOC_HEADINGS, type TocItem } from "@/lib/toc";
@@ -20,14 +20,19 @@ export async function generateMetadata({
 }: {
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
-  const { id } = await params;
-  const doc = await getDoc(id);
+  const { id: idOrSlug } = await params;
+
+  let doc = await getDoc(idOrSlug);
+  if (!doc) {
+    const slugRecord = await getPageBySlug(idOrSlug).catch(() => null);
+    if (slugRecord) doc = await getDoc(slugRecord.id);
+  }
 
   if (!doc) {
     return buildMetadata({
       title: "Not found",
       description: "This page doesn't exist or it has expired.",
-      pathname: `/p/${id}`,
+      pathname: `/p/${idOrSlug}`,
       noIndex: true,
     });
   }
@@ -42,7 +47,7 @@ export async function generateMetadata({
     ...buildMetadata({
       title,
       description,
-      pathname: `/p/${id}`,
+      pathname: `/p/${idOrSlug}`,
       noIndex: false,
     }),
     openGraph: {
@@ -50,7 +55,7 @@ export async function generateMetadata({
       siteName: APP_NAME,
       title: `${title} — ${APP_NAME}`,
       description,
-      url: absoluteUrl(`/p/${id}`),
+      url: absoluteUrl(`/p/${idOrSlug}`),
       images: [{ url: ogImage, width: 1200, height: 630, alt: `${APP_NAME} preview` }],
     },
     twitter: {
@@ -67,13 +72,25 @@ export default async function SharePage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = await params;
-  const doc = await getDoc(id);
+  const { id: idOrSlug } = await params;
+
+  // Try direct KV lookup first (fast path for 10-char IDs).
+  let doc = await getDoc(idOrSlug);
+  let resolvedId = idOrSlug;
+
+  // Fallback: treat the path segment as a custom slug.
+  if (!doc) {
+    const slugRecord = await getPageBySlug(idOrSlug).catch(() => null);
+    if (slugRecord) {
+      doc = await getDoc(slugRecord.id);
+      resolvedId = slugRecord.id;
+    }
+  }
 
   if (!doc) return <NotFoundOrExpired />;
 
   // Fire-and-forget: non-blocking, non-fatal if D1 record doesn't exist.
-  void incrementViewCount(id).catch(() => {});
+  void incrementViewCount(resolvedId).catch(() => {});
 
   const createdAt = new Date(doc.createdAt);
   const expiresAt = new Date(createdAt.getTime() + STORAGE.ttlSeconds * 1000);

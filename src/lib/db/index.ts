@@ -59,6 +59,14 @@ export async function getPageRecord(pageId: string): Promise<DbPage | null> {
     .first<DbPage>();
 }
 
+export async function getPageBySlug(slug: string): Promise<DbPage | null> {
+  const db = getDb();
+  return db
+    .prepare("SELECT * FROM pages WHERE slug = ?")
+    .bind(slug)
+    .first<DbPage>();
+}
+
 export async function getPagesByUser(userId: string): Promise<DbPage[]> {
   const db = getDb();
   const result = await db
