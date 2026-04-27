@@ -3,7 +3,7 @@ import { AppLogo } from "@/components/ui/AppLogo";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import type { Block } from "@/lib/blocks";
 import { APP_NAME, ROUTES, STORAGE } from "@/lib/constants";
-import { getPageBySlug, incrementViewCount } from "@/lib/db";
+import { getPageBySlug, getPageRecord, incrementViewCount } from "@/lib/db";
 import { absoluteUrl, buildMetadata } from "@/lib/seo";
 import { getDoc } from "@/lib/storage";
 import { buildToc, MIN_TOC_HEADINGS, type TocItem } from "@/lib/toc";
@@ -15,18 +15,43 @@ import { PrintButton } from "@/components/share/PrintButton";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+// ---------------------------------------------------------------------------
+// Resolve id-or-slug → { doc, resolvedId, pageRecord }
+// ---------------------------------------------------------------------------
+
+async function resolveSharePage(idOrSlug: string) {
+  // Fast path: direct KV lookup by 10-char ID.
+  let doc = await getDoc(idOrSlug);
+  let resolvedId = idOrSlug;
+  let pageRecord = null;
+
+  if (doc) {
+    // Try to get the ownership record for this ID — non-fatal.
+    pageRecord = await getPageRecord(resolvedId).catch(() => null);
+  } else {
+    // Slug fallback: D1 gives us both the real ID and the page record.
+    const slugRecord = await getPageBySlug(idOrSlug).catch(() => null);
+    if (slugRecord) {
+      doc = await getDoc(slugRecord.id);
+      resolvedId = slugRecord.id;
+      pageRecord = slugRecord;
+    }
+  }
+
+  return { doc, resolvedId, pageRecord };
+}
+
+// ---------------------------------------------------------------------------
+// generateMetadata
+// ---------------------------------------------------------------------------
+
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id: idOrSlug } = await params;
-
-  let doc = await getDoc(idOrSlug);
-  if (!doc) {
-    const slugRecord = await getPageBySlug(idOrSlug).catch(() => null);
-    if (slugRecord) doc = await getDoc(slugRecord.id);
-  }
+  const { doc, pageRecord } = await resolveSharePage(idOrSlug);
 
   if (!doc) {
     return buildMetadata({
@@ -37,6 +62,7 @@ export async function generateMetadata({
     });
   }
 
+  const isUnlisted = pageRecord?.visibility === "unlisted";
   const title = extractTitle(doc.blocks) ?? "Shared page";
   const description = extractDescription(doc.blocks);
 
@@ -48,7 +74,7 @@ export async function generateMetadata({
       title,
       description,
       pathname: `/p/${idOrSlug}`,
-      noIndex: false,
+      noIndex: isUnlisted,
     }),
     openGraph: {
       type: "article",
@@ -67,38 +93,35 @@ export async function generateMetadata({
   };
 }
 
+// ---------------------------------------------------------------------------
+// Page
+// ---------------------------------------------------------------------------
+
 export default async function SharePage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id: idOrSlug } = await params;
-
-  // Try direct KV lookup first (fast path for 10-char IDs).
-  let doc = await getDoc(idOrSlug);
-  let resolvedId = idOrSlug;
-
-  // Fallback: treat the path segment as a custom slug.
-  if (!doc) {
-    const slugRecord = await getPageBySlug(idOrSlug).catch(() => null);
-    if (slugRecord) {
-      doc = await getDoc(slugRecord.id);
-      resolvedId = slugRecord.id;
-    }
-  }
+  const { doc, resolvedId, pageRecord } = await resolveSharePage(idOrSlug);
 
   if (!doc) return <NotFoundOrExpired />;
 
-  // Fire-and-forget: non-blocking, non-fatal if D1 record doesn't exist.
+  // Fire-and-forget view count — non-blocking, non-fatal.
   void incrementViewCount(resolvedId).catch(() => {});
 
+  // Permanent pages (owned, in D1) don't expire.
+  const isPermanent = pageRecord !== null;
   const createdAt = new Date(doc.createdAt);
-  const expiresAt = new Date(createdAt.getTime() + STORAGE.ttlSeconds * 1000);
-  const daysLeft = Math.ceil((expiresAt.getTime() - Date.now()) / 86_400_000);
+  const daysLeft = isPermanent
+    ? null
+    : Math.ceil(
+        (new Date(createdAt.getTime() + STORAGE.ttlSeconds * 1000).getTime() - Date.now()) /
+          86_400_000,
+      );
 
   const { toc, anchorMap } = buildToc(doc.blocks ?? []);
   const showToc = toc.length >= MIN_TOC_HEADINGS;
-
   const maxW = doc.settings?.width === "wide" ? "max-w-4xl" : "max-w-3xl";
 
   return (
@@ -109,7 +132,7 @@ export default async function SharePage({
           <AppLogo onlyIcon={false} />
 
           <div className="flex items-center gap-2 shrink-0">
-            <ExpiryBadge daysLeft={daysLeft} />
+            {daysLeft !== null && <ExpiryBadge daysLeft={daysLeft} />}
             <PrintButton />
             <ThemeToggle />
             <Link
@@ -194,7 +217,7 @@ function ExpiryBadge({ daysLeft }: { daysLeft: number }) {
 }
 
 // ---------------------------------------------------------------------------
-// Not found / expired — proper page structure with header
+// Not found / expired
 // ---------------------------------------------------------------------------
 
 function NotFoundOrExpired() {
@@ -244,13 +267,13 @@ export async function generateStaticParams(): Promise<{ id: string }[]> {
 }
 
 // ---------------------------------------------------------------------------
-// Metadata helpers
+// Metadata helpers (local — also used by generateMetadata above)
 // ---------------------------------------------------------------------------
 
 function extractTitle(blocks: Block[]): string | null {
   for (const b of blocks ?? []) {
-    if (b?.t === "heading" && (b?.level === 1 || b?.level === 2)) {
-      const t = inlineToText((b as any)?.inl);
+    if (b?.t === "heading" && ((b as { level?: number }).level === 1 || (b as { level?: number }).level === 2)) {
+      const t = inlineToText((b as Record<string, unknown>).inl);
       if (t) return clamp(t, 64);
     }
   }
@@ -260,7 +283,7 @@ function extractTitle(blocks: Block[]): string | null {
 function extractDescription(blocks: Block[]): string {
   for (const b of blocks ?? []) {
     if (b?.t === "paragraph") {
-      const t = inlineToText((b as any)?.inl);
+      const t = inlineToText((b as Record<string, unknown>).inl);
       if (t) return clamp(t, 160);
     }
   }
@@ -281,6 +304,5 @@ function inlineToText(inl: unknown): string {
 
 function clamp(s: string, n: number) {
   const t = s.replace(/\s+/g, " ").trim();
-  if (t.length <= n) return t;
-  return t.slice(0, Math.max(0, n - 1)).trimEnd() + "…";
+  return t.length <= n ? t : t.slice(0, n - 1).trimEnd() + "…";
 }

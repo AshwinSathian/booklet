@@ -77,6 +77,7 @@ export default async function MyPagesPage() {
           initialPages={pages.map((p) => ({
             id: p.id,
             slug: p.slug,
+            title: p.title,
             visibility: p.visibility,
             view_count: p.view_count,
             created_at: p.created_at,

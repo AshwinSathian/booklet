@@ -39,15 +39,16 @@ export async function upsertUser(
 export async function createPageRecord(
   pageId: string,
   userId: string,
+  title: string | null = null,
 ): Promise<void> {
   const db = getDb();
   const now = new Date().toISOString();
   await db
     .prepare(
-      `INSERT INTO pages (id, user_id, visibility, view_count, created_at, updated_at)
-       VALUES (?, ?, 'public', 0, ?, ?)`,
+      `INSERT INTO pages (id, user_id, title, visibility, view_count, created_at, updated_at)
+       VALUES (?, ?, ?, 'public', 0, ?, ?)`,
     )
-    .bind(pageId, userId, now, now)
+    .bind(pageId, userId, title, now, now)
     .run();
 }
 
@@ -80,7 +81,7 @@ export async function getPagesByUser(userId: string): Promise<DbPage[]> {
 
 export async function updatePageRecord(
   pageId: string,
-  patch: Partial<Pick<DbPage, "slug" | "visibility" | "updated_at">>,
+  patch: Partial<Pick<DbPage, "slug" | "title" | "visibility" | "updated_at">>,
 ): Promise<void> {
   const db = getDb();
   const sets: string[] = [];
@@ -89,6 +90,10 @@ export async function updatePageRecord(
   if (patch.slug !== undefined) {
     sets.push("slug = ?");
     values.push(patch.slug);
+  }
+  if (patch.title !== undefined) {
+    sets.push("title = ?");
+    values.push(patch.title);
   }
   if (patch.visibility !== undefined) {
     sets.push("visibility = ?");

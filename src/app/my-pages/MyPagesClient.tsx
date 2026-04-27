@@ -10,6 +10,7 @@ function isValidSlug(s: string) { return SLUG_RE.test(s) && !s.includes("--"); }
 type PageRow = {
   id: string;
   slug: string | null;
+  title: string | null;
   visibility: "public" | "unlisted";
   view_count: number;
   created_at: string;
@@ -251,8 +252,9 @@ function PageCard({
             rel="noopener noreferrer"
             className="block truncate text-sm font-medium text-text-primary hover:text-accent transition"
           >
-            {url.replace(/^https?:\/\//, "")}
+            {page.title ?? <span className="text-text-muted italic">Untitled</span>}
           </a>
+          <div className="text-xs text-text-muted/60 truncate mt-0.5">{url.replace(/^https?:\/\//, "")}</div>
           <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-text-muted">
             <span>{page.view_count === 1 ? "1 view" : `${page.view_count} views`}</span>
             <span className="h-3 w-px bg-outline" aria-hidden />
@@ -367,7 +369,7 @@ export function MyPagesList({
   initialPages,
   baseUrl,
 }: {
-  initialPages: Array<{ id: string; slug: string | null; visibility: "public" | "unlisted"; view_count: number; created_at: string; updated_at: string }>;
+  initialPages: Array<{ id: string; slug: string | null; title: string | null; visibility: "public" | "unlisted"; view_count: number; created_at: string; updated_at: string }>;
   baseUrl: string;
 }) {
   const [pages, setPages] = useState<PageRow[]>(() =>

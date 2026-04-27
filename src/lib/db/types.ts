@@ -10,6 +10,7 @@ export type DbPage = {
   id: string;           // 10-char KV key
   user_id: string;
   slug: string | null;
+  title: string | null;
   visibility: "public" | "unlisted";
   view_count: number;
   created_at: string;
