@@ -38,6 +38,16 @@
       "id": "205fe067b23840c3ac012db2772ef61a",
     },
   ],
+  "d1_databases": [
+    {
+      // Create with: wrangler d1 create readable-db
+      // Then replace database_id with the ID returned by that command.
+      "binding": "READABLE_DB",
+      "database_name": "readable-db",
+      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      "migrations_dir": "migrations",
+    },
+  ],
   /**
    * Smart Placement
    * https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement

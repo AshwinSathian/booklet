@@ -6,6 +6,7 @@ interface Env {
 		IMAGES: ImagesBinding;
 		ASSETS: Fetcher;
 		READABLE_DOCS: KVNamespace;
+		READABLE_DB: D1Database;
 		NEXTJS_ENV: string;
 		WORKER_SELF_REFERENCE: Fetcher /* readable */;
 	}
