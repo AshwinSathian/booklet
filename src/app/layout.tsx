@@ -1,5 +1,6 @@
 import { Analytics } from "@/components/analytics/Analytics";
 import { APP_NAME } from "@/lib/constants";
+import { clerkAppearance } from "@/lib/clerk-appearance";
 import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
@@ -26,7 +27,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider>
+    <ClerkProvider appearance={clerkAppearance}>
       <html lang="en" suppressHydrationWarning className={inter.variable}>
         <body>
           <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>

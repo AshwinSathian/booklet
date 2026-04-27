@@ -541,7 +541,7 @@ export function TopBar({
 
   const menuItems: MenuItem[] = [
     ...(isSignedIn ? [
-      { type: "item" as const, label: "My pages", icon: "list" as IconName, onClick: () => { window.location.href = ROUTES.myPages; } },
+      { type: "item" as const, label: "My pages", icon: "external" as IconName, onClick: () => { window.location.href = ROUTES.myPages; } },
       { type: "separator" as const },
     ] : []),
     { type: "item", label: "New draft",        icon: "plus",     shortcut: "⌘B", onClick: onNew },
@@ -603,7 +603,7 @@ export function TopBar({
               <UserButton.MenuItems>
                 <UserButton.Link
                   label="My pages"
-                  labelIcon={<Icon name="list" size={14} />}
+                  labelIcon={<Icon name="external" size={14} />}
                   href={ROUTES.myPages}
                 />
               </UserButton.MenuItems>
