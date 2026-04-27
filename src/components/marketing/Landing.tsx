@@ -4,6 +4,7 @@ import { AppLogo } from "@/components/ui/AppLogo";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import { trackEvent } from "@/lib/analytics";
 import { APP_NAME, ROUTES } from "@/lib/constants";
+import { UserButton, useUser } from "@clerk/nextjs";
 import type { Easing, Variants } from "framer-motion";
 import { motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
@@ -370,6 +371,7 @@ max_connections=5 # was 50
 
 export function Landing() {
   const reduce = useReducedMotion();
+  const { isSignedIn } = useUser();
 
   const steps = useMemo(
     () => [
@@ -459,6 +461,11 @@ export function Landing() {
             <AppLogo onlyIcon={false} />
             <div className="flex items-center gap-2">
               <ThemeToggle />
+              {isSignedIn ? (
+                <UserButton />
+              ) : (
+                <GhostButton href={ROUTES.signIn}>Sign in</GhostButton>
+              )}
               <PrimaryButton
                 href={ROUTES.app}
                 onClick={() => trackEvent("open_editor_clicked", { location: "topbar" })}

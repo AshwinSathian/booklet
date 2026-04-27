@@ -3,8 +3,10 @@
 import { trackEvent } from "@/lib/analytics";
 import { ANALYTICS_EVENTS } from "@/lib/analytics-events";
 import { DocSettings } from "@/lib/blocks";
-import { UI } from "@/lib/constants";
+import { ROUTES, UI } from "@/lib/constants";
 import { copyTextToClipboard, markdownToHtml } from "@/lib/export";
+import { UserButton, useUser } from "@clerk/nextjs";
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AppLogo } from "../ui/AppLogo";
 import { Icon, type IconName } from "../ui/Icon";
@@ -535,7 +537,13 @@ export function TopBar({
     }
   }, [onImportMarkdown, toast]);
 
+  const { isSignedIn } = useUser();
+
   const menuItems: MenuItem[] = [
+    ...(isSignedIn ? [
+      { type: "item" as const, label: "My pages", icon: "list" as IconName, onClick: () => { window.location.href = ROUTES.myPages; } },
+      { type: "separator" as const },
+    ] : []),
     { type: "item", label: "New draft",        icon: "plus",     shortcut: "⌘B", onClick: onNew },
     { type: "item", label: "My drafts",        icon: "list",                     onClick: () => setVisibleDrafts(true) },
     { type: "item", label: "Import Markdown",  icon: "import",                   onClick: openImportPicker },
@@ -588,6 +596,26 @@ export function TopBar({
               />
             ) : null}
           </div>
+
+          {/* ── Auth ── */}
+          {isSignedIn ? (
+            <UserButton>
+              <UserButton.MenuItems>
+                <UserButton.Link
+                  label="My pages"
+                  labelIcon={<Icon name="list" size={14} />}
+                  href={ROUTES.myPages}
+                />
+              </UserButton.MenuItems>
+            </UserButton>
+          ) : (
+            <Link
+              href={ROUTES.signIn}
+              className="hidden sm:inline-flex items-center gap-1.5 rounded-pill border border-outline px-3 py-1 text-xs font-medium text-text-secondary transition hover:border-accent-soft/50 hover:text-text-primary"
+            >
+              Sign in
+            </Link>
+          )}
 
           <div className="mx-1 h-4 w-px bg-outline" />
 
