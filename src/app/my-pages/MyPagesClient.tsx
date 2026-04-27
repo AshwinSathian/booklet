@@ -102,7 +102,11 @@ function PageCard({ page, onDeleted }: { page: PageRow; onDeleted: (id: string) 
               disabled={deleting}
               className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-red-400 border border-red-400/30 hover:bg-red-400/10 transition disabled:opacity-50"
             >
-              {deleting ? <Icon name="spinner" size={12} /> : null}
+              {deleting ? (
+                <svg width="12" height="12" viewBox="0 0 13 13" fill="none" className="animate-spin" aria-hidden>
+                  <path d="M6.5 1a5.5 5.5 0 1 0 5.5 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              ) : null}
               Delete
             </button>
             <button
@@ -118,7 +122,7 @@ function PageCard({ page, onDeleted }: { page: PageRow; onDeleted: (id: string) 
             type="button"
             onClick={() => setConfirming(true)}
             title="Delete page"
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-text-muted transition hover:text-red-400 hover:bg-red-400/8 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-text-muted transition hover:text-red-400 hover:bg-red-400/8 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100"
           >
             <Icon name="trash" size={14} />
           </button>
