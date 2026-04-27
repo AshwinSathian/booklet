@@ -107,9 +107,10 @@ export async function POST(req: Request) {
         null;
       await ensureDbUser(userId, email);
       await createPageRecord(id, userId);
-    } catch {
+    } catch (dbErr) {
       // D1 write failure must not block the publish response.
       // The KV doc is already written; the page is live.
+      console.error("[publish] D1 ownership write failed:", dbErr);
     }
   }
 

@@ -355,7 +355,12 @@ function PublishArea({
             copyLinkPulse ? "ring-2 ring-accent-soft ring-offset-1 ring-offset-bg" : "",
           ].join(" ")}
         >
-          <Icon name="link" size={13} />
+          <span className="relative">
+            <Icon name="link" size={13} />
+            {publishedOwned && (
+              <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-accent sm:hidden" aria-hidden />
+            )}
+          </span>
           <span className="hidden sm:inline">
             {publishedOwned ? "Your page · Copy link" : "Copy link"}
           </span>
