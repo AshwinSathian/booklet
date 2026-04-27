@@ -24,7 +24,7 @@ type ToastApi = Readonly<{
 }>;
 
 const TOAST = {
-  lifeMs: 2500,
+  lifeMs: 3500,
 } as const;
 
 const ToastContext = React.createContext<ToastApi | null>(null);
