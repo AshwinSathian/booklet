@@ -7,6 +7,9 @@ export type PublishedSnapshotRef = {
   url: string;
   /** ISO timestamp captured when the publish completed on the client. */
   createdAt: string;
+  /** True when the publish was made by an authenticated user and the page
+   *  is owned in D1 (permanent, editable). False for anonymous publishes. */
+  owned?: boolean;
 };
 
 export type DraftDoc = {

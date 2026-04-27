@@ -52,6 +52,7 @@ function AppPageContent() {
     "idle" | "typing" | "publishing" | "published" | "error"
   >("idle");
   const [lastPublishedUrl, setLastPublishedUrl] = useState<string | null>(null);
+  const [lastPublishedOwned, setLastPublishedOwned] = useState(false);
   const [copyLinkPulse, setCopyLinkPulse] = useState(false);
 
   const toast = useToast();
@@ -211,6 +212,7 @@ function AppPageContent() {
     setSettings(draft.settings);
 
     setLastPublishedUrl(draft.lastPublished?.url ?? null);
+    setLastPublishedOwned(draft.lastPublished?.owned ?? false);
 
     setSaveState("saved");
     setLastSavedAtLabel(
@@ -320,6 +322,7 @@ function AppPageContent() {
       setRaw("");
       setDraftTitle(draft.title ?? "");
       setLastPublishedUrl(null);
+      setLastPublishedOwned(false);
       setStatus("idle");
       setSettings(DEFAULT_SETTINGS);
       setSaveStateSmoothed("saved");
@@ -362,6 +365,7 @@ function AppPageContent() {
 
       // Publishing state is per-editor session.
       setLastPublishedUrl(draft.lastPublished?.url ?? null);
+      setLastPublishedOwned(draft.lastPublished?.owned ?? false);
       setStatus("idle");
       setCopyLinkPulse(false);
 
@@ -453,7 +457,7 @@ function AppPageContent() {
         throw new Error(msg || `Publish failed (${res.status})`);
       }
 
-      const data = (await res.json()) as { id: string; url: string };
+      const data = (await res.json()) as { id: string; url: string; owned?: boolean };
 
       const createdAt = new Date().toISOString();
 
@@ -462,6 +466,7 @@ function AppPageContent() {
           id: data.id,
           url: data.url,
           createdAt,
+          owned: data.owned ?? false,
         });
 
         trackEvent(ANALYTICS_EVENTS.publish_from_draft, {
@@ -473,6 +478,7 @@ function AppPageContent() {
       }
 
       setLastPublishedUrl(data.url);
+      setLastPublishedOwned(data.owned ?? false);
       setStatus("published");
 
       toast.showCoalesced(
@@ -587,6 +593,7 @@ function AppPageContent() {
         onCopyLink={onCopyLink}
         onOpenPublished={onOpenPublished}
         publishedUrl={lastPublishedUrl}
+        publishedOwned={lastPublishedOwned}
         copyLinkPulse={copyLinkPulse}
         settings={settings}
         onSettingsChange={setSettings}

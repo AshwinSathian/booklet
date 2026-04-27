@@ -323,6 +323,7 @@ function PublishArea({
   status,
   canPublish,
   publishedUrl,
+  publishedOwned,
   copyLinkPulse,
   onPublish,
   onCopyLink,
@@ -331,6 +332,7 @@ function PublishArea({
   status: EditorStatus;
   canPublish: boolean;
   publishedUrl: string | null;
+  publishedOwned: boolean;
   copyLinkPulse: boolean;
   onPublish: () => void;
   onCopyLink: () => void;
@@ -341,19 +343,22 @@ function PublishArea({
   if (publishedUrl) {
     return (
       <div className="flex items-center gap-1">
-        {/* Post-publish: same pill shape as the Publish button */}
         <button
           type="button"
           onClick={onCopyLink}
           title="Copy share link"
           className={[
             "flex items-center gap-1.5 rounded-pill px-3.5 py-1.5 text-xs font-semibold transition",
-            "border border-outline text-text-secondary hover:border-accent-soft/50 hover:text-text-primary",
+            publishedOwned
+              ? "border border-accent/40 text-accent bg-accent-dim hover:border-accent hover:bg-accent/10"
+              : "border border-outline text-text-secondary hover:border-accent-soft/50 hover:text-text-primary",
             copyLinkPulse ? "ring-2 ring-accent-soft ring-offset-1 ring-offset-bg" : "",
           ].join(" ")}
         >
           <Icon name="link" size={13} />
-          <span className="hidden sm:inline">Copy link</span>
+          <span className="hidden sm:inline">
+            {publishedOwned ? "Your page · Copy link" : "Copy link"}
+          </span>
         </button>
         <button
           type="button"
@@ -455,6 +460,7 @@ export function TopBar({
   onCopyLink,
   onOpenPublished,
   publishedUrl,
+  publishedOwned,
   copyLinkPulse,
   settings,
   onSettingsChange,
@@ -477,6 +483,7 @@ export function TopBar({
   onCopyLink: () => void;
   onOpenPublished: () => void;
   publishedUrl: string | null;
+  publishedOwned?: boolean;
   copyLinkPulse?: boolean;
   settings: DocSettings;
   onSettingsChange: (next: DocSettings) => void;
@@ -623,6 +630,7 @@ export function TopBar({
             status={status}
             canPublish={canPublish}
             publishedUrl={publishedUrl ?? null}
+            publishedOwned={publishedOwned ?? false}
             copyLinkPulse={copyLinkPulse ?? false}
             onPublish={onPublish}
             onCopyLink={onCopyLink}
