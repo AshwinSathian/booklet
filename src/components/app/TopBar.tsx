@@ -61,9 +61,13 @@ type MenuItem =
 function OverflowMenu({
   items,
   trigger,
+  align = "left",
+  disabled = false,
 }: {
   items: MenuItem[];
   trigger: React.ReactNode;
+  align?: "left" | "right";
+  disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -86,9 +90,9 @@ function OverflowMenu({
 
   return (
     <div ref={ref} className="relative">
-      <div onClick={() => setOpen((v) => !v)}>{trigger}</div>
+      <div onClick={() => { if (!disabled) setOpen((v) => !v); }}>{trigger}</div>
       {open ? (
-        <div className="absolute left-0 top-full mt-1.5 z-(--z-dropdown,20) min-w-52 rounded-xl border border-outline bg-bg-elevated shadow-glass py-1 animate-dropdown-in">
+        <div className={["absolute top-full mt-1.5 z-(--z-dropdown,20) min-w-52 rounded-xl border border-outline bg-bg-elevated shadow-glass py-1 animate-dropdown-in", align === "right" ? "right-0" : "left-0"].join(" ")}>
           {items.map((item, i) =>
             item.type === "separator" ? (
               <div key={i} className="my-1 h-px bg-border-subtle" />
@@ -409,6 +413,8 @@ function PublishArea({
         </button>
         {/* Divider + "Publish as new" trigger */}
         <OverflowMenu
+          align="right"
+          disabled={isPublishing}
           items={[
             {
               type: "item",
@@ -424,7 +430,7 @@ function PublishArea({
               disabled={isPublishing}
               className={[
                 "flex h-8 w-8 items-center justify-center rounded-r-pill transition",
-                "bg-accent text-white border-l border-accent-hover",
+                "bg-accent text-white border-l border-white/20",
                 "hover:bg-accent-hover active:scale-[0.97]",
                 "disabled:opacity-40 disabled:cursor-not-allowed",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
@@ -652,6 +658,7 @@ export function TopBar({
 
           <OverflowMenu
             items={menuItems}
+            align="right"
             trigger={<IconBtn label="More options" icon="dots" />}
           />
 
