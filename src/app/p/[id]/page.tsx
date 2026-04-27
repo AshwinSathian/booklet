@@ -3,6 +3,7 @@ import { AppLogo } from "@/components/ui/AppLogo";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import type { Block } from "@/lib/blocks";
 import { APP_NAME, ROUTES, STORAGE } from "@/lib/constants";
+import { incrementViewCount } from "@/lib/db";
 import { absoluteUrl, buildMetadata } from "@/lib/seo";
 import { getDoc } from "@/lib/storage";
 import { buildToc, MIN_TOC_HEADINGS, type TocItem } from "@/lib/toc";
@@ -70,6 +71,9 @@ export default async function SharePage({
   const doc = await getDoc(id);
 
   if (!doc) return <NotFoundOrExpired />;
+
+  // Fire-and-forget: non-blocking, non-fatal if D1 record doesn't exist.
+  void incrementViewCount(id).catch(() => {});
 
   const createdAt = new Date(doc.createdAt);
   const expiresAt = new Date(createdAt.getTime() + STORAGE.ttlSeconds * 1000);
