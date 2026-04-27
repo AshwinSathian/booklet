@@ -1,5 +1,6 @@
 import { Analytics } from "@/components/analytics/Analytics";
 import { APP_NAME } from "@/lib/constants";
+import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { ThemeProvider } from "next-themes";
@@ -25,15 +26,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning className={inter.variable}>
-      <body>
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-          <Suspense fallback={null}>
-            <Analytics />
-          </Suspense>
-          {children}
-        </ThemeProvider>
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en" suppressHydrationWarning className={inter.variable}>
+        <body>
+          <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+            <Suspense fallback={null}>
+              <Analytics />
+            </Suspense>
+            {children}
+          </ThemeProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
