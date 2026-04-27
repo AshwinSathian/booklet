@@ -1,0 +1,72 @@
+# Example: Publish a document to Readable from a GitHub Action.
+#
+# The Readable API accepts a `blocks` array (parsed content).
+# This example uses a minimal single-paragraph block for illustration.
+# For full markdown-to-blocks conversion, use the Readable CLI (coming soon)
+# or call parseToBlocks from the @readable/sdk package.
+#
+# Setup:
+#   1. Create an API key at https://readable.page/my-pages
+#   2. Add it as a repo secret: Settings → Secrets → READABLE_API_KEY
+#   3. Optionally set READABLE_PAGE_ID in repo vars to update in-place.
+
+name: Publish release notes to Readable
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Publish to Readable
+        id: publish
+        env:
+          READABLE_API_KEY: ${{ secrets.READABLE_API_KEY }}
+          READABLE_PAGE_ID: ${{ vars.READABLE_PAGE_ID }}
+        run: |
+          # Build a minimal blocks payload.
+          # Replace this with real block generation from your markdown source.
+          PAYLOAD=$(cat <<'JSON'
+          {
+            "blocks": [
+              { "type": "heading", "level": 1, "content": "Release notes" },
+              { "type": "paragraph", "content": "See the full changelog in the repository." }
+            ],
+            "settings": { "width": "normal", "spacing": "comfortable", "code": "show" }
+          }
+          JSON
+          )
+
+          if [ -n "$READABLE_PAGE_ID" ]; then
+            URL="https://readable.page/api/v1/pages/${READABLE_PAGE_ID}"
+            METHOD="PATCH"
+          else
+            URL="https://readable.page/api/v1/publish"
+            METHOD="POST"
+          fi
+
+          RESPONSE=$(curl -sf -X "$METHOD" "$URL" \
+            -H "Authorization: Bearer ${READABLE_API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD")
+
+          PAGE_URL=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('url',''))")
+          echo "page_url=$PAGE_URL" >> "$GITHUB_OUTPUT"
+          echo "Published: $PAGE_URL"
+
+      - name: Comment URL on release
+        if: steps.publish.outputs.page_url != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const url = '${{ steps.publish.outputs.page_url }}';
+            const { owner, repo } = context.repo;
+            const releaseId = context.payload.release.id;
+            await github.rest.repos.updateRelease({
+              owner, repo, release_id: releaseId,
+              body: context.payload.release.body + `\n\n📄 [Readable version](${url})`
+            });
