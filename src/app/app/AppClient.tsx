@@ -459,6 +459,17 @@ function AppPageContent() {
       });
 
       if (!res.ok) {
+        if (res.status === 402) {
+          const body = await res.json().catch(() => ({})) as { error?: string; code?: string };
+          if (body.code === "page_limit_reached") {
+            setStatus("idle");
+            toast.warn(
+              "Page limit reached",
+              "You've used all 5 free pages. Delete a page from My pages to publish a new one.",
+            );
+            return;
+          }
+        }
         const msg = await safeReadText(res);
         throw new Error(msg || `Publish failed (${res.status})`);
       }
