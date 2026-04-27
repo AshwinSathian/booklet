@@ -4,6 +4,9 @@ export const ROUTES = {
   home: "/",
   app: "/app",
   publish: (id: string) => `/p/${id}`,
+  signIn: "/sign-in",
+  signUp: "/sign-up",
+  myPages: "/my-pages",
 } as const;
 
 export const STORAGE = {
