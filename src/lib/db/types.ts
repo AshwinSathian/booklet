@@ -1,8 +1,6 @@
 export type DbUser = {
   id: string;           // Clerk user ID
   email: string | null;
-  is_pro: 0 | 1;
-  stripe_customer_id: string | null;
   created_at: string;
 };
 

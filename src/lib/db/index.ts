@@ -24,8 +24,8 @@ export async function upsertUser(
   const db = getDb();
   await db
     .prepare(
-      `INSERT INTO users (id, email, is_pro, created_at)
-       VALUES (?, ?, 0, ?)
+      `INSERT INTO users (id, email, created_at)
+       VALUES (?, ?, ?)
        ON CONFLICT(id) DO UPDATE SET email = excluded.email`,
     )
     .bind(id, email, new Date().toISOString())
@@ -124,15 +124,6 @@ export async function incrementViewCount(pageId: string): Promise<void> {
 export async function deletePageRecord(pageId: string): Promise<void> {
   const db = getDb();
   await db.prepare("DELETE FROM pages WHERE id = ?").bind(pageId).run();
-}
-
-export async function countUserPages(userId: string): Promise<number> {
-  const db = getDb();
-  const row = await db
-    .prepare("SELECT COUNT(*) as n FROM pages WHERE user_id = ?")
-    .bind(userId)
-    .first<{ n: number }>();
-  return row?.n ?? 0;
 }
 
 // ---------------------------------------------------------------------------
