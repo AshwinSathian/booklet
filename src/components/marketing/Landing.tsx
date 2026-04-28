@@ -205,7 +205,7 @@ function Section({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Feature cards (SVG icons — no emoji)
+// Feature cards
 // ─────────────────────────────────────────────────────────────────────────────
 
 function FeatureIcon({ children }: { children: React.ReactNode }) {
@@ -235,7 +235,7 @@ function FeatureCard({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Example cards (use cases with links)
+// Example / use-case cards
 // ─────────────────────────────────────────────────────────────────────────────
 
 function ExampleCard({
@@ -246,7 +246,7 @@ function ExampleCard({
 }: {
   title: string;
   desc: string;
-  href: string;
+  href?: string;
   tag: string;
 }) {
   return (
@@ -260,30 +260,32 @@ function ExampleCard({
         </div>
       </div>
       <div className="text-[15px] leading-[1.72] text-text-secondary">{desc}</div>
-      <a
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-accent transition hover:text-accent-soft"
-        onClick={() => trackEvent("example_clicked", { example: tag })}
-      >
-        View live example
-        <svg width="12" height="12" fill="none" viewBox="0 0 12 12" aria-hidden>
-          <path
-            d="M2.5 9.5 9.5 2.5M9.5 2.5H4M9.5 2.5V8"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </a>
+      {href ? (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-accent transition hover:text-accent-soft"
+          onClick={() => trackEvent("example_clicked", { example: tag })}
+        >
+          View live example
+          <svg width="12" height="12" fill="none" viewBox="0 0 12 12" aria-hidden>
+            <path
+              d="M2.5 9.5 9.5 2.5M9.5 2.5H4M9.5 2.5V8"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </a>
+      ) : null}
     </div>
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// FAQ — native details/summary, no PrimeReact
+// FAQ
 // ─────────────────────────────────────────────────────────────────────────────
 
 function FaqItem({
@@ -335,7 +337,7 @@ function FaqItem({
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Hero product mock — shows the markdown → beautiful page transformation
+// Hero product mock — split-pane editor showing MD → rendered page
 // ─────────────────────────────────────────────────────────────────────────────
 
 function HeroMock() {
@@ -369,7 +371,7 @@ function HeroMock() {
 
       {/* Editor / Preview split */}
       <div className="grid grid-cols-2 divide-x divide-border-default">
-        {/* ── Markdown editor */}
+        {/* Markdown editor */}
         <div className="p-4 sm:p-5">
           <div className="mb-3 text-[9px] font-semibold uppercase tracking-[0.18em] text-text-muted">
             Markdown
@@ -397,7 +399,7 @@ pool_size: 5 # was 50
           </pre>
         </div>
 
-        {/* ── Rendered preview */}
+        {/* Rendered preview */}
         <div className="bg-bg p-4 sm:p-5">
           <div className="mb-3 text-[9px] font-semibold uppercase tracking-[0.18em] text-text-muted">
             Preview
@@ -457,6 +459,310 @@ pool_size: 5 # was 50
         >
           Copy link
         </button>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Problem section mock — before (raw MD) vs after (Readable page)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function ProblemMock() {
+  return (
+    <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+      {/* Before: raw Markdown in a chat/message context */}
+      <div>
+        <div className="mb-3 flex items-center gap-2">
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500/15 text-red-400">
+            <svg width="9" height="9" fill="none" viewBox="0 0 12 12" aria-hidden>
+              <path d="M6 1v5M6 9v.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+          </span>
+          <span className="text-[12px] font-semibold text-text-muted">Pasted into chat or email</span>
+        </div>
+        <div className="overflow-hidden rounded-2xl border border-red-500/12 bg-bg-elevated shadow-card">
+          <div className="flex items-center gap-2.5 border-b border-border-default bg-bg-soft px-4 py-2.5">
+            <div className="h-6 w-6 rounded-full bg-fill-3 shrink-0" />
+            <div>
+              <div className="text-2xs font-semibold text-text-primary">Sarah</div>
+              <div className="text-[9px] text-text-muted">12:47 PM</div>
+            </div>
+          </div>
+          <div className="p-5">
+            <div className="text-[11px] text-text-secondary mb-3">Here&apos;s the incident summary:</div>
+            <pre className="overflow-hidden whitespace-pre-wrap font-mono text-[10.5px] leading-[1.72] text-text-muted/90 select-none">
+{`## Incident Report
+
+**Severity:** P1
+**Status:** Resolved
+
+### Timeline
+
+- 14:32 Alert triggered
+- 14:45 Root cause found
+- 15:01 Fix deployed
+
+### Root Cause
+
+DB pool exhausted after Tuesday's deploy.
+
+\`\`\`yaml
+pool_size: 5 # was 50
+\`\`\``}
+            </pre>
+          </div>
+        </div>
+      </div>
+
+      {/* After: clean Readable published page */}
+      <div>
+        <div className="mb-3 flex items-center gap-2">
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400">
+            <svg width="9" height="9" fill="none" viewBox="0 0 12 12" aria-hidden>
+              <path d="M2 6.5 4.5 9 10 3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
+          <span className="text-[12px] font-semibold text-text-muted">Shared as a Readable link</span>
+        </div>
+        <div className="overflow-hidden rounded-2xl border border-emerald-500/12 bg-bg-elevated shadow-card">
+          {/* Browser bar */}
+          <div className="flex items-center gap-2.5 border-b border-border-default bg-bg-soft px-4 py-2.5">
+            <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-400" />
+            <span className="font-mono text-2xs text-text-muted truncate">
+              readable.app/p/Ab3k91QxZp
+            </span>
+          </div>
+          {/* Clean rendered content */}
+          <div className="p-5">
+            <div className="text-[14px] font-bold tracking-tight text-text-primary">
+              Incident Report
+            </div>
+            <div className="mt-2.5 flex flex-wrap gap-1.5">
+              <span className="inline-flex rounded-full border border-red-500/25 bg-red-500/10 px-2 py-0.5 text-[9px] font-semibold text-red-400">
+                P1 Severity
+              </span>
+              <span className="inline-flex rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2 py-0.5 text-[9px] font-semibold text-emerald-400">
+                Resolved
+              </span>
+            </div>
+            <div className="mt-3.5 text-[11px] font-semibold text-text-primary">Timeline</div>
+            <ul className="mt-1.5 space-y-1">
+              {["14:32 — Alert triggered", "14:45 — Root cause found", "15:01 — Fix deployed"].map((t) => (
+                <li key={t} className="flex items-start gap-2 text-2xs text-text-secondary">
+                  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
+                  {t}
+                </li>
+              ))}
+            </ul>
+            <div className="mt-3.5 text-[11px] font-semibold text-text-primary">Root Cause</div>
+            <div className="mt-1 text-2xs leading-[1.65] text-text-secondary">
+              DB pool exhausted after Tuesday&apos;s deploy.
+            </div>
+            <div className="mt-2.5 rounded-lg border border-border-default bg-bg px-3 py-2 font-mono text-2xs text-text-muted">
+              <span className="text-accent-soft">pool_size</span>
+              {": 5  "}
+              <span className="text-text-muted/60"># was 50</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// API section — code block + feature list
+// ─────────────────────────────────────────────────────────────────────────────
+
+function ApiBlock() {
+  return (
+    <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 items-center">
+      {/* Description */}
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-4">
+          {[
+            {
+              title: "Auto-publish release notes",
+              desc: "Trigger a publish from your GitHub Action after every tagged release. The link is always ready before your team announcement.",
+            },
+            {
+              title: "Incident tooling integration",
+              desc: "Publish a post-mortem page directly from PagerDuty, Opsgenie, or your on-call runbook — no copy-paste, no formatting step.",
+            },
+            {
+              title: "Update pages in place",
+              desc: "PATCH an existing page with new content. The URL stays the same — bookmark it once, always current.",
+            },
+          ].map((item) => (
+            <div key={item.title} className="flex gap-4">
+              <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent-dim text-accent">
+                <svg width="9" height="9" fill="none" viewBox="0 0 12 12" aria-hidden>
+                  <path d="M2 6.5 4.5 9 10 3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+              <div>
+                <div className="text-[14px] font-semibold tracking-tight">{item.title}</div>
+                <div className="mt-1 text-[14px] leading-[1.7] text-text-secondary">{item.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div>
+          <PrimaryButton href={ROUTES.signIn} onClick={() => trackEvent("api_cta_clicked")}>
+            Get an API key
+            <svg width="12" height="12" fill="none" viewBox="0 0 12 12" aria-hidden>
+              <path d="M2.5 9.5 9.5 2.5M9.5 2.5H4M9.5 2.5V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </PrimaryButton>
+        </div>
+      </div>
+
+      {/* Code block */}
+      <div className="overflow-hidden rounded-2xl border border-border-default bg-bg-elevated shadow-card">
+        <div className="flex items-center gap-2 border-b border-border-default bg-bg-soft px-4 py-3">
+          <div className="flex gap-1.5">
+            <span className="h-3 w-3 rounded-full bg-[#ff5f57]" />
+            <span className="h-3 w-3 rounded-full bg-[#febc2e]" />
+            <span className="h-3 w-3 rounded-full bg-[#28c840]" />
+          </div>
+          <span className="ml-2 font-mono text-2xs text-text-muted">REST API</span>
+        </div>
+        <div className="p-5">
+          <pre className="overflow-x-auto font-mono text-[12px] leading-[1.78] text-text-secondary">
+{`# Publish a new page
+POST /api/v1/publish
+Authorization: Bearer rk_live_...
+
+{
+  "blocks": [ ... ]
+}
+
+# Response
+{
+  "id": "Ab3k91QxZp",
+  "url": "https://readable.app/p/Ab3k91QxZp"
+}
+
+# Update an existing page (same URL)
+PATCH /api/v1/pages/Ab3k91QxZp
+Authorization: Bearer rk_live_...`}
+          </pre>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Pricing / account section
+// ─────────────────────────────────────────────────────────────────────────────
+
+function PricingCards() {
+  const anonymous = [
+    "Live editor and preview",
+    "Unlimited local drafts",
+    "Publish with one click",
+    "All rendering features",
+    "Mermaid diagram support",
+    "Export to HTML or Markdown",
+    "Pages live for 30 days",
+  ];
+  const account = [
+    "Everything in the free tier",
+    "Permanent pages — no expiry",
+    "Custom URL slugs",
+    "View count tracking",
+    "My Pages dashboard",
+    "Unlisted (link-only) pages",
+    "REST API + API key management",
+  ];
+
+  return (
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 max-w-3xl mx-auto">
+      {/* No account */}
+      <div className="flex flex-col gap-5 rounded-2xl border border-border-default bg-bg-elevated p-6 shadow-card">
+        <div>
+          <div className="text-[13px] font-semibold uppercase tracking-widest text-text-muted">
+            No account
+          </div>
+          <div className="mt-2 text-[28px] font-bold tracking-tight">Free</div>
+          <div className="mt-1 text-[14px] text-text-secondary">
+            Start immediately. No sign-up.
+          </div>
+        </div>
+        <ul className="flex flex-col gap-2.5">
+          {anonymous.map((item) => (
+            <li key={item} className="flex items-start gap-2.5 text-[14px] text-text-secondary">
+              <svg className="mt-0.5 shrink-0 text-text-muted" width="14" height="14" fill="none" viewBox="0 0 14 14" aria-hidden>
+                <path d="M2.5 7.5 5.5 10.5 11.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              {item}
+            </li>
+          ))}
+        </ul>
+        <PrimaryButton
+          href={ROUTES.app}
+          onClick={() => trackEvent("open_editor_clicked", { location: "pricing_anon" })}
+        >
+          Open the editor
+          <svg width="12" height="12" fill="none" viewBox="0 0 12 12" aria-hidden>
+            <path d="M2.5 9.5 9.5 2.5M9.5 2.5H4M9.5 2.5V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </PrimaryButton>
+      </div>
+
+      {/* Free account */}
+      <div className="flex flex-col gap-5 rounded-2xl border border-accent/25 bg-bg-elevated p-6 shadow-card relative overflow-hidden">
+        {/* Subtle accent glow */}
+        <div aria-hidden className="pointer-events-none absolute -top-12 right-0 h-40 w-40 rounded-full bg-accent opacity-[0.09] blur-2xl" />
+
+        <div className="relative">
+          <div className="flex items-center gap-2">
+            <div className="text-[13px] font-semibold uppercase tracking-widest text-accent">
+              Free account
+            </div>
+            <span className="rounded-full bg-accent-dim px-2 py-0.5 text-2xs font-semibold text-accent">
+              Recommended
+            </span>
+          </div>
+          <div className="mt-2 text-[28px] font-bold tracking-tight">Free</div>
+          <div className="mt-1 text-[14px] text-text-secondary">
+            Sign in with Google or GitHub.
+          </div>
+        </div>
+        <ul className="relative flex flex-col gap-2.5">
+          {account.map((item, i) => (
+            <li
+              key={item}
+              className={cn(
+                "flex items-start gap-2.5 text-[14px]",
+                i === 0 ? "text-text-muted" : "text-text-secondary",
+              )}
+            >
+              <svg
+                className={cn("mt-0.5 shrink-0", i === 0 ? "text-text-muted" : "text-accent")}
+                width="14"
+                height="14"
+                fill="none"
+                viewBox="0 0 14 14"
+                aria-hidden
+              >
+                <path d="M2.5 7.5 5.5 10.5 11.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              {item}
+            </li>
+          ))}
+        </ul>
+        <PrimaryButton
+          href={ROUTES.signUp}
+          onClick={() => trackEvent("sign_up_clicked", { location: "pricing" })}
+        >
+          Create a free account
+          <svg width="12" height="12" fill="none" viewBox="0 0 12 12" aria-hidden>
+            <path d="M2.5 9.5 9.5 2.5M9.5 2.5H4M9.5 2.5V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </PrimaryButton>
       </div>
     </div>
   );
@@ -567,6 +873,83 @@ export function Landing() {
         title: "Private until you publish",
         desc: "Every draft stays in your browser. Nothing leaves your device until you deliberately hit publish.",
       },
+      {
+        icon: (
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" aria-hidden>
+            <path
+              d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"
+              stroke="currentColor"
+              strokeWidth="1.75"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        ),
+        title: "Auto Table of Contents",
+        desc: "Documents with three or more headings get a scroll-tracked navigation sidebar on desktop, accordion on mobile.",
+      },
+      {
+        icon: (
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" aria-hidden>
+            <path
+              d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"
+              stroke="currentColor"
+              strokeWidth="1.75"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M17 21v-8H7v8M7 3v5h8"
+              stroke="currentColor"
+              strokeWidth="1.75"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        ),
+        title: "Multiple drafts",
+        desc: "Keep all your work organized. Unlimited named drafts, auto-saved to your browser, persistent across sessions.",
+      },
+      {
+        icon: (
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" aria-hidden>
+            <circle cx="18" cy="5" r="3" stroke="currentColor" strokeWidth="1.75" />
+            <circle cx="6" cy="12" r="3" stroke="currentColor" strokeWidth="1.75" />
+            <circle cx="18" cy="19" r="3" stroke="currentColor" strokeWidth="1.75" />
+            <path
+              d="M8.59 13.51 15.42 17.49M15.41 6.51 8.59 10.49"
+              stroke="currentColor"
+              strokeWidth="1.75"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        ),
+        title: "Mermaid diagrams",
+        desc: "Flowcharts, sequence diagrams, architecture diagrams — all rendered inline from fenced Mermaid code blocks.",
+      },
+      {
+        icon: (
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" aria-hidden>
+            <polyline
+              points="16 18 22 12 16 6"
+              stroke="currentColor"
+              strokeWidth="1.75"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <polyline
+              points="8 6 2 12 8 18"
+              stroke="currentColor"
+              strokeWidth="1.75"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        ),
+        title: "REST API for automation",
+        desc: "Publish pages from CI/CD, incident tools, or scripts. Generate an API key and automate your sharing workflow.",
+      },
     ],
     [],
   );
@@ -576,20 +959,35 @@ export function Landing() {
       {
         tag: "Incident",
         title: "Incident summaries",
-        desc: "Timelines, impact, root cause, next steps — structured enough to forward to leadership.",
+        desc: "Timeline, severity, root cause, next steps — structured enough to forward to leadership the moment the incident closes.",
         href: "https://readable.ashwinsathian.com/p/GqfTrJQg0t",
       },
       {
         tag: "ADR",
-        title: "Design notes & decisions",
-        desc: "Architecture decisions and tradeoffs that make sense even to someone outside the repo.",
+        title: "Design decisions",
+        desc: "Architecture decisions and tradeoffs that make sense even to someone outside the codebase. No repo navigation required.",
         href: "https://readable.ashwinsathian.com/p/Vmm78unhPg",
       },
       {
         tag: "Docs",
         title: "README-style docs",
-        desc: "Documentation you can share without sending someone to GitHub first.",
+        desc: "Documentation you can share without sending someone to GitHub first. Clean URL, proper headings, code blocks intact.",
         href: "https://readable.ashwinsathian.com/p/6MTZfx3M6q",
+      },
+      {
+        tag: "Release",
+        title: "Release notes",
+        desc: "Ship a clean changelog your non-technical stakeholders can actually read. Publish directly from the CHANGELOG, no reformatting.",
+      },
+      {
+        tag: "Onboarding",
+        title: "Onboarding guides",
+        desc: "New hire guides, team wikis, service runbooks. Paste the Readable link in a welcome Slack message — zero setup for the reader.",
+      },
+      {
+        tag: "Proposal",
+        title: "Proposals & briefs",
+        desc: "Write in Markdown, skip the Google Docs formatting step. Send a clean, professional link that opens in any browser.",
       },
     ],
     [],
@@ -626,6 +1024,12 @@ export function Landing() {
                 className="text-sm text-text-muted transition hover:text-text-primary"
               >
                 Examples
+              </a>
+              <a
+                href="#pricing"
+                className="text-sm text-text-muted transition hover:text-text-primary"
+              >
+                Pricing
               </a>
             </nav>
             <div className="flex items-center gap-2">
@@ -681,7 +1085,7 @@ export function Landing() {
               </div>
             </motion.div>
 
-            {/* Headline — Apple-scale type */}
+            {/* Headline */}
             <motion.h1
               variants={reduce ? undefined : fadeUp}
               className="mt-6 max-w-4xl text-balance text-[52px] font-bold leading-[1.02] tracking-[-0.04em] sm:text-[72px] lg:text-[88px]"
@@ -763,9 +1167,58 @@ export function Landing() {
         </Container>
       </section>
 
-      <Container>
-        <Divider />
-      </Container>
+      <Container><Divider /></Container>
+
+      {/* ──────────────────────────────────────────────────────────────────── */}
+      {/* The problem                                                           */}
+      {/* ──────────────────────────────────────────────────────────────────── */}
+      <Section
+        id="problem"
+        eyebrow="The problem"
+        title="Raw Markdown doesn't travel well."
+        subtitle="When engineers share Markdown outside their team — in Slack, email, a ticket — the recipient sees syntax noise, not a document. Structure is lost. The message is harder to act on."
+      >
+        <ProblemMock />
+
+        {/* Alternatives callout */}
+        <motion.div variants={reduce ? undefined : fadeUp} className="mt-10">
+          <div className="rounded-2xl border border-border-default bg-bg-elevated p-6 sm:p-8">
+            <div className="text-[13px] font-semibold uppercase tracking-[0.18em] text-text-muted mb-5">
+              The usual alternatives
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {[
+                { tool: "Google Docs", why: "Requires a Google account" },
+                { tool: "Notion", why: "Requires workspace access" },
+                { tool: "Confluence", why: "Requires corporate SSO" },
+                { tool: "GitHub Gist", why: "Poor rendering, GitHub account" },
+                { tool: "HackMD / StackEdit", why: "Collaborative overkill" },
+                { tool: "Paste into Slack", why: "Destroys all formatting" },
+              ].map(({ tool, why }) => (
+                <div key={tool} className="flex items-start gap-3">
+                  <svg className="mt-0.5 shrink-0 text-red-400/60" width="14" height="14" fill="none" viewBox="0 0 14 14" aria-hidden>
+                    <path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                  </svg>
+                  <div>
+                    <span className="text-[13px] font-medium text-text-primary">{tool}</span>
+                    <span className="text-[13px] text-text-muted"> — {why}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-6 flex items-center gap-3 rounded-xl border border-accent/20 bg-accent-dim px-4 py-3">
+              <svg className="shrink-0 text-accent" width="16" height="16" fill="none" viewBox="0 0 24 24" aria-hidden>
+                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span className="text-[14px] text-text-secondary">
+                <span className="font-semibold text-text-primary">Readable</span> — paste, publish, share a link. No account, no access to grant, no formatting step.
+              </span>
+            </div>
+          </div>
+        </motion.div>
+      </Section>
+
+      <Container><Divider /></Container>
 
       {/* ──────────────────────────────────────────────────────────────────── */}
       {/* Features                                                              */}
@@ -785,9 +1238,7 @@ export function Landing() {
         </div>
       </Section>
 
-      <Container>
-        <Divider />
-      </Container>
+      <Container><Divider /></Container>
 
       {/* ──────────────────────────────────────────────────────────────────── */}
       {/* How it works                                                          */}
@@ -813,9 +1264,7 @@ export function Landing() {
         </div>
       </Section>
 
-      <Container>
-        <Divider />
-      </Container>
+      <Container><Divider /></Container>
 
       {/* ──────────────────────────────────────────────────────────────────── */}
       {/* Examples / Use cases                                                  */}
@@ -826,7 +1275,7 @@ export function Landing() {
         title="Real pages, real use cases."
         subtitle="If it gets pasted into Slack, emailed, or dropped into a ticket — it belongs in Readable."
       >
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {useCases.map((c) => (
             <motion.div key={c.tag} variants={reduce ? undefined : fadeUp}>
               <ExampleCard {...c} />
@@ -835,9 +1284,36 @@ export function Landing() {
         </div>
       </Section>
 
-      <Container>
-        <Divider />
-      </Container>
+      <Container><Divider /></Container>
+
+      {/* ──────────────────────────────────────────────────────────────────── */}
+      {/* API & automation                                                       */}
+      {/* ──────────────────────────────────────────────────────────────────── */}
+      <Section
+        id="api"
+        eyebrow="API"
+        title="Publish from anywhere."
+        subtitle="Readable's REST API lets you publish pages directly from CI/CD pipelines, incident tools, and automation scripts. Sign in to generate a key."
+      >
+        <ApiBlock />
+      </Section>
+
+      <Container><Divider /></Container>
+
+      {/* ──────────────────────────────────────────────────────────────────── */}
+      {/* Pricing                                                               */}
+      {/* ──────────────────────────────────────────────────────────────────── */}
+      <Section
+        id="pricing"
+        eyebrow="Pricing"
+        title="Everything. Free."
+        subtitle="No paid tier. No credit card. No freemium expiration. Readable is free for everyone."
+        center
+      >
+        <PricingCards />
+      </Section>
+
+      <Container><Divider /></Container>
 
       {/* ──────────────────────────────────────────────────────────────────── */}
       {/* FAQ                                                                   */}
@@ -846,38 +1322,53 @@ export function Landing() {
         <div className="mx-auto max-w-2xl rounded-2xl border border-border-default bg-bg-elevated px-7 shadow-card">
           <FaqItem question="Do I need an account?">
             No. {APP_NAME} works immediately — no signup, no email, no password. Just
-            paste and publish.
+            paste and publish. A free account unlocks permanent pages, custom slugs,
+            view counts, the My Pages dashboard, and API access.
           </FaqItem>
           <FaqItem question="Are published pages public?">
             Yes — they&apos;re accessible by anyone with the link. If you publish it,
-            assume it can be forwarded.
+            assume it can be forwarded. Signed-in users can mark pages as &ldquo;unlisted&rdquo; to
+            hide them from any discovery while keeping the link functional.
           </FaqItem>
           <FaqItem question="How long do pages last?">
-            30 days from the time of publishing. The page shows an expiry countdown at
-            the top so your reader always knows.
+            30 days from the time of publishing for anonymous pages. The page shows an expiry
+            countdown badge so your reader always knows. Signed-in users get permanent pages
+            that never expire.
           </FaqItem>
           <FaqItem question="Can I edit after publishing?">
-            Not right now. Published pages are immutable snapshots. You can edit your
-            local draft and republish — which creates a new link.
+            Anonymous pages are immutable — edit your local draft and republish to get a new link.
+            Signed-in users can use the API to republish updated content to the same page ID,
+            keeping the URL unchanged.
           </FaqItem>
           <FaqItem question="Can I export to PDF?">
             Use your browser&apos;s print function on the published page (File → Print
-            or ⌘+P). It produces a clean PDF with no chrome.
+            or ⌘+P). It produces a clean PDF with no chrome, no ads, no nav.
           </FaqItem>
           <FaqItem question="Where are drafts stored?">
             Entirely in your browser&apos;s localStorage. Nothing is sent to a server
-            until you deliberately hit Publish.
+            until you deliberately hit Publish. Clearing your browser&apos;s storage will delete local drafts.
           </FaqItem>
           <FaqItem question="Is there an API?">
-            Yes — Readable has a REST API and supports API key authentication for
-            publishing programmatically from CI or scripts. Sign in to generate a key.
+            Yes — Readable has a REST API for publishing pages programmatically.{" "}
+            <code className="rounded bg-fill-2 px-1 py-0.5 font-mono text-xs">POST /api/v1/publish</code>{" "}
+            creates a new page;{" "}
+            <code className="rounded bg-fill-2 px-1 py-0.5 font-mono text-xs">PATCH /api/v1/pages/{"{id}"}</code>{" "}
+            updates an existing one. Sign in to generate an API key from the My Pages dashboard.
+          </FaqItem>
+          <FaqItem question="What Markdown is supported?">
+            Readable supports GitHub-Flavored Markdown (GFM): H1–H4 headings, bold, italic,
+            strikethrough, code (inline and fenced), tables, ordered/unordered/nested lists,
+            task lists, blockquotes, links, images (external URLs), and Mermaid diagrams.
+            HTML in Markdown is not rendered for security reasons.
+          </FaqItem>
+          <FaqItem question="Is there a size limit?">
+            The editor accepts up to 200,000 characters. Published page payloads are capped at
+            350,000 bytes to keep edge storage fast.
           </FaqItem>
         </div>
       </Section>
 
-      <Container>
-        <Divider />
-      </Container>
+      <Container><Divider /></Container>
 
       {/* ──────────────────────────────────────────────────────────────────── */}
       {/* Final CTA                                                             */}
@@ -897,10 +1388,7 @@ export function Landing() {
               <div className="absolute bottom-0 right-1/4 h-48 w-48 rounded-full bg-accent-soft opacity-[0.07] blur-2xl" />
             </div>
 
-            <motion.div
-              variants={reduce ? undefined : fadeUp}
-              className="relative z-10"
-            >
+            <motion.div variants={reduce ? undefined : fadeUp} className="relative z-10">
               <div className="text-2xs font-semibold tracking-[0.24em] uppercase text-accent">
                 Get started
               </div>
@@ -910,13 +1398,11 @@ export function Landing() {
               <p className="mx-auto mt-5 max-w-md text-[17px] leading-[1.72] text-text-secondary">
                 Free. No account. Under 30 seconds.
               </p>
-              <div className="mt-10 flex justify-center">
+              <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
                 <PrimaryButton
                   href={ROUTES.app}
                   large
-                  onClick={() =>
-                    trackEvent("open_editor_clicked", { location: "cta" })
-                  }
+                  onClick={() => trackEvent("open_editor_clicked", { location: "cta" })}
                 >
                   Open the editor
                   <svg width="14" height="14" fill="none" viewBox="0 0 12 12" aria-hidden>
@@ -929,6 +1415,11 @@ export function Landing() {
                     />
                   </svg>
                 </PrimaryButton>
+                {!isSignedIn && (
+                  <GhostButton href={ROUTES.signUp} onClick={() => trackEvent("sign_up_clicked", { location: "cta" })}>
+                    Create a free account
+                  </GhostButton>
+                )}
               </div>
             </motion.div>
           </motion.div>
@@ -963,10 +1454,13 @@ export function Landing() {
               <a href="#examples" className="transition hover:text-text-primary">
                 Examples
               </a>
-              <a href="#faq" className="transition hover:text-text-primary" onClick={(e) => {
-                e.preventDefault();
-                document.querySelector("[id='faq'], #faq, [data-faq]")?.scrollIntoView({ behavior: "smooth" });
-              }}>
+              <a href="#api" className="transition hover:text-text-primary">
+                API
+              </a>
+              <a href="#pricing" className="transition hover:text-text-primary">
+                Pricing
+              </a>
+              <a href="#faq" className="transition hover:text-text-primary">
                 FAQ
               </a>
             </nav>

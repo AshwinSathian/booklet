@@ -13,9 +13,11 @@ export const ANALYTICS_EVENTS = {
   export_copy_markdown: "export_copy_markdown",
   export_copy_html: "export_copy_html",
 
-  // Marketing / Phase 1
+  // Marketing
   example_clicked: "example_clicked",
   open_editor_clicked: "open_editor_clicked",
+  api_cta_clicked: "api_cta_clicked",
+  sign_up_clicked: "sign_up_clicked",
 
   // Existing Phase 1 events (kept for backward compatibility)
   publish_success: "publish_success",
