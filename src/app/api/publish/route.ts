@@ -15,6 +15,7 @@ export const runtime = "nodejs";
 type PublishPayload = {
   blocks: PublishedDoc["blocks"];
   settings?: PublishedDoc["settings"];
+  raw?: string;
 };
 
 function getClientIp(req: Request): string {
@@ -90,6 +91,7 @@ export async function POST(req: Request) {
     createdAt: new Date().toISOString(),
     settings: payload.settings ?? DEFAULT_SETTINGS,
     blocks: payload.blocks,
+    ...(payload.raw ? { raw: payload.raw.slice(0, STORAGE.maxInputChars) } : {}),
   };
 
   try {

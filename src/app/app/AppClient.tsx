@@ -455,7 +455,7 @@ function AppPageContent() {
       const res = await fetch(API.publishPath, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ blocks, settings }),
+        body: JSON.stringify({ blocks, settings, raw }),
       });
 
       if (!res.ok) {
@@ -525,7 +525,7 @@ function AppPageContent() {
       const res = await fetch(`/api/publish/${lastPublishedId}`, {
         method: "PATCH",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ blocks, settings }),
+        body: JSON.stringify({ blocks, settings, raw }),
       });
 
       if (!res.ok) {

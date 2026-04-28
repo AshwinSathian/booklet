@@ -12,7 +12,7 @@ export const ROUTES = {
 export const STORAGE = {
   kvBinding: "READABLE_DOCS",
   maxInputChars: 200_000,
-  maxDocBytes: 350_000, // keep KV payloads safe and fast
+  maxDocBytes: 600_000, // increased to accommodate optional raw markdown alongside blocks
   ttlSeconds: 60 * 60 * 24 * 30, // 30 days (MVP-friendly default)
 } as const;
 

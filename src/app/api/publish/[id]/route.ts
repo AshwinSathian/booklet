@@ -11,6 +11,7 @@ export const runtime = "nodejs";
 type UpdatePayload = {
   blocks: PublishedDoc["blocks"];
   settings?: PublishedDoc["settings"];
+  raw?: string;
 };
 
 export async function PATCH(
@@ -65,6 +66,7 @@ export async function PATCH(
     createdAt: record.created_at,
     settings: payload.settings ?? DEFAULT_SETTINGS,
     blocks: payload.blocks,
+    ...(payload.raw ? { raw: payload.raw.slice(0, STORAGE.maxInputChars) } : {}),
   };
 
   try {

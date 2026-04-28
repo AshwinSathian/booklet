@@ -43,6 +43,7 @@ export type PublishedDoc = {
   createdAt: string;
   settings: DocSettings;
   blocks: Block[];
+  raw?: string; // original markdown source; present for docs published after this field was added
 };
 
 export const DEFAULT_SETTINGS: DocSettings = {
