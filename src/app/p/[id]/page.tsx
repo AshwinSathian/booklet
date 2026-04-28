@@ -10,7 +10,7 @@ import { buildToc, MIN_TOC_HEADINGS, type TocItem } from "@/lib/toc";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { DesktopTocClient, MobileTocClient } from "@/components/share/TocClient";
-import { PrintButton } from "@/components/share/PrintButton";
+import { ExportMenu } from "@/components/share/ExportMenu";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -123,6 +123,7 @@ export default async function SharePage({
   const { toc, anchorMap } = buildToc(doc.blocks ?? []);
   const showToc = toc.length >= MIN_TOC_HEADINGS;
   const maxW = doc.settings?.width === "wide" ? "max-w-4xl" : "max-w-3xl";
+  const pageTitle = extractTitle(doc.blocks) ?? "Shared page";
 
   return (
     <div className="min-h-screen bg-bg text-text-primary">
@@ -133,7 +134,12 @@ export default async function SharePage({
 
           <div className="flex items-center gap-2 shrink-0">
             {daysLeft !== null && <ExpiryBadge daysLeft={daysLeft} />}
-            <PrintButton />
+            <ExportMenu
+              blocks={doc.blocks}
+              settings={doc.settings}
+              raw={doc.raw}
+              title={pageTitle}
+            />
             <ThemeToggle />
             <Link
               href={ROUTES.app}

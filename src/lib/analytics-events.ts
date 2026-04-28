@@ -13,6 +13,11 @@ export const ANALYTICS_EVENTS = {
   export_copy_markdown: "export_copy_markdown",
   export_copy_html: "export_copy_html",
 
+  // Share page exports
+  share_export_markdown: "share_export_markdown",
+  share_export_html: "share_export_html",
+  share_print: "share_print",
+
   // Marketing
   example_clicked: "example_clicked",
   open_editor_clicked: "open_editor_clicked",

@@ -1,2 +1,2 @@
 export { copyTextToClipboard } from "./copy";
-export { blocksToHtml, markdownToHtml } from "./html";
+export { blocksToHtml, blocksToHtmlDocument, markdownToHtml } from "./html";
