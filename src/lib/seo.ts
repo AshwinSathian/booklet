@@ -23,8 +23,12 @@ type BuildMetaArgs = {
   description?: string;
   pathname?: string;
   noIndex?: boolean;
-  origin?: string; // <- important
+  origin?: string;
 };
+
+const DEFAULT_TITLE = `${APP_NAME} — Share Beautiful Markdown Pages Instantly`;
+const DEFAULT_DESC =
+  "Convert any Markdown into a clean, beautifully formatted shareable page in seconds. Perfect for incident reports, ADRs, READMEs, and technical docs. Free, no account required.";
 
 export function buildMetadata({
   title,
@@ -34,13 +38,9 @@ export function buildMetadata({
   origin,
 }: BuildMetaArgs): Metadata {
   const resolvedTitle =
-    title && title !== APP_NAME
-      ? `${title} — ${APP_NAME}`
-      : `${APP_NAME} — Paste. Preview. Share.`;
+    title && title !== APP_NAME ? `${title} — ${APP_NAME}` : DEFAULT_TITLE;
 
-  const resolvedDesc =
-    description ??
-    "Turn pasted text into clean, confidently shareable pages for non-technical readers.";
+  const resolvedDesc = description ?? DEFAULT_DESC;
 
   const canonicalPath = pathname ?? ROUTES.home;
   const url = absoluteUrl(canonicalPath, origin);
@@ -55,7 +55,16 @@ export function buildMetadata({
     alternates: { canonical: url },
     robots: noIndex
       ? { index: false, follow: false }
-      : { index: true, follow: true },
+      : {
+          index: true,
+          follow: true,
+          googleBot: {
+            index: true,
+            follow: true,
+            "max-image-preview": "large",
+            "max-snippet": -1,
+          },
+        },
 
     openGraph: {
       type: "website",
@@ -68,7 +77,7 @@ export function buildMetadata({
           url: ogImage,
           width: 1200,
           height: 630,
-          alt: `${APP_NAME} preview`,
+          alt: `${APP_NAME} — Share Beautiful Markdown Pages`,
         },
       ],
     },
@@ -82,7 +91,7 @@ export function buildMetadata({
           url: twitterImage,
           width: 1200,
           height: 630,
-          alt: `${APP_NAME} preview`,
+          alt: `${APP_NAME} — Share Beautiful Markdown Pages`,
         },
       ],
     },

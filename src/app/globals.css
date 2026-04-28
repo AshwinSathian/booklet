@@ -6,6 +6,15 @@
   - html.light overrides to LIGHT when user chooses light or system is light
   - next-themes toggles html class: "light" | "dark"
   - PrimeReact theme is swapped in PrimeStyles based on html.dark
+
+  Design DNA (locked — do not drift from this):
+  - Type is the product: UI exemplifies beautiful typography
+  - Chrome recedes: surfaces exist to carry content, not call attention to themselves
+  - Purple = action / active only: not decoration, not category colour
+  - Three surfaces: base → elevated → float (bg → bg-elevated → bg-glass)
+  - Motion has purpose: entrances orient, micros confirm
+  - Dark palette: Apple-quality pure-black base with violet accent
+  - Light palette: Apple-quality white base with tinted elevated surfaces
 */
 
 :root {
@@ -14,143 +23,143 @@
   --font-body: var(--font-inter), "Inter", system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", ui-monospace, "SF Mono", monospace;
 
-  /* -------- Surface palette (DARK) -------- */
-  --color-bg: #07090f;
-  --color-bg-soft: #0d1117;
-  --color-bg-elevated: #131720;
-  --color-bg-glass: rgba(13, 17, 23, 0.5);
+  /* ── Surfaces (DARK) ────────────────────────────────────────────────────── */
+  --color-bg:           #000000;          /* base — Apple-premium pure black   */
+  --color-bg-soft:      #0d0d0d;          /* subtle step up — nav, input bg    */
+  --color-bg-elevated:  #161617;          /* cards, dialogs, panels            */
+  --color-bg-glass:     rgba(22, 22, 23, 0.72); /* backdrop-blur surfaces     */
 
-  /* -------- Text (DARK) -------- */
-  --color-text-primary: #f0f2f8;
-  --color-text-secondary: #a8b3cc;
-  --color-text-muted: #6b7591;
+  /* ── Text (DARK) ────────────────────────────────────────────────────────── */
+  --color-text-primary:   #f5f5f7;        /* Apple primary label               */
+  --color-text-secondary: #98989f;        /* Apple secondary label             */
+  --color-text-muted:     #636366;        /* Apple tertiary label              */
 
-  /* -------- Accent (DARK) -------- */
-  --color-accent: #7c5cfc;
-  --color-accent-hover: #6b47f5;
-  --color-accent-soft: #a78bfa;
-  --color-accent-warm: #f59e0b;
-  --color-accent-dim: rgba(124, 92, 252, 0.10);
+  /* ── Accent (DARK) ──────────────────────────────────────────────────────── */
+  --color-accent:       #7c5cfc;          /* Readable signature purple         */
+  --color-accent-hover: #6b48f0;
+  --color-accent-soft:  #a78bfa;          /* for focus rings, secondary tints  */
+  --color-accent-warm:  #f59e0b;          /* amber — warnings, expiry          */
+  --color-accent-dim:   rgba(124, 92, 252, 0.12); /* icon backgrounds         */
 
-  /* -------- Borders — pre-computed, never composed (DARK) -------- */
-  --color-border-strong: rgba(255, 255, 255, 0.13);
-  --color-border-default: rgba(255, 255, 255, 0.07);
-  --color-border-subtle: rgba(255, 255, 255, 0.04);
+  /* ── Borders — pre-computed, never composed in component classes (DARK) ── */
+  --color-border-strong:  rgba(255, 255, 255, 0.16);
+  --color-border-default: rgba(255, 255, 255, 0.09);
+  --color-border-subtle:  rgba(255, 255, 255, 0.05);
 
-  /* -------- Surface fills (DARK) -------- */
-  --color-fill-1: rgba(255, 255, 255, 0.04);   /* table row alternates */
-  --color-fill-2: rgba(255, 255, 255, 0.07);   /* code block header, inset panels */
-  --color-fill-3: rgba(255, 255, 255, 0.12);   /* table header, button hover bg */
+  /* ── Surface fills (DARK) ───────────────────────────────────────────────── */
+  --color-fill-1: rgba(255, 255, 255, 0.04);   /* table row alternates        */
+  --color-fill-2: rgba(255, 255, 255, 0.08);   /* code headers, inset panels  */
+  --color-fill-3: rgba(255, 255, 255, 0.13);   /* table head, button hover    */
 
-  /* -------- Legacy outline (used in app chrome — keep for backward compat) -------- */
-  --color-outline: #1e2840;
-  --color-outline-soft: rgba(255, 255, 255, 0.06);
+  /* ── Legacy outline (app chrome compat — maps to border-default) ────────── */
+  --color-outline:      rgba(255, 255, 255, 0.09);
+  --color-outline-soft: rgba(255, 255, 255, 0.05);
 
-  /* -------- Shadows (DARK) -------- */
-  --shadow-soft: 0 8px 32px rgba(124, 92, 252, 0.18);
-  --shadow-glass: 0 4px 24px rgba(0, 0, 0, 0.4);
-  --shadow-glow: 0 0 40px rgba(124, 92, 252, 0.22);
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.4), 0 4px 16px rgba(0, 0, 0, 0.3);
+  /* ── Shadows (DARK) ─────────────────────────────────────────────────────── */
+  --shadow-soft:  0 4px 14px rgba(124, 92, 252, 0.35);  /* primary btn glow   */
+  --shadow-glass: 0 8px 48px rgba(0, 0, 0, 0.70);       /* hero mock shadow   */
+  --shadow-glow:  0 0 80px rgba(124, 92, 252, 0.20);    /* CTA section glow   */
+  --shadow-card:  0 1px 2px rgba(0, 0, 0, 0.60), 0 4px 24px rgba(0, 0, 0, 0.40);
 
-  /* -------- Scrollbar (DARK) -------- */
-  --scrollbar-thumb: rgba(255, 255, 255, 0.12);
-  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.22);
+  /* ── Scrollbar (DARK) ───────────────────────────────────────────────────── */
+  --scrollbar-thumb:       rgba(255, 255, 255, 0.10);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.20);
 
-  /* -------- PrimeReact overrides (DARK) -------- */
-  --p-primary-color: #7c5cfc;
+  /* ── PrimeReact overrides (DARK) ────────────────────────────────────────── */
+  --p-primary-color:          #7c5cfc;
   --p-primary-contrast-color: #ffffff;
-  --p-surface-ground: #07090f;
-  --p-surface-card: rgba(13, 17, 23, 0.6);
-  --p-content-border-color: rgba(255, 255, 255, 0.06);
-  --p-text-color: #f0f2f8;
-  --p-text-muted-color: #a8b3cc;
-  --p-focus-ring: 0 0 0 2px rgba(167, 139, 250, 0.4);
+  --p-surface-ground:         #000000;
+  --p-surface-card:           rgba(22, 22, 23, 0.80);
+  --p-content-border-color:   rgba(255, 255, 255, 0.08);
+  --p-text-color:             #f5f5f7;
+  --p-text-muted-color:       #98989f;
+  --p-focus-ring:             0 0 0 2px rgba(167, 139, 250, 0.45);
 }
 
-/* LIGHT override */
+/* ── LIGHT override ──────────────────────────────────────────────────────── */
 html.light {
   color-scheme: light;
 
-  /* -------- Surface palette (LIGHT) -------- */
-  --color-bg: #f6f8fc;
-  --color-bg-soft: #ffffff;
-  --color-bg-elevated: #f0f3fa;          /* was #ffffff — now distinct from bg-soft */
-  --color-bg-glass: rgba(255, 255, 255, 0.82);
+  /* ── Surfaces (LIGHT) ───────────────────────────────────────────────────── */
+  --color-bg:           #ffffff;          /* Apple pure white                  */
+  --color-bg-soft:      #f5f5f7;          /* Apple systemGroupedBackground     */
+  --color-bg-elevated:  #e8e8ed;          /* Apple secondarySystemBackground   */
+  --color-bg-glass:     rgba(255, 255, 255, 0.90);
 
-  /* -------- Text (LIGHT) -------- */
-  --color-text-primary: #0a0e1a;
-  --color-text-secondary: #3d4a6b;
-  --color-text-muted: #545e78;           /* was #6b7591 — improved WCAG AA on #f6f8fc */
+  /* ── Text (LIGHT) ───────────────────────────────────────────────────────── */
+  --color-text-primary:   #1d1d1f;        /* Apple label                       */
+  --color-text-secondary: #6e6e73;        /* Apple secondaryLabel              */
+  --color-text-muted:     #86868b;        /* Apple tertiaryLabel               */
 
-  /* -------- Accent (LIGHT) -------- */
-  --color-accent: #6d46f8;
-  --color-accent-hover: #5b37e6;
-  --color-accent-soft: #8b6cf7;
-  --color-accent-warm: #d97706;
-  --color-accent-dim: rgba(109, 70, 248, 0.10);
+  /* ── Accent (LIGHT) ─────────────────────────────────────────────────────── */
+  --color-accent:       #6741f0;
+  --color-accent-hover: #5530de;
+  --color-accent-soft:  #8b6cf7;
+  --color-accent-warm:  #d97706;
+  --color-accent-dim:   rgba(103, 65, 240, 0.10);
 
-  /* -------- Borders (LIGHT) -------- */
-  --color-border-strong: rgba(10, 14, 26, 0.14);
-  --color-border-default: rgba(10, 14, 26, 0.09);
-  --color-border-subtle: rgba(10, 14, 26, 0.05);
+  /* ── Borders (LIGHT) ────────────────────────────────────────────────────── */
+  --color-border-strong:  rgba(0, 0, 0, 0.14);
+  --color-border-default: rgba(0, 0, 0, 0.09);
+  --color-border-subtle:  rgba(0, 0, 0, 0.05);
 
-  /* -------- Surface fills (LIGHT) -------- */
-  --color-fill-1: rgba(10, 14, 26, 0.03);
-  --color-fill-2: rgba(10, 14, 26, 0.06);
-  --color-fill-3: rgba(10, 14, 26, 0.10);
+  /* ── Surface fills (LIGHT) ──────────────────────────────────────────────── */
+  --color-fill-1: rgba(0, 0, 0, 0.03);
+  --color-fill-2: rgba(0, 0, 0, 0.06);
+  --color-fill-3: rgba(0, 0, 0, 0.10);
 
-  /* -------- Legacy outline (LIGHT) -------- */
-  --color-outline: rgba(10, 14, 26, 0.1);
-  --color-outline-soft: rgba(10, 14, 26, 0.06);
+  /* ── Legacy outline (LIGHT) ─────────────────────────────────────────────── */
+  --color-outline:      rgba(0, 0, 0, 0.09);
+  --color-outline-soft: rgba(0, 0, 0, 0.05);
 
-  /* -------- Shadows (LIGHT) -------- */
-  --shadow-soft: 0 8px 32px rgba(109, 70, 248, 0.12);
-  --shadow-glass: 0 4px 24px rgba(10, 14, 26, 0.08);
-  --shadow-glow: 0 0 40px rgba(109, 70, 248, 0.16);
-  --shadow-card: 0 1px 3px rgba(10, 14, 26, 0.08), 0 4px 16px rgba(10, 14, 26, 0.06);
+  /* ── Shadows (LIGHT) ────────────────────────────────────────────────────── */
+  --shadow-soft:  0 4px 14px rgba(103, 65, 240, 0.28);
+  --shadow-glass: 0 4px 24px rgba(0, 0, 0, 0.10);
+  --shadow-glow:  0 0 60px rgba(103, 65, 240, 0.14);
+  --shadow-card:  0 1px 2px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.06);
 
-  /* -------- Scrollbar (LIGHT) -------- */
-  --scrollbar-thumb: rgba(10, 14, 26, 0.16);
-  --scrollbar-thumb-hover: rgba(10, 14, 26, 0.30);
+  /* ── Scrollbar (LIGHT) ──────────────────────────────────────────────────── */
+  --scrollbar-thumb:       rgba(0, 0, 0, 0.14);
+  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.28);
 
-  --p-primary-color: #6d46f8;
+  --p-primary-color:          #6741f0;
   --p-primary-contrast-color: #ffffff;
-  --p-surface-ground: #f6f8fc;
-  --p-surface-card: rgba(255, 255, 255, 0.95);
-  --p-content-border-color: rgba(10, 14, 26, 0.08);
-  --p-text-color: #0a0e1a;
-  --p-text-muted-color: #545e78;
-  --p-focus-ring: 0 0 0 2px rgba(139, 108, 247, 0.4);
+  --p-surface-ground:         #ffffff;
+  --p-surface-card:           rgba(255, 255, 255, 0.95);
+  --p-content-border-color:   rgba(0, 0, 0, 0.08);
+  --p-text-color:             #1d1d1f;
+  --p-text-muted-color:       #6e6e73;
+  --p-focus-ring:             0 0 0 2px rgba(139, 108, 247, 0.45);
 }
 
 html.dark {
   color-scheme: dark;
 }
 
-/* Tailwind v4 theme — bind CSS vars to utility classes */
+/* ── Tailwind v4 @theme — bind CSS vars to utility classes ───────────────── */
 @theme {
   /* Surfaces */
-  --color-bg: var(--color-bg);
-  --color-bg-soft: var(--color-bg-soft);
+  --color-bg:          var(--color-bg);
+  --color-bg-soft:     var(--color-bg-soft);
   --color-bg-elevated: var(--color-bg-elevated);
-  --color-bg-glass: var(--color-bg-glass);
+  --color-bg-glass:    var(--color-bg-glass);
 
   /* Text */
-  --color-text-primary: var(--color-text-primary);
+  --color-text-primary:   var(--color-text-primary);
   --color-text-secondary: var(--color-text-secondary);
-  --color-text-muted: var(--color-text-muted);
+  --color-text-muted:     var(--color-text-muted);
 
   /* Accent */
-  --color-accent: var(--color-accent);
+  --color-accent:       var(--color-accent);
   --color-accent-hover: var(--color-accent-hover);
-  --color-accent-soft: var(--color-accent-soft);
-  --color-accent-warm: var(--color-accent-warm);
-  --color-accent-dim: var(--color-accent-dim);
+  --color-accent-soft:  var(--color-accent-soft);
+  --color-accent-warm:  var(--color-accent-warm);
+  --color-accent-dim:   var(--color-accent-dim);
 
   /* Semantic borders */
-  --color-border-strong: var(--color-border-strong);
+  --color-border-strong:  var(--color-border-strong);
   --color-border-default: var(--color-border-default);
-  --color-border-subtle: var(--color-border-subtle);
+  --color-border-subtle:  var(--color-border-subtle);
 
   /* Surface fills */
   --color-fill-1: var(--color-fill-1);
@@ -158,46 +167,43 @@ html.dark {
   --color-fill-3: var(--color-fill-3);
 
   /* Legacy outline (app chrome) */
-  --color-outline: var(--color-outline);
+  --color-outline:      var(--color-outline);
   --color-outline-soft: var(--color-outline-soft);
 
   /* Shadows */
-  --shadow-soft: var(--shadow-soft);
+  --shadow-soft:  var(--shadow-soft);
   --shadow-glass: var(--shadow-glass);
-  --shadow-glow: var(--shadow-glow);
-  --shadow-card: var(--shadow-card);
+  --shadow-glow:  var(--shadow-glow);
+  --shadow-card:  var(--shadow-card);
 
   /* Fonts */
   --font-body: var(--font-body);
   --font-mono: var(--font-mono);
 
   /* ── Type scale ──────────────────────────────────────────────────────────
-     2xs / xs / sm are added or overridden to create a dense-but-coherent
-     small-size scale. Tailwind defaults for base/lg/xl/2xl/3xl remain.
+     Dense-but-coherent small-size scale. Tailwind defaults for base/lg/xl/2xl/3xl remain.
   ──────────────────────────────────────────────────────────────────────── */
-  --text-2xs: 0.625rem;    /* 10px — kbd hints, eyebrow labels, tab names   */
-  --text-xs: 0.6875rem;    /* 11px — secondary chrome, save indicator       */
-  --text-sm: 0.8125rem;    /* 13px — body-small, menu items, captions       */
+  --text-2xs: 0.625rem;     /* 10px — kbd hints, eyebrow labels, tab names   */
+  --text-xs:  0.6875rem;    /* 11px — secondary chrome, save indicator       */
+  --text-sm:  0.8125rem;    /* 13px — body-small, menu items, captions       */
 
   /* ── Radius ──────────────────────────────────────────────────────────────
-     Named semantic tokens that don't conflict with Tailwind defaults.
-     Use: rounded-input, rounded-card, rounded-pill in component classes.
+     Semantic tokens. Use: rounded-input, rounded-card, rounded-pill.
   ──────────────────────────────────────────────────────────────────────── */
-  --radius-input: 6px;       /* inline inputs, code action buttons          */
-  --radius-card: 16px;       /* cards, dialogs, floating panels             */
-  --radius-pill: 9999px;     /* pill buttons, badges, segmented controls    */
+  --radius-input: 6px;      /* inline inputs, code action buttons            */
+  --radius-card:  16px;     /* cards, dialogs, floating panels               */
+  --radius-pill:  9999px;   /* pill buttons, badges, segmented controls      */
 
   /* ── Motion ──────────────────────────────────────────────────────────────
      Named durations for semantic animation intent.
-     Use: duration-fast / duration-normal / duration-slow / duration-deliberate
   ──────────────────────────────────────────────────────────────────────── */
-  --duration-fast: 100ms;       /* color, opacity — micro-interactions      */
-  --duration-normal: 180ms;     /* standard UI transitions                  */
-  --duration-slow: 280ms;       /* entrance animations                      */
-  --duration-deliberate: 400ms; /* full-panel / dialog open                 */
-  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);    /* spring out            */
-  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);     /* layout changes        */
-  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);/* interactive confirm   */
+  --duration-fast:       100ms;   /* color, opacity — micro-interactions     */
+  --duration-normal:     180ms;   /* standard UI transitions                 */
+  --duration-slow:       280ms;   /* entrance animations                     */
+  --duration-deliberate: 400ms;   /* full-panel / dialog open                */
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);   /* spring out             */
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);    /* layout changes         */
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1); /* interactive confirm  */
 }
 
 html,
@@ -208,7 +214,8 @@ body {
 body {
   @apply bg-bg text-text-primary antialiased;
   font-family: var(--font-body);
-  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  font-size: 17px;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -219,11 +226,11 @@ button {
 }
 
 ::selection {
-  background: rgba(124, 92, 252, 0.25);
+  background: rgba(124, 92, 252, 0.28);
   color: inherit;
 }
 
-/* ---- Entrance keyframes ---- */
+/* ── Entrance keyframes ──────────────────────────────────────────────────── */
 @keyframes dialogIn {
   from { opacity: 0; transform: translateY(10px) scale(0.97); }
   to   { opacity: 1; transform: translateY(0)    scale(1); }
@@ -239,28 +246,23 @@ button {
   to   { opacity: 1; }
 }
 
-/* ---- Tailwind v4: custom animation bindings ---- */
+/* ── Tailwind v4: custom animation bindings ──────────────────────────────── */
 @theme {
   --animate-dialog-in:   dialogIn   280ms cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-dropdown-in: dropdownIn 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-fade-in:     fadeIn     150ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-/* ---- Transitions — scoped to color/opacity only to avoid layout jank ---- */
+/* ── Transitions — scoped to color/opacity to avoid layout jank ─────────── */
 *,
 *::before,
 *::after {
   transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* ---- Scrollbar (Webkit) ---- */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
+/* ── Scrollbar (Webkit) ──────────────────────────────────────────────────── */
+::-webkit-scrollbar       { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
   background: var(--scrollbar-thumb);
   border-radius: 999px;
@@ -269,7 +271,7 @@ button {
   background: var(--scrollbar-thumb-hover);
 }
 
-/* ---- PrimeReact: SelectButton (mobile pane toggle) ---- */
+/* ── PrimeReact: SelectButton (mobile pane toggle) ──────────────────────── */
 .readable-theme-toggle .p-selectbutton .p-button {
   padding: 0.4rem 0.75rem;
   font-size: 0.7rem;
@@ -278,7 +280,7 @@ button {
   letter-spacing: 0.1em;
 }
 
-/* ---- Print styles ---- */
+/* ── Print styles ────────────────────────────────────────────────────────── */
 @media print {
   body {
     background: white !important;
