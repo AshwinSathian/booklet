@@ -1,294 +1,392 @@
-# Readable — Brand & Product Reference
+# Readable — Brand Reference
 
-> Paste this document into Claude before asking it to generate any branding materials,
-> marketing copy, social posts, ad creative, email campaigns, or design briefs.
-
----
-
-## What Readable Is
-
-Readable is a Markdown-to-shareable-page tool. Paste any Markdown text into the editor, see it rendered beautifully in real time, and publish it to a clean public URL with one click. The link is permanent for 30 days and requires nothing from the reader — no login, no app, no plugin.
-
-**The core insight:** Engineers and technical people write in Markdown. Their stakeholders, customers, and non-technical colleagues cannot read raw Markdown. Readable bridges that gap silently — nobody has to change their tools or their workflow.
-
-**One-line description:**  
-*"Paste Markdown. Get a page worth sharing."*
-
-**Tagline:**  
-*"Built for clarity."*
+> The canonical source of truth for Readable's brand identity. Paste this document into
+> Claude before generating any branding materials, marketing copy, social posts, ad creative,
+> email campaigns, design briefs, or UI copy decisions.
 
 ---
 
-## The Problem It Solves
+## Design Philosophy
 
-Technical people write beautifully structured content — incident reports, architecture decisions, onboarding docs, release notes, proposals — but the medium they write in (Markdown) is invisible to the people who need to read it. When you paste raw Markdown into Slack or email, the recipient sees a wall of asterisks, hashes, and backticks instead of a formatted document.
+**Readable's design north star: Apple-quality execution.**
 
-The alternatives are all high-friction:
-- Google Docs / Notion require everyone to have an account
-- GitHub requires the reader to navigate a repo
-- Confluence requires corporate access
-- Copy-pasting into an email destroys all formatting
+That means:
 
-Readable is the zero-friction path: one link, opens in any browser, reads like a proper document.
-
----
-
-## Product Overview
-
-| | |
-|---|---|
-| **Input** | Any Markdown (GFM — headings, bold, italic, code, tables, lists, blockquotes, task lists, diagrams) |
-| **Output** | A clean, read-only public URL (e.g. `readable.app/p/Ab3k91QxZp`) |
-| **Time to publish** | Under 30 seconds |
-| **Account required** | No — drafts stay in browser localStorage until the user deliberately publishes |
-| **Reader requirements** | None — just a browser |
-| **Page lifespan** | 30 days (anonymous); permanent for signed-in users who own the page |
-| **Price** | Free |
-| **API** | Yes — REST API with API key auth for CI/scripting use |
-| **Platform** | Web app, any browser |
-
-### Key features
-- **Live split-pane editor** — Markdown on the left, beautifully rendered preview on the right, updated in real time
-- **One-click publish** — keyboard shortcut ⌘↵ or the Publish button; generates a unique URL instantly
-- **Beautiful typography** — headings, code blocks (with copy button), tables, blockquotes, inline code, task lists — all rendered with care; zero configuration
-- **Table of Contents** — auto-generated on published pages with ≥3 headings; scroll-tracked on desktop, accordion on mobile
-- **Expiry badge** — published pages show a countdown so readers know the content is time-limited
-- **Print to PDF** — published pages produce a clean, chrome-free PDF from the browser
-- **Multiple drafts** — unlimited local drafts with auto-save; rename, duplicate, delete from a drafts panel
-- **Export** — copy as HTML or download the raw Markdown
-- **Unlisted pages** — published but excluded from any index; link-only access
-- **Custom slugs** — signed-in users can set a human-readable slug for their page URL
-- **Diagram rendering** — Mermaid and other diagram syntaxes rendered inline
-- **Dark / light mode** — system default with manual toggle; dark is the primary mode
+- **Type is the product.** The UI exists to exemplify beautiful typography — every layout decision should make the content look better, not the chrome louder.
+- **Chrome recedes.** Surfaces carry content; they don't call attention to themselves. No gradients on structural elements, no decorative borders, no shadow theatre.
+- **Purple = action/active only.** The accent colour is reserved for CTAs, links, active states, and brand moments. Never for decoration, category colour, or background fills.
+- **Three surfaces.** The visual hierarchy uses exactly three background levels: base → elevated → glass. Don't invent a fourth.
+- **Motion has purpose.** Entrances orient. Micro-interactions confirm. Nothing moves just because it can.
+- **Dark-first.** Dark mode is the primary brand expression. Always design dark-first, then verify light. Never invert this.
+- **One idea per section.** Every section of a page or screen communicates one thing. If you can't name the section's one idea, it needs to be split or cut.
 
 ---
 
-## Target Audience
+## Brand Personality
 
-### Primary: The technical writer-sharer
-Software engineers, engineering managers, DevOps/SRE, product engineers, technical leads. People who:
-- Write in Markdown daily (READMEs, ADRs, runbooks, tickets, notes)
-- Need to communicate outcomes to non-technical stakeholders (PMs, leadership, customers, support)
-- Are frustrated by the gap between how they write and how their writing looks to others
-- Value speed and zero friction above all else — they are not going to spend 10 minutes formatting a Google Doc
-
-### Secondary: Technical teams broadly
-- Engineering teams sharing incident post-mortems
-- Platform/DevEx teams distributing internal docs
-- Technical writers creating lightweight reference pages
-- Open-source maintainers sharing changelogs or onboarding guides
-- Consultants or contractors sharing proposals and reports
-
-### Who is NOT the audience
-- People who want real-time collaboration (use Notion, Google Docs)
-- People who want a full CMS (use Contentful, Sanity)
-- Non-technical writers who don't already work in Markdown
-
----
-
-## Brand Identity
-
-### Personality
 **Calm. Precise. Confident. Invisible.**
 
-Readable's brand personality mirrors the product: it exists to make other things look good, not to call attention to itself. It is the tool that disappears when you're using it. The brand communicates like a senior engineer who is also a great writer — direct, clear, no noise, no filler.
+Readable mirrors its product: it exists to make other things look good, not to call attention to itself. The brand communicates like a senior engineer who is also a great writer — direct, clear, no noise, no filler.
+
+| Adjective | What it means in practice |
+|---|---|
+| **Calm** | No urgency theatre, no countdown timers, no exclamation marks in UI |
+| **Precise** | Concrete numbers, specific examples, correct technical vocabulary |
+| **Confident** | Declarative statements, not hedged claims |
+| **Invisible** | The product surfaces the user's content; Readable's brand gets out of the way |
 
 Readable is not playful. It is not corporate. It is not aspirational in a Silicon Valley sense. It is quietly excellent.
 
-### Voice & tone
-
-| Do | Don't |
-|---|---|
-| Short sentences. One idea at a time. | Paragraph-long sentences with multiple clauses |
-| Confident declarations ("Readable turns your text into…") | Hedged language ("can help you maybe…") |
-| Concrete use cases ("incident reports, ADRs, READMEs") | Vague abstractions ("all kinds of content") |
-| Second person, present tense ("Your Markdown. Their reading.") | Third person or passive voice |
-| Technical vocabulary used correctly (Markdown, ADR, GFM, URL) | Dumbing down or over-explaining tech concepts |
-| Specific numbers ("under 30 seconds", "30 days") | Meaningless superlatives ("blazing fast") |
-| "Paste. Publish. Share." | "Revolutionize your workflow" |
-
-### Copy hierarchy
-1. **Hero headline** — 3–8 words, declarative, names the transformation. *"Write in Markdown. Get a page worth sharing."*
-2. **Sub-headline** — 1–2 sentences, names what the product does and removes the biggest objection. *"Readable turns your plain text into a beautifully formatted page — shareable with a single link. No setup, no noise."*
-3. **Trust signals** — removes friction: *"Free · No account · Published in seconds"*
-4. **Feature copy** — benefit-first headline (not feature name), one-sentence description. *"Beautiful by default — Typography, code blocks, tables, headings — all rendered with care. Zero configuration, zero CSS, zero effort."*
-
 ---
 
-## Colours
+## Colour System
 
-### Dark mode (primary — use this for all dark-background creative)
+### Design tokens — Dark mode (primary)
 
-| Name | Hex / Value | Usage |
+| Token | Value | Role |
 |---|---|---|
-| Background | `#000000` | Page base, hero backgrounds |
-| Surface | `#0d0d0d` | Navbar, subtle backgrounds |
-| Elevated | `#161617` | Cards, modals, panels |
-| Text — Primary | `#f5f5f7` | Headlines, body text |
-| Text — Secondary | `#98989f` | Subtitles, supporting copy |
-| Text — Muted | `#636366` | Captions, metadata, hints |
-| **Accent (Readable Purple)** | **`#7c5cfc`** | **CTAs, links, active states, brand moments** |
-| Accent soft | `#a78bfa` | Hover states, focus rings, gradient midpoints |
-| Accent warm | `#f59e0b` | Warnings, expiry, amber callouts |
-| Border | `rgba(255,255,255,0.09)` | Card borders, dividers |
+| `--color-bg` | `#000000` | Base — Apple-premium pure black |
+| `--color-bg-soft` | `#0d0d0d` | Nav, input backgrounds, subtle step |
+| `--color-bg-elevated` | `#161617` | Cards, dialogs, panels |
+| `--color-bg-glass` | `rgba(22, 22, 23, 0.72)` | Backdrop-blur floating surfaces |
+| `--color-text-primary` | `#f5f5f7` | Apple primary label |
+| `--color-text-secondary` | `#98989f` | Apple secondary label |
+| `--color-text-muted` | `#636366` | Apple tertiary label |
+| `--color-accent` | `#7c5cfc` | Readable signature purple — action/active |
+| `--color-accent-hover` | `#6b48f0` | Accent on hover |
+| `--color-accent-soft` | `#a78bfa` | Focus rings, secondary tints |
+| `--color-accent-warm` | `#f59e0b` | Amber — warnings, expiry, time-sensitive |
+| `--color-accent-dim` | `rgba(124, 92, 252, 0.12)` | Icon backgrounds, subtle fills |
+| `--color-border-strong` | `rgba(255, 255, 255, 0.16)` | Prominent dividers, active borders |
+| `--color-border-default` | `rgba(255, 255, 255, 0.09)` | Standard card borders, dividers |
+| `--color-border-subtle` | `rgba(255, 255, 255, 0.05)` | Background separators |
+| `--color-fill-1` | `rgba(255, 255, 255, 0.04)` | Table row alternates |
+| `--color-fill-2` | `rgba(255, 255, 255, 0.08)` | Code headers, inset panels |
+| `--color-fill-3` | `rgba(255, 255, 255, 0.13)` | Table head, button hover |
+| `--shadow-soft` | `0 4px 14px rgba(124, 92, 252, 0.35)` | Primary button glow |
+| `--shadow-glass` | `0 8px 48px rgba(0, 0, 0, 0.70)` | Hero mock / modal shadow |
+| `--shadow-glow` | `0 0 80px rgba(124, 92, 252, 0.20)` | CTA section ambient glow |
+| `--shadow-card` | `0 1px 2px rgba(0,0,0,0.60), 0 4px 24px rgba(0,0,0,0.40)` | Card depth |
 
-### Light mode
+### Design tokens — Light mode
 
-| Name | Hex / Value |
-|---|---|
-| Background | `#ffffff` |
-| Surface | `#f5f5f7` |
-| Elevated | `#e8e8ed` |
-| Text — Primary | `#1d1d1f` |
-| Text — Secondary | `#6e6e73` |
-| Text — Muted | `#86868b` |
-| Accent | `#6741f0` |
+| Token | Value | Role |
+|---|---|---|
+| `--color-bg` | `#ffffff` | Apple pure white |
+| `--color-bg-soft` | `#f5f5f7` | Apple systemGroupedBackground |
+| `--color-bg-elevated` | `#e8e8ed` | Apple secondarySystemBackground |
+| `--color-bg-glass` | `rgba(255, 255, 255, 0.90)` | Frosted glass surfaces |
+| `--color-text-primary` | `#1d1d1f` | Apple label |
+| `--color-text-secondary` | `#6e6e73` | Apple secondaryLabel |
+| `--color-text-muted` | `#86868b` | Apple tertiaryLabel |
+| `--color-accent` | `#6741f0` | Readable purple, light variant |
+| `--color-accent-hover` | `#5530de` | |
+| `--color-accent-soft` | `#8b6cf7` | |
+| `--color-accent-warm` | `#d97706` | |
+| `--color-accent-dim` | `rgba(103, 65, 240, 0.10)` | |
+| `--color-border-strong` | `rgba(0, 0, 0, 0.14)` | |
+| `--color-border-default` | `rgba(0, 0, 0, 0.09)` | |
+| `--color-border-subtle` | `rgba(0, 0, 0, 0.05)` | |
 
-### Gradient (hero / key brand moments)
+### Colour rules
+
+- **Purple is for action and active states only.** Never use it as a category colour, background, or decorative element.
+- **Never use more than one accent colour in a single visual.** Purple and amber cannot appear in the same design unit.
+- **Dark mode is the primary brand expression.** All brand assets, screenshots, and marketing visuals default to dark.
+- The `--color-outline` token (legacy alias for `--color-border-default`) is `rgba(255,255,255,0.09)` in dark mode. Do not revert to the old `#1e2840` navy value.
+
+### Hero gradient (brand moments only)
+
+Used on: the second line of the hero headline, key CTA moments in marketing.
+
 ```
-from: #7c5cfc   via: #a78bfa   to: #7c5cfc
-direction: left to right (90deg)
+direction: 90deg (left → right)
+from:  #7c5cfc
+via:   #a78bfa
+to:    #7c5cfc
 ```
-Applied to: the second line of the hero headline, key headline moments in marketing.
 
-### The rules
-- Purple (`#7c5cfc`) is used for **action and active states only** — not decoration, not category colour
-- Never use more than one accent colour in a single visual
-- Dark mode is the primary brand expression; always design dark-first
+CSS: `background: linear-gradient(90deg, #7c5cfc, #a78bfa, #7c5cfc); -webkit-background-clip: text; -webkit-text-fill-color: transparent;`
+
+Use sparingly — one gradient element per page maximum.
 
 ---
 
 ## Typography
 
-| Role | Size | Weight | Tracking | Line-height |
-|---|---|---|---|---|
-| Hero H1 | 52–88px (responsive) | 800 | −0.04em | 1.02 |
-| Section H2 | 30–40px | 700 | −0.03em | 1.14 |
-| Feature title | 15px | 600 | tight | — |
-| Body / subtitle | 17px | 400 | normal | 1.75 |
-| Caption / meta | 11–13px | 400–500 | normal | — |
-| Eyebrow label | 10px | 600 | 0.24em | — |
-| Monospace (code) | 13px | 400 | normal | 1.65 |
+**Primary typeface:** Inter (all weights). Self-hosted via Next.js `next/font`.  
+**Monospace typeface:** JetBrains Mono → Fira Code → Cascadia Code → SF Mono (system fallback).  
+**Font features:** `"cv02", "cv03", "cv04", "cv11", "ss01"` — enables Inter's alternate digit forms and refined punctuation.  
+**Base font size:** 17px (Apple canonical body size).
 
-**Typeface:** Inter (all weights). Self-hosted via Next.js.  
-**Monospace:** JetBrains Mono / Fira Code / SF Mono (system fallback).  
-**Font features:** `cv02, cv03, cv04, cv11, ss01` — enables Inter's alternate digit forms and refined punctuation.
+### Type scale
+
+| Role | Size | Weight | Tracking | Line-height | Usage |
+|---|---|---|---|---|---|
+| Hero H1 | 52px → 72px → 88px | 800 | −0.04em | 1.02 | Landing page hero only |
+| Section H2 | 30px → 40px | 700 | −0.03em | 1.14 | Section headlines |
+| Feature title | 15px | 600 | tight | — | Feature card headers |
+| Body / subtitle | 17px | 400 | normal | 1.75 | Paragraphs, subtitles |
+| Body small | 15px | 400 | normal | 1.72 | Card descriptions |
+| Caption / meta | 11–13px | 400–500 | normal | — | Dates, counts, hints |
+| Eyebrow label | 10px | 600 | 0.24em | — | Section eyebrows, uppercase |
+| Monospace | 13px | 400 | normal | 1.65 | Code blocks, URLs |
+| UI small | 13px | 500–600 | tight | — | Buttons, tabs, labels |
+
+### Typography rules
+
+- Headlines use `text-balance` for multi-line wrap.
+- Body copy uses `text-pretty` for natural paragraph wrapping.
+- **Never** set a heading below H1 at a size larger than the level above it.
+- Monospace content always uses `font-mono` (JetBrains Mono).
+- Eyebrow labels are always `uppercase tracking-[0.24em] text-accent`.
+- Don't mix font weights within a single sentence.
+
+### Responsive headline breakpoints
+
+```
+Hero H1:
+  mobile:  52px  / lh: 1.02 / tracking: -0.04em
+  sm:      72px
+  lg:      88px
+
+Section H2:
+  mobile:  30px  / lh: 1.14 / tracking: -0.03em
+  sm:      40px
+```
 
 ---
 
 ## Logo & Mark
 
-**The mark** is a rounded square in Readable Purple (`#7c5cfc`) containing a clean SVG letterform of the letter **R** — vertical stem, upper arch, diagonal leg — rendered in white at 2.2px stroke weight with round caps and joins.
+### The mark
 
-**The wordmark** is "Readable" set in Inter Semibold (600), 14px, tight tracking, in `#f5f5f7` (dark) or `#1d1d1f` (light).
+A rounded square in Readable Purple (`#7c5cfc`) containing a clean SVG letterform of the letter **R**:
+- Vertical stem, upper arch, diagonal leg
+- Rendered in `#ffffff` (white)
+- 2.2px stroke weight, round caps and joins
+- Corner radius matches the container's rounded square
 
-**Usage:**
-- Mark + wordmark together: navigation, email headers
-- Mark alone: favicon, app icon, footer, social profile images
-- Never stretch, recolour, or apply drop shadows to the mark
-- Minimum clear space: equal to the mark's border-radius on all sides
+### The wordmark
+
+"Readable" set in Inter Semibold (600), tight tracking, in `#f5f5f7` (dark mode) or `#1d1d1f` (light mode).
+
+### Lockups
+
+| Lockup | Where to use |
+|---|---|
+| Mark + wordmark | Navigation, email headers, documents |
+| Mark alone | Favicon, app icon, footer icon, social profile images |
+| Wordmark alone | Never — always accompany with the mark |
+
+### Usage rules
+
+- Never stretch, squash, recolour, or apply drop shadows to the mark
+- Never place the mark on a coloured background other than pure black, pure white, or the exact Readable Purple
+- Minimum clear space: equal to the mark's border-radius on all four sides
+- Minimum mark size: 16px × 16px (favicon context); 24px × 24px (any visible UI context)
+
+---
+
+## Motion & Animation
+
+### Principles
+
+- **Entrances orient.** Elements fade-in upward (fadeUp) to communicate arrival, not to show off.
+- **Micros confirm.** Button presses, copy actions, publishes — all get a micro-response (scale, colour, icon swap).
+- **Reduced motion is first-class.** All framer-motion variants respect `useReducedMotion`. Pass `undefined` variants when `reduce === true`.
+- **Duration hierarchy:**
+  - `100ms` — color, opacity: micro-interactions
+  - `180ms` — standard UI: hover, focus states
+  - `280ms` — entrance animations: elements entering the viewport
+  - `400ms` — full-panel / dialog open
+
+### Named easing curves
+
+| Token | Value | Use for |
+|---|---|---|
+| `--ease-spring` | `cubic-bezier(0.16, 1, 0.3, 1)` | All entrances, interactive confirms |
+| `--ease-smooth` | `cubic-bezier(0.4, 0, 0.2, 1)` | Layout changes, reorder |
+| `--ease-bounce` | `cubic-bezier(0.34, 1.56, 0.64, 1)` | Copy-success states, pill actives |
+
+### Standard entry animation
+
+```ts
+// fadeUp — standard element entrance
+const fadeUp: Variants = {
+  hidden: { opacity: 0, y: 20, filter: "blur(4px)" },
+  show: {
+    opacity: 1, y: 0, filter: "blur(0px)",
+    transition: { duration: 0.65, ease: [0.16, 1, 0.3, 1] },
+  },
+};
+
+// stagger — wraps children to sequence their entries
+const stagger: Variants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.08, delayChildren: 0.05 } },
+};
+```
+
+### Rules
+
+- Use `whileInView` with `viewport={{ once: true, margin: "-80px" }}` for scroll-triggered entrances.
+- Hero elements use `animate` (not `whileInView`) since they are above the fold.
+- Never animate layout properties (`width`, `height`, `padding`). Animate `opacity`, `transform` (y, scale), and `filter` only.
+- Button hover uses CSS transitions (`transition hover:bg-accent-hover active:scale-[0.97]`), not framer-motion.
+
+---
+
+## Spacing & Layout
+
+### Grid
+
+- Max content width: `max-w-6xl` (72rem) with `px-5 sm:px-8` horizontal gutter
+- Section padding: `py-20 sm:py-28`
+- Card internal padding: `p-6`
+- Card gap: `gap-4`
+
+### Radius tokens
+
+| Token | Value | Used for |
+|---|---|---|
+| `rounded-input` | `6px` | Text inputs, code action buttons |
+| `rounded-card` (16px) | `rounded-2xl` | Cards, dialogs, panels |
+| `rounded-pill` | `9999px` | Pills, badges, segmented controls, pill buttons |
+| `rounded-xl` | `12px` | Icon containers, small chips |
+| `rounded-3xl` | `24px` | Large hero CTA blocks only |
+
+---
+
+## Icon Style
+
+All icons are inline SVG — **no external icon library, no emoji in UI copy**.
+
+- **Stroke weight:** 1.75px standard; 1.5px for small contexts (≤14px)
+- **Cap/join:** `strokeLinecap="round" strokeLinejoin="round"` — always
+- **Fill:** `fill="none"` for line icons; `fill="currentColor"` for solid icons
+- **Size:** 18px standard feature icon; 14px action icon; 12px inline text icon
+- **Colour:** `currentColor` — inherits from parent, never hardcoded
+- Icon containers use `bg-accent-dim` (purple tint) with `text-accent` for feature card icons
+
+---
+
+## Voice & Tone
+
+### Personality summary
+
+The brand voice is a senior engineer who writes as well as they code: direct, concrete, and respectful of the reader's intelligence. No marketing fluff. No hedging. No filler.
+
+### Core rules
+
+| Do | Don't |
+|---|---|
+| Short sentences. One idea at a time. | Multi-clause run-on sentences |
+| Confident declarations ("Readable turns your text into…") | Hedged language ("can help you maybe…") |
+| Concrete use cases ("incident reports, ADRs, READMEs") | Vague abstractions ("all kinds of content") |
+| Second person, present tense | Third person or passive voice |
+| Correct technical vocabulary (Markdown, ADR, GFM, KV) | Dumbing down tech concepts |
+| Specific numbers ("under 30 seconds", "30 days", "10-character ID") | Meaningless superlatives ("blazing fast") |
+| "Paste. Publish. Share." | "Revolutionize your workflow" |
+| Active voice | Passive voice |
+
+### Words to never write
+
+`Revolutionary`, `game-changing`, `disrupting`, `paradigm shift`, `all-in-one`, `end-to-end`, `seamless`, `robust`, `powerful solution`, `leverage`, `synergy`, `we're excited to announce`, `delighted to share`, `game changer`, `next-level`, `best-in-class`.
+
+### Copy hierarchy
+
+1. **Hero headline** — 3–8 words, declarative, names the transformation. *"Write in Markdown. Get a page worth sharing."*
+2. **Sub-headline** — 1–2 sentences, names what the product does and removes the biggest objection.
+3. **Trust signals** — removes friction: *"Free · No account · Published in seconds"*
+4. **Eyebrow** — ultra-short, 2–3 words, uppercase. Used for section labels only.
+5. **Feature headline** — benefit-first, one sentence max. *"Beautiful by default"* not *"Advanced Rendering Engine"*.
+6. **Feature description** — what the user experiences, not what the code does.
 
 ---
 
 ## Key Messages
 
-### For marketing headlines (pick any)
-- "Write in Markdown. Get a page worth sharing."
+### Hero headlines (pick any)
+
+- "Write in Markdown. Get a page worth sharing." ← **primary / canonical**
 - "Markdown, made beautiful."
 - "Paste once. Share a page people actually read."
 - "Your writing, the way it was meant to be read."
 - "Beautiful pages. Instantly."
 - "The space between writing Markdown and making it readable."
 
-### For sub-headlines / body copy
+### Sub-headlines / body copy
+
+- "Readable turns your plain text into a beautifully formatted page — with proper headings, code blocks, and tables — shareable with a single link. No setup, no noise." ← **canonical subtitle**
 - "No signup, no onboarding. Paste and you're in the editor."
 - "Typography, spacing, and layout — handled so your content lands the way you meant it."
 - "When your message gets escalated or CC'd, the structure stays intact."
 - "Nothing stored until you deliberately hit publish."
 - "Send in Slack, email, or a ticket. They just read."
 
-### For social / short-form
+### CTAs (verb-first, specific)
+
+- "Open the editor — it's free" ← **primary CTA**
+- "Try it now"
+- "See a live example"
+- "Paste your first draft"
+- "Open the editor"
+- "Make your own →"
+
+### Social / short-form
+
 - "Markdown → beautiful page → link → done."
 - "Stop pasting raw Markdown into Slack. There's a better way."
 - "Your incident report deserves to look like you wrote it on purpose."
 - "ADRs, READMEs, post-mortems, proposals. One link. Anyone can read it."
 - "The fastest way to share something that looks like you spent time on it."
 
-### For CTAs
-- "Open the editor — it's free"
-- "Try it now"
-- "See a live example"
-- "Paste your first draft"
-
 ---
 
-## Use Cases (with proof)
-
-These are the primary use cases that resonate most with the audience. Always use specific, concrete examples rather than generic descriptions.
+## Use Cases (with pain and proof)
 
 | Use case | The pain | Readable's role |
 |---|---|---|
-| **Incident summaries / post-mortems** | Raw Markdown pasted into Slack is unreadable; Google Docs requires an account | A link anyone can open, structure intact, timeline clear |
-| **Architecture decision records (ADRs)** | ADRs live in repos — inaccessible to non-engineers | A shareable link that explains the decision in context |
-| **README-style docs** | GitHub requires a login and a repo-navigation mental model | A plain URL that reads like a proper document |
-| **Release notes** | Buried in PRs or CHANGELOG.md files | A clean page stakeholders can actually read |
-| **Onboarding guides** | Google Docs for internal docs requires IT provisioning | A Readable link you can paste in a welcome Slack message |
+| **Incident summaries / post-mortems** | Raw MD pasted to Slack is noise; Google Docs requires an account | A link anyone can open — timeline, severity, root cause all intact |
+| **Architecture decision records (ADRs)** | ADRs live in repos — non-engineers can't navigate them | A shareable link that explains the decision without GitHub |
+| **README-style docs** | GitHub requires login, repo navigation, mental model overhead | A plain URL that reads like a proper document |
+| **Release notes** | Buried in PRs or CHANGELOG.md | A clean page stakeholders can actually read |
+| **Onboarding guides** | Google Docs for internal docs requires IT provisioning | A Readable link pasted in the welcome Slack message |
 | **Proposals / briefs** | Writing in Markdown, formatting in another tool wastes time | Publish from the Markdown, skip the formatting step |
-| **CI/CD publishing via API** | Manual publishing doesn't scale | The Readable API publishes pages from pipelines automatically |
-
----
-
-## What Readable Is Not
-
-Be explicit about this to avoid misleading positioning:
-
-- **Not a CMS** — pages are not editable after publishing; they are immutable snapshots
-- **Not a collaboration tool** — no comments, no co-editing, no mentions
-- **Not a note-taking app** — Readable doesn't store notes; it publishes them
-- **Not a permanent host** — anonymous pages expire after 30 days (owned pages are permanent)
-- **Not a private tool** — published pages are accessible to anyone with the link
-
----
-
-## Competitive Positioning
-
-| Tool | Why users reach for it | Why Readable wins |
-|---|---|---|
-| Google Docs | Rich formatting, familiar | Requires Google account; slow; not Markdown-native |
-| Notion | Beautiful output, flexible | Requires workspace access; heavy onboarding |
-| GitHub Gists | Developer-native | Ugly rendering; no sharing-optimised page |
-| HackMD / StackEdit | Markdown-native | Collaborative overkill; not optimised for sharing |
-| Confluence | Enterprise docs | Requires corporate SSO; slow; heavyweight |
-| Pasting into Slack/email | Zero friction | Destroys all formatting; no permanent link |
-
-**Readable's position:** The fastest, most beautiful path from Markdown to a link someone can actually read. Not a full tool — a sharp one.
+| **CI/CD via API** | Manual publishing doesn't scale | The Readable API publishes pages from pipelines automatically |
 
 ---
 
 ## Tone in Specific Contexts
 
 ### Product announcements
-Lead with what changed for the user, not what changed in the code. One sentence of context, one of impact. Short. No changelog-speak.
 
-### Social media (LinkedIn, Twitter/X)
+Lead with what changed for the user, not what changed in the code. One sentence of context, one of impact. No changelog-speak.
+
+### Social media (LinkedIn, X/Twitter)
+
 - Open with the pain or the scenario, not the product name
 - Use line breaks aggressively — no walls of text
-- End with a concrete, specific CTA (link or "Open the editor — free")
-- Avoid: hashtag spam, emoji overload, hollow hype words
+- End with a concrete, specific CTA
+- No hashtag spam, no emoji overload, no hollow hype
 
 ### Ad copy
-- Headline: name the transformation (input → output) in under 8 words
-- Body: remove one specific objection (no account, free, 30 seconds)
+
+- Headline: name the transformation in under 8 words
+- Body: remove one specific objection (no account / free / 30 seconds)
 - CTA: verb-first, specific ("Try the editor free" not "Learn more")
 
 ### Email
-- Subject: specific scenario or use case, not product feature
+
+- Subject: specific scenario, not product feature
   - ✅ "Stop pasting raw Markdown into Slack"
   - ❌ "Announcing Readable's new sharing features"
 - Body: 3 paragraphs max. Problem → Solution → CTA.
-- Signature: "Built for clarity. — The Readable team"
+- Signature: *"Built for clarity. — The Readable team"*
 
-### Developer/technical content
+### Developer / technical content
+
 - Use correct terminology (Markdown, GFM, localStorage, Cloudflare KV, API key)
 - Show real code examples for API/CLI use cases
 - Don't over-explain concepts the audience already knows
@@ -296,23 +394,62 @@ Lead with what changed for the user, not what changed in the code. One sentence 
 
 ---
 
-## Things to Always Include
+## Competitive Positioning
 
-When generating any marketing asset:
+| Tool | Why users reach for it | Why Readable wins |
+|---|---|---|
+| Google Docs | Rich formatting, familiar | Requires Google account; not Markdown-native |
+| Notion | Beautiful output, flexible | Requires workspace access; heavy onboarding |
+| GitHub Gists | Developer-native | Poor sharing-optimised rendering; no clean URL |
+| HackMD / StackEdit | Markdown-native | Collaborative overkill; not optimised for sharing |
+| Confluence | Enterprise docs | Requires corporate SSO; heavyweight |
+| Pasting into Slack/email | Zero friction | Destroys all formatting; no permanent link |
+
+**Readable's position:** The fastest, most beautiful path from Markdown to a link someone can actually read. Not a full tool — a sharp one.
+
+---
+
+## What Readable Is Not
+
+Be explicit in all positioning to avoid misleading copy:
+
+- **Not a CMS** — published pages are immutable snapshots, not editable posts
+- **Not a collaboration tool** — no comments, no co-editing, no version history
+- **Not a note-taking app** — Readable publishes notes, not stores them
+- **Not permanent for anonymous users** — 30-day TTL (account unlocks permanent pages)
+- **Not access-controlled** — published pages are publicly accessible to anyone with the link
+
+---
+
+## Always Include in Marketing Assets
 
 1. **The zero-friction proof point** — "no account", "free", "under 30 seconds", or all three
 2. **The transformation** — from (raw Markdown / technical draft) to (beautiful / shareable / readable page)
 3. **At least one specific use case** — incident report, ADR, README, or post-mortem
 4. **The CTA** — always link to the editor at `/app`, never to a sign-up page
 
-## Things to Never Write
+---
 
-- "Revolutionary", "game-changing", "disrupting", "paradigm shift"
-- "All-in-one", "end-to-end", "seamless", "robust", "powerful solution"
-- "We're excited to announce…"
-- Any claim about collaboration, real-time co-editing, or permanent storage of anonymous pages
-- Markdown rendered as literal characters in marketing copy (e.g. `**bold**` or `## Heading`) — always show rendered output
+## SEO
+
+| Element | Value |
+|---|---|
+| Root `<title>` | `Readable — Share Beautiful Markdown Pages Instantly` |
+| Root `<meta description>` | `Convert any Markdown into a clean, beautifully formatted shareable page in seconds. Perfect for incident reports, ADRs, READMEs, and technical docs. Free, no account required.` (155 chars) |
+| Title pattern | `{Page title} — Readable` |
+| Primary keywords | markdown viewer, share markdown online, markdown to html, markdown preview, shareable markdown link, incident report template, ADR template, README viewer, technical writing tool |
+| Schema types | `SoftwareApplication + WebSite + WebPage` on home page |
+| OG image | `/opengraph-image` — 1200×630 |
+| Twitter card | `summary_large_image` |
 
 ---
 
-*Last updated: April 2026. For questions about the product, contact Ashwin Sathian (ashwinsathyan19@gmail.com).*
+## Print & Media
+
+- Print styles force white background, black text, with code blocks wrapped
+- Published pages produce clean, chrome-free PDF via `⌘P` — no ads, no nav, no cookie banners
+- Dark theme-color meta: `#000000`; Light: `#ffffff`
+
+---
+
+*Last updated: April 2026. Contact: Ashwin Sathian — ashwinsathyan19@gmail.com*

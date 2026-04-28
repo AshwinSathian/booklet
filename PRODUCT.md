@@ -1,9 +1,10 @@
 # Readable — Product Explainer
 
-> A plain-English document explaining what Readable is, how it works, who it's for,
-> and what makes it distinct. Use this as context for any Claude conversation where
-> you need the product explained accurately — content creation, FAQs, docs, pitches,
-> investor briefs, demo scripts, onboarding copy, etc.
+> A plain-English document explaining what Readable is, how it works, who it's for, and what
+> makes it distinct. Use this as context for any conversation where you need the product
+> explained accurately — content creation, FAQs, docs, pitches, investor briefs, demo scripts,
+> onboarding copy, support answers, API documentation, or any Claude session where Readable
+> is the subject.
 
 ---
 
@@ -17,17 +18,17 @@ publicly shareable page — instantly, with no account required.
 ## The Problem
 
 Markdown is the default writing format for technical people. Engineers write READMEs, incident
-reports, architecture decision records (ADRs), runbooks, proposals, and meeting notes in
-Markdown every day. It's fast, structured, and universally understood within technical teams.
+reports, architecture decision records (ADRs), runbooks, proposals, and meeting notes in Markdown
+every day. It's fast, structured, and universally understood within technical teams.
 
-The problem is that Markdown is meant to be *rendered*, not read raw. When a raw Markdown
-file gets forwarded outside the technical team — to a product manager, a customer, a designer,
-an executive, a support team — it looks like this:
+The problem is that Markdown is meant to be *rendered*, not read raw. When a raw Markdown file
+gets forwarded outside the technical team — to a product manager, a customer, an executive,
+a support agent — it looks like this:
 
 ```
 ## Incident Summary
 
-**Severity:** P1  
+**Severity:** P1
 **Status:** Resolved
 
 ### Root Cause
@@ -37,15 +38,25 @@ The database connection pool was misconfigured after Tuesday's deploy.
 - Pool size set to `5` instead of `50`
 - Health check delayed by 90 seconds
 - Alert threshold set too high
+
+\`\`\`yaml
+pool_size: 5  # was 50
+\`\`\`
 ```
 
-To a non-technical reader, that's noise. The hashes, asterisks, and backticks break the
-reading experience and make the content feel unfinished.
+To a non-technical reader, that's noise. The hashes, asterisks, and backticks break the reading
+experience and make the content feel unfinished.
 
-The alternatives — pasting into Google Docs, creating a Confluence page, opening a Notion
-doc — all require effort, accounts, or access that the recipient may not have. So the
-content either gets stripped of its formatting (losing all structure) or it never gets shared
-at all.
+### The alternatives are all high-friction
+
+| Option | Why it fails |
+|---|---|
+| Google Docs | Requires a Google account; not Markdown-native; formatting step is extra work |
+| Notion | Requires workspace access or an invite; heavy onboarding |
+| GitHub Gist | Poor sharing-optimised rendering; requires GitHub account to create |
+| Confluence | Requires corporate SSO; heavyweight |
+| HackMD / StackEdit | Collaborative overkill; not optimised for share-only use |
+| Paste into Slack/email | Destroys all formatting; no permanent link; no structure preserved |
 
 **Readable solves this with one step: paste and publish.**
 
@@ -54,250 +65,456 @@ at all.
 ## What Readable Does
 
 1. **You paste Markdown** into the editor. Any Markdown — a README, a post-mortem, an ADR,
-   a proposal, a changelog, meeting notes, anything.
+   a proposal, a changelog, meeting notes, a runbook, anything.
 
-2. **You see it rendered** in real time on the right-hand side of the editor — exactly as
-   it will appear to readers. Headings, bold text, code blocks, tables, bullet lists,
-   task checkboxes, blockquotes, inline code, diagrams — all rendered with beautiful
-   typography and proper spacing.
+2. **You see it rendered** in real time — exactly as it will appear to readers. Headings, bold,
+   code blocks, tables, bullet lists, task checkboxes, blockquotes, inline code, and diagrams —
+   all rendered with beautiful typography and proper spacing.
 
-3. **You hit Publish** (or press ⌘↵). Readable generates a unique public URL
-   (e.g. `readable.app/p/Ab3k91QxZp`) in under a second.
+3. **You hit Publish** (or press `⌘↵`). Readable generates a unique public URL in under a second.
 
-4. **You send the link.** The recipient opens a clean, well-formatted reading page in
-   their browser. No login. No app. No friction.
+4. **You send the link.** The recipient opens a clean, well-formatted reading page in their browser.
+   No login. No app. No friction.
 
 ---
 
-## The User Experience in Detail
+## The Editor
 
-### The editor
-The editor is a split-pane interface: Markdown input on the left, live rendered preview
-on the right. The preview updates in real time as you type (debounced at 120ms, so it never
-lags). The editor is distraction-free — no formatting toolbar, no rich text widgets. You
-write in Markdown and the preview handles everything.
+### Interface
 
-Drafts are saved automatically to the browser's `localStorage` — nothing is transmitted to
-any server until you explicitly publish. You can have multiple named drafts, switch between
-them, rename them, duplicate them, or delete them. Drafts persist across sessions and
-browser restarts.
+The editor is a split-pane interface: Markdown input on the left, live rendered preview on the right.
+The preview updates in real time as you type (debounced at 120ms — never lags). There is no
+formatting toolbar, no rich text widgets, no distracting UI chrome. You write in Markdown; the
+preview handles everything.
 
-### Publishing
-When you're ready, you hit the Publish button or press ⌘↵. Readable sends your content to
-the server, stores it, and returns a 10-character unique ID. The full public URL is shown
-immediately and can be copied with one click.
+### Drafts
 
-Publishing is rate-limited to prevent abuse (12 publishes per minute per IP). Each publish
-creates a new, independent snapshot — you cannot edit a published page.
+Drafts are saved automatically to `localStorage` — nothing is transmitted to any server until you
+explicitly publish. Features:
 
-### The published page
-The published page is a clean, read-only reading experience. It has:
-- A minimal sticky header with the Readable logo, a theme toggle (dark/light), a print
-  button, an expiry countdown badge, and a "Make your own →" CTA
-- The full rendered document with proper typographic hierarchy
-- An auto-generated Table of Contents on pages with 3 or more headings (scroll-tracked on
-  desktop, collapsible accordion on mobile)
-- A clean footer showing the publish date and a link to create your own page
-- No ads, no tracking pixels, no cookie banners, no social share buttons
+- **Unlimited local drafts** — create as many as you need
+- **Named drafts** — editable inline; each draft has a name, creation date, word count, and character count
+- **Switch, duplicate, delete** from a slide-in drafts panel
+- **Persist across sessions** — drafts survive browser restarts
+- **Auto-save indicator** — shows "Saving…" / "Saved" with a short smoothing window to prevent flicker
 
-The page is fully printable — pressing ⌘P or using File → Print produces a clean, chrome-
-free PDF of the content.
+### Keyboard shortcuts
 
-### Page lifespan
-Anonymous pages (published without signing in) expire after **30 days**. The expiry
-countdown is visible on the page so readers always know. Signed-in users who own a page
-can publish pages that don't expire.
+| Action | Shortcut |
+|---|---|
+| Publish | `⌘↵` |
+| Open drafts | — |
 
----
+### Import
 
-## Key Features
-
-### Live split-pane editor
-Real-time Markdown preview as you type. The rendered view is pixel-for-pixel what readers
-will see. No "save to preview" step.
-
-### One-click publish
-A single click (or ⌘↵) creates the public URL. The entire workflow from paste to shareable
-link takes under 30 seconds.
-
-### Beautiful typography out of the box
-All Markdown elements are rendered with care:
-- Headings with size hierarchy and tight tracking
-- Body text at 15–16px with generous line-height (1.8)
-- Fenced code blocks with a macOS-style header, language label, line count, copy button,
-  and optional collapse for long blocks
-- Tables with alternating row shading and hover highlight
-- Blockquotes with a purple accent border
-- Task lists with checkboxes (read-only)
-- Inline code in a monospace typeface with subtle background
-- Images (external URLs only) with rounded corners and optional caption
-
-### Table of Contents
-For documents with 3 or more headings, Readable auto-generates a Table of Contents.
-On desktop it appears as a sticky sidebar on the right, with the active heading highlighted
-as you scroll (via IntersectionObserver). On mobile it appears as a collapsible accordion
-above the content.
-
-### Multiple drafts
-Unlimited local drafts stored in `localStorage`. Each has a name (editable inline),
-a creation date, and a character/word count. The drafts panel lets you switch between,
-duplicate, or delete any draft.
+Files can be imported into the editor via drag-and-drop or file picker:
+- Accepts `.md` and `text/markdown` MIME type
+- Maximum file size: 500KB
+- Imported draft gets name: "Imported draft" (editable)
 
 ### Export
-From the editor you can:
-- Copy the rendered page as clean HTML
-- Download the raw Markdown as a `.md` file
 
-### Theme toggle
-Dark and light modes. Dark is the default (and primary brand expression). The toggle
-persists across sessions. The theme is dark-first to prevent a white flash on load.
+From the editor:
+- **Copy as HTML** — copies the rendered page as clean, standalone HTML
+- **Download Markdown** — downloads the raw Markdown as a `.md` file
 
-### Diagram support
-Mermaid diagrams and other diagram syntaxes are rendered inline on both the editor preview
-and the published page.
+### Character and size limits
 
-### Unlisted pages
-Signed-in users can publish a page as "unlisted" — it's publicly accessible via the link
-but excluded from any indexing or discovery. Useful for sensitive content you want to share
-with a specific person but not the world.
+- Editor accepts up to **200,000 characters** of Markdown input
+- Published page payloads are capped at **350,000 bytes** (Cloudflare KV storage optimisation)
 
-### Custom slugs
-Signed-in users can set a human-readable slug for their published page, e.g.
-`readable.app/p/q4-incident-summary` instead of the auto-generated ID.
+---
 
-### View counts
-Readable tracks how many times a published page has been viewed. Available to the page
-owner in the "My pages" dashboard.
+## Publishing
 
-### API
-Readable has a REST API for publishing pages programmatically. Use cases include:
-- Publishing post-mortems automatically from incident management tools
-- Publishing release notes from a CI/CD pipeline
-- Publishing changelogs as part of a GitHub Action
-Signed-in users can generate API keys in the My Pages dashboard.
+### The publish flow
+
+1. Click the **Publish** button in the top bar, or press `⌘↵`
+2. Readable parses the Markdown, converts it to a portable block format, and stores it server-side
+3. A unique **10-character random ID** is generated (e.g. `Ab3k91QxZp`)
+4. The full public URL is returned instantly: `readable.app/p/Ab3k91QxZp`
+5. The URL is shown in a toast with a one-click copy button
+
+### Rate limiting
+
+Publishing is rate-limited to **12 publishes per minute per IP** to prevent abuse. This is implemented
+via a Cloudflare KV counter — no auth required, entirely edge-enforced.
+
+### Immutability
+
+Published pages are **immutable snapshots**. You cannot edit a published page. To update, edit your
+local draft and republish — which creates a new URL. The old URL continues to work until it expires.
+
+This is intentional: a shared link should always show exactly what was sent to the recipient.
+
+---
+
+## The Published Page
+
+### Header
+
+A minimal sticky header containing:
+- Readable logo + wordmark
+- Theme toggle (dark/light)
+- Print button
+- Expiry countdown badge (anonymous pages only)
+- "Make your own →" CTA button (links to `/app`)
+
+### Content rendering
+
+The published page renders all Markdown elements with care:
+
+| Element | Rendering detail |
+|---|---|
+| H1–H4 headings | Size hierarchy, tight tracking, anchor links |
+| Body text | 15–16px, 1.8 line-height |
+| **Bold** / *italic* / ~~strikethrough~~ | Correct weight/style/decoration |
+| Fenced code blocks | macOS-style header, language label, line count, copy button, collapse for long blocks |
+| Inline code | Monospace, subtle background |
+| Tables | Alternating row shading, hover highlight, horizontal scroll on mobile |
+| Blockquotes | Left border in Readable Purple, indented |
+| Task lists | Read-only checkboxes |
+| Ordered/unordered lists | Nested support |
+| Images | External URLs only, rounded corners, optional caption (alt text) |
+| Horizontal rule | Subtle divider |
+| Mermaid diagrams | Rendered inline |
+
+### Table of Contents
+
+Automatically generated for documents with **3 or more headings**:
+- **Desktop:** sticky sidebar on the right, scroll-tracked via IntersectionObserver
+- **Mobile:** collapsible accordion above the content
+- Active heading highlighted as you scroll
+- Smooth-scroll to heading on click
+
+### Expiry badge
+
+Anonymous pages show an expiry countdown at the top right of the header:
+- > 7 days remaining: neutral badge ("Expires in N days")
+- ≤ 7 days remaining: amber badge with dot ("Expires in N days")
+- Expired: red badge ("Expired")
+
+### Print to PDF
+
+The published page produces a clean, chrome-free PDF via the browser's print function (`⌘P` or
+File → Print). Print styles force white background, black text, and wrapped code blocks. No ads, no
+nav, no cookies banners visible in the PDF.
+
+### Footer
+
+- Readable logo
+- Publish date
+- "Create your own →" link to `/app`
+
+---
+
+## Page Lifespan
+
+| User type | Page lifespan |
+|---|---|
+| Anonymous (no account) | **30 days** from time of publish |
+| Signed-in user (account owner) | **Permanent** — no expiry |
+
+The expiry countdown is visible on anonymous pages so readers always know. There is no warning email
+before expiry. After 30 days, the URL returns "Page not found."
+
+---
+
+## All Features
+
+### Core (available to everyone — no account required)
+
+| Feature | Detail |
+|---|---|
+| **Live split-pane editor** | Real-time preview, 120ms debounce, exactly what readers will see |
+| **One-click publish** | `⌘↵` or the Publish button; URL returned in under a second |
+| **Beautiful rendering** | All GFM elements rendered with typographic care out of the box |
+| **Unlimited local drafts** | Named, auto-saved to `localStorage`, persists across sessions |
+| **Draft management** | Rename, duplicate, delete, switch drafts |
+| **Multiple drafts** | No limit on number of local drafts |
+| **Table of Contents** | Auto-generated for docs with ≥3 headings; scroll-tracked on desktop, accordion on mobile |
+| **Code blocks** | Language label, copy button, line count, macOS-style header, collapse for long blocks |
+| **Diagram support** | Mermaid diagrams rendered inline in editor and on published page |
+| **Theme toggle** | Dark / light mode; dark is the default; persists across sessions |
+| **Print to PDF** | Clean, chrome-free PDF from the published page |
+| **Export** | Copy as HTML or download raw `.md` file |
+| **Expiry badge** | Countdown badge on anonymous published pages |
+| **Link-only sharing** | No index, no feed — published pages are only accessible via direct link |
+| **File import** | Drag-and-drop or file picker for `.md` files up to 500KB |
+
+### Account features (free, requires sign-in via Clerk)
+
+| Feature | Detail |
+|---|---|
+| **Permanent pages** | Published pages don't expire |
+| **Custom slugs** | Human-readable URL: `readable.app/p/q4-incident-summary` (1–60 chars, lowercase/numbers/hyphens) |
+| **Unlisted pages** | Published but excluded from any discovery; link-only access |
+| **View counts** | Track how many times each published page has been viewed |
+| **My Pages dashboard** | Manage all published pages — view, copy link, toggle visibility, edit slug, delete |
+| **Update pages via API** | `PATCH /api/v1/pages/{id}` — republish content to an existing page ID |
+| **API access** | REST API with API key authentication for publishing from CI/scripts |
+| **API key management** | Generate and revoke API keys from the My Pages dashboard |
+
+---
+
+## The REST API
+
+Readable exposes a REST API for publishing pages programmatically. Requires a signed-in account
+and a generated API key.
+
+### Authentication
+
+All API requests must include the API key in the `Authorization` header:
+
+```
+Authorization: Bearer rk_live_YOURKEYHERE
+```
+
+API keys are generated in the My Pages dashboard (`/my-pages`).
+
+### Publish a new page
+
+```
+POST /api/v1/publish
+```
+
+Publishes a new page and returns its URL.
+
+**Request body:**
+
+```json
+{
+  "blocks": [...],
+  "settings": {
+    "width": "normal"
+  }
+}
+```
+
+`blocks` is the parsed block-format representation of the document (produced by the Readable parser).
+For CI/scripting use cases, you'll typically need to call the parse endpoint or use a client library
+to convert Markdown to blocks before publishing.
+
+**Response (201):**
+
+```json
+{
+  "id": "Ab3k91QxZp",
+  "url": "https://readable.app/p/Ab3k91QxZp"
+}
+```
+
+**Error responses:**
+
+| Status | Reason |
+|---|---|
+| 400 | Invalid JSON, empty blocks, or missing payload |
+| 401 | Missing or invalid API key |
+| 413 | Document too large (>350KB) |
+| 500 | Internal storage error |
+
+### Update an existing page
+
+```
+PATCH /api/v1/pages/{id}
+```
+
+Republishes content to an existing page ID (account-owned pages only). Maintains the same URL.
+
+**Request body:** Same as publish (`blocks`, optional `settings`).
+
+**Response (200):**
+
+```json
+{
+  "id": "Ab3k91QxZp",
+  "url": "https://readable.app/p/Ab3k91QxZp",
+  "updated_at": "2026-04-29T12:00:00.000Z"
+}
+```
+
+**Error responses:**
+
+| Status | Reason |
+|---|---|
+| 401 | Missing or invalid API key |
+| 403 | Page belongs to a different account |
+| 404 | Page not found |
+| 413 | Document too large |
+
+### API use cases
+
+- Publishing post-mortems automatically from incident management tools (e.g. PagerDuty webhooks)
+- Publishing release notes from a CI/CD pipeline (e.g. GitHub Actions after a release tag)
+- Publishing changelogs as part of a monorepo build process
+- Publishing API documentation from generated Markdown outputs
+- Keeping a team runbook up to date by publishing from a scheduled script
+
+---
+
+## The My Pages Dashboard
+
+Available to signed-in users at `/my-pages`.
+
+Displays all published pages owned by the account, each showing:
+- Page title (extracted from first H1/H2 heading)
+- Full public URL
+- Publish date and last-updated date
+- View count
+- Visibility status (public / unlisted)
+- Custom slug (editable inline)
+
+Per-page actions:
+- **Copy link** — copies the public URL to clipboard
+- **Open page** — opens the published page in a new tab
+- **Toggle visibility** — switches between public and unlisted
+- **Edit slug** — opens an inline slug editor (`{host}/p/` prefix shown)
+- **Delete** — two-step confirmation to delete the page (removes from KV + D1)
+
+---
+
+## Account Tiers
+
+Readable is **completely free**. There is no paid tier, no freemium model, no credit card required.
+
+| | Anonymous | Signed-in (free account) |
+|---|---|---|
+| Create & edit drafts | ✓ | ✓ |
+| Publish pages | ✓ | ✓ |
+| All rendering features | ✓ | ✓ |
+| Page lifespan | 30 days | Permanent |
+| Custom slugs | — | ✓ |
+| Unlisted pages | — | ✓ |
+| View counts | — | ✓ |
+| My Pages dashboard | — | ✓ |
+| REST API + API keys | — | ✓ |
+| Update published pages | — | ✓ |
+
+Sign-in is via Clerk (Google, GitHub, or email).
+
+---
+
+## Technical Architecture
+
+| Layer | Technology | Notes |
+|---|---|---|
+| Framework | Next.js 16 (App Router) | React 19, TypeScript strict |
+| Styling | Tailwind CSS v4 | CSS-variable design tokens, dark-first |
+| Auth | Clerk | Google, GitHub, email sign-in |
+| Markdown parsing | unified / remark / remark-gfm | Pipeline: parse → process → AST |
+| Rendering | Custom AST block renderer | Never `dangerouslySetInnerHTML` — XSS safe |
+| Storage — published pages | Cloudflare KV | Edge-distributed, 30-day TTL for anonymous |
+| Storage — owned pages / user data | Cloudflare D1 | SQLite-compatible, permanent records |
+| Infrastructure | Cloudflare Workers via OpenNext | Edge-deployed Next.js |
+| Rate limiting | Cloudflare KV counter | 12 publishes/min per IP |
+| Analytics | Google Analytics 4 | |
+| Fonts | Inter via next/font (self-hosted) | |
+| Diagrams | Mermaid | Client-side rendering |
+
+### Key architectural facts relevant to product copy
+
+- **Drafts are 100% private until publish.** They live in `localStorage` and are never sent to any server.
+- **Published pages are edge-cached globally.** Cloudflare KV is distributed — pages load fast worldwide.
+- **The custom renderer makes all Markdown content XSS-safe.** No `dangerouslySetInnerHTML` is used anywhere; the AST is sanitised before display.
+- **The platform is stateless for anonymous users.** No cookies, no sessions, no tracking until the moment of publish.
+- **Permanent pages use Cloudflare D1** (SQLite at the edge) so they're never subject to KV TTL expiry.
 
 ---
 
 ## What Readable Does Not Do
 
-These are intentional omissions, not missing features:
+These are intentional omissions:
 
-- **No real-time collaboration** — Readable is not Google Docs. There is no co-editing,
-  no comments, no mentions, no version history.
-- **No editing after publish** — Published pages are immutable snapshots. To update,
-  edit the draft and republish (which creates a new link).
-- **No private pages** — Every published page is publicly accessible to anyone with
-  the URL. There is no password protection or access control (unlisted mode hides it
-  from discovery but does not restrict access).
-- **No permanent storage for anonymous users** — Anonymous pages expire after 30 days.
-  If you need permanent pages, sign in.
-- **No rich text editing** — The editor is plain Markdown only. There is no WYSIWYG
-  toolbar or drag-and-drop formatting.
-- **No embedded media** — Readable renders external image URLs but does not host or
-  embed video, audio, or interactive content.
-- **No search** — There is no public directory or search index of Readable pages.
+| Omission | Why intentional |
+|---|---|
+| No real-time collaboration | Readable is not Google Docs. One writer, one page. |
+| No editing after publish | Published pages are immutable snapshots; stability of shared links is a feature |
+| No private/password-protected pages | Any published page is accessible to anyone with the URL (unlisted hides from discovery, not from access) |
+| No permanent storage for anonymous users | 30-day TTL is generous for sharing; permanence requires identity |
+| No rich text / WYSIWYG | Markdown only — no toolbar, no drag-and-drop |
+| No embedded media | External image URLs rendered; no video/audio/iframes |
+| No search or directory | No public index of Readable pages |
+| No comments or reactions | Read-only for recipients |
 
 ---
 
-## Technical Architecture (for context)
+## Supported Markdown (GitHub-Flavored Markdown)
 
-Understanding the tech helps when writing accurate product copy or answering technical
-questions.
+Readable supports GFM — the most widely used Markdown dialect:
 
-| Layer | Technology |
-|---|---|
-| Framework | Next.js 16 (App Router), React 19 |
-| Language | TypeScript (strict) |
-| Styling | Tailwind CSS v4 |
-| Auth | Clerk |
-| Markdown parsing | unified / remark / remark-gfm |
-| Rendering | Custom AST renderer — never `dangerouslySetInnerHTML` (XSS-safe) |
-| Storage | Cloudflare KV (published pages) + Cloudflare D1 (owned pages, user data) |
-| Infrastructure | Cloudflare Workers via OpenNext |
-| Rate limiting | KV-based counter (12 publishes/min per IP) |
-| Analytics | Google Analytics 4 |
-
-**Key architectural facts that affect product copy:**
-- Drafts live in `localStorage` — they are 100% private until published
-- Published pages are stored in Cloudflare KV at the edge — extremely fast globally
-- The custom renderer means all Markdown content is sanitised before display — no XSS risk
-- The platform is stateless for anonymous users — no cookies, no sessions, no tracking
-  until the moment of publish
+- Headings H1–H4
+- Bold, italic, strikethrough
+- Inline code and fenced code blocks (with syntax label)
+- Tables (aligned columns)
+- Ordered and unordered lists (nested)
+- Task lists with checkboxes
+- Blockquotes (nested)
+- Horizontal rules
+- Links
+- Images (external URLs only; inline images from data URIs are not supported)
+- Mermaid diagram blocks
+- HTML in Markdown is **not** rendered (security policy)
 
 ---
 
 ## Pricing
 
-Readable is **free**. There is no paid tier, no freemium model, no credit card required.
+**Free.** No paid tier. No credit card. No freemium expiration.
 
-- Anonymous use (no account): free, unlimited drafts, pages expire in 30 days
-- Signed-in use (Clerk account): free, pages are permanent, custom slugs, API access,
-  view count tracking, unlisted pages, My Pages dashboard
-
----
-
-## The Name
-
-"Readable" is a direct statement of the product's purpose: it makes Markdown *readable*
-to people who don't know Markdown. The name is a quality descriptor, not a company name —
-it describes what the output is, not who made it.
-
----
-
-## Founder
-
-Readable was built by **Ashwin Sathian**, a software engineer. It started as a personal
-tool to solve a problem he encountered daily: writing beautifully structured Markdown and
-then having it fall apart when shared with non-technical colleagues. The product is
-intentionally minimal — it solves one problem very well.
-
-Contact: ashwinsathyan19@gmail.com
+- Anonymous use: all features except permanent pages and account features
+- Signed-in use (Clerk account): all features, permanently, for free
 
 ---
 
 ## Frequently Asked Questions
 
-**Do I need an account to use Readable?**
-No. You can paste, preview, and publish without signing in. An account (via Google, GitHub,
-or email through Clerk) is optional and unlocks permanent pages, custom slugs, the API,
-and the My Pages dashboard.
+**Do I need an account to use Readable?**  
+No. Paste, preview, and publish immediately — no signup, no email, no password. An account unlocks permanent pages, custom slugs, the API, view counts, and the My Pages dashboard.
 
-**Is my content private before I publish?**
-Yes. Drafts are stored entirely in your browser's localStorage and are never sent to any
-server. Nothing leaves your device until you click Publish.
+**Is my content private before I publish?**  
+Yes. Drafts are stored entirely in your browser's localStorage and are never transmitted to any server. Nothing leaves your device until you click Publish.
 
-**Can I edit a page after publishing?**
-No. Published pages are immutable. You can edit your local draft and republish — which
-creates a new URL. The old URL continues to work until it expires.
+**Can I edit a page after publishing?**  
+No for anonymous pages. Account holders can use `PATCH /api/v1/pages/{id}` to republish updated content to the same page ID. For anonymous pages, edit your local draft and republish — creating a new URL. The old URL works until it expires.
 
-**What happens when a page expires?**
-After 30 days, the page is removed from storage and the URL returns a "page not found"
-screen. There is no warning email. The page itself shows an expiry countdown so readers
-can see when it will expire.
+**What happens when a page expires?**  
+After 30 days, the page is removed from storage and the URL returns "Page not found." There is no warning email. The page itself shows an expiry countdown badge.
 
-**Can I use Readable for sensitive or confidential content?**
-Use caution. Any published page is accessible to anyone with the link. There is no
-password protection. If you're sharing sensitive content, use the "unlisted" option (which
-hides it from discovery) and ensure you only share the link with trusted parties. For
-truly confidential content, Readable is not the right tool.
+**Can I use Readable for sensitive or confidential content?**  
+Use caution. Any published page is accessible to anyone with the URL — there is no password protection. The "unlisted" option hides the page from discovery, but anyone who has the URL can still open it. For truly confidential content, Readable is not the right tool.
 
-**Does Readable support all Markdown features?**
-Readable supports GitHub-Flavored Markdown (GFM) — the most widely used Markdown dialect.
-This includes: headings (H1–H4), bold, italic, strikethrough, code (inline and fenced),
-tables, ordered and unordered lists, nested lists, task lists, blockquotes, horizontal
-rules, images (external URLs), links, and Mermaid diagrams. HTML in Markdown is not
-rendered for security reasons.
+**Does Readable support all Markdown features?**  
+Readable supports GitHub-Flavored Markdown (GFM). HTML in Markdown is not rendered for security reasons.
 
-**Is there a character or file size limit?**
-The editor accepts up to 200,000 characters of Markdown input. Published page payloads
-are capped at 350,000 bytes to keep Cloudflare KV storage efficient.
+**What does the URL look like?**  
+- Anonymous / account without slug: `readable.app/p/Ab3k91QxZp` (10-character random ID)
+- Account with custom slug: `readable.app/p/q4-incident-summary`
 
-**Can I use the API without signing in?**
+**Is there a character limit?**  
+The editor accepts up to 200,000 characters. Published payloads are capped at 350,000 bytes.
+
+**Where are drafts stored?**  
+Entirely in your browser's `localStorage`. Clearing browser storage will delete drafts.
+
+**Can I use the API without signing in?**  
 No. API access requires a signed-in account and a generated API key.
 
-**What does the URL look like?**
-Anonymous publish: `readable.app/p/Ab3k91QxZp` (10-character random ID).
-With custom slug: `readable.app/p/q4-incident-summary`.
+**Does Readable support Mermaid diagrams?**  
+Yes. Mermaid diagram blocks (` ```mermaid `) are rendered inline on both the editor preview and the published page.
+
+---
+
+## The Name
+
+"Readable" is a direct statement of the product's purpose: it makes Markdown *readable* to people who don't know Markdown. The name is a quality descriptor, not a company name — it describes what the output is, not who made it.
+
+---
+
+## Founder
+
+Readable was built by **Ashwin Sathian**, a software engineer. It started as a personal tool to solve a problem encountered daily: writing beautifully structured Markdown, then watching it fall apart when shared with non-technical colleagues. The product is intentionally minimal — it solves one problem very well.
+
+Contact: ashwinsathyan19@gmail.com
 
 ---
 
