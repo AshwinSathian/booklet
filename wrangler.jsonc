@@ -44,7 +44,7 @@
       // Then replace database_id with the ID returned by that command.
       "binding": "READABLE_DB",
       "database_name": "readable-db",
-      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      "database_id": "7edc6b30-4bb4-4671-b5f8-0833f9eeb39a",
       "migrations_dir": "migrations",
     },
   ],
