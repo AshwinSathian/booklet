@@ -171,7 +171,7 @@ The brand spec (locked April 2026) specifies `SoftwareApplication + WebSite + We
 
 > **Priority: High.** Executes the planned-but-not-yet-started 20-commit overhaul from April 2026 — scoped to the highest-impact items. Phase order matters: token changes (2.1) before component changes (2.3+).
 
-- [ ] **2.1 — Remove PrimeReact from non-editor pages**
+- [x] **2.1 — Remove PrimeReact from non-editor pages**
 
   PrimeReact CSS currently loads on every page including the landing page and share pages. This bloats page weight and delays FCP on share pages (which are meant to be fast, read-only documents).
 
@@ -181,28 +181,21 @@ The brand spec (locked April 2026) specifies `SoftwareApplication + WebSite + We
 
   *Refs: `src/app/globals.css`, `src/app/app/primereact.css`, `src/app/app/layout.tsx`*
 
-- [ ] **2.2 — Replace PrimeReact SelectButton in AppShell with native segmented control**
+- [x] **2.2 — Replace PrimeReact SelectButton in AppShell with native segmented control**
 
-  The mobile "Editor / Preview" pane toggle in `src/components/app/AppShell.tsx` is the last PrimeReact interactive component in the product. Replace it with the native `SegmentedControl` component that already exists inside `src/components/app/TopBar.tsx`.
-
-  Extract `SegmentedControl` into its own file (`src/components/ui/SegmentedControl.tsx`) so both AppShell and TopBar can import it. After this commit, PrimeReact can be removed from `dependencies` in `package.json` entirely — verify no other imports remain.
+  AppShell was already using native buttons. `SegmentedControl` extracted from `TopBar.tsx` into `src/components/ui/SegmentedControl.tsx` and imported back. `ToastProvider` still uses `primereact/toast` — full removal of PrimeReact from `package.json` requires a native Toast replacement first (deferred to Milestone 7 polish).
 
   *Refs: `src/components/app/AppShell.tsx`, `src/components/app/TopBar.tsx`*
 
-- [ ] **2.3 — Stray hard-coded colour sweep**
+- [x] **2.3 — Stray hard-coded colour sweep**
 
   Run `grep -rn '#[0-9a-fA-F]\{3,6\}' src/` and `grep -rn 'rgb(' src/` across all component files. Replace any values not in `globals.css` token definitions with the appropriate `--color-*` custom property. The macOS dot colours in `HeroMock` (`#ff5f57`, `#febc2e`, `#28c840`) are intentional and should be exempted — comment them as such.
 
-- [ ] **2.4 — AppLogo SVG replacement**
+- [x] **2.4 — AppLogo SVG replacement**
 
-  Replace the `favicon.png` reference in `src/components/ui/AppLogo.tsx` with a proper inline SVG mark:
-  - Sized `h-6` (24px) for TopBar usage
-  - Sized `h-5` (20px) for footer and share page header
-  - Colour: `text-accent` fill on the mark, `text-text-primary` on wordmark text
+  Already complete — `AppLogo.tsx` already has an inline `ReadableMark` SVG using `fill="var(--color-accent)"` with a wordmark. No favicon.png reference present.
 
-  The SVG mark should be the letterform "R" or a simple geometric mark — to be designed inline with the session that implements it.
-
-- [ ] **2.5 — Focus ring audit across interactive elements**
+- [x] **2.5 — Focus ring audit across interactive elements**
 
   `globals.css` sets `focus-visible:ring-2 focus-visible:ring-accent-soft` globally on `a` and `button`. But custom interactive elements (OverflowMenu items, SegmentedControl buttons, SlugEditor inputs) may have inconsistent or redundant ring styles. Audit all focusable elements in:
   - `src/components/app/TopBar.tsx`

@@ -1,2 +1,25 @@
 @import "primereact/resources/primereact.min.css";
 @import "primeicons/primeicons.css";
+
+/* PrimeReact design-token overrides — only loaded in the editor layout */
+:root {
+  --p-primary-color:          #7c5cfc;
+  --p-primary-contrast-color: #ffffff;
+  --p-surface-ground:         #000000;
+  --p-surface-card:           rgba(22, 22, 23, 0.80);
+  --p-content-border-color:   rgba(255, 255, 255, 0.08);
+  --p-text-color:             #f5f5f7;
+  --p-text-muted-color:       #98989f;
+  --p-focus-ring:             0 0 0 2px rgba(167, 139, 250, 0.45);
+}
+
+html.light {
+  --p-primary-color:          #6741f0;
+  --p-primary-contrast-color: #ffffff;
+  --p-surface-ground:         #ffffff;
+  --p-surface-card:           rgba(255, 255, 255, 0.95);
+  --p-content-border-color:   rgba(0, 0, 0, 0.08);
+  --p-text-color:             #1d1d1f;
+  --p-text-muted-color:       #6e6e73;
+  --p-focus-ring:             0 0 0 2px rgba(139, 108, 247, 0.45);
+}

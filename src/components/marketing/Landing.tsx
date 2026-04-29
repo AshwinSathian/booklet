@@ -345,6 +345,7 @@ function HeroMock() {
     <div className="overflow-hidden rounded-2xl border border-border-default bg-bg-elevated shadow-glass">
       {/* Window chrome */}
       <div className="flex items-center gap-2 border-b border-border-default bg-bg-soft px-4 py-3">
+        {/* macOS traffic-light dots — intentional literal colours, not design tokens */}
         <div className="flex gap-1.5">
           <span className="h-3 w-3 rounded-full bg-[#ff5f57]" />
           <span className="h-3 w-3 rounded-full bg-[#febc2e]" />
@@ -621,6 +622,7 @@ function ApiBlock() {
       {/* Code block */}
       <div className="overflow-hidden rounded-2xl border border-border-default bg-bg-elevated shadow-card">
         <div className="flex items-center gap-2 border-b border-border-default bg-bg-soft px-4 py-3">
+          {/* macOS traffic-light dots — intentional literal colours, not design tokens */}
           <div className="flex gap-1.5">
             <span className="h-3 w-3 rounded-full bg-[#ff5f57]" />
             <span className="h-3 w-3 rounded-full bg-[#febc2e]" />
