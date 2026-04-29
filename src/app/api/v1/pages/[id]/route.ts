@@ -5,6 +5,7 @@ import { getPageRecord, updatePageRecord } from "@/lib/db";
 import { resolveApiKey } from "@/lib/api-key-auth";
 import { putDoc } from "@/lib/storage";
 import { QuotaExceededError, quotaErrorResponse } from "@/lib/quota";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -22,6 +23,9 @@ export async function PATCH(
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const rl = await checkRateLimit(`v1__patch__${userId}`, 60);
+  if (rl) return rl;
 
   const { id } = await params;
   if (!id?.trim()) {

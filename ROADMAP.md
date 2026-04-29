@@ -122,7 +122,7 @@ The brand spec (locked April 2026) specifies `SoftwareApplication + WebSite + We
 
 > **Priority: Ship first.** These are non-negotiable safety improvements. No new dependencies or infrastructure required.
 
-- [ ] **1.1 — HTTP security headers on all HTML responses**
+- [x] **1.1 — HTTP security headers on all HTML responses**
 
   Add the following headers via Next.js middleware (`src/middleware.ts`), injected before Cloudflare processes the response:
 
@@ -136,7 +136,7 @@ The brand spec (locked April 2026) specifies `SoftwareApplication + WebSite + We
 
   *Refs: `src/middleware.ts`, `public/_headers`*
 
-- [ ] **1.2 — Rate limiting on v1 API endpoints**
+- [x] **1.2 — Rate limiting on v1 API endpoints**
 
   Port the KV-based rate limiter from `/api/publish/route.ts` to:
   - `src/app/api/v1/publish/route.ts`
@@ -146,7 +146,7 @@ The brand spec (locked April 2026) specifies `SoftwareApplication + WebSite + We
 
   *Refs: `src/lib/api-key-auth.ts` (key ID is `record.id` from `findApiKeyByHash`)*
 
-- [ ] **1.3 — API key prefix alignment in docs**
+- [x] **1.3 — API key prefix alignment in docs**
 
   Update the following to show `rdbl_` prefix (matching `src/lib/api-key.ts`):
   - `PRODUCT.md` — API key example `rk_live_YOURKEYHERE` → `rdbl_YOURKEYHERE`
@@ -154,9 +154,9 @@ The brand spec (locked April 2026) specifies `SoftwareApplication + WebSite + We
 
   No functional change. One pass.
 
-- [ ] **1.4 — Remove dead pro/stripe columns from D1 schema**
+- [x] **1.4 — Remove dead pro/stripe columns from D1 schema**
 
-  Add migration `migrations/0003_drop_pro_columns.sql`:
+  Add migration `migrations/0004_drop_pro_columns.sql`:
   ```sql
   ALTER TABLE users DROP COLUMN is_pro;
   ALTER TABLE users DROP COLUMN stripe_customer_id;

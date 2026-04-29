@@ -8,6 +8,7 @@ import { resolveApiKey } from "@/lib/api-key-auth";
 import { extractDocTitle } from "@/lib/doc-title";
 import { putDoc } from "@/lib/storage";
 import { QuotaExceededError, quotaErrorResponse } from "@/lib/quota";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -22,6 +23,9 @@ export async function POST(req: Request) {
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const rl = await checkRateLimit(`v1__publish__${userId}`, 60);
+  if (rl) return rl;
 
   let payload: PublishPayload | null = null;
   try {

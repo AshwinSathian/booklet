@@ -6,9 +6,9 @@ import { ensureDbUser } from "@/lib/db/ensure-user";
 import { createId } from "@/lib/id";
 import { extractDocTitle } from "@/lib/doc-title";
 import { putDoc } from "@/lib/storage";
-import { checkAndBumpQuota, QuotaExceededError, quotaErrorResponse } from "@/lib/quota";
+import { QuotaExceededError, quotaErrorResponse } from "@/lib/quota";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { auth } from "@clerk/nextjs/server";
-import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -29,47 +29,9 @@ function getClientIp(req: Request): string {
   return "unknown";
 }
 
-async function rateLimitPublish(req: Request): Promise<null | NextResponse> {
-  // Gate KV read + write before touching KV for rate-limit counter.
-  try {
-    await checkAndBumpQuota("KV_READS");
-  } catch (e) {
-    if (e instanceof QuotaExceededError) return quotaErrorResponse(e);
-    throw e;
-  }
-  try {
-    await checkAndBumpQuota("KV_WRITES");
-  } catch (e) {
-    if (e instanceof QuotaExceededError) return quotaErrorResponse(e);
-    throw e;
-  }
-
-  const ip = getClientIp(req);
-  const now = Date.now();
-  const bucket = Math.floor(now / 60_000);
-  const key = `__rl__publish__${ip}__${bucket}`;
-
-  const kv = getCloudflareContext().env.READABLE_DOCS;
-
-  const raw = await kv.get(key);
-  const curr = raw ? Number(raw) : 0;
-  const next = Number.isFinite(curr) ? curr + 1 : 1;
-
-  const LIMIT_PER_MIN = 12;
-  await kv.put(key, String(next), { expirationTtl: 90 });
-
-  if (next > LIMIT_PER_MIN) {
-    return NextResponse.json(
-      { error: "Too many publishes. Please slow down and try again." },
-      { status: 429 },
-    );
-  }
-
-  return null;
-}
-
 export async function POST(req: Request) {
-  const rl = await rateLimitPublish(req);
+  const ip = getClientIp(req);
+  const rl = await checkRateLimit(`publish__ip__${ip}`, 12);
   if (rl) return rl;
 
   // Attempt to read Clerk session — optional; anonymous publish still works.

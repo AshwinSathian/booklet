@@ -295,7 +295,7 @@ and a generated API key.
 All API requests must include the API key in the `Authorization` header:
 
 ```
-Authorization: Bearer rk_live_YOURKEYHERE
+Authorization: Bearer rdbl_YOURKEYHERE
 ```
 
 API keys are generated in the My Pages dashboard (`/my-pages`).

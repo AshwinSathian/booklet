@@ -632,7 +632,7 @@ function ApiBlock() {
           <pre className="overflow-x-auto font-mono text-[12px] leading-[1.78] text-text-secondary">
 {`# Publish a new page
 POST /api/v1/publish
-Authorization: Bearer rk_live_...
+Authorization: Bearer rdbl_...
 
 {
   "blocks": [ ... ]
@@ -646,7 +646,7 @@ Authorization: Bearer rk_live_...
 
 # Update an existing page (same URL)
 PATCH /api/v1/pages/Ab3k91QxZp
-Authorization: Bearer rk_live_...`}
+Authorization: Bearer rdbl_...`}
           </pre>
         </div>
       </div>
