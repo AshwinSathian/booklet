@@ -1,5 +1,6 @@
 import { getPageBySlug, getPageRecord, updatePageRecord, deletePageRecord } from "@/lib/db";
 import { deleteDoc } from "@/lib/storage";
+import { QuotaExceededError, quotaErrorResponse } from "@/lib/quota";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
@@ -113,7 +114,12 @@ export async function DELETE(
   }
 
   // Delete KV content first; if D1 delete fails, the page is still gone.
-  await deleteDoc(id);
+  try {
+    await deleteDoc(id);
+  } catch (e: unknown) {
+    if (e instanceof QuotaExceededError) return quotaErrorResponse(e);
+    throw e;
+  }
 
   try {
     await deletePageRecord(id);

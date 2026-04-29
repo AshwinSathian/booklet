@@ -6,6 +6,7 @@ import { ensureDbUser } from "@/lib/db/ensure-user";
 import { createId } from "@/lib/id";
 import { extractDocTitle } from "@/lib/doc-title";
 import { putDoc } from "@/lib/storage";
+import { checkAndBumpQuota, QuotaExceededError, quotaErrorResponse } from "@/lib/quota";
 import { auth } from "@clerk/nextjs/server";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextResponse } from "next/server";
@@ -29,6 +30,20 @@ function getClientIp(req: Request): string {
 }
 
 async function rateLimitPublish(req: Request): Promise<null | NextResponse> {
+  // Gate KV read + write before touching KV for rate-limit counter.
+  try {
+    await checkAndBumpQuota("KV_READS");
+  } catch (e) {
+    if (e instanceof QuotaExceededError) return quotaErrorResponse(e);
+    throw e;
+  }
+  try {
+    await checkAndBumpQuota("KV_WRITES");
+  } catch (e) {
+    if (e instanceof QuotaExceededError) return quotaErrorResponse(e);
+    throw e;
+  }
+
   const ip = getClientIp(req);
   const now = Date.now();
   const bucket = Math.floor(now / 60_000);
@@ -97,6 +112,7 @@ export async function POST(req: Request) {
   try {
     await putDoc(id, doc, isAuthenticated);
   } catch (e: unknown) {
+    if (e instanceof QuotaExceededError) return quotaErrorResponse(e);
     const msg = e instanceof Error ? e.message : "Publish failed";
     return NextResponse.json({ error: msg }, { status: 500 });
   }

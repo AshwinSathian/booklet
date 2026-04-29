@@ -3,6 +3,7 @@ import { DEFAULT_SETTINGS } from "@/lib/blocks";
 import { BLOCKS, STORAGE } from "@/lib/constants";
 import { getPageRecord, updatePageRecord } from "@/lib/db";
 import { putDoc } from "@/lib/storage";
+import { QuotaExceededError, quotaErrorResponse } from "@/lib/quota";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
@@ -72,6 +73,7 @@ export async function PATCH(
   try {
     await putDoc(id, doc, true);
   } catch (e: unknown) {
+    if (e instanceof QuotaExceededError) return quotaErrorResponse(e);
     const msg = e instanceof Error ? e.message : "Update failed";
     return NextResponse.json({ error: msg }, { status: 500 });
   }

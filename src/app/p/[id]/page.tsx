@@ -6,6 +6,7 @@ import { APP_NAME, ROUTES, STORAGE } from "@/lib/constants";
 import { getPageBySlug, getPageRecord, incrementViewCount } from "@/lib/db";
 import { absoluteUrl, buildMetadata } from "@/lib/seo";
 import { getDoc } from "@/lib/storage";
+import { QuotaExceededError } from "@/lib/quota";
 import { buildToc, MIN_TOC_HEADINGS, type TocItem } from "@/lib/toc";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -20,25 +21,40 @@ export const dynamic = "force-dynamic";
 // ---------------------------------------------------------------------------
 
 async function resolveSharePage(idOrSlug: string) {
-  // Fast path: direct KV lookup by 10-char ID.
-  let doc = await getDoc(idOrSlug);
+  let doc = null;
   let resolvedId = idOrSlug;
   let pageRecord = null;
+  let quotaExceeded = false;
+
+  try {
+    // Fast path: direct KV lookup by 10-char ID.
+    doc = await getDoc(idOrSlug);
+  } catch (e) {
+    if (e instanceof QuotaExceededError) {
+      return { doc: null, resolvedId, pageRecord: null, quotaExceeded: true };
+    }
+    throw e;
+  }
 
   if (doc) {
-    // Try to get the ownership record for this ID — non-fatal.
     pageRecord = await getPageRecord(resolvedId).catch(() => null);
   } else {
-    // Slug fallback: D1 gives us both the real ID and the page record.
     const slugRecord = await getPageBySlug(idOrSlug).catch(() => null);
     if (slugRecord) {
-      doc = await getDoc(slugRecord.id);
+      try {
+        doc = await getDoc(slugRecord.id);
+      } catch (e) {
+        if (e instanceof QuotaExceededError) {
+          return { doc: null, resolvedId, pageRecord: null, quotaExceeded: true };
+        }
+        throw e;
+      }
       resolvedId = slugRecord.id;
       pageRecord = slugRecord;
     }
   }
 
-  return { doc, resolvedId, pageRecord };
+  return { doc, resolvedId, pageRecord, quotaExceeded };
 }
 
 // ---------------------------------------------------------------------------
@@ -51,7 +67,16 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id: idOrSlug } = await params;
-  const { doc, pageRecord } = await resolveSharePage(idOrSlug);
+  const { doc, pageRecord, quotaExceeded } = await resolveSharePage(idOrSlug);
+
+  if (quotaExceeded) {
+    return buildMetadata({
+      title: "Service temporarily unavailable",
+      description: "Readable is temporarily unavailable. Please try again later.",
+      pathname: `/p/${idOrSlug}`,
+      noIndex: true,
+    });
+  }
 
   if (!doc) {
     return buildMetadata({
@@ -103,8 +128,9 @@ export default async function SharePage({
   params: Promise<{ id: string }>;
 }) {
   const { id: idOrSlug } = await params;
-  const { doc, resolvedId, pageRecord } = await resolveSharePage(idOrSlug);
+  const { doc, resolvedId, pageRecord, quotaExceeded } = await resolveSharePage(idOrSlug);
 
+  if (quotaExceeded) return <ServiceUnavailable />;
   if (!doc) return <NotFoundOrExpired />;
 
   // Fire-and-forget view count — non-blocking, non-fatal.
@@ -219,6 +245,46 @@ function ExpiryBadge({ daysLeft }: { daysLeft: number }) {
     <span className="hidden sm:inline-flex items-center rounded-pill border border-border-default px-2.5 py-0.5 text-2xs text-text-muted">
       Expires in {daysLeft} days
     </span>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Service unavailable (quota exceeded)
+// ---------------------------------------------------------------------------
+
+function ServiceUnavailable() {
+  return (
+    <div className="min-h-screen bg-bg text-text-primary flex flex-col">
+      <header className="border-b border-border-subtle">
+        <div className="mx-auto w-full max-w-2xl px-4 py-3">
+          <AppLogo onlyIcon={false} />
+        </div>
+      </header>
+
+      <main className="flex-1 flex items-center justify-center px-4 py-16">
+        <div className="text-center max-w-sm">
+          <div className="mb-6 flex justify-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-card bg-amber-400/10 text-amber-400">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <path d="M12 9v4M12 17h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+          </div>
+          <h1 className="text-lg font-semibold">Temporarily unavailable</h1>
+          <p className="mt-2 text-sm text-text-secondary">
+            Readable has reached its free-tier daily limit. We&apos;re in beta and this
+            resets automatically at midnight UTC. Please check back shortly.
+          </p>
+          <Link
+            href={ROUTES.home}
+            className="mt-6 inline-flex items-center gap-1.5 rounded-pill border border-border-default px-5 py-2.5 text-sm font-semibold transition hover:bg-fill-2"
+          >
+            Go home
+          </Link>
+        </div>
+      </main>
+    </div>
   );
 }
 

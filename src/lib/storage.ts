@@ -1,6 +1,7 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import type { PublishedDoc } from "./blocks";
 import { STORAGE } from "./constants";
+import { checkAndBumpQuota } from "./quota";
 
 export async function putDoc(
   id: string,
@@ -13,6 +14,8 @@ export async function putDoc(
     throw new Error("Document is too large to publish.");
   }
 
+  await checkAndBumpQuota("KV_WRITES");
+
   const kv = getCloudflareContext().env.READABLE_DOCS;
   if (permanent) {
     await kv.put(id, json);
@@ -22,11 +25,15 @@ export async function putDoc(
 }
 
 export async function deleteDoc(id: string): Promise<void> {
+  await checkAndBumpQuota("KV_DELETES");
+
   const kv = getCloudflareContext().env.READABLE_DOCS;
   await kv.delete(id);
 }
 
 export async function getDoc(id: string): Promise<PublishedDoc | null> {
+  await checkAndBumpQuota("KV_READS");
+
   const kv = getCloudflareContext().env.READABLE_DOCS;
   const raw = await kv.get(id);
   if (!raw) return null;
