@@ -661,11 +661,12 @@ Authorization: Bearer rk_live_...`}
 function PricingCards() {
   const anonymous = [
     "Live editor and preview",
+    "Formatting toolbar for common syntax",
     "Unlimited local drafts",
     "Publish with one click",
     "All rendering features",
     "Mermaid diagram support",
-    "Export to HTML or Markdown",
+    "Export as Markdown, HTML, or PDF",
     "Pages live for 30 days",
   ];
   const account = [
@@ -931,24 +932,25 @@ export function Landing() {
       {
         icon: (
           <svg width="18" height="18" fill="none" viewBox="0 0 24 24" aria-hidden>
-            <polyline
-              points="16 18 22 12 16 6"
-              stroke="currentColor"
-              strokeWidth="1.75"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <polyline
-              points="8 6 2 12 8 18"
-              stroke="currentColor"
-              strokeWidth="1.75"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
+            <path d="M4 7V4h16v3" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M9 20h6" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M12 4v16" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M5 12h3M16 12h3" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         ),
-        title: "REST API for automation",
-        desc: "Publish pages from CI/CD, incident tools, or scripts. Generate an API key and automate your sharing workflow.",
+        title: "Formatting toolbar",
+        desc: "Not sure about the syntax? Bold, italic, headings, links, code blocks — one click inserts the right Markdown. Works on your selection.",
+      },
+      {
+        icon: (
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" aria-hidden>
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+            <polyline points="7 10 12 15 17 10" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+            <line x1="12" y1="15" x2="12" y2="3" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+          </svg>
+        ),
+        title: "Export from the share page",
+        desc: "Download the original Markdown source, a self-contained HTML file, or print to PDF — right from the published page.",
       },
     ],
     [],
@@ -1340,9 +1342,11 @@ export function Landing() {
             Signed-in users can use the API to republish updated content to the same page ID,
             keeping the URL unchanged.
           </FaqItem>
-          <FaqItem question="Can I export to PDF?">
-            Use your browser&apos;s print function on the published page (File → Print
-            or ⌘+P). It produces a clean PDF with no chrome, no ads, no nav.
+          <FaqItem question="Can I export a published page?">
+            Yes — the share page has an <strong>Export</strong> menu with three options: download the original
+            Markdown source (available for pages published recently), download a self-contained HTML file
+            with inline styles, or use Print / Save as PDF (File → Print or ⌘+P) for a clean,
+            chrome-free PDF.
           </FaqItem>
           <FaqItem question="Where are drafts stored?">
             Entirely in your browser&apos;s localStorage. Nothing is sent to a server
@@ -1363,7 +1367,7 @@ export function Landing() {
           </FaqItem>
           <FaqItem question="Is there a size limit?">
             The editor accepts up to 200,000 characters. Published page payloads are capped at
-            350,000 bytes to keep edge storage fast.
+            600,000 bytes to keep edge storage fast.
           </FaqItem>
         </div>
       </Section>

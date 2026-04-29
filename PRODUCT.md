@@ -83,9 +83,25 @@ experience and make the content feel unfinished.
 ### Interface
 
 The editor is a split-pane interface: Markdown input on the left, live rendered preview on the right.
-The preview updates in real time as you type (debounced at 120ms — never lags). There is no
-formatting toolbar, no rich text widgets, no distracting UI chrome. You write in Markdown; the
-preview handles everything.
+The preview updates in real time as you type (debounced at 120ms — never lags).
+
+A compact **formatting toolbar** sits above the textarea and provides one-click insertion of common
+Markdown syntax. Toolbar actions:
+
+| Button | What it inserts |
+|---|---|
+| **B** | Bold — wraps selection in `**...**` |
+| _I_ | Italic — wraps selection in `*...*` |
+| S̶ | Strikethrough — wraps selection in `~~...~~` |
+| H1 / H2 / H3 | Heading prefix (`# `, `## `, `### `) — toggles on/off |
+| `` ` `` | Inline code — wraps in backticks |
+| Code block | Wraps in ` ```\n...\n``` ` |
+| Link | Wraps in `[text](url)` |
+| Quote | Blockquote prefix (`> `) — toggles |
+| Bullet | Bullet list prefix (`- `) — toggles |
+| 1. | Ordered list prefix (`1. `) — toggles |
+
+Each button reads the textarea's selection before acting, so toolbar clicks never steal focus.
 
 ### Drafts
 
@@ -114,14 +130,19 @@ Files can be imported into the editor via drag-and-drop or file picker:
 
 ### Export
 
-From the editor:
+From the editor (overflow menu):
 - **Copy as HTML** — copies the rendered page as clean, standalone HTML
-- **Download Markdown** — downloads the raw Markdown as a `.md` file
+- **Copy as Markdown** — copies the raw Markdown to clipboard
+
+From the published share page (Export menu in header):
+- **Download Markdown** — downloads the original `.md` source file (available for pages published after April 2026, when raw MD storage was added)
+- **Download HTML** — downloads a self-contained `.html` file with inline CSS; readable without any external resources
+- **Print / Save as PDF** — triggers the browser's print dialog; produces a clean, chrome-free PDF
 
 ### Character and size limits
 
 - Editor accepts up to **200,000 characters** of Markdown input
-- Published page payloads are capped at **350,000 bytes** (Cloudflare KV storage optimisation)
+- Published page payloads are capped at **600,000 bytes** (Cloudflare KV storage — increased from 350KB to accommodate optional raw markdown alongside blocks)
 
 ---
 
@@ -156,7 +177,7 @@ This is intentional: a shared link should always show exactly what was sent to t
 A minimal sticky header containing:
 - Readable logo + wordmark
 - Theme toggle (dark/light)
-- Print button
+- **Export menu** — dropdown with: Download Markdown (if available), Download HTML, Print / Save as PDF
 - Expiry countdown badge (anonymous pages only)
 - "Make your own →" CTA button (links to `/app`)
 
@@ -194,11 +215,17 @@ Anonymous pages show an expiry countdown at the top right of the header:
 - ≤ 7 days remaining: amber badge with dot ("Expires in N days")
 - Expired: red badge ("Expired")
 
-### Print to PDF
+### Export from the share page
 
-The published page produces a clean, chrome-free PDF via the browser's print function (`⌘P` or
-File → Print). Print styles force white background, black text, and wrapped code blocks. No ads, no
-nav, no cookies banners visible in the PDF.
+The **Export** dropdown in the share page header offers three options:
+
+- **Download Markdown** — available when the doc was published after raw MD storage was added
+  (April 2026). Downloads the exact `.md` source the author wrote.
+- **Download HTML** — always available. Produces a complete, self-contained `.html` file with
+  inline CSS for clean offline reading.
+- **Print / Save as PDF** — triggers the browser's print function (`⌘P` or File → Print). Print
+  styles produce a clean, chrome-free PDF: white background, black text, wrapped code blocks,
+  no ads, no nav, no cookie banners.
 
 ### Footer
 
@@ -227,6 +254,7 @@ before expiry. After 30 days, the URL returns "Page not found."
 | Feature | Detail |
 |---|---|
 | **Live split-pane editor** | Real-time preview, 120ms debounce, exactly what readers will see |
+| **Formatting toolbar** | One-click bold, italic, headings, links, code, quote, lists — selection-aware, toggleable |
 | **One-click publish** | `⌘↵` or the Publish button; URL returned in under a second |
 | **Beautiful rendering** | All GFM elements rendered with typographic care out of the box |
 | **Unlimited local drafts** | Named, auto-saved to `localStorage`, persists across sessions |
@@ -236,8 +264,8 @@ before expiry. After 30 days, the URL returns "Page not found."
 | **Code blocks** | Language label, copy button, line count, macOS-style header, collapse for long blocks |
 | **Diagram support** | Mermaid diagrams rendered inline in editor and on published page |
 | **Theme toggle** | Dark / light mode; dark is the default; persists across sessions |
-| **Print to PDF** | Clean, chrome-free PDF from the published page |
-| **Export** | Copy as HTML or download raw `.md` file |
+| **Export (editor)** | Copy as Markdown or HTML from the editor overflow menu |
+| **Export (share page)** | Download Markdown (when available), Download HTML, Print / Save as PDF |
 | **Expiry badge** | Countdown badge on anonymous published pages |
 | **Link-only sharing** | No index, no feed — published pages are only accessible via direct link |
 | **File import** | Drag-and-drop or file picker for `.md` files up to 500KB |
@@ -431,7 +459,7 @@ These are intentional omissions:
 | No editing after publish | Published pages are immutable snapshots; stability of shared links is a feature |
 | No private/password-protected pages | Any published page is accessible to anyone with the URL (unlisted hides from discovery, not from access) |
 | No permanent storage for anonymous users | 30-day TTL is generous for sharing; permanence requires identity |
-| No rich text / WYSIWYG | Markdown only — no toolbar, no drag-and-drop |
+| No rich text / WYSIWYG | Markdown only — no drag-and-drop block editor; the formatting toolbar assists with syntax but does not hide it |
 | No embedded media | External image URLs rendered; no video/audio/iframes |
 | No search or directory | No public index of Readable pages |
 | No comments or reactions | Read-only for recipients |
@@ -491,7 +519,7 @@ Readable supports GitHub-Flavored Markdown (GFM). HTML in Markdown is not render
 - Account with custom slug: `readable.app/p/q4-incident-summary`
 
 **Is there a character limit?**  
-The editor accepts up to 200,000 characters. Published payloads are capped at 350,000 bytes.
+The editor accepts up to 200,000 characters. Published payloads are capped at 600,000 bytes.
 
 **Where are drafts stored?**  
 Entirely in your browser's `localStorage`. Clearing browser storage will delete drafts.
