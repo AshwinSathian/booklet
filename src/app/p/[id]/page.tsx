@@ -7,6 +7,7 @@ import { getPageBySlug, getPageRecord, incrementViewCount } from "@/lib/db";
 import { absoluteUrl, buildMetadata } from "@/lib/seo";
 import { getDoc } from "@/lib/storage";
 import { QuotaExceededError } from "@/lib/quota";
+import { readingTimeMinutes } from "@/lib/reading-time";
 import { buildToc, MIN_TOC_HEADINGS, type TocItem } from "@/lib/toc";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -150,6 +151,7 @@ export default async function SharePage({
   const showToc = toc.length >= MIN_TOC_HEADINGS;
   const maxW = doc.settings?.width === "wide" ? "max-w-4xl" : "max-w-3xl";
   const pageTitle = extractTitle(doc.blocks) ?? "Shared page";
+  const readMins = readingTimeMinutes(doc.blocks ?? []);
 
   return (
     <div className="min-h-screen bg-bg text-text-primary">
@@ -160,6 +162,9 @@ export default async function SharePage({
 
           <div className="flex items-center gap-2 shrink-0">
             {daysLeft !== null && <ExpiryBadge daysLeft={daysLeft} />}
+            <span className="hidden sm:inline text-2xs text-text-muted">
+              ~{readMins} min read
+            </span>
             <ExportMenu
               blocks={doc.blocks}
               settings={doc.settings}

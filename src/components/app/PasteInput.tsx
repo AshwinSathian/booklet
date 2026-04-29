@@ -222,6 +222,49 @@ export function PasteInput({
           ref={ref}
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key !== "Tab") return;
+            e.preventDefault();
+            const ta = e.currentTarget;
+            const { selectionStart: start, selectionEnd: end, value: v } = ta;
+
+            if (!e.shiftKey) {
+              if (start === end) {
+                // No selection: insert 2 spaces at cursor.
+                const next = v.slice(0, start) + "  " + v.slice(end);
+                onChange(next);
+                requestAnimationFrame(() => { ta.focus(); ta.setSelectionRange(start + 2, start + 2); });
+              } else {
+                // Selection: indent every line by 2 spaces.
+                const lineStart = v.lastIndexOf("\n", start - 1) + 1;
+                const lineEnd = v.indexOf("\n", end - 1);
+                const blockEnd = lineEnd === -1 ? v.length : lineEnd;
+                const block = v.slice(lineStart, blockEnd);
+                const newBlock = block.split("\n").map((l) => "  " + l).join("\n");
+                const delta = newBlock.length - block.length;
+                onChange(v.slice(0, lineStart) + newBlock + v.slice(blockEnd));
+                requestAnimationFrame(() => { ta.focus(); ta.setSelectionRange(start + 2, end + delta); });
+              }
+            } else {
+              // Shift+Tab: de-indent every line in selection.
+              const lineStart = v.lastIndexOf("\n", start - 1) + 1;
+              const lineEnd = v.indexOf("\n", end - 1);
+              const blockEnd = lineEnd === -1 ? v.length : lineEnd;
+              const block = v.slice(lineStart, blockEnd);
+              const lines = block.split("\n");
+              const newLines = lines.map((l) =>
+                l.startsWith("  ") ? l.slice(2) : l.startsWith(" ") ? l.slice(1) : l,
+              );
+              const newBlock = newLines.join("\n");
+              const delta = newBlock.length - block.length;
+              const removedFirst = lines[0].startsWith("  ") ? 2 : lines[0].startsWith(" ") ? 1 : 0;
+              onChange(v.slice(0, lineStart) + newBlock + v.slice(blockEnd));
+              requestAnimationFrame(() => {
+                ta.focus();
+                ta.setSelectionRange(Math.max(lineStart, start - removedFirst), end + delta);
+              });
+            }
+          }}
           placeholder="Paste anything Markdown-shaped: notes, READMEs, incident summaries, tables, code…"
           spellCheck={false}
           className={[

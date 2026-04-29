@@ -119,7 +119,9 @@ explicitly publish. Features:
 | Action | Shortcut |
 |---|---|
 | Publish | `⌘↵` |
-| Open drafts | — |
+| New draft | `⌘B` |
+| Open drafts | `⌘D` |
+| Focus editor | `⌘K` |
 
 ### Import
 

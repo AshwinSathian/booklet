@@ -58,6 +58,7 @@ function AppPageContent() {
 
   const toast = useToast();
   const focusFnRef = useRef<null | (() => void)>(null);
+  const openDraftsFnRef = useRef<null | (() => void)>(null);
 
   const autosaveTimerRef = useRef<number | null>(null);
   const skipNextAutosaveRef = useRef(true);
@@ -443,6 +444,29 @@ function AppPageContent() {
     [flushPendingAutosave, setSaveStateSmoothed],
   );
 
+  const onInsertTemplate = useCallback(
+    (title: string, content: string) => {
+      flushPendingAutosave();
+      const safeRaw = content.slice(0, STORAGE.maxInputChars);
+      const draft = createDraft({ title, raw: safeRaw, settings: DEFAULT_SETTINGS });
+      setActiveDraftId(draft.id);
+      setActiveDraftIdState(draft.id);
+      skipNextAutosaveRef.current = true;
+      setRaw(draft.raw);
+      setDraftTitle(draft.title ?? "");
+      setSettings(draft.settings);
+      setSaveStateSmoothed("saved");
+      setLastSavedAtLabel(formatTimeHHMM(new Date(draft.updatedAt)));
+      setLastPublishedUrl(null);
+      setLastPublishedId(null);
+      setLastPublishedOwned(false);
+      setStatus("idle");
+      setCopyLinkPulse(false);
+      focusFnRef.current?.();
+    },
+    [flushPendingAutosave, setSaveStateSmoothed],
+  );
+
   const onPublish = useCallback(async () => {
     if (!canPublish) {
       toast.info("Nothing to publish", "Paste some content first.");
@@ -616,6 +640,12 @@ function AppPageContent() {
         onNew();
         return;
       }
+
+      if (mod && (e.key === "d" || e.key === "D")) {
+        e.preventDefault();
+        openDraftsFnRef.current?.();
+        return;
+      }
     }
 
     window.addEventListener("keydown", onKeyDown);
@@ -651,6 +681,8 @@ function AppPageContent() {
         lastSavedAtLabel={lastSavedAtLabel}
         showSaveWarning={showSaveWarning}
         onImportMarkdown={onImportMarkdown}
+        onInsertTemplate={onInsertTemplate}
+        onOpenDraftsShortcutRegistered={(fn) => { openDraftsFnRef.current = fn; }}
       />
 
       <div className="flex-1 min-h-0">

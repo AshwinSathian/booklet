@@ -2,6 +2,7 @@
 
 import type { Block, DocSettings, ListItem } from "@/lib/blocks";
 import { UI } from "@/lib/constants";
+import { highlightCode } from "@/lib/highlight";
 import type { JSX } from "react";
 import { useMemo, useState } from "react";
 import { DiagramBlock } from "./DiagramBlock";
@@ -29,6 +30,7 @@ function CodeBlock({
 
   const lines = useMemo(() => code.split("\n").length, [code]);
   const shouldCollapse = settings.code === "collapse" && lines > UI.maxCodeCollapseLines;
+  const highlighted = useMemo(() => highlightCode(code, lang), [code, lang]);
   const isCollapsed = shouldCollapse && !expanded;
 
   async function onCopy() {
@@ -89,7 +91,15 @@ function CodeBlock({
           isCollapsed ? "max-h-96" : "",
         ].join(" ")}
       >
-        <code>{code}</code>
+        {highlighted ? (
+          <code
+            className="hljs"
+            // highlight.js escapes all HTML entities — safe to use here.
+            dangerouslySetInnerHTML={{ __html: highlighted }}
+          />
+        ) : (
+          <code>{code}</code>
+        )}
       </pre>
 
       {isCollapsed ? (

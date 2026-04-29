@@ -211,7 +211,7 @@ The brand spec (locked April 2026) specifies `SoftwareApplication + WebSite + We
 
 > **Priority: High user value.** All client-side. Zero infrastructure cost.
 
-- [ ] **3.1 — Markdown templates / starters**
+- [x] **3.1 — Markdown templates / starters**
 
   Add a "Templates" item to the overflow menu in `src/components/app/TopBar.tsx` that opens a picker modal. On selection, creates a new draft with the chosen template as its content.
 
@@ -230,14 +230,14 @@ The brand spec (locked April 2026) specifies `SoftwareApplication + WebSite + We
 
   The picker UI: a simple modal (`<dialog>` native element) with a grid of cards (`rounded-card bg-bg-elevated border border-border-default`), one per template. No PrimeReact. Respects `animate-dialog-in` entrance.
 
-- [ ] **3.2 — ⌘D keyboard shortcut to open drafts**
+- [x] **3.2 — ⌘D keyboard shortcut to open drafts**
 
   The PRODUCT.md documents the "Open drafts" shortcut as "—" (not implemented). Add `⌘D` (Mac) / `Ctrl+D` (Win/Linux) in `src/app/app/AppClient.tsx`, alongside the existing `⌘↵` publish shortcut.
 
   - Update the overflow menu item label in `TopBar.tsx` to show the shortcut: `⌘D`
   - Update `PRODUCT.md` keyboard shortcuts table
 
-- [ ] **3.3 — Tab key handling in the editor textarea**
+- [x] **3.3 — Tab key handling in the editor textarea**
 
   The PasteInput textarea does not intercept Tab. Pressing Tab navigates away from the editor instead of inserting indentation — a hard friction point when writing nested lists or code blocks.
 
@@ -248,7 +248,7 @@ The brand spec (locked April 2026) specifies `SoftwareApplication + WebSite + We
 
   The handler should use the existing `applyFormat` pattern — read `selectionStart`/`selectionEnd`, mutate the value string, call `onChange`, then restore selection via `requestAnimationFrame`.
 
-- [ ] **3.4 — Client-side syntax highlighting for code blocks**
+- [x] **3.4 — Client-side syntax highlighting for code blocks**
 
   Code blocks in `BlockRenderer` currently render monochrome text. Syntax highlighting dramatically improves the quality of technical content — the primary use case.
 
@@ -261,7 +261,7 @@ The brand spec (locked April 2026) specifies `SoftwareApplication + WebSite + We
 
   The same highlighting should apply on both the editor preview pane and the published share page (BlockRenderer is shared).
 
-- [ ] **3.5 — Reading time indicator on published share pages**
+- [x] **3.5 — Reading time indicator on published share pages**
 
   Add a "~N min read" estimate to the share page header, between the expiry badge and the export menu. Calculated from the block content — not stored, computed at render time.
 

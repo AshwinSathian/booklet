@@ -14,6 +14,7 @@ import { SegmentedControl } from "../ui/SegmentedControl";
 import ThemeToggle from "../ui/ThemeToggle";
 import { useToast } from "../ui/ToastProvider";
 import { DraftsDialog } from "./DraftsDialog";
+import { TemplatesDialog } from "./TemplatesDialog";
 
 export type SaveState = "saved" | "saving";
 type EditorStatus = "idle" | "typing" | "publishing" | "published" | "error";
@@ -512,6 +513,8 @@ export function TopBar({
   lastSavedAtLabel,
   showSaveWarning,
   onImportMarkdown,
+  onInsertTemplate,
+  onOpenDraftsShortcutRegistered,
 }: {
   status: EditorStatus;
   canPublish: boolean;
@@ -536,9 +539,12 @@ export function TopBar({
   lastSavedAtLabel?: string | null;
   showSaveWarning?: boolean;
   onImportMarkdown: (title: string, raw: string) => void;
+  onInsertTemplate?: (title: string, content: string) => void;
+  onOpenDraftsShortcutRegistered?: (fn: () => void) => void;
 }) {
   const [visibleSettings, setVisibleSettings] = useState(false);
   const [visibleDrafts, setVisibleDrafts] = useState(false);
+  const [visibleTemplates, setVisibleTemplates] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const toast = useToast();
@@ -590,13 +596,20 @@ export function TopBar({
 
   const { isSignedIn } = useUser();
 
+  useEffect(() => {
+    if (onOpenDraftsShortcutRegistered) {
+      onOpenDraftsShortcutRegistered(() => setVisibleDrafts(true));
+    }
+  }, [onOpenDraftsShortcutRegistered]);
+
   const menuItems: MenuItem[] = [
     ...(isSignedIn ? [
       { type: "item" as const, label: "My pages", icon: "external" as IconName, onClick: () => { window.location.href = ROUTES.myPages; } },
       { type: "separator" as const },
     ] : []),
     { type: "item", label: "New draft",        icon: "plus",     shortcut: "⌘B", onClick: onNew },
-    { type: "item", label: "My drafts",        icon: "list",                     onClick: () => setVisibleDrafts(true) },
+    { type: "item", label: "My drafts",        icon: "list",     shortcut: "⌘D", onClick: () => setVisibleDrafts(true) },
+    { type: "item", label: "Templates",        icon: "markdown",                 onClick: () => setVisibleTemplates(true) },
     { type: "item", label: "Import Markdown",  icon: "import",                   onClick: openImportPicker },
     { type: "separator" },
     { type: "item", label: "Copy as Markdown", icon: "copy",                     onClick: () => void onCopyMarkdown() },
@@ -724,6 +737,14 @@ export function TopBar({
           setVisibleDrafts(false);
         }}
         onHide={() => setVisibleDrafts(false)}
+      />
+
+      <TemplatesDialog
+        visible={visibleTemplates}
+        onHide={() => setVisibleTemplates(false)}
+        onSelect={(t) => {
+          onInsertTemplate?.(t.name, t.content);
+        }}
       />
     </header>
   );
