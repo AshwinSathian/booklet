@@ -401,9 +401,7 @@ Per-page actions:
 
 ---
 
-## Account Tiers
-
-Readable is **completely free**. There is no paid tier, no freemium model, no credit card required.
+## Anonymous vs. Signed-in
 
 | | Anonymous | Signed-in (free account) |
 |---|---|---|
@@ -482,15 +480,6 @@ Readable supports GFM — the most widely used Markdown dialect:
 - Images (external URLs only; inline images from data URIs are not supported)
 - Mermaid diagram blocks
 - HTML in Markdown is **not** rendered (security policy)
-
----
-
-## Pricing
-
-**Free.** No paid tier. No credit card. No freemium expiration.
-
-- Anonymous use: all features except permanent pages and account features
-- Signed-in use (Clerk account): all features, permanently, for free
 
 ---
 

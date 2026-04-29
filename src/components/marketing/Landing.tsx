@@ -655,121 +655,6 @@ Authorization: Bearer rk_live_...`}
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Pricing / account section
-// ─────────────────────────────────────────────────────────────────────────────
-
-function PricingCards() {
-  const anonymous = [
-    "Live editor and preview",
-    "Formatting toolbar for common syntax",
-    "Unlimited local drafts",
-    "Publish with one click",
-    "All rendering features",
-    "Mermaid diagram support",
-    "Export as Markdown, HTML, or PDF",
-    "Pages live for 30 days",
-  ];
-  const account = [
-    "Everything in the free tier",
-    "Permanent pages — no expiry",
-    "Custom URL slugs",
-    "View count tracking",
-    "My Pages dashboard",
-    "Unlisted (link-only) pages",
-    "REST API + API key management",
-  ];
-
-  return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 max-w-3xl mx-auto">
-      {/* No account */}
-      <div className="flex flex-col gap-5 rounded-2xl border border-border-default bg-bg-elevated p-6 shadow-card">
-        <div>
-          <div className="text-[13px] font-semibold uppercase tracking-widest text-text-muted">
-            No account
-          </div>
-          <div className="mt-2 text-[28px] font-bold tracking-tight">Free</div>
-          <div className="mt-1 text-[14px] text-text-secondary">
-            Start immediately. No sign-up.
-          </div>
-        </div>
-        <ul className="flex flex-col gap-2.5">
-          {anonymous.map((item) => (
-            <li key={item} className="flex items-start gap-2.5 text-[14px] text-text-secondary">
-              <svg className="mt-0.5 shrink-0 text-text-muted" width="14" height="14" fill="none" viewBox="0 0 14 14" aria-hidden>
-                <path d="M2.5 7.5 5.5 10.5 11.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              {item}
-            </li>
-          ))}
-        </ul>
-        <PrimaryButton
-          href={ROUTES.app}
-          onClick={() => trackEvent("open_editor_clicked", { location: "pricing_anon" })}
-        >
-          Open the editor
-          <svg width="12" height="12" fill="none" viewBox="0 0 12 12" aria-hidden>
-            <path d="M2.5 9.5 9.5 2.5M9.5 2.5H4M9.5 2.5V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </PrimaryButton>
-      </div>
-
-      {/* Free account */}
-      <div className="flex flex-col gap-5 rounded-2xl border border-accent/25 bg-bg-elevated p-6 shadow-card relative overflow-hidden">
-        {/* Subtle accent glow */}
-        <div aria-hidden className="pointer-events-none absolute -top-12 right-0 h-40 w-40 rounded-full bg-accent opacity-[0.09] blur-2xl" />
-
-        <div className="relative">
-          <div className="flex items-center gap-2">
-            <div className="text-[13px] font-semibold uppercase tracking-widest text-accent">
-              Free account
-            </div>
-            <span className="rounded-full bg-accent-dim px-2 py-0.5 text-2xs font-semibold text-accent">
-              Recommended
-            </span>
-          </div>
-          <div className="mt-2 text-[28px] font-bold tracking-tight">Free</div>
-          <div className="mt-1 text-[14px] text-text-secondary">
-            Sign in with Google or GitHub.
-          </div>
-        </div>
-        <ul className="relative flex flex-col gap-2.5">
-          {account.map((item, i) => (
-            <li
-              key={item}
-              className={cn(
-                "flex items-start gap-2.5 text-[14px]",
-                i === 0 ? "text-text-muted" : "text-text-secondary",
-              )}
-            >
-              <svg
-                className={cn("mt-0.5 shrink-0", i === 0 ? "text-text-muted" : "text-accent")}
-                width="14"
-                height="14"
-                fill="none"
-                viewBox="0 0 14 14"
-                aria-hidden
-              >
-                <path d="M2.5 7.5 5.5 10.5 11.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              {item}
-            </li>
-          ))}
-        </ul>
-        <PrimaryButton
-          href={ROUTES.signUp}
-          onClick={() => trackEvent("sign_up_clicked", { location: "pricing" })}
-        >
-          Create a free account
-          <svg width="12" height="12" fill="none" viewBox="0 0 12 12" aria-hidden>
-            <path d="M2.5 9.5 9.5 2.5M9.5 2.5H4M9.5 2.5V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </PrimaryButton>
-      </div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Main Landing component
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -1026,12 +911,6 @@ export function Landing() {
                 className="text-sm text-text-muted transition hover:text-text-primary"
               >
                 Examples
-              </a>
-              <a
-                href="#pricing"
-                className="text-sm text-text-muted transition hover:text-text-primary"
-              >
-                Pricing
               </a>
             </nav>
             <div className="flex items-center gap-2">
@@ -1303,21 +1182,6 @@ export function Landing() {
       <Container><Divider /></Container>
 
       {/* ──────────────────────────────────────────────────────────────────── */}
-      {/* Pricing                                                               */}
-      {/* ──────────────────────────────────────────────────────────────────── */}
-      <Section
-        id="pricing"
-        eyebrow="Pricing"
-        title="Everything. Free."
-        subtitle="No paid tier. No credit card. No freemium expiration. Readable is free for everyone."
-        center
-      >
-        <PricingCards />
-      </Section>
-
-      <Container><Divider /></Container>
-
-      {/* ──────────────────────────────────────────────────────────────────── */}
       {/* FAQ                                                                   */}
       {/* ──────────────────────────────────────────────────────────────────── */}
       <Section id="faq" eyebrow="FAQ" title="Quick answers." center>
@@ -1460,9 +1324,6 @@ export function Landing() {
               </a>
               <a href="#api" className="transition hover:text-text-primary">
                 API
-              </a>
-              <a href="#pricing" className="transition hover:text-text-primary">
-                Pricing
               </a>
               <a href="#faq" className="transition hover:text-text-primary">
                 FAQ
