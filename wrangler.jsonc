@@ -67,6 +67,11 @@
    */
   "vars": {
     "NEXT_PUBLIC_SITE_URL": "https://readable.ashwinsathian.com",
-    "NEXT_PUBLIC_GA_MEASUREMENT_ID ": "G-Q8YDP8LXZ3",
+    "NEXT_PUBLIC_GA_MEASUREMENT_ID": "G-Q8YDP8LXZ3",
+    "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_live_Y2xlcmsuYXNod2luc2F0aGlhbi5jb20k",
+    "NEXT_PUBLIC_CLERK_SIGN_IN_URL": "/sign-in",
+    "NEXT_PUBLIC_CLERK_SIGN_UP_URL": "/sign-up",
+    "NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL": "/app",
+    "NEXT_PUBLIC_CLERK_AFTER_SIGN_OUT_URL": "/",
   },
 }
