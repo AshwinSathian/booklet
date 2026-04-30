@@ -69,7 +69,7 @@ function SlugEditor({
     if (value === slug) { cancel(); return; }
 
     if (value !== null && !isValidSlug(value)) {
-      setError("1-60 chars, lowercase letters/numbers/hyphens only.");
+      setError("Use 1–60 lowercase letters, digits, or hyphens.");
       return;
     }
 

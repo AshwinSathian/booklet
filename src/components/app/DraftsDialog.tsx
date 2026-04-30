@@ -221,8 +221,7 @@ export function DraftsDialog({
             <div className="rounded-xl border border-outline/60 bg-bg-glass/40 p-5">
               <div className="text-sm font-semibold">No drafts yet.</div>
               <div className="mt-1.5 text-sm leading-relaxed text-text-secondary">
-                Drafts live on this device and autosave as you type. Publish creates a shareable
-                snapshot; your draft stays editable.
+                Drafts autosave to your browser. Publishing creates a shareable link — your draft stays here, ready to edit.
               </div>
             </div>
           ) : (
@@ -306,12 +305,12 @@ export function DraftsDialog({
                     </div>
 
                     {isEditing && !isValidTitle(editingTitle) ? (
-                      <div className="text-xs text-red-400">Title cannot be empty.</div>
+                      <div className="text-xs text-red-400">A title is required.</div>
                     ) : null}
 
                     {isConfirmingDelete ? (
                       <div className="flex items-center justify-between gap-2 rounded-lg border border-red-500/20 bg-red-500/8 px-3 py-2">
-                        <span className="text-xs text-red-400">Delete this draft? This cannot be undone.</span>
+                        <span className="text-xs text-red-400">Delete this draft? You can't undo this.</span>
                         <div className="flex gap-1.5">
                           <button
                             type="button"

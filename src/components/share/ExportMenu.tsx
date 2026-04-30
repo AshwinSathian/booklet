@@ -123,7 +123,7 @@ export function ExportMenu({
             <span className="text-text-muted shrink-0">
               <Icon name="print" size={14} />
             </span>
-            <span className="flex-1 text-left">Print / Save as PDF</span>
+            <span className="flex-1 text-left">Print or Save as PDF</span>
           </button>
         </div>
       ) : null}

@@ -59,17 +59,17 @@ export default async function MyPagesPage() {
             <h1 className="text-xl font-semibold">My pages</h1>
             <p className="mt-0.5 text-sm text-text-secondary">
               {pages.length === 0
-                ? "No published pages yet."
+                ? "No pages yet."
                 : pages.length === 1
-                  ? "1 published page"
-                  : `${pages.length} published pages`}
+                  ? "1 page"
+                  : `${pages.length} pages`}
             </p>
           </div>
           <Link
             href={ROUTES.app}
             className="inline-flex items-center gap-1.5 rounded-pill bg-accent px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-accent-hover shrink-0"
           >
-            + New page
+            New page
           </Link>
         </div>
 

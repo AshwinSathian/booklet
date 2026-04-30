@@ -993,9 +993,8 @@ export function Landing() {
               variants={reduce ? undefined : fadeUp}
               className="mt-6 max-w-2xl text-pretty text-[18px] leading-[1.75] text-text-secondary"
             >
-              Readable turns your plain text into a beautifully formatted page — with
-              proper headings, code blocks, and tables — shareable with a single link.
-              No setup, no noise.
+              Readable turns Markdown into a beautifully formatted page — proper
+              headings, code blocks, tables — shareable with one link. No setup, no noise.
             </motion.p>
 
             {/* CTAs */}
@@ -1008,7 +1007,7 @@ export function Landing() {
                 large
                 onClick={() => trackEvent("open_editor_clicked", { location: "hero" })}
               >
-                Open the editor — it&apos;s free
+                Open the editor
                 <svg width="14" height="14" fill="none" viewBox="0 0 12 12" aria-hidden>
                   <path
                     d="M2.5 9.5 9.5 2.5M9.5 2.5H4M9.5 2.5V8"
@@ -1118,8 +1117,8 @@ export function Landing() {
       <Section
         id="features"
         eyebrow="Features"
-        title="Everything your share needs."
-        subtitle="Readable handles all the formatting complexity so your content lands exactly the way you meant it — for everyone on the receiving end."
+        title="Everything it needs to land well."
+        subtitle="Every formatting detail handled. Your content arrives exactly as you wrote it — for anyone on the receiving end."
       >
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {features.map((f) => (
@@ -1213,26 +1212,20 @@ export function Landing() {
             that never expire.
           </FaqItem>
           <FaqItem question="Can I edit after publishing?">
-            Anonymous pages are immutable — edit your local draft and republish to get a new link.
-            Signed-in users can use the API to republish updated content to the same page ID,
-            keeping the URL unchanged.
+            Anonymous pages can't be edited after publishing — update your draft and republish for a new link.
+            Signed-in users can update pages in place, keeping the same URL.
           </FaqItem>
           <FaqItem question="Can I export a published page?">
-            Yes — the share page has an <strong>Export</strong> menu with three options: download the original
-            Markdown source (available for pages published recently), download a self-contained HTML file
-            with inline styles, or use Print / Save as PDF (File → Print or ⌘+P) for a clean,
-            chrome-free PDF.
+            Yes — every published page has an <strong>Export</strong> menu. Download the original Markdown source,
+            a self-contained HTML file, or use Print or Save as PDF (⌘P) for a clean, chrome-free PDF.
           </FaqItem>
           <FaqItem question="Where are drafts stored?">
-            Entirely in your browser&apos;s localStorage. Nothing is sent to a server
-            until you deliberately hit Publish. Clearing your browser&apos;s storage will delete local drafts.
+            Entirely in your browser. Nothing leaves your device until you hit Publish. Clearing browser storage removes local drafts.
           </FaqItem>
           <FaqItem question="Is there an API?">
-            Yes — Readable has a REST API for publishing pages programmatically.{" "}
-            <code className="rounded bg-fill-2 px-1 py-0.5 font-mono text-xs">POST /api/v1/publish</code>{" "}
-            creates a new page;{" "}
-            <code className="rounded bg-fill-2 px-1 py-0.5 font-mono text-xs">PATCH /api/v1/pages/{"{id}"}</code>{" "}
-            updates an existing one. Sign in to generate an API key from the My Pages dashboard.
+            Yes. Publish pages directly from CI/CD pipelines, scripts, or automation — using a simple REST API.
+            Sign in to generate a key from My Pages, then see the full{" "}
+            <a href="/api-docs" className="text-accent hover:underline">API reference</a>.
           </FaqItem>
           <FaqItem question="What Markdown is supported?">
             Readable supports GitHub-Flavored Markdown (GFM): H1–H4 headings, bold, italic,
@@ -1241,8 +1234,7 @@ export function Landing() {
             HTML in Markdown is not rendered for security reasons.
           </FaqItem>
           <FaqItem question="Is there a size limit?">
-            The editor accepts up to 200,000 characters. Published page payloads are capped at
-            600,000 bytes to keep edge storage fast.
+            Up to 200,000 characters in the editor. Published pages are capped at 600 KB.
           </FaqItem>
         </div>
       </Section>

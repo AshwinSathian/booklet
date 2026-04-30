@@ -398,7 +398,7 @@ function AppPageContent() {
 
   const onInsertSample = useCallback(() => {
     setRaw(SAMPLE_MARKDOWN);
-    toast.info("Inserted sample", "Edit it and publish when ready.");
+    toast.info("Sample loaded", "Edit and publish when ready.");
     focusFnRef.current?.();
   }, [toast]);
 
@@ -516,7 +516,7 @@ function AppPageContent() {
         "publish_ok",
         "success",
         "Published",
-        "Your share link is ready.",
+        "Your link is ready.",
       );
 
       // Keep existing Phase 1 event for continuity.
@@ -563,7 +563,7 @@ function AppPageContent() {
         "publish_ok",
         "success",
         "Updated",
-        "Your page has been updated.",
+        "Same URL, new content.",
       );
 
       setCopyLinkPulse(true);
@@ -579,7 +579,7 @@ function AppPageContent() {
 
   const onCopyLink = useCallback(async () => {
     if (!lastPublishedUrl) {
-      toast.info("No link yet", "Publish first to get a share link.");
+      toast.info("No link yet", "Publish to get your link.");
       return;
     }
 
@@ -589,7 +589,7 @@ function AppPageContent() {
         "copy_link",
         "success",
         "Copied",
-        "Link copied to clipboard.",
+        "Link is on your clipboard.",
       );
     } catch (e) {
       toast.error("Copy failed", toErrorMessage(e));
@@ -598,7 +598,7 @@ function AppPageContent() {
 
   const onOpenPublished = useCallback(() => {
     if (!lastPublishedUrl) {
-      toast.info("No link yet", "Publish first to get a share link.");
+      toast.info("No link yet", "Publish to get your link.");
       return;
     }
 

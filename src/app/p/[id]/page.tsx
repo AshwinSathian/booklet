@@ -73,7 +73,7 @@ export async function generateMetadata({
   if (quotaExceeded) {
     return buildMetadata({
       title: "Service temporarily unavailable",
-      description: "Readable is temporarily unavailable. Please try again later.",
+      description: "Readable is temporarily unavailable. Try again later.",
       pathname: `/p/${idOrSlug}`,
       noIndex: true,
     });
@@ -280,8 +280,7 @@ function ServiceUnavailable() {
           </div>
           <h1 className="text-lg font-semibold">Temporarily unavailable</h1>
           <p className="mt-2 text-sm text-text-secondary">
-            Readable has reached its free-tier daily limit. We&apos;re in beta and this
-            resets automatically at midnight UTC. Please check back shortly.
+            Readable has reached its free-tier daily limit. It resets at midnight UTC. Check back soon.
           </p>
           <Link
             href={ROUTES.home}
@@ -323,9 +322,9 @@ function NotFoundOrExpired() {
             </svg>
           </div>
 
-          <h1 className="text-xl font-semibold">This page has expired or doesn&apos;t exist</h1>
+          <h1 className="text-xl font-semibold">This page doesn&apos;t exist.</h1>
           <p className="mt-2 text-sm text-text-secondary leading-relaxed">
-            Anonymous pages expire after 30 days. Sign in to publish permanent pages that never expire.
+            Anonymous pages expire after 30 days. Sign in for pages that never expire.
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">

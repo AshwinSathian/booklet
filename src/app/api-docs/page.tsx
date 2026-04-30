@@ -185,7 +185,7 @@ export default function ApiDocsPage() {
           </Section>
 
           <Section id="update" title="Update a page">
-            <Endpoint method="PATCH" path="/api/v1/pages/{id}" description="Republishes content to an existing page. The URL stays the same. Only the page owner can update.">
+            <Endpoint method="PATCH" path="/api/v1/pages/{id}" description="Updates an existing page in place. The URL stays the same. Only the page owner can update.">
               <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">Request body</p>
               <Pre>{`{ "raw": "# Updated content\\n\\n..." }`}</Pre>
               <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mt-4 mb-2">Response 200</p>
@@ -243,7 +243,7 @@ export default function ApiDocsPage() {
           </Section>
 
           <Section id="delete" title="Delete a page">
-            <Endpoint method="DELETE" path="/api/v1/pages/{id}" description="Permanently deletes a page. Cannot be undone.">
+            <Endpoint method="DELETE" path="/api/v1/pages/{id}" description="Permanently deletes a page. This can't be undone.">
               <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">Response 200</p>
               <Pre>{`{ "ok": true }`}</Pre>
               <div className="mt-4">
@@ -257,7 +257,7 @@ export default function ApiDocsPage() {
           </Section>
 
           <Section id="errors" title="Error format">
-            <p className="text-sm text-text-secondary mb-3">All error responses use a consistent shape:</p>
+            <p className="text-sm text-text-secondary mb-3">All errors use the same shape:</p>
             <Pre>{`{
   "error": "Human-readable error message"
 }`}</Pre>
