@@ -278,7 +278,7 @@ The brand spec (locked April 2026) specifies `SoftwareApplication + WebSite + We
 
 > **Priority: Medium-high.** Improves reader experience and organic discoverability.
 
-- [ ] **4.1 — Page-specific dynamic OG images**
+- [x] **4.1 — Page-specific dynamic OG images**
 
   All share pages currently use the same generic OG image. A page titled "Q4 Incident Summary" shares an image that says nothing about its content on Slack/Twitter unfurls.
 
@@ -289,7 +289,7 @@ The brand spec (locked April 2026) specifies `SoftwareApplication + WebSite + We
 
   No WASM. Pure SVG string response. Zero cost. The existing routes already handle SVG rendering — this adds title injection only.
 
-- [ ] **4.2 — JSON-LD structured data on home page** *(fixes BUG-S7)*
+- [x] **4.2 — JSON-LD structured data on home page** *(fixes BUG-S7)*
 
   Add a `<script type="application/ld+json">` block to `src/app/page.tsx` or `src/components/marketing/Landing.tsx`:
 
@@ -308,13 +308,13 @@ The brand spec (locked April 2026) specifies `SoftwareApplication + WebSite + We
 
   Also add `WebSite` schema with `SearchAction` stub and `WebPage` schema for the home route.
 
-- [ ] **4.3 — Heading anchor links on all share pages, not just ToC pages**
+- [x] **4.3 — Heading anchor links on all share pages, not just ToC pages**
 
   In `src/app/p/[id]/page.tsx`, `buildToc` and `anchorMap` are only generated when `showToc` is true (≥ 3 headings). Pages with 1–2 headings get no anchor IDs and no deep-link capability.
 
   **Fix:** Always call `buildToc(doc.blocks)` to get the `anchorMap`. Pass the map to `BlockRenderer` unconditionally. Keep `showToc` as the separate guard for rendering the ToC sidebar/accordion.
 
-- [ ] **4.4 — Improved 404 / expired page**
+- [x] **4.4 — Improved 404 / expired page**
 
   The current `NotFoundOrExpired` component in `src/app/p/[id]/page.tsx` is functional but minimal. It dead-ends the user.
 

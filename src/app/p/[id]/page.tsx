@@ -92,8 +92,9 @@ export async function generateMetadata({
   const title = extractTitle(doc.blocks) ?? "Shared page";
   const description = extractDescription(doc.blocks);
 
-  const ogImage = absoluteUrl("/opengraph-image");
-  const twImage = absoluteUrl("/twitter-image");
+  const titleParam = encodeURIComponent(title);
+  const ogImage = absoluteUrl(`/opengraph-image?title=${titleParam}`);
+  const twImage = absoluteUrl(`/twitter-image?title=${titleParam}`);
 
   return {
     ...buildMetadata({
@@ -108,13 +109,13 @@ export async function generateMetadata({
       title: `${title} — ${APP_NAME}`,
       description,
       url: absoluteUrl(`/p/${idOrSlug}`),
-      images: [{ url: ogImage, width: 1200, height: 630, alt: `${APP_NAME} preview` }],
+      images: [{ url: ogImage, width: 1200, height: 630, alt: title }],
     },
     twitter: {
       card: "summary_large_image",
       title: `${title} — ${APP_NAME}`,
       description,
-      images: [{ url: twImage, width: 1200, height: 630, alt: `${APP_NAME} preview` }],
+      images: [{ url: twImage, width: 1200, height: 630, alt: title }],
     },
   };
 }
@@ -149,6 +150,7 @@ export default async function SharePage({
 
   const { toc, anchorMap } = buildToc(doc.blocks ?? []);
   const showToc = toc.length >= MIN_TOC_HEADINGS;
+  // anchorMap is always populated so all headings get IDs regardless of TOC visibility
   const maxW = doc.settings?.width === "wide" ? "max-w-4xl" : "max-w-3xl";
   const pageTitle = extractTitle(doc.blocks) ?? "Shared page";
   const readMins = readingTimeMinutes(doc.blocks ?? []);
@@ -297,6 +299,12 @@ function ServiceUnavailable() {
 // Not found / expired
 // ---------------------------------------------------------------------------
 
+const EXAMPLE_PAGES = [
+  { label: "Incident Report", href: "https://readable.ashwinsathian.com/p/GqfTrJQg0t" },
+  { label: "Architecture Decision Record", href: "https://readable.ashwinsathian.com/p/Vmm78unhPg" },
+  { label: "Technical Docs", href: "https://readable.ashwinsathian.com/p/6MTZfx3M6q" },
+] as const;
+
 function NotFoundOrExpired() {
   return (
     <div className="min-h-screen bg-bg text-text-primary flex flex-col">
@@ -306,29 +314,57 @@ function NotFoundOrExpired() {
         </div>
       </header>
 
-      <main className="flex-1 flex items-center justify-center px-4 py-16">
-        <div className="text-center max-w-sm">
-          <div className="mb-6 flex justify-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-card bg-fill-2 text-text-muted">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden>
-                <rect x="4" y="2" width="16" height="20" rx="2" stroke="currentColor" strokeWidth="1.5" />
-                <path d="M9 9l6 6M15 9l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <main className="flex-1 px-4 py-16">
+        <div className="mx-auto max-w-xl">
+          <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-card bg-fill-2 text-text-muted">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden>
+              <rect x="4" y="2" width="16" height="20" rx="2" stroke="currentColor" strokeWidth="1.5" />
+              <path d="M9 9l6 6M15 9l-6 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </div>
+
+          <h1 className="text-xl font-semibold">This page has expired or doesn&apos;t exist</h1>
+          <p className="mt-2 text-sm text-text-secondary leading-relaxed">
+            Anonymous pages expire after 30 days. Sign in to publish permanent pages that never expire.
+          </p>
+
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link
+              href={ROUTES.app}
+              className="inline-flex items-center gap-1.5 rounded-pill bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-hover active:scale-[0.97]"
+            >
+              Create a page
+              <svg width="11" height="11" fill="none" viewBox="0 0 12 12" aria-hidden>
+                <path d="M2.5 9.5 9.5 2.5M9.5 2.5H4M9.5 2.5V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
+            </Link>
+            <Link
+              href="/?#examples"
+              className="inline-flex items-center gap-1.5 rounded-pill border border-border-default px-4 py-2 text-sm font-medium text-text-secondary transition hover:text-text-primary hover:bg-fill-2"
+            >
+              Browse examples
+            </Link>
+          </div>
+
+          <div className="mt-10">
+            <p className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-3">Example pages</p>
+            <div className="flex flex-col gap-2">
+              {EXAMPLE_PAGES.map((ex) => (
+                <a
+                  key={ex.href}
+                  href={ex.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between rounded-xl border border-border-subtle px-4 py-3 text-sm text-text-secondary transition hover:border-accent-soft/40 hover:text-text-primary hover:bg-fill-1 group"
+                >
+                  <span>{ex.label}</span>
+                  <svg width="12" height="12" fill="none" viewBox="0 0 12 12" className="text-text-muted group-hover:text-accent transition" aria-hidden>
+                    <path d="M2.5 9.5 9.5 2.5M9.5 2.5H4M9.5 2.5V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </a>
+              ))}
             </div>
           </div>
-          <h1 className="text-lg font-semibold">Page not found</h1>
-          <p className="mt-2 text-sm text-text-secondary">
-            This page doesn&apos;t exist or has expired after 30 days.
-          </p>
-          <Link
-            href={ROUTES.app}
-            className="mt-6 inline-flex items-center gap-1.5 rounded-pill bg-accent px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover active:scale-[0.97]"
-          >
-            Create a Readable page
-            <svg width="12" height="12" fill="none" viewBox="0 0 12 12" aria-hidden>
-              <path d="M2.5 9.5 9.5 2.5M9.5 2.5H4M9.5 2.5V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </Link>
         </div>
       </main>
     </div>
