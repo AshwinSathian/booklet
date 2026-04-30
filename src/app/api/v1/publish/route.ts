@@ -59,6 +59,7 @@ export async function POST(req: Request) {
     createdAt: new Date().toISOString(),
     settings: payload.settings ?? DEFAULT_SETTINGS,
     blocks: payload.blocks,
+    ...(payload.raw ? { raw: payload.raw.slice(0, STORAGE.maxInputChars) } : {}),
   };
 
   try {

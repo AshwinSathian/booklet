@@ -1,9 +1,10 @@
 import type { PublishedDoc } from "@/lib/blocks";
 import { DEFAULT_SETTINGS } from "@/lib/blocks";
 import { BLOCKS, STORAGE } from "@/lib/constants";
-import { getPageRecord, updatePageRecord } from "@/lib/db";
+import { getPageRecord, updatePageRecord, deletePageRecord } from "@/lib/db";
 import { resolveApiKey } from "@/lib/api-key-auth";
-import { putDoc } from "@/lib/storage";
+import { parseToBlocks } from "@/lib/parse";
+import { putDoc, deleteDoc } from "@/lib/storage";
 import { QuotaExceededError, quotaErrorResponse } from "@/lib/quota";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
@@ -11,7 +12,8 @@ import { NextResponse } from "next/server";
 export const runtime = "nodejs";
 
 type UpdatePayload = {
-  blocks: PublishedDoc["blocks"];
+  blocks?: PublishedDoc["blocks"];
+  raw?: string;
   settings?: PublishedDoc["settings"];
 };
 
@@ -47,8 +49,12 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
+  if (payload?.raw && typeof payload.raw === "string") {
+    payload = { ...payload, blocks: parseToBlocks(payload.raw) };
+  }
+
   if (!payload?.blocks?.length) {
-    return NextResponse.json({ error: "Nothing to publish" }, { status: 400 });
+    return NextResponse.json({ error: "Nothing to publish — provide `blocks` or `raw` markdown." }, { status: 400 });
   }
 
   try {
@@ -65,6 +71,7 @@ export async function PATCH(
     createdAt: record.created_at,
     settings: payload.settings ?? DEFAULT_SETTINGS,
     blocks: payload.blocks,
+    ...(payload.raw ? { raw: payload.raw.slice(0, STORAGE.maxInputChars) } : {}),
   };
 
   try {
@@ -88,4 +95,46 @@ export async function PATCH(
   url.hash = "";
 
   return NextResponse.json({ id, url: url.toString(), updated_at: updatedAt });
+}
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const userId = await resolveApiKey(req);
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const rl = await checkRateLimit(`v1__delete__${userId}`, 60);
+  if (rl) return rl;
+
+  const { id } = await params;
+  if (!id?.trim()) {
+    return NextResponse.json({ error: "Missing page id" }, { status: 400 });
+  }
+
+  const record = await getPageRecord(id);
+  if (!record) {
+    return NextResponse.json({ error: "Page not found" }, { status: 404 });
+  }
+  if (record.user_id !== userId) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  // Delete KV content first; if D1 delete fails, the page is still gone.
+  try {
+    await deleteDoc(id);
+  } catch (e: unknown) {
+    if (e instanceof QuotaExceededError) return quotaErrorResponse(e);
+    throw e;
+  }
+
+  try {
+    await deletePageRecord(id);
+  } catch (dbErr) {
+    console.error("[v1/pages] D1 delete failed:", dbErr);
+  }
+
+  return NextResponse.json({ ok: true });
 }
