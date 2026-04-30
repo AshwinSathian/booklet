@@ -668,8 +668,8 @@ export function Landing() {
     () => [
       {
         n: "01",
-        title: "Paste your Markdown",
-        desc: "Drop in notes, READMEs, incident updates, or proposals — anything Markdown-shaped.",
+        title: "Write your Markdown",
+        desc: "Type, paste, or import — notes, READMEs, incident updates, proposals, anything Markdown-shaped.",
       },
       {
         n: "02",
@@ -728,7 +728,7 @@ export function Landing() {
           </svg>
         ),
         title: "One link. Instantly shareable.",
-        desc: "Hit publish and get a clean URL in seconds. Paste it into Slack, email, a PR, or a ticket — it just works.",
+        desc: "Hit publish and get a clean URL in seconds. Drop it into Slack, email, a PR, or a ticket — it just works.",
       },
       {
         icon: (
@@ -871,7 +871,7 @@ export function Landing() {
       {
         tag: "Onboarding",
         title: "Onboarding guides",
-        desc: "New hire guides, team wikis, service runbooks. Paste the Readable link in a welcome Slack message — zero setup for the reader.",
+        desc: "New hire guides, team wikis, service runbooks. Drop the Readable link in a welcome Slack message — zero setup for the reader.",
       },
       {
         tag: "Proposal",
@@ -993,8 +993,8 @@ export function Landing() {
               variants={reduce ? undefined : fadeUp}
               className="mt-6 max-w-2xl text-pretty text-[18px] leading-[1.75] text-text-secondary"
             >
-              Readable turns Markdown into a beautifully formatted page — proper
-              headings, code blocks, tables — shareable with one link. No setup, no noise.
+              Readable turns your Markdown into a beautifully formatted page — headings,
+              code blocks, tables, diagrams — shareable with one link. No setup. No noise.
             </motion.p>
 
             {/* CTAs */}
@@ -1102,7 +1102,7 @@ export function Landing() {
                 <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               <span className="text-[14px] text-text-secondary">
-                <span className="font-semibold text-text-primary">Readable</span> — paste, publish, share a link. No account, no access to grant, no formatting step.
+                <span className="font-semibold text-text-primary">Readable</span> — write, publish, share a link. No account, no access to grant, no formatting step.
               </span>
             </div>
           </div>
@@ -1137,8 +1137,8 @@ export function Landing() {
       <Section
         id="how"
         eyebrow="How it works"
-        title="Paste → preview → publish → share."
-        subtitle="Four steps that fit inside your existing workflow. No new tool to learn — just a cleaner way to forward what you already wrote."
+        title="Write. Preview. Publish. Share."
+        subtitle="Four steps that fit inside your existing workflow. No new tool to learn — just a cleaner way to share what you already wrote."
       >
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {steps.map((s) => (
@@ -1164,7 +1164,7 @@ export function Landing() {
         id="examples"
         eyebrow="Examples"
         title="Real pages, real use cases."
-        subtitle="If it gets pasted into Slack, emailed, or dropped into a ticket — it belongs in Readable."
+        subtitle="If it ends up in Slack, email, or a ticket — it belongs in Readable."
       >
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {useCases.map((c) => (
@@ -1198,7 +1198,7 @@ export function Landing() {
         <div className="mx-auto max-w-2xl rounded-2xl border border-border-default bg-bg-elevated px-7 shadow-card">
           <FaqItem question="Do I need an account?">
             No. {APP_NAME} works immediately — no signup, no email, no password. Just
-            paste and publish. A free account unlocks permanent pages, custom slugs,
+            write and publish. A free account unlocks permanent pages, custom slugs,
             view counts, the My Pages dashboard, and API access.
           </FaqItem>
           <FaqItem question="Are published pages public?">
@@ -1264,7 +1264,7 @@ export function Landing() {
                 Get started
               </div>
               <h2 className="mt-4 text-balance text-[30px] font-bold leading-[1.12] tracking-[-0.03em] sm:text-[40px]">
-                Paste once. Share a page people actually read.
+                Write once. Share a page people actually read.
               </h2>
               <p className="mx-auto mt-5 max-w-md text-[17px] leading-[1.72] text-text-secondary">
                 Free. No account. Under 30 seconds.

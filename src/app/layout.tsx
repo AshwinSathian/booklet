@@ -21,10 +21,10 @@ const SITE_URL =
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
 
-  title: `${APP_NAME} — Markdown to a Beautiful, Shareable Page`,
+  title: `${APP_NAME} — Write Markdown. Share a Beautiful Page.`,
 
   description:
-    "Paste Markdown. Get a clean, beautifully formatted page with one link. Perfect for incident reports, ADRs, READMEs, and technical docs. Free, no account required.",
+    "Write or paste Markdown and get a clean, beautifully formatted page in seconds. Perfect for incident reports, ADRs, READMEs, and technical docs. Free, no account required.",
 
   applicationName: APP_NAME,
 
@@ -60,31 +60,31 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: APP_NAME,
-    title: `${APP_NAME} — Markdown to a Beautiful, Shareable Page`,
+    title: `${APP_NAME} — Write Markdown. Share a Beautiful Page.`,
     description:
-      "Paste Markdown. Get a clean, beautifully formatted page with one link. Free, no account required.",
+      "Write or paste Markdown and get a clean, beautifully formatted page in seconds. Free, no account required.",
     url: SITE_URL,
     images: [
       {
         url: "/opengraph-image",
         width: 1200,
         height: 630,
-        alt: `${APP_NAME} — Markdown to a Beautiful, Shareable Page`,
+        alt: `${APP_NAME} — Write Markdown. Share a Beautiful Page.`,
       },
     ],
   },
 
   twitter: {
     card: "summary_large_image",
-    title: `${APP_NAME} — Markdown to a Beautiful, Shareable Page`,
+    title: `${APP_NAME} — Write Markdown. Share a Beautiful Page.`,
     description:
-      "Paste Markdown. Get a clean, beautifully formatted page with one link. Free, no account required.",
+      "Write or paste Markdown and get a clean, beautifully formatted page in seconds. Free, no account required.",
     images: [
       {
         url: "/twitter-image",
         width: 1200,
         height: 630,
-        alt: `${APP_NAME} — Markdown to a Beautiful, Shareable Page`,
+        alt: `${APP_NAME} — Write Markdown. Share a Beautiful Page.`,
       },
     ],
   },

@@ -90,10 +90,10 @@ function EmptyState({
           </div>
         </div>
         <div className="text-[15px] font-semibold tracking-tight">
-          Paste. Preview. Publish.
+          Write. Preview. Publish.
         </div>
         <div className="mt-2 text-sm leading-[1.7] text-text-secondary">
-          Type or paste Markdown on the left. Your formatted preview appears here live.
+          Type or paste Markdown on the left. Your formatted page appears here live.
         </div>
 
         {/* Sample Markdown teaser */}

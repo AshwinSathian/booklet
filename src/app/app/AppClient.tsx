@@ -469,7 +469,7 @@ function AppPageContent() {
 
   const onPublish = useCallback(async () => {
     if (!canPublish) {
-      toast.info("Nothing to publish", "Paste some content first.");
+      toast.info("Nothing to publish", "Write or paste something first.");
       return;
     }
 
@@ -538,7 +538,7 @@ function AppPageContent() {
 
   const onUpdatePage = useCallback(async () => {
     if (!canPublish) {
-      toast.info("Nothing to publish", "Paste some content first.");
+      toast.info("Nothing to publish", "Write or paste something first.");
       return;
     }
     if (!lastPublishedId || !lastPublishedOwned || !activeDraftId) return;

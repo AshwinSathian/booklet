@@ -265,7 +265,7 @@ export function PasteInput({
               });
             }
           }}
-          placeholder="Paste anything Markdown-shaped: notes, READMEs, incident summaries, tables, code…"
+          placeholder="Write or paste Markdown here — notes, READMEs, incident summaries, tables, code…"
           spellCheck={false}
           className={[
             "h-full w-full min-h-0 min-w-0",

@@ -17,7 +17,7 @@ export default function SignUpPage() {
       <main className="flex-1 flex flex-col items-center justify-center px-4 py-12 gap-6">
         <div className="text-center">
           <p className="text-sm text-text-secondary">
-            Create an account to keep your pages permanently and access them anywhere.
+            Create a free account. Keep pages permanently. Access them anywhere.
           </p>
         </div>
         <SignUp />

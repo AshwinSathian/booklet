@@ -17,8 +17,7 @@ export default function ShareError({
           Couldn&apos;t load this page
         </div>
         <div className="mt-3 text-sm text-text-secondary">
-          This can happen if the link expired, the backend is unavailable, or
-          the page failed to render.
+          The link may have expired, or something went wrong on our end.
         </div>
 
         <div className="mt-6 flex justify-center gap-3">

@@ -17,14 +17,14 @@ export default function SignInPage() {
       <main className="flex-1 flex flex-col items-center justify-center px-4 py-12 gap-6">
         <div className="text-center">
           <p className="text-sm text-text-secondary">
-            Sign in to keep your pages and access them anywhere.
+            Sign in to keep your pages forever and access them anywhere.
           </p>
         </div>
         <SignIn />
         <p className="text-xs text-text-muted text-center">
           No account?{" "}
           <Link href={ROUTES.app} className="text-accent hover:text-accent-soft transition-colors">
-            Just paste and publish — no sign-in needed.
+            Just write and publish — no sign-in needed.
           </Link>
         </p>
       </main>
