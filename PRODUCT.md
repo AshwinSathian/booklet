@@ -312,18 +312,18 @@ Publishes a new page and returns its URL.
 
 **Request body:**
 
+Supply either `raw` (Markdown string — parsed server-side) or `blocks` (pre-parsed block array):
+
+```json
+{ "raw": "# My Doc\n\nContent here." }
+```
+
 ```json
 {
   "blocks": [...],
-  "settings": {
-    "width": "normal"
-  }
+  "settings": { "width": "normal" }
 }
 ```
-
-`blocks` is the parsed block-format representation of the document (produced by the Readable parser).
-For CI/scripting use cases, you'll typically need to call the parse endpoint or use a client library
-to convert Markdown to blocks before publishing.
 
 **Response (201):**
 
@@ -338,7 +338,7 @@ to convert Markdown to blocks before publishing.
 
 | Status | Reason |
 |---|---|
-| 400 | Invalid JSON, empty blocks, or missing payload |
+| 400 | Invalid JSON, empty document, or missing `raw`/`blocks` |
 | 401 | Missing or invalid API key |
 | 413 | Document too large (>350KB) |
 | 500 | Internal storage error |
@@ -371,6 +371,77 @@ Republishes content to an existing page ID (account-owned pages only). Maintains
 | 403 | Page belongs to a different account |
 | 404 | Page not found |
 | 413 | Document too large |
+
+### List your pages
+
+```
+GET /api/v1/pages
+```
+
+Returns all pages owned by the authenticated account.
+
+**Response (200):**
+
+```json
+{
+  "pages": [
+    {
+      "id": "Ab3k91QxZp",
+      "title": "My Document",
+      "slug": "my-doc",
+      "visibility": "public",
+      "view_count": 42,
+      "url": "https://readable.app/p/my-doc",
+      "created_at": "2026-04-29T10:00:00.000Z",
+      "updated_at": "2026-04-29T10:00:00.000Z"
+    }
+  ]
+}
+```
+
+---
+
+### GitHub Actions workflow example
+
+Publish or update a Readable page every time you push a release tag:
+
+```yaml
+# .github/workflows/publish-release-notes.yml
+name: Publish release notes
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Publish to Readable
+        env:
+          READABLE_API_KEY: ${{ secrets.READABLE_API_KEY }}
+          PAGE_ID: ${{ vars.READABLE_PAGE_ID }}   # optional: set to update in-place
+        run: |
+          BODY=$(jq -n --rawfile raw CHANGELOG.md '{"raw": $raw}')
+
+          if [ -n "$PAGE_ID" ]; then
+            # Update existing page
+            curl -fsSL -X PATCH "https://readable.app/api/v1/pages/$PAGE_ID" \
+              -H "Authorization: Bearer $READABLE_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d "$BODY"
+          else
+            # Publish new page, print URL
+            curl -fsSL -X POST "https://readable.app/api/v1/publish" \
+              -H "Authorization: Bearer $READABLE_API_KEY" \
+              -H "Content-Type: application/json" \
+              -d "$BODY" | jq -r '.url'
+          fi
+```
+
+Set `READABLE_API_KEY` as a repository secret (Settings → Secrets → Actions). Optionally pin `READABLE_PAGE_ID` as a repository variable to update the same URL on every release.
 
 ### API use cases
 

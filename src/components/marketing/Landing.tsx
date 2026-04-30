@@ -662,7 +662,7 @@ Authorization: Bearer rdbl_...`}
 
 export function Landing() {
   const reduce = useReducedMotion();
-  const { isSignedIn } = useUser();
+  const { isSignedIn, isLoaded } = useUser();
 
   const steps = useMemo(
     () => [
@@ -914,14 +914,23 @@ export function Landing() {
               >
                 Examples
               </a>
+              <Link
+                href="/api-docs"
+                className="text-sm text-text-muted transition hover:text-text-primary"
+              >
+                API
+              </Link>
             </nav>
             <div className="flex items-center gap-2">
               <ThemeToggle />
-              {isSignedIn ? (
-                <UserButton />
-              ) : (
-                <GhostButton href={ROUTES.signIn}>Sign in</GhostButton>
-              )}
+              {/* Fixed-width slot avoids CLS while Clerk resolves auth state */}
+              <div className="w-18 flex justify-end">
+                {!isLoaded ? null : isSignedIn ? (
+                  <UserButton />
+                ) : (
+                  <GhostButton href={ROUTES.signIn}>Sign in</GhostButton>
+                )}
+              </div>
               <PrimaryButton
                 href={ROUTES.app}
                 onClick={() => trackEvent("open_editor_clicked", { location: "topbar" })}
@@ -1285,7 +1294,7 @@ export function Landing() {
                     />
                   </svg>
                 </PrimaryButton>
-                {!isSignedIn && (
+                {isLoaded && !isSignedIn && (
                   <GhostButton href={ROUTES.signUp} onClick={() => trackEvent("sign_up_clicked", { location: "cta" })}>
                     Create a free account
                   </GhostButton>
@@ -1330,6 +1339,9 @@ export function Landing() {
               <a href="#faq" className="transition hover:text-text-primary">
                 FAQ
               </a>
+              <Link href="/api-docs" className="transition hover:text-text-primary">
+                API docs
+              </Link>
             </nav>
           </div>
         </Container>

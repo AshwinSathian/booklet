@@ -330,7 +330,7 @@ The brand spec (locked April 2026) specifies `SoftwareApplication + WebSite + We
 
 > **Priority: Medium.** Fixes visible quality issues in the signed-in experience.
 
-- [ ] **5.1 — Visibility toggle icon fix** *(fixes BUG-S5)*
+- [x] **5.1 — Visibility toggle icon fix** *(fixes BUG-S5)*
 
   In `src/components/ui/Icon.tsx`, add an `eye-off` (or `eye-slash`) icon variant.
 
@@ -340,14 +340,14 @@ The brand spec (locked April 2026) specifies `SoftwareApplication + WebSite + We
 
   Also ensure the button has a proper `aria-label` that describes the *current* state and *action*, not just one of them.
 
-- [ ] **5.2 — My Pages empty state redesign** *(fixes BUG-S6)*
+- [x] **5.2 — My Pages empty state redesign** *(fixes BUG-S6)*
 
   Replace the `📄` emoji in `src/app/my-pages/MyPagesClient.tsx` with:
   - An inline SVG document icon (3–4 lines suggesting text, simple rectangle with corner fold)
   - Brand-consistent copy: "No pages yet." + "Publish your first →" linking to `/app`
   - Secondary link: "See example pages" linking to `/?#examples`
 
-- [ ] **5.3 — Post-publish continuity for signed-in users**
+- [x] **5.3 — Post-publish continuity for signed-in users**
 
   After a signed-in user publishes from the editor, the toast shows "Copied" / "Open". Add a third action in the toast or in the `PublishArea` post-publish state: "View in My Pages →" (`href="/my-pages"`). Only show this when `publishedOwned === true`.
 
@@ -359,13 +359,13 @@ The brand spec (locked April 2026) specifies `SoftwareApplication + WebSite + We
 
 > **Priority: Medium.** Completes the API surface and makes it usable from CI/CD.
 
-- [ ] **6.1 — `raw` markdown field support in v1 API**
+- [x] **6.1 — `raw` markdown field support in v1 API**
 
   The browser publish route (`/api/publish/route.ts`) accepts and stores an optional `raw` string. The v1 API publish route (`/api/v1/publish/route.ts`) does not. Pages published via API therefore cannot be downloaded as `.md` from the share page (the `ExportMenu` hides the "Download Markdown" option when `doc.raw` is absent).
 
   **Fix:** Add `raw?: string` to `PublishPayload` in `src/app/api/v1/publish/route.ts` and include it in the `PublishedDoc` construction (same `slice(0, STORAGE.maxInputChars)` guard already used in the browser route). Update PRODUCT.md API payload documentation.
 
-- [ ] **6.2 — `GET /api/v1/pages` — list owned pages**
+- [x] **6.2 — `GET /api/v1/pages` — list owned pages**
 
   Add a list endpoint so API users can enumerate their pages programmatically without logging into the dashboard.
 
@@ -396,7 +396,7 @@ The brand spec (locked April 2026) specifies `SoftwareApplication + WebSite + We
 
   > **Note:** The existing `src/app/api/v1/pages/[id]/route.ts` is the `PATCH` endpoint for updating a specific page. The new `route.ts` without `[id]` is the list endpoint — no conflict.
 
-- [ ] **6.3 — GitHub Actions workflow template in PRODUCT.md**
+- [x] **6.3 — GitHub Actions workflow template in PRODUCT.md**
 
   Add a "CI/CD recipe" section to `PRODUCT.md` (or a separate `docs/github-action.md`) showing a ready-to-paste GitHub Actions workflow that:
 
@@ -407,7 +407,7 @@ The brand spec (locked April 2026) specifies `SoftwareApplication + WebSite + We
 
   This is documentation/recipe work only — no new application code required.
 
-- [ ] **6.4 — `/api-docs` reference page**
+- [x] **6.4 — `/api-docs` reference page**
 
   A clean, static page at `/api-docs` showing all v1 API endpoints with:
   - Method + path
@@ -424,7 +424,7 @@ The brand spec (locked April 2026) specifies `SoftwareApplication + WebSite + We
 
 > **Priority: Medium.** Organic discovery improvements. All zero-cost.
 
-- [ ] **7.1 — Core Web Vitals audit and fixes**
+- [x] **7.1 — Core Web Vitals audit and fixes**
 
   Run a Lighthouse / PageSpeed audit on the production landing page. Target:
   - LCP < 2.5s
@@ -437,7 +437,7 @@ The brand spec (locked April 2026) specifies `SoftwareApplication + WebSite + We
   - `HeroMock` is pure CSS/HTML — should not be an LCP blocker. Confirm.
   - Largest risk: Clerk JS bundle loading on the landing page even for logged-out users. Clerk's `useUser()` hook in `Landing.tsx` forces the Clerk bundle to load eagerly. Evaluate whether the sign-in state can be deferred until interaction.
 
-- [ ] **7.2 — Sitemap completeness**
+- [x] **7.2 — Sitemap completeness**
 
   Review `src/app/sitemap.ts`. Ensure it includes:
   - Home page (`/`)
@@ -447,7 +447,7 @@ The brand spec (locked April 2026) specifies `SoftwareApplication + WebSite + We
 
   Published share pages (`/p/[id]`) should NOT be in the sitemap — they are ephemeral and link-only by design.
 
-- [ ] **7.3 — Footer and nav link to `/api-docs`**
+- [x] **7.3 — Footer and nav link to `/api-docs`**
 
   Once the API docs page exists (6.4), add it to the landing page footer nav and the top nav (after "API"). Minor update to `src/components/marketing/Landing.tsx`.
 

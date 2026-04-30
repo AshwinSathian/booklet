@@ -353,6 +353,15 @@ function PublishArea({
         >
           <Icon name="external" size={14} />
         </button>
+        {publishedOwned && (
+          <a
+            href="/my-pages"
+            className="hidden sm:flex items-center gap-1 text-xs text-text-muted hover:text-accent transition ml-0.5"
+          >
+            <Icon name="list" size={12} />
+            <span>My pages</span>
+          </a>
+        )}
       </div>
     );
   }

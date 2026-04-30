@@ -6,6 +6,7 @@ import { ensureDbUser } from "@/lib/db/ensure-user";
 import { createId } from "@/lib/id";
 import { resolveApiKey } from "@/lib/api-key-auth";
 import { extractDocTitle } from "@/lib/doc-title";
+import { parseToBlocks } from "@/lib/parse";
 import { putDoc } from "@/lib/storage";
 import { QuotaExceededError, quotaErrorResponse } from "@/lib/quota";
 import { checkRateLimit } from "@/lib/rate-limit";
@@ -14,7 +15,8 @@ import { NextResponse } from "next/server";
 export const runtime = "nodejs";
 
 type PublishPayload = {
-  blocks: PublishedDoc["blocks"];
+  blocks?: PublishedDoc["blocks"];
+  raw?: string;
   settings?: PublishedDoc["settings"];
 };
 
@@ -34,8 +36,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
+  if (payload?.raw && typeof payload.raw === "string") {
+    payload = { ...payload, blocks: parseToBlocks(payload.raw) };
+  }
+
   if (!payload?.blocks?.length) {
-    return NextResponse.json({ error: "Nothing to publish" }, { status: 400 });
+    return NextResponse.json({ error: "Nothing to publish — provide `blocks` or `raw` markdown." }, { status: 400 });
   }
 
   try {

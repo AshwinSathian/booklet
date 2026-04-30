@@ -311,6 +311,7 @@ function PageCard({
             type="button"
             onClick={() => void handleToggleVisibility()}
             disabled={togglingVisibility}
+            aria-label={page.visibility === "public" ? "Make unlisted" : "Make public"}
             title={page.visibility === "public" ? "Make unlisted" : "Make public"}
             className={[
               "flex h-8 w-8 items-center justify-center rounded-lg transition disabled:opacity-40",
@@ -319,7 +320,7 @@ function PageCard({
                 : "text-text-muted hover:text-text-primary hover:bg-fill-2 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100",
             ].join(" ")}
           >
-            <Icon name={page.visibility === "unlisted" ? "moon" : "moon"} size={14} />
+            <Icon name={page.visibility === "public" ? "eye" : "eye-off"} size={14} />
           </button>
 
           {confirming ? (
@@ -390,9 +391,20 @@ export function MyPagesList({
 
   if (pages.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
-        <div className="text-3xl">📄</div>
-        <p className="text-sm text-text-secondary">No pages yet. Go publish something!</p>
+      <div className="flex flex-col items-start justify-center py-20 gap-3">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" aria-hidden className="text-text-muted/40">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          <polyline points="14 2 14 8 20 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          <line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          <line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          <polyline points="10 9 9 9 8 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        </svg>
+        <p className="text-sm font-medium text-text-primary">No pages yet.</p>
+        <div className="flex items-center gap-3 text-sm">
+          <a href="/app" className="text-accent hover:underline">Publish your first →</a>
+          <span className="text-text-muted/40">·</span>
+          <a href="/#examples" className="text-text-muted hover:text-text-primary hover:underline">See example pages</a>
+        </div>
       </div>
     );
   }
