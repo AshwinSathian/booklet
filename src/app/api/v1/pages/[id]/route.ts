@@ -5,7 +5,6 @@ import { getPageRecord, updatePageRecord, deletePageRecord } from "@/lib/db";
 import { resolveApiKey } from "@/lib/api-key-auth";
 import { parseToBlocks } from "@/lib/parse";
 import { putDoc, deleteDoc } from "@/lib/storage";
-import { QuotaExceededError, quotaErrorResponse } from "@/lib/quota";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
 
@@ -77,7 +76,6 @@ export async function PATCH(
   try {
     await putDoc(id, doc, true);
   } catch (e: unknown) {
-    if (e instanceof QuotaExceededError) return quotaErrorResponse(e);
     const msg = e instanceof Error ? e.message : "Update failed";
     return NextResponse.json({ error: msg }, { status: 500 });
   }
@@ -86,7 +84,7 @@ export async function PATCH(
   try {
     await updatePageRecord(id, { updated_at: updatedAt });
   } catch (dbErr) {
-    console.error("[v1/pages] D1 updated_at write failed:", dbErr);
+    console.error("[v1/pages] DB updated_at write failed:", dbErr);
   }
 
   const url = new URL(req.url);
@@ -122,18 +120,17 @@ export async function DELETE(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  // Delete KV content first; if D1 delete fails, the page is still gone.
   try {
     await deleteDoc(id);
   } catch (e: unknown) {
-    if (e instanceof QuotaExceededError) return quotaErrorResponse(e);
-    throw e;
+    const msg = e instanceof Error ? e.message : "Delete failed";
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 
   try {
     await deletePageRecord(id);
   } catch (dbErr) {
-    console.error("[v1/pages] D1 delete failed:", dbErr);
+    console.error("[v1/pages] DB delete failed:", dbErr);
   }
 
   return NextResponse.json({ ok: true });

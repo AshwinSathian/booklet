@@ -6,7 +6,6 @@ import { ensureDbUser } from "@/lib/db/ensure-user";
 import { createId } from "@/lib/id";
 import { extractDocTitle } from "@/lib/doc-title";
 import { putDoc } from "@/lib/storage";
-import { QuotaExceededError, quotaErrorResponse } from "@/lib/quota";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
@@ -34,7 +33,6 @@ export async function POST(req: Request) {
   const rl = await checkRateLimit(`publish__ip__${ip}`, 12);
   if (rl) return rl;
 
-  // Attempt to read Clerk session — optional; anonymous publish still works.
   const { userId, sessionClaims } = await auth();
   const isAuthenticated = Boolean(userId);
 
@@ -74,12 +72,10 @@ export async function POST(req: Request) {
   try {
     await putDoc(id, doc, isAuthenticated);
   } catch (e: unknown) {
-    if (e instanceof QuotaExceededError) return quotaErrorResponse(e);
     const msg = e instanceof Error ? e.message : "Publish failed";
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 
-  // If authenticated, provision user row and create page ownership record.
   if (isAuthenticated && userId) {
     try {
       const email =
@@ -90,9 +86,7 @@ export async function POST(req: Request) {
       await ensureDbUser(userId, email);
       await createPageRecord(id, userId, title);
     } catch (dbErr) {
-      // D1 write failure must not block the publish response.
-      // The KV doc is already written; the page is live.
-      console.error("[publish] D1 ownership write failed:", dbErr);
+      console.error("[publish] DB ownership write failed:", dbErr);
     }
   }
 

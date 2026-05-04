@@ -8,7 +8,6 @@ import { resolveApiKey } from "@/lib/api-key-auth";
 import { extractDocTitle } from "@/lib/doc-title";
 import { parseToBlocks } from "@/lib/parse";
 import { putDoc } from "@/lib/storage";
-import { QuotaExceededError, quotaErrorResponse } from "@/lib/quota";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
 
@@ -65,7 +64,6 @@ export async function POST(req: Request) {
   try {
     await putDoc(id, doc, true);
   } catch (e: unknown) {
-    if (e instanceof QuotaExceededError) return quotaErrorResponse(e);
     const msg = e instanceof Error ? e.message : "Publish failed";
     return NextResponse.json({ error: msg }, { status: 500 });
   }
@@ -75,7 +73,7 @@ export async function POST(req: Request) {
     await ensureDbUser(userId, null);
     await createPageRecord(id, userId, title);
   } catch (dbErr) {
-    console.error("[v1/publish] D1 write failed:", dbErr);
+    console.error("[v1/publish] DB write failed:", dbErr);
   }
 
   const url = new URL(req.url);

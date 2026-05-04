@@ -3,7 +3,6 @@ import { DEFAULT_SETTINGS } from "@/lib/blocks";
 import { BLOCKS, STORAGE } from "@/lib/constants";
 import { getPageRecord, updatePageRecord } from "@/lib/db";
 import { putDoc } from "@/lib/storage";
-import { QuotaExceededError, quotaErrorResponse } from "@/lib/quota";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
@@ -29,7 +28,6 @@ export async function PATCH(
     return NextResponse.json({ error: "Missing page id" }, { status: 400 });
   }
 
-  // Verify ownership.
   const record = await getPageRecord(id);
   if (!record) {
     return NextResponse.json({ error: "Page not found" }, { status: 404 });
@@ -61,7 +59,6 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
-  // Preserve original createdAt; only content and settings change.
   const doc: PublishedDoc = {
     v: BLOCKS.version,
     createdAt: record.created_at,
@@ -73,7 +70,6 @@ export async function PATCH(
   try {
     await putDoc(id, doc, true);
   } catch (e: unknown) {
-    if (e instanceof QuotaExceededError) return quotaErrorResponse(e);
     const msg = e instanceof Error ? e.message : "Update failed";
     return NextResponse.json({ error: msg }, { status: 500 });
   }
@@ -82,10 +78,9 @@ export async function PATCH(
   try {
     await updatePageRecord(id, { updated_at: updatedAt });
   } catch (dbErr) {
-    console.error("[patch-publish] D1 updated_at write failed:", dbErr);
+    console.error("[patch-publish] DB updated_at write failed:", dbErr);
   }
 
-  // Return the same URL — this is the point of edit-in-place.
   const url = new URL(req.url);
   url.pathname = `/p/${id}`;
   url.search = "";

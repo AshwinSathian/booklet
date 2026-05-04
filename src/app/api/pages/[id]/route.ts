@@ -1,6 +1,5 @@
 import { getPageBySlug, getPageRecord, updatePageRecord, deletePageRecord } from "@/lib/db";
 import { deleteDoc } from "@/lib/storage";
-import { QuotaExceededError, quotaErrorResponse } from "@/lib/quota";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
@@ -44,7 +43,6 @@ export async function PATCH(
 
   const patch: Parameters<typeof updatePageRecord>[1] = {};
 
-  // Handle slug update.
   if (body.slug !== undefined) {
     const rawSlug = body.slug;
     const slug = rawSlug === null ? null : rawSlug.trim().toLowerCase();
@@ -66,7 +64,6 @@ export async function PATCH(
     patch.slug = slug;
   }
 
-  // Handle visibility update.
   if (body.visibility !== undefined) {
     if (body.visibility !== "public" && body.visibility !== "unlisted") {
       return NextResponse.json(
@@ -113,18 +110,17 @@ export async function DELETE(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  // Delete KV content first; if D1 delete fails, the page is still gone.
   try {
     await deleteDoc(id);
   } catch (e: unknown) {
-    if (e instanceof QuotaExceededError) return quotaErrorResponse(e);
-    throw e;
+    const msg = e instanceof Error ? e.message : "Delete failed";
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 
   try {
     await deletePageRecord(id);
   } catch (dbErr) {
-    console.error("[delete-page] D1 delete failed:", dbErr);
+    console.error("[delete-page] DB delete failed:", dbErr);
   }
 
   return new NextResponse(null, { status: 204 });

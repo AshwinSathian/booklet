@@ -1,7 +1,12 @@
-import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { getDb } from "@/lib/mongodb";
 import type { PublishedDoc } from "./blocks";
 import { STORAGE } from "./constants";
-import { checkAndBumpQuota } from "./quota";
+
+type DocRecord = {
+  _id: string;
+  doc: PublishedDoc;
+  expiresAt?: Date;
+};
 
 export async function putDoc(
   id: string,
@@ -14,33 +19,24 @@ export async function putDoc(
     throw new Error("Document is too large to publish.");
   }
 
-  await checkAndBumpQuota("KV_WRITES");
-
-  const kv = getCloudflareContext().env.READABLE_DOCS;
-  if (permanent) {
-    await kv.put(id, json);
-  } else {
-    await kv.put(id, json, { expirationTtl: STORAGE.ttlSeconds });
+  const db = await getDb();
+  const record: DocRecord = { _id: id, doc };
+  if (!permanent) {
+    record.expiresAt = new Date(Date.now() + STORAGE.ttlSeconds * 1000);
   }
+
+  await db
+    .collection<DocRecord>("docs")
+    .replaceOne({ _id: id }, record, { upsert: true });
 }
 
 export async function deleteDoc(id: string): Promise<void> {
-  await checkAndBumpQuota("KV_DELETES");
-
-  const kv = getCloudflareContext().env.READABLE_DOCS;
-  await kv.delete(id);
+  const db = await getDb();
+  await db.collection<DocRecord>("docs").deleteOne({ _id: id });
 }
 
 export async function getDoc(id: string): Promise<PublishedDoc | null> {
-  await checkAndBumpQuota("KV_READS");
-
-  const kv = getCloudflareContext().env.READABLE_DOCS;
-  const raw = await kv.get(id);
-  if (!raw) return null;
-
-  try {
-    return JSON.parse(raw) as PublishedDoc;
-  } catch {
-    return null;
-  }
+  const db = await getDb();
+  const record = await db.collection<DocRecord>("docs").findOne({ _id: id });
+  return record?.doc ?? null;
 }

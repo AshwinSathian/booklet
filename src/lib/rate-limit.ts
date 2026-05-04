@@ -1,47 +1,42 @@
-import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { getDb } from "@/lib/mongodb";
 import { NextResponse } from "next/server";
-import { checkAndBumpQuota, QuotaExceededError, quotaErrorResponse } from "./quota";
+
+type RateLimitDoc = {
+  _id: string;
+  count: number;
+  expiresAt: Date;
+};
 
 /**
- * KV-backed sliding-window rate limiter.
- * Counts the counter's own KV read+write against the free-tier quota so the
- * quota system stays consistent with the rest of the app.
+ * MongoDB-backed sliding-window rate limiter (60-second buckets).
  *
- * @param discriminator  Unique string identifying the rate-limit bucket,
- *                       e.g. `publish__ip__1.2.3.4` or `v1__userId__abc`.
- * @param limitPerMin    Maximum allowed calls within the current 60-second window.
- * @returns              A 429 (rate limit) or 503 (quota exhausted) NextResponse
- *                       if the call should be blocked, otherwise null.
+ * @param discriminator  Unique string identifying the bucket, e.g. `publish__ip__1.2.3.4`
+ * @param limitPerMin    Max allowed calls within the current 60-second window
+ * @returns              A 429 NextResponse if the call should be blocked, otherwise null
  */
 export async function checkRateLimit(
   discriminator: string,
   limitPerMin: number,
 ): Promise<NextResponse | null> {
-  // Gate the counter's own KV operations against the free-tier quota.
-  try {
-    await checkAndBumpQuota("KV_READS");
-  } catch (e) {
-    if (e instanceof QuotaExceededError) return quotaErrorResponse(e);
-    throw e;
-  }
-  try {
-    await checkAndBumpQuota("KV_WRITES");
-  } catch (e) {
-    if (e instanceof QuotaExceededError) return quotaErrorResponse(e);
-    throw e;
-  }
-
   const bucket = Math.floor(Date.now() / 60_000);
   const key = `__rl__${discriminator}__${bucket}`;
+  const expiresAt = new Date((bucket + 2) * 60_000); // expires after two bucket windows
 
-  const kv = getCloudflareContext().env.READABLE_DOCS;
-  const raw = await kv.get(key);
-  const curr = raw ? Number(raw) : 0;
-  const next = Number.isFinite(curr) ? curr + 1 : 1;
+  const db = await getDb();
+  const result = await db
+    .collection<RateLimitDoc>("rate_limits")
+    .findOneAndUpdate(
+      { _id: key },
+      {
+        $inc: { count: 1 },
+        $setOnInsert: { _id: key, expiresAt },
+      },
+      { upsert: true, returnDocument: "after" },
+    );
 
-  await kv.put(key, String(next), { expirationTtl: 90 });
+  const count = result?.count ?? 1;
 
-  if (next > limitPerMin) {
+  if (count > limitPerMin) {
     return NextResponse.json(
       { error: "Too many requests. Please slow down and try again." },
       { status: 429 },
