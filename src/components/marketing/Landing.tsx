@@ -105,7 +105,7 @@ function GhostButton({
   external?: boolean;
 }) {
   const cls =
-    "inline-flex items-center gap-2 rounded-full border border-border-default bg-transparent px-5 py-2.5 text-sm font-semibold text-text-secondary transition hover:border-accent-soft/50 hover:text-text-primary active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg";
+    "inline-flex items-center gap-2 rounded-full border border-border-default bg-transparent px-5 py-2.5 text-sm font-semibold text-text-secondary whitespace-nowrap transition hover:border-accent-soft/50 hover:text-text-primary active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg";
 
   if (external && href) {
     return (

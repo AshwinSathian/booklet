@@ -29,75 +29,82 @@ function getClientIp(req: Request): string {
 }
 
 export async function POST(req: Request) {
-  const ip = getClientIp(req);
-  const rl = await checkRateLimit(`publish__ip__${ip}`, 12);
-  if (rl) return rl;
-
-  const { userId, sessionClaims } = await auth();
-  const isAuthenticated = Boolean(userId);
-
-  let payload: PublishPayload | null = null;
-
   try {
-    payload = (await req.json()) as PublishPayload;
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
+    const ip = getClientIp(req);
 
-  if (!payload?.blocks?.length) {
-    return NextResponse.json({ error: "Nothing to publish" }, { status: 400 });
-  }
+    // Rate limiting is best-effort — a DB failure must not block publish.
+    const rl = await checkRateLimit(`publish__ip__${ip}`, 12).catch(() => null);
+    if (rl) return rl;
 
-  try {
-    const bytes = new TextEncoder().encode(JSON.stringify(payload));
-    if (bytes.byteLength > STORAGE.maxDocBytes) {
-      return NextResponse.json(
-        { error: "Document is too large to publish." },
-        { status: 413 },
-      );
+    const { userId, sessionClaims } = await auth();
+    const isAuthenticated = Boolean(userId);
+
+    let payload: PublishPayload | null = null;
+    try {
+      payload = (await req.json()) as PublishPayload;
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
     }
-  } catch {
-    return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
-  }
 
-  const id = createId(10);
-  const doc: PublishedDoc = {
-    v: BLOCKS.version,
-    createdAt: new Date().toISOString(),
-    settings: payload.settings ?? DEFAULT_SETTINGS,
-    blocks: payload.blocks,
-    ...(payload.raw ? { raw: payload.raw.slice(0, STORAGE.maxInputChars) } : {}),
-  };
+    if (!payload?.blocks?.length) {
+      return NextResponse.json({ error: "Nothing to publish" }, { status: 400 });
+    }
 
-  try {
-    await putDoc(id, doc, isAuthenticated);
+    try {
+      const bytes = new TextEncoder().encode(JSON.stringify(payload));
+      if (bytes.byteLength > STORAGE.maxDocBytes) {
+        return NextResponse.json(
+          { error: "Document is too large to publish." },
+          { status: 413 },
+        );
+      }
+    } catch {
+      return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+    }
+
+    const id = createId(10);
+    const doc: PublishedDoc = {
+      v: BLOCKS.version,
+      createdAt: new Date().toISOString(),
+      settings: payload.settings ?? DEFAULT_SETTINGS,
+      blocks: payload.blocks,
+      ...(payload.raw ? { raw: payload.raw.slice(0, STORAGE.maxInputChars) } : {}),
+    };
+
+    try {
+      await putDoc(id, doc, isAuthenticated);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Publish failed";
+      return NextResponse.json({ error: msg }, { status: 500 });
+    }
+
+    if (isAuthenticated && userId) {
+      try {
+        const email =
+          (sessionClaims?.email as string | undefined) ??
+          (sessionClaims?.primary_email_address as string | undefined) ??
+          null;
+        const title = extractDocTitle(payload.blocks);
+        await ensureDbUser(userId, email);
+        await createPageRecord(id, userId, title);
+      } catch (dbErr) {
+        console.error("[publish] DB ownership write failed:", dbErr);
+      }
+    }
+
+    const url = new URL(req.url);
+    url.pathname = ROUTES.publish(id);
+    url.search = "";
+    url.hash = "";
+
+    return NextResponse.json({
+      id,
+      url: url.toString(),
+      owned: isAuthenticated,
+    });
   } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : "Publish failed";
+    console.error("[publish] Unhandled error:", e);
+    const msg = e instanceof Error ? e.message : "An unexpected error occurred";
     return NextResponse.json({ error: msg }, { status: 500 });
   }
-
-  if (isAuthenticated && userId) {
-    try {
-      const email =
-        (sessionClaims?.email as string | undefined) ??
-        (sessionClaims?.primary_email_address as string | undefined) ??
-        null;
-      const title = extractDocTitle(payload.blocks);
-      await ensureDbUser(userId, email);
-      await createPageRecord(id, userId, title);
-    } catch (dbErr) {
-      console.error("[publish] DB ownership write failed:", dbErr);
-    }
-  }
-
-  const url = new URL(req.url);
-  url.pathname = ROUTES.publish(id);
-  url.search = "";
-  url.hash = "";
-
-  return NextResponse.json({
-    id,
-    url: url.toString(),
-    owned: isAuthenticated,
-  });
 }

@@ -483,7 +483,7 @@ function AppPageContent() {
       });
 
       if (!res.ok) {
-        const msg = await safeReadText(res);
+        const msg = await safeReadErrorMessage(res);
         throw new Error(msg || `Publish failed (${res.status})`);
       }
 
@@ -553,7 +553,7 @@ function AppPageContent() {
       });
 
       if (!res.ok) {
-        const msg = await safeReadText(res);
+        const msg = await safeReadErrorMessage(res);
         throw new Error(msg || `Update failed (${res.status})`);
       }
 
@@ -735,12 +735,17 @@ export function AppClient() {
   );
 }
 
-async function safeReadText(res: Response) {
+async function safeReadErrorMessage(res: Response): Promise<string> {
   try {
-    return await res.text();
+    const ct = res.headers.get("content-type") ?? "";
+    if (ct.includes("application/json")) {
+      const data = (await res.json()) as { error?: string };
+      return data.error || `Request failed (${res.status})`;
+    }
   } catch {
-    return "";
+    // fall through
   }
+  return `Request failed (${res.status})`;
 }
 
 function toErrorMessage(e: unknown) {
