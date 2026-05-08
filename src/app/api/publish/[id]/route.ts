@@ -82,7 +82,7 @@ export async function PATCH(
   }
 
   const url = new URL(req.url);
-  url.pathname = `/p/${id}`;
+  url.pathname = `/p/${record.slug ?? id}`;
   url.search = "";
   url.hash = "";
 
