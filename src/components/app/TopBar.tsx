@@ -19,6 +19,10 @@ import { TemplatesDialog } from "./TemplatesDialog";
 export type SaveState = "saved" | "saving";
 type EditorStatus = "idle" | "typing" | "publishing" | "published" | "error";
 
+// Slug validation — mirrors server-side rule in /api/pages/[id]/route.ts
+const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,58}[a-z0-9]$|^[a-z0-9]{1,60}$/;
+function isValidSlug(s: string) { return SLUG_RE.test(s) && !s.includes("--"); }
+
 // ---------------------------------------------------------------------------
 // Icon button
 // ---------------------------------------------------------------------------
@@ -492,6 +496,165 @@ function SaveIndicator({
 // Main TopBar
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Post-publish slug bar
+// ---------------------------------------------------------------------------
+
+type SlugBarAvailability = "idle" | "checking" | "available" | "taken";
+
+function PostPublishSlugBar({
+  pageId,
+  onSlugSet,
+  onDismiss,
+}: {
+  pageId: string;
+  onSlugSet: (newSlug: string) => void;
+  onDismiss: () => void;
+}) {
+  const [draft, setDraft] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [availability, setAvailability] = useState<SlugBarAvailability>("idle");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Focus input on mount
+  useEffect(() => {
+    setTimeout(() => inputRef.current?.focus(), 80);
+  }, []);
+
+  // Debounced availability check
+  useEffect(() => {
+    const value = draft.trim().toLowerCase();
+    if (!value || !isValidSlug(value)) {
+      setAvailability("idle");
+      return;
+    }
+    setAvailability("checking");
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `/api/pages/check-slug?slug=${encodeURIComponent(value)}&exclude=${pageId}`,
+        );
+        const data = (await res.json()) as { available: boolean };
+        setAvailability(data.available ? "available" : "taken");
+      } catch {
+        setAvailability("idle");
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [draft, pageId]);
+
+  const save = async () => {
+    const value = draft.trim().toLowerCase();
+    if (!value) { onDismiss(); return; }
+    if (!isValidSlug(value)) {
+      setError("Use 1–60 lowercase letters, digits, or hyphens.");
+      return;
+    }
+    if (availability === "taken") {
+      setError("That slug is already taken.");
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/pages/${pageId}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ slug: value }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? "Failed to save");
+      }
+      onSlugSet(value);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to save");
+      setSaving(false);
+    }
+  };
+
+  const hostLabel =
+    typeof window !== "undefined"
+      ? window.location.host
+      : "readable.page";
+
+  const canSave =
+    draft.trim().length > 0 &&
+    !saving &&
+    availability !== "taken" &&
+    availability !== "checking";
+
+  return (
+    <div className="absolute top-full left-0 right-0 z-10 border-b border-outline/50 bg-bg-soft/95 backdrop-blur-xl px-3 py-2.5">
+      <div className="mx-auto w-full max-w-7xl flex flex-col sm:flex-row sm:items-center gap-2">
+        <span className="text-xs text-text-secondary shrink-0">
+          Set a custom URL before sharing:
+        </span>
+        <div className="flex items-center gap-0 min-w-0 flex-1">
+          <span className="text-xs text-text-muted/60 px-2 py-1 bg-bg border border-r-0 border-outline rounded-l-md whitespace-nowrap hidden sm:inline">
+            {hostLabel}/p/
+          </span>
+          <input
+            ref={inputRef}
+            value={draft}
+            onChange={(e) => { setDraft(e.target.value.toLowerCase()); setError(null); }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") { e.preventDefault(); void save(); }
+              if (e.key === "Escape") { e.preventDefault(); onDismiss(); }
+            }}
+            placeholder="my-incident-2026"
+            className={[
+              "min-w-0 flex-1 sm:w-52 sm:flex-none px-2 py-1 text-xs bg-bg border rounded-md sm:rounded-l-none sm:rounded-r-md text-text-primary placeholder:text-text-muted/40",
+              "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft",
+              availability === "taken" ? "border-red-400/60" : "border-outline",
+            ].join(" ")}
+            aria-label="Custom URL slug"
+          />
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {/* Availability indicator */}
+          {availability === "checking" && (
+            <span className="text-xs text-text-muted">Checking…</span>
+          )}
+          {availability === "available" && !error && (
+            <span className="text-xs text-green-400">✓ Available</span>
+          )}
+          {availability === "taken" && !error && (
+            <span className="text-xs text-red-400">✗ Taken</span>
+          )}
+          {error && <span className="text-xs text-red-400">{error}</span>}
+          <button
+            type="button"
+            onClick={() => void save()}
+            disabled={!canSave}
+            className="flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-semibold text-white bg-accent hover:bg-accent-hover transition disabled:opacity-40"
+          >
+            {saving ? (
+              <svg width="11" height="11" viewBox="0 0 13 13" fill="none" className="animate-spin" aria-hidden>
+                <path d="M6.5 1a5.5 5.5 0 1 0 5.5 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            ) : null}
+            Save URL
+          </button>
+          <button
+            type="button"
+            onClick={onDismiss}
+            className="flex h-7 w-7 items-center justify-center rounded-md text-text-muted transition hover:bg-fill-2 hover:text-text-primary"
+            aria-label="Skip"
+            title="Skip"
+          >
+            <Icon name="close" size={13} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+
 const TOAST_KEYS = {
   copyMd: "copy_md",
   copyHtml: "copy_html",
@@ -524,6 +687,8 @@ export function TopBar({
   onImportMarkdown,
   onInsertTemplate,
   onOpenDraftsShortcutRegistered,
+  publishedId,
+  onSlugSet,
 }: {
   status: EditorStatus;
   canPublish: boolean;
@@ -550,10 +715,22 @@ export function TopBar({
   onImportMarkdown: (title: string, raw: string) => void;
   onInsertTemplate?: (title: string, content: string) => void;
   onOpenDraftsShortcutRegistered?: (fn: () => void) => void;
+  publishedId?: string | null;
+  onSlugSet?: (newSlug: string) => void;
 }) {
   const [visibleSettings, setVisibleSettings] = useState(false);
   const [visibleDrafts, setVisibleDrafts] = useState(false);
   const [visibleTemplates, setVisibleTemplates] = useState(false);
+  const [slugBarDismissed, setSlugBarDismissed] = useState(false);
+  const prevPublishedIdRef = useRef<string | null | undefined>(undefined);
+
+  // Reset slug bar when a new page is published
+  useEffect(() => {
+    if (publishedId !== prevPublishedIdRef.current) {
+      prevPublishedIdRef.current = publishedId;
+      setSlugBarDismissed(false);
+    }
+  }, [publishedId]);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const toast = useToast();
@@ -715,6 +892,18 @@ export function TopBar({
         className="hidden"
         onChange={(e) => { void onFilePicked(e.target.files?.[0] ?? null); }}
       />
+
+      {/* Post-publish slug bar — shown once for owned pages until dismissed or slug saved */}
+      {status === "published" && publishedOwned && publishedId && !slugBarDismissed ? (
+        <PostPublishSlugBar
+          pageId={publishedId}
+          onSlugSet={(newSlug) => {
+            setSlugBarDismissed(true);
+            onSlugSet?.(newSlug);
+          }}
+          onDismiss={() => setSlugBarDismissed(true)}
+        />
+      ) : null}
 
       {/* Save warning — absolutely positioned so it doesn't shift header height */}
       {showSaveWarning ? (

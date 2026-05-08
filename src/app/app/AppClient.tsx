@@ -683,6 +683,18 @@ function AppPageContent() {
         onImportMarkdown={onImportMarkdown}
         onInsertTemplate={onInsertTemplate}
         onOpenDraftsShortcutRegistered={(fn) => { openDraftsFnRef.current = fn; }}
+        publishedId={lastPublishedId}
+        onSlugSet={(newSlug) => {
+          if (!lastPublishedUrl || !lastPublishedId || !activeDraftId) return;
+          const newUrl = lastPublishedUrl.replace(/\/p\/[^/]+$/, `/p/${newSlug}`);
+          setLastPublishedUrl(newUrl);
+          setDraftLastPublished(activeDraftId, {
+            id: lastPublishedId,
+            url: newUrl,
+            createdAt: new Date().toISOString(),
+            owned: true,
+          });
+        }}
       />
 
       <div className="flex-1 min-h-0">
