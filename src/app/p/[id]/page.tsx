@@ -176,6 +176,26 @@ export default async function SharePage({
         </div>
       </main>
 
+      {/* ── Floating attribution badge — acquisition loop anchor ── */}
+      <a
+        href="/"
+        className="fixed bottom-4 right-4 z-10 hidden sm:flex items-center gap-1.5 rounded-pill border border-border-subtle bg-bg/80 backdrop-blur-md px-3 py-1.5 transition hover:border-accent-soft/40 hover:bg-bg-elevated print:hidden"
+        aria-label="Made with Readable — create your own page"
+      >
+        {/* Inline Readable mark at badge scale */}
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+          <rect width="24" height="24" rx="5.5" fill="var(--color-accent)" />
+          <path
+            d="M 6.5 5 L 6.5 19 M 6.5 5 L 13 5 Q 17 5 17 9 Q 17 13 13 13 L 6.5 13 M 11.5 13 L 17 19"
+            stroke="white"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+        <span className="text-2xs text-text-muted">Made with Readable</span>
+      </a>
+
       {/* ── Footer ── */}
       <footer className="mt-12 border-t border-border-subtle print:hidden">
         <div className={`mx-auto w-full px-4 py-6 ${maxW}`}>
