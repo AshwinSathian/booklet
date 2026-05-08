@@ -2,7 +2,7 @@
 
 import { Icon } from "@/components/ui/Icon";
 import { ROUTES } from "@/lib/constants";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 // Mirrors server-side validation.
 const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,58}[a-z0-9]$|^[a-z0-9]{1,60}$/;
@@ -33,6 +33,8 @@ function formatDate(iso: string) {
 // Slug editor
 // ---------------------------------------------------------------------------
 
+type SlugAvailability = "idle" | "checking" | "available" | "taken";
+
 function SlugEditor({
   pageId,
   slug,
@@ -48,13 +50,42 @@ function SlugEditor({
   const [draft, setDraft] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [availability, setAvailability] = useState<SlugAvailability>("idle");
   const inputRef = useRef<HTMLInputElement>(null);
 
   const hostLabel = baseUrl.replace(/^https?:\/\//, "");
 
+  // Debounced availability check while editing
+  useEffect(() => {
+    if (!editing) return;
+    const value = draft.trim().toLowerCase();
+
+    // No check needed if empty, unchanged, or invalid format
+    if (!value || value === slug || !isValidSlug(value)) {
+      setAvailability("idle");
+      return;
+    }
+
+    setAvailability("checking");
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `/api/pages/check-slug?slug=${encodeURIComponent(value)}&exclude=${pageId}`,
+        );
+        const data = (await res.json()) as { available: boolean };
+        setAvailability(data.available ? "available" : "taken");
+      } catch {
+        setAvailability("idle");
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [draft, editing, slug, pageId]);
+
   const beginEdit = () => {
     setDraft(slug ?? "");
     setError(null);
+    setAvailability("idle");
     setEditing(true);
     setTimeout(() => inputRef.current?.focus(), 0);
   };
@@ -62,6 +93,7 @@ function SlugEditor({
   const cancel = () => {
     setEditing(false);
     setError(null);
+    setAvailability("idle");
   };
 
   const save = async () => {
@@ -70,6 +102,11 @@ function SlugEditor({
 
     if (value !== null && !isValidSlug(value)) {
       setError("Use 1–60 lowercase letters, digits, or hyphens.");
+      return;
+    }
+
+    if (availability === "taken") {
+      setError("That slug is already taken.");
       return;
     }
 
@@ -87,6 +124,7 @@ function SlugEditor({
       }
       onSlugSaved(value);
       setEditing(false);
+      setAvailability("idle");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to save");
     } finally {
@@ -155,13 +193,16 @@ function SlugEditor({
             if (e.key === "Escape") { e.preventDefault(); cancel(); }
           }}
           placeholder="my-custom-slug"
-          className="min-w-0 w-40 px-2 py-1 text-xs bg-bg border border-outline rounded-r-md text-text-primary placeholder:text-text-muted/40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft"
+          className={[
+            "min-w-0 w-40 px-2 py-1 text-xs bg-bg border rounded-r-md text-text-primary placeholder:text-text-muted/40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft",
+            availability === "taken" ? "border-red-400/60" : "border-outline",
+          ].join(" ")}
           aria-label="Custom slug"
         />
         <button
           type="button"
           onClick={() => void save()}
-          disabled={saving}
+          disabled={saving || availability === "taken" || availability === "checking"}
           className="ml-1.5 flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium text-white bg-accent hover:bg-accent-hover transition disabled:opacity-50"
         >
           {saving ? (
@@ -178,6 +219,16 @@ function SlugEditor({
           <Icon name="close" size={11} />
         </button>
       </div>
+      {/* Availability indicator — shown only when actively checking / has a result */}
+      {!error && availability === "checking" && (
+        <p className="text-xs text-text-muted">Checking…</p>
+      )}
+      {!error && availability === "available" && (
+        <p className="text-xs text-green-400">✓ Available</p>
+      )}
+      {!error && availability === "taken" && (
+        <p className="text-xs text-red-400">✗ Already taken</p>
+      )}
       {error && <p className="text-xs text-red-400">{error}</p>}
     </div>
   );
