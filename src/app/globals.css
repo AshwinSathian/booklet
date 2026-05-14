@@ -229,11 +229,35 @@ button {
   to   { opacity: 1; }
 }
 
+@keyframes drawerBackdropIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes drawerBackdropOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+@keyframes drawerPanelIn {
+  from { opacity: 0; transform: var(--drawer-enter-from); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@keyframes drawerPanelOut {
+  from { opacity: 1; transform: translate3d(0, 0, 0); }
+  to   { opacity: 0; transform: var(--drawer-exit-to); }
+}
+
 /* ── Tailwind v4: custom animation bindings ──────────────────────────────── */
 @theme {
   --animate-dialog-in:   dialogIn   280ms cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-dropdown-in: dropdownIn 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-fade-in:     fadeIn     150ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-drawer-backdrop-in:  drawerBackdropIn 180ms ease-out both;
+  --animate-drawer-backdrop-out: drawerBackdropOut 160ms ease-in both;
+  --animate-drawer-panel-in:     drawerPanelIn 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-drawer-panel-out:    drawerPanelOut 160ms cubic-bezier(0.7, 0, 0.84, 0) both;
 }
 
 /* ── Transitions — scoped to color/opacity to avoid layout jank ─────────── */

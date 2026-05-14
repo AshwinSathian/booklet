@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Icon } from "./Icon";
+
+const DRAWER_EXIT_MS = 160;
 
 export function ActionDrawer({
   open,
@@ -17,15 +19,51 @@ export function ActionDrawer({
   children: ReactNode;
 }) {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const onCloseRef = useRef(onClose);
+  const closeTimerRef = useRef<number | null>(null);
+  const [shouldRender, setShouldRender] = useState(open);
+  const [isClosing, setIsClosing] = useState(false);
 
   useEffect(() => {
-    if (!open) return;
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  useEffect(() => {
+    if (open) {
+      if (closeTimerRef.current) {
+        window.clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = null;
+      }
+      setShouldRender(true);
+      setIsClosing(false);
+      return;
+    }
+
+    if (!shouldRender) return;
+
+    setIsClosing(true);
+    closeTimerRef.current = window.setTimeout(() => {
+      setShouldRender(false);
+      setIsClosing(false);
+      closeTimerRef.current = null;
+    }, DRAWER_EXIT_MS);
+
+    return () => {
+      if (closeTimerRef.current) {
+        window.clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = null;
+      }
+    };
+  }, [open, shouldRender]);
+
+  useEffect(() => {
+    if (!shouldRender) return;
     const activeElement = document.activeElement;
     const previousOverflow = document.body.style.overflow;
     const focusFrame = window.requestAnimationFrame(() => closeButtonRef.current?.focus());
 
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") onCloseRef.current();
     }
 
     document.body.style.overflow = "hidden";
@@ -36,22 +74,28 @@ export function ActionDrawer({
       document.removeEventListener("keydown", onKeyDown);
       if (activeElement instanceof HTMLElement) activeElement.focus();
     };
-  }, [open, onClose]);
+  }, [shouldRender]);
 
-  if (!open) return null;
+  if (!shouldRender) return null;
 
   return (
     <div className="fixed inset-0 z-50 print:hidden" role="dialog" aria-modal="true" aria-label={title}>
       <button
         type="button"
-        className="absolute inset-0 bg-black/45 backdrop-blur-sm"
+        className={[
+          "absolute inset-0 bg-black/50 backdrop-blur-sm",
+          isClosing ? "animate-drawer-backdrop-out" : "animate-drawer-backdrop-in",
+        ].join(" ")}
         onClick={onClose}
         aria-label="Close drawer"
       />
 
       <aside
         className={[
-          "absolute border-border-default bg-bg shadow-glass animate-dialog-in",
+          "absolute border-border-default bg-bg shadow-glass",
+          "[--drawer-enter-from:translate3d(0,24px,0)] [--drawer-exit-to:translate3d(0,24px,0)]",
+          "sm:[--drawer-enter-from:translate3d(24px,0,0)] sm:[--drawer-exit-to:translate3d(24px,0,0)]",
+          isClosing ? "animate-drawer-panel-out" : "animate-drawer-panel-in",
           "inset-x-0 bottom-0 max-h-[86dvh] overflow-hidden rounded-t-card border-t",
           "sm:inset-y-0 sm:left-auto sm:right-0 sm:h-dvh sm:max-h-none sm:w-[380px] sm:rounded-none sm:border-l sm:border-t-0",
         ].join(" ")}
