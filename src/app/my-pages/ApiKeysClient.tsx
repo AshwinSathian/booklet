@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { useCallback, useRef, useState } from "react";
 
@@ -49,36 +50,29 @@ function KeyCard({ k, onRevoked }: { k: KeyRow; onRevoked: (id: string) => void 
 
       {confirming ? (
         <div className="flex items-center gap-1 shrink-0">
-          <button
-            type="button"
-            onClick={() => void revoke()}
-            disabled={revoking}
-            className="flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-red-400 border border-red-400/30 hover:bg-red-400/10 transition disabled:opacity-50"
-          >
+          <Button variant="danger" size="md" onClick={() => void revoke()} disabled={revoking}>
             {revoking ? (
               <svg width="12" height="12" viewBox="0 0 13 13" fill="none" className="animate-spin" aria-hidden>
                 <path d="M6.5 1a5.5 5.5 0 1 0 5.5 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
             ) : null}
             Revoke
-          </button>
-          <button
-            type="button"
-            onClick={() => setConfirming(false)}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-text-muted transition hover:bg-fill-2"
-          >
+          </Button>
+          <Button variant="ghost" size="md" iconOnly onClick={() => setConfirming(false)}>
             <Icon name="close" size={13} />
-          </button>
+          </Button>
         </div>
       ) : (
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="md"
+          iconOnly
           onClick={() => setConfirming(true)}
           title="Revoke key"
-          className="flex h-8 w-8 items-center justify-center rounded-lg text-text-muted transition hover:text-red-400 hover:bg-red-400/8 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 shrink-0"
+          className="sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 shrink-0 hover:text-red-400 hover:bg-red-400/8"
         >
           <Icon name="trash" size={14} />
-        </button>
+        </Button>
       )}
     </div>
   );
@@ -104,26 +98,24 @@ function NewKeyReveal({ raw, onDismiss }: { raw: string; onDismiss: () => void }
           <p className="text-sm font-semibold text-text-primary">Your new API key</p>
           <p className="mt-0.5 text-xs text-text-secondary">Copy it now — it won&apos;t be shown again.</p>
         </div>
-        <button
-          type="button"
-          onClick={onDismiss}
-          className="flex h-7 w-7 items-center justify-center rounded-lg text-text-muted transition hover:bg-outline/40"
-        >
+        <Button variant="ghost" size="sm" iconOnly onClick={onDismiss}>
           <Icon name="close" size={12} />
-        </button>
+        </Button>
       </div>
       <div className="flex items-center gap-2">
         <code className="flex-1 min-w-0 truncate rounded-lg bg-bg border border-outline px-3 py-2 text-xs font-mono text-text-primary">
           {raw}
         </code>
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="md"
+          iconOnly
           onClick={() => void copy()}
-          className={["flex h-8 w-8 items-center justify-center rounded-lg transition shrink-0", copied ? "text-accent bg-accent-dim" : "text-text-muted hover:text-text-primary hover:bg-fill-2"].join(" ")}
           title="Copy key"
+          className={`shrink-0 ${copied ? "text-accent bg-accent-dim" : ""}`}
         >
           <Icon name={copied ? "check" : "copy"} size={14} />
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -196,12 +188,7 @@ export function ApiKeysSection({ initialKeys }: { initialKeys: KeyRow[] }) {
           maxLength={80}
           className="min-w-0 flex-1 rounded-lg border border-outline bg-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft"
         />
-        <button
-          type="button"
-          onClick={() => void handleCreate()}
-          disabled={creating}
-          className="flex items-center gap-1.5 rounded-lg border border-outline px-3.5 py-2 text-xs font-medium text-text-secondary transition hover:border-accent-soft/50 hover:text-text-primary disabled:opacity-50 shrink-0"
-        >
+        <Button variant="primary" size="md" onClick={() => void handleCreate()} disabled={creating} className="shrink-0">
           {creating ? (
             <svg width="12" height="12" viewBox="0 0 13 13" fill="none" className="animate-spin" aria-hidden>
               <path d="M6.5 1a5.5 5.5 0 1 0 5.5 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -210,7 +197,7 @@ export function ApiKeysSection({ initialKeys }: { initialKeys: KeyRow[] }) {
             <Icon name="plus" size={12} />
           )}
           Create key
-        </button>
+        </Button>
       </div>
     </div>
   );

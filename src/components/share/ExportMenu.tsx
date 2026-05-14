@@ -5,6 +5,7 @@ import { ANALYTICS_EVENTS } from "@/lib/analytics-events";
 import type { Block, DocSettings } from "@/lib/blocks";
 import { blocksToHtmlDocument } from "@/lib/export";
 import { useState } from "react";
+import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { ActionDrawer, DrawerSection } from "@/components/ui/ActionDrawer";
 
@@ -70,15 +71,10 @@ export function ExportMenu({
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        title="Export options"
-        className="inline-flex items-center gap-1.5 rounded-lg border border-border-default px-2.5 py-1.5 text-xs font-medium text-text-muted transition hover:border-border-strong hover:text-text-primary sm:px-3"
-      >
+      <Button variant="secondary" size="md" onClick={() => setOpen(true)} title="Export options">
         <Icon name="download" size={13} />
         <span className="hidden sm:inline">Export</span>
-      </button>
+      </Button>
 
       <ActionDrawer
         open={open}

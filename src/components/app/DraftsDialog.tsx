@@ -12,6 +12,7 @@ import {
 } from "@/lib/drafts";
 import { formatRelativeTimeFromIso, formatUpdatedAtLong } from "@/lib/ui/time";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Button } from "../ui/Button";
 import { Icon } from "../ui/Icon";
 
 function isValidTitle(title: string): boolean {
@@ -32,23 +33,17 @@ function IconBtn({
   active?: boolean;
 }) {
   return (
-    <button
-      type="button"
+    <Button
+      variant={danger ? "danger" : "ghost"}
+      size="sm"
+      iconOnly
       aria-label={label}
       title={label}
       onClick={onClick}
-      className={[
-        "flex h-7 w-7 items-center justify-center rounded-md transition",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-1 focus-visible:ring-offset-bg",
-        danger
-          ? "text-red-400 hover:bg-red-500/12 hover:text-red-300"
-          : active
-            ? "bg-outline/30 text-text-primary"
-            : "text-text-muted hover:bg-outline/30 hover:text-text-primary",
-      ].join(" ")}
+      className={active ? "bg-fill-2 text-text-primary" : ""}
     >
       {children}
-    </button>
+    </Button>
   );
 }
 
@@ -184,34 +179,25 @@ export function DraftsDialog({
         <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-outline/60 shrink-0">
           <span className="text-sm font-semibold">My drafts</span>
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => onRequestImportMarkdown()}
-              className="flex items-center gap-1.5 rounded-input border border-outline px-2.5 py-1 text-xs font-medium text-text-secondary transition hover:border-accent-soft/50 hover:text-text-primary"
-            >
+            <Button variant="secondary" size="sm" onClick={() => onRequestImportMarkdown()}>
               <Icon name="download" size={12} />
               Import
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
               onClick={() => {
                 const id = onCreateDraft("drafts_dialog");
                 trackEvent(ANALYTICS_EVENTS.draft_created, { draft_hash: hashId(id), origin: "drafts_dialog" });
                 onHide();
               }}
-              className="flex items-center gap-1.5 rounded-input bg-accent px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-accent-hover"
             >
               <Icon name="plus" size={12} />
               New draft
-            </button>
-            <button
-              type="button"
-              onClick={onHide}
-              aria-label="Close"
-              className="flex h-7 w-7 items-center justify-center rounded-md text-text-muted transition hover:bg-outline/30 hover:text-text-primary"
-            >
+            </Button>
+            <Button variant="ghost" size="sm" iconOnly onClick={onHide} aria-label="Close">
               <Icon name="close" size={14} />
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -312,20 +298,12 @@ export function DraftsDialog({
                       <div className="flex items-center justify-between gap-2 rounded-lg border border-red-500/20 bg-red-500/8 px-3 py-2">
                         <span className="text-xs text-red-400">Delete this draft? You can&apos;t undo this.</span>
                         <div className="flex gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => setConfirmDeleteId(null)}
-                            className="rounded-md px-2 py-0.5 text-xs font-medium text-text-muted transition hover:text-text-primary"
-                          >
+                          <Button variant="secondary" size="sm" onClick={() => setConfirmDeleteId(null)}>
                             Cancel
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => onDelete(d.id)}
-                            className="rounded-md bg-red-500 px-2 py-0.5 text-xs font-semibold text-white transition hover:bg-red-600"
-                          >
+                          </Button>
+                          <Button variant="danger" size="sm" onClick={() => onDelete(d.id)}>
                             Delete
-                          </button>
+                          </Button>
                         </div>
                       </div>
                     ) : null}

@@ -10,6 +10,7 @@ import { readingTimeMinutes } from "@/lib/reading-time";
 import { buildToc, MIN_TOC_HEADINGS } from "@/lib/toc";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Button } from "@/components/ui/Button";
 import { DesktopTocClient, MobileTocClient } from "@/components/share/TocClient";
 import { ExportMenu } from "@/components/share/ExportMenu";
 import { AnalyticsBeacon } from "@/components/share/AnalyticsBeacon";
@@ -152,15 +153,12 @@ export default async function SharePage({
               title={pageTitle}
             />
             <ThemeToggle />
-            <Link
-              href={ROUTES.app}
-              className="hidden sm:inline-flex items-center gap-1.5 rounded-pill bg-accent px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-accent-hover"
-            >
+            <Button variant="primary" size="md" href={ROUTES.app} className="hidden sm:inline-flex">
               Make your own
               <svg width="11" height="11" fill="none" viewBox="0 0 11 11" aria-hidden>
                 <path d="M2 9 9 2M9 2H4.5M9 2v4.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-            </Link>
+            </Button>
           </div>
         </div>
       </header>

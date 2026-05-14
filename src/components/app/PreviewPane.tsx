@@ -1,6 +1,7 @@
 "use client";
 
 import { BlockRenderer } from "@/components/blocks/BlockRenderer";
+import { Button } from "@/components/ui/Button";
 import type { Block, DocSettings } from "@/lib/blocks";
 import { SAMPLE_MARKDOWN } from "@/lib/sample";
 import { useState } from "react";
@@ -103,30 +104,22 @@ function EmptyState({
             </span>
             <div className="flex items-center gap-1">
               {onInsertSample ? (
-                <button
-                  type="button"
-                  onClick={onInsertSample}
-                  title="Insert sample"
-                  className="rounded-md px-2 py-1 text-2xs font-medium text-text-muted transition hover:bg-fill-2 hover:text-text-primary"
-                >
+                <Button variant="secondary" size="sm" onClick={onInsertSample} title="Insert sample">
                   Insert
-                </button>
+                </Button>
               ) : null}
-              <button
-                type="button"
+              <Button
+                variant={copyState === "copied" ? "primary" : "secondary"}
+                size="sm"
                 onClick={onCopySample}
                 title="Copy sample"
-                className={[
-                  "rounded-md px-2 py-1 text-2xs font-medium transition",
-                  copyState === "copied"
-                    ? "text-emerald-400"
-                    : copyState === "failed"
-                      ? "text-red-400"
-                      : "text-text-muted hover:bg-fill-2 hover:text-text-primary",
-                ].join(" ")}
+                className={
+                  copyState === "copied" ? "bg-accent-dim text-accent border-accent/40 hover:bg-accent-dim hover:border-accent/40 hover:text-accent shadow-none" :
+                  copyState === "failed" ? "border-red-400/40 text-red-400" : ""
+                }
               >
                 {copyState === "copied" ? "Copied!" : copyState === "failed" ? "Failed" : "Copy"}
-              </button>
+              </Button>
             </div>
           </div>
           {/* Fade out the bottom of the sample preview */}

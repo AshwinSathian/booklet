@@ -1,6 +1,7 @@
 "use client";
 
 import { BlockRenderer } from "@/components/blocks/BlockRenderer";
+import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import type { PublishedDoc } from "@/lib/blocks";
 import { formatUpdatedAtLong } from "@/lib/ui/time";
@@ -97,11 +98,11 @@ export function VersionsClient({
               </div>
 
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
+                <Button
+                  variant="secondary"
+                  size="md"
                   onClick={() => void previewVersion(version.version_number)}
                   disabled={loadingVersion === version.version_number || restoringVersion !== null}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-outline px-3 py-1.5 text-xs font-medium text-text-secondary transition hover:border-accent-soft/50 hover:text-text-primary disabled:opacity-50"
                 >
                   {loadingVersion === version.version_number ? (
                     <Icon name="spinner" size={12} className="animate-spin" />
@@ -109,12 +110,12 @@ export function VersionsClient({
                     <Icon name="eye" size={12} />
                   )}
                   Preview
-                </button>
-                <button
-                  type="button"
+                </Button>
+                <Button
+                  variant="primary"
+                  size="md"
                   onClick={() => void restoreVersion(version.version_number)}
                   disabled={restoringVersion !== null}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-accent-hover disabled:opacity-50"
                 >
                   {restoringVersion === version.version_number ? (
                     <Icon name="spinner" size={12} className="animate-spin" />
@@ -122,7 +123,7 @@ export function VersionsClient({
                     <Icon name="history" size={12} />
                   )}
                   Restore
-                </button>
+                </Button>
               </div>
             </div>
           ))
@@ -141,14 +142,9 @@ export function VersionsClient({
                 <div className="text-sm font-semibold">Preview v{preview.version}</div>
                 <div className="text-xs text-text-muted">This is a saved snapshot.</div>
               </div>
-              <button
-                type="button"
-                onClick={() => setPreview(null)}
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-text-muted transition hover:bg-fill-2 hover:text-text-primary"
-                aria-label="Close preview"
-              >
+              <Button variant="ghost" size="md" iconOnly onClick={() => setPreview(null)} aria-label="Close preview">
                 <Icon name="close" size={14} />
-              </button>
+              </Button>
             </div>
             <div className="overflow-auto px-5 py-5">
               <BlockRenderer blocks={preview.doc.blocks} settings={preview.doc.settings} />

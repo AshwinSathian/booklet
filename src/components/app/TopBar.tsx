@@ -16,10 +16,10 @@ import { copyTextToClipboard, markdownToHtml } from "@/lib/export";
 import { TEMPLATES, type Template } from "@/lib/templates";
 import { formatRelativeTimeFromIso, formatUpdatedAtLong } from "@/lib/ui/time";
 import { UserButton, useUser } from "@clerk/nextjs";
-import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ActionDrawer, DrawerSection } from "../ui/ActionDrawer";
 import { AppLogo } from "../ui/AppLogo";
+import { Button } from "../ui/Button";
 import { Icon, type IconName } from "../ui/Icon";
 import { SegmentedControl } from "../ui/SegmentedControl";
 import ThemeToggle from "../ui/ThemeToggle";
@@ -50,20 +50,17 @@ function IconBtn({
   active?: boolean;
 }) {
   return (
-    <button
-      type="button"
+    <Button
+      variant="ghost"
+      size="md"
+      iconOnly
       aria-label={label}
       title={label}
       onClick={onClick}
-      className={[
-        "flex h-8 w-8 items-center justify-center rounded-lg transition",
-        "text-text-muted hover:text-text-primary hover:bg-outline/40",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
-        active ? "bg-outline/30 text-text-primary" : "",
-      ].join(" ")}
+      className={active ? "bg-fill-2 text-text-primary" : ""}
     >
       <Icon name={icon} />
-    </button>
+    </Button>
   );
 }
 
@@ -182,14 +179,10 @@ function MoreActionsDrawer({
 
 function DrawerBackButton({ onBack }: { onBack: () => void }) {
   return (
-    <button
-      type="button"
-      onClick={onBack}
-      className="mb-3 inline-flex items-center gap-1.5 rounded-lg border border-border-subtle px-2.5 py-1.5 text-xs font-medium text-text-muted transition hover:border-border-strong hover:text-text-primary"
-    >
+    <Button variant="secondary" size="sm" onClick={onBack} className="mb-3">
       <Icon name="chevron-right" size={13} className="rotate-180" />
       Back
-    </button>
+    </Button>
   );
 }
 
@@ -319,26 +312,22 @@ function DrawerDraftsView({
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <DrawerBackButton onBack={onBack} />
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={onRequestImportMarkdown}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border-subtle px-2.5 py-1.5 text-xs font-medium text-text-secondary transition hover:border-accent-soft/50 hover:text-text-primary"
-          >
+          <Button variant="secondary" size="sm" onClick={onRequestImportMarkdown}>
             <Icon name="download" size={12} />
             Import
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
             onClick={() => {
               const id = onCreateDraft("drafts_dialog");
               trackEvent(ANALYTICS_EVENTS.draft_created, { draft_hash: hashId(id), origin: "drafts_dialog" });
               onClose();
             }}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-accent-hover"
           >
             <Icon name="plus" size={12} />
             New draft
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -426,20 +415,16 @@ function DrawerDraftsView({
                   <div className="mt-3 flex items-center justify-between gap-2 rounded-lg border border-red-500/20 bg-red-500/8 px-3 py-2">
                     <span className="text-xs text-red-400">Delete this draft? You can&apos;t undo this.</span>
                     <div className="flex gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => setConfirmDeleteId(null)}
-                        className="rounded-md px-2 py-0.5 text-xs font-medium text-text-muted transition hover:text-text-primary"
-                      >
+                      <Button variant="secondary" size="sm" onClick={() => setConfirmDeleteId(null)}>
                         Cancel
-                      </button>
-                      <button
-                        type="button"
+                      </Button>
+                      <Button
+                        variant="danger"
+                        size="sm"
                         onClick={() => onDelete(draft.id)}
-                        className="rounded-md bg-red-500 px-2 py-0.5 text-xs font-semibold text-white transition hover:bg-red-600"
                       >
                         Delete
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 ) : null}
@@ -464,20 +449,16 @@ function DrawerDraftIconButton({
   danger?: boolean;
 }) {
   return (
-    <button
-      type="button"
+    <Button
+      variant={danger ? "danger" : "ghost"}
+      size="sm"
+      iconOnly
       aria-label={label}
       title={label}
       onClick={onClick}
-      className={[
-        "flex h-7 w-7 items-center justify-center rounded-md transition",
-        danger
-          ? "text-red-400 hover:bg-red-500/12 hover:text-red-300"
-          : "text-text-muted hover:bg-outline/30 hover:text-text-primary",
-      ].join(" ")}
     >
       {children}
-    </button>
+    </Button>
   );
 }
 
@@ -683,7 +664,8 @@ function PublishArea({
           onClick={onCopyLink}
           title="Copy share link"
           className={[
-            "flex items-center gap-1.5 rounded-pill px-3.5 py-1.5 text-xs font-semibold transition",
+            "inline-flex items-center gap-1.5 rounded-pill font-semibold transition h-8 px-3.5 text-xs",
+            "active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
             publishedOwned
               ? "border border-accent/40 text-accent bg-accent-dim hover:border-accent hover:bg-accent/10"
               : "border border-outline text-text-secondary hover:border-accent-soft/50 hover:text-text-primary",
@@ -700,15 +682,9 @@ function PublishArea({
             {publishedOwned ? "Your page · Copy link" : "Copy link"}
           </span>
         </button>
-        <button
-          type="button"
-          onClick={onOpenPublished}
-          title="Open published page"
-          className="flex h-8 w-8 items-center justify-center rounded-pill border border-outline text-text-muted transition hover:border-accent-soft/50 hover:text-text-primary"
-          aria-label="Open published page"
-        >
+        <Button variant="secondary" size="md" iconOnly onClick={onOpenPublished} title="Open published page" aria-label="Open published page">
           <Icon name="external" size={14} />
-        </button>
+        </Button>
         {publishedOwned && (
           <a
             href="/my-pages"
@@ -732,13 +708,7 @@ function PublishArea({
             onClick={onUpdatePage}
             disabled={!canPublish || isPublishing}
             title="Update published page in place"
-            className={[
-              "flex items-center gap-1.5 rounded-l-pill px-4 py-1.5 text-xs font-semibold transition",
-              "bg-accent text-white shadow-soft",
-              "hover:bg-accent-hover active:scale-[0.97]",
-              "disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
-            ].join(" ")}
+            className="inline-flex items-center gap-1.5 rounded-l-pill h-8 px-3.5 text-xs font-semibold bg-accent text-white shadow-soft hover:bg-accent-hover transition active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
           >
             {isPublishing ? (
               <svg width="13" height="13" viewBox="0 0 13 13" fill="none" className="animate-spin" aria-hidden>
@@ -754,13 +724,7 @@ function PublishArea({
             title="More publish options"
             disabled={isPublishing}
             onClick={() => setShowPublishOptions(true)}
-            className={[
-              "flex h-8 w-8 items-center justify-center rounded-r-pill transition",
-              "bg-accent text-white border-l border-white/20",
-              "hover:bg-accent-hover active:scale-[0.97]",
-              "disabled:opacity-40 disabled:cursor-not-allowed",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
-            ].join(" ")}
+            className="flex h-8 w-8 items-center justify-center rounded-r-pill bg-accent text-white border-l border-white/20 hover:bg-accent-hover transition active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
           >
             <Icon name="chevron-down" size={11} />
           </button>
@@ -797,18 +761,7 @@ function PublishArea({
   const label = status === "error" ? "Retry" : "Publish";
 
   return (
-    <button
-      type="button"
-      onClick={onPublish}
-      disabled={!canPublish || isPublishing}
-      className={[
-        "flex items-center gap-1.5 rounded-pill px-4 py-1.5 text-xs font-semibold transition",
-        "bg-accent text-white shadow-soft",
-        "hover:bg-accent-hover active:scale-[0.97]",
-        "disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
-      ].join(" ")}
-    >
+    <Button variant="primary" size="md" onClick={onPublish} disabled={!canPublish || isPublishing}>
       {isPublishing ? (
         <svg width="13" height="13" viewBox="0 0 13 13" fill="none" className="animate-spin" aria-hidden>
           <path d="M6.5 1a5.5 5.5 0 1 0 5.5 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -817,7 +770,7 @@ function PublishArea({
         <Icon name="upload" size={13} />
       )}
       <span className="hidden sm:inline">{label}</span>
-    </button>
+    </Button>
   );
 }
 
@@ -990,28 +943,17 @@ function PostPublishSlugBar({
             <span className="text-xs text-red-400">✗ Taken</span>
           )}
           {error && <span className="text-xs text-red-400">{error}</span>}
-          <button
-            type="button"
-            onClick={() => void save()}
-            disabled={!canSave}
-            className="flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-semibold text-white bg-accent hover:bg-accent-hover transition disabled:opacity-40"
-          >
+          <Button variant="primary" size="sm" onClick={() => void save()} disabled={!canSave}>
             {saving ? (
               <svg width="11" height="11" viewBox="0 0 13 13" fill="none" className="animate-spin" aria-hidden>
                 <path d="M6.5 1a5.5 5.5 0 1 0 5.5 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
             ) : null}
             Save URL
-          </button>
-          <button
-            type="button"
-            onClick={onDismiss}
-            className="flex h-7 w-7 items-center justify-center rounded-md text-text-muted transition hover:bg-fill-2 hover:text-text-primary"
-            aria-label="Skip"
-            title="Skip"
-          >
+          </Button>
+          <Button variant="ghost" size="sm" iconOnly onClick={onDismiss} aria-label="Skip" title="Skip">
             <Icon name="close" size={13} />
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -1247,12 +1189,9 @@ export function TopBar({
               </UserButton.MenuItems>
             </UserButton>
           ) : (
-            <Link
-              href={ROUTES.signIn}
-              className="hidden sm:inline-flex items-center gap-1.5 rounded-pill border border-outline px-3 py-1 text-xs font-medium text-text-secondary transition hover:border-accent-soft/50 hover:text-text-primary"
-            >
+            <Button variant="secondary" size="sm" href={ROUTES.signIn} className="hidden sm:inline-flex">
               Sign in
-            </Link>
+            </Button>
           )}
 
           <div className="mx-1 h-4 w-px bg-outline" />

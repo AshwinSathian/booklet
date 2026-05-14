@@ -7,6 +7,7 @@ import { APP_NAME, ROUTES } from "@/lib/constants";
 import { UserButton, useUser } from "@clerk/nextjs";
 import type { Easing, Variants } from "framer-motion";
 import { motion, useReducedMotion } from "framer-motion";
+import { Button } from "@/components/ui/Button";
 import Link from "next/link";
 import React, { useMemo, useState } from "react";
 
@@ -72,24 +73,10 @@ function PrimaryButton({
   children: React.ReactNode;
   large?: boolean;
 }) {
-  const cls = cn(
-    "inline-flex items-center gap-2 rounded-full bg-accent font-semibold text-white shadow-soft",
-    "transition hover:bg-accent-hover active:scale-[0.97]",
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
-    large ? "px-7 py-3.5 text-[15px]" : "px-5 py-2.5 text-sm",
-  );
-
-  if (href) {
-    return (
-      <Link href={href} className={cls} onClick={onClick}>
-        {children}
-      </Link>
-    );
-  }
   return (
-    <button type="button" className={cls} onClick={onClick}>
+    <Button variant="primary" size={large ? "xl" : "lg"} href={href} onClick={onClick}>
       {children}
-    </button>
+    </Button>
   );
 }
 
@@ -104,33 +91,10 @@ function GhostButton({
   children: React.ReactNode;
   external?: boolean;
 }) {
-  const cls =
-    "inline-flex items-center gap-2 rounded-full border border-border-default bg-transparent px-5 py-2.5 text-sm font-semibold text-text-secondary whitespace-nowrap transition hover:border-accent-soft/50 hover:text-text-primary active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg";
-
-  if (external && href) {
-    return (
-      <a
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={cls}
-        onClick={onClick}
-      >
-        {children}
-      </a>
-    );
-  }
-  if (href) {
-    return (
-      <Link href={href} className={cls} onClick={onClick}>
-        {children}
-      </Link>
-    );
-  }
   return (
-    <button type="button" className={cls} onClick={onClick}>
+    <Button variant="secondary" size="lg" href={href} external={external} onClick={onClick}>
       {children}
-    </button>
+    </Button>
   );
 }
 

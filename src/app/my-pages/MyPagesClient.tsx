@@ -1,9 +1,9 @@
 "use client";
 
 import { ActionDrawer, DrawerSection } from "@/components/ui/ActionDrawer";
+import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { ROUTES } from "@/lib/constants";
-import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,58}[a-z0-9]$|^[a-z0-9]{3,60}$/;
@@ -202,26 +202,22 @@ function SlugEditor({
           ].join(" ")}
           aria-label="Custom URL slug"
         />
-        <button
-          type="button"
+        <Button
+          variant="primary"
+          size="sm"
           onClick={() => void save()}
           disabled={saving || availability === "taken" || availability === "checking"}
-          className="ml-1.5 flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium text-white bg-accent hover:bg-accent-hover transition disabled:opacity-50"
+          className="ml-1.5"
         >
           {saving ? (
             <svg width="11" height="11" viewBox="0 0 13 13" fill="none" className="animate-spin" aria-hidden>
               <path d="M6.5 1a5.5 5.5 0 1 0 5.5 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             </svg>
           ) : "Save"}
-        </button>
-        <button
-          type="button"
-          onClick={cancel}
-          className="ml-1 flex h-7 w-7 items-center justify-center rounded-md text-text-muted transition hover:bg-fill-2 hover:text-text-primary"
-          aria-label="Cancel"
-        >
+        </Button>
+        <Button variant="ghost" size="sm" iconOnly onClick={cancel} aria-label="Cancel" className="ml-1">
           <Icon name="close" size={11} />
-        </button>
+        </Button>
       </div>
       {!error && availability === "checking" && <p className="text-xs text-text-muted">Checking…</p>}
       {!error && availability === "available" && <p className="text-xs text-green-400">✓ Available</p>}
@@ -411,31 +407,28 @@ function PageCard({
 
           {/* ── Actions ── */}
           <div className="flex items-center gap-1 shrink-0">
-            <button
-              type="button"
+            <Button
+              variant={copying ? "primary" : "secondary"}
+              size="md"
               onClick={() => void handleCopy()}
               title="Copy link"
               aria-label="Copy share link"
-              className={[
-                "flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition",
-                copying
-                  ? "text-accent bg-accent-dim"
-                  : "text-text-muted hover:text-text-primary hover:bg-fill-2",
-              ].join(" ")}
+              className={copying ? "bg-accent-dim text-accent border-accent/40 hover:bg-accent-dim hover:border-accent/40 hover:text-accent shadow-none" : ""}
             >
               <Icon name={copying ? "check" : "copy"} size={13} />
               <span className="hidden sm:inline">{copying ? "Copied" : "Copy"}</span>
-            </button>
+            </Button>
 
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="md"
+              iconOnly
               onClick={() => { setConfirming(false); setDrawerOpen(true); }}
               title="Page actions"
               aria-label="More actions"
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-text-muted transition hover:text-text-primary hover:bg-fill-2"
             >
               <Icon name="dots" size={15} />
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -495,26 +488,17 @@ function PageCard({
           {confirming ? (
             <div className="flex items-center gap-3 px-3 py-3">
               <span className="flex-1 text-sm text-text-secondary">Delete this page permanently?</span>
-              <button
-                type="button"
-                onClick={() => void handleDelete()}
-                disabled={deleting}
-                className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white bg-red-500 hover:bg-red-600 transition disabled:opacity-50"
-              >
+              <Button variant="danger" size="sm" onClick={() => void handleDelete()} disabled={deleting}>
                 {deleting ? (
                   <svg width="11" height="11" viewBox="0 0 13 13" fill="none" className="animate-spin" aria-hidden>
                     <path d="M6.5 1a5.5 5.5 0 1 0 5.5 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                   </svg>
                 ) : null}
                 Delete
-              </button>
-              <button
-                type="button"
-                onClick={() => setConfirming(false)}
-                className="rounded-lg px-3 py-1.5 text-xs font-medium text-text-muted hover:bg-fill-2 transition"
-              >
+              </Button>
+              <Button variant="secondary" size="sm" onClick={() => setConfirming(false)}>
                 Cancel
-              </button>
+              </Button>
             </div>
           ) : (
             <DrawerItem
@@ -602,15 +586,17 @@ function CollectionSidebar({
         </span>
       </button>
       {canDelete ? (
-        <button
-          type="button"
+        <Button
+          variant="danger"
+          size="sm"
+          iconOnly
           onClick={() => onDeleteCollection(id)}
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-text-muted opacity-0 transition hover:bg-red-400/10 hover:text-red-400 group-hover:opacity-100 focus-visible:opacity-100"
           aria-label={`Delete ${label}`}
           title={`Delete ${label}`}
+          className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 shrink-0"
         >
           <Icon name="trash" size={12} />
-        </button>
+        </Button>
       ) : null}
     </div>
   );
@@ -645,11 +631,12 @@ function CollectionSidebar({
           placeholder="New collection…"
           className="min-w-0 flex-1 rounded-lg border border-outline bg-bg px-2.5 py-1.5 text-xs text-text-primary placeholder:text-text-muted/40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft"
         />
-        <button
-          type="button"
+        <Button
+          variant="primary"
+          size="md"
+          iconOnly
           onClick={onCreateCollection}
           disabled={creatingCollection || !newCollectionName.trim()}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent text-white transition hover:bg-accent-hover disabled:opacity-40"
           aria-label="Create collection"
           title="Create collection"
         >
@@ -658,7 +645,7 @@ function CollectionSidebar({
             size={13}
             className={creatingCollection ? "animate-spin" : undefined}
           />
-        </button>
+        </Button>
       </div>
     </aside>
   );
@@ -866,15 +853,12 @@ export function MyPagesList({
           <p className="mt-1 text-sm text-text-secondary">Publish your first page to see it here.</p>
         </div>
         <div className="flex items-center gap-3 text-sm mt-1">
-          <Link
-            href={ROUTES.app}
-            className="inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-hover"
-          >
+          <Button variant="primary" size="lg" href={ROUTES.app}>
             Open editor
             <svg width="11" height="11" fill="none" viewBox="0 0 12 12" aria-hidden>
               <path d="M2.5 9.5 9.5 2.5M9.5 2.5H4M9.5 2.5V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-          </Link>
+          </Button>
         </div>
       </div>
     );
