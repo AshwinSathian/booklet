@@ -30,7 +30,6 @@ function downloadBlob(content: string, filename: string, mimeType: string) {
 
 export function ExportMenu({
   blocks,
-  settings,
   raw,
   title,
 }: {

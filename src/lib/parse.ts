@@ -1,4 +1,4 @@
-import type { Content, Parent, Root, Text } from "mdast";
+import type { Parent, Root, Text } from "mdast";
 import remarkGfm from "remark-gfm";
 import remarkParse from "remark-parse";
 import { unified } from "unified";
@@ -6,7 +6,17 @@ import { visit } from "unist-util-visit";
 import { SKIP } from "unist-util-visit-parents";
 import { DIAGRAM_LANGS, type Block, type Inline, type ListItem } from "./blocks";
 
-type MdNode = any;
+type MdNode = {
+  type?: string;
+  value?: unknown;
+  children?: MdNode[];
+  url?: unknown;
+  alt?: unknown;
+  lang?: unknown;
+  depth?: unknown;
+  ordered?: unknown;
+  checked?: unknown;
+};
 
 function inlineFromNodes(nodes: MdNode[]): Inline[] {
   const out: Inline[] = [];
@@ -103,10 +113,10 @@ function listBlockFromNode(node: MdNode): Block {
   return { t: "list", ordered, items };
 }
 
-function blocksFromChildren(children: Content[]): Block[] {
+function blocksFromChildren(children: MdNode[]): Block[] {
   const blocks: Block[] = [];
 
-  for (const node of children as MdNode[]) {
+  for (const node of children) {
     if (!node) continue;
 
     switch (node.type) {
@@ -165,7 +175,7 @@ function blocksFromChildren(children: Content[]): Block[] {
         const headRow = rowNodes[0];
         if (headRow?.type === "tableRow") {
           head.push(
-            ...headRow.children.map((c: MdNode) => inlineFromNodes(c.children ?? [])),
+            ...(headRow.children ?? []).map((c: MdNode) => inlineFromNodes(c.children ?? [])),
           );
         }
         const rows: Inline[][][] = rowNodes.slice(1).map((tr: MdNode) =>
@@ -185,16 +195,16 @@ function blocksFromChildren(children: Content[]): Block[] {
 
 export function parseToBlocks(input: string): Block[] {
   const tree = unified().use(remarkParse).use(remarkGfm).parse(input) as Root;
-  visit(tree as any, "html", removeRawHtmlNodes);
-  return blocksFromChildren(tree.children ?? []);
+  visit(tree, "html", removeRawHtmlNodes);
+  return blocksFromChildren((tree.children ?? []) as unknown as MdNode[]);
 }
 
 function removeRawHtmlNodes(
-  node: any,
+  _node: unknown,
   index: number | undefined,
   parent: Parent | undefined,
 ) {
   if (!parent || typeof index !== "number") return;
-  (parent.children as any[]).splice(index, 1);
+  parent.children.splice(index, 1);
   return SKIP;
 }

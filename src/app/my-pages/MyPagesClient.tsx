@@ -2,6 +2,7 @@
 
 import { Icon } from "@/components/ui/Icon";
 import { ROUTES } from "@/lib/constants";
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 // Mirrors server-side validation.
@@ -692,9 +693,9 @@ export function MyPagesList({
         </svg>
         <p className="text-sm font-medium text-text-primary">No pages yet.</p>
         <div className="flex items-center gap-3 text-sm">
-          <a href={ROUTES.app} className="text-accent hover:underline">Publish your first →</a>
+          <Link href={ROUTES.app} className="text-accent hover:underline">Publish your first →</Link>
           <span className="text-text-muted/40">·</span>
-          <a href="/#examples" className="text-text-muted hover:text-text-primary hover:underline">See example pages</a>
+          <Link href="/#examples" className="text-text-muted hover:text-text-primary hover:underline">See example pages</Link>
         </div>
       </div>
     );

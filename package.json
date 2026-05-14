@@ -10,7 +10,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "serve": "next start",
+    "lint": "eslint .",
+    "test": "tsc --noEmit",
     "postinstall": "node scripts/stub-og.cjs",
     "preview": "opennextjs-cloudflare build && wrangler dev",
     "deploy": "opennextjs-cloudflare build && wrangler deploy"

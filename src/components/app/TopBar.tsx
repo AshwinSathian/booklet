@@ -911,7 +911,7 @@ export function TopBar({
           <div className="mx-auto w-full max-w-7xl">
             <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-400/30 bg-amber-400/8 px-3 py-2">
               <span className="text-xs text-amber-400">
-                Couldn't save — browser storage may be full.
+                Couldn&apos;t save — browser storage may be full.
               </span>
               <button
                 type="button"

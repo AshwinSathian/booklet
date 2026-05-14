@@ -102,7 +102,7 @@ function NewKeyReveal({ raw, onDismiss }: { raw: string; onDismiss: () => void }
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-sm font-semibold text-text-primary">Your new API key</p>
-          <p className="mt-0.5 text-xs text-text-secondary">Copy it now — it won't be shown again.</p>
+          <p className="mt-0.5 text-xs text-text-secondary">Copy it now — it won&apos;t be shown again.</p>
         </div>
         <button
           type="button"

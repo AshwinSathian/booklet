@@ -14,17 +14,19 @@ function inlineToText(inl: Inline[] | Inline | unknown): string {
   if (typeof inl === "string") return inl;
   if (typeof inl !== "object") return "";
 
-  const anyInl = inl as Inline;
-
-  switch (anyInl.t) {
+  const node = inl as Inline;
+  switch (node.t) {
     case "text":
     case "code":
-      return String((anyInl as any).v ?? "");
+      return node.v;
     case "link":
-      return inlineToText((anyInl as any).c);
+      return inlineToText(node.c);
     case "strong":
     case "em":
-      return inlineToText((anyInl as any).c);
+    case "del":
+      return inlineToText(node.c);
+    case "image":
+      return node.alt;
     default:
       return "";
   }

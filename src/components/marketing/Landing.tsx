@@ -1212,7 +1212,7 @@ export function Landing() {
             that never expire.
           </FaqItem>
           <FaqItem question="Can I edit after publishing?">
-            Anonymous pages can't be edited after publishing — update your draft and republish for a new link.
+            Anonymous pages can&apos;t be edited after publishing — update your draft and republish for a new link.
             Signed-in users can update pages in place, keeping the same URL.
           </FaqItem>
           <FaqItem question="Can I export a published page?">

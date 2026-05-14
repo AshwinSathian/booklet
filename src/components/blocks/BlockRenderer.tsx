@@ -312,6 +312,8 @@ export function BlockRenderer({
               if (!src) return null;
               return (
                 <figure key={idx} className="my-0">
+                  {/* Markdown images are arbitrary external URLs; next/image cannot safely optimize them without domain allowlists. */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={src}
                     alt={b.alt}

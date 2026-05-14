@@ -534,7 +534,7 @@ function AppPageContent() {
         stage: "api",
       });
     }
-  }, [activeDraftId, blocks, settings, toast, canPublish, raw.length]);
+  }, [activeDraftId, blocks, settings, toast, canPublish, raw]);
 
   const onUpdatePage = useCallback(async () => {
     if (!canPublish) {
@@ -575,7 +575,7 @@ function AppPageContent() {
       toast.error("Update failed", toErrorMessage(e));
       trackEvent(ANALYTICS_EVENTS.publish_error, { stage: "api" });
     }
-  }, [activeDraftId, blocks, settings, toast, canPublish, lastPublishedId, lastPublishedOwned]);
+  }, [activeDraftId, blocks, settings, raw, toast, canPublish, lastPublishedId, lastPublishedOwned]);
 
   const onCopyLink = useCallback(async () => {
     if (!lastPublishedUrl) {

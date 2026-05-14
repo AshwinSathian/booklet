@@ -63,6 +63,8 @@ export function InlineRenderer({ inl }: { inl: Inline[] }) {
             const src = safeSrc(node.src);
             if (!src) return null;
             return (
+              // Markdown images are arbitrary external URLs; next/image cannot safely optimize them without domain allowlists.
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 key={i}
                 src={src}

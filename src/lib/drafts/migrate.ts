@@ -24,11 +24,6 @@ function isArray(v: unknown): v is unknown[] {
   return Array.isArray(v);
 }
 
-function isPublishedSnapshotRef(v: unknown): v is PublishedSnapshotRef {
-  if (!isPlainObject(v)) return false;
-  return isString(v.id) && isString(v.url) && isString(v.createdAt);
-}
-
 function coercePublishedSnapshotRef(
   v: unknown,
 ): PublishedSnapshotRef | undefined {

@@ -7,7 +7,7 @@ import { getPageBySlug, getPageRecord, incrementViewCount } from "@/lib/db";
 import { absoluteUrl, buildMetadata } from "@/lib/seo";
 import { getDoc } from "@/lib/storage";
 import { readingTimeMinutes } from "@/lib/reading-time";
-import { buildToc, MIN_TOC_HEADINGS, type TocItem } from "@/lib/toc";
+import { buildToc, MIN_TOC_HEADINGS } from "@/lib/toc";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { DesktopTocClient, MobileTocClient } from "@/components/share/TocClient";
@@ -180,7 +180,7 @@ export default async function SharePage({
       </main>
 
       {/* ── Floating attribution badge — acquisition loop anchor ── */}
-      <a
+      <Link
         href="/"
         className="fixed bottom-4 right-4 z-10 hidden sm:flex items-center gap-1.5 rounded-pill border border-border-subtle bg-bg/80 backdrop-blur-md px-3 py-1.5 transition hover:border-accent-soft/40 hover:bg-bg-elevated print:hidden"
         aria-label="Made with Readable — create your own page"
@@ -197,7 +197,7 @@ export default async function SharePage({
           />
         </svg>
         <span className="text-2xs text-text-muted">Made with Readable</span>
-      </a>
+      </Link>
 
       {/* ── Footer ── */}
       <footer className="mt-12 border-t border-border-subtle print:hidden">

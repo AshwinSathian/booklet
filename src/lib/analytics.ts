@@ -7,7 +7,7 @@ export function trackEvent(
   params?: AnalyticsEventParams,
 ) {
   if (typeof window === "undefined") return;
-  const gtag = (window as any).gtag as undefined | ((...args: any[]) => void);
+  const gtag = (window as Window & { gtag?: (...args: unknown[]) => void }).gtag;
   if (!gtag) return;
 
   // Keep params shallow and safe (no content).
