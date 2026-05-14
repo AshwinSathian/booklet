@@ -80,19 +80,18 @@ export function ActionDrawer({
 
   return (
     <div className="fixed inset-0 z-50 print:hidden" role="dialog" aria-modal="true" aria-label={title}>
-      <button
-        type="button"
+      <div
         className={[
-          "absolute inset-0 bg-black/50 backdrop-blur-sm",
+          "absolute inset-0 z-0 bg-black/50 backdrop-blur-sm",
           isClosing ? "animate-drawer-backdrop-out" : "animate-drawer-backdrop-in",
         ].join(" ")}
-        onClick={onClose}
-        aria-label="Close drawer"
+        onPointerDown={onClose}
+        aria-hidden="true"
       />
 
       <aside
         className={[
-          "absolute border-border-default bg-bg shadow-glass",
+          "absolute z-10 border-border-default bg-bg shadow-glass",
           "[--drawer-enter-from:translate3d(0,24px,0)] [--drawer-exit-to:translate3d(0,24px,0)]",
           "sm:[--drawer-enter-from:translate3d(24px,0,0)] sm:[--drawer-exit-to:translate3d(24px,0,0)]",
           isClosing ? "animate-drawer-panel-out" : "animate-drawer-panel-in",
