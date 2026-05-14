@@ -1,10 +1,20 @@
 "use client";
 
 import { trackEvent } from "@/lib/analytics";
-import { ANALYTICS_EVENTS } from "@/lib/analytics-events";
+import { ANALYTICS_EVENTS, hashId } from "@/lib/analytics-events";
 import { DocSettings } from "@/lib/blocks";
 import { ROUTES, UI } from "@/lib/constants";
+import {
+  DRAFTS_STORAGE_KEYS,
+  deleteDraft,
+  duplicateDraft,
+  listDrafts,
+  updateDraft,
+  type DraftMeta,
+} from "@/lib/drafts";
 import { copyTextToClipboard, markdownToHtml } from "@/lib/export";
+import { TEMPLATES, type Template } from "@/lib/templates";
+import { formatRelativeTimeFromIso, formatUpdatedAtLong } from "@/lib/ui/time";
 import { UserButton, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -15,7 +25,6 @@ import { SegmentedControl } from "../ui/SegmentedControl";
 import ThemeToggle from "../ui/ThemeToggle";
 import { useToast } from "../ui/ToastProvider";
 import { DraftsDialog } from "./DraftsDialog";
-import { TemplatesDialog } from "./TemplatesDialog";
 
 export type SaveState = "saved" | "saving";
 type EditorStatus = "idle" | "typing" | "publishing" | "published" | "error";
@@ -23,6 +32,7 @@ type EditorStatus = "idle" | "typing" | "publishing" | "published" | "error";
 // Slug validation — mirrors server-side rule in /api/pages/[id]/route.ts
 const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,58}[a-z0-9]$|^[a-z0-9]{1,60}$/;
 function isValidSlug(s: string) { return SLUG_RE.test(s) && !s.includes("--"); }
+function isValidTitle(title: string): boolean { return title.trim().length > 0; }
 
 // ---------------------------------------------------------------------------
 // Icon button
@@ -57,12 +67,15 @@ function IconBtn({
   );
 }
 
+type MoreDrawerView = "menu" | "drafts" | "templates";
+
 type ActionItem = {
   label: string;
   detail?: string;
   icon?: IconName;
   shortcut?: string;
-  onClick: () => void;
+  view?: Exclude<MoreDrawerView, "menu">;
+  onClick?: () => void;
 };
 
 type ActionSection = {
@@ -73,52 +86,398 @@ type ActionSection = {
 function MoreActionsDrawer({
   open,
   sections,
+  activeDraftId,
+  onCreateDraft,
+  onOpenDraft,
+  onRequestImportMarkdown,
+  onSelectTemplate,
   onClose,
 }: {
   open: boolean;
   sections: ActionSection[];
+  activeDraftId: string | null;
+  onCreateDraft: (origin?: "drafts_dialog") => string;
+  onOpenDraft: (id: string, origin?: "drafts_dialog") => void;
+  onRequestImportMarkdown: () => void;
+  onSelectTemplate?: (template: Template) => void;
   onClose: () => void;
 }) {
+  const [view, setView] = useState<MoreDrawerView>("menu");
+
+  useEffect(() => {
+    if (!open) setView("menu");
+  }, [open]);
+
+  const goBack = useCallback(() => setView("menu"), []);
+
   return (
     <ActionDrawer
       open={open}
-      title="More"
-      description="Draft actions, import/export tools, and navigation."
+      title={view === "menu" ? "More" : view === "drafts" ? "My drafts" : "Templates"}
+      description={view === "menu" ? "Draft actions, import/export tools, and navigation." : undefined}
       onClose={onClose}
     >
-      {sections.map((section) => (
-        <DrawerSection key={section.title} title={section.title}>
-          {section.items.map((item) => (
-            <button
-              key={item.label}
-              type="button"
-              className="flex w-full items-center gap-3 border-b border-border-subtle px-3 py-3 text-left text-sm text-text-secondary transition last:border-b-0 hover:bg-fill-2 hover:text-text-primary"
-              onClick={() => {
-                item.onClick();
-                onClose();
-              }}
-            >
-              {item.icon ? (
-                <span className="shrink-0 text-text-muted">
-                  <Icon name={item.icon} size={16} />
-                </span>
-              ) : null}
-              <span className="min-w-0 flex-1">
-                <span className="block text-text-primary">{item.label}</span>
-                {item.detail ? (
-                  <span className="mt-0.5 block text-xs text-text-muted">{item.detail}</span>
+      {view === "menu" ? (
+        sections.map((section) => (
+          <DrawerSection key={section.title} title={section.title}>
+            {section.items.map((item) => (
+              <button
+                key={item.label}
+                type="button"
+                className="flex w-full items-center gap-3 border-b border-border-subtle px-3 py-3 text-left text-sm text-text-secondary transition last:border-b-0 hover:bg-fill-2 hover:text-text-primary"
+                onClick={() => {
+                  if (item.view) {
+                    setView(item.view);
+                    return;
+                  }
+                  item.onClick?.();
+                  onClose();
+                }}
+              >
+                {item.icon ? (
+                  <span className="shrink-0 text-text-muted">
+                    <Icon name={item.icon} size={16} />
+                  </span>
                 ) : null}
-              </span>
-              {item.shortcut ? (
-                <kbd className="rounded border border-border-subtle bg-fill-1 px-1.5 py-0.5 text-2xs font-mono text-text-muted">
-                  {item.shortcut}
-                </kbd>
-              ) : null}
-            </button>
-          ))}
-        </DrawerSection>
-      ))}
+                <span className="min-w-0 flex-1">
+                  <span className="block text-text-primary">{item.label}</span>
+                  {item.detail ? (
+                    <span className="mt-0.5 block text-xs text-text-muted">{item.detail}</span>
+                  ) : null}
+                </span>
+                {item.shortcut ? (
+                  <kbd className="rounded border border-border-subtle bg-fill-1 px-1.5 py-0.5 text-2xs font-mono text-text-muted">
+                    {item.shortcut}
+                  </kbd>
+                ) : null}
+              </button>
+            ))}
+          </DrawerSection>
+        ))
+      ) : null}
+
+      {view === "drafts" ? (
+        <DrawerDraftsView
+          activeDraftId={activeDraftId}
+          onBack={goBack}
+          onClose={onClose}
+          onCreateDraft={onCreateDraft}
+          onOpenDraft={onOpenDraft}
+          onRequestImportMarkdown={onRequestImportMarkdown}
+        />
+      ) : null}
+
+      {view === "templates" ? (
+        <DrawerTemplatesView
+          onBack={goBack}
+          onSelect={(template) => {
+            onSelectTemplate?.(template);
+            onClose();
+          }}
+        />
+      ) : null}
     </ActionDrawer>
+  );
+}
+
+function DrawerBackButton({ onBack }: { onBack: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onBack}
+      className="mb-3 inline-flex items-center gap-1.5 rounded-lg border border-border-subtle px-2.5 py-1.5 text-xs font-medium text-text-muted transition hover:border-border-strong hover:text-text-primary"
+    >
+      <Icon name="chevron-right" size={13} className="rotate-180" />
+      Back
+    </button>
+  );
+}
+
+function DrawerTemplatesView({
+  onBack,
+  onSelect,
+}: {
+  onBack: () => void;
+  onSelect: (template: Template) => void;
+}) {
+  return (
+    <>
+      <DrawerBackButton onBack={onBack} />
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {TEMPLATES.map((template) => (
+          <button
+            key={template.name}
+            type="button"
+            onClick={() => onSelect(template)}
+            className="flex min-h-24 flex-col items-start gap-1 rounded-lg border border-border-subtle bg-bg-elevated px-4 py-3.5 text-left transition hover:border-accent-soft/40 hover:bg-accent/4 active:scale-[0.99]"
+          >
+            <span className="text-sm font-medium text-text-primary">{template.name}</span>
+            <span className="text-xs leading-relaxed text-text-muted">{template.description}</span>
+          </button>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function DrawerDraftsView({
+  activeDraftId,
+  onBack,
+  onClose,
+  onCreateDraft,
+  onOpenDraft,
+  onRequestImportMarkdown,
+}: {
+  activeDraftId: string | null;
+  onBack: () => void;
+  onClose: () => void;
+  onCreateDraft: (origin?: "drafts_dialog") => string;
+  onOpenDraft: (id: string, origin?: "drafts_dialog") => void;
+  onRequestImportMarkdown: () => void;
+}) {
+  const [drafts, setDrafts] = useState<DraftMeta[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState("");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
+  const refresh = useCallback(() => setDrafts(listDrafts()), []);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === DRAFTS_STORAGE_KEYS.db) refresh();
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [refresh]);
+
+  const cancelRename = useCallback(() => {
+    setEditingId(null);
+    setEditingTitle("");
+  }, []);
+
+  const beginRename = useCallback((draft: DraftMeta) => {
+    setEditingId(draft.id);
+    setEditingTitle(draft.title);
+    setConfirmDeleteId(null);
+  }, []);
+
+  const commitRename = useCallback(() => {
+    if (!editingId) return;
+    const next = editingTitle.trim();
+    if (!isValidTitle(next)) return;
+    updateDraft(editingId, { title: next });
+    trackEvent(ANALYTICS_EVENTS.draft_renamed, { draft_hash: hashId(editingId) });
+    cancelRename();
+    refresh();
+  }, [cancelRename, editingId, editingTitle, refresh]);
+
+  const onDuplicate = useCallback((id: string) => {
+    const copy = duplicateDraft(id);
+    trackEvent(ANALYTICS_EVENTS.draft_duplicated, {
+      draft_hash: hashId(id),
+      new_draft_hash: copy ? hashId(copy.id) : "",
+    });
+    refresh();
+  }, [refresh]);
+
+  const onDelete = useCallback((id: string) => {
+    if (confirmDeleteId !== id) {
+      setConfirmDeleteId(id);
+      return;
+    }
+
+    const deletingActive = id === activeDraftId;
+    deleteDraft(id);
+    trackEvent(ANALYTICS_EVENTS.draft_deleted, {
+      draft_hash: hashId(id),
+      deleting_active: deletingActive,
+    });
+    cancelRename();
+    setConfirmDeleteId(null);
+
+    const nextDrafts = listDrafts();
+    setDrafts(nextDrafts);
+
+    if (!deletingActive) return;
+
+    const nextId = nextDrafts[0]?.id;
+    if (nextId) {
+      onOpenDraft(nextId, "drafts_dialog");
+      onClose();
+      return;
+    }
+    onCreateDraft("drafts_dialog");
+    onClose();
+  }, [activeDraftId, cancelRename, confirmDeleteId, onClose, onCreateDraft, onOpenDraft]);
+
+  return (
+    <>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <DrawerBackButton onBack={onBack} />
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onRequestImportMarkdown}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border-subtle px-2.5 py-1.5 text-xs font-medium text-text-secondary transition hover:border-accent-soft/50 hover:text-text-primary"
+          >
+            <Icon name="download" size={12} />
+            Import
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const id = onCreateDraft("drafts_dialog");
+              trackEvent(ANALYTICS_EVENTS.draft_created, { draft_hash: hashId(id), origin: "drafts_dialog" });
+              onClose();
+            }}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-2.5 py-1.5 text-xs font-semibold text-white transition hover:bg-accent-hover"
+          >
+            <Icon name="plus" size={12} />
+            New draft
+          </button>
+        </div>
+      </div>
+
+      {drafts.length === 0 ? (
+        <div className="rounded-lg border border-border-subtle bg-bg-elevated p-5">
+          <div className="text-sm font-semibold text-text-primary">No drafts yet.</div>
+          <div className="mt-1.5 text-sm leading-relaxed text-text-secondary">
+            Drafts autosave to your browser. Publishing creates a shareable link; your draft stays here, ready to edit.
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
+          {drafts.map((draft) => {
+            const isActive = draft.id === activeDraftId;
+            const isEditing = editingId === draft.id;
+            const isConfirmingDelete = confirmDeleteId === draft.id;
+            const updatedLong = formatUpdatedAtLong(draft.updatedAt);
+            const updatedRel = formatRelativeTimeFromIso(draft.updatedAt);
+            const updated = updatedRel && updatedRel !== updatedLong
+              ? `${updatedRel} · ${updatedLong}`
+              : updatedLong;
+
+            return (
+              <div
+                key={draft.id}
+                className={[
+                  "rounded-lg border p-3 transition",
+                  isActive ? "border-accent-soft/40 bg-accent/5" : "border-border-subtle bg-bg-elevated",
+                ].join(" ")}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    {isEditing ? (
+                      <input
+                        value={editingTitle}
+                        onChange={(e) => setEditingTitle(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") { e.preventDefault(); commitRename(); }
+                          if (e.key === "Escape") { e.preventDefault(); cancelRename(); }
+                        }}
+                        onBlur={commitRename}
+                        autoFocus
+                        className="w-full rounded-md border border-accent-soft bg-bg px-2 py-0.5 text-sm font-medium text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft"
+                        aria-label="Draft title"
+                      />
+                    ) : (
+                      <div className="truncate text-sm font-medium text-text-primary">
+                        {draft.title?.trim() ? draft.title : "Untitled"}
+                      </div>
+                    )}
+                    {updated ? (
+                      <div className="mt-0.5 text-xs text-text-muted">{updated}</div>
+                    ) : null}
+                  </div>
+
+                  <div className="flex shrink-0 items-center gap-0.5">
+                    <DrawerDraftIconButton label={isEditing ? "Save rename" : "Open draft"} onClick={() => {
+                      if (isEditing) {
+                        commitRename();
+                        return;
+                      }
+                      trackEvent(ANALYTICS_EVENTS.draft_opened, { draft_hash: hashId(draft.id), origin: "drafts_dialog", is_active: isActive });
+                      onOpenDraft(draft.id, "drafts_dialog");
+                      onClose();
+                    }}>
+                      <Icon name={isEditing ? "check" : "external"} size={13} />
+                    </DrawerDraftIconButton>
+                    <DrawerDraftIconButton label="Rename" onClick={() => isEditing ? cancelRename() : beginRename(draft)}>
+                      <Icon name="pencil" size={13} />
+                    </DrawerDraftIconButton>
+                    <DrawerDraftIconButton label="Duplicate" onClick={() => onDuplicate(draft.id)}>
+                      <Icon name="duplicate" size={13} />
+                    </DrawerDraftIconButton>
+                    <DrawerDraftIconButton label="Delete" danger onClick={() => onDelete(draft.id)}>
+                      <Icon name="trash" size={13} />
+                    </DrawerDraftIconButton>
+                  </div>
+                </div>
+
+                {isEditing && !isValidTitle(editingTitle) ? (
+                  <div className="mt-2 text-xs text-red-400">A title is required.</div>
+                ) : null}
+
+                {isConfirmingDelete ? (
+                  <div className="mt-3 flex items-center justify-between gap-2 rounded-lg border border-red-500/20 bg-red-500/8 px-3 py-2">
+                    <span className="text-xs text-red-400">Delete this draft? You can&apos;t undo this.</span>
+                    <div className="flex gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDeleteId(null)}
+                        className="rounded-md px-2 py-0.5 text-xs font-medium text-text-muted transition hover:text-text-primary"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onDelete(draft.id)}
+                        className="rounded-md bg-red-500 px-2 py-0.5 text-xs font-semibold text-white transition hover:bg-red-600"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </>
+  );
+}
+
+function DrawerDraftIconButton({
+  label,
+  onClick,
+  children,
+  danger,
+}: {
+  label: string;
+  onClick: () => void;
+  children: React.ReactNode;
+  danger?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      onClick={onClick}
+      className={[
+        "flex h-7 w-7 items-center justify-center rounded-md transition",
+        danger
+          ? "text-red-400 hover:bg-red-500/12 hover:text-red-300"
+          : "text-text-muted hover:bg-outline/30 hover:text-text-primary",
+      ].join(" ")}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -727,7 +1086,6 @@ export function TopBar({
   const [visibleSettings, setVisibleSettings] = useState(false);
   const [visibleMoreActions, setVisibleMoreActions] = useState(false);
   const [visibleDrafts, setVisibleDrafts] = useState(false);
-  const [visibleTemplates, setVisibleTemplates] = useState(false);
   const [slugBarDismissed, setSlugBarDismissed] = useState(false);
   const prevPublishedIdRef = useRef<string | null | undefined>(undefined);
 
@@ -779,6 +1137,7 @@ export function TopBar({
       const title = baseName || UI.importMarkdown.defaultTitle;
       onImportMarkdown(title, text);
       setVisibleDrafts(false);
+      setVisibleMoreActions(false);
       toast.showCoalesced(TOAST_KEYS.importMd, "success", "Imported", "Draft created from Markdown.");
     } catch (e) {
       toast.error("Import failed", toErrorMessage(e));
@@ -811,8 +1170,8 @@ export function TopBar({
       title: "Drafts",
       items: [
         { label: "New draft", detail: "Start with a blank local draft.", icon: "plus", shortcut: "⌘B", onClick: onNew },
-        { label: "My drafts", detail: "Open saved local drafts.", icon: "list", shortcut: "⌘D", onClick: () => setVisibleDrafts(true) },
-        { label: "Templates", detail: "Insert a structured starting point.", icon: "markdown", onClick: () => setVisibleTemplates(true) },
+        { label: "My drafts", detail: "Open saved local drafts.", icon: "list", shortcut: "⌘D", view: "drafts" },
+        { label: "Templates", detail: "Insert a structured starting point.", icon: "markdown", view: "templates" },
         { label: "Import Markdown", detail: "Create a draft from a .md file.", icon: "import", onClick: openImportPicker },
       ],
     },
@@ -924,6 +1283,11 @@ export function TopBar({
       <MoreActionsDrawer
         open={visibleMoreActions}
         sections={actionSections}
+        activeDraftId={activeDraftId}
+        onCreateDraft={onCreateDraft}
+        onOpenDraft={onSwitchDraft}
+        onRequestImportMarkdown={openImportPicker}
+        onSelectTemplate={(template) => onInsertTemplate?.(template.name, template.content)}
         onClose={() => setVisibleMoreActions(false)}
       />
 
@@ -971,13 +1335,6 @@ export function TopBar({
         onHide={() => setVisibleDrafts(false)}
       />
 
-      <TemplatesDialog
-        visible={visibleTemplates}
-        onHide={() => setVisibleTemplates(false)}
-        onSelect={(t) => {
-          onInsertTemplate?.(t.name, t.content);
-        }}
-      />
     </header>
   );
 }
