@@ -1,4 +1,5 @@
 import { getPageBySlug, getPageRecord, updatePageRecord, deletePageRecord } from "@/lib/db";
+import { deletePageVersions } from "@/lib/db/versions";
 import { deleteDoc } from "@/lib/storage";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
@@ -119,6 +120,7 @@ export async function DELETE(
 
   try {
     await deletePageRecord(id);
+    await deletePageVersions(id);
   } catch (dbErr) {
     console.error("[delete-page] DB delete failed:", dbErr);
   }

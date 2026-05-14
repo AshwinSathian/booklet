@@ -33,3 +33,12 @@ export type AnalyticsEvent = {
   session_hash: string;
   created_at: string;
 };
+
+export type PageVersion = {
+  id: string;
+  page_id: string;
+  version_number: number;
+  doc_snapshot: string;
+  created_at: string;
+  size_bytes: number;
+};

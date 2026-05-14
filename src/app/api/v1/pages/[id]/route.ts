@@ -2,6 +2,7 @@ import type { PublishedDoc } from "@/lib/blocks";
 import { DEFAULT_SETTINGS } from "@/lib/blocks";
 import { BLOCKS, STORAGE } from "@/lib/constants";
 import { getPageBySlug, getPageRecord, updatePageRecord, deletePageRecord } from "@/lib/db";
+import { deletePageVersions, snapshotPageVersion } from "@/lib/db/versions";
 import { resolveApiKey } from "@/lib/api-key-auth";
 import { parseToBlocks } from "@/lib/parse";
 import { putDoc, deleteDoc } from "@/lib/storage";
@@ -133,6 +134,9 @@ export async function PATCH(
 
     try {
       await putDoc(id, doc, true);
+      void snapshotPageVersion(id, doc).catch((err) => {
+        console.error("[v1/pages] version snapshot failed:", err);
+      });
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Update failed";
       return NextResponse.json({ error: msg }, { status: 500 });
@@ -199,6 +203,7 @@ export async function DELETE(
 
   try {
     await deletePageRecord(id);
+    await deletePageVersions(id);
   } catch (dbErr) {
     console.error("[v1/pages] DB delete failed:", dbErr);
   }

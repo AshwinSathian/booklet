@@ -6,6 +6,7 @@ import { ensureDbUser } from "@/lib/db/ensure-user";
 import { createId } from "@/lib/id";
 import { resolveApiKey } from "@/lib/api-key-auth";
 import { extractDocTitle } from "@/lib/doc-title";
+import { snapshotPageVersion } from "@/lib/db/versions";
 import { parseToBlocks } from "@/lib/parse";
 import { putDoc } from "@/lib/storage";
 import { checkRateLimit } from "@/lib/rate-limit";
@@ -72,6 +73,9 @@ export async function POST(req: Request) {
     const title = extractDocTitle(payload.blocks);
     await ensureDbUser(userId, null);
     await createPageRecord(id, userId, title);
+    void snapshotPageVersion(id, doc).catch((err) => {
+      console.error("[v1/publish] version snapshot failed:", err);
+    });
   } catch (dbErr) {
     console.error("[v1/publish] DB write failed:", dbErr);
   }

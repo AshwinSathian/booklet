@@ -560,6 +560,10 @@ Link from My Pages row: add a "stats" icon button that navigates to
 
 ### P1-2 — Version history
 
+**Status:** Implemented in this repo. Authenticated publishes and in-place updates
+snapshot the latest `PublishedDoc` into `page_versions`, My Pages links to an
+owner-only version history page, and owners can preview or restore saved versions.
+
 **Goal:** Keep the last 10 versions of any published page so authors can see what changed
 and revert if needed. Non-negotiable for incident reports and ADRs.
 

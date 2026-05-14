@@ -59,6 +59,10 @@ async function main() {
     { expireAfterSeconds: 7776000 },
   );
 
+  // --- page_versions ---
+  await db.collection("page_versions").createIndex({ page_id: 1, version_number: -1 });
+  await db.collection("page_versions").createIndex({ page_id: 1, created_at: -1 });
+
   console.log("MongoDB indexes created successfully.");
   await client.close();
 }

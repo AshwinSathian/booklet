@@ -367,6 +367,14 @@ function PageCard({
             <Icon name="chart" size={14} />
           </a>
 
+          <a
+            href={`/my-pages/versions/${page.id}`}
+            title="Version history"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-text-muted transition hover:text-text-primary hover:bg-fill-2"
+          >
+            <Icon name="history" size={14} />
+          </a>
+
           <button
             type="button"
             onClick={() => void handleToggleVisibility()}

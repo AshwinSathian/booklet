@@ -5,6 +5,7 @@ import { createPageRecord } from "@/lib/db";
 import { ensureDbUser } from "@/lib/db/ensure-user";
 import { createId } from "@/lib/id";
 import { extractDocTitle } from "@/lib/doc-title";
+import { snapshotPageVersion } from "@/lib/db/versions";
 import { putDoc } from "@/lib/storage";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { auth } from "@clerk/nextjs/server";
@@ -87,6 +88,9 @@ export async function POST(req: Request) {
         const title = extractDocTitle(payload.blocks);
         await ensureDbUser(userId, email);
         await createPageRecord(id, userId, title);
+        void snapshotPageVersion(id, doc).catch((err) => {
+          console.error("[publish] version snapshot failed:", err);
+        });
       } catch (dbErr) {
         console.error("[publish] DB ownership write failed:", dbErr);
       }

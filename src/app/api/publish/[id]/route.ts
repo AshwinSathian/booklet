@@ -2,6 +2,7 @@ import type { PublishedDoc } from "@/lib/blocks";
 import { DEFAULT_SETTINGS } from "@/lib/blocks";
 import { BLOCKS, STORAGE } from "@/lib/constants";
 import { getPageRecord, updatePageRecord } from "@/lib/db";
+import { snapshotPageVersion } from "@/lib/db/versions";
 import { putDoc } from "@/lib/storage";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
@@ -70,6 +71,9 @@ export async function PATCH(
 
     try {
       await putDoc(id, doc, true);
+      void snapshotPageVersion(id, doc).catch((err) => {
+        console.error("[patch-publish] version snapshot failed:", err);
+      });
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Update failed";
       return NextResponse.json({ error: msg }, { status: 500 });

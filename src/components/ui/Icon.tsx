@@ -28,6 +28,7 @@ export type IconName =
   | "eye"
   | "eye-off"
   | "chart"
+  | "history"
   | "moon"
   | "sun"
   | "print"
@@ -67,6 +68,7 @@ const PATHS: Record<IconName, string | string[]> = {
   eye:            ["M1 8C2.5 4.5 5 3 8 3s5.5 1.5 7 5c-1.5 3.5-4 5-7 5S2.5 11.5 1 8z", "M8 6a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"],
   "eye-off":      ["M2 2l12 12", "M1 8C2.5 4.5 5 3 8 3s5.5 1.5 7 5c-1.5 3.5-4 5-7 5S2.5 11.5 1 8z", "M8 6a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"],
   chart:          "M3 13V8M8 13V3M13 13V6M2 13h12",
+  history:        "M4 5H2V3M2 5a6 6 0 1 1 1.8 4.3M8 4v4l3 2",
   moon:           "M12 12A5 5 0 0 1 7 3a7 7 0 1 0 9 9z",
   sun:            "M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3 3l1 1M11 11l1 1M3 13l1-1M11 5l1-1M8 5a3 3 0 1 0 0 6 3 3 0 0 0 0-6z",
   print:          "M4 5V2h8v3M3 9h10a1 1 0 0 1 1 1v4H2v-4a1 1 0 0 1 1-1zM4 11h.01M5 13h6v3H5z",
