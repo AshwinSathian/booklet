@@ -819,6 +819,10 @@ deployment calls out to this sidecar service. Document this architecture in infr
 
 ### P2-1 — Mermaid diagram rendering (first-class)
 
+**Status:** Implemented in this repo. Mermaid fences are parsed into diagram blocks,
+rendered via dynamic import, show styled errors, rerender on light/dark theme changes,
+and supported diagram types are documented in `PRODUCT.md`.
+
 **Current state:** `DiagramBlock` exists in `src/components/blocks/DiagramBlock.tsx`.
 Verify it works end-to-end. Make it documented and solid.
 

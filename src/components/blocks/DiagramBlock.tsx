@@ -6,11 +6,26 @@ export function DiagramBlock({ lang, code }: { lang: string; code: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [errMsg, setErrMsg] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  const [themeKey, setThemeKey] = useState(0);
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setThemeKey((value) => value + 1);
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     let stale = false;
     setErrMsg(null);
     setReady(false);
+    if (containerRef.current) containerRef.current.innerHTML = "";
 
     async function go() {
       try {
@@ -41,23 +56,23 @@ export function DiagramBlock({ lang, code }: { lang: string; code: string }) {
     return () => {
       stale = true;
     };
-  }, [code]);
+  }, [code, themeKey]);
 
   return (
-    <div className="rounded-xl border border-[rgb(var(--border))] bg-bg-elevated overflow-hidden">
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-[rgb(var(--border))]/60 bg-[rgb(var(--border))]/12">
+    <div className="overflow-hidden rounded-xl border border-border-default bg-bg-elevated">
+      <div className="flex items-center gap-2 border-b border-border-default bg-fill-2 px-3 py-2">
         <div className="flex gap-1">
-          <span className="h-2 w-2 rounded-full bg-[rgb(var(--muted))]/30" />
-          <span className="h-2 w-2 rounded-full bg-[rgb(var(--muted))]/30" />
-          <span className="h-2 w-2 rounded-full bg-[rgb(var(--muted))]/30" />
+          <span className="h-2 w-2 rounded-full bg-text-muted/30" />
+          <span className="h-2 w-2 rounded-full bg-text-muted/30" />
+          <span className="h-2 w-2 rounded-full bg-text-muted/30" />
         </div>
-        <span className="text-[11px] font-mono text-[rgb(var(--muted))]">{lang}</span>
+        <span className="text-[11px] font-mono text-text-muted">{lang}</span>
       </div>
 
       {errMsg ? (
-        <div className="p-4 text-[13px] text-red-400/80">
-          <span className="font-semibold">Diagram error: </span>
-          {errMsg}
+        <div className="m-4 rounded-xl border border-red-500/30 bg-red-500/10 p-4">
+          <p className="text-sm font-semibold text-red-400">Diagram error</p>
+          <pre className="mt-2 whitespace-pre-wrap text-xs text-red-300">{errMsg}</pre>
         </div>
       ) : null}
 
@@ -72,7 +87,7 @@ export function DiagramBlock({ lang, code }: { lang: string; code: string }) {
       />
 
       {!ready && !errMsg ? (
-        <div className="flex justify-center items-center pb-6 text-[13px] text-[rgb(var(--muted))] -mt-16">
+        <div className="-mt-16 flex items-center justify-center pb-6 text-[13px] text-text-muted">
           Rendering…
         </div>
       ) : null}

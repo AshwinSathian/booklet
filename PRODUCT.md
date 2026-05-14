@@ -202,6 +202,17 @@ The published page renders all Markdown elements with care:
 | Horizontal rule | Subtle divider |
 | Mermaid diagrams | Rendered inline |
 
+Supported Mermaid fence types include `flowchart` / `graph`, `sequenceDiagram`,
+`classDiagram`, `erDiagram`, `gantt`, `stateDiagram-v2`, `pie`, and `gitGraph`.
+Use a fenced code block with the `mermaid` language:
+
+````
+```mermaid
+flowchart LR
+  A[Draft] --> B[Publish]
+```
+````
+
 ### Table of Contents
 
 Automatically generated for documents with **3 or more headings**:
