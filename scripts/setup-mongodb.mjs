@@ -48,6 +48,17 @@ async function main() {
     { expireAfterSeconds: 0 },
   );
 
+  // --- analytics_events ---
+  await db.collection("analytics_events").createIndex({ page_id: 1, created_at: -1 });
+  await db.collection("analytics_events").createIndex(
+    { session_hash: 1, page_id: 1, event: 1 },
+    { unique: true },
+  );
+  await db.collection("analytics_events").createIndex(
+    { created_at: 1 },
+    { expireAfterSeconds: 7776000 },
+  );
+
   console.log("MongoDB indexes created successfully.");
   await client.close();
 }

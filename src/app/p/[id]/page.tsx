@@ -12,6 +12,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { DesktopTocClient, MobileTocClient } from "@/components/share/TocClient";
 import { ExportMenu } from "@/components/share/ExportMenu";
+import { AnalyticsBeacon } from "@/components/share/AnalyticsBeacon";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -130,6 +131,8 @@ export default async function SharePage({
 
   return (
     <div className="min-h-screen bg-bg text-text-primary">
+      <AnalyticsBeacon pageId={resolvedId} />
+
       {/* ── Sticky header ── */}
       <header className="sticky top-0 z-20 border-b border-border-subtle bg-bg/85 backdrop-blur-xl print:hidden">
         <div className={`mx-auto w-full px-4 py-3 flex items-center justify-between gap-4 ${maxW}`}>

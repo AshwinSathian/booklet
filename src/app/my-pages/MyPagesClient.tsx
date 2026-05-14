@@ -359,6 +359,14 @@ function PageCard({
             <Icon name="external" size={14} />
           </a>
 
+          <a
+            href={`/my-pages/analytics/${page.id}`}
+            title="View analytics"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-text-muted transition hover:text-text-primary hover:bg-fill-2"
+          >
+            <Icon name="chart" size={14} />
+          </a>
+
           <button
             type="button"
             onClick={() => void handleToggleVisibility()}

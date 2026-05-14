@@ -313,6 +313,10 @@ and API response handlers to use `page.slug ?? page.id` when constructing share 
 
 ### P1-1 — Publisher analytics
 
+**Status:** Implemented in this repo. Share pages now emit privacy-safe `view`,
+`read_50`, and `read_100` events into `analytics_events`; My Pages links to the
+owner-only dashboard at `/my-pages/analytics/:pageId`.
+
 **Goal:** Show each page owner: unique views, referrers (bucketed), reading completion
 (scroll depth), geographic distribution. Make the data feel rewarding so authors
 come back.

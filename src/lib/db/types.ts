@@ -23,3 +23,13 @@ export type DbApiKey = {
   created_at: string;
   last_used_at: string | null;
 };
+
+export type AnalyticsEvent = {
+  id: string;
+  page_id: string;
+  event: "view" | "read_50" | "read_100" | "exit";
+  referrer_bucket: "slack" | "twitter" | "github" | "email" | "direct" | "other";
+  country: string | null;
+  session_hash: string;
+  created_at: string;
+};

@@ -22,7 +22,7 @@ export async function GET(req: Request) {
   base.hash = "";
 
   const items = pages.map((p) => {
-    const path = ROUTES.publish(p.id);
+    const path = ROUTES.publish(p.slug ?? p.id);
     return {
       id: p.id,
       title: p.title ?? null,
