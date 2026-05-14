@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { Icon } from "./Icon";
 
 const DRAWER_EXIT_MS = 160;
@@ -9,12 +10,14 @@ export function ActionDrawer({
   open,
   title,
   description,
+  contentWidthClass = "max-w-7xl",
   onClose,
   children,
 }: {
   open: boolean;
   title: string;
   description?: string;
+  contentWidthClass?: string;
   onClose: () => void;
   children: ReactNode;
 }) {
@@ -78,52 +81,53 @@ export function ActionDrawer({
 
   if (!shouldRender) return null;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 print:hidden" role="dialog" aria-modal="true" aria-label={title}>
       <div
         className={[
-          "absolute inset-0 z-0 bg-black/50 backdrop-blur-sm",
+          "fixed inset-0 z-0 bg-black/50 backdrop-blur-sm",
           isClosing ? "animate-drawer-backdrop-out" : "animate-drawer-backdrop-in",
         ].join(" ")}
         onPointerDown={onClose}
         aria-hidden="true"
       />
 
-      <aside
-        className={[
-          "absolute z-10 border-border-default bg-bg shadow-glass",
-          "[--drawer-enter-from:translate3d(0,24px,0)] [--drawer-exit-to:translate3d(0,24px,0)]",
-          "sm:[--drawer-enter-from:translate3d(24px,0,0)] sm:[--drawer-exit-to:translate3d(24px,0,0)]",
-          isClosing ? "animate-drawer-panel-out" : "animate-drawer-panel-in",
-          "inset-x-0 bottom-0 max-h-[86dvh] overflow-hidden rounded-t-card border-t",
-          "sm:inset-y-0 sm:left-auto sm:right-0 sm:h-dvh sm:max-h-none sm:w-[380px] sm:rounded-none sm:border-l sm:border-t-0",
-        ].join(" ")}
-      >
-        <div className="flex h-full flex-col">
-          <div className="flex items-start justify-between gap-4 border-b border-border-subtle px-4 py-4">
-            <div className="min-w-0">
-              <h2 className="text-sm font-semibold text-text-primary">{title}</h2>
-              {description ? (
-                <p className="mt-1 text-xs leading-[1.5] text-text-muted">{description}</p>
-              ) : null}
+      <div className="fixed inset-x-0 bottom-0 z-10 flex justify-center px-4">
+        <aside
+          className={[
+            "flex max-h-[86dvh] w-full flex-col overflow-hidden rounded-t-card border border-b-0 border-border-default bg-bg shadow-glass",
+            contentWidthClass,
+            "[--drawer-enter-from:translate3d(0,24px,0)] [--drawer-exit-to:translate3d(0,24px,0)]",
+            isClosing ? "animate-drawer-panel-out" : "animate-drawer-panel-in",
+          ].join(" ")}
+        >
+          <div className="flex min-h-0 flex-1 flex-col">
+            <div className="flex items-start justify-between gap-4 border-b border-border-subtle px-4 py-4">
+              <div className="min-w-0">
+                <h2 className="text-sm font-semibold text-text-primary">{title}</h2>
+                {description ? (
+                  <p className="mt-1 text-xs leading-[1.5] text-text-muted">{description}</p>
+                ) : null}
+              </div>
+              <button
+                ref={closeButtonRef}
+                type="button"
+                onClick={onClose}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-text-muted transition hover:bg-fill-2 hover:text-text-primary"
+                aria-label="Close drawer"
+              >
+                <Icon name="close" size={14} />
+              </button>
             </div>
-            <button
-              ref={closeButtonRef}
-              type="button"
-              onClick={onClose}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-text-muted transition hover:bg-fill-2 hover:text-text-primary"
-              aria-label="Close drawer"
-            >
-              <Icon name="close" size={14} />
-            </button>
-          </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
-            {children}
+            <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
+              {children}
+            </div>
           </div>
-        </div>
-      </aside>
-    </div>
+        </aside>
+      </div>
+    </div>,
+    document.body,
   );
 }
 

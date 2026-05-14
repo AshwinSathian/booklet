@@ -32,6 +32,7 @@ function downloadBlob(content: string, filename: string, mimeType: string) {
 export function ExportMenu({
   blocks,
   raw,
+  settings,
   title,
 }: {
   blocks: Block[];
@@ -40,6 +41,7 @@ export function ExportMenu({
   title: string;
 }) {
   const [open, setOpen] = useState(false);
+  const drawerWidth = settings.width === "wide" ? "max-w-4xl" : "max-w-3xl";
 
   const filename = sanitizeFilename(title);
 
@@ -82,6 +84,7 @@ export function ExportMenu({
         open={open}
         title="Export"
         description="Download this page or use your browser print flow for a PDF."
+        contentWidthClass={drawerWidth}
         onClose={() => setOpen(false)}
       >
         <DrawerSection title="Files">
