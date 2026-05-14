@@ -4,8 +4,9 @@ import { trackEvent } from "@/lib/analytics";
 import { ANALYTICS_EVENTS } from "@/lib/analytics-events";
 import type { Block, DocSettings } from "@/lib/blocks";
 import { blocksToHtmlDocument } from "@/lib/export";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Icon } from "@/components/ui/Icon";
+import { ActionDrawer, DrawerSection } from "@/components/ui/ActionDrawer";
 
 function sanitizeFilename(title: string): string {
   return (title || "readable-export")
@@ -39,23 +40,6 @@ export function ExportMenu({
   title: string;
 }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    function onDown(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
-    }
-    document.addEventListener("mousedown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
 
   const filename = sanitizeFilename(title);
 
@@ -79,53 +63,65 @@ export function ExportMenu({
     window.print();
   };
 
-  // Shared button class
   const itemCls =
-    "flex w-full items-center gap-2.5 px-3 py-2 text-sm text-text-secondary transition hover:bg-fill-2 hover:text-text-primary disabled:opacity-40 disabled:cursor-not-allowed";
+    "flex w-full items-center gap-3 border-b border-border-subtle px-3 py-3 text-left text-sm text-text-secondary transition last:border-b-0 hover:bg-fill-2 hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-40";
 
   return (
-    <div ref={ref} className="relative">
+    <>
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => setOpen(true)}
         title="Export options"
-        className="hidden sm:flex items-center gap-1.5 rounded-lg border border-border-default px-3 py-1.5 text-xs font-medium text-text-muted transition hover:border-border-strong hover:text-text-primary"
+        className="inline-flex items-center gap-1.5 rounded-lg border border-border-default px-2.5 py-1.5 text-xs font-medium text-text-muted transition hover:border-border-strong hover:text-text-primary sm:px-3"
       >
         <Icon name="download" size={13} />
-        Export
-        <Icon name="chevron-down" size={11} />
+        <span className="hidden sm:inline">Export</span>
       </button>
 
-      {open ? (
-        <div className="absolute right-0 top-full mt-1.5 z-20 min-w-52 rounded-xl border border-border-default bg-bg-elevated shadow-glass py-1 animate-dropdown-in">
+      <ActionDrawer
+        open={open}
+        title="Export"
+        description="Download this page or use your browser print flow for a PDF."
+        onClose={() => setOpen(false)}
+      >
+        <DrawerSection title="Files">
           {raw ? (
             <button type="button" className={itemCls} onClick={handleMarkdown}>
               <span className="text-text-muted shrink-0">
-                <Icon name="markdown" size={14} />
+                <Icon name="markdown" size={16} />
               </span>
-              <span className="flex-1 text-left">Download Markdown</span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-text-primary">Download Markdown</span>
+                <span className="mt-0.5 block text-xs text-text-muted">Original Markdown source as .md</span>
+              </span>
               <span className="text-2xs text-text-muted font-mono">.md</span>
             </button>
           ) : null}
 
           <button type="button" className={itemCls} onClick={handleHtml}>
             <span className="text-text-muted shrink-0">
-              <Icon name="code" size={14} />
+              <Icon name="code" size={16} />
             </span>
-            <span className="flex-1 text-left">Download HTML</span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-text-primary">Download HTML</span>
+              <span className="mt-0.5 block text-xs text-text-muted">Standalone HTML document</span>
+            </span>
             <span className="text-2xs text-text-muted font-mono">.html</span>
           </button>
+        </DrawerSection>
 
-          <div className="my-1 h-px bg-border-subtle" />
-
+        <DrawerSection title="Print">
           <button type="button" className={itemCls} onClick={handlePrint}>
             <span className="text-text-muted shrink-0">
-              <Icon name="print" size={14} />
+              <Icon name="print" size={16} />
             </span>
-            <span className="flex-1 text-left">Print or Save as PDF</span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-text-primary">Print or Save as PDF</span>
+              <span className="mt-0.5 block text-xs text-text-muted">Uses Readable&apos;s print-optimized layout</span>
+            </span>
           </button>
-        </div>
-      ) : null}
-    </div>
+        </DrawerSection>
+      </ActionDrawer>
+    </>
   );
 }

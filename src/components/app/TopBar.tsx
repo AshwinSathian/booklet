@@ -8,6 +8,7 @@ import { copyTextToClipboard, markdownToHtml } from "@/lib/export";
 import { UserButton, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { ActionDrawer, DrawerSection } from "../ui/ActionDrawer";
 import { AppLogo } from "../ui/AppLogo";
 import { Icon, type IconName } from "../ui/Icon";
 import { SegmentedControl } from "../ui/SegmentedControl";
@@ -56,77 +57,68 @@ function IconBtn({
   );
 }
 
-// ---------------------------------------------------------------------------
-// Overflow menu (⋯)
-// ---------------------------------------------------------------------------
+type ActionItem = {
+  label: string;
+  detail?: string;
+  icon?: IconName;
+  shortcut?: string;
+  onClick: () => void;
+};
 
-type MenuItem =
-  | { type: "item"; label: string; icon?: IconName; shortcut?: string; onClick: () => void }
-  | { type: "separator" };
+type ActionSection = {
+  title: string;
+  items: ActionItem[];
+};
 
-function OverflowMenu({
-  items,
-  trigger,
-  align = "left",
-  disabled = false,
+function MoreActionsDrawer({
+  open,
+  sections,
+  onClose,
 }: {
-  items: MenuItem[];
-  trigger: React.ReactNode;
-  align?: "left" | "right";
-  disabled?: boolean;
+  open: boolean;
+  sections: ActionSection[];
+  onClose: () => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    function onDown(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
-    }
-    document.addEventListener("mousedown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
-
   return (
-    <div ref={ref} className="relative">
-      <div onClick={() => { if (!disabled) setOpen((v) => !v); }}>{trigger}</div>
-      {open ? (
-        <div className={["absolute top-full mt-1.5 z-(--z-dropdown,20) min-w-52 rounded-xl border border-outline bg-bg-elevated shadow-glass py-1 animate-dropdown-in", align === "right" ? "right-0" : "left-0"].join(" ")}>
-          {items.map((item, i) =>
-            item.type === "separator" ? (
-              <div key={i} className="my-1 h-px bg-border-subtle" />
-            ) : (
-              <button
-                key={i}
-                type="button"
-                className="flex w-full items-center gap-3 px-3 py-2 text-sm text-text-secondary transition hover:bg-fill-2 hover:text-text-primary"
-                onClick={() => {
-                  item.onClick();
-                  setOpen(false);
-                }}
-              >
-                {item.icon ? (
-                  <span className="text-text-muted shrink-0">
-                    <Icon name={item.icon} size={14} />
-                  </span>
+    <ActionDrawer
+      open={open}
+      title="More"
+      description="Draft actions, import/export tools, and navigation."
+      onClose={onClose}
+    >
+      {sections.map((section) => (
+        <DrawerSection key={section.title} title={section.title}>
+          {section.items.map((item) => (
+            <button
+              key={item.label}
+              type="button"
+              className="flex w-full items-center gap-3 border-b border-border-subtle px-3 py-3 text-left text-sm text-text-secondary transition last:border-b-0 hover:bg-fill-2 hover:text-text-primary"
+              onClick={() => {
+                item.onClick();
+                onClose();
+              }}
+            >
+              {item.icon ? (
+                <span className="shrink-0 text-text-muted">
+                  <Icon name={item.icon} size={16} />
+                </span>
+              ) : null}
+              <span className="min-w-0 flex-1">
+                <span className="block text-text-primary">{item.label}</span>
+                {item.detail ? (
+                  <span className="mt-0.5 block text-xs text-text-muted">{item.detail}</span>
                 ) : null}
-                <span className="flex-1 text-left">{item.label}</span>
-                {item.shortcut ? (
-                  <kbd className="text-2xs text-text-muted font-mono">{item.shortcut}</kbd>
-                ) : null}
-              </button>
-            ),
-          )}
-        </div>
-      ) : null}
-    </div>
+              </span>
+              {item.shortcut ? (
+                <kbd className="rounded border border-border-subtle bg-fill-1 px-1.5 py-0.5 text-2xs font-mono text-text-muted">
+                  {item.shortcut}
+                </kbd>
+              ) : null}
+            </button>
+          ))}
+        </DrawerSection>
+      ))}
+    </ActionDrawer>
   );
 }
 
@@ -321,6 +313,7 @@ function PublishArea({
   onOpenPublished: () => void;
 }) {
   const isPublishing = status === "publishing";
+  const [showPublishOptions, setShowPublishOptions] = useState(false);
 
   // Post-publish state: show copy + open buttons.
   if (status === "published" && publishedUrl) {
@@ -373,59 +366,72 @@ function PublishArea({
   // Owned draft with an existing page: split "Update page" + "Publish as new".
   if (publishedOwned && publishedUrl && status !== "error") {
     return (
-      <div className="flex items-center">
-        <button
-          type="button"
-          onClick={onUpdatePage}
-          disabled={!canPublish || isPublishing}
-          title="Update published page in place"
-          className={[
-            "flex items-center gap-1.5 rounded-l-pill px-4 py-1.5 text-xs font-semibold transition",
-            "bg-accent text-white shadow-soft",
-            "hover:bg-accent-hover active:scale-[0.97]",
-            "disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
-          ].join(" ")}
+      <>
+        <div className="flex items-center">
+          <button
+            type="button"
+            onClick={onUpdatePage}
+            disabled={!canPublish || isPublishing}
+            title="Update published page in place"
+            className={[
+              "flex items-center gap-1.5 rounded-l-pill px-4 py-1.5 text-xs font-semibold transition",
+              "bg-accent text-white shadow-soft",
+              "hover:bg-accent-hover active:scale-[0.97]",
+              "disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
+            ].join(" ")}
+          >
+            {isPublishing ? (
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none" className="animate-spin" aria-hidden>
+                <path d="M6.5 1a5.5 5.5 0 1 0 5.5 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            ) : (
+              <Icon name="upload" size={13} />
+            )}
+            <span className="hidden sm:inline">Update page</span>
+          </button>
+          <button
+            type="button"
+            title="More publish options"
+            disabled={isPublishing}
+            onClick={() => setShowPublishOptions(true)}
+            className={[
+              "flex h-8 w-8 items-center justify-center rounded-r-pill transition",
+              "bg-accent text-white border-l border-white/20",
+              "hover:bg-accent-hover active:scale-[0.97]",
+              "disabled:opacity-40 disabled:cursor-not-allowed",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
+            ].join(" ")}
+          >
+            <Icon name="chevron-down" size={11} />
+          </button>
+        </div>
+        <ActionDrawer
+          open={showPublishOptions}
+          title="Publish options"
+          description="Choose whether this draft updates the current page or becomes a new page."
+          onClose={() => setShowPublishOptions(false)}
         >
-          {isPublishing ? (
-            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" className="animate-spin" aria-hidden>
-              <path d="M6.5 1a5.5 5.5 0 1 0 5.5 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            </svg>
-          ) : (
-            <Icon name="upload" size={13} />
-          )}
-          <span className="hidden sm:inline">Update page</span>
-        </button>
-        {/* Divider + "Publish as new" trigger */}
-        <OverflowMenu
-          align="right"
-          disabled={isPublishing}
-          items={[
-            {
-              type: "item",
-              label: "Publish as new page",
-              icon: "plus",
-              onClick: onPublish,
-            },
-          ]}
-          trigger={
+          <DrawerSection title="Page">
             <button
               type="button"
-              title="More publish options"
-              disabled={isPublishing}
-              className={[
-                "flex h-8 w-8 items-center justify-center rounded-r-pill transition",
-                "bg-accent text-white border-l border-white/20",
-                "hover:bg-accent-hover active:scale-[0.97]",
-                "disabled:opacity-40 disabled:cursor-not-allowed",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
-              ].join(" ")}
+              className="flex w-full items-center gap-3 border-b border-border-subtle px-3 py-3 text-left text-sm text-text-secondary transition last:border-b-0 hover:bg-fill-2 hover:text-text-primary"
+              onClick={() => {
+                onPublish();
+                setShowPublishOptions(false);
+              }}
             >
-              <Icon name="chevron-down" size={11} />
+              <span className="shrink-0 text-text-muted">
+                <Icon name="plus" size={16} />
+              </span>
+              <span>
+                <span className="block text-text-primary">Publish as new page</span>
+                <span className="mt-0.5 block text-xs text-text-muted">Create a separate published URL from this draft.</span>
+              </span>
             </button>
-          }
-        />
-      </div>
+          </DrawerSection>
+        </ActionDrawer>
+      </>
     );
   }
 
@@ -719,6 +725,7 @@ export function TopBar({
   onSlugSet?: (newSlug: string) => void;
 }) {
   const [visibleSettings, setVisibleSettings] = useState(false);
+  const [visibleMoreActions, setVisibleMoreActions] = useState(false);
   const [visibleDrafts, setVisibleDrafts] = useState(false);
   const [visibleTemplates, setVisibleTemplates] = useState(false);
   const [slugBarDismissed, setSlugBarDismissed] = useState(false);
@@ -788,21 +795,41 @@ export function TopBar({
     }
   }, [onOpenDraftsShortcutRegistered]);
 
-  const menuItems: MenuItem[] = [
-    ...(isSignedIn ? [
-      { type: "item" as const, label: "My pages", icon: "external" as IconName, onClick: () => { window.location.href = ROUTES.myPages; } },
-      { type: "separator" as const },
-    ] : []),
-    { type: "item", label: "New draft",        icon: "plus",     shortcut: "⌘B", onClick: onNew },
-    { type: "item", label: "My drafts",        icon: "list",     shortcut: "⌘D", onClick: () => setVisibleDrafts(true) },
-    { type: "item", label: "Templates",        icon: "markdown",                 onClick: () => setVisibleTemplates(true) },
-    { type: "item", label: "Import Markdown",  icon: "import",                   onClick: openImportPicker },
-    { type: "separator" },
-    { type: "item", label: "Copy as Markdown", icon: "copy",                     onClick: () => void onCopyMarkdown() },
-    { type: "item", label: "Copy as HTML",     icon: "code",                     onClick: () => void onCopyHtml() },
-    { type: "item", label: "Insert sample",    icon: "markdown",                 onClick: onInsertSample },
-    { type: "separator" },
-    { type: "item", label: "Go to homepage",   icon: "home",                     onClick: () => { window.location.href = "/"; } },
+  const actionSections: ActionSection[] = [
+    ...(isSignedIn ? [{
+      title: "Account",
+      items: [
+        {
+          label: "My pages",
+          detail: "Manage published pages, slugs, analytics, and history.",
+          icon: "external" as IconName,
+          onClick: () => { window.location.href = ROUTES.myPages; },
+        },
+      ],
+    }] : []),
+    {
+      title: "Drafts",
+      items: [
+        { label: "New draft", detail: "Start with a blank local draft.", icon: "plus", shortcut: "⌘B", onClick: onNew },
+        { label: "My drafts", detail: "Open saved local drafts.", icon: "list", shortcut: "⌘D", onClick: () => setVisibleDrafts(true) },
+        { label: "Templates", detail: "Insert a structured starting point.", icon: "markdown", onClick: () => setVisibleTemplates(true) },
+        { label: "Import Markdown", detail: "Create a draft from a .md file.", icon: "import", onClick: openImportPicker },
+      ],
+    },
+    {
+      title: "Clipboard",
+      items: [
+        { label: "Copy as Markdown", detail: "Copy the current source text.", icon: "copy", onClick: () => void onCopyMarkdown() },
+        { label: "Copy as HTML", detail: "Copy rendered HTML for the draft.", icon: "code", onClick: () => void onCopyHtml() },
+        { label: "Insert sample", detail: "Replace the draft with sample Markdown.", icon: "markdown", onClick: onInsertSample },
+      ],
+    },
+    {
+      title: "Navigation",
+      items: [
+        { label: "Go to homepage", detail: "Return to Readable's public page.", icon: "home", onClick: () => { window.location.href = "/"; } },
+      ],
+    },
   ];
 
   return (
@@ -826,10 +853,11 @@ export function TopBar({
 
           <div className="mx-1 h-4 w-px bg-outline" />
 
-          <OverflowMenu
-            items={menuItems}
-            align="right"
-            trigger={<IconBtn label="More options" icon="dots" />}
+          <IconBtn
+            label="More options"
+            icon="dots"
+            onClick={() => setVisibleMoreActions(true)}
+            active={visibleMoreActions}
           />
 
           <div className="relative">
@@ -891,6 +919,12 @@ export function TopBar({
         accept={UI.importMarkdown.accept}
         className="hidden"
         onChange={(e) => { void onFilePicked(e.target.files?.[0] ?? null); }}
+      />
+
+      <MoreActionsDrawer
+        open={visibleMoreActions}
+        sections={actionSections}
+        onClose={() => setVisibleMoreActions(false)}
       />
 
       {/* Post-publish slug bar — shown once for owned pages until dismissed or slug saved */}
