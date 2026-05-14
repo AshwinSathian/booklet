@@ -38,7 +38,7 @@ export function PreviewPane({
       <div className="shrink-0 flex items-center justify-between px-3 py-2 border-b border-border-subtle bg-bg-soft/50">
         <span className="text-2xs font-medium text-text-muted/60 tracking-wide">Preview</span>
         <span className="flex items-center gap-1 text-2xs text-text-muted/40">
-          <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500/70" aria-hidden />
+          <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500/70 animate-dot-pulse" aria-hidden />
           Live
         </span>
       </div>
@@ -46,9 +46,10 @@ export function PreviewPane({
       {/* Preview surface — bg-bg-soft differentiates it from the editor pane */}
       <div className="flex-1 min-h-0 overflow-y-auto bg-bg-soft border-l border-border-subtle">
         {isBusy ? (
-          <div className="flex h-full items-start p-4">
-            <span className="text-2xs font-medium uppercase tracking-widest text-text-muted animate-pulse">
-              Updating…
+          <div className="flex h-full items-start p-4 animate-fade-in">
+            <span className="flex items-center gap-2 text-2xs font-medium uppercase tracking-widest text-text-muted">
+              <span className="h-1 w-12 rounded-full bg-text-muted/20 animate-shimmer bg-linear-to-r from-transparent via-text-muted/15 to-transparent bg-size-[200%_100%]" aria-hidden />
+              Updating
             </span>
           </div>
         ) : isEmpty ? (

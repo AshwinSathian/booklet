@@ -106,15 +106,15 @@ export function ActionDrawer({
               <div className="min-w-0">
                 <h2 className="text-sm font-semibold text-text-primary">{title}</h2>
                 {description ? (
-                  <p className="mt-1 text-xs leading-[1.5] text-text-muted">{description}</p>
+                  <p className="mt-1 text-xs leading-normal text-text-muted">{description}</p>
                 ) : null}
               </div>
               <button
                 ref={closeButtonRef}
                 type="button"
                 onClick={onClose}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-text-muted transition hover:bg-fill-2 hover:text-text-primary"
                 aria-label="Close drawer"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-pill text-text-muted hover:text-text-primary hover:bg-fill-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
               >
                 <Icon name="close" size={14} />
               </button>

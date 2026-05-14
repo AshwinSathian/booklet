@@ -8,10 +8,11 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
 // ---------------------------------------------------------------------------
 
 const BASE =
-  "inline-flex items-center justify-center font-semibold rounded-pill transition " +
+  "inline-flex items-center justify-center font-semibold rounded-pill " +
+  "transition-[color,background-color,border-color,box-shadow,opacity,transform] " +
   "active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 " +
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft " +
-  "focus-visible:ring-offset-2 focus-visible:ring-offset-bg";
+  "focus-visible:ring-offset-2 focus-visible:ring-offset-bg select-none";
 
 const VARIANTS = {
   primary: "bg-accent text-white shadow-soft hover:bg-accent-hover",

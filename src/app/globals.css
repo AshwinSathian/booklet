@@ -213,7 +213,7 @@ button {
   color: inherit;
 }
 
-/* ── Entrance keyframes ──────────────────────────────────────────────────── */
+/* ── Keyframes ───────────────────────────────────────────────────────────── */
 @keyframes dialogIn {
   from { opacity: 0; transform: translateY(10px) scale(0.97); }
   to   { opacity: 1; transform: translateY(0)    scale(1); }
@@ -227,6 +227,36 @@ button {
 @keyframes fadeIn {
   from { opacity: 0; }
   to   { opacity: 1; }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.88); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+@keyframes toastOut {
+  from { opacity: 1; transform: translateY(0)    scale(1); }
+  to   { opacity: 0; transform: translateY(6px)  scale(0.97); }
+}
+
+@keyframes shimmer {
+  from { background-position: -200% center; }
+  to   { background-position:  200% center; }
+}
+
+@keyframes dotPulse {
+  0%, 100% { opacity: 1;   transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.75); }
 }
 
 @keyframes drawerBackdropIn {
@@ -254,17 +284,28 @@ button {
   --animate-dialog-in:   dialogIn   280ms cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-dropdown-in: dropdownIn 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-fade-in:     fadeIn     150ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-fade-up:     fadeUp     220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-scale-in:    scaleIn    160ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  --animate-toast-in:    toastIn    260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-toast-out:   toastOut   180ms cubic-bezier(0.4, 0, 1, 1) both;
+  --animate-shimmer:     shimmer    1.8s  linear infinite;
+  --animate-dot-pulse:   dotPulse   2.4s  ease-in-out infinite;
   --animate-drawer-backdrop-in:  drawerBackdropIn 180ms ease-out both;
   --animate-drawer-backdrop-out: drawerBackdropOut 160ms ease-in both;
   --animate-drawer-panel-in:     drawerPanelIn 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-drawer-panel-out:    drawerPanelOut 160ms cubic-bezier(0.7, 0, 0.84, 0) both;
 }
 
-/* ── Transitions — scoped to color/opacity to avoid layout jank ─────────── */
+/* ── Transitions ─────────────────────────────────────────────────────────── */
 *,
 *::before,
 *::after {
   transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Default transition duration on interactive elements */
+a, button, [role="button"], input, select, textarea {
+  transition-duration: var(--duration-normal);
 }
 
 /* ── Scrollbar (Webkit) ──────────────────────────────────────────────────── */

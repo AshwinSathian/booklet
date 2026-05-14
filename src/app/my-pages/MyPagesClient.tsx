@@ -298,6 +298,7 @@ function DrawerItem({
 
 function PageCard({
   page,
+  index,
   onDeleted,
   onSlugSaved,
   onVisibilityChanged,
@@ -305,6 +306,7 @@ function PageCard({
   onDragEnd,
 }: {
   page: PageRow;
+  index: number;
   onDeleted: (id: string) => void;
   onSlugSaved: (id: string, slug: string | null) => void;
   onVisibilityChanged: (id: string, v: "public" | "unlisted") => void;
@@ -358,7 +360,8 @@ function PageCard({
   return (
     <>
       <div
-        className="group flex flex-col gap-0 rounded-xl border border-border-default bg-bg-elevated transition hover:border-accent-soft/30 hover:shadow-card cursor-grab active:cursor-grabbing"
+        className="group flex flex-col gap-0 rounded-xl border border-border-default bg-bg-elevated transition hover:border-accent-soft/30 hover:shadow-card cursor-grab active:cursor-grabbing animate-fade-up"
+        style={{ animationDelay: `${Math.min(index * 40, 300)}ms` }}
         draggable
         onDragStart={(e) => {
           e.dataTransfer.effectAllowed = "move";
@@ -898,10 +901,11 @@ export function MyPagesList({
 
         {filteredAndSorted.length > 0 ? (
           <div className="flex flex-col gap-2">
-            {filteredAndSorted.map((page) => (
+            {filteredAndSorted.map((page, i) => (
               <PageCard
                 key={page.id}
                 page={page}
+                index={i}
                 onDeleted={handleDeleted}
                 onSlugSaved={handleSlugSaved}
                 onVisibilityChanged={handleVisibilityChanged}

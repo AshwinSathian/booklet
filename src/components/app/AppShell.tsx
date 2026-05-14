@@ -25,7 +25,7 @@ export function AppShell({
                 type="button"
                 onClick={() => setPane(p)}
                 className={[
-                  "rounded-pill px-5 py-1.5 text-xs font-semibold uppercase tracking-wider transition",
+                  "rounded-pill px-5 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors duration-normal",
                   pane === p
                     ? "bg-accent text-white shadow-sm"
                     : "text-text-muted hover:text-text-primary",
@@ -38,11 +38,11 @@ export function AppShell({
         </div>
       </div>
 
-      <div className={["flex min-h-0 overflow-hidden w-full", pane === "edit" ? "" : "hidden lg:flex"].join(" ")}>
+      <div className={["flex min-h-0 overflow-hidden w-full", pane === "edit" ? "animate-fade-in" : "hidden lg:flex"].join(" ")}>
         {left}
       </div>
 
-      <div className={["flex min-h-0 overflow-hidden w-full", pane === "preview" ? "" : "hidden lg:flex"].join(" ")}>
+      <div className={["flex min-h-0 overflow-hidden w-full", pane === "preview" ? "animate-fade-in" : "hidden lg:flex"].join(" ")}>
         {right}
       </div>
     </div>

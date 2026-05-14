@@ -905,7 +905,7 @@ function PostPublishSlugBar({
     availability !== "checking";
 
   return (
-    <div className="absolute top-full left-0 right-0 z-10 border-b border-outline/50 bg-bg-soft/95 backdrop-blur-xl px-3 py-2.5">
+    <div className="absolute top-full left-0 right-0 z-10 border-b border-outline/50 bg-bg-soft/95 backdrop-blur-xl px-3 py-2.5 animate-dropdown-in">
       <div className="mx-auto w-full max-w-7xl flex flex-col sm:flex-row sm:items-center gap-2">
         <span className="text-xs text-text-secondary shrink-0">
           Set a custom URL before sharing:
@@ -926,6 +926,7 @@ function PostPublishSlugBar({
             className={[
               "min-w-0 flex-1 sm:w-52 sm:flex-none px-2 py-1 text-xs bg-bg border rounded-md sm:rounded-l-none sm:rounded-r-md text-text-primary placeholder:text-text-muted/40",
               "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft",
+              "transition-colors duration-fast",
               availability === "taken" ? "border-red-400/60" : "border-outline",
             ].join(" ")}
             aria-label="Custom URL slug"
@@ -934,15 +935,15 @@ function PostPublishSlugBar({
         <div className="flex items-center gap-1.5 shrink-0">
           {/* Availability indicator */}
           {availability === "checking" && (
-            <span className="text-xs text-text-muted">Checking…</span>
+            <span key="checking" className="text-xs text-text-muted animate-fade-in">Checking…</span>
           )}
           {availability === "available" && !error && (
-            <span className="text-xs text-green-400">✓ Available</span>
+            <span key="available" className="text-xs text-green-400 animate-fade-in">✓ Available</span>
           )}
           {availability === "taken" && !error && (
-            <span className="text-xs text-red-400">✗ Taken</span>
+            <span key="taken" className="text-xs text-red-400 animate-fade-in">✗ Taken</span>
           )}
-          {error && <span className="text-xs text-red-400">{error}</span>}
+          {error && <span key="error" className="text-xs text-red-400 animate-fade-in">{error}</span>}
           <Button variant="primary" size="sm" onClick={() => void save()} disabled={!canSave}>
             {saving ? (
               <svg width="11" height="11" viewBox="0 0 13 13" fill="none" className="animate-spin" aria-hidden>
