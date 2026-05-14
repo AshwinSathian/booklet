@@ -24,6 +24,7 @@ async function main() {
 
   // --- pages ---
   await db.collection("pages").createIndex({ user_id: 1, created_at: -1 });
+  await db.collection("pages").createIndex({ collection_id: 1, user_id: 1 });
   await db.collection("pages").createIndex(
     { slug: 1 },
     { unique: true, sparse: true }, // slug is optional; unique when present
@@ -62,6 +63,12 @@ async function main() {
   // --- page_versions ---
   await db.collection("page_versions").createIndex({ page_id: 1, version_number: -1 });
   await db.collection("page_versions").createIndex({ page_id: 1, created_at: -1 });
+
+  // --- collections ---
+  await db.collection("collections").createIndex(
+    { user_id: 1, name: 1 },
+    { unique: true },
+  );
 
   console.log("MongoDB indexes created successfully.");
   await client.close();

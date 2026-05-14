@@ -13,11 +13,21 @@ type PageRow = {
   slug: string | null;
   title: string | null;
   visibility: "public" | "unlisted";
+  collection_id: string | null;
   view_count: number;
   created_at: string;
   updated_at: string;
   baseUrl: string;
 };
+
+type CollectionRow = {
+  id: string;
+  name: string;
+  created_at: string;
+  updated_at: string;
+};
+
+type CollectionFilter = "all" | "uncollected" | string;
 
 function pageUrl(page: PageRow) {
   const path = page.slug ? `/p/${page.slug}` : `/p/${page.id}`;
@@ -243,11 +253,15 @@ function PageCard({
   onDeleted,
   onSlugSaved,
   onVisibilityChanged,
+  onDragStart,
+  onDragEnd,
 }: {
   page: PageRow;
   onDeleted: (id: string) => void;
   onSlugSaved: (id: string, slug: string | null) => void;
   onVisibilityChanged: (id: string, v: "public" | "unlisted") => void;
+  onDragStart: (pageId: string) => void;
+  onDragEnd: () => void;
 }) {
   const [copying, setCopying] = useState(false);
   const [confirming, setConfirming] = useState(false);
@@ -294,7 +308,16 @@ function PageCard({
   }, [page.id, onDeleted]);
 
   return (
-    <div className="group flex flex-col gap-2 rounded-xl border border-outline bg-bg-elevated px-4 py-3.5 transition hover:border-accent-soft/40">
+    <div
+      className="group flex flex-col gap-2 rounded-xl border border-outline bg-bg-elevated px-4 py-3.5 transition hover:border-accent-soft/40"
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("text/plain", page.id);
+        onDragStart(page.id);
+      }}
+      onDragEnd={onDragEnd}
+    >
       <div className="flex flex-col sm:flex-row sm:items-start gap-3">
         {/* ── Info ── */}
         <div className="min-w-0 flex-1">
@@ -434,16 +457,153 @@ function PageCard({
 // List
 // ---------------------------------------------------------------------------
 
+function CollectionSidebar({
+  collections,
+  pages,
+  selected,
+  newCollectionName,
+  creatingCollection,
+  draggingPageId,
+  onSelected,
+  onNewCollectionName,
+  onCreateCollection,
+  onDeleteCollection,
+  onDropPage,
+}: {
+  collections: CollectionRow[];
+  pages: PageRow[];
+  selected: CollectionFilter;
+  newCollectionName: string;
+  creatingCollection: boolean;
+  draggingPageId: string | null;
+  onSelected: (next: CollectionFilter) => void;
+  onNewCollectionName: (next: string) => void;
+  onCreateCollection: () => void;
+  onDeleteCollection: (collectionId: string) => void;
+  onDropPage: (collectionId: string | null) => void;
+}) {
+  const pageCount = (collectionId: CollectionFilter) => {
+    if (collectionId === "all") return pages.length;
+    if (collectionId === "uncollected") return pages.filter((p) => p.collection_id === null).length;
+    return pages.filter((p) => p.collection_id === collectionId).length;
+  };
+
+  const DropButton = ({
+    id,
+    label,
+    count,
+    canDelete,
+  }: {
+    id: CollectionFilter;
+    label: string;
+    count: number;
+    canDelete?: boolean;
+  }) => (
+    <div
+      className="group flex items-center gap-1"
+      onDragOver={(e) => {
+        if (draggingPageId) e.preventDefault();
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        if (id === "all") return;
+        onDropPage(id === "uncollected" ? null : id);
+      }}
+    >
+      <button
+        type="button"
+        onClick={() => onSelected(id)}
+        className={[
+          "flex min-w-0 flex-1 items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm transition",
+          selected === id
+            ? "bg-accent-dim text-accent"
+            : "text-text-secondary hover:bg-fill-2 hover:text-text-primary",
+        ].join(" ")}
+      >
+        <span className="truncate">{label}</span>
+        <span className="shrink-0 rounded-full bg-fill-2 px-1.5 py-0.5 text-2xs text-text-muted">
+          {count}
+        </span>
+      </button>
+      {canDelete ? (
+        <button
+          type="button"
+          onClick={() => onDeleteCollection(id)}
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-text-muted opacity-0 transition hover:bg-red-400/10 hover:text-red-400 group-hover:opacity-100 focus-visible:opacity-100"
+          aria-label={`Delete ${label}`}
+          title={`Delete ${label}`}
+        >
+          <Icon name="trash" size={12} />
+        </button>
+      ) : null}
+    </div>
+  );
+
+  return (
+    <aside className="rounded-xl border border-outline bg-bg-elevated p-3 lg:sticky lg:top-16 lg:self-start">
+      <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-text-muted">
+        Collections
+      </div>
+
+      <div className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible">
+        <DropButton id="all" label="All pages" count={pageCount("all")} />
+        <DropButton id="uncollected" label="Uncollected" count={pageCount("uncollected")} />
+        {collections.map((collection) => (
+          <DropButton
+            key={collection.id}
+            id={collection.id}
+            label={collection.name}
+            count={pageCount(collection.id)}
+            canDelete
+          />
+        ))}
+      </div>
+
+      <div className="mt-3 flex gap-1.5">
+        <input
+          value={newCollectionName}
+          onChange={(e) => onNewCollectionName(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              onCreateCollection();
+            }
+          }}
+          placeholder="New collection"
+          className="min-w-0 flex-1 rounded-lg border border-outline bg-bg px-2.5 py-1.5 text-xs text-text-primary placeholder:text-text-muted/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft"
+        />
+        <button
+          type="button"
+          onClick={onCreateCollection}
+          disabled={creatingCollection || !newCollectionName.trim()}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent text-white transition hover:bg-accent-hover disabled:opacity-40"
+          aria-label="Create collection"
+          title="Create collection"
+        >
+          <Icon name={creatingCollection ? "spinner" : "plus"} size={13} className={creatingCollection ? "animate-spin" : undefined} />
+        </button>
+      </div>
+    </aside>
+  );
+}
+
 export function MyPagesList({
   initialPages,
+  initialCollections,
   baseUrl,
 }: {
-  initialPages: Array<{ id: string; slug: string | null; title: string | null; visibility: "public" | "unlisted"; view_count: number; created_at: string; updated_at: string }>;
+  initialPages: Array<{ id: string; slug: string | null; title: string | null; visibility: "public" | "unlisted"; collection_id: string | null; view_count: number; created_at: string; updated_at: string }>;
+  initialCollections: CollectionRow[];
   baseUrl: string;
 }) {
   const [pages, setPages] = useState<PageRow[]>(() =>
     initialPages.map((p) => ({ ...p, baseUrl }))
   );
+  const [collections, setCollections] = useState<CollectionRow[]>(initialCollections);
+  const [selectedCollection, setSelectedCollection] = useState<CollectionFilter>("all");
+  const [newCollectionName, setNewCollectionName] = useState("");
+  const [creatingCollection, setCreatingCollection] = useState(false);
+  const [draggingPageId, setDraggingPageId] = useState<string | null>(null);
 
   const handleDeleted = useCallback((id: string) => {
     setPages((prev) => prev.filter((p) => p.id !== id));
@@ -456,6 +616,69 @@ export function MyPagesList({
   const handleVisibilityChanged = useCallback((id: string, visibility: "public" | "unlisted") => {
     setPages((prev) => prev.map((p) => (p.id === id ? { ...p, visibility } : p)));
   }, []);
+
+  const handleCreateCollection = useCallback(async () => {
+    const name = newCollectionName.trim();
+    if (!name) return;
+
+    setCreatingCollection(true);
+    try {
+      const res = await fetch("/api/collections", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      if (!res.ok) throw new Error();
+      const body = (await res.json()) as { collection: CollectionRow };
+      setCollections((prev) => [...prev, body.collection].sort((a, b) => a.name.localeCompare(b.name)));
+      setSelectedCollection(body.collection.id);
+      setNewCollectionName("");
+    } finally {
+      setCreatingCollection(false);
+    }
+  }, [newCollectionName]);
+
+  const handleDeleteCollection = useCallback(async (collectionId: string) => {
+    const res = await fetch(`/api/collections/${collectionId}`, { method: "DELETE" });
+    if (!res.ok) return;
+    setCollections((prev) => prev.filter((c) => c.id !== collectionId));
+    setPages((prev) => prev.map((p) => (p.collection_id === collectionId ? { ...p, collection_id: null } : p)));
+    setSelectedCollection((prev) => (prev === collectionId ? "all" : prev));
+  }, []);
+
+  const assignPageToCollection = useCallback(async (pageId: string, collectionId: string | null) => {
+    const page = pages.find((p) => p.id === pageId);
+    if (!page || page.collection_id === collectionId) return;
+
+    const previousCollectionId = page.collection_id;
+    setPages((prev) => prev.map((p) => (p.id === pageId ? { ...p, collection_id: collectionId } : p)));
+
+    try {
+      if (collectionId) {
+        const res = await fetch(`/api/collections/${collectionId}/pages`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ pageId }),
+        });
+        if (!res.ok) throw new Error();
+      } else if (previousCollectionId) {
+        const res = await fetch(`/api/collections/${previousCollectionId}/pages`, {
+          method: "DELETE",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ pageId }),
+        });
+        if (!res.ok) throw new Error();
+      }
+    } catch {
+      setPages((prev) => prev.map((p) => (p.id === pageId ? { ...p, collection_id: previousCollectionId } : p)));
+    }
+  }, [pages]);
+
+  const filteredPages = pages.filter((page) => {
+    if (selectedCollection === "all") return true;
+    if (selectedCollection === "uncollected") return page.collection_id === null;
+    return page.collection_id === selectedCollection;
+  });
 
   if (pages.length === 0) {
     return (
@@ -478,16 +701,43 @@ export function MyPagesList({
   }
 
   return (
-    <div className="flex flex-col gap-2">
-      {pages.map((page) => (
-        <PageCard
-          key={page.id}
-          page={page}
-          onDeleted={handleDeleted}
-          onSlugSaved={handleSlugSaved}
-          onVisibilityChanged={handleVisibilityChanged}
-        />
-      ))}
+    <div className="grid gap-5 lg:grid-cols-[220px_minmax(0,1fr)]">
+      <CollectionSidebar
+        collections={collections}
+        pages={pages}
+        selected={selectedCollection}
+        newCollectionName={newCollectionName}
+        creatingCollection={creatingCollection}
+        draggingPageId={draggingPageId}
+        onSelected={setSelectedCollection}
+        onNewCollectionName={setNewCollectionName}
+        onCreateCollection={handleCreateCollection}
+        onDeleteCollection={handleDeleteCollection}
+        onDropPage={(collectionId) => {
+          if (draggingPageId) void assignPageToCollection(draggingPageId, collectionId);
+          setDraggingPageId(null);
+        }}
+      />
+
+      <div className="flex flex-col gap-2">
+        {filteredPages.length > 0 ? (
+          filteredPages.map((page) => (
+            <PageCard
+              key={page.id}
+              page={page}
+              onDeleted={handleDeleted}
+              onSlugSaved={handleSlugSaved}
+              onVisibilityChanged={handleVisibilityChanged}
+              onDragStart={setDraggingPageId}
+              onDragEnd={() => setDraggingPageId(null)}
+            />
+          ))
+        ) : (
+          <div className="rounded-xl border border-dashed border-outline px-4 py-10 text-sm text-text-muted">
+            No pages in this collection.
+          </div>
+        )}
+      </div>
     </div>
   );
 }

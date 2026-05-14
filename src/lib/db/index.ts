@@ -1,5 +1,5 @@
 import { getDb } from "@/lib/mongodb";
-import type { DbApiKey, DbPage, DbUser } from "./types";
+import type { DbApiKey, DbCollection, DbPage, DbUser } from "./types";
 
 // ---------------------------------------------------------------------------
 // Internal document shapes (MongoDB _id = our string id)
@@ -8,6 +8,7 @@ import type { DbApiKey, DbPage, DbUser } from "./types";
 type UserDoc = Omit<DbUser, "id"> & { _id: string };
 type PageDoc = Omit<DbPage, "id"> & { _id: string };
 type ApiKeyDoc = Omit<DbApiKey, "id"> & { _id: string };
+type CollectionDoc = Omit<DbCollection, "id"> & { _id: string };
 
 function toUser(doc: UserDoc): DbUser {
   const { _id, ...rest } = doc;
@@ -16,10 +17,15 @@ function toUser(doc: UserDoc): DbUser {
 
 function toPage(doc: PageDoc): DbPage {
   const { _id, ...rest } = doc;
-  return { id: _id, ...rest };
+  return { id: _id, ...rest, collection_id: rest.collection_id ?? null };
 }
 
 function toApiKey(doc: ApiKeyDoc): DbApiKey {
+  const { _id, ...rest } = doc;
+  return { id: _id, ...rest };
+}
+
+function toCollection(doc: CollectionDoc): DbCollection {
   const { _id, ...rest } = doc;
   return { id: _id, ...rest };
 }
@@ -66,6 +72,7 @@ export async function createPageRecord(
     slug: null,
     title,
     visibility: "public",
+    collection_id: null,
     view_count: 0,
     created_at: now,
     updated_at: now,
@@ -96,13 +103,68 @@ export async function getPagesByUser(userId: string): Promise<DbPage[]> {
 
 export async function updatePageRecord(
   pageId: string,
-  patch: Partial<Pick<DbPage, "slug" | "title" | "visibility" | "updated_at">>,
+  patch: Partial<Pick<DbPage, "slug" | "title" | "visibility" | "collection_id" | "updated_at">>,
 ): Promise<void> {
   if (Object.keys(patch).length === 0) return;
   const db = await getDb();
   await db
     .collection<PageDoc>("pages")
     .updateOne({ _id: pageId }, { $set: patch });
+}
+
+// ---------------------------------------------------------------------------
+// Collections
+// ---------------------------------------------------------------------------
+
+export async function getCollectionsByUser(userId: string): Promise<DbCollection[]> {
+  const db = await getDb();
+  const docs = await db
+    .collection<CollectionDoc>("collections")
+    .find({ user_id: userId })
+    .sort({ name: 1 })
+    .toArray();
+  return docs.map(toCollection);
+}
+
+export async function getCollectionRecord(collectionId: string): Promise<DbCollection | null> {
+  const db = await getDb();
+  const doc = await db.collection<CollectionDoc>("collections").findOne({ _id: collectionId });
+  return doc ? toCollection(doc) : null;
+}
+
+export async function createCollectionRecord(
+  collectionId: string,
+  userId: string,
+  name: string,
+): Promise<void> {
+  const db = await getDb();
+  const now = new Date().toISOString();
+  await db.collection<CollectionDoc>("collections").insertOne({
+    _id: collectionId,
+    user_id: userId,
+    name,
+    created_at: now,
+    updated_at: now,
+  });
+}
+
+export async function updateCollectionRecord(
+  collectionId: string,
+  patch: Partial<Pick<DbCollection, "name" | "updated_at">>,
+): Promise<void> {
+  if (Object.keys(patch).length === 0) return;
+  const db = await getDb();
+  await db
+    .collection<CollectionDoc>("collections")
+    .updateOne({ _id: collectionId }, { $set: patch });
+}
+
+export async function deleteCollectionRecord(collectionId: string, userId: string): Promise<void> {
+  const db = await getDb();
+  await db
+    .collection<PageDoc>("pages")
+    .updateMany({ user_id: userId, collection_id: collectionId }, { $set: { collection_id: null } });
+  await db.collection<CollectionDoc>("collections").deleteOne({ _id: collectionId, user_id: userId });
 }
 
 export async function incrementViewCount(pageId: string): Promise<void> {

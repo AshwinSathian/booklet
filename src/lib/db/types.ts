@@ -10,7 +10,16 @@ export type DbPage = {
   slug: string | null;
   title: string | null;
   visibility: "public" | "unlisted";
+  collection_id: string | null;
   view_count: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DbCollection = {
+  id: string;
+  user_id: string;
+  name: string;
   created_at: string;
   updated_at: string;
 };

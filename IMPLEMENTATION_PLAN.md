@@ -708,6 +708,10 @@ version snapshot of the current state before overwriting.
 
 ### P1-3 — Collections (page organisation)
 
+**Status:** Implemented in this repo. My Pages now supports collection creation,
+filtering, deletion, and HTML5 drag-and-drop assignment backed by Clerk-protected
+collection APIs and MongoDB `collections` records.
+
 **Goal:** Let users organise their pages into named groups. The flat list in My Pages
 breaks past 20 documents.
 
