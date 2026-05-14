@@ -9,7 +9,7 @@ import { DiagramBlock } from "./DiagramBlock";
 import { InlineRenderer } from "./InlineRenderer";
 
 function spacingClass(settings: DocSettings): string {
-  return settings.spacing === "compact" ? "gap-4" : "gap-6";
+  return settings.spacing === "compact" ? "gap-3" : "gap-4";
 }
 
 function proseWidthClass(settings: DocSettings): string {
@@ -86,7 +86,7 @@ function CodeBlock({
       {/* Code body */}
       <pre
         className={[
-          "p-4 text-[13px] leading-[1.65] overflow-auto",
+          "p-4 text-[13px] leading-[1.55] overflow-auto",
           "font-mono text-text-primary",
           isCollapsed ? "max-h-96" : "",
         ].join(" ")}
@@ -182,7 +182,7 @@ export function BlockRenderer({
               return (
                 <p
                   key={idx}
-                  className="text-[15px] sm:text-[16px] leading-[1.8] text-text-primary"
+                  className="text-[15px] sm:text-[16px] leading-[1.62] text-text-primary"
                 >
                   <InlineRenderer inl={b.inl} />
                 </p>
@@ -228,14 +228,14 @@ export function BlockRenderer({
               return b.ordered ? (
                 <ol
                   key={idx}
-                  className="list-decimal pl-6 space-y-2 text-[15px] sm:text-[16px] leading-[1.8] text-text-primary"
+                  className="list-decimal pl-6 space-y-1.5 text-[15px] sm:text-[16px] leading-[1.62] text-text-primary"
                 >
                   {b.items.map(renderItem)}
                 </ol>
               ) : (
                 <ul
                   key={idx}
-                  className="list-disc pl-6 space-y-2 text-[15px] sm:text-[16px] leading-[1.8] text-text-primary"
+                  className="list-disc pl-6 space-y-1.5 text-[15px] sm:text-[16px] leading-[1.62] text-text-primary"
                 >
                   {b.items.map(renderItem)}
                 </ul>
@@ -249,7 +249,7 @@ export function BlockRenderer({
                   className="relative pl-4 py-0.5"
                 >
                   <div className="absolute left-0 top-0 bottom-0 w-0.75 rounded-full bg-accent/50" />
-                  <div className="text-[15px] leading-[1.8] text-text-muted italic">
+                  <div className="text-[15px] leading-[1.62] text-text-muted italic">
                     <BlockRenderer
                       blocks={b.blocks}
                       settings={settings}
