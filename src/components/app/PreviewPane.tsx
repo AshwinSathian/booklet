@@ -34,12 +34,11 @@ export function PreviewPane({
   return (
     <div className="flex h-full max-h-full min-h-0 flex-col w-full overflow-hidden">
       {/* Pane label */}
-      <div className="shrink-0 flex items-center justify-between px-3 py-2 border-b border-border-subtle">
-        <span className="text-2xs font-semibold uppercase tracking-widest text-text-muted">
-          Preview
-        </span>
-        <span className="text-2xs text-text-muted">
-          Live · ⌘↵ publish
+      <div className="shrink-0 flex items-center justify-between px-3 py-2 border-b border-border-subtle bg-bg-soft/50">
+        <span className="text-2xs font-medium text-text-muted/60 tracking-wide">Preview</span>
+        <span className="flex items-center gap-1 text-2xs text-text-muted/40">
+          <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500/70" aria-hidden />
+          Live
         </span>
       </div>
 

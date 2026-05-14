@@ -5,7 +5,7 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
 // Slug rules: 3-60 chars, lowercase alphanumeric + hyphens, no leading/trailing hyphens.
-const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,58}[a-z0-9]$|^[a-z0-9]{1,60}$/;
+const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,58}[a-z0-9]$|^[a-z0-9]{3,60}$/;
 
 function isValidSlug(s: string): boolean {
   return SLUG_RE.test(s) && !s.includes("--");

@@ -13,6 +13,7 @@ import Link from "next/link";
 import { DesktopTocClient, MobileTocClient } from "@/components/share/TocClient";
 import { ExportMenu } from "@/components/share/ExportMenu";
 import { AnalyticsBeacon } from "@/components/share/AnalyticsBeacon";
+import { ReadingProgress } from "@/components/share/ReadingProgress";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -131,6 +132,7 @@ export default async function SharePage({
 
   return (
     <div className="min-h-screen bg-bg text-text-primary">
+      <ReadingProgress />
       <AnalyticsBeacon pageId={resolvedId} />
 
       {/* ── Sticky header ── */}

@@ -30,7 +30,7 @@ export type SaveState = "saved" | "saving";
 type EditorStatus = "idle" | "typing" | "publishing" | "published" | "error";
 
 // Slug validation — mirrors server-side rule in /api/pages/[id]/route.ts
-const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,58}[a-z0-9]$|^[a-z0-9]{1,60}$/;
+const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,58}[a-z0-9]$|^[a-z0-9]{3,60}$/;
 function isValidSlug(s: string) { return SLUG_RE.test(s) && !s.includes("--"); }
 function isValidTitle(title: string): boolean { return title.trim().length > 0; }
 

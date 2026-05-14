@@ -202,18 +202,7 @@ export function PasteInput({
 
   return (
     <div className="flex h-full max-h-full min-h-0 flex-col overflow-hidden w-full">
-      {/* Pane label */}
-      <div className="shrink-0 flex items-center justify-between px-3 py-2 border-b border-border-subtle">
-        <span className="text-2xs font-semibold uppercase tracking-widest text-text-muted">
-          Editor
-        </span>
-        <span className="text-2xs text-text-muted">
-          <kbd className="rounded border border-border-default bg-fill-2 px-1 py-0.5 font-mono text-2xs">⌘K</kbd>
-          {" "}focus
-        </span>
-      </div>
-
-      {/* Formatting toolbar */}
+      {/* Formatting toolbar — acts as the pane header */}
       <FormatToolbar textareaRef={ref} onChange={onChange} />
 
       {/* Textarea */}
@@ -230,12 +219,10 @@ export function PasteInput({
 
             if (!e.shiftKey) {
               if (start === end) {
-                // No selection: insert 2 spaces at cursor.
                 const next = v.slice(0, start) + "  " + v.slice(end);
                 onChange(next);
                 requestAnimationFrame(() => { ta.focus(); ta.setSelectionRange(start + 2, start + 2); });
               } else {
-                // Selection: indent every line by 2 spaces.
                 const lineStart = v.lastIndexOf("\n", start - 1) + 1;
                 const lineEnd = v.indexOf("\n", end - 1);
                 const blockEnd = lineEnd === -1 ? v.length : lineEnd;
@@ -246,7 +233,6 @@ export function PasteInput({
                 requestAnimationFrame(() => { ta.focus(); ta.setSelectionRange(start + 2, end + delta); });
               }
             } else {
-              // Shift+Tab: de-indent every line in selection.
               const lineStart = v.lastIndexOf("\n", start - 1) + 1;
               const lineEnd = v.indexOf("\n", end - 1);
               const blockEnd = lineEnd === -1 ? v.length : lineEnd;
@@ -265,28 +251,35 @@ export function PasteInput({
               });
             }
           }}
-          placeholder="Write or paste Markdown here — notes, READMEs, incident summaries, tables, code…"
+          placeholder="Write or paste Markdown…"
           spellCheck={false}
           className={[
             "h-full w-full min-h-0 min-w-0",
             "resize-none overflow-y-auto",
             "bg-bg text-text-primary",
             "font-mono text-sm leading-[1.65]",
-            "p-4",
-            "placeholder:text-text-muted/60",
+            "px-5 py-4",
+            "placeholder:text-text-muted/40",
             "focus:outline-none",
             "caret-accent",
           ].join(" ")}
         />
       </div>
 
-      {/* Footer: word/char count */}
-      <div className="shrink-0 flex items-center gap-1.5 border-t border-border-subtle px-3 py-1.5">
-        <span className="text-2xs text-text-muted">
-          {wordCount} {wordCount === 1 ? "word" : "words"}
+      {/* Status bar */}
+      <div className="shrink-0 flex items-center justify-between border-t border-border-subtle px-3 py-1">
+        <div className="flex items-center gap-2">
+          <span className="text-2xs text-text-muted tabular-nums">
+            {wordCount.toLocaleString()} {wordCount === 1 ? "word" : "words"}
+          </span>
+          <span className="text-2xs text-text-muted/30" aria-hidden>·</span>
+          <span className="text-2xs text-text-muted tabular-nums">
+            {charCount.toLocaleString()} chars
+          </span>
+        </div>
+        <span className="text-2xs text-text-muted/50 hidden sm:inline">
+          <kbd className="font-mono">⌘K</kbd> focus · <kbd className="font-mono">⌘↵</kbd> publish
         </span>
-        <span className="text-2xs text-text-muted opacity-40">·</span>
-        <span className="text-2xs text-text-muted">{charCount} chars</span>
       </div>
     </div>
   );
