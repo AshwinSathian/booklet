@@ -761,6 +761,9 @@ In `src/app/my-pages/MyPagesClient.tsx`:
 
 ### P1-4 — Real PDF export
 
+**Status:** Immediate print-CSS enhancement implemented. True server-side PDF
+generation remains deferred per the Cloudflare Workers constraints documented below.
+
 **Current state:** `ExportMenu` has "Print or Save as PDF" which calls `window.print()`.
 This is a system print dialog — quality varies by browser and OS.
 
