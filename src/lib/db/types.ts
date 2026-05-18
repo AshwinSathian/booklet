@@ -36,7 +36,7 @@ export type DbApiKey = {
 export type AnalyticsEvent = {
   id: string;
   page_id: string;
-  event: "view" | "read_50" | "read_100" | "exit";
+  event: "view" | "read_50" | "read_100" | "exit" | "cta_click";
   referrer_bucket: "slack" | "twitter" | "github" | "email" | "direct" | "other";
   country: string | null;
   session_hash: string;
@@ -50,4 +50,14 @@ export type PageVersion = {
   doc_snapshot: string;
   created_at: string;
   size_bytes: number;
+};
+
+export type PublishEvent = {
+  id: string;
+  user_id: string | null;       // null = anonymous
+  page_id: string;
+  is_update: boolean;           // true = re-publish to existing page
+  content_length_bucket: "xs" | "sm" | "md" | "lg" | "xl";
+  source: "browser" | "api" | "cli";
+  created_at: string;
 };

@@ -3,6 +3,7 @@ import { DEFAULT_SETTINGS } from "@/lib/blocks";
 import { BLOCKS, STORAGE } from "@/lib/constants";
 import { getPageBySlug, getPageRecord, updatePageRecord, deletePageRecord } from "@/lib/db";
 import { deletePageVersions, snapshotPageVersion } from "@/lib/db/versions";
+import { recordPublishEvent } from "@/lib/db/publish-events";
 import { resolveApiKey } from "@/lib/api-key-auth";
 import { parseToBlocks } from "@/lib/parse";
 import { putDoc, deleteDoc } from "@/lib/storage";
@@ -141,6 +142,15 @@ export async function PATCH(
       const msg = e instanceof Error ? e.message : "Update failed";
       return NextResponse.json({ error: msg }, { status: 500 });
     }
+
+    const rawLength = payload.raw?.length ?? JSON.stringify(payload.blocks).length;
+    void recordPublishEvent({
+      userId,
+      pageId: id,
+      isUpdate: true,
+      contentLength: rawLength,
+      source: "api",
+    }).catch((err) => console.error("[v1/pages] event record failed:", err));
 
     metaPatch.updated_at = new Date().toISOString();
   }

@@ -6,6 +6,7 @@ import { ensureDbUser } from "@/lib/db/ensure-user";
 import { createId } from "@/lib/id";
 import { extractDocTitle } from "@/lib/doc-title";
 import { snapshotPageVersion } from "@/lib/db/versions";
+import { recordPublishEvent } from "@/lib/db/publish-events";
 import { putDoc } from "@/lib/storage";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { auth } from "@clerk/nextjs/server";
@@ -78,6 +79,15 @@ export async function POST(req: Request) {
       const msg = e instanceof Error ? e.message : "Publish failed";
       return NextResponse.json({ error: msg }, { status: 500 });
     }
+
+    const rawLength = payload.raw?.length ?? JSON.stringify(payload.blocks).length;
+    void recordPublishEvent({
+      userId: userId ?? null,
+      pageId: id,
+      isUpdate: false,
+      contentLength: rawLength,
+      source: "browser",
+    }).catch((err) => console.error("[publish] event record failed:", err));
 
     if (isAuthenticated && userId) {
       try {

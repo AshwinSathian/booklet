@@ -153,7 +153,7 @@ export default async function SharePage({
               title={pageTitle}
             />
             <ThemeToggle />
-            <Button variant="primary" size="md" href={ROUTES.app} className="hidden sm:inline-flex">
+            <Button variant="primary" size="md" href={ROUTES.app} className="hidden sm:inline-flex" data-readable-cta="make-your-own">
               Make your own
               <svg width="11" height="11" fill="none" viewBox="0 0 11 11" aria-hidden>
                 <path d="M2 9 9 2M9 2H4.5M9 2v4.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />

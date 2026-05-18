@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import React from "react";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
 // ---------------------------------------------------------------------------
@@ -82,14 +83,14 @@ export function Button({
 
   if (href && external) {
     return (
-      <a href={href} target="_blank" rel="noopener noreferrer" className={computed}>
+      <a href={href} target="_blank" rel="noopener noreferrer" className={computed} {...(rest as React.AnchorHTMLAttributes<HTMLAnchorElement>)}>
         {children}
       </a>
     );
   }
   if (href) {
     return (
-      <Link href={href} className={computed}>
+      <Link href={href} className={computed} {...(rest as React.AnchorHTMLAttributes<HTMLAnchorElement>)}>
         {children}
       </Link>
     );

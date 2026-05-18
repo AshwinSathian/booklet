@@ -2,7 +2,9 @@
 
 import { useEffect, useRef } from "react";
 
-function sendAnalytics(payload: { pageId: string; event: "view" | "read_50" | "read_100"; referrer?: string }) {
+type AnalyticsEvent = "view" | "read_50" | "read_100" | "cta_click";
+
+function sendAnalytics(payload: { pageId: string; event: AnalyticsEvent; referrer?: string }) {
   const body = JSON.stringify(payload);
   if (typeof navigator !== "undefined" && "sendBeacon" in navigator) {
     const blob = new Blob([body], { type: "application/json" });
@@ -43,9 +45,20 @@ export function AnalyticsBeacon({ pageId }: { pageId: string }) {
       }
     }
 
+    function onCtaClick(e: MouseEvent) {
+      const target = (e.target as Element).closest("[data-readable-cta]");
+      if (target) {
+        sendAnalytics({ pageId, event: "cta_click" });
+      }
+    }
+
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    document.addEventListener("click", onCtaClick, { capture: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      document.removeEventListener("click", onCtaClick, { capture: true });
+    };
   }, [pageId]);
 
   return null;

@@ -10,7 +10,7 @@ type AnalyticsPayload = {
   referrer?: string;
 };
 
-const ALLOWED_EVENTS = new Set<AnalyticsEvent["event"]>(["view", "read_50", "read_100"]);
+const ALLOWED_EVENTS = new Set<AnalyticsEvent["event"]>(["view", "read_50", "read_100", "cta_click"]);
 
 function getClientIp(req: Request): string {
   const cf = req.headers.get("cf-connecting-ip");

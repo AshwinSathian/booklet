@@ -7,6 +7,7 @@ import { createId } from "@/lib/id";
 import { resolveApiKey } from "@/lib/api-key-auth";
 import { extractDocTitle } from "@/lib/doc-title";
 import { snapshotPageVersion } from "@/lib/db/versions";
+import { recordPublishEvent } from "@/lib/db/publish-events";
 import { parseToBlocks } from "@/lib/parse";
 import { putDoc } from "@/lib/storage";
 import { checkRateLimit } from "@/lib/rate-limit";
@@ -68,6 +69,15 @@ export async function POST(req: Request) {
     const msg = e instanceof Error ? e.message : "Publish failed";
     return NextResponse.json({ error: msg }, { status: 500 });
   }
+
+  const rawLength = payload.raw?.length ?? JSON.stringify(payload.blocks).length;
+  void recordPublishEvent({
+    userId,
+    pageId: id,
+    isUpdate: false,
+    contentLength: rawLength,
+    source: "api",
+  }).catch((err) => console.error("[v1/publish] event record failed:", err));
 
   try {
     const title = extractDocTitle(payload.blocks);

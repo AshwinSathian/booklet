@@ -23,6 +23,19 @@ const SECURITY_HEADERS: Record<string, string> = {
 };
 
 export default clerkMiddleware(async (auth, req) => {
+  // Admin route: IP-allowlist only — never reaches Clerk auth
+  if (req.nextUrl.pathname.startsWith("/admin")) {
+    const ip =
+      req.headers.get("cf-connecting-ip") ??
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+      "unknown";
+    const allowed = (process.env.ADMIN_IPS ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+    // In development always allow loopback
+    if (process.env.NODE_ENV !== "development" && !allowed.includes(ip)) {
+      return new Response("Forbidden", { status: 403 });
+    }
+  }
+
   if (isProtected(req)) {
     await auth.protect();
   }
