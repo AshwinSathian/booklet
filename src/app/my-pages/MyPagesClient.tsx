@@ -4,6 +4,8 @@ import { ActionDrawer, DrawerSection } from "@/components/ui/ActionDrawer";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { ROUTES } from "@/lib/constants";
+import type { UserPlan } from "@/lib/db/types";
+import { canUseFeature } from "@/lib/quota";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,58}[a-z0-9]$|^[a-z0-9]{3,60}$/;
@@ -241,6 +243,7 @@ function DrawerItem({
   disabled,
   active,
   activeLabel,
+  locked,
 }: {
   icon: Parameters<typeof Icon>[0]["name"];
   label: string;
@@ -251,34 +254,49 @@ function DrawerItem({
   disabled?: boolean;
   active?: boolean;
   activeLabel?: string;
+  locked?: boolean;
 }) {
   const cls = [
     "flex w-full items-center gap-3 px-3 py-3 text-left transition",
     "border-b border-border-subtle last:border-b-0",
-    danger
-      ? "text-red-400 hover:bg-red-400/8"
-      : active
-        ? "text-accent bg-accent-dim hover:bg-accent-dim"
-        : "text-text-secondary hover:bg-fill-2 hover:text-text-primary",
+    locked
+      ? "text-text-muted opacity-60 hover:bg-fill-1"
+      : danger
+        ? "text-red-400 hover:bg-red-400/8"
+        : active
+          ? "text-accent bg-accent-dim hover:bg-accent-dim"
+          : "text-text-secondary hover:bg-fill-2 hover:text-text-primary",
     disabled ? "opacity-40 pointer-events-none" : "",
   ].join(" ");
 
   const inner = (
     <>
-      <span className={["shrink-0", danger ? "text-red-400/70" : active ? "text-accent" : "text-text-muted"].join(" ")}>
+      <span className={["shrink-0", locked ? "text-text-muted" : danger ? "text-red-400/70" : active ? "text-accent" : "text-text-muted"].join(" ")}>
         <Icon name={icon} size={16} />
       </span>
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-medium leading-tight">{label}</span>
         {description ? <span className="block text-xs text-text-muted mt-0.5">{description}</span> : null}
       </span>
-      {active && activeLabel ? (
+      {locked ? (
+        <span className="shrink-0 rounded-pill border border-accent/40 bg-accent/10 px-2 py-0.5 text-2xs font-semibold text-accent">
+          Pro
+        </span>
+      ) : active && activeLabel ? (
         <span className="text-xs font-medium text-accent shrink-0">{activeLabel}</span>
       ) : null}
     </>
   );
 
   if (href) {
+    // Locked items link internally to /pricing; all others open in a new tab.
+    if (locked) {
+      return (
+        <a href={href} className={cls} onClick={onClick}>
+          {inner}
+        </a>
+      );
+    }
     return (
       <a href={href} target="_blank" rel="noopener noreferrer" className={cls} onClick={onClick}>
         {inner}
@@ -299,6 +317,7 @@ function DrawerItem({
 function PageCard({
   page,
   index,
+  userPlan,
   onDeleted,
   onSlugSaved,
   onVisibilityChanged,
@@ -307,6 +326,7 @@ function PageCard({
 }: {
   page: PageRow;
   index: number;
+  userPlan: UserPlan;
   onDeleted: (id: string) => void;
   onSlugSaved: (id: string, slug: string | null) => void;
   onVisibilityChanged: (id: string, v: "public" | "unlisted") => void;
@@ -459,13 +479,24 @@ function PageCard({
             href={`/my-pages/analytics/${page.id}`}
             onClick={() => setDrawerOpen(false)}
           />
-          <DrawerItem
-            icon="history"
-            label="Version history"
-            description="Browse and restore previous versions"
-            href={`/my-pages/versions/${page.id}`}
-            onClick={() => setDrawerOpen(false)}
-          />
+          {canUseFeature(userPlan, "versionHistory") ? (
+            <DrawerItem
+              icon="history"
+              label="Version history"
+              description="Browse and restore previous versions"
+              href={`/my-pages/versions/${page.id}`}
+              onClick={() => setDrawerOpen(false)}
+            />
+          ) : (
+            <DrawerItem
+              icon="history"
+              label="Version history"
+              description="Available on Readable Pro — upgrade to access"
+              href="/pricing"
+              onClick={() => setDrawerOpen(false)}
+              locked
+            />
+          )}
         </DrawerSection>
 
         <DrawerSection>
@@ -729,6 +760,7 @@ export function MyPagesList({
   initialPages,
   initialCollections,
   baseUrl,
+  userPlan = "free",
 }: {
   initialPages: Array<{
     id: string;
@@ -742,6 +774,7 @@ export function MyPagesList({
   }>;
   initialCollections: CollectionRow[];
   baseUrl: string;
+  userPlan?: UserPlan;
 }) {
   const [pages, setPages] = useState<PageRow[]>(() =>
     initialPages.map((p) => ({ ...p, baseUrl }))
@@ -906,6 +939,7 @@ export function MyPagesList({
                 key={page.id}
                 page={page}
                 index={i}
+                userPlan={userPlan}
                 onDeleted={handleDeleted}
                 onSlugSaved={handleSlugSaved}
                 onVisibilityChanged={handleVisibilityChanged}

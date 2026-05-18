@@ -1,5 +1,5 @@
 import { getDb } from "@/lib/mongodb";
-import type { DbApiKey, DbCollection, DbPage, DbUser } from "./types";
+import type { DbApiKey, DbCollection, DbPage, DbUser, UserPlan } from "./types";
 
 // ---------------------------------------------------------------------------
 // Internal document shapes (MongoDB _id = our string id)
@@ -49,10 +49,47 @@ export async function upsertUser(
     { _id: id },
     {
       $set: { email },
-      $setOnInsert: { _id: id, created_at: new Date().toISOString() },
+      $setOnInsert: {
+        _id: id,
+        plan: "free" as UserPlan,
+        stripe_customer_id: null,
+        stripe_subscription_id: null,
+        plan_expires_at: null,
+        created_at: new Date().toISOString(),
+      },
     },
     { upsert: true },
   );
+}
+
+export async function getUserPlan(userId: string): Promise<UserPlan> {
+  const user = await getUser(userId);
+  return user?.plan ?? "free";
+}
+
+export async function setUserPlan(
+  userId: string,
+  plan: UserPlan,
+  stripeCustomerId?: string,
+  stripeSubscriptionId?: string,
+): Promise<void> {
+  const db = await getDb();
+  await db.collection<UserDoc>("users").updateOne(
+    { _id: userId },
+    {
+      $set: {
+        plan,
+        ...(stripeCustomerId !== undefined ? { stripe_customer_id: stripeCustomerId } : {}),
+        ...(stripeSubscriptionId !== undefined ? { stripe_subscription_id: stripeSubscriptionId } : {}),
+      },
+    },
+  );
+}
+
+export async function getUserByStripeCustomerId(stripeCustomerId: string): Promise<DbUser | null> {
+  const db = await getDb();
+  const doc = await db.collection<UserDoc>("users").findOne({ stripe_customer_id: stripeCustomerId });
+  return doc ? toUser(doc) : null;
 }
 
 // ---------------------------------------------------------------------------
@@ -74,6 +111,7 @@ export async function createPageRecord(
     visibility: "public",
     collection_id: null,
     view_count: 0,
+    remove_attribution_badge: false,
     created_at: now,
     updated_at: now,
   });
@@ -103,7 +141,7 @@ export async function getPagesByUser(userId: string): Promise<DbPage[]> {
 
 export async function updatePageRecord(
   pageId: string,
-  patch: Partial<Pick<DbPage, "slug" | "title" | "visibility" | "collection_id" | "updated_at">>,
+  patch: Partial<Pick<DbPage, "slug" | "title" | "visibility" | "collection_id" | "remove_attribution_badge" | "updated_at">>,
 ): Promise<void> {
   if (Object.keys(patch).length === 0) return;
   const db = await getDb();

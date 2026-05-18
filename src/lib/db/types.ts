@@ -1,6 +1,12 @@
+export type UserPlan = "free" | "pro" | "teams";
+
 export type DbUser = {
   id: string;           // Clerk user ID
   email: string | null;
+  plan: UserPlan;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+  plan_expires_at: string | null;
   created_at: string;
 };
 
@@ -12,6 +18,7 @@ export type DbPage = {
   visibility: "public" | "unlisted";
   collection_id: string | null;
   view_count: number;
+  remove_attribution_badge: boolean;
   created_at: string;
   updated_at: string;
 };

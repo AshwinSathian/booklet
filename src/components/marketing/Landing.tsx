@@ -1298,6 +1298,9 @@ export function Landing() {
               <Link href="/api-docs" className="transition hover:text-text-primary">
                 API docs
               </Link>
+              <Link href="/pricing" className="transition hover:text-text-primary">
+                Pricing
+              </Link>
             </nav>
           </div>
         </Container>
