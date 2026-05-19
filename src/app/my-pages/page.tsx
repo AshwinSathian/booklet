@@ -83,6 +83,7 @@ export default async function MyPagesPage() {
             visibility: p.visibility,
             collection_id: p.collection_id,
             view_count: p.view_count,
+            has_password: Boolean(p.password_hash),
             created_at: p.created_at,
             updated_at: p.updated_at,
           }))}

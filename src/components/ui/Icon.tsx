@@ -38,7 +38,8 @@ export type IconName =
   | "italic"
   | "strikethrough"
   | "quote"
-  | "image";
+  | "image"
+  | "lock";
 
 const PATHS: Record<IconName, string | string[]> = {
   plus:           "M8 3v10M3 8h10",
@@ -79,6 +80,7 @@ const PATHS: Record<IconName, string | string[]> = {
   strikethrough:  "M3 8h10M7 4a2 2 0 0 0-2 2c0 1 .6 1.6 2 2h2c1.4.4 2 1 2 2a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2",
   quote:          "M4 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM4 9v4M10 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM10 9v4",
   image:          "M2 3h12a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1zM1 10l4-4 3 3 2-2 4 4",
+  lock:           ["M4 7V5a4 4 0 0 1 8 0v2", "M2 7h12a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z", "M8 11a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"],
 };
 
 export function Icon({

@@ -17,7 +17,12 @@ function toUser(doc: UserDoc): DbUser {
 
 function toPage(doc: PageDoc): DbPage {
   const { _id, ...rest } = doc;
-  return { id: _id, ...rest, collection_id: rest.collection_id ?? null };
+  return {
+    id: _id,
+    ...rest,
+    collection_id: rest.collection_id ?? null,
+    password_hash: rest.password_hash ?? null,
+  };
 }
 
 function toApiKey(doc: ApiKeyDoc): DbApiKey {
@@ -113,6 +118,7 @@ export async function createPageRecord(
     collection_id: null,
     view_count: 0,
     remove_attribution_badge: removeAttributionBadge,
+    password_hash: null,
     created_at: now,
     updated_at: now,
   });
@@ -142,7 +148,7 @@ export async function getPagesByUser(userId: string): Promise<DbPage[]> {
 
 export async function updatePageRecord(
   pageId: string,
-  patch: Partial<Pick<DbPage, "slug" | "title" | "visibility" | "collection_id" | "remove_attribution_badge" | "updated_at">>,
+  patch: Partial<Pick<DbPage, "slug" | "title" | "visibility" | "collection_id" | "remove_attribution_badge" | "password_hash" | "updated_at">>,
 ): Promise<void> {
   if (Object.keys(patch).length === 0) return;
   const db = await getDb();

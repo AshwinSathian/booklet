@@ -1,6 +1,8 @@
-import { getPageBySlug, getPageRecord, updatePageRecord, deletePageRecord } from "@/lib/db";
+import { getPageBySlug, getPageRecord, updatePageRecord, deletePageRecord, getUserPlan } from "@/lib/db";
 import { deletePageVersions } from "@/lib/db/versions";
 import { deleteDoc } from "@/lib/storage";
+import { hashPassword } from "@/lib/password";
+import { canUseFeature } from "@/lib/quota";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
@@ -35,14 +37,29 @@ export async function PATCH(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  let body: { slug?: string | null; visibility?: string } = {};
+  let body: { slug?: string | null; visibility?: string; password?: string | null } = {};
   try {
-    body = (await req.json()) as { slug?: string | null; visibility?: string };
+    body = (await req.json()) as { slug?: string | null; visibility?: string; password?: string | null };
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
   const patch: Parameters<typeof updatePageRecord>[1] = {};
+
+  // Password protection is a Pro feature
+  if (body.password !== undefined) {
+    const plan = await getUserPlan(userId);
+    if (!canUseFeature(plan, "passwordProtection")) {
+      return NextResponse.json({ error: "Password protection requires Readable Pro." }, { status: 403 });
+    }
+    if (body.password === null || body.password === "") {
+      patch.password_hash = null;
+    } else if (typeof body.password === "string" && body.password.length >= 4) {
+      patch.password_hash = await hashPassword(body.password);
+    } else {
+      return NextResponse.json({ error: "Password must be at least 4 characters." }, { status: 422 });
+    }
+  }
 
   if (body.slug !== undefined) {
     const rawSlug = body.slug;

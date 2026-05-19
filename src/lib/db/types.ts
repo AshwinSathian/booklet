@@ -19,6 +19,7 @@ export type DbPage = {
   collection_id: string | null;
   view_count: number;
   remove_attribution_badge: boolean;
+  password_hash: string | null;   // bcrypt hash; null = no password
   created_at: string;
   updated_at: string;
 };

@@ -10,11 +10,13 @@ import { readingTimeMinutes } from "@/lib/reading-time";
 import { buildToc, MIN_TOC_HEADINGS } from "@/lib/toc";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { Button } from "@/components/ui/Button";
 import { DesktopTocClient, MobileTocClient } from "@/components/share/TocClient";
 import { ExportMenu } from "@/components/share/ExportMenu";
 import { AnalyticsBeacon } from "@/components/share/AnalyticsBeacon";
 import { ReadingProgress } from "@/components/share/ReadingProgress";
+import { PasswordGate } from "@/components/share/PasswordGate";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -110,6 +112,15 @@ export default async function SharePage({
   const { doc, resolvedId, pageRecord } = await resolveSharePage(idOrSlug);
 
   if (!doc) return <NotFoundOrExpired />;
+
+  // Password gate: check cookie before revealing content.
+  if (pageRecord?.password_hash) {
+    const cookieStore = await cookies();
+    const unlocked = cookieStore.get(`readable_unlock_${resolvedId}`)?.value === "1";
+    if (!unlocked) {
+      return <PasswordGate pageId={resolvedId} />;
+    }
+  }
 
   // Fire-and-forget view count — non-blocking, non-fatal.
   void incrementViewCount(resolvedId).catch(() => {});

@@ -18,6 +18,7 @@ type PageRow = {
   visibility: "public" | "unlisted";
   collection_id: string | null;
   view_count: number;
+  has_password: boolean;
   created_at: string;
   updated_at: string;
   baseUrl: string;
@@ -338,6 +339,10 @@ function PageCard({
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [togglingVisibility, setTogglingVisibility] = useState(false);
+  const [hasPassword, setHasPassword] = useState(page.has_password);
+  const [passwordPrompt, setPasswordPrompt] = useState(false);
+  const [passwordDraft, setPasswordDraft] = useState("");
+  const [savingPassword, setSavingPassword] = useState(false);
 
   const url = pageUrl(page);
 
@@ -363,6 +368,24 @@ function PageCard({
       setTimeout(() => setCopying(false), 1400);
     } catch { /* ignore */ }
   }, [url]);
+
+  const handleSetPassword = useCallback(async (pw: string | null) => {
+    setSavingPassword(true);
+    try {
+      const res = await fetch(`/api/pages/${page.id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ password: pw }),
+      });
+      if (res.ok) {
+        setHasPassword(pw !== null && pw.length > 0);
+        setPasswordPrompt(false);
+        setPasswordDraft("");
+      }
+    } finally {
+      setSavingPassword(false);
+    }
+  }, [page.id]);
 
   const handleDelete = useCallback(async () => {
     setDeleting(true);
@@ -516,6 +539,59 @@ function PageCard({
               setDrawerOpen(false);
             }}
           />
+          {canUseFeature(userPlan, "passwordProtection") ? (
+            hasPassword ? (
+              <DrawerItem
+                icon="lock"
+                label="Remove password"
+                description="Page is currently password-protected"
+                active
+                activeLabel="Protected"
+                disabled={savingPassword}
+                onClick={() => void handleSetPassword(null)}
+              />
+            ) : passwordPrompt ? (
+              <div className="px-3 py-2 flex flex-col gap-2">
+                <input
+                  type="password"
+                  value={passwordDraft}
+                  onChange={(e) => setPasswordDraft(e.target.value)}
+                  placeholder="Set a password (min. 4 chars)"
+                  autoFocus
+                  className="w-full rounded-lg border border-border-default bg-bg px-3 py-2 text-sm outline-none focus:border-accent/50 focus:ring-2 focus:ring-accent/15 transition"
+                />
+                <div className="flex gap-2">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    disabled={passwordDraft.length < 4 || savingPassword}
+                    onClick={() => void handleSetPassword(passwordDraft)}
+                  >
+                    Save
+                  </Button>
+                  <Button variant="secondary" size="sm" onClick={() => { setPasswordPrompt(false); setPasswordDraft(""); }}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <DrawerItem
+                icon="lock"
+                label="Password protect"
+                description="Require a password to view this page"
+                onClick={() => setPasswordPrompt(true)}
+              />
+            )
+          ) : (
+            <DrawerItem
+              icon="lock"
+              label="Password protect"
+              description="Available on Readable Pro — upgrade to access"
+              href="/pricing"
+              onClick={() => setDrawerOpen(false)}
+              locked
+            />
+          )}
         </DrawerSection>
 
         <DrawerSection>
@@ -769,6 +845,7 @@ export function MyPagesList({
     visibility: "public" | "unlisted";
     collection_id: string | null;
     view_count: number;
+    has_password: boolean;
     created_at: string;
     updated_at: string;
   }>;
