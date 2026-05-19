@@ -10,6 +10,7 @@ import { recordPublishEvent } from "@/lib/db/publish-events";
 import { putDoc } from "@/lib/storage";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { canUseFeature } from "@/lib/quota";
+import { deliverWebhooks } from "@/lib/webhook-delivery";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
@@ -104,6 +105,12 @@ export async function POST(req: Request) {
         void snapshotPageVersion(id, doc).catch((err) => {
           console.error("[publish] version snapshot failed:", err);
         });
+        void deliverWebhooks(userId, "page.published", {
+          page_id: id,
+          page_url: `${new URL(req.url).origin}/p/${id}`,
+          title,
+          published_at: doc.createdAt,
+        }).catch(() => {});
       } catch (dbErr) {
         console.error("[publish] DB ownership write failed:", dbErr);
       }

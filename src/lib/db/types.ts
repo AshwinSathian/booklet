@@ -73,6 +73,16 @@ export type PageVersion = {
   size_bytes: number;
 };
 
+export type DbWebhook = {
+  id: string;
+  user_id: string;
+  url: string;
+  secret: string;   // HMAC signing secret — stored in plain text (user-visible)
+  events: ("page.published" | "page.updated")[];
+  created_at: string;
+  last_triggered_at: string | null;
+};
+
 export type PublishEvent = {
   id: string;
   user_id: string | null;       // null = anonymous

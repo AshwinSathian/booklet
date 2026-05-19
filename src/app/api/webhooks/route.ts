@@ -1,0 +1,73 @@
+import { createWebhook, getWebhooksByUser, getUserPlan } from "@/lib/db";
+import { canUseFeature } from "@/lib/quota";
+import { createId } from "@/lib/id";
+import { auth } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
+import type { DbWebhook } from "@/lib/db/types";
+
+export const runtime = "nodejs";
+
+const ALLOWED_EVENTS = new Set<DbWebhook["events"][number]>(["page.published", "page.updated"]);
+const MAX_WEBHOOKS = 5;
+
+function isValidUrl(url: string): boolean {
+  try {
+    const u = new URL(url);
+    return u.protocol === "https:" || u.protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
+export async function GET() {
+  const { userId } = await auth();
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const webhooks = await getWebhooksByUser(userId);
+  // Never return the secret in list responses
+  return NextResponse.json({
+    webhooks: webhooks.map(({ secret: _s, ...w }) => w),
+  });
+}
+
+export async function POST(req: Request) {
+  const { userId } = await auth();
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const plan = await getUserPlan(userId);
+  if (!canUseFeature(plan, "webhooks")) {
+    return NextResponse.json({ error: "Webhooks require Readable Pro or Teams plan." }, { status: 403 });
+  }
+
+  let body: { url?: string; events?: unknown[] };
+  try {
+    body = (await req.json()) as { url?: string; events?: unknown[] };
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  const url = body.url?.trim();
+  if (!url || !isValidUrl(url)) {
+    return NextResponse.json({ error: "Valid HTTPS URL required" }, { status: 422 });
+  }
+
+  const rawEvents = Array.isArray(body.events) ? body.events : ["page.published"];
+  const events = rawEvents.filter((e): e is DbWebhook["events"][number] =>
+    typeof e === "string" && ALLOWED_EVENTS.has(e as DbWebhook["events"][number])
+  );
+  if (events.length === 0) {
+    return NextResponse.json({ error: "At least one valid event required: page.published, page.updated" }, { status: 422 });
+  }
+
+  const existing = await getWebhooksByUser(userId);
+  if (existing.length >= MAX_WEBHOOKS) {
+    return NextResponse.json({ error: `Maximum ${MAX_WEBHOOKS} webhooks allowed.` }, { status: 422 });
+  }
+
+  const id = createId(10);
+  const secret = createId(32); // random signing secret
+
+  await createWebhook(id, userId, url, secret, events);
+
+  return NextResponse.json({ id, url, events, secret }, { status: 201 });
+}

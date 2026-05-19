@@ -1,5 +1,5 @@
 import { getDb } from "@/lib/mongodb";
-import type { DbApiKey, DbCollection, DbCollectionMember, DbPage, DbUser, UserPlan, CollectionMemberRole } from "./types";
+import type { DbApiKey, DbCollection, DbCollectionMember, DbPage, DbUser, DbWebhook, UserPlan, CollectionMemberRole } from "./types";
 
 // ---------------------------------------------------------------------------
 // Internal document shapes (MongoDB _id = our string id)
@@ -10,6 +10,7 @@ type PageDoc = Omit<DbPage, "id"> & { _id: string };
 type ApiKeyDoc = Omit<DbApiKey, "id"> & { _id: string };
 type CollectionDoc = Omit<DbCollection, "id"> & { _id: string };
 type CollectionMemberDoc = Omit<DbCollectionMember, "id"> & { _id: string };
+type WebhookDoc = Omit<DbWebhook, "id"> & { _id: string };
 
 function toUser(doc: UserDoc): DbUser {
   const { _id, ...rest } = doc;
@@ -378,4 +379,55 @@ export async function deleteApiKey(id: string, userId: string): Promise<void> {
   await db
     .collection<ApiKeyDoc>("api_keys")
     .deleteOne({ _id: id, user_id: userId });
+}
+
+// ---------------------------------------------------------------------------
+// Webhooks
+// ---------------------------------------------------------------------------
+
+function toWebhook(doc: WebhookDoc): DbWebhook {
+  const { _id, ...rest } = doc;
+  return { id: _id, ...rest, last_triggered_at: rest.last_triggered_at ?? null };
+}
+
+export async function getWebhooksByUser(userId: string): Promise<DbWebhook[]> {
+  const db = await getDb();
+  const docs = await db
+    .collection<WebhookDoc>("webhooks")
+    .find({ user_id: userId })
+    .sort({ created_at: -1 })
+    .toArray();
+  return docs.map(toWebhook);
+}
+
+export async function createWebhook(
+  id: string,
+  userId: string,
+  url: string,
+  secret: string,
+  events: DbWebhook["events"],
+): Promise<void> {
+  const db = await getDb();
+  await db.collection<WebhookDoc>("webhooks").insertOne({
+    _id: id,
+    user_id: userId,
+    url,
+    secret,
+    events,
+    created_at: new Date().toISOString(),
+    last_triggered_at: null,
+  });
+}
+
+export async function deleteWebhook(id: string, userId: string): Promise<void> {
+  const db = await getDb();
+  await db.collection<WebhookDoc>("webhooks").deleteOne({ _id: id, user_id: userId });
+}
+
+export async function touchWebhookTriggered(id: string): Promise<void> {
+  const db = await getDb();
+  await db.collection<WebhookDoc>("webhooks").updateOne(
+    { _id: id },
+    { $set: { last_triggered_at: new Date().toISOString() } },
+  );
 }
