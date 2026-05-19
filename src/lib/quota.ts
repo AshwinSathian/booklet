@@ -39,7 +39,7 @@ const LIMITS: Record<UserPlan, PlanLimits> = {
     apiAccess: true,
     apiKeysMax: 10,
     teamsAccess: false,
-    webhooks: false,
+    webhooks: true,
   },
   teams: {
     pagesPerMonth: -1,
