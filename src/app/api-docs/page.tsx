@@ -111,10 +111,12 @@ export default function ApiDocsPage() {
               ["#overview", "Overview"],
               ["#authentication", "Authentication"],
               ["#publish", "Publish a page"],
+              ["#frontmatter", "Frontmatter"],
               ["#update", "Update a page"],
               ["#list", "List pages"],
               ["#patch-slug", "Update slug / visibility"],
               ["#delete", "Delete a page"],
+              ["#webhooks", "Webhooks"],
               ["#errors", "Error format"],
               ["#rate-limits", "Rate limits"],
               ["#github-actions", "GitHub Actions"],
@@ -182,6 +184,49 @@ export default function ApiDocsPage() {
                 ]} />
               </div>
             </Endpoint>
+          </Section>
+
+          <Section id="frontmatter" title="YAML frontmatter">
+            <p className="text-sm text-text-secondary mb-3">
+              When supplying <Code>raw</Code> Markdown, you can include a YAML frontmatter block at the top to configure the page metadata without extra API calls:
+            </p>
+            <Pre>{`---
+title: Incident Report — Auth Service
+visibility: unlisted
+slug: incident-auth-2026-05
+---
+
+# Incident Report — Auth Service
+
+...`}</Pre>
+            <p className="mt-4 text-sm text-text-secondary mb-2">Supported fields:</p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm border-collapse">
+                <thead>
+                  <tr className="border-b border-outline text-left">
+                    <th className="pb-2 pr-6 text-xs font-semibold text-text-muted uppercase tracking-wide">Field</th>
+                    <th className="pb-2 pr-6 text-xs font-semibold text-text-muted uppercase tracking-wide">Type</th>
+                    <th className="pb-2 text-xs font-semibold text-text-muted uppercase tracking-wide">Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    ["title", "string", "Overrides the extracted H1 title (max 200 chars)"],
+                    ["visibility", '"public" | "unlisted"', "Defaults to public"],
+                    ["slug", "string", "Custom URL slug — requires Pro or Teams plan"],
+                    ["description", "string", "Used for SEO meta description (max 300 chars)"],
+                    ["author", "string", "Stored as metadata, max 100 chars"],
+                    ["date", "string", "Stored as metadata, any format"],
+                  ].map(([field, type, notes]) => (
+                    <tr key={field} className="border-b border-outline/50">
+                      <td className="py-2 pr-6 font-mono text-xs text-amber-400">{field}</td>
+                      <td className="py-2 pr-6 font-mono text-xs text-text-muted">{type}</td>
+                      <td className="py-2 text-xs text-text-secondary">{notes}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </Section>
 
           <Section id="update" title="Update a page">
@@ -254,6 +299,72 @@ export default function ApiDocsPage() {
                 ]} />
               </div>
             </Endpoint>
+          </Section>
+
+          <Section id="webhooks" title="Webhooks">
+            <p className="text-sm text-text-secondary mb-4">
+              Register HTTP endpoints to receive a signed POST request whenever a page is published or updated. Available on Pro and Teams plans. Maximum 5 webhooks per account.
+            </p>
+
+            <Endpoint method="GET" path="/api/webhooks" description="List all registered webhooks for your account. Secrets are not returned.">
+              <Pre>{`{
+  "webhooks": [
+    {
+      "id": "Wk9xZ2mP1q",
+      "url": "https://hooks.example.com/readable",
+      "events": ["page.published", "page.updated"],
+      "created_at": "2026-05-01T10:00:00.000Z",
+      "last_triggered_at": "2026-05-15T14:32:00.000Z"
+    }
+  ]
+}`}</Pre>
+            </Endpoint>
+
+            <Endpoint method="POST" path="/api/webhooks" description="Register a new webhook. Returns the signing secret — store it securely, it is not shown again.">
+              <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">Request body</p>
+              <Pre>{`{
+  "url": "https://hooks.example.com/readable",
+  "events": ["page.published", "page.updated"]
+}`}</Pre>
+              <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mt-4 mb-2">Response 201</p>
+              <Pre>{`{
+  "id": "Wk9xZ2mP1q",
+  "url": "https://hooks.example.com/readable",
+  "events": ["page.published"],
+  "secret": "rdbl_whsec_abc123..."
+}`}</Pre>
+            </Endpoint>
+
+            <Endpoint method="DELETE" path="/api/webhooks/{id}" description="Remove a webhook. Returns 204 No Content.">
+            </Endpoint>
+
+            <div className="rounded-xl border border-border-subtle bg-bg-elevated p-5 text-sm">
+              <p className="font-semibold text-text-primary mb-2">Verifying webhook signatures</p>
+              <p className="text-text-secondary mb-3">
+                Every delivery includes an <Code>X-Readable-Signature</Code> header containing <Code>sha256=&lt;HMAC-SHA256&gt;</Code> of the raw request body, computed with your webhook secret. Verify this before trusting the payload.
+              </p>
+              <Pre>{`// Node.js example
+const crypto = require('crypto');
+
+function verifySignature(rawBody, secret, header) {
+  const expected = 'sha256=' + crypto
+    .createHmac('sha256', secret)
+    .update(rawBody)
+    .digest('hex');
+  return crypto.timingSafeEqual(
+    Buffer.from(expected),
+    Buffer.from(header)
+  );
+}`}</Pre>
+              <p className="mt-3 text-text-secondary">The payload body shape:</p>
+              <Pre>{`{
+  "event": "page.published",
+  "page_id": "Ab3k91QxZp",
+  "page_url": "https://readable.app/p/Ab3k91QxZp",
+  "title": "Incident Report — Auth Service",
+  "published_at": "2026-05-19T08:32:00.000Z"
+}`}</Pre>
+            </div>
           </Section>
 
           <Section id="errors" title="Error format">
