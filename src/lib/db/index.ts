@@ -157,6 +157,32 @@ export async function updatePageRecord(
     .updateOne({ _id: pageId }, { $set: patch });
 }
 
+export type ExploreItem = Pick<DbPage, "id" | "slug" | "title" | "view_count" | "created_at">;
+
+export async function getRecentPublicPages(limit = 48): Promise<ExploreItem[]> {
+  const db = await getDb();
+  const docs = await db
+    .collection<PageDoc>("pages")
+    .find({ visibility: "public", password_hash: null })
+    .sort({ created_at: -1 })
+    .limit(limit)
+    .project<Pick<PageDoc, "_id" | "slug" | "title" | "view_count" | "created_at">>({
+      _id: 1,
+      slug: 1,
+      title: 1,
+      view_count: 1,
+      created_at: 1,
+    })
+    .toArray();
+  return docs.map((d) => ({
+    id: d._id,
+    slug: d.slug,
+    title: d.title,
+    view_count: d.view_count,
+    created_at: d.created_at,
+  }));
+}
+
 // ---------------------------------------------------------------------------
 // Collections
 // ---------------------------------------------------------------------------

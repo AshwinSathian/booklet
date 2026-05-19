@@ -40,6 +40,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 0.8,
     },
+    {
+      url: absoluteUrl("/explore"),
+      lastModified: now,
+      changeFrequency: "daily",
+      priority: 0.7,
+    },
     ...TEMPLATES.filter((t) => t.slug).map((t) => ({
       url: absoluteUrl(`/templates/${t.slug}`),
       lastModified: now,
