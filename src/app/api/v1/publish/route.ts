@@ -1,13 +1,15 @@
 import type { PublishedDoc } from "@/lib/blocks";
 import { DEFAULT_SETTINGS } from "@/lib/blocks";
 import { BLOCKS, ROUTES, STORAGE } from "@/lib/constants";
-import { createPageRecord } from "@/lib/db";
+import { createPageRecord, getUserPlan, updatePageRecord } from "@/lib/db";
 import { ensureDbUser } from "@/lib/db/ensure-user";
 import { createId } from "@/lib/id";
 import { resolveApiKey } from "@/lib/api-key-auth";
 import { extractDocTitle } from "@/lib/doc-title";
 import { snapshotPageVersion } from "@/lib/db/versions";
 import { recordPublishEvent } from "@/lib/db/publish-events";
+import { parseFrontmatter } from "@/lib/frontmatter";
+import { canUseFeature } from "@/lib/quota";
 import { parseToBlocks } from "@/lib/parse";
 import { putDoc } from "@/lib/storage";
 import { checkRateLimit } from "@/lib/rate-limit";
@@ -37,8 +39,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
+  // Extract frontmatter metadata before parsing
+  let frontmatterMeta = {};
   if (payload?.raw && typeof payload.raw === "string") {
-    payload = { ...payload, blocks: parseToBlocks(payload.raw) };
+    const { meta, body } = parseFrontmatter(payload.raw);
+    frontmatterMeta = meta;
+    payload = { ...payload, raw: body, blocks: parseToBlocks(body) };
   }
 
   if (!payload?.blocks?.length) {
@@ -80,9 +86,21 @@ export async function POST(req: Request) {
   }).catch((err) => console.error("[v1/publish] event record failed:", err));
 
   try {
-    const title = extractDocTitle(payload.blocks);
+    const fm = frontmatterMeta as import("@/lib/frontmatter").FrontmatterMeta;
+    const title = fm.title ?? extractDocTitle(payload.blocks);
     await ensureDbUser(userId, null);
-    await createPageRecord(id, userId, title);
+    const plan = await getUserPlan(userId);
+    const removeAttributionBadge = canUseFeature(plan, "removeAttributionBadge");
+    await createPageRecord(id, userId, title, removeAttributionBadge);
+
+    // Apply frontmatter-derived settings (visibility, slug) where plan allows
+    const postPatch: Parameters<typeof updatePageRecord>[1] = {};
+    if (fm.visibility) postPatch.visibility = fm.visibility;
+    if (fm.slug && canUseFeature(plan, "customSlugs")) postPatch.slug = fm.slug;
+    if (Object.keys(postPatch).length > 0) {
+      await updatePageRecord(id, postPatch).catch((e) => console.error("[v1/publish] patch failed:", e));
+    }
+
     void snapshotPageVersion(id, doc).catch((err) => {
       console.error("[v1/publish] version snapshot failed:", err);
     });

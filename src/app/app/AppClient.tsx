@@ -24,6 +24,7 @@ import { parseToBlocks } from "@/lib/parse";
 import { SAMPLE_MARKDOWN } from "@/lib/sample";
 import { normalizeInput, stripDangerousSequences } from "@/lib/sanitize";
 import { getTemplateBySlug } from "@/lib/templates";
+import { stripFrontmatter } from "@/lib/frontmatter";
 import { formatTimeHHMM } from "@/lib/ui/time";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -246,7 +247,8 @@ function AppPageContent() {
   }, []);
 
   const normalized = useMemo(
-    () => stripDangerousSequences(normalizeInput(raw)),
+    // Strip frontmatter for rendering/parsing — the raw textarea preserves it for editing.
+    () => stripDangerousSequences(normalizeInput(stripFrontmatter(raw))),
     [raw],
   );
 
