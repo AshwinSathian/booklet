@@ -1,6 +1,6 @@
 import { AppLogo } from "@/components/ui/AppLogo";
 import { ROUTES } from "@/lib/constants";
-import { getApiKeysByUser, getCollectionsByUser, getPagesByUser, getUserPlan } from "@/lib/db";
+import { getApiKeysByUser, getCollectionsByUser, getPagesByUser, getUserPlan, getTeamSpacesByMembership } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
 import { UserButton } from "@clerk/nextjs";
 import Link from "next/link";
@@ -27,12 +27,16 @@ export default async function MyPagesPage() {
 
   const hdrs = await headers();
   const baseUrl = getBaseUrl(hdrs);
-  const [pages, apiKeys, collections, userPlan] = await Promise.all([
+  const [pages, apiKeys, ownedCollections, teamSpaces, userPlan] = await Promise.all([
     getPagesByUser(userId),
     getApiKeysByUser(userId),
     getCollectionsByUser(userId),
+    getTeamSpacesByMembership(userId),
     getUserPlan(userId),
   ]);
+  // Merge owned collections + team spaces the user is a member of (but doesn't own)
+  const ownedIds = new Set(ownedCollections.map((c) => c.id));
+  const collections = [...ownedCollections, ...teamSpaces.filter((c) => !ownedIds.has(c.id))];
 
   return (
     <div className="min-h-screen bg-bg text-text-primary flex flex-col">
@@ -90,6 +94,7 @@ export default async function MyPagesPage() {
           initialCollections={collections.map((c) => ({
             id: c.id,
             name: c.name,
+            is_team_space: c.is_team_space ?? false,
             created_at: c.created_at,
             updated_at: c.updated_at,
           }))}

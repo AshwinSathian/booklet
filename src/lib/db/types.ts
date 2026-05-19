@@ -26,10 +26,23 @@ export type DbPage = {
 
 export type DbCollection = {
   id: string;
-  user_id: string;
+  user_id: string;   // owner
   name: string;
+  is_team_space: boolean;
   created_at: string;
   updated_at: string;
+};
+
+export type CollectionMemberRole = "editor" | "viewer";
+
+export type DbCollectionMember = {
+  id: string;
+  collection_id: string;
+  user_id: string;
+  email: string | null;   // stored for display; source of truth is user_id once claimed
+  role: CollectionMemberRole;
+  invited_by: string;    // user_id of inviter
+  created_at: string;
 };
 
 export type DbApiKey = {

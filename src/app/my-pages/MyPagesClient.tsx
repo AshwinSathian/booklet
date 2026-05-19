@@ -27,6 +27,7 @@ type PageRow = {
 type CollectionRow = {
   id: string;
   name: string;
+  is_team_space: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -724,9 +725,9 @@ function CollectionSidebar({
           <DropButton
             key={collection.id}
             id={collection.id}
-            label={collection.name}
+            label={collection.is_team_space ? `${collection.name} · Team` : collection.name}
             count={pageCount(collection.id)}
-            canDelete
+            canDelete={!collection.is_team_space}
           />
         ))}
       </div>

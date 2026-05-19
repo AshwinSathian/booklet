@@ -1,5 +1,5 @@
 import { getDb } from "@/lib/mongodb";
-import type { DbApiKey, DbCollection, DbPage, DbUser, UserPlan } from "./types";
+import type { DbApiKey, DbCollection, DbCollectionMember, DbPage, DbUser, UserPlan, CollectionMemberRole } from "./types";
 
 // ---------------------------------------------------------------------------
 // Internal document shapes (MongoDB _id = our string id)
@@ -9,6 +9,7 @@ type UserDoc = Omit<DbUser, "id"> & { _id: string };
 type PageDoc = Omit<DbPage, "id"> & { _id: string };
 type ApiKeyDoc = Omit<DbApiKey, "id"> & { _id: string };
 type CollectionDoc = Omit<DbCollection, "id"> & { _id: string };
+type CollectionMemberDoc = Omit<DbCollectionMember, "id"> & { _id: string };
 
 function toUser(doc: UserDoc): DbUser {
   const { _id, ...rest } = doc;
@@ -32,7 +33,7 @@ function toApiKey(doc: ApiKeyDoc): DbApiKey {
 
 function toCollection(doc: CollectionDoc): DbCollection {
   const { _id, ...rest } = doc;
-  return { id: _id, ...rest };
+  return { id: _id, ...rest, is_team_space: rest.is_team_space ?? false };
 }
 
 // ---------------------------------------------------------------------------
@@ -94,6 +95,12 @@ export async function setUserPlan(
 export async function getUserByStripeCustomerId(stripeCustomerId: string): Promise<DbUser | null> {
   const db = await getDb();
   const doc = await db.collection<UserDoc>("users").findOne({ stripe_customer_id: stripeCustomerId });
+  return doc ? toUser(doc) : null;
+}
+
+export async function getUserByEmail(email: string): Promise<DbUser | null> {
+  const db = await getDb();
+  const doc = await db.collection<UserDoc>("users").findOne({ email: email.toLowerCase() });
   return doc ? toUser(doc) : null;
 }
 
@@ -203,10 +210,16 @@ export async function getCollectionRecord(collectionId: string): Promise<DbColle
   return doc ? toCollection(doc) : null;
 }
 
+function toCollectionMember(doc: CollectionMemberDoc): DbCollectionMember {
+  const { _id, ...rest } = doc;
+  return { id: _id, ...rest, email: rest.email ?? null };
+}
+
 export async function createCollectionRecord(
   collectionId: string,
   userId: string,
   name: string,
+  isTeamSpace = false,
 ): Promise<void> {
   const db = await getDb();
   const now = new Date().toISOString();
@@ -214,6 +227,7 @@ export async function createCollectionRecord(
     _id: collectionId,
     user_id: userId,
     name,
+    is_team_space: isTeamSpace,
     created_at: now,
     updated_at: now,
   });
@@ -221,7 +235,7 @@ export async function createCollectionRecord(
 
 export async function updateCollectionRecord(
   collectionId: string,
-  patch: Partial<Pick<DbCollection, "name" | "updated_at">>,
+  patch: Partial<Pick<DbCollection, "name" | "is_team_space" | "updated_at">>,
 ): Promise<void> {
   if (Object.keys(patch).length === 0) return;
   const db = await getDb();
@@ -236,6 +250,67 @@ export async function deleteCollectionRecord(collectionId: string, userId: strin
     .collection<PageDoc>("pages")
     .updateMany({ user_id: userId, collection_id: collectionId }, { $set: { collection_id: null } });
   await db.collection<CollectionDoc>("collections").deleteOne({ _id: collectionId, user_id: userId });
+}
+
+// ---------------------------------------------------------------------------
+// Team Space members
+// ---------------------------------------------------------------------------
+
+export async function getCollectionMembers(collectionId: string): Promise<DbCollectionMember[]> {
+  const db = await getDb();
+  const docs = await db
+    .collection<CollectionMemberDoc>("collection_members")
+    .find({ collection_id: collectionId })
+    .sort({ created_at: 1 })
+    .toArray();
+  return docs.map(toCollectionMember);
+}
+
+export async function addCollectionMember(
+  id: string,
+  collectionId: string,
+  userId: string,
+  email: string | null,
+  role: CollectionMemberRole,
+  invitedBy: string,
+): Promise<void> {
+  const db = await getDb();
+  await db.collection<CollectionMemberDoc>("collection_members").updateOne(
+    { collection_id: collectionId, user_id: userId },
+    {
+      $set: { email, role, invited_by: invitedBy },
+      $setOnInsert: { _id: id, collection_id: collectionId, user_id: userId, created_at: new Date().toISOString() },
+    },
+    { upsert: true },
+  );
+}
+
+export async function removeCollectionMember(collectionId: string, userId: string): Promise<void> {
+  const db = await getDb();
+  await db.collection<CollectionMemberDoc>("collection_members").deleteOne({ collection_id: collectionId, user_id: userId });
+}
+
+export async function getCollectionMemberships(userId: string): Promise<{ collection_id: string; role: CollectionMemberRole }[]> {
+  const db = await getDb();
+  const docs = await db
+    .collection<CollectionMemberDoc>("collection_members")
+    .find({ user_id: userId })
+    .project<Pick<CollectionMemberDoc, "collection_id" | "role">>({ collection_id: 1, role: 1 })
+    .toArray();
+  return docs.map((d) => ({ collection_id: d.collection_id, role: d.role }));
+}
+
+export async function getTeamSpacesByMembership(userId: string): Promise<DbCollection[]> {
+  const memberships = await getCollectionMemberships(userId);
+  if (memberships.length === 0) return [];
+  const ids = memberships.map((m) => m.collection_id);
+  const db = await getDb();
+  const docs = await db
+    .collection<CollectionDoc>("collections")
+    .find({ _id: { $in: ids }, is_team_space: true })
+    .sort({ name: 1 })
+    .toArray();
+  return docs.map(toCollection);
 }
 
 export async function incrementViewCount(pageId: string): Promise<void> {
