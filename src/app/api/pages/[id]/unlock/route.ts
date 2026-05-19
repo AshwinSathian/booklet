@@ -1,18 +1,33 @@
 import { getPageRecord } from "@/lib/db";
 import { verifyPassword } from "@/lib/password";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
-// Cookie name pattern: readable_unlock_<pageId>
-// Value: 1 (just presence matters; the hash check happened server-side)
-// Expires in 8 hours.
+// Cookie name: readable_unlock_<pageId>
+// Path: /p/ — covers both /p/<id> and /p/<slug> access patterns.
+// Expires 8 hours from unlock.
+const UNLOCK_TTL = 8 * 60 * 60;
+
+function getClientIp(req: Request): string {
+  return (
+    req.headers.get("cf-connecting-ip") ??
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    "unknown"
+  );
+}
 
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
+
+  // Strict rate limit: 5 attempts per minute per page+IP to prevent brute-force.
+  const ip = getClientIp(req);
+  const rl = await checkRateLimit(`unlock__${id}__${ip}`, 5).catch(() => null);
+  if (rl) return rl;
 
   let password: string | undefined;
   try {
@@ -28,7 +43,8 @@ export async function POST(
 
   const page = await getPageRecord(id).catch(() => null);
   if (!page || !page.password_hash) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    // Return 401 (not 404) — don't reveal whether the page exists but is unprotected.
+    return NextResponse.json({ error: "Incorrect password" }, { status: 401 });
   }
 
   const ok = await verifyPassword(password, page.password_hash);
@@ -36,16 +52,14 @@ export async function POST(
     return NextResponse.json({ error: "Incorrect password" }, { status: 401 });
   }
 
-  const cookieName = `readable_unlock_${id}`;
-  const maxAge = 8 * 60 * 60; // 8 hours
-
   const res = NextResponse.json({ ok: true });
-  res.cookies.set(cookieName, "1", {
+  res.cookies.set(`readable_unlock_${id}`, "1", {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
-    maxAge,
-    path: `/p/${id}`,
+    maxAge: UNLOCK_TTL,
+    // /p/ covers both /p/<id> and /p/<slug> — cookie name already scopes to the page.
+    path: "/p/",
   });
   return res;
 }

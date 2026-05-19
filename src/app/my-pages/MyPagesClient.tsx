@@ -486,7 +486,7 @@ function PageCard({
         title={page.title ?? "Untitled"}
         description={url.replace(/^https?:\/\//, "")}
         contentWidthClass="max-w-lg"
-        onClose={() => { setDrawerOpen(false); setConfirming(false); }}
+        onClose={() => { setDrawerOpen(false); setConfirming(false); setPasswordPrompt(false); setPasswordDraft(""); }}
       >
         <DrawerSection>
           <DrawerItem
@@ -557,7 +557,7 @@ function PageCard({
                   type="password"
                   value={passwordDraft}
                   onChange={(e) => setPasswordDraft(e.target.value)}
-                  placeholder="Set a password (min. 4 chars)"
+                  placeholder="Set a password (min. 6 chars)"
                   autoFocus
                   className="w-full rounded-lg border border-border-default bg-bg px-3 py-2 text-sm outline-none focus:border-accent/50 focus:ring-2 focus:ring-accent/15 transition"
                 />
@@ -565,7 +565,7 @@ function PageCard({
                   <Button
                     variant="primary"
                     size="sm"
-                    disabled={passwordDraft.length < 4 || savingPassword}
+                    disabled={passwordDraft.length < 6 || savingPassword}
                     onClick={() => void handleSetPassword(passwordDraft)}
                   >
                     Save

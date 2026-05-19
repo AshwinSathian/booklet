@@ -72,6 +72,7 @@ export default function PricingPage() {
 
   const PRO_MONTHLY = process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_MONTHLY ?? "";
   const TEAMS_MONTHLY = process.env.NEXT_PUBLIC_STRIPE_PRICE_TEAMS ?? "";
+  const billingEnabled = Boolean(PRO_MONTHLY && TEAMS_MONTHLY);
 
   return (
     <div className="min-h-screen bg-bg text-text-primary">
@@ -126,6 +127,7 @@ export default function PricingPage() {
                 variant="primary"
                 size="md"
                 className="w-full justify-center"
+                disabled={!billingEnabled}
                 onClick={() => void handleUpgrade(PRO_MONTHLY)}
               >
                 Upgrade to Pro
@@ -146,6 +148,7 @@ export default function PricingPage() {
                 variant="secondary"
                 size="md"
                 className="w-full justify-center"
+                disabled={!billingEnabled}
                 onClick={() => void handleUpgrade(TEAMS_MONTHLY)}
               >
                 Start team trial

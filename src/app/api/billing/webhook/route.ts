@@ -27,34 +27,39 @@ export async function POST(req: Request) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
         const userId = session.metadata?.userId;
-        if (userId && session.customer && session.subscription) {
-          await setUserPlan(
-            userId,
-            "pro",
-            session.customer as string,
-            session.subscription as string,
-          );
+        const customerId = typeof session.customer === "string" ? session.customer : (session.customer as Stripe.Customer | null)?.id ?? null;
+        const subscriptionId = typeof session.subscription === "string" ? session.subscription : (session.subscription as Stripe.Subscription | null)?.id ?? null;
+        if (userId && customerId && subscriptionId) {
+          await setUserPlan(userId, "pro", customerId, subscriptionId);
         }
         break;
       }
 
       case "customer.subscription.updated": {
         const sub = event.data.object as Stripe.Subscription;
+        const customerId = typeof sub.customer === "string" ? sub.customer : (sub.customer as Stripe.Customer).id;
         const isActive = sub.status === "active" || sub.status === "trialing";
         if (!isActive) {
-          const user = await getUserByStripeCustomerId(sub.customer as string);
-          if (user) {
-            await setUserPlan(user.id, "free");
-          }
+          const user = await getUserByStripeCustomerId(customerId);
+          if (user) await setUserPlan(user.id, "free");
         }
         break;
       }
 
       case "customer.subscription.deleted": {
         const sub = event.data.object as Stripe.Subscription;
-        const user = await getUserByStripeCustomerId(sub.customer as string);
-        if (user) {
-          await setUserPlan(user.id, "free");
+        const customerId = typeof sub.customer === "string" ? sub.customer : (sub.customer as Stripe.Customer).id;
+        const user = await getUserByStripeCustomerId(customerId);
+        if (user) await setUserPlan(user.id, "free");
+        break;
+      }
+
+      case "invoice.payment_failed": {
+        const invoice = event.data.object as Stripe.Invoice;
+        const customerId = typeof invoice.customer === "string" ? invoice.customer : (invoice.customer as Stripe.Customer | null)?.id ?? null;
+        if (customerId) {
+          const user = await getUserByStripeCustomerId(customerId);
+          if (user) await setUserPlan(user.id, "free");
         }
         break;
       }

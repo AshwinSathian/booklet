@@ -54,16 +54,16 @@ export async function PATCH(
     }
     if (body.password === null || body.password === "") {
       patch.password_hash = null;
-    } else if (typeof body.password === "string" && body.password.length >= 4) {
+    } else if (typeof body.password === "string" && body.password.length >= 6) {
       patch.password_hash = await hashPassword(body.password);
     } else {
-      return NextResponse.json({ error: "Password must be at least 4 characters." }, { status: 422 });
+      return NextResponse.json({ error: "Password must be at least 6 characters." }, { status: 422 });
     }
   }
 
   if (body.slug !== undefined) {
     const rawSlug = body.slug;
-    const slug = rawSlug === null ? null : rawSlug.trim().toLowerCase();
+    const slug = rawSlug === null ? null : (rawSlug.trim().toLowerCase() || null);
 
     if (slug !== null && !isValidSlug(slug)) {
       return NextResponse.json(
