@@ -2,12 +2,28 @@ export type Template = {
   name: string;
   description: string;
   content: string;
+  // SEO landing page fields (optional — only templates with these get a /templates/* page)
+  slug?: string;
+  headline?: string;
+  metaDescription?: string;
+  category?: string;
+  useCases?: string[];
 };
+
+export function getTemplateBySlug(slug: string): Template | undefined {
+  return TEMPLATES.find((t) => t.slug === slug);
+}
 
 export const TEMPLATES: Template[] = [
   {
+    slug: "incident-report",
     name: "Incident Report",
+    headline: "Free Incident Report Template",
     description: "P1/P2 post-mortem: severity, timeline, root cause, next steps",
+    metaDescription:
+      "Free incident report template. Write and share a clean post-incident report with your team. No account required.",
+    category: "Engineering",
+    useCases: ["SRE teams", "DevOps engineers", "Engineering managers", "On-call engineers"],
     content: `# Incident Report — [Service Name] [Date]
 
 ## Summary
@@ -58,8 +74,14 @@ Describe the underlying technical cause.
 `,
   },
   {
+    slug: "architecture-decision-record",
     name: "Architecture Decision Record",
+    headline: "Free Architecture Decision Record (ADR) Template",
     description: "ADR: status, context, decision, consequences",
+    metaDescription:
+      "Free ADR template. Capture and share significant architecture decisions with context, rationale, and consequences.",
+    category: "Engineering",
+    useCases: ["Staff engineers", "Tech leads", "Software architects", "Engineering teams"],
     content: `# ADR-NNN: [Decision Title]
 
 **Status:** Proposed / Accepted / Deprecated / Superseded
@@ -103,8 +125,14 @@ What is the change we're making?
 `,
   },
   {
+    slug: "release-notes",
     name: "Release Notes",
+    headline: "Free Release Notes Template",
     description: "Version, highlights, changes, breaking changes",
+    metaDescription:
+      "Free release notes template. Write clear, structured release notes and share them with your users instantly.",
+    category: "Product",
+    useCases: ["Product teams", "Engineering teams", "Open source maintainers", "SaaS companies"],
     content: `# Release Notes — v[X.Y.Z]
 
 **Released:** YYYY-MM-DD
@@ -155,8 +183,14 @@ Thank you to everyone who contributed to this release.
 `,
   },
   {
+    slug: "readme",
     name: "README",
+    headline: "Free README Template",
     description: "Project name, installation, usage, contributing, licence",
+    metaDescription:
+      "Free README template for open source projects. Write a clean, structured README and share it as a readable page.",
+    category: "Engineering",
+    useCases: ["Open source maintainers", "Software developers", "Engineering teams"],
     content: `# Project Name
 
 > One sentence description of what this project does.
@@ -215,8 +249,14 @@ const result = thing({ option: 'value' });
 `,
   },
   {
+    slug: "meeting-notes",
     name: "Meeting Notes",
+    headline: "Free Meeting Notes Template",
     description: "Attendees, agenda, decisions, action items with owners",
+    metaDescription:
+      "Free meeting notes template. Capture decisions and action items clearly. Share readable meeting notes with your team instantly.",
+    category: "General",
+    useCases: ["Teams", "Project managers", "Engineering leads", "Anyone running meetings"],
     content: `# Meeting Notes — [Meeting Name]
 
 **Date:** YYYY-MM-DD
@@ -272,8 +312,14 @@ Notes from the discussion.
 `,
   },
   {
+    slug: "onboarding-guide",
     name: "Onboarding Guide",
+    headline: "Free Onboarding Guide Template",
     description: "Setup, prerequisites, first steps, key contacts",
+    metaDescription:
+      "Free onboarding guide template. Create a clear, shareable onboarding doc for new team members. No account required.",
+    category: "General",
+    useCases: ["Engineering teams", "Team leads", "HR and People", "Remote teams"],
     content: `# Onboarding Guide — [Team / Role / System]
 
 Welcome! This guide covers everything you need to get up and running.
@@ -344,8 +390,14 @@ Post in **#team-channel** or ask **@buddy**.
 `,
   },
   {
+    slug: "runbook",
     name: "Runbook",
+    headline: "Free Runbook Template",
     description: "Trigger, pre-conditions, steps, rollback, escalation",
+    metaDescription:
+      "Free runbook template for engineering teams. Document operational procedures clearly. Publish a shareable runbook in minutes.",
+    category: "Engineering",
+    useCases: ["SRE teams", "Platform engineers", "DevOps", "On-call engineers"],
     content: `# Runbook — [Procedure Name]
 
 **Last updated:** YYYY-MM-DD
@@ -414,8 +466,14 @@ If these steps do not resolve the issue:
 `,
   },
   {
+    slug: "weekly-update",
     name: "Weekly Update",
+    headline: "Free Weekly Update Template",
     description: "Summary, progress, blockers, next week",
+    metaDescription:
+      "Free weekly update template. Write and share a clear team status update with progress, blockers, and next steps.",
+    category: "General",
+    useCases: ["Engineering teams", "Managers", "Individual contributors", "Remote teams"],
     content: `# Weekly Update — Week of [Date]
 
 **Author:** @name

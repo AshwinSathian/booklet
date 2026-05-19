@@ -1,5 +1,6 @@
 import { ROUTES } from "@/lib/constants";
 import { absoluteUrl } from "@/lib/seo";
+import { TEMPLATES } from "@/lib/templates";
 import type { MetadataRoute } from "next";
 
 // MVP sitemap: just static routes.
@@ -33,5 +34,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 0.8,
     },
+    {
+      url: absoluteUrl("/templates"),
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    ...TEMPLATES.filter((t) => t.slug).map((t) => ({
+      url: absoluteUrl(`/templates/${t.slug}`),
+      lastModified: now,
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
+    })),
   ];
 }

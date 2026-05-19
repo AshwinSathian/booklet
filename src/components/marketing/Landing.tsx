@@ -1295,6 +1295,9 @@ export function Landing() {
               <a href="#faq" className="transition hover:text-text-primary">
                 FAQ
               </a>
+              <Link href="/templates" className="transition hover:text-text-primary">
+                Templates
+              </Link>
               <Link href="/api-docs" className="transition hover:text-text-primary">
                 API docs
               </Link>

@@ -1,7 +1,7 @@
 import type { PublishedDoc } from "@/lib/blocks";
 import { DEFAULT_SETTINGS } from "@/lib/blocks";
 import { BLOCKS, ROUTES, STORAGE } from "@/lib/constants";
-import { createPageRecord } from "@/lib/db";
+import { createPageRecord, getUserPlan } from "@/lib/db";
 import { ensureDbUser } from "@/lib/db/ensure-user";
 import { createId } from "@/lib/id";
 import { extractDocTitle } from "@/lib/doc-title";
@@ -9,6 +9,7 @@ import { snapshotPageVersion } from "@/lib/db/versions";
 import { recordPublishEvent } from "@/lib/db/publish-events";
 import { putDoc } from "@/lib/storage";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { canUseFeature } from "@/lib/quota";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
@@ -97,7 +98,9 @@ export async function POST(req: Request) {
           null;
         const title = extractDocTitle(payload.blocks);
         await ensureDbUser(userId, email);
-        await createPageRecord(id, userId, title);
+        const plan = await getUserPlan(userId);
+        const removeAttributionBadge = canUseFeature(plan, "removeAttributionBadge");
+        await createPageRecord(id, userId, title, removeAttributionBadge);
         void snapshotPageVersion(id, doc).catch((err) => {
           console.error("[publish] version snapshot failed:", err);
         });

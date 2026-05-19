@@ -23,6 +23,7 @@ import {
 import { parseToBlocks } from "@/lib/parse";
 import { SAMPLE_MARKDOWN } from "@/lib/sample";
 import { normalizeInput, stripDangerousSequences } from "@/lib/sanitize";
+import { getTemplateBySlug } from "@/lib/templates";
 import { formatTimeHHMM } from "@/lib/ui/time";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -200,11 +201,21 @@ function AppPageContent() {
 
   // Hydrate active draft on mount.
   useEffect(() => {
+    // If ?template=<slug> is in the URL, open a fresh draft with that template content.
+    const templateSlug =
+      typeof window !== "undefined"
+        ? new URLSearchParams(window.location.search).get("template")
+        : null;
+    const templateContent = templateSlug
+      ? (getTemplateBySlug(templateSlug)?.content ?? null)
+      : null;
+
     const storedId = getActiveDraftId();
-    const storedDraft = storedId ? getDraft(storedId) : null;
+    const storedDraft = templateContent ? null : (storedId ? getDraft(storedId) : null);
 
     const draft =
-      storedDraft ?? createDraft({ raw: "", settings: DEFAULT_SETTINGS });
+      storedDraft ??
+      createDraft({ raw: templateContent ?? "", settings: DEFAULT_SETTINGS });
 
     setActiveDraftId(draft.id);
     setActiveDraftIdState(draft.id);

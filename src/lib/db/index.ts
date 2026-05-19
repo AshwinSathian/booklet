@@ -100,6 +100,7 @@ export async function createPageRecord(
   pageId: string,
   userId: string,
   title: string | null = null,
+  removeAttributionBadge = false,
 ): Promise<void> {
   const db = await getDb();
   const now = new Date().toISOString();
@@ -111,7 +112,7 @@ export async function createPageRecord(
     visibility: "public",
     collection_id: null,
     view_count: 0,
-    remove_attribution_badge: false,
+    remove_attribution_badge: removeAttributionBadge,
     created_at: now,
     updated_at: now,
   });
