@@ -1,6 +1,6 @@
 import { AppLogo } from "@/components/ui/AppLogo";
 import { ROUTES } from "@/lib/constants";
-import { getApiKeysByUser, getCollectionsByUser, getPagesByUser, getUserPlan, getTeamSpacesByMembership } from "@/lib/db";
+import { getApiKeysByUser, getCollectionsByUser, getPagesByUser, getTeamSpacesByMembership } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
 import { UserButton } from "@clerk/nextjs";
 import Link from "next/link";
@@ -27,12 +27,11 @@ export default async function MyPagesPage() {
 
   const hdrs = await headers();
   const baseUrl = getBaseUrl(hdrs);
-  const [pages, apiKeys, ownedCollections, teamSpaces, userPlan] = await Promise.all([
+  const [pages, apiKeys, ownedCollections, teamSpaces] = await Promise.all([
     getPagesByUser(userId),
     getApiKeysByUser(userId),
     getCollectionsByUser(userId),
     getTeamSpacesByMembership(userId),
-    getUserPlan(userId),
   ]);
   // Merge owned collections + team spaces the user is a member of (but doesn't own)
   const ownedIds = new Set(ownedCollections.map((c) => c.id));
@@ -99,7 +98,6 @@ export default async function MyPagesPage() {
             updated_at: c.updated_at,
           }))}
           baseUrl={baseUrl}
-          userPlan={userPlan}
         />
 
         <ApiKeysSection

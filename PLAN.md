@@ -4,6 +4,11 @@
 > Replaces `ROADMAP.md`, `IMPLEMENTATION_PLAN.md`, and `STRATEGY_EXECUTION_PLAN.md`.
 > Last updated: May 2026.
 
+> **Direction update (May 2026):** Readable is fully free. No paid plans, no upgrade prompts,
+> no paywalls. All features — version history, analytics, password protection, the API,
+> webhooks, MCP — are available to all signed-in users. The monetisation phases below are
+> preserved for historical context but are **not the current direction**.
+
 ---
 
 ## MCP Server
@@ -104,31 +109,29 @@ The following are confirmed complete and do not need rework.
 
 ---
 
-## What Is Missing (the build list)
+## Build Status
 
-| Capability | Phase | Revenue impact |
+| Capability | Status | Notes |
 |---|---|---|
-| Publisher funnel event tracking | 0 | Enables all decisions |
-| "Make your own" CTA click tracking | 0 | Measures top of funnel |
-| Internal metrics dashboard (`/admin`) | 0 | Answers the five questions |
-| Quota system by plan | 1 | Required before billing |
-| Stripe integration (checkout, webhooks, portal) | 1 | Revenue |
-| Pricing page | 1 | Conversion surface |
-| Upgrade prompts ("lock icon" pattern) | 1 | Conversion mechanism |
-| Attribution badge ("Made with Readable") | 1 | Acquisition loop |
-| Password-protected pages (Pro) | 2 | Confidential content unlock |
-| YAML frontmatter support | 2 | Ecosystem compatibility |
-| Template SEO landing pages | 2 | Organic acquisition |
-| Public explore page | 2 | Social proof + discovery |
-| CLI (`@readable/cli`) | 2 | Workflow embedding, switching cost |
-| Team Spaces schema + routes | 3 | B2B revenue wedge |
-| Team invite flow (email via Resend) | 3 | Team growth |
-| Team publishing from editor | 3 | B2B workflow |
-| Webhooks (Teams feature) | 3 | Workflow embedding |
-| First-party GitHub Action | 4 | Distribution |
-| KaTeX math rendering | 4 | Research/academic audience |
-| Embed codes | 4 | Notion/Confluence integration |
-| VS Code extension | 4 | Developer workflow integration |
+| Publisher funnel event tracking | ✅ Done | `publish_events` collection, `recordPublishEvent` |
+| "Make your own" CTA click tracking | ✅ Done | `AnalyticsBeacon` + `data-readable-cta` attribute |
+| Internal metrics dashboard (`/admin`) | ✅ Done | `/admin` page, IP-restricted via middleware |
+| Quota system | ✅ Done (all open) | `src/lib/quota.ts` — all limits set to unlimited |
+| Stripe billing (checkout, webhooks) | ❌ Removed | No paid plans; portal route retained for history |
+| Pricing page | ✅ Converted | `/pricing` now shows "free forever" feature list |
+| Attribution badge ("Made with Readable") | ✅ Done | Share page, hidden when `remove_attribution_badge = true` |
+| Password-protected pages | ✅ Done | `PasswordGate`, bcrypt hash in DB, cookie-based auth |
+| YAML frontmatter support | ✅ Done | Parsed from raw Markdown; `frontmatter_meta` in DB |
+| Template SEO landing pages | ✅ Done | `/templates`, `/templates/[slug]` with full content |
+| Public explore page | ✅ Done | `/explore` shows recent public pages |
+| Version history | ✅ Done | `/api/pages/[id]/versions`, `snapshotPageVersion` |
+| Webhooks | ✅ Done | `deliverWebhooks` on publish/update, UI in My Pages |
+| MCP server | ✅ Done | `mcp-server/` Cloudflare Worker at `mcp.readable.ashwinsathian.com` |
+| CLI (`@readable/cli`) | Not started | Any HTTP client works via the REST API |
+| Team Spaces | Not started | Schema columns exist, routes not built |
+| KaTeX math rendering | Not started | — |
+| Embed codes | Not started | — |
+| VS Code extension | Not started | — |
 
 ---
 

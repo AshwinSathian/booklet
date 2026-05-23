@@ -17,9 +17,12 @@ export type DbPage = {
   title: string | null;
   visibility: "public" | "unlisted";
   collection_id: string | null;
+  team_id: string | null;         // null = personal page
   view_count: number;
   remove_attribution_badge: boolean;
   password_hash: string | null;   // bcrypt hash; null = no password
+  featured: boolean;              // opt-in: appear on /explore featured section
+  frontmatter_meta: Record<string, unknown> | null;  // parsed YAML frontmatter fields
   created_at: string;
   updated_at: string;
 };
@@ -28,6 +31,7 @@ export type DbCollection = {
   id: string;
   user_id: string;   // owner
   name: string;
+  slug: string | null;   // only set for team spaces; used for /t/[slug] routing
   is_team_space: boolean;
   created_at: string;
   updated_at: string;

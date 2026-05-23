@@ -74,30 +74,6 @@ export async function getUserPlan(userId: string): Promise<UserPlan> {
   return user?.plan ?? "free";
 }
 
-export async function setUserPlan(
-  userId: string,
-  plan: UserPlan,
-  stripeCustomerId?: string,
-  stripeSubscriptionId?: string,
-): Promise<void> {
-  const db = await getDb();
-  await db.collection<UserDoc>("users").updateOne(
-    { _id: userId },
-    {
-      $set: {
-        plan,
-        ...(stripeCustomerId !== undefined ? { stripe_customer_id: stripeCustomerId } : {}),
-        ...(stripeSubscriptionId !== undefined ? { stripe_subscription_id: stripeSubscriptionId } : {}),
-      },
-    },
-  );
-}
-
-export async function getUserByStripeCustomerId(stripeCustomerId: string): Promise<DbUser | null> {
-  const db = await getDb();
-  const doc = await db.collection<UserDoc>("users").findOne({ stripe_customer_id: stripeCustomerId });
-  return doc ? toUser(doc) : null;
-}
 
 export async function getUserByEmail(email: string): Promise<DbUser | null> {
   const db = await getDb();
@@ -124,9 +100,12 @@ export async function createPageRecord(
     title,
     visibility: "public",
     collection_id: null,
+    team_id: null,
     view_count: 0,
     remove_attribution_badge: removeAttributionBadge,
     password_hash: null,
+    featured: false,
+    frontmatter_meta: null,
     created_at: now,
     updated_at: now,
   });
@@ -156,7 +135,7 @@ export async function getPagesByUser(userId: string): Promise<DbPage[]> {
 
 export async function updatePageRecord(
   pageId: string,
-  patch: Partial<Pick<DbPage, "slug" | "title" | "visibility" | "collection_id" | "remove_attribution_badge" | "password_hash" | "updated_at">>,
+  patch: Partial<Pick<DbPage, "slug" | "title" | "visibility" | "collection_id" | "remove_attribution_badge" | "password_hash" | "featured" | "updated_at">>,
 ): Promise<void> {
   if (Object.keys(patch).length === 0) return;
   const db = await getDb();
@@ -228,6 +207,7 @@ export async function createCollectionRecord(
     _id: collectionId,
     user_id: userId,
     name,
+    slug: null,
     is_team_space: isTeamSpace,
     created_at: now,
     updated_at: now,

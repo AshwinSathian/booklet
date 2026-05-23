@@ -1,195 +1,194 @@
-"use client";
-
 import { AppLogo } from "@/components/ui/AppLogo";
 import { Button } from "@/components/ui/Button";
+import { APP_NAME, ROUTES } from "@/lib/constants";
+import { buildMetadata } from "@/lib/seo";
+import type { Metadata } from "next";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useUser } from "@clerk/nextjs";
 
-// ---------------------------------------------------------------------------
-// Feature list rows
-// ---------------------------------------------------------------------------
+export const metadata: Metadata = buildMetadata({
+  title: "Free — No paid plans",
+  description:
+    "Readable is completely free. Publish Markdown pages, get analytics, use the API, version history, password protection — all included. No credit card.",
+  pathname: "/pricing",
+});
 
-function Check() {
+function FeatureItem({ children }: { children: React.ReactNode }) {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden className="shrink-0 text-accent">
-      <path d="M3 8l3.5 3.5 6.5-7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
+    <li className="flex items-start gap-3">
+      <svg
+        width="16"
+        height="16"
+        viewBox="0 0 16 16"
+        fill="none"
+        aria-hidden
+        className="mt-0.5 shrink-0 text-accent"
+      >
+        <path
+          d="M3 8l3.5 3.5 6.5-7"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+      <span className="text-sm text-text-secondary">{children}</span>
+    </li>
   );
 }
 
-function Dash() {
-  return <span className="block w-4 h-[2px] rounded-full bg-border-default mx-auto" aria-hidden />;
-}
-
-type Feature = { label: string; free: boolean; pro: boolean; teams: boolean };
-
-const FEATURES: Feature[] = [
-  { label: "Unlimited local drafts", free: true, pro: true, teams: true },
-  { label: "Publish pages instantly", free: true, pro: true, teams: true },
-  { label: "All Markdown / GFM rendering", free: true, pro: true, teams: true },
-  { label: "Mermaid diagrams", free: true, pro: true, teams: true },
-  { label: "Templates library", free: true, pro: true, teams: true },
-  { label: "YAML frontmatter support", free: true, pro: true, teams: true },
-  { label: "Export (MD, HTML, PDF)", free: true, pro: true, teams: true },
-  { label: "Permanent pages", free: true, pro: true, teams: true },
-  { label: "Custom URL slugs", free: true, pro: true, teams: true },
-  { label: "Page analytics", free: true, pro: true, teams: true },
-  { label: "2 API keys", free: true, pro: false, teams: false },
-  { label: "Version history", free: false, pro: true, teams: true },
-  { label: "Password-protected pages", free: false, pro: true, teams: true },
-  { label: "Remove attribution badge", free: false, pro: true, teams: true },
-  { label: "10 API keys", free: false, pro: true, teams: false },
-  { label: "Publish webhooks (up to 5)", free: false, pro: true, teams: true },
-  { label: "Unlimited API keys", free: false, pro: false, teams: true },
-  { label: "Team Spaces (shared collections)", free: false, pro: false, teams: true },
-  { label: "Team member management", free: false, pro: false, teams: true },
+const FEATURE_GROUPS: { heading: string; items: string[] }[] = [
+  {
+    heading: "Writing & publishing",
+    items: [
+      "Live Markdown preview as you type",
+      "Publish with one click — clean shareable URL",
+      "Unlimited local drafts, auto-saved to your browser",
+      "Full GitHub-Flavored Markdown support",
+      "Mermaid diagram rendering (flowcharts, sequence, architecture)",
+      "Formatting toolbar — bold, italic, headings, code, links",
+      "YAML frontmatter support (title, author, date, tags, visibility)",
+      "8 ready-to-use templates (incident report, ADR, runbook, and more)",
+    ],
+  },
+  {
+    heading: "Pages & sharing",
+    items: [
+      "Permanent pages for signed-in users",
+      "Custom URL slugs (e.g. /p/my-incident-report)",
+      "Unlisted pages — accessible by link, not discoverable",
+      "Password-protected pages",
+      "Per-page view analytics with read-depth tracking",
+      "Version history — restore any of the last 10 snapshots",
+      "Auto Table of Contents for long documents",
+      "Reading time displayed on every shared page",
+    ],
+  },
+  {
+    heading: "Export & organisation",
+    items: [
+      "Export to Markdown, self-contained HTML, or PDF",
+      "Collections — group related pages into organised sets",
+      "My Pages dashboard to manage all your published pages",
+      "Attribution badge on every page (links back to Readable)",
+    ],
+  },
+  {
+    heading: "API & integrations",
+    items: [
+      "REST API v1 — publish, update, list, and delete pages",
+      "API key management (generate, revoke, label keys)",
+      "Publish webhooks — get notified on page.published and page.updated",
+      "Claude MCP server — use Readable directly from Claude",
+      "GitHub Actions integration — publish from CI/CD pipelines",
+      "CLI support via the REST API and any HTTP client",
+    ],
+  },
 ];
 
-// ---------------------------------------------------------------------------
-// Pricing page
-// ---------------------------------------------------------------------------
-
 export default function PricingPage() {
-  const { isSignedIn } = useUser();
-  const router = useRouter();
-
-  async function handleUpgrade(priceId: string) {
-    if (!isSignedIn) {
-      router.push(`/sign-in?redirect_url=${encodeURIComponent("/pricing")}`);
-      return;
-    }
-    const res = await fetch("/api/billing/checkout", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ priceId }),
-    });
-    const data = (await res.json()) as { checkoutUrl?: string; error?: string };
-    if (data.checkoutUrl) {
-      window.location.href = data.checkoutUrl;
-    }
-  }
-
-  const PRO_MONTHLY = process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO_MONTHLY ?? "";
-  const TEAMS_MONTHLY = process.env.NEXT_PUBLIC_STRIPE_PRICE_TEAMS ?? "";
-  const billingEnabled = Boolean(PRO_MONTHLY && TEAMS_MONTHLY);
-
   return (
     <div className="min-h-screen bg-bg text-text-primary">
-      {/* Nav */}
-      <header className="border-b border-border-subtle">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-          <Link href="/"><AppLogo onlyIcon={false} /></Link>
-          <Button variant="secondary" size="sm" href="/app">Open editor</Button>
+      <header className="border-b border-border-subtle bg-bg/85 backdrop-blur-xl sticky top-0 z-20">
+        <div className="mx-auto flex max-w-3xl items-center justify-between px-6 h-12">
+          <Link href="/">
+            <AppLogo onlyIcon={false} />
+          </Link>
+          <Button variant="primary" size="md" href={ROUTES.app}>
+            Start writing
+          </Button>
         </div>
       </header>
 
-      {/* Hero */}
-      <div className="mx-auto max-w-5xl px-6 pt-16 pb-12 text-center">
-        <h1 className="text-4xl font-bold tracking-tight">Simple, honest pricing</h1>
-        <p className="mt-3 text-base text-text-secondary max-w-xl mx-auto">
-          Start free. Pay when you need more. No surprises.
-        </p>
-      </div>
-
-      {/* Tiers */}
-      <div className="mx-auto max-w-5xl px-6 pb-20">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-          {/* Free */}
-          <div className="rounded-2xl border border-border-default bg-bg-elevated p-8 flex flex-col">
-            <p className="text-sm font-semibold text-text-muted uppercase tracking-wider">Free</p>
-            <p className="mt-3 text-3xl font-bold">$0</p>
-            <p className="mt-1 text-xs text-text-muted">forever</p>
-            <p className="mt-4 text-sm text-text-secondary leading-relaxed">
-              Everything you need to write, publish, and share Markdown pages instantly.
-            </p>
-            <div className="mt-6">
-              <Button variant="secondary" size="md" href="/app" className="w-full justify-center">
-                Open the editor
-              </Button>
-            </div>
+      <main className="mx-auto max-w-3xl px-6 py-16">
+        {/* Hero */}
+        <div className="mb-14 text-center">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-accent/20 bg-accent-dim px-4 py-1.5 text-xs font-semibold tracking-wide text-accent">
+            <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+            Free forever
           </div>
-
-          {/* Pro */}
-          <div className="rounded-2xl border-2 border-accent bg-bg-elevated p-8 flex flex-col relative">
-            <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-pill bg-accent px-3 py-0.5 text-2xs font-semibold text-white">
-              Most popular
-            </span>
-            <p className="text-sm font-semibold text-accent uppercase tracking-wider">Readable Pro</p>
-            <p className="mt-3 text-3xl font-bold">$7</p>
-            <p className="mt-1 text-xs text-text-muted">per month</p>
-            <p className="mt-4 text-sm text-text-secondary leading-relaxed">
-              For individuals who publish regularly and want the full experience.
-            </p>
-            <div className="mt-6">
-              <Button
-                variant="primary"
-                size="md"
-                className="w-full justify-center"
-                disabled={!billingEnabled}
-                onClick={() => void handleUpgrade(PRO_MONTHLY)}
-              >
-                Upgrade to Pro
-              </Button>
-            </div>
-          </div>
-
-          {/* Teams */}
-          <div className="rounded-2xl border border-border-default bg-bg-elevated p-8 flex flex-col">
-            <p className="text-sm font-semibold text-text-muted uppercase tracking-wider">Teams</p>
-            <p className="mt-3 text-3xl font-bold">$12</p>
-            <p className="mt-1 text-xs text-text-muted">per user / month</p>
-            <p className="mt-4 text-sm text-text-secondary leading-relaxed">
-              A shared workspace for your team. Publish together, see it together.
-            </p>
-            <div className="mt-6">
-              <Button
-                variant="secondary"
-                size="md"
-                className="w-full justify-center"
-                disabled={!billingEnabled}
-                onClick={() => void handleUpgrade(TEAMS_MONTHLY)}
-              >
-                Start team trial
-              </Button>
-            </div>
+          <h1 className="text-4xl font-bold tracking-tight text-text-primary">
+            Everything included. No catch.
+          </h1>
+          <p className="mt-4 text-base text-text-secondary max-w-lg mx-auto leading-relaxed">
+            {APP_NAME} is completely free. Every feature — the API, version history, analytics,
+            password protection, webhooks, MCP — is available to everyone with an account.
+            No credit card. No paid plan. No upgrade prompt.
+          </p>
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Button variant="primary" size="md" href={ROUTES.app}>
+              Open the editor
+              <svg width="11" height="11" fill="none" viewBox="0 0 11 11" aria-hidden>
+                <path
+                  d="M2 9 9 2M9 2H4.5M9 2v4.5"
+                  stroke="currentColor"
+                  strokeWidth="1.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </Button>
+            <Button variant="ghost" size="md" href={ROUTES.signUp}>
+              Create an account
+            </Button>
           </div>
         </div>
 
-        {/* Feature comparison table */}
-        <div className="mt-16 overflow-x-auto">
-          <table className="w-full border-collapse text-sm">
-            <thead>
-              <tr className="border-b border-border-default">
-                <th className="pb-3 text-left font-semibold text-text-primary w-1/2">Feature</th>
-                <th className="pb-3 text-center font-semibold text-text-muted w-[16%]">Free</th>
-                <th className="pb-3 text-center font-semibold text-accent w-[16%]">Pro</th>
-                <th className="pb-3 text-center font-semibold text-text-muted w-[16%]">Teams</th>
-              </tr>
-            </thead>
-            <tbody>
-              {FEATURES.map((f) => (
-                <tr key={f.label} className="border-b border-border-subtle last:border-0">
-                  <td className="py-3 text-text-secondary">{f.label}</td>
-                  <td className="py-3 text-center">{f.free ? <Check /> : <Dash />}</td>
-                  <td className="py-3 text-center">{f.pro || f.free ? <Check /> : <Dash />}</td>
-                  <td className="py-3 text-center">{f.teams || f.pro || f.free ? <Check /> : <Dash />}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        {/* Feature groups */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+          {FEATURE_GROUPS.map((group) => (
+            <div key={group.heading}>
+              <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-text-muted">
+                {group.heading}
+              </h2>
+              <ul className="space-y-3">
+                {group.items.map((item) => (
+                  <FeatureItem key={item}>{item}</FeatureItem>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
 
-        {/* Footer note */}
-        <p className="mt-10 text-center text-xs text-text-muted">
-          All plans include unlimited local drafts and drafts are never transmitted until you publish.
-          Cancel anytime.{" "}
-          <Link href="/app" className="text-accent hover:text-accent-soft underline">
-            Start writing free →
-          </Link>
-        </p>
-      </div>
+        {/* Anonymous vs signed-in note */}
+        <div className="mt-14 rounded-xl border border-border-subtle bg-bg-elevated px-6 py-7">
+          <h2 className="text-sm font-semibold text-text-primary mb-3">
+            Anonymous vs. signed-in
+          </h2>
+          <p className="text-sm text-text-secondary leading-relaxed mb-4">
+            You can publish immediately without creating an account. Anonymous pages
+            last 30 days and show a countdown to your reader. Creating a free account
+            upgrades your pages to permanent, unlocks custom slugs, the My Pages dashboard,
+            analytics, version history, the API, and all other features listed above.
+          </p>
+          <Button variant="secondary" size="sm" href={ROUTES.signUp}>
+            Create a free account
+          </Button>
+        </div>
+
+        {/* CTA */}
+        <div className="mt-10 text-center">
+          <p className="text-xs text-text-muted">
+            Built for developers, writers, and teams who need to share things clearly.{" "}
+            <Link href="/explore" className="text-accent hover:text-accent-soft transition">
+              Browse pages people are sharing →
+            </Link>
+          </p>
+        </div>
+      </main>
+
+      <footer className="mt-8 border-t border-border-subtle">
+        <div className="mx-auto w-full max-w-3xl px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-text-muted">
+          <div className="flex items-center gap-2">
+            <AppLogo onlyIcon={true} />
+            <span>{APP_NAME} — Beautiful markdown pages, instantly.</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <Link href="/templates" className="hover:text-text-primary transition">Templates</Link>
+            <Link href="/explore" className="hover:text-text-primary transition">Explore</Link>
+            <Link href={ROUTES.app} className="text-accent hover:text-accent-soft transition">Start writing →</Link>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

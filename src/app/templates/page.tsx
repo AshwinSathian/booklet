@@ -95,7 +95,7 @@ export default function TemplatesPage() {
             <span>{APP_NAME} — Beautiful markdown pages, instantly.</span>
           </div>
           <div className="flex items-center gap-4">
-            <Link href="/pricing" className="hover:text-text-primary transition">Pricing</Link>
+            <Link href="/explore" className="hover:text-text-primary transition">Explore</Link>
             <Link href={ROUTES.app} className="text-accent hover:text-accent-soft transition">Start writing →</Link>
           </div>
         </div>

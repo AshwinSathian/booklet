@@ -10,6 +10,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
 import { type ReactNode, useMemo, useState } from "react";
+import { TEMPLATES } from "@/lib/templates";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Utilities
@@ -803,6 +804,68 @@ export function Landing() {
         title: "Export from the share page",
         desc: "Download the original Markdown source, a self-contained HTML file, or print to PDF — right from the published page.",
       },
+      {
+        icon: (
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" aria-hidden>
+            <path d="M12 20h9" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        ),
+        title: "Version history",
+        desc: "Every publish creates a snapshot. Restore any of the last 10 versions of your page with one click from My Pages.",
+      },
+      {
+        icon: (
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" aria-hidden>
+            <path d="M18 20V10M12 20V4M6 20v-6" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        ),
+        title: "Page analytics",
+        desc: "See view counts, read-depth (50% and 100% read), and referrer breakdown for every page you publish.",
+      },
+      {
+        icon: (
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" aria-hidden>
+            <rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" strokeWidth="1.75" />
+            <path d="M7 11V7a5 5 0 0 1 9.9-1" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+            <circle cx="12" cy="16" r="1" fill="currentColor" />
+          </svg>
+        ),
+        title: "Password-protected pages",
+        desc: "Restrict sensitive pages with a password. Readers enter it once and the page unlocks — the link stays shareable.",
+      },
+      {
+        icon: (
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" aria-hidden>
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+            <polyline points="14 2 14 8 20 8" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+            <line x1="9" y1="15" x2="15" y2="15" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+            <line x1="9" y1="11" x2="15" y2="11" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+          </svg>
+        ),
+        title: "8 ready-to-use templates",
+        desc: "Incident reports, ADRs, runbooks, release notes, meeting notes, and more. Open, fill in, publish.",
+      },
+      {
+        icon: (
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" aria-hidden>
+            <path d="M10 9H5L3 7V3h14v4l-2 2h-5z" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        ),
+        title: "Collections",
+        desc: "Group related pages into named collections. Drag to reorder, share a collection, invite collaborators.",
+      },
+      {
+        icon: (
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" aria-hidden>
+            <polyline points="16 18 22 12 16 6" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+            <polyline points="8 6 2 12 8 18" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        ),
+        title: "REST API + MCP",
+        desc: "Publish pages from CI/CD pipelines, scripts, or directly from Claude. Full API key management included.",
+      },
     ],
     [],
   );
@@ -889,6 +952,12 @@ export function Landing() {
                 className="text-sm text-text-muted transition hover:text-text-primary"
               >
                 API
+              </Link>
+              <Link
+                href="/templates"
+                className="text-sm text-text-muted transition hover:text-text-primary"
+              >
+                Templates
               </Link>
             </nav>
             <div className="flex items-center gap-2">
@@ -1092,7 +1161,7 @@ export function Landing() {
       >
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {features.map((f) => (
-            <motion.div key={f.title} variants={reduce ? undefined : fadeUp}>
+            <motion.div key={f.title} variants={reduce ? undefined : fadeUp} className="h-full">
               <FeatureCard icon={f.icon} title={f.title} desc={f.desc} />
             </motion.div>
           ))}
@@ -1254,14 +1323,159 @@ export function Landing() {
       <Container><Divider /></Container>
 
       {/* ──────────────────────────────────────────────────────────────────── */}
+      {/* Templates                                                             */}
+      {/* ──────────────────────────────────────────────────────────────────── */}
+      <Section
+        id="templates"
+        eyebrow="Templates"
+        title="Start with structure."
+        subtitle="Eight templates for the documents engineers and teams reach for most. Click one — the editor opens pre-loaded."
+      >
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {TEMPLATES.filter((t) => t.slug).map((t) => (
+            <motion.div key={t.slug} variants={reduce ? undefined : fadeUp} className="h-full">
+              <Link
+                href={`/templates/${t.slug}`}
+                className="group flex flex-col gap-2 rounded-xl border border-border-default bg-bg-elevated p-5 shadow-card transition hover:border-border-strong hover:bg-bg-soft h-full"
+              >
+                {t.category && (
+                  <span className="text-2xs font-medium uppercase tracking-wider text-text-muted">
+                    {t.category}
+                  </span>
+                )}
+                <p className="text-[14px] font-semibold text-text-primary group-hover:text-accent transition">
+                  {t.name}
+                </p>
+                <p className="text-xs text-text-muted leading-relaxed flex-1">
+                  {t.description}
+                </p>
+                <span className="text-xs text-accent opacity-0 group-hover:opacity-100 transition mt-1">
+                  Use template →
+                </span>
+              </Link>
+            </motion.div>
+          ))}
+        </div>
+        <motion.div
+          variants={reduce ? undefined : fadeUp}
+          className="mt-6 text-center"
+        >
+          <Link
+            href="/templates"
+            className="inline-flex items-center gap-1.5 text-sm text-accent transition hover:text-accent-soft"
+          >
+            Browse all templates
+            <svg width="12" height="12" fill="none" viewBox="0 0 12 12" aria-hidden>
+              <path d="M2.5 9.5 9.5 2.5M9.5 2.5H4M9.5 2.5V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </Link>
+        </motion.div>
+      </Section>
+
+      <Container><Divider /></Container>
+
+      {/* ──────────────────────────────────────────────────────────────────── */}
+      {/* All features included                                                 */}
+      {/* ──────────────────────────────────────────────────────────────────── */}
+      <Section
+        id="all-features"
+        eyebrow="Everything included"
+        title="No feature is locked. No upgrade required."
+        subtitle="Create a free account and every capability below is available — version history, analytics, password protection, the API, webhooks, MCP. All of it."
+        center
+      >
+        <div className="mx-auto max-w-3xl">
+          {[
+            {
+              group: "Writing & publishing",
+              items: [
+                "Live Markdown preview as you type",
+                "Full GitHub-Flavored Markdown support",
+                "Mermaid diagram rendering",
+                "Formatting toolbar",
+                "YAML frontmatter (title, author, date, tags)",
+                "8 ready-to-use templates",
+                "Unlimited local drafts, auto-saved to browser",
+              ],
+            },
+            {
+              group: "Pages & sharing",
+              items: [
+                "Permanent pages (never expire)",
+                "Custom URL slugs",
+                "Unlisted pages",
+                "Password-protected pages",
+                "Per-page analytics with read-depth",
+                "Version history — restore any snapshot",
+                "Auto Table of Contents on long documents",
+              ],
+            },
+            {
+              group: "Export & organisation",
+              items: [
+                "Export to Markdown, HTML, or PDF",
+                "Collections — group and organise pages",
+                "My Pages dashboard",
+                "Reading time on every share page",
+                "OG image for rich link previews",
+              ],
+            },
+            {
+              group: "API & integrations",
+              items: [
+                "REST API v1 — publish, update, list, delete",
+                "API key management",
+                "Publish webhooks (page.published, page.updated)",
+                "Claude MCP server",
+                "GitHub Actions integration",
+                "Anonymous publishing — no account needed",
+              ],
+            },
+          ].map(({ group, items }) => (
+            <div key={group} className="mb-8 last:mb-0">
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-widest text-text-muted">
+                {group}
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-8">
+                {items.map((item) => (
+                  <div key={item} className="flex items-start gap-2.5">
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      aria-hidden
+                      className="mt-0.5 shrink-0 text-accent"
+                    >
+                      <path
+                        d="M3 8l3.5 3.5 6.5-7"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    <span className="text-sm text-text-secondary">{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      <Container><Divider /></Container>
+
+      {/* ──────────────────────────────────────────────────────────────────── */}
       {/* FAQ                                                                   */}
       {/* ──────────────────────────────────────────────────────────────────── */}
       <Section id="faq" eyebrow="FAQ" title="Quick answers." center>
         <div className="mx-auto max-w-2xl rounded-2xl border border-border-default bg-bg-elevated px-7 shadow-card">
           <FaqItem question="Do I need an account?">
             No. {APP_NAME} works immediately — no signup, no email, no password. Just
-            write and publish. A free account unlocks permanent pages, custom slugs,
-            view counts, the My Pages dashboard, and API access.
+            write and publish. Creating an account (free) upgrades your pages to permanent,
+            unlocks custom slugs, analytics, version history, the API, and My Pages.
+            Everything is free — there is no paid plan.
           </FaqItem>
           <FaqItem question="Are published pages public?">
             Yes — they&apos;re accessible by anyone with the link. If you publish it,
@@ -1410,9 +1624,6 @@ export function Landing() {
               >
                 MCP
               </a>
-              <Link href="/pricing" className="transition hover:text-text-primary">
-                Pricing
-              </Link>
             </nav>
           </div>
         </Container>

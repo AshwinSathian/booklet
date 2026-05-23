@@ -206,7 +206,7 @@ export default async function TemplatePage({
           </div>
           <div className="flex items-center gap-4">
             <Link href="/templates" className="hover:text-text-primary transition">Templates</Link>
-            <Link href="/pricing" className="hover:text-text-primary transition">Pricing</Link>
+            <Link href="/explore" className="hover:text-text-primary transition">Explore</Link>
             <Link href={ROUTES.app} className="text-accent hover:text-accent-soft transition">Start writing →</Link>
           </div>
         </div>

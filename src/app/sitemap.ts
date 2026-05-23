@@ -29,12 +29,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.7,
     },
     {
-      url: absoluteUrl("/pricing"),
-      lastModified: now,
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
-    {
       url: absoluteUrl("/templates"),
       lastModified: now,
       changeFrequency: "monthly",

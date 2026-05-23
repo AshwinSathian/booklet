@@ -4,8 +4,6 @@ import { ActionDrawer, DrawerSection } from "@/components/ui/ActionDrawer";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { ROUTES } from "@/lib/constants";
-import type { UserPlan } from "@/lib/db/types";
-import { canUseFeature } from "@/lib/quota";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,58}[a-z0-9]$|^[a-z0-9]{3,60}$/;
@@ -319,7 +317,6 @@ function DrawerItem({
 function PageCard({
   page,
   index,
-  userPlan,
   onDeleted,
   onSlugSaved,
   onVisibilityChanged,
@@ -328,7 +325,6 @@ function PageCard({
 }: {
   page: PageRow;
   index: number;
-  userPlan: UserPlan;
   onDeleted: (id: string) => void;
   onSlugSaved: (id: string, slug: string | null) => void;
   onVisibilityChanged: (id: string, v: "public" | "unlisted") => void;
@@ -503,24 +499,13 @@ function PageCard({
             href={`/my-pages/analytics/${page.id}`}
             onClick={() => setDrawerOpen(false)}
           />
-          {canUseFeature(userPlan, "versionHistory") ? (
-            <DrawerItem
-              icon="history"
-              label="Version history"
-              description="Browse and restore previous versions"
-              href={`/my-pages/versions/${page.id}`}
-              onClick={() => setDrawerOpen(false)}
-            />
-          ) : (
-            <DrawerItem
-              icon="history"
-              label="Version history"
-              description="Available on Readable Pro — upgrade to access"
-              href="/pricing"
-              onClick={() => setDrawerOpen(false)}
-              locked
-            />
-          )}
+          <DrawerItem
+            icon="history"
+            label="Version history"
+            description="Browse and restore previous versions"
+            href={`/my-pages/versions/${page.id}`}
+            onClick={() => setDrawerOpen(false)}
+          />
         </DrawerSection>
 
         <DrawerSection>
@@ -540,57 +525,46 @@ function PageCard({
               setDrawerOpen(false);
             }}
           />
-          {canUseFeature(userPlan, "passwordProtection") ? (
-            hasPassword ? (
-              <DrawerItem
-                icon="lock"
-                label="Remove password"
-                description="Page is currently password-protected"
-                active
-                activeLabel="Protected"
-                disabled={savingPassword}
-                onClick={() => void handleSetPassword(null)}
+          {hasPassword ? (
+            <DrawerItem
+              icon="lock"
+              label="Remove password"
+              description="Page is currently password-protected"
+              active
+              activeLabel="Protected"
+              disabled={savingPassword}
+              onClick={() => void handleSetPassword(null)}
+            />
+          ) : passwordPrompt ? (
+            <div className="px-3 py-2 flex flex-col gap-2">
+              <input
+                type="password"
+                value={passwordDraft}
+                onChange={(e) => setPasswordDraft(e.target.value)}
+                placeholder="Set a password (min. 6 chars)"
+                autoFocus
+                className="w-full rounded-lg border border-border-default bg-bg px-3 py-2 text-sm outline-none focus:border-accent/50 focus:ring-2 focus:ring-accent/15 transition"
               />
-            ) : passwordPrompt ? (
-              <div className="px-3 py-2 flex flex-col gap-2">
-                <input
-                  type="password"
-                  value={passwordDraft}
-                  onChange={(e) => setPasswordDraft(e.target.value)}
-                  placeholder="Set a password (min. 6 chars)"
-                  autoFocus
-                  className="w-full rounded-lg border border-border-default bg-bg px-3 py-2 text-sm outline-none focus:border-accent/50 focus:ring-2 focus:ring-accent/15 transition"
-                />
-                <div className="flex gap-2">
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    disabled={passwordDraft.length < 6 || savingPassword}
-                    onClick={() => void handleSetPassword(passwordDraft)}
-                  >
-                    Save
-                  </Button>
-                  <Button variant="secondary" size="sm" onClick={() => { setPasswordPrompt(false); setPasswordDraft(""); }}>
-                    Cancel
-                  </Button>
-                </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="primary"
+                  size="sm"
+                  disabled={passwordDraft.length < 6 || savingPassword}
+                  onClick={() => void handleSetPassword(passwordDraft)}
+                >
+                  Save
+                </Button>
+                <Button variant="secondary" size="sm" onClick={() => { setPasswordPrompt(false); setPasswordDraft(""); }}>
+                  Cancel
+                </Button>
               </div>
-            ) : (
-              <DrawerItem
-                icon="lock"
-                label="Password protect"
-                description="Require a password to view this page"
-                onClick={() => setPasswordPrompt(true)}
-              />
-            )
+            </div>
           ) : (
             <DrawerItem
               icon="lock"
               label="Password protect"
-              description="Available on Readable Pro — upgrade to access"
-              href="/pricing"
-              onClick={() => setDrawerOpen(false)}
-              locked
+              description="Require a password to view this page"
+              onClick={() => setPasswordPrompt(true)}
             />
           )}
         </DrawerSection>
@@ -837,7 +811,6 @@ export function MyPagesList({
   initialPages,
   initialCollections,
   baseUrl,
-  userPlan = "free",
 }: {
   initialPages: Array<{
     id: string;
@@ -852,7 +825,6 @@ export function MyPagesList({
   }>;
   initialCollections: CollectionRow[];
   baseUrl: string;
-  userPlan?: UserPlan;
 }) {
   const [pages, setPages] = useState<PageRow[]>(() =>
     initialPages.map((p) => ({ ...p, baseUrl }))
@@ -1017,7 +989,6 @@ export function MyPagesList({
                 key={page.id}
                 page={page}
                 index={i}
-                userPlan={userPlan}
                 onDeleted={handleDeleted}
                 onSlugSaved={handleSlugSaved}
                 onVisibilityChanged={handleVisibilityChanged}

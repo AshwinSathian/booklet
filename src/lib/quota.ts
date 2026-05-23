@@ -16,17 +16,17 @@ export type PlanLimits = {
 
 const LIMITS: Record<UserPlan, PlanLimits> = {
   free: {
-    pagesPerMonth: 30,
+    pagesPerMonth: -1,
     permanentPages: true,
     customSlugs: true,
     analytics: true,
-    versionHistory: false,
-    passwordProtection: false,
-    removeAttributionBadge: false,
+    versionHistory: true,
+    passwordProtection: true,
+    removeAttributionBadge: true,
     apiAccess: true,
-    apiKeysMax: 2,
-    teamsAccess: false,
-    webhooks: false,
+    apiKeysMax: -1,
+    teamsAccess: true,
+    webhooks: true,
   },
   pro: {
     pagesPerMonth: -1,

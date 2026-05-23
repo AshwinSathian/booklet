@@ -1,5 +1,4 @@
-import { createWebhook, getWebhooksByUser, getUserPlan } from "@/lib/db";
-import { canUseFeature } from "@/lib/quota";
+import { createWebhook, getWebhooksByUser } from "@/lib/db";
 import { createId } from "@/lib/id";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
@@ -33,11 +32,6 @@ export async function GET() {
 export async function POST(req: Request) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const plan = await getUserPlan(userId);
-  if (!canUseFeature(plan, "webhooks")) {
-    return NextResponse.json({ error: "Webhooks require Readable Pro or Teams plan." }, { status: 403 });
-  }
 
   let body: { url?: string; events?: unknown[] };
   try {
