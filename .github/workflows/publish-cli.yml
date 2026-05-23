@@ -1,0 +1,60 @@
+# Publishes readable-cli to npm when packages/cli/package.json version changes on main.
+# Trigger: push to main that touches packages/cli/, OR manual dispatch.
+#
+# Required secret: NPM_TOKEN — a Granular Access Token with:
+#   - Read and write on "All packages"
+#   - "Allow this token to bypass two-factor authentication" enabled
+#
+# Add it at: repo → Settings → Secrets → Actions → NPM_TOKEN
+
+name: Publish CLI to npm
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "packages/cli/package.json"
+      - "packages/cli/src/**"
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/cli
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Check if version already published
+        id: version_check
+        run: |
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          echo "version=$PKG_VERSION" >> $GITHUB_OUTPUT
+          if npm view readable-cli@$PKG_VERSION version 2>/dev/null; then
+            echo "already_published=true" >> $GITHUB_OUTPUT
+          else
+            echo "already_published=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Publish to npm
+        if: steps.version_check.outputs.already_published == 'false'
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Skip (already published)
+        if: steps.version_check.outputs.already_published == 'true'
+        run: echo "readable-cli@${{ steps.version_check.outputs.version }} already on npm — bump version to publish."
