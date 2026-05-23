@@ -120,6 +120,7 @@ export default function ApiDocsPage() {
               ["#errors", "Error format"],
               ["#rate-limits", "Rate limits"],
               ["#github-actions", "GitHub Actions"],
+              ["#mcp", "Use with Claude"],
             ].map(([href, label]) => (
               <a key={href} href={href} className="text-text-muted hover:text-text-primary transition py-0.5">
                 {label}
@@ -150,6 +151,10 @@ export default function ApiDocsPage() {
             <Pre>{`Authorization: Bearer rdbl_live_<your-key>`}</Pre>
             <p className="mt-3 text-sm text-text-secondary">
               Generate keys at <Link href="/my-pages" className="text-accent hover:underline">/my-pages</Link>. Keys are scoped to your account and never expire (delete and regenerate to rotate).
+            </p>
+            <p className="mt-3 text-sm text-text-secondary">
+              Each key is rate-limited to <strong className="text-text-primary">60 requests per minute</strong>. Exceeding the limit returns HTTP{" "}
+              <Code>429</Code>. The limit resets at the start of the next minute. See <a href="#rate-limits" className="text-accent hover:underline">Rate limits</a> for details.
             </p>
           </Section>
 
@@ -418,6 +423,44 @@ jobs:
             <p className="mt-3 text-sm text-text-secondary">
               Add <Code>READABLE_API_KEY</Code> under Settings → Secrets → Actions. Set <Code>READABLE_PAGE_ID</Code> as a repository variable to reuse the same URL on every run.
             </p>
+          </Section>
+
+          <Section id="mcp" title="Use with Claude">
+            <p className="text-sm text-text-secondary mb-4">
+              Readable has an MCP server that lets Claude publish and manage pages on your behalf. Once connected, you can ask Claude to publish a document, update an existing page, or list your pages — all without leaving the conversation.
+            </p>
+
+            <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">Connection instructions</p>
+            <ol className="list-decimal list-inside text-sm text-text-secondary space-y-1.5 mb-4 ml-1">
+              <li>Go to Claude settings → Connectors</li>
+              <li>
+                Add a new MCP connector with URL:{" "}
+                <Code>https://mcp.readable.ashwinsathian.com</Code>
+              </li>
+              <li>
+                When prompted, enter your Readable API key (<Code>rdbl_live_...</Code>) from{" "}
+                <Link href="/my-pages" className="text-accent hover:underline">/my-pages</Link>
+              </li>
+              <li>
+                Claude will then have access to:{" "}
+                <Code>publish_page</Code>, <Code>update_page</Code>, <Code>list_pages</Code>, <Code>delete_page</Code>
+              </li>
+            </ol>
+
+            <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">Example conversation</p>
+            <Pre>{`You: Publish this as a Readable page: [markdown content]
+Claude: Published. Here's your link: https://readable.ashwinsathian.com/p/Ab3k91QxZp`}</Pre>
+
+            <div className="mt-4 text-sm text-text-secondary rounded-xl border border-border-subtle bg-bg-elevated p-4 space-y-1.5">
+              <p>
+                Your API key is passed directly to the Readable REST API on each tool call. The MCP server acts as a thin proxy — it holds the key only for the duration of the SSE session and never writes it to persistent storage.
+              </p>
+              <p>
+                To revoke MCP access, delete the API key from{" "}
+                <Link href="/my-pages" className="text-accent hover:underline">/my-pages</Link>.
+                This invalidates the key immediately across all clients including Claude.
+              </p>
+            </div>
           </Section>
         </main>
       </div>
