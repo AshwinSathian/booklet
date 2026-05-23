@@ -4,6 +4,7 @@ export type Template = {
   content: string;
   // SEO landing page fields (optional — only templates with these get a /templates/* page)
   slug?: string;
+  aliases?: string[];
   headline?: string;
   metaDescription?: string;
   category?: string;
@@ -11,7 +12,7 @@ export type Template = {
 };
 
 export function getTemplateBySlug(slug: string): Template | undefined {
-  return TEMPLATES.find((t) => t.slug === slug);
+  return TEMPLATES.find((t) => t.slug === slug || t.aliases?.includes(slug));
 }
 
 export const TEMPLATES: Template[] = [
@@ -75,6 +76,7 @@ Describe the underlying technical cause.
   },
   {
     slug: "architecture-decision-record",
+    aliases: ["adr"],
     name: "Architecture Decision Record",
     headline: "Free Architecture Decision Record (ADR) Template",
     description: "ADR: status, context, decision, consequences",
@@ -463,6 +465,98 @@ If these steps do not resolve the issue:
 
 - [ ] File a post-mortem if P1/P2
 - [ ] Update this runbook if steps were inaccurate
+`,
+  },
+  {
+    slug: "postmortem",
+    name: "Postmortem",
+    headline: "Free Blameless Postmortem Template",
+    description: "Blameless postmortem: impact, timeline, root cause, contributing factors, action items",
+    metaDescription:
+      "Free blameless postmortem template. Write a clear, structured postmortem and share it with your team instantly. No account required.",
+    category: "Engineering",
+    useCases: ["SRE teams", "Engineering managers", "DevOps engineers", "On-call engineers"],
+    content: `# Postmortem — [Service / Feature Name]
+
+**Date:** YYYY-MM-DD
+**Severity:** P1 / P2
+**Duration:** HH:MM – HH:MM UTC
+**Author(s):** @name1, @name2
+**Status:** Draft / Final
+
+---
+
+## Summary
+
+A brief, neutral description of what happened and its impact. (2–3 sentences, no blame.)
+
+---
+
+## Impact
+
+- **Users affected:** ~N users / % of traffic
+- **Services affected:** Service A, Service B
+- **Revenue impact:** $X or "not quantified"
+- **Duration:** X hours Y minutes
+
+---
+
+## Timeline
+
+| Time (UTC) | Event |
+|---|---|
+| HH:MM | First alert / first user report |
+| HH:MM | On-call engineer paged |
+| HH:MM | Incident channel opened |
+| HH:MM | Root cause identified |
+| HH:MM | Mitigation applied |
+| HH:MM | Service restored |
+| HH:MM | Monitoring confirmed stable |
+
+---
+
+## Root Cause
+
+Describe the primary technical cause. Be specific: which system, which change, which condition?
+
+---
+
+## Contributing Factors
+
+- Factor 1 (e.g. missing test coverage for edge case)
+- Factor 2 (e.g. monitoring gap)
+- Factor 3 (e.g. deployment without feature flag)
+
+---
+
+## What Went Well
+
+- Point 1 (e.g. fast detection via alert)
+- Point 2 (e.g. clear runbook made mitigation fast)
+
+---
+
+## What Went Poorly
+
+- Point 1 (e.g. alert threshold too high — delayed detection)
+- Point 2 (e.g. no rollback path)
+
+---
+
+## Lessons Learned
+
+- Lesson 1
+- Lesson 2
+
+---
+
+## Action Items
+
+| # | Action | Owner | Due |
+|---|---|---|---|
+| 1 | Corrective action | @owner | YYYY-MM-DD |
+| 2 | Monitoring improvement | @owner | YYYY-MM-DD |
+| 3 | Process improvement | @owner | YYYY-MM-DD |
 `,
   },
   {

@@ -70,7 +70,9 @@ export async function generateMetadata({
 
   const isUnlisted = pageRecord?.visibility === "unlisted";
   const title = extractTitle(doc.blocks) ?? "Shared page";
-  const description = extractDescription(doc.blocks);
+  const fmMeta = pageRecord?.frontmatter_meta as Record<string, unknown> | null | undefined;
+  const fmDescription = typeof fmMeta?.description === "string" ? fmMeta.description : null;
+  const description = fmDescription ?? extractDescription(doc.blocks);
 
   const titleParam = encodeURIComponent(title);
   const ogImage = absoluteUrl(`/opengraph-image?title=${titleParam}`);
@@ -186,6 +188,7 @@ export default async function SharePage({
 
         <div className="flex flex-col lg:flex-row gap-12">
           <div className="min-w-0 flex-1">
+            <FrontmatterMetaStrip meta={pageRecord?.frontmatter_meta ?? null} />
             <BlockRenderer
               blocks={doc.blocks}
               settings={doc.settings}
@@ -235,6 +238,58 @@ export default async function SharePage({
           </div>
         </div>
       </footer>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Frontmatter metadata strip
+// ---------------------------------------------------------------------------
+
+function FrontmatterMetaStrip({ meta }: { meta: Record<string, unknown> | null }) {
+  if (!meta) return null;
+
+  const author = typeof meta.author === "string" ? meta.author : null;
+  const dateRaw = typeof meta.date === "string" ? meta.date : null;
+  const tags = Array.isArray(meta.tags) ? (meta.tags as unknown[]).filter((t): t is string => typeof t === "string") : [];
+
+  if (!author && !dateRaw && tags.length === 0) return null;
+
+  let formattedDate: string | null = null;
+  if (dateRaw) {
+    try {
+      formattedDate = new Date(dateRaw).toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    } catch {
+      formattedDate = dateRaw;
+    }
+  }
+
+  return (
+    <div className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-text-secondary print:mb-4">
+      {author && (
+        <span>
+          by <span className="font-medium text-text-primary">{author}</span>
+        </span>
+      )}
+      {formattedDate && (
+        <span className="text-text-muted">{formattedDate}</span>
+      )}
+      {tags.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {tags.map((tag) => (
+            <span
+              key={tag}
+              className="rounded-pill bg-accent-dim text-accent text-xs px-2 py-0.5 font-medium"
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
