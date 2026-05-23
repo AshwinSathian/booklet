@@ -1,6 +1,6 @@
 {
   "name": "readable-cli",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "CLI for Readable — publish Markdown from your terminal",
   "type": "module",
   "bin": {
@@ -30,9 +30,11 @@
     "email": "ashwinsathyan19@gmail.com"
   },
   "license": "MIT",
+  "homepage": "https://readable.ashwinsathian.com",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/AshwinSathian/readable.git"
+    "url": "git+https://github.com/AshwinSathian/readable.git",
+    "directory": "packages/cli"
   },
   "keywords": [
     "readable",
