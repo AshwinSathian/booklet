@@ -1,7 +1,7 @@
 import type { PublishedDoc } from "@/lib/blocks";
 import { DEFAULT_SETTINGS } from "@/lib/blocks";
 import { BLOCKS, ROUTES, STORAGE } from "@/lib/constants";
-import { createPageRecord, getUserPlan, updatePageRecord } from "@/lib/db";
+import { createPageRecord, updatePageRecord } from "@/lib/db";
 import { ensureDbUser } from "@/lib/db/ensure-user";
 import { createId } from "@/lib/id";
 import { resolveApiKey } from "@/lib/api-key-auth";
@@ -9,7 +9,6 @@ import { extractDocTitle } from "@/lib/doc-title";
 import { snapshotPageVersion } from "@/lib/db/versions";
 import { recordPublishEvent } from "@/lib/db/publish-events";
 import { parseFrontmatter } from "@/lib/frontmatter";
-import { canUseFeature } from "@/lib/quota";
 import { deliverWebhooks } from "@/lib/webhook-delivery";
 import { parseToBlocks } from "@/lib/parse";
 import { putDoc } from "@/lib/storage";
@@ -89,15 +88,15 @@ export async function POST(req: Request) {
   try {
     const fm = frontmatterMeta as import("@/lib/frontmatter").FrontmatterMeta;
     const title = fm.title ?? extractDocTitle(payload.blocks);
+    const fmRecord = Object.keys(fm).length > 0 ? (fm as Record<string, unknown>) : null;
     await ensureDbUser(userId, null);
-    const plan = await getUserPlan(userId);
-    const removeAttributionBadge = canUseFeature(plan, "removeAttributionBadge");
-    await createPageRecord(id, userId, title, removeAttributionBadge);
+    // Signed-in API users get no badge by default
+    await createPageRecord(id, userId, title, true, null, fmRecord);
 
-    // Apply frontmatter-derived settings (visibility, slug) where plan allows
+    // Apply frontmatter-derived settings (visibility, slug)
     const postPatch: Parameters<typeof updatePageRecord>[1] = {};
     if (fm.visibility) postPatch.visibility = fm.visibility;
-    if (fm.slug && canUseFeature(plan, "customSlugs")) postPatch.slug = fm.slug;
+    if (fm.slug) postPatch.slug = fm.slug;
     if (Object.keys(postPatch).length > 0) {
       await updatePageRecord(id, postPatch).catch((e) => console.error("[v1/publish] patch failed:", e));
     }
