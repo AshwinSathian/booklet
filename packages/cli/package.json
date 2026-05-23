@@ -1,0 +1,43 @@
+{
+  "name": "@readable/cli",
+  "version": "0.1.0",
+  "description": "CLI for Readable — publish Markdown from your terminal",
+  "type": "module",
+  "bin": {
+    "readable": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.0",
+    "typescript": "^5.7.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "author": {
+    "name": "Ashwin Sathian",
+    "email": "ashwinsathyan19@gmail.com"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AshwinSathian/readable"
+  },
+  "keywords": [
+    "readable",
+    "markdown",
+    "publish",
+    "cli"
+  ]
+}

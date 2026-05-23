@@ -23,7 +23,10 @@ function toPage(doc: PageDoc): DbPage {
     id: _id,
     ...rest,
     collection_id: rest.collection_id ?? null,
+    team_id: rest.team_id ?? null,
     password_hash: rest.password_hash ?? null,
+    featured: rest.featured ?? false,
+    frontmatter_meta: rest.frontmatter_meta ?? null,
   };
 }
 
@@ -34,7 +37,7 @@ function toApiKey(doc: ApiKeyDoc): DbApiKey {
 
 function toCollection(doc: CollectionDoc): DbCollection {
   const { _id, ...rest } = doc;
-  return { id: _id, ...rest, is_team_space: rest.is_team_space ?? false };
+  return { id: _id, ...rest, slug: rest.slug ?? null, is_team_space: rest.is_team_space ?? false };
 }
 
 // ---------------------------------------------------------------------------
@@ -90,6 +93,8 @@ export async function createPageRecord(
   userId: string,
   title: string | null = null,
   removeAttributionBadge = false,
+  teamId: string | null = null,
+  frontmatterMeta: Record<string, unknown> | null = null,
 ): Promise<void> {
   const db = await getDb();
   const now = new Date().toISOString();
@@ -100,12 +105,12 @@ export async function createPageRecord(
     title,
     visibility: "public",
     collection_id: null,
-    team_id: null,
+    team_id: teamId,
     view_count: 0,
     remove_attribution_badge: removeAttributionBadge,
     password_hash: null,
     featured: false,
-    frontmatter_meta: null,
+    frontmatter_meta: frontmatterMeta,
     created_at: now,
     updated_at: now,
   });
@@ -135,7 +140,7 @@ export async function getPagesByUser(userId: string): Promise<DbPage[]> {
 
 export async function updatePageRecord(
   pageId: string,
-  patch: Partial<Pick<DbPage, "slug" | "title" | "visibility" | "collection_id" | "remove_attribution_badge" | "password_hash" | "featured" | "updated_at">>,
+  patch: Partial<Pick<DbPage, "slug" | "title" | "visibility" | "collection_id" | "team_id" | "remove_attribution_badge" | "password_hash" | "featured" | "frontmatter_meta" | "updated_at">>,
 ): Promise<void> {
   if (Object.keys(patch).length === 0) return;
   const db = await getDb();
@@ -168,6 +173,20 @@ export async function getRecentPublicPages(limit = 48): Promise<ExploreItem[]> {
     view_count: d.view_count,
     created_at: d.created_at,
   }));
+}
+
+export async function getFeaturedPages(limit = 50): Promise<ExploreItem[]> {
+  const db = await getDb();
+  const docs = await db
+    .collection<PageDoc>("pages")
+    .find({ featured: true, visibility: "public", password_hash: null })
+    .sort({ created_at: -1 })
+    .limit(limit)
+    .project<Pick<PageDoc, "_id" | "slug" | "title" | "view_count" | "created_at">>({
+      _id: 1, slug: 1, title: 1, view_count: 1, created_at: 1,
+    })
+    .toArray();
+  return docs.map((d) => ({ id: d._id, slug: d.slug, title: d.title, view_count: d.view_count, created_at: d.created_at }));
 }
 
 // ---------------------------------------------------------------------------
@@ -214,9 +233,15 @@ export async function createCollectionRecord(
   });
 }
 
+export async function getCollectionBySlug(slug: string): Promise<DbCollection | null> {
+  const db = await getDb();
+  const doc = await db.collection<CollectionDoc>("collections").findOne({ slug, is_team_space: true });
+  return doc ? toCollection(doc) : null;
+}
+
 export async function updateCollectionRecord(
   collectionId: string,
-  patch: Partial<Pick<DbCollection, "name" | "is_team_space" | "updated_at">>,
+  patch: Partial<Pick<DbCollection, "name" | "slug" | "is_team_space" | "updated_at">>,
 ): Promise<void> {
   if (Object.keys(patch).length === 0) return;
   const db = await getDb();
