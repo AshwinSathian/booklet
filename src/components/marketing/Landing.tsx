@@ -9,7 +9,7 @@ import type { Easing, Variants } from "framer-motion";
 import { motion, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
-import React, { useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Utilities
@@ -44,7 +44,7 @@ function Container({
   children,
   className,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
   className?: string;
 }) {
   return (
@@ -70,7 +70,7 @@ function PrimaryButton({
 }: {
   href?: string;
   onClick?: () => void;
-  children: React.ReactNode;
+  children: ReactNode;
   large?: boolean;
 }) {
   return (
@@ -88,7 +88,7 @@ function GhostButton({
 }: {
   href?: string;
   onClick?: () => void;
-  children: React.ReactNode;
+  children: ReactNode;
   external?: boolean;
 }) {
   return (
@@ -115,7 +115,7 @@ function Section({
   eyebrow?: string;
   title: string;
   subtitle?: string;
-  children: React.ReactNode;
+  children: ReactNode;
   className?: string;
   center?: boolean;
 }) {
@@ -172,7 +172,7 @@ function Section({
 // Feature cards
 // ─────────────────────────────────────────────────────────────────────────────
 
-function FeatureIcon({ children }: { children: React.ReactNode }) {
+function FeatureIcon({ children }: { children: ReactNode }) {
   return (
     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-dim text-accent">
       {children}
@@ -185,7 +185,7 @@ function FeatureCard({
   title,
   desc,
 }: {
-  icon: React.ReactNode;
+  icon: ReactNode;
   title: string;
   desc: string;
 }) {
@@ -257,7 +257,7 @@ function FaqItem({
   children,
 }: {
   question: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   return (
