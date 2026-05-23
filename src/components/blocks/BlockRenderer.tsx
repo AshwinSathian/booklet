@@ -1,13 +1,15 @@
 "use client";
 
 import type { Block, DocSettings, ListItem } from "@/lib/blocks";
-import { UI } from "@/lib/constants";
-import { highlightCode } from "@/lib/highlight";
-import katex from "katex";
+import dynamic from "next/dynamic";
 import type { JSX } from "react";
-import { useMemo, useState } from "react";
-import { DiagramBlock } from "./DiagramBlock";
 import { InlineRenderer } from "./InlineRenderer";
+
+// Heavy libraries (KaTeX, highlight.js, Mermaid) are excluded from the SSR
+// worker bundle by using ssr:false — they load only in the browser.
+const CodeBlock = dynamic(() => import("./CodeBlock").then((m) => m.CodeBlock), { ssr: false });
+const DiagramBlock = dynamic(() => import("./DiagramBlock").then((m) => m.DiagramBlock), { ssr: false });
+const MathDisplay = dynamic(() => import("./MathDisplay").then((m) => m.MathDisplay), { ssr: false });
 
 function spacingClass(settings: DocSettings): string {
   return settings.spacing === "compact" ? "gap-3" : "gap-4";
@@ -15,101 +17,6 @@ function spacingClass(settings: DocSettings): string {
 
 function proseWidthClass(settings: DocSettings): string {
   return settings.width === "wide" ? "max-w-4xl" : "max-w-3xl";
-}
-
-function CodeBlock({
-  lang,
-  code,
-  settings,
-}: {
-  lang?: string;
-  code: string;
-  settings: DocSettings;
-}) {
-  const [expanded, setExpanded] = useState(false);
-  const [copyState, setCopyState] = useState<"idle" | "copied">("idle");
-
-  const lines = useMemo(() => code.split("\n").length, [code]);
-  const shouldCollapse = settings.code === "collapse" && lines > UI.maxCodeCollapseLines;
-  const highlighted = useMemo(() => highlightCode(code, lang), [code, lang]);
-  const isCollapsed = shouldCollapse && !expanded;
-
-  async function onCopy() {
-    try {
-      await navigator.clipboard.writeText(code);
-      setCopyState("copied");
-      setTimeout(() => setCopyState("idle"), 1600);
-    } catch {
-      // silently ignore — clipboard may not be available
-    }
-  }
-
-  return (
-    <div className="rounded-xl border border-border-default overflow-hidden bg-bg-elevated">
-      {/* Header bar */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-border-default bg-fill-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <div className="flex gap-1">
-            <span className="h-2 w-2 rounded-full bg-text-muted/25" />
-            <span className="h-2 w-2 rounded-full bg-text-muted/25" />
-            <span className="h-2 w-2 rounded-full bg-text-muted/25" />
-          </div>
-          <span className="truncate text-[11px] font-mono text-text-muted">
-            {lang ?? "code"}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-2 shrink-0">
-          <span className="tabular-nums text-[10px] text-text-muted">{lines} lines</span>
-
-          {shouldCollapse ? (
-            <button
-              type="button"
-              onClick={() => setExpanded((v) => !v)}
-              className="rounded-md border border-border-default px-2 py-0.5 text-[10px] font-medium text-text-muted transition hover:bg-fill-3 hover:text-text-primary"
-              aria-label={expanded ? "Collapse code block" : "Expand code block"}
-            >
-              {expanded ? "Collapse" : "Expand"}
-            </button>
-          ) : null}
-
-          <button
-            type="button"
-            onClick={() => void onCopy()}
-            className="rounded-md border border-border-default px-2 py-0.5 text-[10px] font-medium text-text-muted transition hover:bg-fill-3 hover:text-text-primary"
-            aria-label="Copy code"
-          >
-            {copyState === "copied" ? "✓ Copied" : "Copy"}
-          </button>
-        </div>
-      </div>
-
-      {/* Code body */}
-      <pre
-        className={[
-          "p-4 text-[13px] leading-[1.55] overflow-auto",
-          "font-mono text-text-primary",
-          isCollapsed ? "max-h-96" : "",
-        ].join(" ")}
-      >
-        {highlighted ? (
-          <code
-            className="hljs"
-            // highlight.js escapes all HTML entities — safe to use here.
-            dangerouslySetInnerHTML={{ __html: highlighted }}
-          />
-        ) : (
-          <code>{code}</code>
-        )}
-      </pre>
-
-      {isCollapsed ? (
-        <div className="px-3 py-2 text-[11px] text-text-muted border-t border-border-default bg-fill-1">
-          Collapsed — use Expand to view the full block.
-        </div>
-      ) : null}
-    </div>
-  );
 }
 
 export function BlockRenderer({
@@ -332,21 +239,8 @@ export function BlockRenderer({
             case "diagram":
               return <DiagramBlock key={idx} lang={b.lang} code={b.code} />;
 
-            case "math": {
-              let html = "";
-              try {
-                html = katex.renderToString(b.code, { throwOnError: false, displayMode: true });
-              } catch {
-                html = `<code>${b.code}</code>`;
-              }
-              return (
-                <div
-                  key={idx}
-                  className="katex-display-block overflow-x-auto py-2 text-center"
-                  dangerouslySetInnerHTML={{ __html: html }}
-                />
-              );
-            }
+            case "math":
+              return <MathDisplay key={idx} code={b.code} />;
 
             default:
               return null;

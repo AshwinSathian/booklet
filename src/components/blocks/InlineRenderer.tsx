@@ -1,6 +1,8 @@
 import type { Inline } from "@/lib/blocks";
-import katex from "katex";
+import dynamic from "next/dynamic";
 import React from "react";
+
+const InlineMath = dynamic(() => import("./InlineMath").then((m) => m.InlineMath), { ssr: false });
 
 function safeHref(href: string): string {
   const trimmed = href.trim();
@@ -74,21 +76,8 @@ export function InlineRenderer({ inl }: { inl: Inline[] }) {
               />
             );
           }
-          case "math": {
-            let html = "";
-            try {
-              html = katex.renderToString(node.v, { throwOnError: false, displayMode: false });
-            } catch {
-              return <code key={i} className="text-[0.9em] font-mono">{node.v}</code>;
-            }
-            return (
-              <span
-                key={i}
-                className="katex-inline"
-                dangerouslySetInnerHTML={{ __html: html }}
-              />
-            );
-          }
+          case "math":
+            return <InlineMath key={i} code={node.v} />;
           default:
             return null;
         }
