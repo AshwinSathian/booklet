@@ -47,9 +47,11 @@ next-env.d.ts
 # wrangler files
 .wrangler
 .dev.vars*
-
-
 !.dev.vars.example
+
+# MCP server — separate npm workspace; ignore its build artefacts
+mcp-server/node_modules/
+mcp-server/.wrangler/
 
 # clerk configuration (can include secrets)
 /.clerk/

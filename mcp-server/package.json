@@ -1,0 +1,16 @@
+{
+  "name": "@readable/mcp-server",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev src/index.ts --port 8788",
+    "deploy": "wrangler deploy src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260128.0",
+    "typescript": "^5.0.0",
+    "wrangler": "^4.0.0"
+  }
+}
