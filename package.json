@@ -22,6 +22,8 @@
     "@opennextjs/cloudflare": "^1.15.1",
     "framer-motion": "^12.29.2",
     "highlight.js": "^11.11.1",
+    "jose": "^6.2.3",
+    "js-yaml": "^4.1.1",
     "katex": "^0.17.0",
     "mermaid": "^11.14.0",
     "mongodb": "^7.2.0",
@@ -34,6 +36,7 @@
     "remark-gfm": "^4.0.1",
     "remark-math": "^6.0.0",
     "remark-parse": "^11.0.0",
+    "resend": "^6.12.3",
     "stripe": "^22.1.1",
     "unified": "^11.0.5",
     "unist-util-visit": "^5.1.0"
@@ -41,6 +44,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4.1.18",
+    "@types/js-yaml": "^4.0.9",
     "@types/katex": "^0.16.8",
     "@types/node": "^20.19.30",
     "@types/react": "^19.1.5",

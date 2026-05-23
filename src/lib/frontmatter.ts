@@ -1,3 +1,5 @@
+import { load as yamlLoad } from "js-yaml";
+
 export type FrontmatterMeta = {
   title?: string;
   visibility?: "public" | "unlisted";
@@ -5,6 +7,7 @@ export type FrontmatterMeta = {
   description?: string;
   author?: string;
   date?: string;
+  tags?: string[];
 };
 
 type ParseResult = {
@@ -12,56 +15,72 @@ type ParseResult = {
   body: string;
 };
 
-// Parses YAML frontmatter from a markdown string.
-// Only handles scalar string values — no arrays, nested objects, or multi-line values.
-// Returns the stripped body and any recognised fields.
+function toStringArray(v: unknown): string[] | undefined {
+  if (Array.isArray(v)) return v.filter((x): x is string => typeof x === "string").map((s) => s.slice(0, 60));
+  if (typeof v === "string") return [v];
+  return undefined;
+}
+
+function safeStr(v: unknown, max = 300): string | undefined {
+  if (typeof v === "string" || typeof v === "number") return String(v).slice(0, max);
+  return undefined;
+}
+
+// Parses YAML frontmatter from a Markdown string using js-yaml.
+// Supports all scalar types and arrays (e.g. tags).
 export function parseFrontmatter(raw: string): ParseResult {
   const trimmed = raw.trimStart();
   if (!trimmed.startsWith("---")) {
     return { meta: {}, body: raw };
   }
 
-  const rest = trimmed.slice(3);
-  const end = rest.indexOf("\n---");
-  if (end === -1) {
+  // Find the closing ---
+  const afterOpen = trimmed.slice(3);
+  // Allow --- immediately on same line or next line
+  const match = afterOpen.match(/^([\s\S]*?)\n---(?:\s*$|\s*\n)/m);
+  if (!match) {
     return { meta: {}, body: raw };
   }
 
-  const yamlBlock = rest.slice(0, end).trim();
-  const body = rest.slice(end + 4).trimStart(); // skip \n---
+  const yamlBlock = match[1];
+  const body = afterOpen.slice(match[0].length).trimStart();
 
+  let parsed: unknown;
+  try {
+    parsed = yamlLoad(yamlBlock);
+  } catch {
+    return { meta: {}, body: raw };
+  }
+
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+    return { meta: {}, body };
+  }
+
+  const obj = parsed as Record<string, unknown>;
   const meta: FrontmatterMeta = {};
 
-  for (const line of yamlBlock.split("\n")) {
-    const colonIdx = line.indexOf(":");
-    if (colonIdx === -1) continue;
-    const key = line.slice(0, colonIdx).trim().toLowerCase();
-    const rawVal = line.slice(colonIdx + 1).trim();
-    // Strip surrounding quotes
-    const val = rawVal.replace(/^["']|["']$/g, "");
-    if (!val) continue;
+  const title = safeStr(obj.title, 200);
+  if (title) meta.title = title;
 
-    switch (key) {
-      case "title":
-        meta.title = val.slice(0, 200);
-        break;
-      case "visibility":
-        if (val === "public" || val === "unlisted") meta.visibility = val;
-        break;
-      case "slug":
-        meta.slug = val.slice(0, 60).toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
-        break;
-      case "description":
-        meta.description = val.slice(0, 300);
-        break;
-      case "author":
-        meta.author = val.slice(0, 100);
-        break;
-      case "date":
-        meta.date = val.slice(0, 30);
-        break;
-    }
+  const vis = safeStr(obj.visibility, 10);
+  if (vis === "public" || vis === "unlisted") meta.visibility = vis;
+
+  const slug = safeStr(obj.slug, 60);
+  if (slug) {
+    meta.slug = slug.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
   }
+
+  const desc = safeStr(obj.description, 300);
+  if (desc) meta.description = desc;
+
+  const author = safeStr(obj.author, 100);
+  if (author) meta.author = author;
+
+  const date = safeStr(obj.date, 30);
+  if (date) meta.date = date;
+
+  const tags = toStringArray(obj.tags);
+  if (tags && tags.length > 0) meta.tags = tags.slice(0, 20);
 
   return { meta, body };
 }
