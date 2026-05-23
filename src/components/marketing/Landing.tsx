@@ -878,6 +878,12 @@ export function Landing() {
               >
                 Examples
               </a>
+              <a
+                href="#integrations"
+                className="text-sm text-text-muted transition hover:text-text-primary"
+              >
+                Integrations
+              </a>
               <Link
                 href="/api-docs"
                 className="text-sm text-text-muted transition hover:text-text-primary"
@@ -937,7 +943,7 @@ export function Landing() {
             <motion.div variants={reduce ? undefined : fadeUp}>
               <div className="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-accent-dim px-4 py-1.5 text-xs font-semibold tracking-wide text-accent">
                 <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-                Free · No account · Published in seconds
+                Free · No account · Works with Claude
               </div>
             </motion.div>
 
@@ -1156,6 +1162,98 @@ export function Landing() {
       <Container><Divider /></Container>
 
       {/* ──────────────────────────────────────────────────────────────────── */}
+      {/* Integrations                                                          */}
+      {/* ──────────────────────────────────────────────────────────────────── */}
+      <Section
+        id="integrations"
+        eyebrow="CONNECT"
+        title="Works where you already are."
+        subtitle="Readable connects to the tools in your workflow — publish directly from your AI assistant, your terminal, or your CI pipeline."
+      >
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {/* Claude MCP */}
+          <motion.div variants={reduce ? undefined : fadeUp}>
+            <div className="flex flex-col gap-4 rounded-xl border border-border-default bg-bg-elevated p-6 shadow-card transition hover:border-border-strong hover:bg-bg-soft h-full">
+              <div className="w-10 h-10 rounded-lg bg-accent-dim flex items-center justify-center text-accent">
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" aria-hidden>
+                  <path d="M12 3a9 9 0 1 0 0 18A9 9 0 0 0 12 3Z" stroke="currentColor" strokeWidth="1.6" />
+                  <path d="M9 9.5c0-1.38 1.34-2.5 3-2.5s3 1.12 3 2.5c0 1.1-.74 2.04-1.8 2.36L12 12.5v1" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                  <circle cx="12" cy="16" r="0.8" fill="currentColor" />
+                </svg>
+              </div>
+              <div className="text-[15px] font-semibold tracking-tight">Claude</div>
+              <div className="text-[15px] leading-[1.72] text-text-secondary">
+                Connect once in Claude settings. Ask Claude to publish, update, or list your Readable pages — no copy-paste required.
+              </div>
+              <a
+                href="https://mcp.readable.ashwinsathian.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-[13px] font-semibold text-accent transition hover:text-accent-soft mt-auto"
+                onClick={() => trackEvent("integration_clicked", { integration: "claude_mcp" })}
+              >
+                Connect
+                <svg width="12" height="12" fill="none" viewBox="0 0 12 12" aria-hidden>
+                  <path d="M2.5 9.5 9.5 2.5M9.5 2.5H4M9.5 2.5V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </a>
+            </div>
+          </motion.div>
+
+          {/* Terminal / CLI */}
+          <motion.div variants={reduce ? undefined : fadeUp}>
+            <div className="flex flex-col gap-4 rounded-xl border border-border-default bg-bg-elevated p-6 shadow-card h-full">
+              <div className="w-10 h-10 rounded-lg bg-accent-dim flex items-center justify-center text-accent">
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" aria-hidden>
+                  <rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" strokeWidth="1.6" />
+                  <path d="M7 9l3 3-3 3M12 15h5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+              <div className="text-[15px] font-semibold tracking-tight">Terminal</div>
+              <div className="text-[15px] leading-[1.72] text-text-secondary">
+                @readable/cli lets you publish Markdown files from any terminal in one command.
+              </div>
+              <code className="text-[12px] font-mono bg-bg-soft border border-border-default rounded-lg px-3 py-2 text-text-muted break-all">
+                npx @readable/cli publish README.md
+              </code>
+              <span className="inline-flex items-center rounded-full bg-fill-2 px-2.5 py-0.5 text-2xs font-semibold tracking-wide text-text-muted mt-auto w-fit">
+                Coming soon
+              </span>
+            </div>
+          </motion.div>
+
+          {/* GitHub Actions */}
+          <motion.div variants={reduce ? undefined : fadeUp}>
+            <div className="flex flex-col gap-4 rounded-xl border border-border-default bg-bg-elevated p-6 shadow-card transition hover:border-border-strong hover:bg-bg-soft h-full">
+              <div className="w-10 h-10 rounded-lg bg-accent-dim flex items-center justify-center text-accent">
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" aria-hidden>
+                  <circle cx="12" cy="5" r="2" stroke="currentColor" strokeWidth="1.6" />
+                  <circle cx="5" cy="19" r="2" stroke="currentColor" strokeWidth="1.6" />
+                  <circle cx="19" cy="19" r="2" stroke="currentColor" strokeWidth="1.6" />
+                  <path d="M12 7v4M12 11l-5.5 6M12 11l5.5 6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+              <div className="text-[15px] font-semibold tracking-tight">GitHub Actions</div>
+              <div className="text-[15px] leading-[1.72] text-text-secondary">
+                Publish release notes, changelogs, or runbooks automatically on every push.
+              </div>
+              <a
+                href="/api-docs#github-actions"
+                className="inline-flex items-center gap-1 text-[13px] font-semibold text-accent transition hover:text-accent-soft mt-auto"
+              >
+                See recipe
+                <svg width="12" height="12" fill="none" viewBox="0 0 12 12" aria-hidden>
+                  <path d="M2.5 9.5 9.5 2.5M9.5 2.5H4M9.5 2.5V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </a>
+            </div>
+          </motion.div>
+        </div>
+      </Section>
+
+      <Container><Divider /></Container>
+
+      {/* ──────────────────────────────────────────────────────────────────── */}
       {/* FAQ                                                                   */}
       {/* ──────────────────────────────────────────────────────────────────── */}
       <Section id="faq" eyebrow="FAQ" title="Quick answers." center>
@@ -1304,6 +1402,14 @@ export function Landing() {
               <Link href="/api-docs" className="transition hover:text-text-primary">
                 API docs
               </Link>
+              <a
+                href="https://mcp.readable.ashwinsathian.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="transition hover:text-text-primary"
+              >
+                MCP
+              </a>
               <Link href="/pricing" className="transition hover:text-text-primary">
                 Pricing
               </Link>
