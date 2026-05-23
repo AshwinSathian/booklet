@@ -13,8 +13,6 @@ export const metadata: Metadata = buildMetadata({
   pathname: "/templates",
 });
 
-const CATEGORIES = ["All", "Engineering", "Product", "General"];
-
 export default function TemplatesPage() {
   const templatesWithSlug = TEMPLATES.filter((t) => t.slug);
 
