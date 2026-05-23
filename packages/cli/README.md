@@ -5,13 +5,13 @@ Publish Markdown pages from your terminal.
 ## Install
 
 ```bash
-npm install -g @readable/cli
+npm install -g readable-cli
 ```
 
 Or use without installing:
 
 ```bash
-npx @readable/cli publish README.md
+npx readable-cli publish README.md
 ```
 
 ## Authentication
