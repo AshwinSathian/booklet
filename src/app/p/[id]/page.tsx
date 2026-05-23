@@ -17,6 +17,7 @@ import { ExportMenu } from "@/components/share/ExportMenu";
 import { AnalyticsBeacon } from "@/components/share/AnalyticsBeacon";
 import { ReadingProgress } from "@/components/share/ReadingProgress";
 import { PasswordGate } from "@/components/share/PasswordGate";
+import { EmbedButton } from "@/components/share/EmbedButton";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -162,6 +163,11 @@ export default async function SharePage({
               settings={doc.settings}
               raw={doc.raw}
               title={pageTitle}
+            />
+            <EmbedButton
+              pageId={resolvedId}
+              title={pageTitle}
+              baseUrl={absoluteUrl("")}
             />
             <ThemeToggle />
             <Button variant="primary" size="md" href={ROUTES.app} className="hidden sm:inline-flex" data-readable-cta="make-your-own">

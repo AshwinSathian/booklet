@@ -41,7 +41,15 @@ export default clerkMiddleware(async (auth, req) => {
   }
 
   const res = NextResponse.next();
+
+  // Embed pages must be iframe-able from any origin.
+  const isEmbedRoute = /^\/p\/[^/]+\/embed(\/|$)/.test(req.nextUrl.pathname);
   for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
+    if (isEmbedRoute && key === "X-Frame-Options") continue;
+    if (isEmbedRoute && key === "Content-Security-Policy") {
+      res.headers.set(key, value.replace(/frame-ancestors[^;]*(;|$)/, "frame-ancestors *$1"));
+      continue;
+    }
     res.headers.set(key, value);
   }
   return res;

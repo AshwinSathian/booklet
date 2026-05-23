@@ -332,6 +332,7 @@ function PageCard({
   onDragEnd: () => void;
 }) {
   const [copying, setCopying] = useState(false);
+  const [copyingEmbed, setCopyingEmbed] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -365,6 +366,17 @@ function PageCard({
       setTimeout(() => setCopying(false), 1400);
     } catch { /* ignore */ }
   }, [url]);
+
+  const handleCopyEmbed = useCallback(async () => {
+    const src = `${page.baseUrl}/p/${page.id}/embed`;
+    const safeTitle = (page.title ?? "").replace(/"/g, "&quot;");
+    const code = `<iframe\n  src="${src}"\n  style="width:100%;min-height:400px;border:none;border-radius:8px;"\n  title="${safeTitle}"\n  loading="lazy"\n></iframe>`;
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopyingEmbed(true);
+      setTimeout(() => setCopyingEmbed(false), 1800);
+    } catch { /* ignore */ }
+  }, [page.baseUrl, page.id, page.title]);
 
   const handleSetPassword = useCallback(async (pw: string | null) => {
     setSavingPassword(true);
@@ -505,6 +517,13 @@ function PageCard({
             description="Browse and restore previous versions"
             href={`/my-pages/versions/${page.id}`}
             onClick={() => setDrawerOpen(false)}
+          />
+          <DrawerItem
+            icon="code"
+            label={copyingEmbed ? "Copied!" : "Copy embed code"}
+            description="Get an <iframe> snippet to embed this page"
+            onClick={() => void handleCopyEmbed()}
+            active={copyingEmbed}
           />
         </DrawerSection>
 
