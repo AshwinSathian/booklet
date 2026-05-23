@@ -1,163 +1,183 @@
 # Readable
 
-**Paste. Preview. Share.**
+**Publish clean, readable pages from Markdown.**
 
-Readable is a minimal Markdown-to-shareable-page tool. Paste any Markdown into the editor, see a live preview, and publish to a clean read-only URL in one click. No accounts, no setup, no friction.
+Paste Markdown into the editor, preview it live, and share a polished read-only URL in one click. Sign in for pages that never expire, version history, analytics, custom slugs, password protection, collections, and a full REST API.
 
-Published pages expire after 30 days. Drafts are saved locally in your browser.
+**[readable.ashwinsathian.com](https://readable.ashwinsathian.com)**
 
-## What it does
+---
 
-- **Live preview** — Markdown is parsed and rendered as you type (200 ms debounce)
-- **Draft management** — unlimited local drafts with autosave, rename, duplicate, import, and export
-- **Publish** — one click creates a public URL backed by Cloudflare KV
-- **Table of contents** — auto-generated for docs with 3+ headings; scroll-tracked on desktop
-- **Settings** — spacing (compact / comfortable), content width, and code block collapse mode per draft
-- **Export** — copy as raw Markdown or HTML fragment
-- **Theming** — dark-first with a light-mode toggle
+## Features
+
+- **Editor** — live preview (120 ms debounce), unlimited local drafts with autosave, import/export
+- **Share pages** — clean read-only URLs, table of contents, reading time, dark/light mode
+- **Embeds** — `<iframe>` embed codes for any page via `/p/:id/embed`
+- **Export** — PDF, Markdown, HTML fragment
+- **LaTeX / KaTeX** — inline `$...$` and display `$$...$$` math blocks
+- **Mermaid diagrams** — fenced code blocks with `mermaid` language tag
+- **Version history** — every publish is snapshotted; browse and restore past versions
+- **Analytics** — per-page view counts, scroll depth, referrers
+- **Collections** — group pages into a named collection with a shared URL
+- **Password protection** — require a password to view any page
+- **Custom slugs** — set a human-readable URL like `/p/my-release-notes`
+- **Webhooks** — HTTP callbacks on `page.published` and `page.deleted` events
+- **REST API** — publish, update, list, and delete pages programmatically
+- **MCP server** — expose the API to AI assistants (Claude, etc.) via the MCP protocol
+- **CLI** — publish Markdown from your terminal (`npx readable-cli`)
+- **Frontmatter** — YAML frontmatter sets title, slug, visibility, tags, author, date
+
+---
+
+## CLI
+
+```bash
+npm install -g readable-cli
+
+readable login                          # save your API key
+readable publish README.md              # publish a file
+readable publish README.md --watch      # watch + auto-republish on save
+readable publish - < NOTES.md           # from stdin
+readable pages list                     # list your pages
+```
+
+See [packages/cli/README.md](packages/cli/README.md) for full docs.
+
+---
+
+## REST API
+
+All endpoints are under `/api/v1/` and authenticated with `Authorization: Bearer <rdbl_...>`.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/v1/publish` | Create a new page |
+| `GET` | `/api/v1/pages` | List your pages |
+| `PATCH` | `/api/v1/pages/:id` | Update content, slug, or visibility |
+| `DELETE` | `/api/v1/pages/:id` | Delete a page |
+| `GET` | `/api/v1/keys` | List API keys |
+| `POST` | `/api/v1/keys` | Create an API key |
+| `DELETE` | `/api/v1/keys/:id` | Revoke an API key |
+
+**Publish example:**
+
+```bash
+curl -X POST https://readable.ashwinsathian.com/api/v1/publish \
+  -H "Authorization: Bearer rdbl_..." \
+  -H "Content-Type: application/json" \
+  -d '{"raw": "# Hello\n\nThis is my page."}'
+```
+
+---
+
+## MCP Server
+
+The MCP server is a Cloudflare Worker that exposes Readable's API to AI assistants supporting the [Model Context Protocol](https://modelcontextprotocol.io).
+
+**Endpoint:** `https://mcp.readable.ashwinsathian.com`  
+**Tools:** `publish_page`, `update_page`, `list_pages`, `delete_page`
+
+```bash
+cd mcp-server && npm run deploy
+```
+
+---
 
 ## Tech stack
 
 | Layer | Technology |
-|---|---|
+|-------|-----------|
 | Framework | Next.js 16 (App Router) |
-| Runtime | React 19 |
 | Language | TypeScript 5 (strict) |
 | Styling | Tailwind CSS v4 |
-| UI components | PrimeReact 10 |
-| Markdown parsing | unified + remark-parse + remark-gfm |
-| Storage | Cloudflare KV (`READABLE_DOCS` binding) |
+| Auth | Clerk |
+| Database | MongoDB (pages, users, API keys, webhooks) |
+| Storage | Cloudflare KV (rendered documents) |
 | Deployment | Cloudflare Workers via OpenNext |
+| Markdown | unified + remark-parse + remark-gfm + remark-math |
+| Math | KaTeX |
+| Diagrams | Mermaid |
 | Analytics | Google Analytics 4 |
 
-## Project structure
-
-```
-src/
-  app/
-    page.tsx              # Landing page (shell)
-    app/
-      AppClient.tsx       # Editor — all client state, autosave, keyboard shortcuts
-      page.tsx            # Editor page
-    p/[id]/
-      page.tsx            # Published share page (server component, KV-backed)
-    api/publish/
-      route.ts            # POST /api/publish — validates, rate-limits, writes to KV
-  components/
-    app/                  # Editor UI: TopBar, PasteInput, PreviewPane, DraftsDialog, AppShell
-    blocks/               # BlockRenderer, InlineRenderer — custom Markdown AST renderer
-    marketing/            # Landing.tsx
-    ui/                   # AppLogo, ThemeToggle, ToastProvider, PrimeStyles
-  lib/
-    blocks.ts             # Block/Inline type definitions and DocSettings
-    parse.ts              # Markdown → Block[] parser (unified pipeline)
-    drafts/               # localStorage draft system (CRUD, migration, autosave)
-    sanitize.ts           # Input normalization
-    export.ts             # Copy as Markdown / HTML
-    toc.ts                # Table of contents builder
-    storage.ts            # Cloudflare KV wrappers (getDoc, putDoc)
-    analytics.ts          # GA4 event helpers
-    constants.ts          # App-wide constants
-public/
-  primereact-themes/      # PrimeReact lara-indigo theme CSS (dark + light), served statically
-```
+---
 
 ## Local development
 
 ### Prerequisites
 
 - Node.js 20+
-- A Cloudflare account with a KV namespace named `READABLE_DOCS`
+- MongoDB connection string
+- Clerk account (for auth)
+- Cloudflare account with a KV namespace
 
-### Install
+### Install & run
 
 ```bash
 npm install
+npm run dev        # Next.js dev server at http://localhost:3000
+npm run preview    # Full Cloudflare Workers runtime via Wrangler
 ```
 
-### Run locally (Next.js dev server)
+### Environment variables
+
+Create `.env.local`:
+
+```env
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
+CLERK_SECRET_KEY=sk_test_...
+MONGODB_URI=mongodb+srv://...
+```
+
+### Deploy
 
 ```bash
-npm run dev
+npm run deploy     # builds via OpenNext then wrangler deploy
 ```
 
-Opens at `http://localhost:3000`. The editor and landing page work fully without Cloudflare. The publish flow requires the KV binding — for local testing use the Wrangler preview instead.
+---
 
-### Run locally (Cloudflare Workers — publish flow included)
+## Project structure
 
-```bash
-npm run preview
+```
+src/
+  app/
+    app/            # Editor (client)
+    p/[id]/         # Share page + embed
+    my-pages/       # Dashboard — pages, API keys, webhooks, collections
+    api/v1/         # REST API
+    explore/        # Public page directory
+    templates/      # Template landing pages
+  components/
+    blocks/         # BlockRenderer + InlineRenderer (custom AST renderer)
+    share/          # TOC, export, embed, reading progress, analytics beacon
+    ui/             # Design system components
+  lib/
+    blocks.ts       # Block/Inline type definitions
+    parse.ts        # Markdown → Block[] (unified pipeline)
+    db/             # MongoDB helpers
+    storage.ts      # Cloudflare KV wrappers
+    quota.ts        # Feature flags
+    frontmatter.ts  # YAML frontmatter parser (js-yaml)
+packages/
+  cli/              # readable-cli npm package
+mcp-server/         # Cloudflare Worker MCP server
+.github/
+  workflows/        # publish-cli.yml — auto-publish CLI to npm
+  examples/         # publish-to-readable.yml — use in your own repo
 ```
 
-This builds via OpenNext and starts `wrangler dev`, which emulates the full Cloudflare Workers runtime including KV.
+---
 
-## Environment variables
+## GitHub Actions
 
-Set these in `wrangler.jsonc` under `vars` for Workers, and in `.env.local` for `next dev`:
+### Auto-publish CLI to npm
 
-| Variable | Description |
-|---|---|
-| `NEXT_PUBLIC_SITE_URL` | Canonical origin (e.g. `https://readable.ashwinsathian.com`) |
-| `NEXT_PUBLIC_GA_MEASUREMENT_ID` | Google Analytics 4 measurement ID |
+Push to `main` with a bumped version in `packages/cli/package.json` → automatically publishes `readable-cli` to npm.
 
-## Cloudflare KV setup
+Required secret: `NPM_TOKEN` (Granular Access Token with publish + 2FA bypass).
 
-1. Create a KV namespace in the Cloudflare dashboard (or via `wrangler kv namespace create READABLE_DOCS`)
-2. Copy the namespace ID into `wrangler.jsonc` under `kv_namespaces[0].id`
-3. For local Wrangler dev, add a `--local` flag or create a preview namespace
+### Publish docs to Readable from your repo
 
-## Deployment
-
-```bash
-npm run deploy
-```
-
-Runs `opennextjs-cloudflare build` then `wrangler deploy`. Requires `wrangler login` and the KV namespace to be configured.
-
-## MCP Server
-
-The MCP server is a separate Cloudflare Worker in `mcp-server/`. It exposes Readable's REST API to AI assistants that support the MCP protocol (Claude, and any other MCP-compatible client). It has no runtime npm dependencies — only `wrangler`, `typescript`, and `@cloudflare/workers-types` as devDependencies.
-
-**Endpoint:** `https://mcp.readable.ashwinsathian.com`  
-**Transport:** HTTP + SSE (MCP protocol version 2024-11-05)  
-**Tools:** `publish_page`, `update_page`, `list_pages`, `delete_page`
-
-### Deploy the MCP server
-
-```bash
-cd mcp-server
-npm install
-npm run typecheck   # verify before deploying
-npm run deploy
-```
-
-### Local development
-
-```bash
-cd mcp-server
-npm run dev
-```
-
-Runs at `http://localhost:8788`. Set `READABLE_API_BASE` in `mcp-server/wrangler.jsonc` to `http://localhost:3000` to point at the local Next.js dev server.
-
-### Architecture notes (MCP server)
-
-**Session lifecycle.** Each `GET /sse` connection creates an in-memory session (10-minute TTL). Sessions are cleaned up on new connections and when the stream is aborted. The Worker sends a 25-second SSE keepalive ping to prevent Cloudflare from closing idle streams.
-
-**Auth.** The user's `rdbl_live_...` API key is extracted from the `Authorization: Bearer` header, validated for format (prefix + ≥32 alphanumeric chars), and forwarded on every REST call. The MCP server never stores keys persistently. Revoking a key from `/my-pages` invalidates it immediately everywhere.
-
-**Upstream timeout.** Every Readable API call has a 10-second `AbortSignal.timeout`. A timeout surfaces as a human-readable tool error rather than hanging the SSE session.
-
-**Root `npm run deploy` does NOT deploy the MCP server.** They are independent workers. You must `cd mcp-server` first.
-
-## Architecture notes
-
-**No server state in the editor.** All draft data lives in `localStorage`. The server is only involved at publish time (`POST /api/publish`) and when loading a published page (`GET /p/[id]`).
-
-**Dark-first theming.** `:root` is the dark theme — this prevents a white flash before JavaScript hydrates. `html.light` overrides it. `next-themes` manages the class toggle.
-
-**XSS safety.** User Markdown is never rendered as raw HTML. It is parsed into a typed `Block[]` AST and rendered through `BlockRenderer` / `InlineRenderer`. Link `href` values are validated against an `https?://` and `mailto:` allowlist.
-
-**Rate limiting.** The publish endpoint allows 12 publishes per minute per IP, tracked in KV with a 90-second TTL. It is not atomic (no Durable Object), which is acceptable at current traffic volumes.
-
-**30-day TTL.** Published documents expire automatically via Cloudflare KV's `expirationTtl`. There is no deletion endpoint — documents simply become inaccessible after expiry.
+See [.github/examples/publish-to-readable.yml](.github/examples/publish-to-readable.yml).
