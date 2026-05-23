@@ -189,6 +189,20 @@ export async function getFeaturedPages(limit = 50): Promise<ExploreItem[]> {
   return docs.map((d) => ({ id: d._id, slug: d.slug, title: d.title, view_count: d.view_count, created_at: d.created_at }));
 }
 
+export async function getPagesByCollection(collectionId: string): Promise<ExploreItem[]> {
+  const db = await getDb();
+  const docs = await db
+    .collection<PageDoc>("pages")
+    .find({ collection_id: collectionId, visibility: "public" })
+    .sort({ created_at: -1 })
+    .limit(200)
+    .project<Pick<PageDoc, "_id" | "slug" | "title" | "view_count" | "created_at">>({
+      _id: 1, slug: 1, title: 1, view_count: 1, created_at: 1,
+    })
+    .toArray();
+  return docs.map((d) => ({ id: d._id, slug: d.slug, title: d.title, view_count: d.view_count, created_at: d.created_at }));
+}
+
 // ---------------------------------------------------------------------------
 // Collections
 // ---------------------------------------------------------------------------

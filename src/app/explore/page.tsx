@@ -1,7 +1,7 @@
 import { AppLogo } from "@/components/ui/AppLogo";
 import { Button } from "@/components/ui/Button";
 import { APP_NAME, ROUTES } from "@/lib/constants";
-import { getRecentPublicPages } from "@/lib/db";
+import { getFeaturedPages, getRecentPublicPages } from "@/lib/db";
 import { buildMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -30,7 +30,10 @@ function timeAgo(iso: string): string {
 }
 
 export default async function ExplorePage() {
-  const pages = await getRecentPublicPages(48);
+  const [featured, recent] = await Promise.all([
+    getFeaturedPages(50),
+    getRecentPublicPages(24),
+  ]);
 
   return (
     <div className="min-h-screen bg-bg text-text-primary">
@@ -49,49 +52,100 @@ export default async function ExplorePage() {
         <div className="mb-8">
           <h1 className="text-2xl font-bold tracking-tight">Explore</h1>
           <p className="mt-1 text-sm text-text-secondary">
-            Recently published pages from the {APP_NAME} community.
+            Pages from the {APP_NAME} community.
           </p>
         </div>
 
-        {pages.length === 0 ? (
-          <div className="py-20 text-center">
-            <p className="text-text-muted text-sm">No published pages yet.</p>
-            <div className="mt-4">
-              <Button variant="primary" size="md" href={ROUTES.app}>
-                Publish the first one →
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {pages.map((page) => (
-              <Link
-                key={page.id}
-                href={pageHref(page)}
-                className="group flex flex-col justify-between rounded-xl border border-border-subtle p-4 hover:border-accent-soft/40 hover:bg-fill-1 transition"
-              >
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-text-primary group-hover:text-accent transition truncate">
-                    {page.title ?? "Untitled"}
-                  </p>
-                  <p className="mt-0.5 text-xs text-text-muted">
-                    {page.slug ? `/p/${page.slug}` : `/p/${page.id}`}
-                  </p>
-                </div>
-                <div className="mt-3 flex items-center justify-between">
-                  <span className="text-2xs text-text-muted">{timeAgo(page.created_at)}</span>
-                  <div className="flex items-center gap-1 text-2xs text-text-muted">
-                    <svg width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden>
-                      <path d="M1 8C2.5 4.5 5 3 8 3s5.5 1.5 7 5c-1.5 3.5-4 5-7 5S2.5 11.5 1 8z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                      <circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.5" />
-                    </svg>
-                    {page.view_count.toLocaleString()}
+        {featured.length > 0 && (
+          <section className="mb-10">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-3">Featured</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {featured.map((page) => (
+                <Link
+                  key={page.id}
+                  href={pageHref(page)}
+                  className="group relative flex flex-col justify-between rounded-xl border border-accent-soft/30 bg-accent-dim/30 p-4 hover:border-accent-soft/60 hover:bg-accent-dim/50 transition"
+                >
+                  <div className="absolute top-3 right-3">
+                    <span className="rounded-pill bg-accent/10 text-accent text-2xs font-semibold px-2 py-0.5 border border-accent/20">
+                      Featured
+                    </span>
                   </div>
-                </div>
-              </Link>
-            ))}
-          </div>
+                  <div className="min-w-0 pr-16">
+                    <p className="text-sm font-medium text-text-primary group-hover:text-accent transition truncate">
+                      {page.title ?? "Untitled"}
+                    </p>
+                    <p className="mt-0.5 text-xs text-text-muted">
+                      {page.slug ? `/p/${page.slug}` : `/p/${page.id}`}
+                    </p>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between">
+                    <span className="text-2xs text-text-muted">{timeAgo(page.created_at)}</span>
+                    <div className="flex items-center gap-1 text-2xs text-text-muted">
+                      <svg width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden>
+                        <path d="M1 8C2.5 4.5 5 3 8 3s5.5 1.5 7 5c-1.5 3.5-4 5-7 5S2.5 11.5 1 8z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                        <circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.5" />
+                      </svg>
+                      {page.view_count.toLocaleString()}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
         )}
+
+        <section>
+          {(featured.length > 0 || recent.length > 0) && (
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-text-muted mb-3">
+              Recently Published
+            </h2>
+          )}
+
+          {recent.length === 0 && featured.length === 0 ? (
+            <div className="py-20 text-center">
+              <p className="text-text-muted text-sm">No published pages yet.</p>
+              <div className="mt-4">
+                <Button variant="primary" size="md" href={ROUTES.app}>
+                  Publish the first one →
+                </Button>
+              </div>
+            </div>
+          ) : recent.length === 0 ? (
+            <p className="text-sm text-text-muted py-4">
+              Be the first to feature your work — toggle &ldquo;Feature on Explore&rdquo; from your page settings.
+            </p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {recent.map((page) => (
+                <Link
+                  key={page.id}
+                  href={pageHref(page)}
+                  className="group flex flex-col justify-between rounded-xl border border-border-subtle p-4 hover:border-accent-soft/40 hover:bg-fill-1 transition"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-text-primary group-hover:text-accent transition truncate">
+                      {page.title ?? "Untitled"}
+                    </p>
+                    <p className="mt-0.5 text-xs text-text-muted">
+                      {page.slug ? `/p/${page.slug}` : `/p/${page.id}`}
+                    </p>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between">
+                    <span className="text-2xs text-text-muted">{timeAgo(page.created_at)}</span>
+                    <div className="flex items-center gap-1 text-2xs text-text-muted">
+                      <svg width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden>
+                        <path d="M1 8C2.5 4.5 5 3 8 3s5.5 1.5 7 5c-1.5 3.5-4 5-7 5S2.5 11.5 1 8z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                        <circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.5" />
+                      </svg>
+                      {page.view_count.toLocaleString()}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
 
         <div className="mt-12 rounded-xl border border-border-subtle bg-bg-elevated px-6 py-8 text-center">
           <p className="text-sm font-semibold text-text-primary mb-1">
