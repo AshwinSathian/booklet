@@ -114,6 +114,42 @@ npm run deploy
 
 Runs `opennextjs-cloudflare build` then `wrangler deploy`. Requires `wrangler login` and the KV namespace to be configured.
 
+## MCP Server
+
+The MCP server is a separate Cloudflare Worker in `mcp-server/`. It exposes Readable's REST API to AI assistants that support the MCP protocol (Claude, and any other MCP-compatible client). It has no runtime npm dependencies — only `wrangler`, `typescript`, and `@cloudflare/workers-types` as devDependencies.
+
+**Endpoint:** `https://mcp.readable.ashwinsathian.com`  
+**Transport:** HTTP + SSE (MCP protocol version 2024-11-05)  
+**Tools:** `publish_page`, `update_page`, `list_pages`, `delete_page`
+
+### Deploy the MCP server
+
+```bash
+cd mcp-server
+npm install
+npm run typecheck   # verify before deploying
+npm run deploy
+```
+
+### Local development
+
+```bash
+cd mcp-server
+npm run dev
+```
+
+Runs at `http://localhost:8788`. Set `READABLE_API_BASE` in `mcp-server/wrangler.jsonc` to `http://localhost:3000` to point at the local Next.js dev server.
+
+### Architecture notes (MCP server)
+
+**Session lifecycle.** Each `GET /sse` connection creates an in-memory session (10-minute TTL). Sessions are cleaned up on new connections and when the stream is aborted. The Worker sends a 25-second SSE keepalive ping to prevent Cloudflare from closing idle streams.
+
+**Auth.** The user's `rdbl_live_...` API key is extracted from the `Authorization: Bearer` header, validated for format (prefix + ≥32 alphanumeric chars), and forwarded on every REST call. The MCP server never stores keys persistently. Revoking a key from `/my-pages` invalidates it immediately everywhere.
+
+**Upstream timeout.** Every Readable API call has a 10-second `AbortSignal.timeout`. A timeout surfaces as a human-readable tool error rather than hanging the SSE session.
+
+**Root `npm run deploy` does NOT deploy the MCP server.** They are independent workers. You must `cd mcp-server` first.
+
 ## Architecture notes
 
 **No server state in the editor.** All draft data lives in `localStorage`. The server is only involved at publish time (`POST /api/publish`) and when loading a published page (`GET /p/[id]`).

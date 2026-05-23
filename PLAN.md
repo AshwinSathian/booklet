@@ -6,6 +6,36 @@
 
 ---
 
+## MCP Server
+
+Deployed at: https://mcp.readable.ashwinsathian.com  
+Source: `mcp-server/` (standalone Cloudflare Worker, separate from main app)  
+Deploy: `cd mcp-server && npm run deploy`  
+Last reviewed: May 2026
+
+### Architecture
+- Standalone Cloudflare Worker (not part of the Next.js/OpenNext bundle)
+- HTTP+SSE transport per MCP spec (protocol version 2024-11-05)
+- Auth: `extractApiKey` validates Bearer token format (prefix + 32-char minimum suffix) before forwarding to the Readable REST API — no additional auth layer
+- Sessions: in-memory `Map<string, Session>`, 10-minute TTL, cleaned on each new `/sse` connection; 25-second keepalive pings prevent Cloudflare from closing idle streams
+- Tools: `publish_page`, `update_page`, `list_pages`, `delete_page`
+- Upstream fetch timeout: 10 seconds (`AbortSignal.timeout`) — fails fast rather than hanging the SSE session
+
+### Protocol compliance
+- Handles `notifications/*` silently (no response, per MCP spec for notifications)
+- Handles `ping` with `{}` result
+- `rpcError` id defaults to `null` when id is indeterminate (not `0`) — per JSON-RPC 2.0 §5.1
+- `Content-Type: application/json` only sent on requests that carry a body (POST/PATCH)
+
+### Environment
+The worker reads `READABLE_API_BASE` from vars (set in `mcp-server/wrangler.jsonc`).
+No secrets required — auth is delegated to the user's API key.
+
+### Key revocation
+Deleting an API key from `/my-pages` invalidates it immediately across all clients including the MCP server. There is no separate MCP credential to rotate.
+
+---
+
 ## Why This Plan Exists
 
 A simulated seed-round pitch surfaced four structural problems that prior roadmaps
