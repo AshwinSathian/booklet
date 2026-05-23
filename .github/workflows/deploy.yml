@@ -1,0 +1,40 @@
+# Builds and deploys the Next.js app to Cloudflare Workers via OpenNext.
+# Runs on every push to main.
+#
+# Required secrets (repo → Settings → Secrets → Actions):
+#   CLOUDFLARE_API_TOKEN  — API token with "Workers Scripts: Edit" permission
+#   CLOUDFLARE_ACCOUNT_ID — Your Cloudflare account ID (from dashboard URL)
+
+name: Deploy to Cloudflare Workers
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "packages/cli/**"
+      - "mcp-server/**"
+      - "**.md"
+      - ".github/examples/**"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build (OpenNext + Wrangler)
+        run: npm run deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
