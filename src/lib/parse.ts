@@ -1,5 +1,6 @@
 import type { Parent, Root, Text } from "mdast";
 import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
 import remarkParse from "remark-parse";
 import { unified } from "unified";
 import { visit } from "unist-util-visit";
@@ -52,6 +53,9 @@ function inlineFromNodes(nodes: MdNode[]): Inline[] {
           src: String(n.url ?? ""),
           alt: String(n.alt ?? ""),
         });
+        break;
+      case "inlineMath":
+        out.push({ t: "math", v: String(n.value ?? "") });
         break;
       case "break":
         out.push({ t: "text", v: "\n" });
@@ -165,6 +169,10 @@ function blocksFromChildren(children: MdNode[]): Block[] {
         break;
       }
 
+      case "math":
+        blocks.push({ t: "math", display: true, code: String(node.value ?? "") });
+        break;
+
       case "thematicBreak":
         blocks.push({ t: "hr" });
         break;
@@ -194,7 +202,7 @@ function blocksFromChildren(children: MdNode[]): Block[] {
 }
 
 export function parseToBlocks(input: string): Block[] {
-  const tree = unified().use(remarkParse).use(remarkGfm).parse(input) as Root;
+  const tree = unified().use(remarkParse).use(remarkGfm).use(remarkMath).parse(input) as Root;
   visit(tree, "html", removeRawHtmlNodes);
   return blocksFromChildren((tree.children ?? []) as unknown as MdNode[]);
 }

@@ -5,7 +5,8 @@ export type Inline =
   | { t: "del"; c: Inline[] }
   | { t: "code"; v: string }
   | { t: "link"; href: string; c: Inline[] }
-  | { t: "image"; src: string; alt: string };
+  | { t: "image"; src: string; alt: string }
+  | { t: "math"; v: string };
 
 /**
  * A list item. The `children` field holds nested block content (nested lists,
@@ -30,7 +31,8 @@ export type Block =
   | { t: "table"; head: Inline[][]; rows: Inline[][][] }
   | { t: "hr" }
   | { t: "image"; src: string; alt: string }
-  | { t: "diagram"; lang: string; code: string };
+  | { t: "diagram"; lang: string; code: string }
+  | { t: "math"; display: true; code: string };
 
 export type DocSettings = {
   spacing: "compact" | "comfortable";

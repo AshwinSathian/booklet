@@ -1,4 +1,5 @@
 import type { Inline } from "@/lib/blocks";
+import katex from "katex";
 import React from "react";
 
 function safeHref(href: string): string {
@@ -70,6 +71,21 @@ export function InlineRenderer({ inl }: { inl: Inline[] }) {
                 src={src}
                 alt={node.alt}
                 className="inline-block max-w-full align-middle rounded"
+              />
+            );
+          }
+          case "math": {
+            let html = "";
+            try {
+              html = katex.renderToString(node.v, { throwOnError: false, displayMode: false });
+            } catch {
+              return <code key={i} className="text-[0.9em] font-mono">{node.v}</code>;
+            }
+            return (
+              <span
+                key={i}
+                className="katex-inline"
+                dangerouslySetInnerHTML={{ __html: html }}
               />
             );
           }

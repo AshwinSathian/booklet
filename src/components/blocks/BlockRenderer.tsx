@@ -3,6 +3,7 @@
 import type { Block, DocSettings, ListItem } from "@/lib/blocks";
 import { UI } from "@/lib/constants";
 import { highlightCode } from "@/lib/highlight";
+import katex from "katex";
 import type { JSX } from "react";
 import { useMemo, useState } from "react";
 import { DiagramBlock } from "./DiagramBlock";
@@ -330,6 +331,22 @@ export function BlockRenderer({
 
             case "diagram":
               return <DiagramBlock key={idx} lang={b.lang} code={b.code} />;
+
+            case "math": {
+              let html = "";
+              try {
+                html = katex.renderToString(b.code, { throwOnError: false, displayMode: true });
+              } catch {
+                html = `<code>${b.code}</code>`;
+              }
+              return (
+                <div
+                  key={idx}
+                  className="katex-display-block overflow-x-auto py-2 text-center"
+                  dangerouslySetInnerHTML={{ __html: html }}
+                />
+              );
+            }
 
             default:
               return null;

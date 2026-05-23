@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "katex/dist/katex.min.css";
 
 /*
   Theme strategy (dark-first, avoids white flash):
