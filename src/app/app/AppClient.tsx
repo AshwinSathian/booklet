@@ -8,7 +8,7 @@ import { ToastProvider, useToast } from "@/components/ui/ToastProvider";
 import { trackEvent } from "@/lib/analytics";
 import { ANALYTICS_EVENTS, hashId } from "@/lib/analytics-events";
 import { DEFAULT_SETTINGS, type DocSettings } from "@/lib/blocks";
-import { API, APP_NAME, STORAGE, UI } from "@/lib/constants";
+import { API, STORAGE, UI } from "@/lib/constants";
 import {
   AUTOSAVE,
   clearLastDraftsPersistError,
@@ -732,10 +732,6 @@ function AppPageContent() {
             />
           }
         />
-      </div>
-
-      <div className="mt-6 pb-6 flex items-center justify-center gap-4 text-[12px] text-[rgb(var(--muted))]">
-        © {new Date().getFullYear()} {APP_NAME}. Built for clarity.
       </div>
     </div>
   );

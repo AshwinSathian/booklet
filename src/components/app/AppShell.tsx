@@ -4,6 +4,21 @@ import React, { useState } from "react";
 
 type MobilePane = "edit" | "preview";
 
+const PEN_ICON = (
+  <svg width="13" height="13" fill="none" viewBox="0 0 16 16" aria-hidden>
+    <path d="M12.5 2.5a1.77 1.77 0 0 1 2.5 2.5L5.5 14.5l-4 1 1-4L12.5 2.5z"
+      stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const EYE_ICON = (
+  <svg width="13" height="13" fill="none" viewBox="0 0 16 16" aria-hidden>
+    <path d="M1 8s2.667-5.333 7-5.333S15 8 15 8s-2.667 5.333-7 5.333S1 8 1 8z"
+      stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.5" />
+  </svg>
+);
+
 export function AppShell({
   left,
   right,
@@ -14,35 +29,66 @@ export function AppShell({
   const [pane, setPane] = useState<MobilePane>("edit");
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 grid grid-cols-1 lg:grid-cols-2 gap-0 h-full min-h-0 overflow-hidden">
-      {/* Mobile pane toggle */}
-      <div className="lg:hidden sticky top-2 z-10 col-span-1">
-        <div className="flex items-center justify-center">
-          <div className="flex rounded-pill border border-outline bg-bg-elevated p-0.5 shadow-card">
-            {(["edit", "preview"] as const).map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => setPane(p)}
-                className={[
-                  "rounded-pill px-5 py-1.5 text-xs font-semibold uppercase tracking-wider transition-colors duration-normal",
-                  pane === p
-                    ? "bg-accent text-white shadow-sm"
-                    : "text-text-muted hover:text-text-primary",
-                ].join(" ")}
-              >
-                {p}
-              </button>
-            ))}
-          </div>
+    <div className="flex h-full min-h-0 flex-col overflow-hidden lg:flex-row">
+      {/* ── Mobile tab bar ── */}
+      <div className="shrink-0 lg:hidden border-b border-border-subtle bg-bg-soft">
+        <div className="flex">
+          {([
+            { id: "edit",    label: "Write",   icon: PEN_ICON },
+            { id: "preview", label: "Preview", icon: EYE_ICON },
+          ] as const).map(({ id, label, icon }) => (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              aria-selected={pane === id}
+              onClick={() => setPane(id)}
+              className={[
+                "relative flex flex-1 items-center justify-center gap-1.5 py-2.5",
+                "text-xs font-semibold transition-colors duration-fast",
+                pane === id
+                  ? "text-accent"
+                  : "text-text-muted hover:text-text-secondary",
+              ].join(" ")}
+            >
+              {icon}
+              {label}
+              {/* Active underline indicator */}
+              {pane === id && (
+                <span
+                  aria-hidden
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent rounded-t-full"
+                  style={{ animation: "fadeIn 0.15s ease both" }}
+                />
+              )}
+            </button>
+          ))}
         </div>
       </div>
 
-      <div className={["flex min-h-0 overflow-hidden w-full", pane === "edit" ? "animate-fade-in" : "hidden lg:flex"].join(" ")}>
+      {/* ── Panes ── */}
+      {/* Desktop: side-by-side with divider */}
+      {/* Mobile: show active pane full-width */}
+      <div
+        className={[
+          "flex min-h-0 overflow-hidden w-full",
+          "lg:max-w-[50%] lg:flex lg:flex-col",
+          pane === "edit" ? "flex-1 animate-fade-in" : "hidden lg:flex",
+        ].join(" ")}
+      >
         {left}
       </div>
 
-      <div className={["flex min-h-0 overflow-hidden w-full", pane === "preview" ? "animate-fade-in" : "hidden lg:flex"].join(" ")}>
+      {/* Vertical divider — desktop only */}
+      <div aria-hidden className="hidden lg:block w-px shrink-0 bg-border-subtle" />
+
+      <div
+        className={[
+          "flex min-h-0 overflow-hidden w-full",
+          "lg:flex-1 lg:flex lg:flex-col",
+          pane === "preview" ? "flex-1 animate-fade-in" : "hidden lg:flex",
+        ].join(" ")}
+      >
         {right}
       </div>
     </div>

@@ -1153,7 +1153,8 @@ export function TopBar({
             showSaveWarning={showSaveWarning}
           />
 
-          <div className="mx-1 h-4 w-px bg-outline" />
+          {/* Divider only visible when SaveIndicator shows (sm+) */}
+          <div className="hidden sm:block mx-1 h-4 w-px bg-outline" />
 
           <IconBtn
             label="More options"
