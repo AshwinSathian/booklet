@@ -18,6 +18,7 @@ import { AnalyticsBeacon } from "@/components/share/AnalyticsBeacon";
 import { ReadingProgress } from "@/components/share/ReadingProgress";
 import { PasswordGate } from "@/components/share/PasswordGate";
 import { EmbedButton } from "@/components/share/EmbedButton";
+import { StickyHeader } from "@/components/share/StickyHeader";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -143,7 +144,23 @@ export default async function SharePage({
       <AnalyticsBeacon pageId={resolvedId} />
 
       {/* ── Sticky header ── */}
-      <header className="sticky top-0 z-20 border-b border-border-subtle bg-bg/85 backdrop-blur-xl print:hidden">
+      <StickyHeader
+        compact={
+          <div className={`mx-auto w-full px-4 py-2 flex items-center justify-between gap-3 ${maxW}`}>
+            <AppLogo onlyIcon={true} />
+            <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+              <ExportMenu blocks={doc.blocks} settings={doc.settings} raw={doc.raw} title={pageTitle} />
+              <ThemeToggle />
+              <Button variant="primary" size="md" href={ROUTES.app} data-readable-cta="make-your-own" className="hidden xs:inline-flex">
+                <span className="hidden sm:inline">Write</span>
+                <svg width="11" height="11" fill="none" viewBox="0 0 11 11" aria-hidden>
+                  <path d="M2 9 9 2M9 2H4.5M9 2v4.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </Button>
+            </div>
+          </div>
+        }
+      >
         <div className={`mx-auto w-full px-4 py-3 flex items-center justify-between gap-3 ${maxW}`}>
           <AppLogo onlyIcon={false} />
 
@@ -180,7 +197,7 @@ export default async function SharePage({
             </Button>
           </div>
         </div>
-      </header>
+      </StickyHeader>
 
       {/* ── Main content ── */}
       <main className={`mx-auto w-full px-4 py-6 sm:py-8 ${maxW}`}>
@@ -198,13 +215,15 @@ export default async function SharePage({
           {showToc ? <DesktopTocClient toc={toc} /> : null}
         </div>
 
-        {/* ── Mobile "create your own" nudge — shown at end of article ── */}
-        <div className="mt-12 sm:hidden">
-            <Link
-              href="/"
-              className="flex items-center gap-3 rounded-2xl border border-border-default bg-bg-elevated p-4 transition hover:border-accent/30 hover:bg-bg-soft"
-            >
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden className="shrink-0">
+      </main>
+
+      {/* ── Footer colophon ── */}
+      <footer className="mt-12 border-t border-border-subtle print:hidden">
+        <div className={`mx-auto w-full px-4 py-8 ${maxW}`}>
+          {/* Colophon row */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden className="shrink-0">
                 <rect width="24" height="24" rx="5.5" fill="var(--color-accent)" />
                 <path
                   d="M 6.5 5 L 6.5 19 M 6.5 5 L 13 5 Q 17 5 17 9 Q 17 13 13 13 L 6.5 13 M 11.5 13 L 17 19"
@@ -214,55 +233,23 @@ export default async function SharePage({
                   strokeLinejoin="round"
                 />
               </svg>
-              <div className="min-w-0 flex-1">
-                <div className="text-[13px] font-semibold text-text-primary">Made with Readable</div>
-                <div className="text-xs text-text-muted mt-0.5">Write in Markdown. Get a page worth sharing.</div>
+              <div>
+                <div className="text-xs font-semibold text-text-primary">{APP_NAME}</div>
+                <div className="text-2xs text-text-muted">
+                  Published {createdAt.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
+                  {readMins > 0 && <> · ~{readMins} min read</>}
+                </div>
               </div>
-              <svg width="14" height="14" fill="none" viewBox="0 0 14 14" aria-hidden className="shrink-0 text-text-muted">
-                <path d="M3 3l8 8M11 3H3M11 3v8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+            </div>
+            <Link
+              href={ROUTES.app}
+              className="inline-flex items-center gap-1.5 rounded-pill border border-outline px-3.5 py-1.5 text-xs font-medium text-text-secondary transition hover:border-accent-soft/50 hover:text-text-primary"
+            >
+              Write your own page
+              <svg width="10" height="10" fill="none" viewBox="0 0 12 12" aria-hidden>
+                <path d="M2.5 9.5 9.5 2.5M9.5 2.5H4M9.5 2.5V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </Link>
-          </div>
-      </main>
-
-      {/* ── Floating attribution badge — desktop only ── */}
-      <Link
-        href="/"
-        className="fixed bottom-4 right-4 z-10 hidden sm:flex items-center gap-1.5 rounded-pill border border-border-subtle bg-bg/80 backdrop-blur-md px-3 py-1.5 transition hover:border-accent-soft/40 hover:bg-bg-elevated print:hidden"
-        aria-label="Made with Readable — create your own page"
-      >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
-          <rect width="24" height="24" rx="5.5" fill="var(--color-accent)" />
-          <path
-            d="M 6.5 5 L 6.5 19 M 6.5 5 L 13 5 Q 17 5 17 9 Q 17 13 13 13 L 6.5 13 M 11.5 13 L 17 19"
-            stroke="white"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-        <span className="text-2xs text-text-muted">Made with Readable</span>
-      </Link>
-
-      {/* ── Footer ── */}
-      <footer className="mt-8 border-t border-border-subtle print:hidden">
-        <div className={`mx-auto w-full px-4 py-5 ${maxW}`}>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-text-muted">
-            <div className="flex items-center gap-2">
-              <AppLogo onlyIcon={true} />
-              <span>Published via {APP_NAME}</span>
-            </div>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
-              <span>
-                {createdAt.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
-              </span>
-              {readMins > 0 && (
-                <span className="sm:hidden">~{readMins} min read</span>
-              )}
-              <Link href={ROUTES.app} className="text-accent transition hover:text-accent-soft font-medium">
-                Create your own →
-              </Link>
-            </div>
           </div>
         </div>
       </footer>

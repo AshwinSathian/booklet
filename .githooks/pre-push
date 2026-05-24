@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# Pre-push hook: rebuilds and restarts the self-hosted Readable server
+# whenever a push targets the main branch.
+#
+# Skip this hook:  git push --no-verify
+# Run manually:    bash scripts/redeploy.sh
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+# ── Determine whether we're pushing to main ──────────────────────────────────
+PUSH_TO_MAIN=false
+
+while IFS=' ' read -r local_ref _local_sha remote_ref _remote_sha; do
+  # remote_ref is "refs/heads/main" when pushing to main
+  if [[ "$remote_ref" == "refs/heads/main" ]]; then
+    PUSH_TO_MAIN=true
+    break
+  fi
+done
+
+if [[ "$PUSH_TO_MAIN" != "true" ]]; then
+  echo "[pre-push] Target is not main — skipping server redeploy."
+  exit 0
+fi
+
+# ── Guard: only deploy if PM2 is actually managing the server ─────────────────
+if ! pm2 jlist 2>/dev/null | grep -q '"readable-app"'; then
+  echo "[pre-push] PM2 does not have readable-app — skipping redeploy."
+  echo "           Run: pm2 start ecosystem.config.js  to initialise the server."
+  exit 0
+fi
+
+# ── Redeploy ──────────────────────────────────────────────────────────────────
+echo ""
+echo "┌─────────────────────────────────────────────────────┐"
+echo "│  pre-push → pushing to main → redeploying server…  │"
+echo "└─────────────────────────────────────────────────────┘"
+echo ""
+
+bash "$REPO_ROOT/scripts/redeploy.sh"
+
+echo ""
+echo "[pre-push] Server is up-to-date. Proceeding with push."
