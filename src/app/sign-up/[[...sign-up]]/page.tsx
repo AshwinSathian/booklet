@@ -1,12 +1,17 @@
 import { AppLogo } from "@/components/ui/AppLogo";
 import { ROUTES } from "@/lib/constants";
+import { buildMetadata } from "@/lib/seo";
 import { SignUp } from "@clerk/nextjs";
 import Link from "next/link";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "Create account — Readable",
-};
+export const metadata: Metadata = buildMetadata({
+  title: "Create free account",
+  description:
+    "Create a free Readable account. Keep pages permanently, edit them in place, get analytics, version history, and full API access. No credit card required.",
+  pathname: "/sign-up",
+  noIndex: true,
+});
 
 function isSafeRedirect(url: string | undefined): url is string {
   return typeof url === "string" && url.startsWith("/") && !url.startsWith("//");

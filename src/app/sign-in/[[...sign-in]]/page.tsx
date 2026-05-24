@@ -1,12 +1,17 @@
 import { AppLogo } from "@/components/ui/AppLogo";
 import { ROUTES } from "@/lib/constants";
+import { buildMetadata } from "@/lib/seo";
 import { SignIn } from "@clerk/nextjs";
 import Link from "next/link";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "Sign in — Readable",
-};
+export const metadata: Metadata = buildMetadata({
+  title: "Sign in",
+  description:
+    "Sign in to Readable. Keep your published pages permanently, edit them in place, unlock analytics, version history, and the REST API.",
+  pathname: "/sign-in",
+  noIndex: true,
+});
 
 // Only allow relative paths as redirect targets — prevents open-redirect abuse
 function isSafeRedirect(url: string | undefined): url is string {

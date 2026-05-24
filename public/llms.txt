@@ -1,0 +1,100 @@
+# Readable
+
+> Write in Markdown. Get a page worth sharing.
+
+Readable is a free tool that converts Markdown into beautifully formatted, shareable pages. Write or paste Markdown in the editor, see a live preview, hit Publish, and get a clean URL — no setup, no account required.
+
+## What Readable does
+
+- Turns plain Markdown into a formatted, readable web page
+- Provides a permanent public URL (shareable link) for every published page
+- Renders GitHub-Flavored Markdown: headings, code blocks, tables, lists, task lists, blockquotes, Mermaid diagrams, and KaTeX math
+- Auto-generates a Table of Contents for documents with 3+ headings
+- Supports YAML frontmatter (title, author, date, tags, description, password)
+- Live preview in the editor as you type
+- Multiple named drafts, auto-saved to browser localStorage
+- 9 built-in templates (incident report, ADR, postmortem, runbook, release notes, etc.)
+- Export to Markdown, HTML, or PDF from the published page
+- Per-page analytics: views, read depth, referrers
+- Version history: restore any of the last 10 publishes
+- Password-protected pages
+- Custom URL slugs for signed-in users
+- Permanent pages (no expiry) for signed-in users; anonymous pages expire after 30 days
+
+## REST API
+
+Readable has a REST API for programmatic publishing:
+
+- `POST /api/v1/publish` — create a new page, returns `{ id, url }`
+- `PATCH /api/v1/pages/{id}` — update an existing page in place (same URL)
+- `GET /api/v1/pages` — list all pages owned by the authenticated account
+- `DELETE /api/v1/pages/{id}` — delete a page permanently
+
+API keys are generated from the My Pages dashboard after signing in (free).
+
+Full reference: https://readable.ashwinsathian.com/api-docs
+
+## MCP (Model Context Protocol)
+
+Readable has a native MCP server that lets Claude and other MCP-compatible AI assistants publish pages directly in natural language.
+
+MCP endpoint: `https://mcp.readable.ashwinsathian.com/mcp`
+
+Setup instructions: https://readable.ashwinsathian.com/mcp-setup
+
+To add Readable to Claude Desktop or Claude.ai, add this to your MCP configuration:
+
+```json
+{
+  "mcpServers": {
+    "readable": {
+      "url": "https://mcp.readable.ashwinsathian.com/mcp"
+    }
+  }
+}
+```
+
+## CLI
+
+```
+npx readable-cli publish README.md
+```
+
+npm: https://www.npmjs.com/package/readable-cli
+
+## Key URLs
+
+- Editor: https://readable.ashwinsathian.com/app
+- Templates: https://readable.ashwinsathian.com/templates
+- API docs: https://readable.ashwinsathian.com/api-docs
+- MCP setup: https://readable.ashwinsathian.com/mcp-setup
+- Explore public pages: https://readable.ashwinsathian.com/explore
+
+## Pricing
+
+Free. No paid plans. No credit card. Every feature is included with a free account.
+Anonymous publishing (no account) works immediately with a 30-day page expiry.
+Signing in (free) upgrades pages to permanent and unlocks the full feature set.
+
+## Technical details
+
+- Built with Next.js (App Router), TypeScript, Tailwind CSS
+- Published pages stored on Cloudflare KV via Cloudflare Workers
+- No user content is indexed for training or resold
+- XSS-safe: all content is rendered through a custom AST renderer (no dangerouslySetInnerHTML on user input)
+
+## Templates available
+
+- Incident Report
+- Post-Mortem
+- Architecture Decision Record (ADR)
+- Runbook
+- Release Notes
+- Engineering Proposal
+- Meeting Notes
+- Onboarding Guide
+- Weekly Status Update
+
+## Contact
+
+Built by Ashwin Sathian. For questions or feedback: https://github.com/anthropics/claude-code/issues (for Claude integration) or open an issue on the project repository.

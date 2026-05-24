@@ -11,7 +11,10 @@ import { VersionsClient } from "./VersionsClient";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Version history - Readable" };
+export const metadata = {
+  title: "Version history — Readable",
+  robots: { index: false, follow: false },
+};
 
 export default async function PageVersionsPage({
   params,

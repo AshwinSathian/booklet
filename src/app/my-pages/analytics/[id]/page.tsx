@@ -10,7 +10,10 @@ import { notFound } from "next/navigation";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Page analytics - Readable" };
+export const metadata = {
+  title: "Page analytics — Readable",
+  robots: { index: false, follow: false },
+};
 
 const REFERRER_LABELS = {
   slack: "Slack",

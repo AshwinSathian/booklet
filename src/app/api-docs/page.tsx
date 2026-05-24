@@ -1,11 +1,27 @@
 import { AppLogo } from "@/components/ui/AppLogo";
 import { ROUTES } from "@/lib/constants";
+import { absoluteUrl, buildMetadata } from "@/lib/seo";
 import Link from "next/link";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "API Reference — Readable",
-  description: "REST API reference for publishing and managing Readable pages programmatically.",
+export const metadata: Metadata = buildMetadata({
+  title: "REST API Reference",
+  description:
+    "Complete REST API reference for Readable — publish pages, update content, manage slugs, and set up webhooks programmatically. Includes GitHub Actions integration examples.",
+  pathname: "/api-docs",
+});
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  name: "Readable REST API Reference",
+  description:
+    "Complete REST API reference for Readable — publish pages, update content, manage slugs, and set up webhooks programmatically.",
+  url: absoluteUrl("/api-docs"),
+  author: { "@type": "Organization", name: "Readable" },
+  proficiencyLevel: "Expert",
+  articleSection: "API Documentation",
+  keywords: "REST API, markdown, publish pages, webhooks, GitHub Actions",
 };
 
 function Code({ children }: { children: React.ReactNode }) {
@@ -86,6 +102,10 @@ function Table({ rows }: { rows: [string, string][] }) {
 export default function ApiDocsPage() {
   return (
     <div className="min-h-screen bg-bg text-text-primary flex flex-col">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <header className="sticky top-0 z-20 border-b border-border-subtle bg-bg/85 backdrop-blur-xl">
         <div className="mx-auto w-full max-w-5xl px-4 h-12 flex items-center justify-between gap-4">
           <Link href={ROUTES.home}>

@@ -11,7 +11,10 @@ import { WebhooksSection } from "./WebhooksClient";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const metadata = { title: "My pages — Readable" };
+export const metadata = {
+  title: "My Pages — Readable",
+  robots: { index: false, follow: false },
+};
 
 function getBaseUrl(req: Headers): string {
   const host = req.get("host") ?? "readable.page";

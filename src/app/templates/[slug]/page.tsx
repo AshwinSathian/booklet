@@ -1,7 +1,7 @@
 import { AppLogo } from "@/components/ui/AppLogo";
 import { Button } from "@/components/ui/Button";
 import { APP_NAME, ROUTES } from "@/lib/constants";
-import { buildMetadata } from "@/lib/seo";
+import { absoluteUrl, buildMetadata } from "@/lib/seo";
 import { TEMPLATES, getTemplateBySlug } from "@/lib/templates";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -41,8 +41,42 @@ export default async function TemplatePage({
   const editorUrl = `${ROUTES.app}?template=${template.slug}`;
   const otherTemplates = TEMPLATES.filter((t) => t.slug && t.slug !== slug).slice(0, 4);
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: template.headline ?? template.name,
+    description: template.metaDescription ?? template.description,
+    url: absoluteUrl(`/templates/${slug}`),
+    tool: [{ "@type": "HowToTool", name: "Readable editor" }],
+    step: [
+      {
+        "@type": "HowToStep",
+        position: 1,
+        name: "Open the template",
+        text: `Click "Use this template" — the editor opens with the ${template.name} pre-loaded.`,
+        url: absoluteUrl(`/templates/${slug}`),
+      },
+      {
+        "@type": "HowToStep",
+        position: 2,
+        name: "Fill in your details",
+        text: "Edit the Markdown directly. The preview updates in real time as you type.",
+      },
+      {
+        "@type": "HowToStep",
+        position: 3,
+        name: "Publish and share",
+        text: "Hit Publish and get a clean, shareable link in seconds. No account needed.",
+      },
+    ],
+  };
+
   return (
     <div className="min-h-screen bg-bg text-text-primary">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <header className="border-b border-border-subtle bg-bg/85 backdrop-blur-xl sticky top-0 z-20">
         <div className="mx-auto w-full max-w-3xl px-4 h-12 flex items-center justify-between gap-4">
           <Link href="/">

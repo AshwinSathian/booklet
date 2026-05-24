@@ -1,7 +1,7 @@
 import { AppLogo } from "@/components/ui/AppLogo";
 import { Button } from "@/components/ui/Button";
 import { APP_NAME, ROUTES } from "@/lib/constants";
-import { buildMetadata } from "@/lib/seo";
+import { absoluteUrl, buildMetadata } from "@/lib/seo";
 import { TEMPLATES } from "@/lib/templates";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -16,8 +16,29 @@ export const metadata: Metadata = buildMetadata({
 export default function TemplatesPage() {
   const templatesWithSlug = TEMPLATES.filter((t) => t.slug);
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "Free Document Templates — Readable",
+    description:
+      "Free templates for incident reports, ADRs, runbooks, meeting notes, changelogs, and more.",
+    url: absoluteUrl("/templates"),
+    numberOfItems: templatesWithSlug.length,
+    itemListElement: templatesWithSlug.map((t, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      name: t.name,
+      url: absoluteUrl(`/templates/${t.slug}`),
+      description: t.metaDescription ?? t.description,
+    })),
+  };
+
   return (
     <div className="min-h-screen bg-bg text-text-primary">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <header className="border-b border-border-subtle bg-bg/85 backdrop-blur-xl sticky top-0 z-20">
         <div className="mx-auto w-full max-w-3xl px-4 h-12 flex items-center justify-between gap-4">
           <Link href="/">
