@@ -997,6 +997,8 @@ export function TopBar({
   onOpenDraftsShortcutRegistered,
   publishedId,
   onSlugSet,
+  focusMode = false,
+  onToggleFocusMode,
 }: {
   status: EditorStatus;
   canPublish: boolean;
@@ -1025,6 +1027,8 @@ export function TopBar({
   onOpenDraftsShortcutRegistered?: (fn: () => void) => void;
   publishedId?: string | null;
   onSlugSet?: (newSlug: string) => void;
+  focusMode?: boolean;
+  onToggleFocusMode?: () => void;
 }) {
   const [visibleSettings, setVisibleSettings] = useState(false);
   const [visibleMoreActions, setVisibleMoreActions] = useState(false);
@@ -1162,6 +1166,15 @@ export function TopBar({
             onClick={() => setVisibleMoreActions(true)}
             active={visibleMoreActions}
           />
+
+          {onToggleFocusMode && (
+            <IconBtn
+              label={focusMode ? "Exit focus mode (⌘.)" : "Focus mode (⌘.)"}
+              icon={focusMode ? "eye" : "eye-off"}
+              onClick={onToggleFocusMode}
+              active={focusMode}
+            />
+          )}
 
           <div className="relative">
             <IconBtn

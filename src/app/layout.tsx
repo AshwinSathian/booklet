@@ -108,7 +108,7 @@ export default function RootLayout({
     <ClerkProvider appearance={clerkAppearance}>
       <html lang="en" suppressHydrationWarning className={inter.variable}>
         <body>
-          <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             <Suspense fallback={null}>
               <Analytics />
             </Suspense>

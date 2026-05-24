@@ -59,6 +59,8 @@ function AppPageContent() {
   const [lastPublishedOwned, setLastPublishedOwned] = useState(false);
   const [copyLinkPulse, setCopyLinkPulse] = useState(false);
 
+  const [focusMode, setFocusMode] = useState(false);
+
   const toast = useToast();
   const focusFnRef = useRef<null | (() => void)>(null);
   const openDraftsFnRef = useRef<null | (() => void)>(null);
@@ -660,6 +662,12 @@ function AppPageContent() {
         openDraftsFnRef.current?.();
         return;
       }
+
+      if (mod && e.key === ".") {
+        e.preventDefault();
+        setFocusMode((f) => !f);
+        return;
+      }
     }
 
     window.addEventListener("keydown", onKeyDown);
@@ -698,6 +706,8 @@ function AppPageContent() {
         onInsertTemplate={onInsertTemplate}
         onOpenDraftsShortcutRegistered={(fn) => { openDraftsFnRef.current = fn; }}
         publishedId={lastPublishedId}
+        focusMode={focusMode}
+        onToggleFocusMode={() => setFocusMode((f) => !f)}
         onSlugSet={(newSlug) => {
           if (!lastPublishedUrl || !lastPublishedId || !activeDraftId) return;
           const newUrl = lastPublishedUrl.replace(/\/p\/[^/]+$/, `/p/${newSlug}`);
@@ -713,6 +723,7 @@ function AppPageContent() {
 
       <div className="flex-1 min-h-0">
         <AppShell
+          focusMode={focusMode}
           left={
             <PasteInput
               value={raw}

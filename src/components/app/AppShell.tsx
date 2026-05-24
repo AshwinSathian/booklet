@@ -22,9 +22,11 @@ const EYE_ICON = (
 export function AppShell({
   left,
   right,
+  focusMode = false,
 }: {
   left: React.ReactNode;
   right: React.ReactNode;
+  focusMode?: boolean;
 }) {
   const [pane, setPane] = useState<MobilePane>("edit");
 
@@ -72,20 +74,20 @@ export function AppShell({
       <div
         className={[
           "flex min-h-0 overflow-hidden w-full",
-          "lg:max-w-[50%] lg:flex lg:flex-col",
+          focusMode ? "lg:flex-1 lg:flex lg:flex-col" : "lg:max-w-[50%] lg:flex lg:flex-col",
           pane === "edit" ? "flex-1 animate-fade-in" : "hidden lg:flex",
         ].join(" ")}
       >
         {left}
       </div>
 
-      {/* Vertical divider — desktop only */}
-      <div aria-hidden className="hidden lg:block w-px shrink-0 bg-border-subtle" />
+      {/* Vertical divider — desktop only, hidden in focus mode */}
+      {!focusMode && <div aria-hidden className="hidden lg:block w-px shrink-0 bg-border-subtle" />}
 
       <div
         className={[
           "flex min-h-0 overflow-hidden w-full",
-          "lg:flex-1 lg:flex lg:flex-col",
+          focusMode ? "hidden" : "lg:flex-1 lg:flex lg:flex-col",
           pane === "preview" ? "flex-1 animate-fade-in" : "hidden lg:flex",
         ].join(" ")}
       >
