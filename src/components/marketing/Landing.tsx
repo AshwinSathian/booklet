@@ -1306,10 +1306,8 @@ export function Landing() {
                   )}
                 </button>
               </div>
-              <a
-                href="https://mcp.readable.ashwinsathian.com"
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                href={ROUTES.mcpSetup}
                 className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-accent transition hover:text-accent-soft mt-auto"
                 onClick={() => trackEvent("integration_clicked", { integration: "claude_mcp" })}
               >
@@ -1317,7 +1315,7 @@ export function Landing() {
                 <svg width="12" height="12" fill="none" viewBox="0 0 12 12" aria-hidden>
                   <path d="M2.5 9.5 9.5 2.5M9.5 2.5H4M9.5 2.5V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-              </a>
+              </Link>
             </div>
           </motion.div>
 

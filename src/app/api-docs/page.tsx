@@ -440,42 +440,52 @@ jobs:
             </p>
           </Section>
 
-          <Section id="mcp" title="Use with Claude">
+          <Section id="mcp" title="Use with Claude (MCP)">
             <p className="text-sm text-text-secondary mb-4">
-              Readable has an MCP server that lets Claude publish and manage pages on your behalf. Once connected, you can ask Claude to publish a document, update an existing page, or list your pages — all without leaving the conversation.
+              Readable has an MCP server that lets Claude, Cursor, Windsurf, VS Code, and Zed
+              publish and manage pages on your behalf — entirely through conversation.
             </p>
 
-            <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">Connection instructions</p>
-            <ol className="list-decimal list-inside text-sm text-text-secondary space-y-1.5 mb-4 ml-1">
-              <li>Go to Claude settings → Connectors</li>
-              <li>
-                Add a new MCP connector with URL:{" "}
-                <Code>https://mcp.readable.ashwinsathian.com</Code>
-              </li>
-              <li>
-                When prompted, enter your Readable API key (<Code>rdbl_live_...</Code>) from{" "}
-                <Link href="/my-pages" className="text-accent hover:underline">/my-pages</Link>
-              </li>
-              <li>
-                Claude will then have access to:{" "}
-                <Code>publish_page</Code>, <Code>update_page</Code>, <Code>list_pages</Code>, <Code>delete_page</Code>
-              </li>
-            </ol>
-
-            <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">Example conversation</p>
-            <Pre>{`You: Publish this as a Readable page: [markdown content]
-Claude: Published. Here's your link: https://readable.ashwinsathian.com/p/Ab3k91QxZp`}</Pre>
-
-            <div className="mt-4 text-sm text-text-secondary rounded-xl border border-border-subtle bg-bg-elevated p-4 space-y-1.5">
-              <p>
-                Your API key is passed directly to the Readable REST API on each tool call. The MCP server acts as a thin proxy — it holds the key only for the duration of the SSE session and never writes it to persistent storage.
-              </p>
-              <p>
-                To revoke MCP access, delete the API key from{" "}
-                <Link href="/my-pages" className="text-accent hover:underline">/my-pages</Link>.
-                This invalidates the key immediately across all clients including Claude.
-              </p>
+            <div className="rounded-xl border border-outline bg-bg-elevated p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-4">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-text-primary mb-0.5">Full setup guide →</p>
+                <p className="text-xs text-text-secondary">
+                  Step-by-step instructions for every platform — Claude Desktop, Claude.ai, Cursor,
+                  Windsurf, VS Code, Zed.
+                </p>
+              </div>
+              <Link
+                href="/mcp-setup"
+                className="shrink-0 inline-flex items-center gap-1.5 rounded-pill bg-accent px-4 py-2 text-xs font-semibold text-white hover:bg-accent-soft transition"
+              >
+                Add to Claude
+                <svg width="10" height="10" fill="none" viewBox="0 0 12 12" aria-hidden>
+                  <path d="M2.5 9.5 9.5 2.5M9.5 2.5H4M9.5 2.5V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </Link>
             </div>
+
+            <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">Quick reference</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+              <div className="rounded-lg border border-outline p-3">
+                <p className="text-xs font-semibold text-text-primary mb-1">MCP endpoint</p>
+                <Code>https://mcp.readable.ashwinsathian.com/mcp</Code>
+              </div>
+              <div className="rounded-lg border border-outline p-3">
+                <p className="text-xs font-semibold text-text-primary mb-1">Auth header</p>
+                <Code>Authorization: Bearer rdbl_YOUR_KEY</Code>
+              </div>
+            </div>
+
+            <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">Available tools</p>
+            <p className="text-sm text-text-secondary mb-1">
+              <Code>publish_page</Code>, <Code>update_page</Code>, <Code>get_page</Code>,{" "}
+              <Code>list_pages</Code>, <Code>delete_page</Code>
+            </p>
+            <p className="text-sm text-text-secondary">
+              Templates: <Code>incident_report</Code>, <Code>adr</Code>,{" "}
+              <Code>release_notes</Code>, <Code>rfc</Code>, <Code>runbook</Code>
+            </p>
           </Section>
         </main>
       </div>
