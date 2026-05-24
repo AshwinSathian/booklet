@@ -2,7 +2,7 @@ import { BlockRenderer } from "@/components/blocks/BlockRenderer";
 import { AppLogo } from "@/components/ui/AppLogo";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import type { Block } from "@/lib/blocks";
-import { APP_NAME, ROUTES, STORAGE } from "@/lib/constants";
+import { APP_NAME, ROUTES } from "@/lib/constants";
 import { getPageBySlug, getPageRecord, incrementViewCount } from "@/lib/db";
 import { absoluteUrl, buildMetadata } from "@/lib/seo";
 import { getDoc } from "@/lib/storage";
@@ -128,16 +128,8 @@ export default async function SharePage({
   // Fire-and-forget view count — non-blocking, non-fatal.
   void incrementViewCount(resolvedId).catch(() => {});
 
-  // Permanent pages (owned) have no expiresAt in MongoDB and never expire.
-  const isPermanent = pageRecord !== null;
-  const createdAt = new Date(doc.createdAt);
-  const daysLeft = isPermanent
-    ? null
-    : Math.ceil(
-        (new Date(createdAt.getTime() + STORAGE.ttlSeconds * 1000).getTime() - Date.now()) /
-          86_400_000,
-      );
 
+  const createdAt = new Date(doc.createdAt);
   const { toc, anchorMap } = buildToc(doc.blocks ?? []);
   const showToc = toc.length >= MIN_TOC_HEADINGS;
   // anchorMap is always populated so all headings get IDs regardless of TOC visibility
@@ -156,7 +148,6 @@ export default async function SharePage({
           <AppLogo onlyIcon={false} />
 
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-            {daysLeft !== null && <ExpiryBadge daysLeft={daysLeft} />}
             {/* Read time — desktop only */}
             <span className="hidden md:inline text-2xs text-text-muted tabular-nums">
               ~{readMins} min
@@ -208,8 +199,7 @@ export default async function SharePage({
         </div>
 
         {/* ── Mobile "create your own" nudge — shown at end of article ── */}
-        {!pageRecord?.remove_attribution_badge && (
-          <div className="mt-12 sm:hidden">
+        <div className="mt-12 sm:hidden">
             <Link
               href="/"
               className="flex items-center gap-3 rounded-2xl border border-border-default bg-bg-elevated p-4 transition hover:border-accent/30 hover:bg-bg-soft"
@@ -233,29 +223,26 @@ export default async function SharePage({
               </svg>
             </Link>
           </div>
-        )}
       </main>
 
       {/* ── Floating attribution badge — desktop only ── */}
-      {!pageRecord?.remove_attribution_badge && (
-        <Link
-          href="/"
-          className="fixed bottom-4 right-4 z-10 hidden sm:flex items-center gap-1.5 rounded-pill border border-border-subtle bg-bg/80 backdrop-blur-md px-3 py-1.5 transition hover:border-accent-soft/40 hover:bg-bg-elevated print:hidden"
-          aria-label="Made with Readable — create your own page"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
-            <rect width="24" height="24" rx="5.5" fill="var(--color-accent)" />
-            <path
-              d="M 6.5 5 L 6.5 19 M 6.5 5 L 13 5 Q 17 5 17 9 Q 17 13 13 13 L 6.5 13 M 11.5 13 L 17 19"
-              stroke="white"
-              strokeWidth="2.2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-          <span className="text-2xs text-text-muted">Made with Readable</span>
-        </Link>
-      )}
+      <Link
+        href="/"
+        className="fixed bottom-4 right-4 z-10 hidden sm:flex items-center gap-1.5 rounded-pill border border-border-subtle bg-bg/80 backdrop-blur-md px-3 py-1.5 transition hover:border-accent-soft/40 hover:bg-bg-elevated print:hidden"
+        aria-label="Made with Readable — create your own page"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+          <rect width="24" height="24" rx="5.5" fill="var(--color-accent)" />
+          <path
+            d="M 6.5 5 L 6.5 19 M 6.5 5 L 13 5 Q 17 5 17 9 Q 17 13 13 13 L 6.5 13 M 11.5 13 L 17 19"
+            stroke="white"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+        <span className="text-2xs text-text-muted">Made with Readable</span>
+      </Link>
 
       {/* ── Footer ── */}
       <footer className="mt-8 border-t border-border-subtle print:hidden">
@@ -332,35 +319,6 @@ function FrontmatterMetaStrip({ meta }: { meta: Record<string, unknown> | null }
         </div>
       )}
     </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Expiry badge
-// ---------------------------------------------------------------------------
-
-function ExpiryBadge({ daysLeft }: { daysLeft: number }) {
-  if (daysLeft <= 0) {
-    return (
-      <span className="hidden sm:inline-flex items-center gap-1.5 rounded-pill border border-red-500/30 bg-red-500/10 px-2.5 py-0.5 text-2xs font-medium text-red-400">
-        Expired
-      </span>
-    );
-  }
-
-  if (daysLeft <= 7) {
-    return (
-      <span className="hidden sm:inline-flex items-center gap-1.5 rounded-pill border border-amber-400/30 bg-amber-400/10 px-2.5 py-0.5 text-2xs font-medium text-amber-400">
-        <span className="h-1.5 w-1.5 rounded-full bg-amber-400 shrink-0" />
-        Expires in {daysLeft} {daysLeft === 1 ? "day" : "days"}
-      </span>
-    );
-  }
-
-  return (
-    <span className="hidden sm:inline-flex items-center rounded-pill border border-border-default px-2.5 py-0.5 text-2xs text-text-muted">
-      Expires in {daysLeft} days
-    </span>
   );
 }
 
