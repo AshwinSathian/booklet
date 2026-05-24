@@ -619,4 +619,863 @@ One to two sentences on the week's most important outcome.
 > Thanks to @name for [reason].
 `,
   },
+  {
+    slug: "product-spec",
+    name: "Product Spec",
+    description: "Define a feature — problem, goals, constraints, and non-goals.",
+    category: "Product",
+    headline: "Product Spec Template",
+    metaDescription: "Write a clear product specification with problem statement, goals, constraints, and success metrics.",
+    content: `# Product Spec: [Feature Name]
+
+**Author:** [Your name]
+**Status:** Draft | In Review | Approved
+**Last updated:** [Date]
+
+---
+
+## Problem Statement
+
+What user pain are we solving? Why does it matter now?
+
+> [1–2 sentence summary of the problem]
+
+---
+
+## Goals
+
+What does success look like? List outcomes, not outputs.
+
+- Goal 1: [e.g., Reduce time to X by Y%]
+- Goal 2:
+- Goal 3:
+
+## Non-Goals
+
+Be explicit about what is out of scope for this version.
+
+- We are not building [X]
+- We are not targeting [audience segment]
+
+---
+
+## User Stories
+
+| As a… | I want to… | So that… |
+|-------|-----------|----------|
+| [user type] | [action] | [outcome] |
+| [user type] | [action] | [outcome] |
+
+---
+
+## Proposed Solution
+
+High-level description of the approach. Link to design mocks if available.
+
+### Key Flows
+
+1. **Flow 1:** [description]
+2. **Flow 2:** [description]
+
+---
+
+## Constraints & Risks
+
+| Constraint | Impact | Mitigation |
+|-----------|--------|------------|
+| [e.g., Must use existing auth] | [Medium] | [Plan] |
+
+---
+
+## Success Metrics
+
+How will we measure whether this worked?
+
+| Metric | Baseline | Target | Timeframe |
+|--------|---------|--------|-----------|
+| [Metric name] | [Current] | [Goal] | [When] |
+
+---
+
+## Open Questions
+
+- [ ] Question 1 — *Owner: @name*
+- [ ] Question 2
+
+---
+
+## Timeline
+
+| Milestone | Date |
+|-----------|------|
+| Design review | |
+| Engineering kickoff | |
+| Beta / internal launch | |
+| GA | |
+`,
+  },
+  {
+    slug: "design-review",
+    name: "Design Review",
+    description: "Capture design decisions, feedback, and open questions from a review session.",
+    category: "Design",
+    content: `# Design Review: [Feature / Component Name]
+
+**Date:** [Date]
+**Designer:** [Name]
+**Attendees:** [Names]
+**Design link:** [Figma / link]
+
+---
+
+## Context
+
+Why are we reviewing this design now? What decision do we need to make?
+
+---
+
+## Design Summary
+
+What is the design trying to achieve? What constraints shaped it?
+
+---
+
+## Feedback
+
+### Approved decisions
+
+- ✅ [Decision 1]
+- ✅ [Decision 2]
+
+### Items to revisit
+
+| Issue | Severity | Owner | Resolution |
+|-------|---------|-------|------------|
+| [Description] | High / Med / Low | @name | |
+
+---
+
+## Open Questions
+
+- [ ] Question 1
+- [ ] Question 2
+
+---
+
+## Next Steps
+
+- [ ] [Action] — *Owner: @name, by [date]*
+- [ ] [Action] — *Owner: @name, by [date]*
+`,
+  },
+  {
+    slug: "api-changelog",
+    name: "API Changelog",
+    description: "Communicate breaking changes, deprecations, and new endpoints to API consumers.",
+    category: "Engineering",
+    headline: "API Changelog Template",
+    metaDescription: "Document API breaking changes, deprecations, and new endpoints clearly for your developers.",
+    content: `# API Changelog
+
+> **Subscribe to updates:** [Link to mailing list / Slack channel]
+
+---
+
+## [Version] — [Date]
+
+### Breaking changes
+
+> ⚠️ Action required by [date].
+
+- **[Endpoint or field]:** [What changed and why.]
+  *Migration:* [What callers must do.]
+
+### Deprecated
+
+- **[Endpoint or field]:** Deprecated, will be removed in [version/date].
+  *Use instead:* [\`replacement\`](#)
+
+### New
+
+- **[Endpoint]:** [Brief description.] [Docs →](#)
+
+### Fixed
+
+- **[Bug description]** — [Impact and resolution.]
+
+---
+
+## [Previous version] — [Date]
+
+*(Copy the block above for each release)*
+`,
+  },
+  {
+    slug: "technical-investigation",
+    name: "Technical Investigation",
+    description: "Document a debugging or research investigation — findings, hypotheses, and resolution.",
+    category: "Engineering",
+    headline: "Technical Investigation Template",
+    metaDescription: "Structure a technical investigation with hypothesis, findings, and resolution for knowledge sharing.",
+    content: `# Technical Investigation: [Topic]
+
+**Author:** [Name]
+**Date:** [Date]
+**Status:** In progress | Resolved | Inconclusive
+
+---
+
+## Summary
+
+One paragraph summary of what was investigated and what was found.
+
+---
+
+## Background
+
+Why did we investigate this? What triggered the investigation?
+
+---
+
+## Hypotheses
+
+| # | Hypothesis | Tested | Result |
+|---|-----------|--------|--------|
+| 1 | [Hypothesis] | Yes / No | [Outcome] |
+| 2 | [Hypothesis] | | |
+
+---
+
+## Investigation Log
+
+### [Date / Time] — [Investigator]
+
+What was tried, what was observed.
+
+\`\`\`bash
+# Commands or queries used
+\`\`\`
+
+**Finding:** [What was learned]
+
+---
+
+## Root Cause
+
+[Describe the root cause once identified, or mark as unknown.]
+
+---
+
+## Resolution
+
+Steps taken to resolve the issue.
+
+---
+
+## Follow-up Actions
+
+- [ ] [Action] — *Owner: @name*
+- [ ] [Action] — *Owner: @name*
+
+---
+
+## References
+
+- [Link to related issue, PR, or document]
+`,
+  },
+  {
+    slug: "sprint-retrospective",
+    name: "Sprint Retrospective",
+    description: "Capture what went well, what didn't, and what to change next sprint.",
+    category: "Engineering",
+    content: `# Sprint [Number] Retrospective
+
+**Date:** [Date]
+**Facilitator:** [Name]
+**Team:** [Team name]
+**Sprint period:** [Start] → [End]
+
+---
+
+## What went well ✅
+
+- [Positive observation]
+- [Positive observation]
+- [Positive observation]
+
+---
+
+## What could be better 🔧
+
+- [Friction point]
+- [Friction point]
+- [Friction point]
+
+---
+
+## Action items
+
+| Action | Owner | By when |
+|--------|-------|---------|
+| [Action] | @name | [date] |
+| [Action] | @name | [date] |
+
+---
+
+## Metrics
+
+| Metric | This sprint | Last sprint | Trend |
+|--------|------------|-------------|-------|
+| Story points delivered | | | |
+| Bugs filed | | | |
+| Bugs closed | | | |
+
+---
+
+## Notes
+
+[Any other discussion worth capturing]
+`,
+  },
+  {
+    slug: "job-description",
+    name: "Job Description",
+    description: "Write a clear, honest job description that attracts the right candidates.",
+    category: "People",
+    content: `# [Job Title] at [Company]
+
+**Location:** [City, Country / Remote / Hybrid]
+**Team:** [Team name]
+**Reports to:** [Role]
+
+---
+
+## About us
+
+[2–3 sentences about the company — mission, product, and stage.]
+
+---
+
+## About the role
+
+[2–3 sentences on why this role exists and what impact it will have.]
+
+---
+
+## What you'll do
+
+- [Responsibility 1]
+- [Responsibility 2]
+- [Responsibility 3]
+- [Responsibility 4]
+- [Responsibility 5]
+
+---
+
+## What we're looking for
+
+**Must-have**
+- [Requirement]
+- [Requirement]
+- [Requirement]
+
+**Nice-to-have**
+- [Requirement]
+- [Requirement]
+
+---
+
+## What we offer
+
+- [Benefit 1]
+- [Benefit 2]
+- [Benefit 3]
+
+---
+
+## How to apply
+
+[Description of the application process and link.]
+
+*[Company] is an equal-opportunity employer. We welcome applicants of all backgrounds.*
+`,
+  },
+  {
+    slug: "interview-debrief",
+    name: "Interview Debrief",
+    description: "Structured debrief doc to capture interviewer feedback and reach a hiring decision.",
+    category: "People",
+    content: `# Interview Debrief: [Candidate Name]
+
+**Role:** [Role title]
+**Interview date:** [Date]
+**Hiring manager:** [Name]
+
+---
+
+## Panel
+
+| Interviewer | Area covered | Signal |
+|-------------|-------------|--------|
+| [Name] | [e.g., Technical screen] | Strong / Mixed / Weak |
+| [Name] | [e.g., System design] | |
+| [Name] | [e.g., Behavioral] | |
+
+---
+
+## Feedback by dimension
+
+### Technical ability
+
+[Summary of technical performance — include specific examples from the interview.]
+
+**Signal:** Strong ✅ / Mixed ⚠️ / Weak ❌
+
+---
+
+### Problem solving & thinking
+
+[How did the candidate approach ambiguity? Did they ask good questions?]
+
+**Signal:** Strong ✅ / Mixed ⚠️ / Weak ❌
+
+---
+
+### Communication
+
+[Was the candidate clear, concise, and able to explain complex ideas?]
+
+**Signal:** Strong ✅ / Mixed ⚠️ / Weak ❌
+
+---
+
+### Culture / values fit
+
+[Did the candidate's values and working style align with the team?]
+
+**Signal:** Strong ✅ / Mixed ⚠️ / Weak ❌
+
+---
+
+## Strengths
+
+- [Strength]
+- [Strength]
+
+## Concerns
+
+- [Concern]
+- [Concern]
+
+---
+
+## Decision
+
+☐ Strong hire  ☐ Hire  ☐ No hire  ☐ Strong no hire
+
+**Rationale:** [1–2 sentences]
+
+---
+
+## Next steps
+
+- [ ] Send offer / rejection by [date]
+- [ ] [Any follow-up action]
+`,
+  },
+  {
+    slug: "project-kickoff",
+    name: "Project Kickoff",
+    description: "Align a project team on goals, scope, roles, and delivery plan from day one.",
+    category: "Project Management",
+    headline: "Project Kickoff Template",
+    metaDescription: "Align your team on project goals, scope, roles, and milestones with this kickoff template.",
+    content: `# Project Kickoff: [Project Name]
+
+**Date:** [Date]
+**PM / DRI:** [Name]
+**Status:** Planning | Active | On hold
+
+---
+
+## Problem & opportunity
+
+What problem are we solving and why does it matter now?
+
+---
+
+## Goals & success criteria
+
+| Goal | How we measure it | Target |
+|------|------------------|--------|
+| [Goal] | [Metric] | [Value] |
+| [Goal] | [Metric] | [Value] |
+
+## Non-goals
+
+- [What is explicitly out of scope]
+
+---
+
+## Scope
+
+### In scope
+
+- [Feature / area]
+- [Feature / area]
+
+### Out of scope
+
+- [Feature / area]
+- [Feature / area]
+
+---
+
+## Team
+
+| Role | Name | Responsibility |
+|------|------|---------------|
+| Project lead | [Name] | Overall delivery |
+| Engineering | [Name] | [Area] |
+| Design | [Name] | [Area] |
+| [Other] | [Name] | [Area] |
+
+---
+
+## Milestones
+
+| Milestone | Target date | Owner |
+|-----------|------------|-------|
+| Kickoff complete | [Date] | [Name] |
+| Design approved | [Date] | [Name] |
+| Engineering complete | [Date] | [Name] |
+| Launch | [Date] | [Name] |
+
+---
+
+## Risks
+
+| Risk | Likelihood | Impact | Mitigation |
+|------|-----------|--------|------------|
+| [Risk] | H/M/L | H/M/L | [Plan] |
+
+---
+
+## Open questions
+
+- [ ] [Question] — *Owner: @name*
+- [ ] [Question] — *Owner: @name*
+`,
+  },
+  {
+    slug: "launch-checklist",
+    name: "Launch Checklist",
+    description: "Track every task before, during, and after a product or feature launch.",
+    category: "Product",
+    headline: "Launch Checklist Template",
+    metaDescription: "Never miss a step with this comprehensive pre-launch, launch-day, and post-launch checklist template.",
+    content: `# Launch Checklist: [Feature / Product Name]
+
+**Launch date:** [Date]
+**DRI:** [Name]
+**Status:** Preparing | Ready | Launched
+
+---
+
+## Pre-launch
+
+### Engineering
+- [ ] Feature flag enabled in production
+- [ ] Load / performance testing complete
+- [ ] Rollback plan documented
+- [ ] Monitoring and alerts configured
+- [ ] Error logging verified
+
+### Design
+- [ ] Final designs approved
+- [ ] Accessibility review complete
+- [ ] Mobile / responsive tested
+
+### Product
+- [ ] User acceptance testing (UAT) complete
+- [ ] Edge cases identified and handled
+- [ ] Analytics events wired
+
+### Legal / Compliance
+- [ ] Privacy review complete
+- [ ] Terms of service updated if needed
+
+### Communications
+- [ ] Internal announcement drafted
+- [ ] External announcement / blog post ready
+- [ ] Support team briefed
+- [ ] Changelog entry written
+
+---
+
+## Launch day
+
+- [ ] Deploy to production
+- [ ] Verify core flows in production
+- [ ] Enable for target audience
+- [ ] Publish announcement
+- [ ] Notify support team
+
+---
+
+## Post-launch (first 48h)
+
+- [ ] Monitor error rates
+- [ ] Review user feedback / support volume
+- [ ] Check analytics for anomalies
+- [ ] Gather initial user feedback
+
+---
+
+## Retrospective
+
+*To be filled in 1 week post-launch.*
+
+**What went well:**
+
+**What could be improved:**
+
+**Action items:**
+`,
+  },
+  {
+    slug: "data-dictionary",
+    name: "Data Dictionary",
+    description: "Document your data model — tables, fields, types, and business definitions.",
+    category: "Engineering",
+    content: `# Data Dictionary: [System / Domain Name]
+
+**Last updated:** [Date]
+**Owner:** [Name / Team]
+
+---
+
+## Overview
+
+Brief description of the data model and how it relates to the system.
+
+---
+
+## Tables / Collections
+
+### \`[table_name]\`
+
+[Brief description of what this table stores and its business purpose.]
+
+| Column | Type | Nullable | Description |
+|--------|------|----------|-------------|
+| \`id\` | \`UUID\` | No | Primary key |
+| \`created_at\` | \`TIMESTAMP\` | No | Record creation time (UTC) |
+| \`updated_at\` | \`TIMESTAMP\` | No | Last update time (UTC) |
+| \`[column]\` | \`[type]\` | Yes / No | [Description] |
+
+**Indexes:** \`[column]\`, \`[column]\`
+**Relations:** References \`[other_table]\` via \`[column]\`
+
+---
+
+### \`[table_name]\`
+
+[Description]
+
+| Column | Type | Nullable | Description |
+|--------|------|----------|-------------|
+| \`id\` | | No | |
+| | | | |
+
+---
+
+## Enums & Constants
+
+### \`[enum_name]\`
+
+| Value | Meaning |
+|-------|---------|
+| \`[VALUE]\` | [Description] |
+| \`[VALUE]\` | [Description] |
+
+---
+
+## Deprecated Fields
+
+| Field | Table | Deprecated in | Will be removed | Migration |
+|-------|-------|--------------|----------------|-----------|
+| \`[field]\` | \`[table]\` | [version/date] | [date] | [action] |
+`,
+  },
+  {
+    slug: "proposal",
+    name: "Proposal",
+    description: "A structured proposal for a new initiative, change, or investment.",
+    category: "Business",
+    content: `# Proposal: [Title]
+
+**Author:** [Name]
+**Date:** [Date]
+**Status:** Draft | Under review | Approved | Rejected
+
+---
+
+## Summary
+
+One paragraph describing what is being proposed and why.
+
+---
+
+## Background
+
+What context does the reader need to evaluate this proposal? What has been tried before?
+
+---
+
+## Proposal
+
+### What we're proposing
+
+[Clear description of the proposal.]
+
+### Why this approach
+
+[Rationale. Why not other approaches?]
+
+### What we're asking for
+
+| Ask | Amount / resource |
+|-----|-------------------|
+| Budget | |
+| Engineering time | |
+| Design time | |
+| Other | |
+
+---
+
+## Expected outcomes
+
+| Outcome | How we'll measure it |
+|---------|---------------------|
+| [Outcome] | [Metric] |
+| [Outcome] | [Metric] |
+
+---
+
+## Risks
+
+| Risk | Likelihood | Impact | Mitigation |
+|------|-----------|--------|------------|
+| [Risk] | H/M/L | H/M/L | [Plan] |
+
+---
+
+## Alternatives considered
+
+1. **[Alternative A]:** [Why not chosen]
+2. **[Alternative B]:** [Why not chosen]
+
+---
+
+## Timeline
+
+| Phase | Duration | Description |
+|-------|---------|-------------|
+| [Phase] | [Weeks] | [What happens] |
+
+---
+
+## Decision
+
+**Approved:** ☐ Yes ☐ No ☐ Conditional
+**Notes:**
+**Decision date:**
+`,
+  },
+  {
+    slug: "user-research-report",
+    name: "User Research Report",
+    description: "Summarize user research findings, insights, and recommended actions.",
+    category: "Design",
+    content: `# User Research Report: [Study Name]
+
+**Researcher:** [Name]
+**Date:** [Date]
+**Methods:** [e.g., Interviews, Usability test, Survey]
+**Participants:** [n=X, describe cohort briefly]
+
+---
+
+## Research Questions
+
+1. [What were we trying to learn?]
+2. [Question 2]
+3. [Question 3]
+
+---
+
+## Methodology
+
+Brief description of how the research was conducted. Link to discussion guide or screener if available.
+
+---
+
+## Key Findings
+
+### Finding 1: [Title]
+
+[Description with supporting data or quotes.]
+
+> "[Representative quote from participant]"
+> — [Participant descriptor, e.g., "Startup founder, 3 years experience"]
+
+**Implication:** [What this means for the product or team]
+
+---
+
+### Finding 2: [Title]
+
+[Description]
+
+> "[Quote]"
+
+**Implication:** [Implication]
+
+---
+
+### Finding 3: [Title]
+
+[Description]
+
+---
+
+## Themes Summary
+
+| Theme | Frequency | Severity |
+|-------|----------|---------|
+| [Theme] | [X of Y participants] | High / Med / Low |
+| [Theme] | | |
+
+---
+
+## Recommendations
+
+| Priority | Recommendation | Owner |
+|----------|---------------|-------|
+| P0 | [Action] | [Team] |
+| P1 | [Action] | [Team] |
+| P2 | [Action] | [Team] |
+
+---
+
+## Appendix
+
+- [Link to raw notes]
+- [Link to recordings]
+- [Link to screener/guide]
+`,
+  },
 ];
+
