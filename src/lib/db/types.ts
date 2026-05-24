@@ -1,12 +1,9 @@
-export type UserPlan = "free" | "pro" | "teams";
+export type UserPlan = "free";
 
 export type DbUser = {
   id: string;           // Clerk user ID
   email: string | null;
   plan: UserPlan;
-  stripe_customer_id: string | null;
-  stripe_subscription_id: string | null;
-  plan_expires_at: string | null;
   created_at: string;
 };
 
@@ -95,4 +92,10 @@ export type PublishEvent = {
   content_length_bucket: "xs" | "sm" | "md" | "lg" | "xl";
   source: "browser" | "api" | "cli";
   created_at: string;
+};
+
+export type DbReaction = {
+  page_id: string;
+  emoji: string;
+  count: number;
 };

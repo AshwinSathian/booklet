@@ -19,6 +19,7 @@ import { ReadingProgress } from "@/components/share/ReadingProgress";
 import { PasswordGate } from "@/components/share/PasswordGate";
 import { EmbedButton } from "@/components/share/EmbedButton";
 import { StickyHeader } from "@/components/share/StickyHeader";
+import { Reactions } from "@/components/share/Reactions";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -211,6 +212,9 @@ export default async function SharePage({
               settings={doc.settings}
               headingAnchors={anchorMap}
             />
+            {pageRecord?.visibility === "public" && (
+              <Reactions pageId={resolvedId} />
+            )}
           </div>
           {showToc ? <DesktopTocClient toc={toc} /> : null}
         </div>
