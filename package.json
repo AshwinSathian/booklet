@@ -15,6 +15,7 @@
     "test": "tsc --noEmit",
     "postinstall": "node scripts/stub-og.cjs",
     "preview": "opennextjs-cloudflare build && wrangler dev",
+    "predeploy": "node scripts/check-secrets.mjs",
     "deploy": "opennextjs-cloudflare build && wrangler deploy"
   },
   "dependencies": {

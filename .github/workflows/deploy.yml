@@ -1,0 +1,84 @@
+# Builds and deploys the Next.js app to Cloudflare Workers via OpenNext.
+# Runs on every push to main that touches app code (not CLI, MCP, or docs).
+#
+# ─── Required GitHub Secrets (repo → Settings → Secrets → Actions) ───────────
+#   CLOUDFLARE_API_TOKEN   — CF API token with "Workers Scripts: Edit" permission
+#   CLOUDFLARE_ACCOUNT_ID  — Your CF account ID (visible in the dashboard URL)
+#
+# ─── Required Cloudflare Worker secrets (set once per environment) ────────────
+#   MONGODB_URI            — set with: printf '%s' '...' | npx wrangler secret put MONGODB_URI
+#   CLERK_SECRET_KEY       — set with: printf '%s' '...' | npx wrangler secret put CLERK_SECRET_KEY
+#
+# Public vars (NEXT_PUBLIC_*, SITE_URL, GA ID) live in wrangler.jsonc and are
+# deployed automatically. NEVER add these to the CF dashboard manually — wrangler
+# deploy treats wrangler.jsonc as the source of truth and will overwrite any
+# dashboard-only vars on the next deploy.
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: Deploy to Cloudflare Workers
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "packages/cli/**"
+      - "mcp-server/**"
+      - "**.md"
+      - ".github/examples/**"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      # ── Verify required Worker secrets exist before building ───────────────
+      # Catches a missing secret early (fast, no build cost) so the deploy
+      # fails with a clear error instead of silently shipping a broken worker.
+      - name: Verify Cloudflare Worker secrets
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          REQUIRED_SECRETS=("MONGODB_URI" "CLERK_SECRET_KEY")
+          PRESENT=$(npx wrangler secret list --format json 2>/dev/null | node -e "
+            let d=''; process.stdin.on('data',c=>d+=c).on('end',()=>{
+              try { console.log(JSON.parse(d).map(s=>s.name).join(' ')); }
+              catch { process.exit(0); }
+            });
+          ")
+          MISSING=()
+          for SECRET in "${REQUIRED_SECRETS[@]}"; do
+            if [[ " $PRESENT " != *" $SECRET "* ]]; then
+              MISSING+=("$SECRET")
+            fi
+          done
+          if [ ${#MISSING[@]} -gt 0 ]; then
+            echo ""
+            echo "✗  Missing Cloudflare Worker secrets:"
+            for S in "${MISSING[@]}"; do echo "     $S"; done
+            echo ""
+            echo "   Set each one with:"
+            echo "     printf '%s' '<value>' | npx wrangler secret put <NAME>"
+            echo ""
+            exit 1
+          fi
+          echo "✓  All required secrets present: ${REQUIRED_SECRETS[*]}"
+
+      # ── Build + deploy ─────────────────────────────────────────────────────
+      - name: Build (OpenNext) and deploy (Wrangler)
+        run: npm run deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
