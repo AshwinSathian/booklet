@@ -7,8 +7,12 @@ const { version } = JSON.parse(
 
 export default defineConfig({
   entry: ["src/index.ts"],
-  format: ["esm"],
+  // CJS is correct for a CLI binary: native require() works for all deps including
+  // CJS packages like commander. ESM + noExternal breaks because bundled CJS code
+  // calls require("events") which throws in ESM context without a real require shim.
+  format: ["cjs"],
   target: "node18",
+  platform: "node",
   outDir: "dist",
   clean: true,
   bundle: true,
