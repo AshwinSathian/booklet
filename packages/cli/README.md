@@ -16,19 +16,25 @@ npx readable-cli publish README.md
 
 ## Authentication
 
-Get your API key from [readable.ashwinsathian.com](https://readable.ashwinsathian.com) → My Pages → Settings → API Keys. Keys look like `rdbl_xxxx…`.
-
 ```bash
 readable login
-# Paste your API key when prompted, or pass it directly:
+```
+
+This opens your browser to authorize the CLI. Sign in (or create an account) and you're done — no copy-pasting required. Your key is saved automatically to `~/.readable/config.json`.
+
+**CI / non-interactive environments:** pass your key directly with `--key`:
+
+```bash
 readable login --key rdbl_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
-Your key is saved to `~/.readable/config.json`. You can also set it via environment variable — useful for CI:
+You can also set it via environment variable, which takes precedence over the config file:
 
 ```bash
 export READABLE_API_KEY=rdbl_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
+
+Generate keys manually at [readable.ashwinsathian.com](https://readable.ashwinsathian.com) → My Pages → Settings → API Keys.
 
 ## Commands
 

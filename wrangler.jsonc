@@ -24,7 +24,7 @@
   },
   // ---------------------------------------------------------------------------
   // Public vars — safe to commit. Secrets (MONGODB_URI, CLERK_SECRET_KEY) are
-  // stored in Cloudflare dashboard / set via `wrangler secret put`.
+  // set via `wrangler secret put` and stored encrypted in Cloudflare.
   // ---------------------------------------------------------------------------
   "vars": {
     "NEXT_PUBLIC_SITE_URL": "https://readable.ashwinsathian.com",
@@ -34,6 +34,5 @@
     "NEXT_PUBLIC_CLERK_SIGN_UP_URL": "/sign-up",
     "NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL": "/app",
     "NEXT_PUBLIC_CLERK_AFTER_SIGN_OUT_URL": "/",
-    "MONGODB_URI": "mongodb+srv://<redacted>:<redacted>@<redacted>.mongodb.net/readable",
   },
 }

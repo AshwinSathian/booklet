@@ -128,14 +128,23 @@ export async function getPageBySlug(slug: string): Promise<DbPage | null> {
   return doc ? toPage(doc) : null;
 }
 
-export async function getPagesByUser(userId: string): Promise<DbPage[]> {
+export async function getPagesByUser(
+  userId: string,
+  opts: { limit?: number; offset?: number } = {},
+): Promise<{ pages: DbPage[]; total: number }> {
   const db = await getDb();
-  const docs = await db
-    .collection<PageDoc>("pages")
-    .find({ user_id: userId })
-    .sort({ created_at: -1 })
-    .toArray();
-  return docs.map(toPage);
+  const col = db.collection<PageDoc>("pages");
+  const filter = { user_id: userId };
+  const [docs, total] = await Promise.all([
+    col
+      .find(filter)
+      .sort({ created_at: -1 })
+      .skip(opts.offset ?? 0)
+      .limit(opts.limit ?? 0)
+      .toArray(),
+    col.countDocuments(filter),
+  ]);
+  return { pages: docs.map(toPage), total };
 }
 
 export async function updatePageRecord(

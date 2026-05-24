@@ -28,7 +28,7 @@ export default async function MyPagesPage() {
 
   const hdrs = await headers();
   const baseUrl = getBaseUrl(hdrs);
-  const [pages, apiKeys, ownedCollections, teamSpaces, webhooks] = await Promise.all([
+  const [{ pages }, apiKeys, ownedCollections, teamSpaces, webhooks] = await Promise.all([
     getPagesByUser(userId),
     getApiKeysByUser(userId),
     getCollectionsByUser(userId),

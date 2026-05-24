@@ -962,14 +962,16 @@ export function Landing() {
             </nav>
             <div className="flex items-center gap-2">
               <ThemeToggle />
-              {/* Fixed-width slot avoids CLS while Clerk resolves auth state */}
-              <div className="w-18 flex justify-end">
-                {!isLoaded ? null : isSignedIn ? (
-                  <UserButton />
-                ) : (
+              {isLoaded && isSignedIn ? (
+                <UserButton />
+              ) : (
+                <span
+                  className={!isLoaded ? "pointer-events-none opacity-0" : undefined}
+                  aria-hidden={!isLoaded || undefined}
+                >
                   <GhostButton href={ROUTES.signIn}>Sign in</GhostButton>
-                )}
-              </div>
+                </span>
+              )}
               <PrimaryButton
                 href={ROUTES.app}
                 onClick={() => trackEvent("open_editor_clicked", { location: "topbar" })}

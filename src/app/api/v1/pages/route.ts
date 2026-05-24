@@ -6,6 +6,9 @@ import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
+const MAX_LIMIT = 100;
+const DEFAULT_LIMIT = 20;
+
 export async function GET(req: Request) {
   const userId = await resolveApiKey(req);
   if (!userId) {
@@ -15,7 +18,14 @@ export async function GET(req: Request) {
   const rl = await checkRateLimit(`v1__pages_list__${userId}`, 60);
   if (rl) return rl;
 
-  const pages = await getPagesByUser(userId);
+  const url = new URL(req.url);
+  const rawLimit = parseInt(url.searchParams.get("limit") ?? String(DEFAULT_LIMIT), 10);
+  const rawOffset = parseInt(url.searchParams.get("offset") ?? "0", 10);
+
+  const limit = Number.isFinite(rawLimit) && rawLimit > 0 ? Math.min(rawLimit, MAX_LIMIT) : DEFAULT_LIMIT;
+  const offset = Number.isFinite(rawOffset) && rawOffset >= 0 ? rawOffset : 0;
+
+  const { pages, total } = await getPagesByUser(userId, { limit, offset });
 
   const base = new URL(req.url);
   base.search = "";
@@ -35,5 +45,8 @@ export async function GET(req: Request) {
     };
   });
 
-  return NextResponse.json({ pages: items }, { status: 200 });
+  return NextResponse.json(
+    { pages: items, total, limit, offset },
+    { status: 200 },
+  );
 }

@@ -6,13 +6,14 @@ import { deletePageVersions, snapshotPageVersion } from "@/lib/db/versions";
 import { recordPublishEvent } from "@/lib/db/publish-events";
 import { resolveApiKey } from "@/lib/api-key-auth";
 import { parseToBlocks } from "@/lib/parse";
-import { putDoc, deleteDoc } from "@/lib/storage";
+import { getDoc, putDoc, deleteDoc } from "@/lib/storage";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { ROUTES } from "@/lib/constants";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
-// Mirrors validation in /api/pages/[id]/route.ts
 const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,58}[a-z0-9]$|^[a-z0-9]{1,60}$/;
 function isValidSlug(s: string) { return SLUG_RE.test(s) && !s.includes("--"); }
 
@@ -28,6 +29,54 @@ type MetadataPayload = {
 };
 
 type PatchPayload = ContentPayload & MetadataPayload;
+
+// ─── GET: read page metadata + raw content ────────────────────────────────────
+
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const userId = await resolveApiKey(req);
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const rl = await checkRateLimit(`v1__page_get__${userId}`, 120);
+  if (rl) return rl;
+
+  const { id } = await params;
+  if (!id?.trim()) {
+    return NextResponse.json({ error: "Missing page id" }, { status: 400 });
+  }
+
+  // Accept both page ID and custom slug
+  const record = (await getPageRecord(id)) ?? (await getPageBySlug(id));
+  if (!record) {
+    return NextResponse.json({ error: "Page not found" }, { status: 404 });
+  }
+  if (record.user_id !== userId) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const doc = await getDoc(record.id);
+
+  const base = new URL(req.url);
+  const url = `${base.origin}${ROUTES.publish(record.slug ?? record.id)}`;
+
+  return NextResponse.json({
+    id: record.id,
+    title: record.title ?? null,
+    slug: record.slug ?? null,
+    visibility: record.visibility,
+    view_count: record.view_count,
+    url,
+    created_at: record.created_at,
+    updated_at: record.updated_at,
+    raw: doc?.raw ?? null,
+  });
+}
+
+// ─── PATCH: update content, slug, or visibility ───────────────────────────────
 
 export async function PATCH(
   req: Request,
@@ -71,7 +120,6 @@ export async function PATCH(
     );
   }
 
-  // ── Metadata update (slug / visibility) ──────────────────────────────────
   const metaPatch: Parameters<typeof updatePageRecord>[1] = {};
 
   if (hasMetadata && payload) {
@@ -103,7 +151,6 @@ export async function PATCH(
     }
   }
 
-  // ── Content update (blocks / raw) ────────────────────────────────────────
   if (hasContent && payload) {
     if (payload.raw && typeof payload.raw === "string") {
       payload = { ...payload, blocks: parseToBlocks(payload.raw) };
@@ -155,7 +202,6 @@ export async function PATCH(
     metaPatch.updated_at = new Date().toISOString();
   }
 
-  // Persist metadata changes (includes updated_at from content update)
   if (Object.keys(metaPatch).length > 0) {
     try {
       await updatePageRecord(id, metaPatch);
@@ -164,7 +210,6 @@ export async function PATCH(
     }
   }
 
-  // Resolve the effective slug for the URL response
   const effectiveSlug = "slug" in metaPatch ? metaPatch.slug : record.slug;
 
   const url = new URL(req.url);
@@ -178,6 +223,8 @@ export async function PATCH(
     ...(metaPatch.updated_at ? { updated_at: metaPatch.updated_at } : {}),
   });
 }
+
+// ─── DELETE ───────────────────────────────────────────────────────────────────
 
 export async function DELETE(
   req: Request,
