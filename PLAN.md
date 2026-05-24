@@ -127,11 +127,17 @@ The following are confirmed complete and do not need rework.
 | Version history | ✅ Done | `/api/pages/[id]/versions`, `snapshotPageVersion` |
 | Webhooks | ✅ Done | `deliverWebhooks` on publish/update, UI in My Pages |
 | MCP server | ✅ Done | `mcp-server/` Cloudflare Worker at `mcp.readable.ashwinsathian.com` |
-| CLI (`@readable/cli`) | Not started | Any HTTP client works via the REST API |
-| Team Spaces | Not started | Schema columns exist, routes not built |
-| KaTeX math rendering | Not started | — |
-| Embed codes | Not started | — |
-| VS Code extension | Not started | — |
+| CLI (`@readable/cli`) | ✅ Done | `packages/cli/` — auth, publish, pages list, --watch mode |
+| Team Spaces | ✅ Done | `/api/teams/`, `/t/[slug]`, `/t/[slug]/admin`, invite via JWT+Resend |
+| KaTeX math rendering | ✅ Done | `remark-math` + `katex`, block + inline, CSS imported |
+| Embed codes | ✅ Done | `/p/[id]/embed`, `EmbedButton`, middleware frame-ancestors |
+| VS Code extension | ✅ Done | `packages/vscode/` — publish, publishSelection, setApiKey |
+| GitHub Action | ✅ Done | `packages/github-action/` — publish/update pages in CI |
+| Postmortem template | ✅ Done | `src/lib/templates.ts` slug `postmortem` |
+| ADR alias `/templates/adr` | ✅ Done | Redirect to `architecture-decision-record` |
+| Featured explore system | ✅ Done | Per-page toggle, featured section on `/explore` |
+| YAML frontmatter tags+display | ✅ Done | Tags, author, date on share page; description as SEO meta |
+| Webhooks UI in My Pages | ✅ Done | `WebhooksClient.tsx` — add/delete webhooks with secret reveal |
 
 ---
 

@@ -1,0 +1,36 @@
+name: "Publish to Readable"
+description: "Publish a Markdown file to Readable and get a shareable URL"
+author: "Readable"
+
+branding:
+  icon: "upload-cloud"
+  color: "blue"
+
+inputs:
+  file:
+    description: "Path to the Markdown file to publish"
+    required: true
+  api-key:
+    description: "Readable API key (store as a repo secret)"
+    required: true
+  page-id:
+    description: "Existing page ID to update in-place (optional)"
+    required: false
+  visibility:
+    description: "Page visibility: public or unlisted"
+    required: false
+    default: "unlisted"
+  base-url:
+    description: "Readable API base URL"
+    required: false
+    default: "https://readable.ashwinsathian.com"
+
+outputs:
+  url:
+    description: "URL of the published page"
+  id:
+    description: "Page ID"
+
+runs:
+  using: "node20"
+  main: "dist/main.js"

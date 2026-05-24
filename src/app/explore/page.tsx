@@ -113,7 +113,7 @@ export default async function ExplorePage() {
             </div>
           ) : recent.length === 0 ? (
             <p className="text-sm text-text-muted py-4">
-              Be the first to feature your work — toggle &ldquo;Feature on Explore&rdquo; from your page settings.
+              No recent pages yet.
             </p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

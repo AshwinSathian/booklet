@@ -21,10 +21,13 @@ Paste Markdown into the editor, preview it live, and share a polished read-only 
 - **Collections** — group pages into a named collection with a shared URL
 - **Password protection** — require a password to view any page
 - **Custom slugs** — set a human-readable URL like `/p/my-release-notes`
-- **Webhooks** — HTTP callbacks on `page.published` and `page.deleted` events
+- **Team Spaces** — invite collaborators, publish to shared `/t/:slug` spaces
+- **Webhooks** — HTTP callbacks on `page.published` and `page.updated` events
 - **REST API** — publish, update, list, and delete pages programmatically
 - **MCP server** — expose the API to AI assistants (Claude, etc.) via the MCP protocol
 - **CLI** — publish Markdown from your terminal (`npx readable-cli`)
+- **VS Code extension** — publish from the editor with `Readable: Publish`
+- **GitHub Action** — publish docs in CI via `packages/github-action/`
 - **Frontmatter** — YAML frontmatter sets title, slug, visibility, tags, author, date
 
 ---
@@ -128,6 +131,10 @@ NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
 CLERK_SECRET_KEY=sk_test_...
 MONGODB_URI=mongodb+srv://...
+
+# Optional — for team invite emails
+RESEND_API_KEY=re_...
+INVITE_JWT_SECRET=<random-secret>
 ```
 
 ### Deploy
@@ -162,6 +169,8 @@ src/
     frontmatter.ts  # YAML frontmatter parser (js-yaml)
 packages/
   cli/              # readable-cli npm package
+  github-action/    # GitHub Action: publish Markdown in CI
+  vscode/           # VS Code extension: publish from editor
 mcp-server/         # Cloudflare Worker MCP server
 .github/
   workflows/        # publish-cli.yml — auto-publish CLI to npm

@@ -1,5 +1,5 @@
 import { BlockRenderer } from "@/components/blocks/BlockRenderer";
-import { APP_NAME, ROUTES } from "@/lib/constants";
+import { APP_NAME } from "@/lib/constants";
 import { buildMetadata } from "@/lib/seo";
 import { getDoc } from "@/lib/storage";
 import { getPageBySlug, getPageRecord } from "@/lib/db";

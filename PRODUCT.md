@@ -537,9 +537,8 @@ These are intentional omissions:
 
 | Omission | Why intentional |
 |---|---|
-| No real-time collaboration | Readable is not Google Docs. One writer, one page. |
+| No real-time collaborative editing | Readable is not a shared editor. Collaboration happens via the published link. |
 | No editing after publish | Published pages are immutable snapshots; stability of shared links is a feature |
-| No private/password-protected pages | Any published page is accessible to anyone with the URL (unlisted hides from discovery, not from access) |
 | No permanent storage for anonymous users | 30-day TTL is generous for sharing; permanence requires identity |
 | No rich text / WYSIWYG | Markdown only — no drag-and-drop block editor; the formatting toolbar assists with syntax but does not hide it |
 | No embedded media | External image URLs rendered; no video/audio/iframes |
@@ -563,6 +562,7 @@ Readable supports GFM — the most widely used Markdown dialect:
 - Links
 - Images (external URLs only; inline images from data URIs are not supported)
 - Mermaid diagram blocks
+- KaTeX math (inline `$...$` and block `$$...$$`)
 - HTML in Markdown is **not** rendered (security policy)
 
 ---
@@ -582,7 +582,7 @@ No for anonymous pages. Account holders can use `PATCH /api/v1/pages/{id}` to re
 After 30 days, the page is removed from storage and the URL returns "Page not found." There is no warning email. The page itself shows an expiry countdown badge.
 
 **Can I use Readable for sensitive or confidential content?**  
-Use caution. Any published page is accessible to anyone with the URL — there is no password protection. The "unlisted" option hides the page from discovery, but anyone who has the URL can still open it. For truly confidential content, Readable is not the right tool.
+Signed-in users can password-protect pages. The "unlisted" option hides the page from discovery, but anyone who has the URL can still open it. For genuinely confidential content, combine password protection with careful link sharing.
 
 **Does Readable support all Markdown features?**  
 Readable supports GitHub-Flavored Markdown (GFM). HTML in Markdown is not rendered for security reasons.

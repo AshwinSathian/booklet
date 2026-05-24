@@ -1,0 +1,59 @@
+{
+  "name": "readable-hq",
+  "displayName": "Readable",
+  "description": "Publish Markdown to Readable from VS Code",
+  "version": "0.1.0",
+  "publisher": "readable-hq",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "readable.publish",
+        "title": "Readable: Publish Current File"
+      },
+      {
+        "command": "readable.publishSelection",
+        "title": "Readable: Publish Selection"
+      },
+      {
+        "command": "readable.setApiKey",
+        "title": "Readable: Set API Key"
+      }
+    ],
+    "configuration": {
+      "title": "Readable",
+      "properties": {
+        "readable.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Your Readable API key"
+        },
+        "readable.defaultVisibility": {
+          "type": "string",
+          "enum": ["public", "unlisted"],
+          "default": "unlisted",
+          "description": "Default visibility for published pages"
+        },
+        "readable.baseUrl": {
+          "type": "string",
+          "default": "https://readable.ashwinsathian.com",
+          "description": "Readable API base URL"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsc -p ./tsconfig.json",
+    "vscode:prepublish": "npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.0.0"
+  }
+}

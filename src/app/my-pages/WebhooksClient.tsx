@@ -194,7 +194,11 @@ export function WebhooksSection({ initialWebhooks }: { initialWebhooks: WebhookR
 
   const handleCreate = async () => {
     const url = urlRef.current?.value.trim() ?? "";
-    if (!url) return;
+    if (!url) {
+      setError("A URL is required.");
+      urlRef.current?.focus();
+      return;
+    }
     if (selectedEvents.size === 0) {
       setError("Select at least one event.");
       return;
@@ -227,6 +231,7 @@ export function WebhooksSection({ initialWebhooks }: { initialWebhooks: WebhookR
       };
       setWebhooks((prev) => [newWh, ...prev]);
       setSecretReveal({ id: newWh.id, secret: data.secret! });
+      setError(null);
       if (urlRef.current) urlRef.current.value = "";
     } finally {
       setCreating(false);
