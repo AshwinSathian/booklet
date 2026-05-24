@@ -100,6 +100,9 @@ function Table({ rows }: { rows: [string, string][] }) {
 }
 
 export default function ApiDocsPage() {
+  const base = absoluteUrl("").replace(/\/$/, "");
+  const mcpBase = base.replace(/^(https?:\/\/)/, "$1mcp.");
+
   return (
     <div className="min-h-screen bg-bg text-text-primary flex flex-col">
       <script
@@ -160,7 +163,7 @@ export default function ApiDocsPage() {
           </div>
 
           <Section id="overview" title="Base URL">
-            <Pre>{`https://readable.ashwinsathian.com/api/v1`}</Pre>
+            <Pre>{`${base}/api/v1`}</Pre>
             <p className="mt-3 text-sm text-text-secondary">All requests and responses use JSON. Timestamps are ISO 8601 UTC.</p>
           </Section>
 
@@ -197,7 +200,7 @@ export default function ApiDocsPage() {
               <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mt-4 mb-2">Response 201</p>
               <Pre>{`{
   "id": "Ab3k91QxZp",
-  "url": "https://readable.ashwinsathian.com/p/Ab3k91QxZp"
+  "url": "${base}/p/Ab3k91QxZp"
 }`}</Pre>
               <div className="mt-4">
                 <Table rows={[
@@ -261,7 +264,7 @@ slug: incident-auth-2026-05
               <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mt-4 mb-2">Response 200</p>
               <Pre>{`{
   "id": "Ab3k91QxZp",
-  "url": "https://readable.ashwinsathian.com/p/Ab3k91QxZp",
+  "url": "${base}/p/Ab3k91QxZp",
   "updated_at": "2026-04-29T12:00:00.000Z"
 }`}</Pre>
               <div className="mt-4">
@@ -286,7 +289,7 @@ slug: incident-auth-2026-05
       "slug": "release-notes-v2-1",
       "visibility": "public",
       "view_count": 42,
-      "url": "https://readable.ashwinsathian.com/p/release-notes-v2-1",
+      "url": "${base}/p/release-notes-v2-1",
       "created_at": "2026-04-29T10:00:00.000Z",
       "updated_at": "2026-04-29T10:00:00.000Z"
     }
@@ -385,7 +388,7 @@ function verifySignature(rawBody, secret, header) {
               <Pre>{`{
   "event": "page.published",
   "page_id": "Ab3k91QxZp",
-  "page_url": "https://readable.ashwinsathian.com/p/Ab3k91QxZp",
+  "page_url": "${base}/p/Ab3k91QxZp",
   "title": "Incident Report — Auth Service",
   "published_at": "2026-05-19T08:32:00.000Z"
 }`}</Pre>
@@ -445,12 +448,12 @@ jobs:
           BODY=$(jq -n --rawfile raw CHANGELOG.md '{"raw": $raw}')
 
           if [ -n "$PAGE_ID" ]; then
-            curl -fsSL -X PATCH "https://readable.ashwinsathian.com/api/v1/pages/$PAGE_ID" \\
+            curl -fsSL -X PATCH "${base}/api/v1/pages/$PAGE_ID" \\
               -H "Authorization: Bearer $READABLE_API_KEY" \\
               -H "Content-Type: application/json" \\
               -d "$BODY"
           else
-            curl -fsSL -X POST "https://readable.ashwinsathian.com/api/v1/publish" \\
+            curl -fsSL -X POST "${base}/api/v1/publish" \\
               -H "Authorization: Bearer $READABLE_API_KEY" \\
               -H "Content-Type: application/json" \\
               -d "$BODY" | jq -r '.url'
@@ -489,7 +492,7 @@ jobs:
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
               <div className="rounded-lg border border-outline p-3">
                 <p className="text-xs font-semibold text-text-primary mb-1">MCP endpoint</p>
-                <Code>https://mcp.readable.ashwinsathian.com/mcp</Code>
+                <Code>{mcpBase}/mcp</Code>
               </div>
               <div className="rounded-lg border border-outline p-3">
                 <p className="text-xs font-semibold text-text-primary mb-1">Auth header</p>
