@@ -1790,15 +1790,9 @@ export function Landing() {
                 <Link href="/templates" className="transition hover:text-text-primary">Templates</Link>
                 <Link href="/explore" className="transition hover:text-text-primary">Explore</Link>
                 <Link href="/api-docs" className="transition hover:text-text-primary">API docs</Link>
-                <Link href="/pricing" className="transition hover:text-text-primary">Pricing</Link>
-                <a
-                  href="https://mcp.readable.ashwinsathian.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="transition hover:text-text-primary"
-                >
-                  MCP
-                </a>
+                <Link href="/about" className="transition hover:text-text-primary">About</Link>
+                <Link href="/privacy" className="transition hover:text-text-primary">Privacy</Link>
+                <Link href="/terms" className="transition hover:text-text-primary">Terms</Link>
               </nav>
             </div>
 

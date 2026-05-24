@@ -47,10 +47,22 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.65,
     },
     {
-      url: absoluteUrl("/pricing"),
+      url: absoluteUrl("/about"),
       lastModified: now,
       changeFrequency: "monthly",
       priority: 0.5,
+    },
+    {
+      url: absoluteUrl("/privacy"),
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.3,
+    },
+    {
+      url: absoluteUrl("/terms"),
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.3,
     },
   ];
 
