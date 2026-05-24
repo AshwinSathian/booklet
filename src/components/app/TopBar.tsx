@@ -688,10 +688,10 @@ function PublishArea({
         {publishedOwned && (
           <a
             href="/my-pages"
-            className="hidden sm:flex items-center gap-1 text-xs text-text-muted hover:text-accent transition ml-0.5"
+            className="flex items-center gap-1 text-xs text-text-muted hover:text-accent transition ml-0.5"
           >
             <Icon name="list" size={12} />
-            <span>My pages</span>
+            <span className="hidden sm:inline">My pages</span>
           </a>
         )}
       </div>
@@ -1190,7 +1190,7 @@ export function TopBar({
               </UserButton.MenuItems>
             </UserButton>
           ) : (
-            <Button variant="secondary" size="sm" href={ROUTES.signIn} className="hidden sm:inline-flex">
+            <Button variant="secondary" size="sm" href={ROUTES.signIn}>
               Sign in
             </Button>
           )}
@@ -1230,6 +1230,21 @@ export function TopBar({
         onSelectTemplate={(template) => onInsertTemplate?.(template.name, template.content)}
         onClose={() => setVisibleMoreActions(false)}
       />
+
+      {/* Post-publish sign-in nudge — shown for anonymous publishes */}
+      {status === "published" && !publishedOwned && !isSignedIn ? (
+        <div className="border-t border-accent/20 bg-accent-dim/60 backdrop-blur-xl px-3 py-2">
+          <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3">
+            <p className="text-xs text-text-secondary">
+              <span className="font-semibold text-text-primary">This page expires in 30 days.</span>
+              {" "}Sign in (free) to make it permanent, edit it in place, and track views.
+            </p>
+            <Button variant="primary" size="sm" href={ROUTES.signIn} className="shrink-0">
+              Sign in free
+            </Button>
+          </div>
+        </div>
+      ) : null}
 
       {/* Post-publish slug bar — shown once for owned pages until dismissed or slug saved */}
       {status === "published" && publishedOwned && publishedId && !slugBarDismissed ? (

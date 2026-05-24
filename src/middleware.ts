@@ -3,6 +3,9 @@ import { NextResponse } from "next/server";
 
 const isProtected = createRouteMatcher(["/my-pages(.*)"]);
 
+// Clerk FAPI host — derived from the publishable key (pk_live_Y2xlcmsuYXNod2luc2F0aGlhbi5jb20k → clerk.ashwinsathian.com)
+const CLERK_HOST = "https://clerk.ashwinsathian.com";
+
 const SECURITY_HEADERS: Record<string, string> = {
   "X-Frame-Options": "DENY",
   "X-Content-Type-Options": "nosniff",
@@ -10,12 +13,13 @@ const SECURITY_HEADERS: Record<string, string> = {
   "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
   "Content-Security-Policy": [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://clerk.readable.so https://challenges.cloudflare.com https://www.googletagmanager.com",
+    `script-src 'self' 'unsafe-inline' 'unsafe-eval' ${CLERK_HOST} https://challenges.cloudflare.com https://www.googletagmanager.com`,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
-    "connect-src 'self' https://clerk.readable.so https://www.google-analytics.com https://region1.google-analytics.com",
-    "frame-src https://challenges.cloudflare.com",
+    `connect-src 'self' ${CLERK_HOST} https://www.google-analytics.com https://region1.google-analytics.com`,
+    `frame-src ${CLERK_HOST} https://challenges.cloudflare.com`,
+    "worker-src blob:",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

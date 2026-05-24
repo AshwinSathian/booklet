@@ -172,7 +172,8 @@ export function registerAuthCommands(program: Command) {
     .description("Authenticate with Readable")
     .option("--key <key>", "Authenticate with an API key directly (for CI/scripts)")
     .option("--api-url <url>", "Override API base URL")
-    .action(async (opts: { key?: string; apiUrl?: string }) => {
+    .option("--force", "Re-authenticate even if already logged in")
+    .action(async (opts: { key?: string; apiUrl?: string; force?: boolean }) => {
       const existing = await readConfig();
       const base = opts.apiUrl?.replace(/\/$/, "") ?? existing.apiBase;
 
@@ -187,6 +188,19 @@ export function registerAuthCommands(program: Command) {
         success("Authenticated. Key saved to ~/.readable/config.json");
         info(`You have ${result.pageCount} page${result.pageCount === 1 ? "" : "s"}.`);
         return;
+      }
+
+      // ── Check existing credentials (skip if --force) ───────────────────────
+      if (!opts.force && existing.apiKey) {
+        info("Checking saved credentials…");
+        const check = await validateKey(existing.apiKey, base);
+        if (check.ok) {
+          success("Already authenticated.");
+          info(`You have ${check.pageCount} page${check.pageCount === 1 ? "" : "s"}.`);
+          info(dim("Run `readable login --force` to re-authenticate."));
+          return;
+        }
+        info("Saved key is no longer valid — re-authenticating…");
       }
 
       // ── Interactive: open browser ──────────────────────────────────────────

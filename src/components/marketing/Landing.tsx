@@ -9,7 +9,7 @@ import type { Easing, Variants } from "framer-motion";
 import { motion, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
-import { type ReactNode, useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState, useCallback } from "react";
 import { TEMPLATES } from "@/lib/templates";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -655,6 +655,19 @@ export function Landing() {
     [],
   );
 
+  const [copiedMcp, setCopiedMcp] = useState(false);
+  const handleCopyMcpConfig = useCallback(() => {
+    const config = JSON.stringify(
+      { mcpServers: { readable: { url: "https://mcp.readable.ashwinsathian.com/mcp" } } },
+      null,
+      2,
+    );
+    navigator.clipboard.writeText(config).then(() => {
+      setCopiedMcp(true);
+      setTimeout(() => setCopiedMcp(false), 2000);
+    });
+  }, []);
+
   const features = useMemo(
     () => [
       {
@@ -963,7 +976,15 @@ export function Landing() {
             <div className="flex items-center gap-2">
               <ThemeToggle />
               {isLoaded && isSignedIn ? (
-                <UserButton />
+                <div className="flex items-center gap-3">
+                  <Link
+                    href={ROUTES.myPages}
+                    className="text-sm text-text-muted transition hover:text-text-primary hidden sm:block"
+                  >
+                    My pages
+                  </Link>
+                  <UserButton />
+                </div>
               ) : (
                 <span
                   className={!isLoaded ? "pointer-events-none opacity-0" : undefined}
@@ -1245,25 +1266,54 @@ export function Landing() {
           {/* Claude MCP */}
           <motion.div variants={reduce ? undefined : fadeUp}>
             <div className="flex flex-col gap-4 rounded-xl border border-border-default bg-bg-elevated p-6 shadow-card transition hover:border-border-strong hover:bg-bg-soft h-full">
-              <div className="w-10 h-10 rounded-lg bg-accent-dim flex items-center justify-center text-accent">
-                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" aria-hidden>
-                  <path d="M12 3a9 9 0 1 0 0 18A9 9 0 0 0 12 3Z" stroke="currentColor" strokeWidth="1.6" />
-                  <path d="M9 9.5c0-1.38 1.34-2.5 3-2.5s3 1.12 3 2.5c0 1.1-.74 2.04-1.8 2.36L12 12.5v1" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                  <circle cx="12" cy="16" r="0.8" fill="currentColor" />
+              {/* Claude brand icon — spark/radial mark in amber */}
+              <div className="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-500">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+                  <path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.93 4.93l2.12 2.12M16.95 16.95l2.12 2.12M4.93 19.07l2.12-2.12M16.95 7.05l2.12-2.12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                 </svg>
               </div>
-              <div className="text-[15px] font-semibold tracking-tight">Claude</div>
+              <div>
+                <div className="text-[15px] font-semibold tracking-tight">Claude</div>
+                <div className="text-[12px] text-text-muted mt-0.5">via MCP</div>
+              </div>
               <div className="text-[15px] leading-[1.72] text-text-secondary">
-                Connect once in Claude settings. Ask Claude to publish, update, or list your Readable pages — no copy-paste required.
+                Add Readable to Claude Desktop or Claude.ai. Then ask Claude to publish, update, or list your pages — all in plain language.
+              </div>
+              {/* Config snippet with copy button */}
+              <div className="relative group">
+                <pre className="text-[11px] font-mono bg-bg-soft border border-border-default rounded-lg px-3 py-3 text-text-muted overflow-x-auto leading-relaxed whitespace-pre">{`{
+  "mcpServers": {
+    "readable": {
+      "url": "https://mcp.readable.ashwinsathian.com/mcp"
+    }
+  }
+}`}</pre>
+                <button
+                  type="button"
+                  onClick={handleCopyMcpConfig}
+                  className="absolute top-2 right-2 p-1.5 rounded-md bg-bg-elevated border border-border-default opacity-0 group-hover:opacity-100 transition-all hover:bg-bg-soft text-text-muted hover:text-text-primary"
+                  title={copiedMcp ? "Copied!" : "Copy config"}
+                >
+                  {copiedMcp ? (
+                    <svg width="13" height="13" fill="none" viewBox="0 0 24 24" aria-hidden>
+                      <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  ) : (
+                    <svg width="13" height="13" fill="none" viewBox="0 0 24 24" aria-hidden>
+                      <rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" strokeWidth="1.7" />
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke="currentColor" strokeWidth="1.7" />
+                    </svg>
+                  )}
+                </button>
               </div>
               <a
                 href="https://mcp.readable.ashwinsathian.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-[13px] font-semibold text-accent transition hover:text-accent-soft mt-auto"
+                className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-accent transition hover:text-accent-soft mt-auto"
                 onClick={() => trackEvent("integration_clicked", { integration: "claude_mcp" })}
               >
-                Connect
+                Add to Claude
                 <svg width="12" height="12" fill="none" viewBox="0 0 12 12" aria-hidden>
                   <path d="M2.5 9.5 9.5 2.5M9.5 2.5H4M9.5 2.5V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
