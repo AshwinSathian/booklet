@@ -1790,6 +1790,7 @@ export function Landing() {
                 <Link href="/templates" className="transition hover:text-text-primary">Templates</Link>
                 <Link href="/explore" className="transition hover:text-text-primary">Explore</Link>
                 <Link href="/api-docs" className="transition hover:text-text-primary">API docs</Link>
+                <Link href="/changelog" className="transition hover:text-text-primary">Changelog</Link>
                 <Link href="/about" className="transition hover:text-text-primary">About</Link>
                 <Link href="/privacy" className="transition hover:text-text-primary">Privacy</Link>
                 <Link href="/terms" className="transition hover:text-text-primary">Terms</Link>
