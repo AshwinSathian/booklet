@@ -1,5 +1,5 @@
 import { ERRORS, McpValidationError, type McpErrorShape } from "./errors.js";
-import type { PageListItem, PublishResponse, UpdateResponse } from "./types.js";
+import type { PageListItem, PageDetailResponse, PublishResponse, UpdateResponse } from "./types.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tool definitions (JSON Schema)
@@ -22,6 +22,17 @@ export const TOOL_DEFINITIONS = [
           type: "string",
           description: "Override the page title. If omitted, Readable extracts the first H1.",
         },
+        slug: {
+          type: "string",
+          description:
+            "Custom URL slug (e.g. \"my-release-notes\"). 1–60 lowercase letters, numbers, or hyphens. Results in a URL like /p/my-release-notes.",
+        },
+        visibility: {
+          type: "string",
+          enum: ["public", "unlisted"],
+          description:
+            "\"public\" (default) lists the page publicly. \"unlisted\" hides it from listings but keeps it accessible via URL.",
+        },
       },
       required: ["raw"],
     },
@@ -29,7 +40,7 @@ export const TOOL_DEFINITIONS = [
   {
     name: "update_page",
     description:
-      "Update the content of an existing Readable page you own. The URL stays the same — visitors who already have the link will see the new content. Use list_pages to find page IDs.",
+      "Update the content or metadata of an existing Readable page you own. The URL stays the same — visitors who already have the link will see the new content. Use list_pages to find page IDs.",
     inputSchema: {
       type: "object",
       properties: {
@@ -42,20 +53,48 @@ export const TOOL_DEFINITIONS = [
           type: "string",
           description: "New Markdown content. Replaces the existing content entirely.",
         },
+        slug: {
+          type: "string",
+          description: "New custom URL slug. Pass null to remove the custom slug and revert to the page ID.",
+        },
+        visibility: {
+          type: "string",
+          enum: ["public", "unlisted"],
+          description: "Change visibility to \"public\" or \"unlisted\".",
+        },
       },
-      required: ["id", "raw"],
+      required: ["id"],
+    },
+  },
+  {
+    name: "get_page",
+    description:
+      "Retrieve full details and raw Markdown content of a specific page you own. Use this to read back what was published, verify content before updating, or inspect metadata.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: {
+          type: "string",
+          description: "The page ID or custom slug to retrieve.",
+        },
+      },
+      required: ["id"],
     },
   },
   {
     name: "list_pages",
     description:
-      "List all Readable pages owned by your account. Returns page IDs, titles, URLs, view counts, and visibility status. Use this to find page IDs for update_page or delete_page.",
+      "List Readable pages owned by your account. Returns page IDs, titles, URLs, view counts, and visibility. Supports pagination via limit and offset.",
     inputSchema: {
       type: "object",
       properties: {
         limit: {
           type: "number",
-          description: "Maximum pages to return. Default 20, max 50.",
+          description: "Maximum pages to return. Default 20, max 100.",
+        },
+        offset: {
+          type: "number",
+          description: "Number of pages to skip for pagination. Default 0.",
         },
       },
       required: [],
@@ -86,7 +125,12 @@ export const TOOL_DEFINITIONS = [
 // Input validation
 // ─────────────────────────────────────────────────────────────────────────────
 
-function validatePublishArgs(args: unknown): { raw: string; title?: string } {
+const SLUG_PATTERN = /^[a-z0-9][a-z0-9-]{0,58}[a-z0-9]$|^[a-z0-9]{1,2}$/;
+function isValidSlug(s: string): boolean {
+  return SLUG_PATTERN.test(s) && !s.includes("--");
+}
+
+function validatePublishArgs(args: unknown): { raw: string; title?: string; slug?: string; visibility?: "public" | "unlisted" } {
   if (typeof args !== "object" || args === null) {
     throw new McpValidationError("Arguments must be an object");
   }
@@ -100,13 +144,24 @@ function validatePublishArgs(args: unknown): { raw: string; title?: string } {
   if (a["title"] !== undefined && typeof a["title"] !== "string") {
     throw new McpValidationError("`title` must be a string if provided");
   }
-  if (a["title"] !== undefined) {
-    return { raw: a["raw"], title: a["title"] as string };
+  if (a["slug"] !== undefined) {
+    if (typeof a["slug"] !== "string") throw new McpValidationError("`slug` must be a string");
+    if (!isValidSlug(a["slug"])) {
+      throw new McpValidationError("`slug` must be 1–60 lowercase letters, numbers, or hyphens (no leading/trailing/double hyphens)");
+    }
   }
-  return { raw: a["raw"] };
+  if (a["visibility"] !== undefined && a["visibility"] !== "public" && a["visibility"] !== "unlisted") {
+    throw new McpValidationError('`visibility` must be "public" or "unlisted"');
+  }
+  return {
+    raw: a["raw"],
+    ...(a["title"] !== undefined ? { title: a["title"] as string } : {}),
+    ...(a["slug"] !== undefined ? { slug: a["slug"] as string } : {}),
+    ...(a["visibility"] !== undefined ? { visibility: a["visibility"] as "public" | "unlisted" } : {}),
+  };
 }
 
-function validateUpdateArgs(args: unknown): { id: string; raw: string } {
+function validateUpdateArgs(args: unknown): { id: string; raw?: string; slug?: string | null; visibility?: "public" | "unlisted" } {
   if (typeof args !== "object" || args === null) {
     throw new McpValidationError("Arguments must be an object");
   }
@@ -114,28 +169,71 @@ function validateUpdateArgs(args: unknown): { id: string; raw: string } {
   if (typeof a["id"] !== "string" || a["id"].trim().length === 0) {
     throw new McpValidationError("`id` must be a non-empty string");
   }
-  if (typeof a["raw"] !== "string" || a["raw"].trim().length === 0) {
-    throw new McpValidationError("`raw` must be a non-empty string");
+  if (a["raw"] !== undefined) {
+    if (typeof a["raw"] !== "string" || a["raw"].trim().length === 0) {
+      throw new McpValidationError("`raw` must be a non-empty string if provided");
+    }
+    if (a["raw"].length > 350_000) {
+      throw new McpValidationError("`raw` exceeds 350,000 character limit");
+    }
   }
-  if (a["raw"].length > 350_000) {
-    throw new McpValidationError("`raw` exceeds 350,000 character limit");
+  if (a["slug"] !== undefined && a["slug"] !== null) {
+    if (typeof a["slug"] !== "string") throw new McpValidationError("`slug` must be a string or null");
+    if (!isValidSlug(a["slug"])) {
+      throw new McpValidationError("`slug` must be 1–60 lowercase letters, numbers, or hyphens");
+    }
   }
-  return { id: a["id"], raw: a["raw"] };
+  if (a["visibility"] !== undefined && a["visibility"] !== "public" && a["visibility"] !== "unlisted") {
+    throw new McpValidationError('`visibility` must be "public" or "unlisted"');
+  }
+  const hasContent = a["raw"] !== undefined;
+  const hasMeta = a["slug"] !== undefined || a["visibility"] !== undefined;
+  if (!hasContent && !hasMeta) {
+    throw new McpValidationError("Provide at least one of: `raw`, `slug`, `visibility`");
+  }
+  return {
+    id: a["id"],
+    ...(a["raw"] !== undefined ? { raw: a["raw"] as string } : {}),
+    ...(a["slug"] !== undefined ? { slug: (a["slug"] as string | null) } : {}),
+    ...(a["visibility"] !== undefined ? { visibility: a["visibility"] as "public" | "unlisted" } : {}),
+  };
 }
 
-function validateListArgs(args: unknown): { limit: number } {
-  const defaultLimit = 20;
+function validateGetArgs(args: unknown): { id: string } {
   if (typeof args !== "object" || args === null) {
-    return { limit: defaultLimit };
+    throw new McpValidationError("Arguments must be an object");
   }
   const a = args as Record<string, unknown>;
-  if (a["limit"] === undefined) {
-    return { limit: defaultLimit };
+  if (typeof a["id"] !== "string" || a["id"].trim().length === 0) {
+    throw new McpValidationError("`id` must be a non-empty string");
   }
-  if (typeof a["limit"] !== "number" || !Number.isInteger(a["limit"]) || a["limit"] < 1) {
-    throw new McpValidationError("`limit` must be a positive integer");
+  return { id: a["id"] };
+}
+
+function validateListArgs(args: unknown): { limit: number; offset: number } {
+  const defaultLimit = 20;
+  if (typeof args !== "object" || args === null) {
+    return { limit: defaultLimit, offset: 0 };
   }
-  return { limit: Math.min(a["limit"], 50) };
+  const a = args as Record<string, unknown>;
+  let limit = defaultLimit;
+  let offset = 0;
+
+  if (a["limit"] !== undefined) {
+    if (typeof a["limit"] !== "number" || !Number.isInteger(a["limit"]) || a["limit"] < 1) {
+      throw new McpValidationError("`limit` must be a positive integer");
+    }
+    limit = Math.min(a["limit"], 100);
+  }
+
+  if (a["offset"] !== undefined) {
+    if (typeof a["offset"] !== "number" || !Number.isInteger(a["offset"]) || a["offset"] < 0) {
+      throw new McpValidationError("`offset` must be a non-negative integer");
+    }
+    offset = a["offset"];
+  }
+
+  return { limit, offset };
 }
 
 function validateDeleteArgs(args: unknown): { id: string } {
@@ -158,14 +256,14 @@ function validateDeleteArgs(args: unknown): { id: string } {
 // Readable API client
 // ─────────────────────────────────────────────────────────────────────────────
 
-const UPSTREAM_TIMEOUT_MS = 10_000; // 10 s — fail fast, don't hang the SSE session
+const UPSTREAM_TIMEOUT_MS = 10_000;
 
 async function callReadableApi(
   path: string,
   method: string,
   apiKey: string,
+  apiBase: string,
   body?: unknown,
-  apiBase: string = "https://readable.ashwinsathian.com",
 ): Promise<{ ok: boolean; status: number; data: unknown }> {
   const hasBody = body !== undefined;
 
@@ -173,7 +271,6 @@ async function callReadableApi(
     Authorization: `Bearer ${apiKey}`,
     "User-Agent": "Readable-MCP/1.0",
   };
-  // Only set Content-Type when there is a request body (GET/DELETE have none)
   if (hasBody) {
     headers["Content-Type"] = "application/json";
   }
@@ -195,8 +292,6 @@ async function callReadableApi(
   return { ok: res.ok, status: res.status, data };
 }
 
-// All ERRORS helpers return McpErrorShape. The return annotation here is
-// explicit so callers don't accidentally narrow to a specific variant.
 function mapUpstreamError(status: number): McpErrorShape {
   if (status === 401) return ERRORS.UNAUTHORIZED();
   if (status === 403) return ERRORS.FORBIDDEN();
@@ -218,8 +313,6 @@ function errorResult(text: string) {
   return { content: [{ type: "text", text: `Error: ${text}` }], isError: true };
 }
 
-// Escape characters that would break a Markdown table cell.
-// Pipes become \|, newlines/carriage returns become spaces.
 function escapeMdCell(value: string): string {
   return value.replace(/\r?\n/g, " ").replace(/\|/g, "\\|");
 }
@@ -234,16 +327,25 @@ export async function handlePublishPage(
   apiBase: string,
 ): Promise<unknown> {
   try {
-    const { raw, title } = validatePublishArgs(args);
-    const body: Record<string, string> = { raw };
-    if (title !== undefined) body["title"] = title;
+    const { raw, title, slug, visibility } = validatePublishArgs(args);
+
+    // The v1/publish endpoint reads slug/visibility from YAML frontmatter.
+    let finalRaw = raw;
+    if (slug !== undefined || visibility !== undefined || title !== undefined) {
+      const fmLines = ["---"];
+      if (title !== undefined) fmLines.push(`title: "${title.replace(/"/g, '\\"')}"`);
+      if (slug !== undefined) fmLines.push(`slug: ${slug}`);
+      if (visibility !== undefined) fmLines.push(`visibility: ${visibility}`);
+      fmLines.push("---");
+      finalRaw = fmLines.join("\n") + "\n" + raw;
+    }
 
     const { ok, status, data } = await callReadableApi(
       "/api/v1/publish",
       "POST",
       apiKey,
-      body,
       apiBase,
+      { raw: finalRaw },
     );
 
     if (!ok) return errorResult(mapUpstreamError(status).message);
@@ -268,22 +370,28 @@ export async function handleUpdatePage(
   apiBase: string,
 ): Promise<unknown> {
   try {
-    const { id, raw } = validateUpdateArgs(args);
+    const { id, raw, slug, visibility } = validateUpdateArgs(args);
+
+    const body: Record<string, unknown> = {};
+    if (raw !== undefined) body["raw"] = raw;
+    if (slug !== undefined) body["slug"] = slug;
+    if (visibility !== undefined) body["visibility"] = visibility;
 
     const { ok, status, data } = await callReadableApi(
       `/api/v1/pages/${encodeURIComponent(id)}`,
       "PATCH",
       apiKey,
-      { raw },
       apiBase,
+      body,
     );
 
     if (!ok) return errorResult(mapUpstreamError(status).message);
 
     const r = data as UpdateResponse;
-    return successResult(
-      `Page updated.\n\nURL: ${r.url}\nUpdated: ${r.updated_at}\n\nVisitors who already have the link will see the new content.`,
-    );
+    const lines = [`Page updated.\n\nURL: ${r.url}`];
+    if (r.updated_at) lines.push(`Updated: ${r.updated_at}`);
+    lines.push("\nVisitors who already have the link will see the new content.");
+    return successResult(lines.join("\n"));
   } catch (e) {
     if (e instanceof McpValidationError) return errorResult(e.message);
     if (e instanceof DOMException && e.name === "TimeoutError") {
@@ -294,25 +402,70 @@ export async function handleUpdatePage(
   }
 }
 
+export async function handleGetPage(
+  args: unknown,
+  apiKey: string,
+  apiBase: string,
+): Promise<unknown> {
+  try {
+    const { id } = validateGetArgs(args);
+
+    const { ok, status, data } = await callReadableApi(
+      `/api/v1/pages/${encodeURIComponent(id)}`,
+      "GET",
+      apiKey,
+      apiBase,
+    );
+
+    if (!ok) return errorResult(mapUpstreamError(status).message);
+
+    const r = data as PageDetailResponse;
+    const sections: string[] = [
+      `**${r.title ?? "(untitled)"}**`,
+      `ID: ${r.id}${r.slug ? ` · Slug: ${r.slug}` : ""}`,
+      `URL: ${r.url}`,
+      `Visibility: ${r.visibility} · Views: ${r.view_count}`,
+      `Created: ${r.created_at} · Updated: ${r.updated_at}`,
+    ];
+
+    if (r.raw) {
+      sections.push("\n---\n");
+      sections.push(r.raw);
+    } else {
+      sections.push("\n*(No raw Markdown stored for this page)*");
+    }
+
+    return successResult(sections.join("\n"));
+  } catch (e) {
+    if (e instanceof McpValidationError) return errorResult(e.message);
+    if (e instanceof DOMException && e.name === "TimeoutError") {
+      return errorResult("Request to Readable API timed out. Try again.");
+    }
+    console.error("get_page unexpected error:", e);
+    return errorResult("An unexpected error occurred");
+  }
+}
+
 export async function handleListPages(
   args: unknown,
   apiKey: string,
   apiBase: string,
 ): Promise<unknown> {
   try {
-    const { limit } = validateListArgs(args);
+    const { limit, offset } = validateListArgs(args);
 
     const { ok, status, data } = await callReadableApi(
-      `/api/v1/pages?limit=${limit}`,
+      `/api/v1/pages?limit=${limit}&offset=${offset}`,
       "GET",
       apiKey,
-      undefined,
       apiBase,
     );
 
     if (!ok) return errorResult(mapUpstreamError(status).message);
 
-    const pages = (data as { pages: PageListItem[] }).pages;
+    const result = data as { pages: PageListItem[]; total: number; limit: number; offset: number };
+    const pages = result.pages ?? [];
+    const total = result.total ?? pages.length;
 
     if (pages.length === 0) {
       return successResult("No pages found. Publish your first page with publish_page.");
@@ -322,11 +475,18 @@ export async function handleListPages(
     const rows = pages
       .map(
         (p) =>
-          `| ${escapeMdCell(p.title)} | ${p.id} | ${p.url} | ${p.view_count} | ${p.visibility} |`,
+          `| ${escapeMdCell(p.title ?? "(untitled)")} | ${p.id} | ${p.url} | ${p.view_count} | ${p.visibility} |`,
       )
       .join("\n");
 
-    return successResult(`Your Readable pages (${pages.length}):\n\n${header}\n${rows}`);
+    const shown = offset + pages.length;
+    const paginationNote = total > shown
+      ? `\n\n*(Showing ${offset + 1}–${shown} of ${total} total. Use \`offset: ${shown}\` to fetch the next page.)*`
+      : total > pages.length
+      ? `\n\n*(Showing ${offset + 1}–${shown} of ${total} total.)*`
+      : "";
+
+    return successResult(`Your Readable pages (${pages.length}):\n\n${header}\n${rows}${paginationNote}`);
   } catch (e) {
     if (e instanceof McpValidationError) return errorResult(e.message);
     if (e instanceof DOMException && e.name === "TimeoutError") {
@@ -349,7 +509,6 @@ export async function handleDeletePage(
       `/api/v1/pages/${encodeURIComponent(id)}`,
       "DELETE",
       apiKey,
-      undefined,
       apiBase,
     );
 
@@ -364,4 +523,69 @@ export async function handleDeletePage(
     console.error("delete_page unexpected error:", e);
     return errorResult("An unexpected error occurred");
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Resources handler (MCP Resources capability)
+// Exposes user's pages as browsable, readable MCP resources.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export async function handleResourcesList(
+  apiKey: string,
+  apiBase: string,
+): Promise<unknown> {
+  const { ok, data } = await callReadableApi(
+    "/api/v1/pages?limit=100&offset=0",
+    "GET",
+    apiKey,
+    apiBase,
+  );
+
+  if (!ok) {
+    return { resources: [] };
+  }
+
+  const result = data as { pages: PageListItem[] };
+  const resources = (result.pages ?? []).map((p) => ({
+    uri: `readable://pages/${p.id}`,
+    name: p.title ?? p.id,
+    description: `${p.visibility} · ${p.view_count} views · ${p.url}`,
+    mimeType: "text/markdown",
+  }));
+
+  return { resources };
+}
+
+export async function handleResourcesRead(
+  uri: string,
+  apiKey: string,
+  apiBase: string,
+): Promise<unknown> {
+  const match = uri.match(/^readable:\/\/pages\/(.+)$/);
+  if (!match) {
+    return {
+      contents: [{ uri, mimeType: "text/plain", text: `Error: Invalid resource URI: ${uri}` }],
+    };
+  }
+
+  const id = match[1] ?? "";
+  const { ok, data } = await callReadableApi(
+    `/api/v1/pages/${encodeURIComponent(id)}`,
+    "GET",
+    apiKey,
+    apiBase,
+  );
+
+  if (!ok) {
+    return {
+      contents: [{ uri, mimeType: "text/plain", text: `Error: Page not found or access denied.` }],
+    };
+  }
+
+  const r = data as PageDetailResponse;
+  const text = r.raw ?? `*(No raw Markdown stored for page ${id})*`;
+
+  return {
+    contents: [{ uri, mimeType: "text/markdown", text }],
+  };
 }

@@ -13,7 +13,7 @@ export const ERRORS = {
   INTERNAL: (msg?: string) => mcpError(-32603, msg ?? "Internal error"),
   // Application-level errors (MCP convention: -32000 to -32099)
   UNAUTHORIZED: () =>
-    mcpError(-32001, "Invalid or missing API key. Generate one at readable.ashwinsathian.com/my-pages"),
+    mcpError(-32001, "Invalid or missing API key. Generate one at readable.ashwinsathian.com/settings/api-keys"),
   RATE_LIMITED: () =>
     mcpError(-32002, "Rate limit exceeded. Readable allows 60 requests per minute per API key."),
   NOT_FOUND: (resource: string) => mcpError(-32003, `${resource} not found`),

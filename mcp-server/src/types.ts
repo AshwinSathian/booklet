@@ -1,5 +1,4 @@
 // MCP JSON-RPC types
-// id is optional because MCP notifications (e.g. notifications/initialized) have no id
 export interface JsonRpcRequest {
   jsonrpc: "2.0";
   id?: string | number | null;
@@ -20,13 +19,15 @@ export interface ToolCallParams {
   arguments: Record<string, unknown>;
 }
 
-// Session type
-export interface Session {
-  id: string;
-  apiKey: string;
-  // Uint8Array because we always enqueue encoder.encode(...) output
-  controller: ReadableStreamDefaultController<Uint8Array>;
-  lastActivity: number;
+// MCP resources/read params
+export interface ResourceReadParams {
+  uri: string;
+}
+
+// MCP prompts/get params
+export interface PromptGetParams {
+  name: string;
+  arguments?: Record<string, string>;
 }
 
 // Readable API response types
@@ -37,7 +38,7 @@ export interface PublishResponse {
 
 export interface PageListItem {
   id: string;
-  title: string;
+  title: string | null;
   slug: string | null;
   url: string;
   visibility: "public" | "unlisted";
@@ -48,6 +49,21 @@ export interface PageListItem {
 
 export interface PageListResponse {
   pages: PageListItem[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface PageDetailResponse {
+  id: string;
+  title: string | null;
+  slug: string | null;
+  url: string;
+  visibility: "public" | "unlisted";
+  view_count: number;
+  created_at: string;
+  updated_at: string;
+  raw: string | null;
 }
 
 export interface UpdateResponse {

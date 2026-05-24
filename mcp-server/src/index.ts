@@ -1,44 +1,35 @@
 import { extractApiKey } from "./auth.js";
 import { ERRORS, type McpErrorShape } from "./errors.js";
-import { sseEvent, startKeepalive } from "./transport.js";
 import {
   TOOL_DEFINITIONS,
   handleDeletePage,
+  handleGetPage,
   handleListPages,
   handlePublishPage,
+  handleResourcesList,
+  handleResourcesRead,
   handleUpdatePage,
 } from "./tools.js";
-import type { Env, JsonRpcRequest, Session, ToolCallParams } from "./types.js";
+import { PROMPT_DEFINITIONS, renderPrompt } from "./prompts.js";
+import type {
+  Env,
+  JsonRpcRequest,
+  PromptGetParams,
+  ResourceReadParams,
+  ToolCallParams,
+} from "./types.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// In-memory session store
+// MCP Streamable HTTP transport — MCP spec 2025-03-26
+// Fully stateless: one POST per request, auth re-validated each time.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const sessions = new Map<string, Session>();
-const SESSION_TTL_MS = 10 * 60 * 1000; // 10 minutes
-
-function generateSessionId(): string {
-  const bytes = crypto.getRandomValues(new Uint8Array(8));
-  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-function cleanStaleSessions(): void {
-  const cutoff = Date.now() - SESSION_TTL_MS;
-  for (const [id, session] of sessions) {
-    if (session.lastActivity < cutoff) {
-      sessions.delete(id);
-    }
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// CORS headers
-// ─────────────────────────────────────────────────────────────────────────────
+const PROTOCOL_VERSION = "2025-03-26";
 
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Authorization, Content-Type",
+  "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept, Mcp-Session-Id",
 } as const;
 
 function corsResponse(body: string | null, status: number, extra?: Record<string, string>): Response {
@@ -55,144 +46,65 @@ function jsonResponse(data: unknown, status = 200): Response {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MCP manifest
+// Server manifest and capabilities
 // ─────────────────────────────────────────────────────────────────────────────
 
 const SERVER_MANIFEST = {
   name: "readable",
   version: "1.0.0",
   description:
-    "Publish, update, list, and delete Readable pages from your AI conversation.",
-  tools: TOOL_DEFINITIONS,
+    "Publish, update, read, list, and delete Readable pages from your AI conversation. Includes pre-built templates for incident reports, ADRs, release notes, RFCs, and runbooks.",
 };
 
 const INITIALIZE_RESULT = {
-  protocolVersion: "2024-11-05",
-  capabilities: { tools: {} },
+  protocolVersion: PROTOCOL_VERSION,
+  capabilities: {
+    tools: {},
+    resources: {},
+    prompts: {},
+  },
   serverInfo: { name: "readable", version: "1.0.0" },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// JSON-RPC response builders
+// JSON-RPC helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
 function rpcResult(id: string | number | null | undefined, result: unknown) {
-  // Per JSON-RPC 2.0 spec, id must be present in responses. When id is
-  // undefined (e.g. from a malformed request), fall back to null.
   return { jsonrpc: "2.0" as const, id: id ?? null, result };
 }
 
-// Per JSON-RPC 2.0 spec, error response id must be null when the request id
-// cannot be determined (parse error, invalid request). Never substitute 0.
 function rpcError(id: string | number | null | undefined, error: McpErrorShape) {
   return { jsonrpc: "2.0" as const, id: id ?? null, error };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Route handlers
+// MCP POST handler
 // ─────────────────────────────────────────────────────────────────────────────
 
-function handleHealth(): Response {
-  return jsonResponse({ ok: true, service: "readable-mcp", version: "1.0.0" });
-}
-
-function handleInfo(): Response {
-  return jsonResponse(SERVER_MANIFEST);
-}
-
-function handleSse(request: Request): Response {
+async function handleMcpPost(request: Request, env: Env): Promise<Response> {
   const apiKey = extractApiKey(request);
   if (!apiKey) {
-    return jsonResponse(
-      { error: "Missing or invalid API key. Use Authorization: Bearer rdbl_live_..." },
-      401,
-    );
+    return jsonResponse(rpcError(null, ERRORS.UNAUTHORIZED()), 401);
   }
-
-  cleanStaleSessions();
-
-  const sessionId = generateSessionId();
-  const encoder = new TextEncoder();
-
-  const stream = new ReadableStream<Uint8Array>({
-    start(controller) {
-      const session: Session = {
-        id: sessionId,
-        apiKey,
-        controller,
-        lastActivity: Date.now(),
-      };
-      sessions.set(sessionId, session);
-
-      const cancelKeepalive = startKeepalive(controller, encoder);
-
-      controller.enqueue(
-        encoder.encode(sseEvent("endpoint", `/message?sessionId=${sessionId}`)),
-      );
-      controller.enqueue(
-        encoder.encode(
-          sseEvent(
-            "connected",
-            JSON.stringify({ server: SERVER_MANIFEST.name, version: SERVER_MANIFEST.version }),
-          ),
-        ),
-      );
-
-      // Clean up session when stream closes
-      request.signal.addEventListener("abort", () => {
-        cancelKeepalive();
-        sessions.delete(sessionId);
-      });
-    },
-  });
-
-  return new Response(stream, {
-    headers: {
-      ...CORS_HEADERS,
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
-      Connection: "keep-alive",
-    },
-  });
-}
-
-async function handleMessage(request: Request, apiBase: string): Promise<Response> {
-  const url = new URL(request.url);
-  const sessionId = url.searchParams.get("sessionId");
-
-  if (!sessionId) {
-    return jsonResponse({ error: "Missing sessionId query parameter" }, 400);
-  }
-
-  const session = sessions.get(sessionId);
-  if (!session) {
-    return jsonResponse({ error: "Session not found or expired" }, 404);
-  }
-
-  session.lastActivity = Date.now();
 
   let body: JsonRpcRequest;
   try {
     body = (await request.json()) as JsonRpcRequest;
   } catch {
-    // id is indeterminate on parse failure — must be null per JSON-RPC spec
-    sendSseMessage(session, rpcError(null, ERRORS.PARSE_ERROR()));
-    return jsonResponse({ ok: true });
+    return jsonResponse(rpcError(null, ERRORS.PARSE_ERROR()), 200);
   }
 
-  // Runtime guard: method must be a non-empty string. The `as JsonRpcRequest`
-  // cast is unsafe — the client can send anything.
   if (typeof body.method !== "string" || body.method === "") {
-    sendSseMessage(session, rpcError(body.id, ERRORS.INVALID_REQUEST("method must be a non-empty string")));
-    return jsonResponse({ ok: true });
+    return jsonResponse(
+      rpcError(body.id, ERRORS.INVALID_REQUEST("method must be a non-empty string")),
+      200,
+    );
   }
 
-  // MCP notifications have no id and expect no response. Handle them first.
-  if (body.id === undefined || body.id === null) {
-    if (body.method === "notifications/initialized" || body.method.startsWith("notifications/")) {
-      // Silently acknowledge — notifications never get a response
-      return jsonResponse({ ok: true });
-    }
+  // MCP notifications — no response, 202 Accepted.
+  if (body.method.startsWith("notifications/")) {
+    return new Response(null, { status: 202, headers: CORS_HEADERS });
   }
 
   let responsePayload: unknown;
@@ -204,10 +116,11 @@ async function handleMessage(request: Request, apiBase: string): Promise<Respons
     }
 
     case "ping": {
-      // Keepalive probe — respond with empty result per MCP spec
       responsePayload = rpcResult(body.id, {});
       break;
     }
+
+    // ── Tools ──────────────────────────────────────────────────────────────
 
     case "tools/list": {
       responsePayload = rpcResult(body.id, { tools: TOOL_DEFINITIONS });
@@ -226,16 +139,19 @@ async function handleMessage(request: Request, apiBase: string): Promise<Respons
 
       switch (params.name) {
         case "publish_page":
-          toolResult = await handlePublishPage(toolArgs, session.apiKey, apiBase);
+          toolResult = await handlePublishPage(toolArgs, apiKey, env.READABLE_API_BASE);
           break;
         case "update_page":
-          toolResult = await handleUpdatePage(toolArgs, session.apiKey, apiBase);
+          toolResult = await handleUpdatePage(toolArgs, apiKey, env.READABLE_API_BASE);
+          break;
+        case "get_page":
+          toolResult = await handleGetPage(toolArgs, apiKey, env.READABLE_API_BASE);
           break;
         case "list_pages":
-          toolResult = await handleListPages(toolArgs, session.apiKey, apiBase);
+          toolResult = await handleListPages(toolArgs, apiKey, env.READABLE_API_BASE);
           break;
         case "delete_page":
-          toolResult = await handleDeletePage(toolArgs, session.apiKey, apiBase);
+          toolResult = await handleDeletePage(toolArgs, apiKey, env.READABLE_API_BASE);
           break;
         default:
           toolResult = {
@@ -248,24 +164,68 @@ async function handleMessage(request: Request, apiBase: string): Promise<Respons
       break;
     }
 
+    // ── Resources ──────────────────────────────────────────────────────────
+    // User's Readable pages are exposed as browsable MCP resources with the
+    // URI scheme: readable://pages/<id>
+
+    case "resources/list": {
+      const result = await handleResourcesList(apiKey, env.READABLE_API_BASE);
+      responsePayload = rpcResult(body.id, result);
+      break;
+    }
+
+    case "resources/read": {
+      const params = body.params as ResourceReadParams | undefined;
+      if (!params?.uri) {
+        responsePayload = rpcError(body.id, ERRORS.INVALID_PARAMS("Missing resource URI"));
+        break;
+      }
+      const result = await handleResourcesRead(params.uri, apiKey, env.READABLE_API_BASE);
+      responsePayload = rpcResult(body.id, result);
+      break;
+    }
+
+    // ── Prompts ────────────────────────────────────────────────────────────
+    // Pre-built Markdown templates: incident_report, adr, release_notes, rfc, runbook.
+    // Call prompts/get to expand a template, then pass the result to publish_page.
+
+    case "prompts/list": {
+      responsePayload = rpcResult(body.id, { prompts: PROMPT_DEFINITIONS });
+      break;
+    }
+
+    case "prompts/get": {
+      const params = body.params as PromptGetParams | undefined;
+      if (!params?.name) {
+        responsePayload = rpcError(body.id, ERRORS.INVALID_PARAMS("Missing prompt name"));
+        break;
+      }
+      const template = renderPrompt(params.name, params.arguments ?? {});
+      if (template === null) {
+        responsePayload = rpcError(
+          body.id,
+          ERRORS.NOT_FOUND(`Prompt "${params.name}"`),
+        );
+        break;
+      }
+      responsePayload = rpcResult(body.id, {
+        description: PROMPT_DEFINITIONS.find((p) => p.name === params.name)?.description ?? "",
+        messages: [
+          {
+            role: "user",
+            content: { type: "text", text: template },
+          },
+        ],
+      });
+      break;
+    }
+
     default: {
       responsePayload = rpcError(body.id, ERRORS.METHOD_NOT_FOUND(body.method));
     }
   }
 
-  sendSseMessage(session, responsePayload);
-  return jsonResponse({ ok: true });
-}
-
-function sendSseMessage(session: Session, payload: unknown): void {
-  try {
-    const encoder = new TextEncoder();
-    session.controller.enqueue(
-      encoder.encode(sseEvent("message", JSON.stringify(payload))),
-    );
-  } catch (e) {
-    console.error("Failed to send SSE message to session", session.id, e);
-  }
+  return jsonResponse(responsePayload);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -283,19 +243,30 @@ export default {
       }
 
       if (method === "GET" && url.pathname === "/health") {
-        return handleHealth();
+        return jsonResponse({
+          ok: true,
+          service: "readable-mcp",
+          version: "1.0.0",
+          protocol: PROTOCOL_VERSION,
+        });
       }
 
       if (method === "GET" && url.pathname === "/") {
-        return handleInfo();
+        return jsonResponse({
+          ...SERVER_MANIFEST,
+          protocol: PROTOCOL_VERSION,
+          endpoint: "/mcp",
+          tools: TOOL_DEFINITIONS.map((t) => t.name),
+          prompts: PROMPT_DEFINITIONS.map((p) => p.name),
+        });
       }
 
-      if (method === "GET" && url.pathname === "/sse") {
-        return handleSse(request);
-      }
-
-      if (method === "POST" && url.pathname === "/message") {
-        return handleMessage(request, env.READABLE_API_BASE);
+      // MCP Streamable HTTP endpoint (2025-03-26)
+      if (url.pathname === "/mcp") {
+        if (method === "POST") {
+          return handleMcpPost(request, env);
+        }
+        return jsonResponse({ error: "Use POST /mcp for MCP requests" }, 405);
       }
 
       return jsonResponse({ error: "Not found" }, 404);
