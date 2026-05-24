@@ -152,13 +152,14 @@ export default async function SharePage({
 
       {/* ── Sticky header ── */}
       <header className="sticky top-0 z-20 border-b border-border-subtle bg-bg/85 backdrop-blur-xl print:hidden">
-        <div className={`mx-auto w-full px-4 py-3 flex items-center justify-between gap-4 ${maxW}`}>
+        <div className={`mx-auto w-full px-4 py-3 flex items-center justify-between gap-3 ${maxW}`}>
           <AppLogo onlyIcon={false} />
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {daysLeft !== null && <ExpiryBadge daysLeft={daysLeft} />}
-            <span className="hidden sm:inline text-2xs text-text-muted">
-              ~{readMins} min read
+            {/* Read time — desktop only */}
+            <span className="hidden md:inline text-2xs text-text-muted tabular-nums">
+              ~{readMins} min
             </span>
             <ExportMenu
               blocks={doc.blocks}
@@ -172,8 +173,16 @@ export default async function SharePage({
               baseUrl={absoluteUrl("")}
             />
             <ThemeToggle />
-            <Button variant="primary" size="md" href={ROUTES.app} className="hidden sm:inline-flex" data-readable-cta="make-your-own">
-              Make your own
+            {/* Make your own — visible at sm+ as button, at xs as icon only */}
+            <Button
+              variant="primary"
+              size="md"
+              href={ROUTES.app}
+              data-readable-cta="make-your-own"
+              className="hidden xs:inline-flex"
+            >
+              <span className="hidden sm:inline">Make your own</span>
+              <span className="sm:hidden">Write</span>
               <svg width="11" height="11" fill="none" viewBox="0 0 11 11" aria-hidden>
                 <path d="M2 9 9 2M9 2H4.5M9 2v4.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
@@ -183,7 +192,7 @@ export default async function SharePage({
       </header>
 
       {/* ── Main content ── */}
-      <main className={`mx-auto w-full flex-1 min-h-0 px-4 py-8 ${maxW}`}>
+      <main className={`mx-auto w-full px-4 py-6 sm:py-8 ${maxW}`}>
         {showToc ? <MobileTocClient toc={toc} /> : null}
 
         <div className="flex flex-col lg:flex-row gap-12">
@@ -197,41 +206,73 @@ export default async function SharePage({
           </div>
           {showToc ? <DesktopTocClient toc={toc} /> : null}
         </div>
+
+        {/* ── Mobile "create your own" nudge — shown at end of article ── */}
+        {!pageRecord?.remove_attribution_badge && (
+          <div className="mt-12 sm:hidden">
+            <Link
+              href="/"
+              className="flex items-center gap-3 rounded-2xl border border-border-default bg-bg-elevated p-4 transition hover:border-accent/30 hover:bg-bg-soft"
+            >
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden className="shrink-0">
+                <rect width="24" height="24" rx="5.5" fill="var(--color-accent)" />
+                <path
+                  d="M 6.5 5 L 6.5 19 M 6.5 5 L 13 5 Q 17 5 17 9 Q 17 13 13 13 L 6.5 13 M 11.5 13 L 17 19"
+                  stroke="white"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              <div className="min-w-0 flex-1">
+                <div className="text-[13px] font-semibold text-text-primary">Made with Readable</div>
+                <div className="text-xs text-text-muted mt-0.5">Write in Markdown. Get a page worth sharing.</div>
+              </div>
+              <svg width="14" height="14" fill="none" viewBox="0 0 14 14" aria-hidden className="shrink-0 text-text-muted">
+                <path d="M3 3l8 8M11 3H3M11 3v8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </Link>
+          </div>
+        )}
       </main>
 
-      {/* ── Floating attribution badge — suppressed for Pro users ── */}
-      {!pageRecord?.remove_attribution_badge && <Link
-        href="/"
-        className="fixed bottom-4 right-4 z-10 hidden sm:flex items-center gap-1.5 rounded-pill border border-border-subtle bg-bg/80 backdrop-blur-md px-3 py-1.5 transition hover:border-accent-soft/40 hover:bg-bg-elevated print:hidden"
-        aria-label="Made with Readable — create your own page"
-      >
-        {/* Inline Readable mark at badge scale */}
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
-          <rect width="24" height="24" rx="5.5" fill="var(--color-accent)" />
-          <path
-            d="M 6.5 5 L 6.5 19 M 6.5 5 L 13 5 Q 17 5 17 9 Q 17 13 13 13 L 6.5 13 M 11.5 13 L 17 19"
-            stroke="white"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-        <span className="text-2xs text-text-muted">Made with Readable</span>
-      </Link>}
+      {/* ── Floating attribution badge — desktop only ── */}
+      {!pageRecord?.remove_attribution_badge && (
+        <Link
+          href="/"
+          className="fixed bottom-4 right-4 z-10 hidden sm:flex items-center gap-1.5 rounded-pill border border-border-subtle bg-bg/80 backdrop-blur-md px-3 py-1.5 transition hover:border-accent-soft/40 hover:bg-bg-elevated print:hidden"
+          aria-label="Made with Readable — create your own page"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+            <rect width="24" height="24" rx="5.5" fill="var(--color-accent)" />
+            <path
+              d="M 6.5 5 L 6.5 19 M 6.5 5 L 13 5 Q 17 5 17 9 Q 17 13 13 13 L 6.5 13 M 11.5 13 L 17 19"
+              stroke="white"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          <span className="text-2xs text-text-muted">Made with Readable</span>
+        </Link>
+      )}
 
       {/* ── Footer ── */}
-      <footer className="mt-12 border-t border-border-subtle print:hidden">
-        <div className={`mx-auto w-full px-4 py-6 ${maxW}`}>
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-text-muted">
+      <footer className="mt-8 border-t border-border-subtle print:hidden">
+        <div className={`mx-auto w-full px-4 py-5 ${maxW}`}>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-text-muted">
             <div className="flex items-center gap-2">
               <AppLogo onlyIcon={true} />
               <span>Published via {APP_NAME}</span>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
               <span>
-                Published {createdAt.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
+                {createdAt.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
               </span>
-              <Link href={ROUTES.app} className="text-accent transition hover:text-accent-soft">
+              {readMins > 0 && (
+                <span className="sm:hidden">~{readMins} min read</span>
+              )}
+              <Link href={ROUTES.app} className="text-accent transition hover:text-accent-soft font-medium">
                 Create your own →
               </Link>
             </div>
