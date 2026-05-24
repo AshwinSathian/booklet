@@ -196,6 +196,39 @@ export async function getFeaturedPages(limit = 50): Promise<ExploreItem[]> {
   return docs.map((d) => ({ id: d._id, slug: d.slug, title: d.title, view_count: d.view_count, created_at: d.created_at }));
 }
 
+export async function getPagesByTag(tag: string, limit = 100): Promise<ExploreItem[]> {
+  const db = await getDb();
+  const docs = await db
+    .collection<PageDoc>("pages")
+    .find({
+      "frontmatter_meta.tags": tag,
+      visibility: "public",
+      password_hash: null,
+    })
+    .sort({ created_at: -1 })
+    .limit(limit)
+    .project<Pick<PageDoc, "_id" | "slug" | "title" | "view_count" | "created_at">>({
+      _id: 1, slug: 1, title: 1, view_count: 1, created_at: 1,
+    })
+    .toArray();
+  return docs.map((d) => ({ id: d._id, slug: d.slug, title: d.title, view_count: d.view_count, created_at: d.created_at }));
+}
+
+export async function getDistinctTags(limit = 200): Promise<Array<{ tag: string; count: number }>> {
+  const db = await getDb();
+  const result = await db
+    .collection<PageDoc>("pages")
+    .aggregate<{ _id: string; count: number }>([
+      { $match: { visibility: "public", password_hash: null, "frontmatter_meta.tags": { $exists: true, $ne: [] } } },
+      { $unwind: "$frontmatter_meta.tags" },
+      { $group: { _id: "$frontmatter_meta.tags", count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: limit },
+    ])
+    .toArray();
+  return result.map((r) => ({ tag: String(r._id), count: r.count }));
+}
+
 export async function getPagesByCollection(collectionId: string): Promise<ExploreItem[]> {
   const db = await getDb();
   const docs = await db
