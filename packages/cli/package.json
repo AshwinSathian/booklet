@@ -1,6 +1,6 @@
 {
   "name": "readable-cli",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "CLI for Readable — publish Markdown from your terminal",
   "type": "module",
   "bin": {
