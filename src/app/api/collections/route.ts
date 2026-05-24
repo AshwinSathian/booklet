@@ -1,10 +1,8 @@
 import {
   createCollectionRecord,
   getCollectionsByUser,
-  getUserPlan,
   getTeamSpacesByMembership,
 } from "@/lib/db";
-import { canUseFeature } from "@/lib/quota";
 import { createId } from "@/lib/id";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
@@ -46,12 +44,6 @@ export async function POST(req: Request) {
   }
 
   const isTeamSpace = body.is_team_space === true;
-  if (isTeamSpace) {
-    const plan = await getUserPlan(userId);
-    if (!canUseFeature(plan, "teamsAccess")) {
-      return NextResponse.json({ error: "Team Spaces require Readable Teams plan." }, { status: 403 });
-    }
-  }
 
   const id = createId(10);
   const now = new Date().toISOString();

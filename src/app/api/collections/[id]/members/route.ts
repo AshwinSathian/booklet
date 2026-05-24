@@ -3,10 +3,8 @@ import {
   getCollectionMembers,
   getCollectionRecord,
   getUserByEmail,
-  getUserPlan,
   removeCollectionMember,
 } from "@/lib/db";
-import { canUseFeature } from "@/lib/quota";
 import { createId } from "@/lib/id";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
@@ -30,7 +28,7 @@ export async function GET(
   return NextResponse.json({ members });
 }
 
-// POST — add a member (owner only, Teams plan required)
+// POST — add a member (owner only)
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -43,11 +41,6 @@ export async function POST(
   if (!collection) return NextResponse.json({ error: "Not found" }, { status: 404 });
   if (collection.user_id !== userId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   if (!collection.is_team_space) return NextResponse.json({ error: "Not a team space" }, { status: 400 });
-
-  const plan = await getUserPlan(userId);
-  if (!canUseFeature(plan, "teamsAccess")) {
-    return NextResponse.json({ error: "Team Spaces require Readable Teams plan." }, { status: 403 });
-  }
 
   let body: { email?: string; role?: string };
   try {

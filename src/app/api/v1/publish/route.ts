@@ -90,8 +90,7 @@ export async function POST(req: Request) {
     const title = fm.title ?? extractDocTitle(payload.blocks);
     const fmRecord = Object.keys(fm).length > 0 ? (fm as Record<string, unknown>) : null;
     await ensureDbUser(userId, null);
-    // Signed-in API users get no badge by default
-    await createPageRecord(id, userId, title, true, null, fmRecord);
+    await createPageRecord(id, userId, title, null, fmRecord);
 
     // Apply frontmatter-derived settings (visibility, slug)
     const postPatch: Parameters<typeof updatePageRecord>[1] = {};

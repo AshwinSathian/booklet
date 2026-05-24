@@ -98,8 +98,7 @@ export async function POST(req: Request) {
           null;
         const title = extractDocTitle(payload.blocks);
         await ensureDbUser(userId, email);
-        // Signed-in users get no attribution badge by default (they opted in via account)
-        await createPageRecord(id, userId, title, true);
+        await createPageRecord(id, userId, title);
         void snapshotPageVersion(id, doc).catch((err) => {
           console.error("[publish] version snapshot failed:", err);
         });

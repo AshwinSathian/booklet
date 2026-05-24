@@ -1,11 +1,17 @@
 import { getDb } from "@/lib/mongodb";
-import type { DbApiKey, DbCollection, DbCollectionMember, DbPage, DbUser, DbWebhook, UserPlan, CollectionMemberRole } from "./types";
+import type { DbApiKey, DbCollection, DbCollectionMember, DbPage, DbUser, DbWebhook, CollectionMemberRole } from "./types";
 
 // ---------------------------------------------------------------------------
 // Internal document shapes (MongoDB _id = our string id)
 // ---------------------------------------------------------------------------
 
-type UserDoc = Omit<DbUser, "id"> & { _id: string };
+type UserDoc = Omit<DbUser, "id"> & {
+  _id: string;
+  // Legacy Stripe fields — ignored on read, not written to new records
+  stripe_customer_id?: string | null;
+  stripe_subscription_id?: string | null;
+  plan_expires_at?: string | null;
+};
 type PageDoc = Omit<DbPage, "id"> & { _id: string };
 type ApiKeyDoc = Omit<DbApiKey, "id"> & { _id: string };
 type CollectionDoc = Omit<DbCollection, "id"> & { _id: string };
@@ -13,7 +19,8 @@ type CollectionMemberDoc = Omit<DbCollectionMember, "id"> & { _id: string };
 type WebhookDoc = Omit<DbWebhook, "id"> & { _id: string };
 
 function toUser(doc: UserDoc): DbUser {
-  const { _id, ...rest } = doc;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { _id, stripe_customer_id, stripe_subscription_id, plan_expires_at, ...rest } = doc;
   return { id: _id, ...rest };
 }
 
@@ -61,20 +68,12 @@ export async function upsertUser(
       $set: { email },
       $setOnInsert: {
         _id: id,
-        plan: "free" as UserPlan,
-        stripe_customer_id: null,
-        stripe_subscription_id: null,
-        plan_expires_at: null,
+        plan: "free" as const,
         created_at: new Date().toISOString(),
       },
     },
     { upsert: true },
   );
-}
-
-export async function getUserPlan(userId: string): Promise<UserPlan> {
-  const user = await getUser(userId);
-  return user?.plan ?? "free";
 }
 
 
@@ -92,7 +91,6 @@ export async function createPageRecord(
   pageId: string,
   userId: string,
   title: string | null = null,
-  removeAttributionBadge = false,
   teamId: string | null = null,
   frontmatterMeta: Record<string, unknown> | null = null,
 ): Promise<void> {
@@ -107,7 +105,7 @@ export async function createPageRecord(
     collection_id: null,
     team_id: teamId,
     view_count: 0,
-    remove_attribution_badge: removeAttributionBadge,
+    remove_attribution_badge: false,
     password_hash: null,
     featured: false,
     frontmatter_meta: frontmatterMeta,
