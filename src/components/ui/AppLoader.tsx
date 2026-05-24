@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 const MESSAGES = [
   "Loading editor…",
@@ -9,43 +9,26 @@ const MESSAGES = [
   "Ready.",
 ];
 
-const ENTER_DELAY_MS = 80;    // wait one paint before entering
-const PROGRESS_START_MS = 380; // when progress bar begins filling
-const PROGRESS_DURATION_MS = 1050; // how long the bar takes to fill
-const EXIT_MS = 1700;         // when fade-out starts
-const FADE_MS = 380;          // fade-out duration
+const PROGRESS_START_MS = 320;
+const PROGRESS_DURATION_MS = 1050;
+const EXIT_MS = 1700;
+const FADE_MS = 380;
 
 type Phase = "pre" | "entering" | "running" | "exiting" | "done";
 
 export function AppLoader() {
   const [phase, setPhase] = useState<Phase>("pre");
-  const [progress, setProgress] = useState(0);
   const [msgIdx, setMsgIdx] = useState(0);
-  const rafRef = useRef<number>(0);
 
   useEffect(() => {
     const timers: ReturnType<typeof setTimeout>[] = [];
-
-    // One rAF to ensure initial "pre" renders, then trigger enter
-    const r = requestAnimationFrame(() => {
-      requestAnimationFrame(() => setPhase("entering"));
+    let rafId = requestAnimationFrame(() => {
+      rafId = requestAnimationFrame(() => setPhase("entering"));
     });
 
-    // Begin progress bar
-    timers.push(
-      setTimeout(() => {
-        setPhase("running");
-        const startTime = performance.now();
-        const tick = (now: number) => {
-          const p = Math.min((now - startTime) / PROGRESS_DURATION_MS, 1);
-          setProgress(p);
-          if (p < 1) rafRef.current = requestAnimationFrame(tick);
-        };
-        rafRef.current = requestAnimationFrame(tick);
-      }, PROGRESS_START_MS),
-    );
+    timers.push(setTimeout(() => setPhase("running"), PROGRESS_START_MS));
 
-    // Message cycling — distribute across progress duration
+    // Cycle status messages evenly across the progress duration
     const msgStep = PROGRESS_DURATION_MS / (MESSAGES.length - 1);
     MESSAGES.slice(1).forEach((_, i) => {
       timers.push(
@@ -56,12 +39,13 @@ export function AppLoader() {
       );
     });
 
-    // Begin exit
     timers.push(setTimeout(() => setPhase("exiting"), EXIT_MS));
+    // Hard fallback — dismisses the overlay even if onTransitionEnd never fires
+    // (React applying transition + opacity simultaneously can prevent transitionend)
+    timers.push(setTimeout(() => setPhase("done"), EXIT_MS + FADE_MS + 200));
 
     return () => {
-      cancelAnimationFrame(r);
-      cancelAnimationFrame(rafRef.current);
+      cancelAnimationFrame(rafId);
       timers.forEach(clearTimeout);
     };
   }, []);
@@ -69,22 +53,24 @@ export function AppLoader() {
   if (phase === "done") return null;
 
   const isEntered = phase === "entering" || phase === "running" || phase === "exiting";
+  const isExiting = phase === "exiting";
 
   return (
     <div
       aria-hidden
+      // Keep transition always set so the browser has it ready when opacity changes.
+      // If both transition + opacity were set simultaneously React can cause transitionend
+      // to never fire — the always-on transition prevents that race.
       style={{
-        opacity: phase === "exiting" ? 0 : 1,
-        transition:
-          phase === "exiting"
-            ? `opacity ${FADE_MS}ms ease-out`
-            : undefined,
-        pointerEvents: phase === "exiting" ? "none" : "all",
+        opacity: isExiting ? 0 : 1,
+        transition: `opacity ${FADE_MS}ms ease-out`,
+        pointerEvents: isExiting ? "none" : "all",
       }}
-      onTransitionEnd={() => {
-        if (phase === "exiting") setPhase("done");
+      onTransitionEnd={(e) => {
+        // Guard against child transitionend events bubbling up
+        if (e.target === e.currentTarget && isExiting) setPhase("done");
       }}
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-bg"
+      className="fixed inset-0 z-9999 flex items-center justify-center bg-bg"
     >
       {/* Centre stack */}
       <div
@@ -128,13 +114,13 @@ export function AppLoader() {
         </div>
 
         {/* Name */}
-        <span
-          className="text-[15px] font-semibold tracking-[-0.01em] text-text-primary"
-        >
+        <span className="text-[15px] font-semibold tracking-[-0.01em] text-text-primary">
           Readable
         </span>
 
-        {/* Progress bar track */}
+        {/* Progress bar — CSS-transition-only, no rAF loop.
+            Transition is always set so when width changes to 100% in "running"
+            phase the browser can smoothly animate it without a race condition. */}
         <div
           className="overflow-hidden rounded-full"
           style={{
@@ -146,13 +132,10 @@ export function AppLoader() {
           <div
             style={{
               height: "100%",
-              width: `${Math.round(progress * 100)}%`,
+              width: phase === "running" || phase === "exiting" ? "100%" : "0%",
               background: "var(--color-accent)",
               borderRadius: 9999,
-              transition:
-                phase === "running"
-                  ? `width ${PROGRESS_DURATION_MS}ms cubic-bezier(0.4,0,0.2,1)`
-                  : "none",
+              transition: `width ${PROGRESS_DURATION_MS}ms cubic-bezier(0.4,0,0.2,1)`,
             }}
           />
         </div>

@@ -748,6 +748,8 @@ export function Landing() {
   const reduce = useReducedMotion();
   const { isSignedIn, isLoaded } = useUser();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const closeNav = useCallback(() => setMobileNavOpen(false), []);
+  const openNav = useCallback(() => setMobileNavOpen(true), []);
 
   const steps = useMemo(
     () => [
@@ -1049,7 +1051,7 @@ export function Landing() {
         open={mobileNavOpen}
         isSignedIn={isSignedIn}
         isLoaded={isLoaded}
-        onClose={() => setMobileNavOpen(false)}
+        onClose={closeNav}
       />
 
       {/* ──────────────────────────────────────────────────────────────────── */}
@@ -1131,7 +1133,7 @@ export function Landing() {
                 type="button"
                 aria-label="Open navigation"
                 aria-expanded={mobileNavOpen}
-                onClick={() => setMobileNavOpen(true)}
+                onClick={openNav}
                 className="lg:hidden flex h-8 w-8 items-center justify-center rounded-lg text-text-muted transition hover:bg-fill-2 hover:text-text-primary"
               >
                 <svg width="16" height="16" fill="none" viewBox="0 0 16 16" aria-hidden>
