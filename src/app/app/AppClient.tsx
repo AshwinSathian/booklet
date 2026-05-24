@@ -26,6 +26,7 @@ import { normalizeInput, stripDangerousSequences } from "@/lib/sanitize";
 import { getTemplateBySlug } from "@/lib/templates";
 import { stripFrontmatter } from "@/lib/frontmatter";
 import { formatTimeHHMM } from "@/lib/ui/time";
+import { AppLoader } from "@/components/ui/AppLoader";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type SaveState = "saved" | "saving";
@@ -743,6 +744,7 @@ function AppPageContent() {
 export function AppClient() {
   return (
     <ToastProvider>
+      <AppLoader />
       <AppPageContent />
     </ToastProvider>
   );
