@@ -140,7 +140,7 @@ export default function ApiDocsPage() {
           </div>
 
           <Section id="overview" title="Base URL">
-            <Pre>{`https://readable.app/api/v1`}</Pre>
+            <Pre>{`https://readable.ashwinsathian.com/api/v1`}</Pre>
             <p className="mt-3 text-sm text-text-secondary">All requests and responses use JSON. Timestamps are ISO 8601 UTC.</p>
           </Section>
 
@@ -177,7 +177,7 @@ export default function ApiDocsPage() {
               <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mt-4 mb-2">Response 201</p>
               <Pre>{`{
   "id": "Ab3k91QxZp",
-  "url": "https://readable.app/p/Ab3k91QxZp"
+  "url": "https://readable.ashwinsathian.com/p/Ab3k91QxZp"
 }`}</Pre>
               <div className="mt-4">
                 <Table rows={[
@@ -218,7 +218,7 @@ slug: incident-auth-2026-05
                   {[
                     ["title", "string", "Overrides the extracted H1 title (max 200 chars)"],
                     ["visibility", '"public" | "unlisted"', "Defaults to public"],
-                    ["slug", "string", "Custom URL slug — requires Pro or Teams plan"],
+                    ["slug", "string", "Custom URL slug — available to all signed-in accounts (max 60 chars)"],
                     ["description", "string", "Used for SEO meta description (max 300 chars)"],
                     ["author", "string", "Stored as metadata, max 100 chars"],
                     ["date", "string", "Stored as metadata, any format"],
@@ -241,7 +241,7 @@ slug: incident-auth-2026-05
               <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mt-4 mb-2">Response 200</p>
               <Pre>{`{
   "id": "Ab3k91QxZp",
-  "url": "https://readable.app/p/Ab3k91QxZp",
+  "url": "https://readable.ashwinsathian.com/p/Ab3k91QxZp",
   "updated_at": "2026-04-29T12:00:00.000Z"
 }`}</Pre>
               <div className="mt-4">
@@ -266,7 +266,7 @@ slug: incident-auth-2026-05
       "slug": "release-notes-v2-1",
       "visibility": "public",
       "view_count": 42,
-      "url": "https://readable.app/p/release-notes-v2-1",
+      "url": "https://readable.ashwinsathian.com/p/release-notes-v2-1",
       "created_at": "2026-04-29T10:00:00.000Z",
       "updated_at": "2026-04-29T10:00:00.000Z"
     }
@@ -308,7 +308,7 @@ slug: incident-auth-2026-05
 
           <Section id="webhooks" title="Webhooks">
             <p className="text-sm text-text-secondary mb-4">
-              Register HTTP endpoints to receive a signed POST request whenever a page is published or updated. Available on Pro and Teams plans. Maximum 5 webhooks per account.
+              Register HTTP endpoints to receive a signed POST request whenever a page is published or updated. Available to all signed-in accounts. Maximum 5 webhooks per account.
             </p>
 
             <Endpoint method="GET" path="/api/webhooks" description="List all registered webhooks for your account. Secrets are not returned.">
@@ -365,7 +365,7 @@ function verifySignature(rawBody, secret, header) {
               <Pre>{`{
   "event": "page.published",
   "page_id": "Ab3k91QxZp",
-  "page_url": "https://readable.app/p/Ab3k91QxZp",
+  "page_url": "https://readable.ashwinsathian.com/p/Ab3k91QxZp",
   "title": "Incident Report — Auth Service",
   "published_at": "2026-05-19T08:32:00.000Z"
 }`}</Pre>
@@ -385,10 +385,12 @@ function verifySignature(rawBody, secret, header) {
             </p>
           </Section>
 
-          <Section id="github-actions" title="GitHub Actions example">
+          <Section id="github-actions" title="GitHub Actions">
             <p className="text-sm text-text-secondary mb-3">
-              Publish or update a page on every release tag push:
+              Use the dedicated <Code>readable-cli</Code> action, or call the REST API directly with <Code>curl</Code>:
             </p>
+
+            <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">Option A — CLI (recommended)</p>
             <Pre>{`# .github/workflows/publish-release-notes.yml
 name: Publish release notes
 
@@ -405,17 +407,25 @@ jobs:
       - name: Publish to Readable
         env:
           READABLE_API_KEY: \${{ secrets.READABLE_API_KEY }}
+        run: |
+          npx readable-cli publish CHANGELOG.md \\
+            --update \${{ vars.READABLE_PAGE_ID || '' }}`}</Pre>
+
+            <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mt-5 mb-2">Option B — raw curl</p>
+            <Pre>{`      - name: Publish to Readable
+        env:
+          READABLE_API_KEY: \${{ secrets.READABLE_API_KEY }}
           PAGE_ID: \${{ vars.READABLE_PAGE_ID }}   # optional: update in-place
         run: |
           BODY=$(jq -n --rawfile raw CHANGELOG.md '{"raw": $raw}')
 
           if [ -n "$PAGE_ID" ]; then
-            curl -fsSL -X PATCH "https://readable.app/api/v1/pages/$PAGE_ID" \\
+            curl -fsSL -X PATCH "https://readable.ashwinsathian.com/api/v1/pages/$PAGE_ID" \\
               -H "Authorization: Bearer $READABLE_API_KEY" \\
               -H "Content-Type: application/json" \\
               -d "$BODY"
           else
-            curl -fsSL -X POST "https://readable.app/api/v1/publish" \\
+            curl -fsSL -X POST "https://readable.ashwinsathian.com/api/v1/publish" \\
               -H "Authorization: Bearer $READABLE_API_KEY" \\
               -H "Content-Type: application/json" \\
               -d "$BODY" | jq -r '.url'

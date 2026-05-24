@@ -47,7 +47,7 @@ const FEATURE_GROUPS: { heading: string; items: string[] }[] = [
       "Mermaid diagram rendering (flowcharts, sequence, architecture)",
       "Formatting toolbar — bold, italic, headings, code, links",
       "YAML frontmatter support (title, author, date, tags, visibility)",
-      "8 ready-to-use templates (incident report, ADR, runbook, and more)",
+      "9 ready-to-use templates (incident report, postmortem, ADR, runbook, and more)",
     ],
   },
   {
@@ -80,7 +80,7 @@ const FEATURE_GROUPS: { heading: string; items: string[] }[] = [
       "Publish webhooks — get notified on page.published and page.updated",
       "Claude MCP server — use Readable directly from Claude",
       "GitHub Actions integration — publish from CI/CD pipelines",
-      "CLI support via the REST API and any HTTP client",
+      "CLI — readable-cli npm package, publish from any terminal or CI",
     ],
   },
 ];

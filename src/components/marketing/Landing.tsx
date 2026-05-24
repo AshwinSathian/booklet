@@ -318,7 +318,7 @@ function HeroMock() {
         </div>
         <div className="flex flex-1 justify-center">
           <div className="rounded-md bg-bg-glass px-8 py-1 text-xs text-text-muted font-mono backdrop-blur">
-            readable.app
+            readable.ashwinsathian.com
           </div>
         </div>
         <div className="flex items-center gap-1.5 rounded-full bg-accent px-3.5 py-1 text-2xs font-semibold text-white">
@@ -417,7 +417,7 @@ pool_size: 5 # was 50
       <div className="flex items-center gap-2.5 border-t border-border-default bg-bg-soft px-4 py-2.5">
         <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-400" />
         <span className="flex-1 truncate font-mono text-2xs text-text-muted">
-          readable.app/p/Ab3k91QxZp
+          readable.ashwinsathian.com/p/Ab3k91QxZp
         </span>
         <button
           type="button"
@@ -496,7 +496,7 @@ pool_size: 5 # was 50
           <div className="flex items-center gap-2.5 border-b border-border-default bg-bg-soft px-4 py-2.5">
             <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-400" />
             <span className="font-mono text-2xs text-text-muted truncate">
-              readable.app/p/Ab3k91QxZp
+              readable.ashwinsathian.com/p/Ab3k91QxZp
             </span>
           </div>
           {/* Clean rendered content */}
@@ -608,7 +608,7 @@ Authorization: Bearer rdbl_...
 # Response
 {
   "id": "Ab3k91QxZp",
-  "url": "https://readable.app/p/Ab3k91QxZp"
+  "url": "https://readable.ashwinsathian.com/p/Ab3k91QxZp"
 }
 
 # Update an existing page (same URL)
@@ -843,8 +843,8 @@ export function Landing() {
             <line x1="9" y1="11" x2="15" y2="11" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
           </svg>
         ),
-        title: "8 ready-to-use templates",
-        desc: "Incident reports, ADRs, runbooks, release notes, meeting notes, and more. Open, fill in, publish.",
+        title: "9 ready-to-use templates",
+        desc: "Incident reports, postmortems, ADRs, runbooks, release notes, meeting notes, and more. Open, fill in, publish.",
       },
       {
         icon: (
@@ -1271,7 +1271,7 @@ export function Landing() {
 
           {/* Terminal / CLI */}
           <motion.div variants={reduce ? undefined : fadeUp}>
-            <div className="flex flex-col gap-4 rounded-xl border border-border-default bg-bg-elevated p-6 shadow-card h-full">
+            <div className="flex flex-col gap-4 rounded-xl border border-border-default bg-bg-elevated p-6 shadow-card transition hover:border-border-strong hover:bg-bg-soft h-full">
               <div className="w-10 h-10 rounded-lg bg-accent-dim flex items-center justify-center text-accent">
                 <svg width="20" height="20" fill="none" viewBox="0 0 24 24" aria-hidden>
                   <rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" strokeWidth="1.6" />
@@ -1280,14 +1280,23 @@ export function Landing() {
               </div>
               <div className="text-[15px] font-semibold tracking-tight">Terminal</div>
               <div className="text-[15px] leading-[1.72] text-text-secondary">
-                @readable/cli lets you publish Markdown files from any terminal in one command.
+                <code className="text-[13px] font-mono">readable-cli</code> publishes Markdown files from any terminal in one command. Works in CI too.
               </div>
               <code className="text-[12px] font-mono bg-bg-soft border border-border-default rounded-lg px-3 py-2 text-text-muted break-all">
-                npx @readable/cli publish README.md
+                npx readable-cli publish README.md
               </code>
-              <span className="inline-flex items-center rounded-full bg-fill-2 px-2.5 py-0.5 text-2xs font-semibold tracking-wide text-text-muted mt-auto w-fit">
-                Coming soon
-              </span>
+              <a
+                href="https://www.npmjs.com/package/readable-cli"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-[13px] font-semibold text-accent transition hover:text-accent-soft mt-auto"
+                onClick={() => trackEvent("integration_clicked", { integration: "cli" })}
+              >
+                View on npm
+                <svg width="12" height="12" fill="none" viewBox="0 0 12 12" aria-hidden>
+                  <path d="M2.5 9.5 9.5 2.5M9.5 2.5H4M9.5 2.5V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </a>
             </div>
           </motion.div>
 
@@ -1329,7 +1338,7 @@ export function Landing() {
         id="templates"
         eyebrow="Templates"
         title="Start with structure."
-        subtitle="Eight templates for the documents engineers and teams reach for most. Click one — the editor opens pre-loaded."
+        subtitle="Nine templates for the documents engineers and teams reach for most. Click one — the editor opens pre-loaded."
       >
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {TEMPLATES.filter((t) => t.slug).map((t) => (
@@ -1394,7 +1403,7 @@ export function Landing() {
                 "Mermaid diagram rendering",
                 "Formatting toolbar",
                 "YAML frontmatter (title, author, date, tags)",
-                "8 ready-to-use templates",
+                "9 ready-to-use templates",
                 "Unlimited local drafts, auto-saved to browser",
               ],
             },
@@ -1506,7 +1515,8 @@ export function Landing() {
           <FaqItem question="What Markdown is supported?">
             Readable supports GitHub-Flavored Markdown (GFM): H1–H4 headings, bold, italic,
             strikethrough, code (inline and fenced), tables, ordered/unordered/nested lists,
-            task lists, blockquotes, links, images (external URLs), and Mermaid diagrams.
+            task lists, blockquotes, links, images (external URLs), Mermaid diagrams, and
+            KaTeX math — inline <strong>$...$</strong> and display <strong>$$...$$</strong>.
             HTML in Markdown is not rendered for security reasons.
           </FaqItem>
           <FaqItem question="Is there a size limit?">
