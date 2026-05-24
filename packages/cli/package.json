@@ -11,16 +11,19 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch",
+    "build": "tsup",
+    "dev": "tsup --watch",
     "prepublishOnly": "npm run build"
   },
-  "dependencies": {
-    "commander": "^12.1.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@types/node": "^20.19.0",
+    "commander": "^12.1.0",
+    "tsup": "^8.5.1",
     "typescript": "^5.7.0"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "engines": {
     "node": ">=18.0.0"

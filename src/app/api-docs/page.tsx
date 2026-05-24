@@ -408,8 +408,13 @@ jobs:
         env:
           READABLE_API_KEY: \${{ secrets.READABLE_API_KEY }}
         run: |
-          npx readable-cli publish CHANGELOG.md \\
-            --update \${{ vars.READABLE_PAGE_ID || '' }}`}</Pre>
+          if [ -n "\${{ vars.READABLE_PAGE_ID }}" ]; then
+            npx readable-cli publish CHANGELOG.md \\
+              --update \${{ vars.READABLE_PAGE_ID }}
+          else
+            npx readable-cli publish CHANGELOG.md \\
+              --slug release-notes --visibility public
+          fi`}</Pre>
 
             <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mt-5 mb-2">Option B — raw curl</p>
             <Pre>{`      - name: Publish to Readable

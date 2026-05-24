@@ -4,6 +4,8 @@ export type ApiResponse<T> =
   | { ok: true; status: number; data: T }
   | { ok: false; status: number; error: string };
 
+const REQUEST_TIMEOUT_MS = 10_000;
+
 export async function apiRequest<T>(
   path: string,
   options: { method?: string; body?: unknown } = {},
@@ -30,6 +32,7 @@ export async function apiRequest<T>(
       method: options.method ?? "GET",
       headers,
       body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);

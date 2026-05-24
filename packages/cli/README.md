@@ -16,7 +16,7 @@ npx readable-cli publish README.md
 
 ## Authentication
 
-Get your API key from [readable.ashwinsathian.com](https://readable.ashwinsathian.com) → My Pages → Settings → API Keys. Keys look like `rdbl_xxxx…` (45 chars).
+Get your API key from [readable.ashwinsathian.com](https://readable.ashwinsathian.com) → My Pages → Settings → API Keys. Keys look like `rdbl_xxxx…`.
 
 ```bash
 readable login
@@ -40,6 +40,7 @@ Publish a Markdown file as a Readable page.
 readable publish README.md
 readable publish NOTES.md --slug my-notes
 readable publish NOTES.md --visibility unlisted
+readable publish README.md --open          # opens the page in your browser
 ```
 
 **Publish from stdin:**
@@ -70,6 +71,7 @@ Options:
 | `--visibility <v>` | `public` (default) or `unlisted` |
 | `--update <id>` | Update an existing page by ID |
 | `--watch` | Watch file and re-publish on change |
+| `--open` | Open the page in your browser after publishing |
 
 ---
 
@@ -82,26 +84,28 @@ readable pages list
 readable pages list --json   # machine-readable output
 ```
 
-### `readable pages delete <id>`
-
-Delete a page by ID.
-
-```bash
-readable pages delete abc123xyz
-readable pages delete abc123xyz --yes   # skip confirmation prompt
-```
-
 ### `readable pages open <id>`
 
-Print the URL of a page.
+Open a page in your browser. Pass `--print` to print the URL without opening a browser.
 
 ```bash
-readable pages open abc123xyz
+readable pages open abc123             # opens browser
+readable pages open abc123 --print     # prints URL only
+readable pages open my-custom-slug     # works with slugs too
+```
+
+### `readable pages delete <id>`
+
+Delete a page by ID or slug. Shows the page title and URL in the confirmation prompt.
+
+```bash
+readable pages delete abc123
+readable pages delete abc123 --yes   # skip confirmation prompt
 ```
 
 ### `readable whoami`
 
-Show the active API key and base URL.
+Show the active API key, base URL, and where the key was loaded from (env var or config file).
 
 ### `readable logout`
 
@@ -118,6 +122,9 @@ YAML frontmatter in your Markdown is parsed and applied automatically:
 title: My Release Notes
 slug: release-notes-v2
 visibility: public
+description: Summary of changes in v2.
+author: Ashwin Sathian
+date: 2026-05-24
 ---
 
 # Release Notes v2
@@ -125,7 +132,16 @@ visibility: public
 Content here…
 ```
 
-Supported frontmatter fields: `title`, `slug`, `visibility`.
+Supported frontmatter fields:
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `title` | string | Overrides the extracted H1 title (max 200 chars) |
+| `slug` | string | Custom URL slug (max 60 chars) |
+| `visibility` | `"public"` \| `"unlisted"` | Defaults to public |
+| `description` | string | SEO meta description (max 300 chars) |
+| `author` | string | Stored as metadata (max 100 chars) |
+| `date` | string | Stored as metadata, any format |
 
 ---
 
@@ -147,10 +163,17 @@ Use the `READABLE_API_KEY` secret to publish from CI:
 - name: Publish to Readable
   env:
     READABLE_API_KEY: ${{ secrets.READABLE_API_KEY }}
-  run: npx readable-cli publish CHANGELOG.md --update ${{ vars.READABLE_PAGE_ID }}
+  run: |
+    if [ -n "${{ vars.READABLE_PAGE_ID }}" ]; then
+      npx readable-cli publish CHANGELOG.md --update ${{ vars.READABLE_PAGE_ID }}
+    else
+      npx readable-cli publish CHANGELOG.md --slug release-notes --visibility public
+    fi
 ```
 
-See [.github/examples/publish-to-readable.yml](https://github.com/AshwinSathian/readable/blob/main/.github/examples/publish-to-readable.yml) for a full example.
+Set `READABLE_API_KEY` under Settings → Secrets → Actions. Set `READABLE_PAGE_ID` as a repository variable to reuse the same URL on every run.
+
+See [.github/examples/publish-to-readable.yml](https://github.com/AshwinSathian/readable/blob/main/.github/examples/publish-to-readable.yml) for a complete example workflow.
 
 ---
 

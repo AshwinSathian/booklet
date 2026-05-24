@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { apiRequest } from "../api.js";
-import { success, error, info, bold, dim, gray } from "../fmt.js";
+import { success, error, info, bold, dim, gray, openUrl } from "../fmt.js";
 import { table } from "../fmt.js";
 import { createInterface } from "readline";
 
@@ -84,8 +84,9 @@ export function registerPagesCommand(program: Command) {
 
   pages
     .command("open <id>")
-    .description("Print the URL of a page")
-    .action(async (id: string) => {
+    .description("Open a page in your browser (use --print to just print the URL)")
+    .option("--print", "Print the URL instead of opening a browser")
+    .action(async (id: string, opts: { print?: boolean }) => {
       const res = await apiRequest<{ pages: PageItem[] }>("/api/v1/pages");
       if (!res.ok) {
         error(res.error);
@@ -97,22 +98,39 @@ export function registerPagesCommand(program: Command) {
         process.exit(1);
       }
       console.log(bold(page.url));
+      if (!opts.print) {
+        openUrl(page.url);
+      }
     });
 
   pages
     .command("delete <id>")
-    .description("Delete a page by ID")
+    .description("Delete a page by ID or slug")
     .option("-y, --yes", "Skip confirmation prompt")
     .action(async (id: string, opts: { yes?: boolean }) => {
+      // Resolve the real page ID (DELETE endpoint does not accept slugs).
+      // This fetch also gives us the title and URL for the confirmation prompt.
+      const listRes = await apiRequest<{ pages: PageItem[] }>("/api/v1/pages");
+      const page = listRes.ok
+        ? listRes.data.pages.find((p) => p.id === id || p.slug === id)
+        : null;
+
+      // Canonical ID to pass to the DELETE endpoint
+      const pageId = page?.id ?? id;
+
       if (!opts.yes) {
-        const ok = await confirm(`Delete page ${bold(id)}?`);
+        const label = page
+          ? `"${page.title ?? "Untitled"}" ${dim(`(${page.url})`)}`
+          : bold(id);
+
+        const ok = await confirm(`Permanently delete ${label}?`);
         if (!ok) {
           info("Aborted.");
           return;
         }
       }
 
-      const res = await apiRequest<{ ok: boolean }>(`/api/v1/pages/${id}`, {
+      const res = await apiRequest<{ ok: boolean }>(`/api/v1/pages/${pageId}`, {
         method: "DELETE",
       });
 
@@ -121,6 +139,6 @@ export function registerPagesCommand(program: Command) {
         process.exit(1);
       }
 
-      success(`Deleted page ${id}`);
+      success(`Deleted page ${pageId}`);
     });
 }

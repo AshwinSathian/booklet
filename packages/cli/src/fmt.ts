@@ -1,3 +1,15 @@
+import { exec } from "node:child_process";
+
+export function openUrl(url: string): void {
+  // On Windows, `start` treats the first quoted arg as the window title,
+  // so an empty title string must precede the URL.
+  const cmd =
+    process.platform === "darwin" ? `open "${url}"`
+    : process.platform === "win32" ? `start "" "${url}"`
+    : `xdg-open "${url}"`;
+  exec(cmd, () => { /* fire and forget */ });
+}
+
 // ANSI colour helpers — fall back gracefully when NO_COLOR is set
 const NO_COLOR = Boolean(process.env.NO_COLOR) || !process.stdout.isTTY;
 

@@ -1,14 +1,13 @@
 import { Command } from "commander";
 import { readFile, watch } from "fs/promises";
 import { apiRequest } from "../api.js";
-import { success, error, info, warn, bold, dim } from "../fmt.js";
+import { success, error, info, warn, bold, dim, openUrl } from "../fmt.js";
 
 type PublishResult = { id: string; url: string };
 type PatchResult = { id: string; url: string; updated_at?: string };
 
 async function readInput(filePath: string): Promise<string> {
   if (filePath === "-") {
-    // Read from stdin
     const chunks: Buffer[] = [];
     for await (const chunk of process.stdin) {
       chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk as string));
@@ -24,14 +23,12 @@ async function doPublish(
     update?: string;
     slug?: string;
     visibility?: string;
+    open?: boolean;
   },
   isWatch = false,
 ): Promise<{ id: string; url: string } | null> {
-  const body: Record<string, unknown> = { raw };
-  if (opts.visibility) body.settings = { visibility: opts.visibility };
-
   if (opts.update) {
-    // PATCH existing page
+    // PATCH existing page — content + optional metadata in one call
     const patchBody: Record<string, unknown> = { raw };
     if (opts.slug) patchBody.slug = opts.slug;
     if (opts.visibility) patchBody.visibility = opts.visibility;
@@ -51,10 +48,13 @@ async function doPublish(
     } else {
       success(`Updated: ${bold(res.data.url)}`);
     }
+    if (opts.open && !isWatch) openUrl(res.data.url);
     return res.data;
   }
 
-  // POST new page
+  // POST new page — only send raw content. The server applies frontmatter and
+  // DEFAULT_SETTINGS. Sending settings here would corrupt DocSettings with
+  // non-layout fields (visibility is not a DocSettings key).
   const res = await apiRequest<PublishResult>("/api/v1/publish", {
     method: "POST",
     body: { raw },
@@ -67,8 +67,9 @@ async function doPublish(
 
   const { id, url } = res.data;
 
-  // Apply post-publish metadata patches
-  if (opts.slug || opts.visibility) {
+  // Apply CLI-specified metadata (slug / visibility) via a separate PATCH.
+  // Frontmatter in the document is handled server-side during the POST.
+  if (opts.slug || (opts.visibility && opts.visibility !== "public")) {
     const metaPatch: Record<string, unknown> = {};
     if (opts.slug) metaPatch.slug = opts.slug;
     if (opts.visibility) metaPatch.visibility = opts.visibility;
@@ -81,15 +82,21 @@ async function doPublish(
     if (!patchRes.ok) {
       warn(`Published but metadata patch failed: ${patchRes.error}`);
       success(`Published: ${bold(url)}`);
+      console.log(dim(`  ID: ${id}`));
+      if (opts.open) openUrl(url);
       return { id, url };
     }
 
-    success(`Published: ${bold(patchRes.data.url)}`);
-    return { id, url: patchRes.data.url };
+    const finalUrl = patchRes.data.url;
+    success(`Published: ${bold(finalUrl)}`);
+    console.log(dim(`  ID: ${id}`));
+    if (opts.open) openUrl(finalUrl);
+    return { id, url: finalUrl };
   }
 
   success(`Published: ${bold(url)}`);
   console.log(dim(`  ID: ${id}`));
+  if (opts.open) openUrl(url);
   return { id, url };
 }
 
@@ -98,14 +105,16 @@ export function registerPublishCommand(program: Command) {
     .command("publish [file]")
     .description("Publish a Markdown file (use - for stdin)")
     .option("--slug <slug>", "Set a custom URL slug")
-    .option("--visibility <v>", "public or unlisted (default: public)", "public")
+    .option("--visibility <v>", "public or unlisted (default: public)")
     .option("--update <id>", "Update an existing page by ID instead of creating new")
     .option("--watch", "Watch file for changes and re-publish automatically")
+    .option("--open", "Open the published page in your browser after success")
     .action(async (file: string | undefined, opts: {
       slug?: string;
       visibility?: string;
       update?: string;
       watch?: boolean;
+      open?: boolean;
     }) => {
       const filePath = file ?? "-";
 
@@ -114,7 +123,6 @@ export function registerPublishCommand(program: Command) {
         process.exit(1);
       }
 
-      // Initial publish
       let raw: string;
       try {
         raw = await readInput(filePath);
@@ -128,7 +136,6 @@ export function registerPublishCommand(program: Command) {
 
       if (!opts.watch) return;
 
-      // --watch mode: watch file for changes
       const pageId = opts.update ?? result.id;
       info(`Watching ${bold(filePath)} for changes… (Ctrl+C to stop)`);
       console.log();
@@ -137,7 +144,7 @@ export function registerPublishCommand(program: Command) {
         const watcher = watch(filePath);
         for await (const event of watcher) {
           if (event.eventType !== "change") continue;
-          // Debounce: small delay to let the write finish
+          // Small debounce to let the editor finish writing
           await new Promise((r) => setTimeout(r, 80));
           try {
             const updated = await readFile(filePath, "utf8");
