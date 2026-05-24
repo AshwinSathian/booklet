@@ -4,7 +4,9 @@ import { ActionDrawer, DrawerSection } from "@/components/ui/ActionDrawer";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { ROUTES } from "@/lib/constants";
+import { createDraft, setActiveDraftId } from "@/lib/drafts";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
 const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,58}[a-z0-9]$|^[a-z0-9]{3,60}$/;
 function isValidSlug(s: string) { return SLUG_RE.test(s) && !s.includes("--"); }
@@ -333,8 +335,10 @@ function PageCard({
   onDragStart: (pageId: string) => void;
   onDragEnd: () => void;
 }) {
+  const router = useRouter();
   const [copying, setCopying] = useState(false);
   const [copyingEmbed, setCopyingEmbed] = useState(false);
+  const [duplicating, setDuplicating] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -345,8 +349,6 @@ function PageCard({
   const [savingPassword, setSavingPassword] = useState(false);
   const [featured, setFeatured] = useState(page.featured);
   const [togglingFeatured, setTogglingFeatured] = useState(false);
-  const [showBadge, setShowBadge] = useState(!page.remove_attribution_badge);
-  const [togglingBadge, setTogglingBadge] = useState(false);
 
   const url = pageUrl(page);
 
@@ -416,19 +418,23 @@ function PageCard({
     }
   }, [page.id, featured]);
 
-  const handleToggleBadge = useCallback(async () => {
-    setTogglingBadge(true);
+  const handleDuplicate = useCallback(async () => {
+    setDuplicating(true);
     try {
-      const res = await fetch(`/api/pages/${page.id}`, {
-        method: "PATCH",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ remove_attribution_badge: showBadge }),
+      const res = await fetch(`/api/pages/${page.id}`);
+      if (!res.ok) return;
+      const data = (await res.json()) as { raw?: string | null; title?: string | null };
+      const draft = createDraft({
+        title: data.title ? `Copy of ${data.title}` : "Copy",
+        raw: data.raw ?? "",
       });
-      if (res.ok) setShowBadge((b) => !b);
+      setActiveDraftId(draft.id);
+      setDrawerOpen(false);
+      router.push(ROUTES.app);
     } finally {
-      setTogglingBadge(false);
+      setDuplicating(false);
     }
-  }, [page.id, showBadge]);
+  }, [page.id, router]);
 
   const handleDelete = useCallback(async () => {
     setDeleting(true);
@@ -559,6 +565,13 @@ function PageCard({
             onClick={() => void handleCopyEmbed()}
             active={copyingEmbed}
           />
+          <DrawerItem
+            icon="duplicate"
+            label={duplicating ? "Opening editor…" : "Duplicate in editor"}
+            description="Copy this page's content into a new draft"
+            disabled={duplicating}
+            onClick={() => void handleDuplicate()}
+          />
         </DrawerSection>
 
         <DrawerSection>
@@ -628,15 +641,6 @@ function PageCard({
             activeLabel="Featured"
             disabled={togglingFeatured}
             onClick={() => void handleToggleFeatured()}
-          />
-          <DrawerItem
-            icon="badge"
-            label={showBadge ? "Hide attribution badge" : "Show attribution badge"}
-            description={showBadge ? "Remove the 'Made with Readable' badge from this page" : "Add the 'Made with Readable' badge back to this page"}
-            active={showBadge}
-            activeLabel="Badge on"
-            disabled={togglingBadge}
-            onClick={() => void handleToggleBadge()}
           />
         </DrawerSection>
 

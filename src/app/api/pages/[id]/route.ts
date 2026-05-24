@@ -1,6 +1,6 @@
 import { getPageBySlug, getPageRecord, updatePageRecord, deletePageRecord } from "@/lib/db";
 import { deletePageVersions } from "@/lib/db/versions";
-import { deleteDoc } from "@/lib/storage";
+import { deleteDoc, getDoc } from "@/lib/storage";
 import { hashPassword } from "@/lib/password";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
@@ -13,6 +13,37 @@ function isValidSlug(s: string): boolean {
 }
 
 export const runtime = "nodejs";
+
+export async function GET(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const { userId } = await auth();
+  if (!userId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { id } = await params;
+  if (!id?.trim()) {
+    return NextResponse.json({ error: "Missing page id" }, { status: 400 });
+  }
+
+  const record = await getPageRecord(id);
+  if (!record) {
+    return NextResponse.json({ error: "Page not found" }, { status: 404 });
+  }
+  if (record.user_id !== userId) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const doc = await getDoc(record.id);
+
+  return NextResponse.json({
+    id: record.id,
+    title: record.title ?? null,
+    raw: doc?.raw ?? null,
+  });
+}
 
 export async function PATCH(
   req: Request,
@@ -40,7 +71,6 @@ export async function PATCH(
     slug?: string | null;
     visibility?: string;
     password?: string | null;
-    remove_attribution_badge?: boolean;
     featured?: boolean;
   } = {};
   try {
@@ -59,10 +89,6 @@ export async function PATCH(
     } else {
       return NextResponse.json({ error: "Password must be at least 6 characters." }, { status: 422 });
     }
-  }
-
-  if (body.remove_attribution_badge !== undefined) {
-    patch.remove_attribution_badge = Boolean(body.remove_attribution_badge);
   }
 
   if (body.featured !== undefined) {

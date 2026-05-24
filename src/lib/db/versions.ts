@@ -2,7 +2,7 @@ import type { PublishedDoc } from "@/lib/blocks";
 import { getDb } from "@/lib/mongodb";
 import type { PageVersion } from "./types";
 
-const MAX_VERSIONS_PER_PAGE = 10;
+const MAX_VERSIONS_PER_PAGE = 50;
 
 export type PageVersionListItem = Pick<
   PageVersion,
