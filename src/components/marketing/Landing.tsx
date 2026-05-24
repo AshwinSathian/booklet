@@ -9,7 +9,7 @@ import type { Easing, Variants } from "framer-motion";
 import { motion, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
-import { type ReactNode, useMemo, useState, useCallback } from "react";
+import { type ReactNode, useEffect, useMemo, useState, useCallback } from "react";
 import { TEMPLATES } from "@/lib/templates";
 
 // ─────────────────────────────────────────────────────────────────────────────
