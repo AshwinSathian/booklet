@@ -15,13 +15,10 @@
     "test": "tsc --noEmit",
     "postinstall": "node scripts/stub-og.cjs",
     "prepare": "git config core.hooksPath .githooks || true",
-    "preview": "opennextjs-cloudflare build && wrangler dev",
-    "predeploy": "node scripts/check-secrets.mjs",
-    "deploy": "opennextjs-cloudflare build && wrangler deploy"
+    "deploy": "bash scripts/redeploy.sh"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.2.7",
-    "@opennextjs/cloudflare": "^1.15.1",
     "framer-motion": "^12.29.2",
     "highlight.js": "^11.11.1",
     "jose": "^6.2.3",
@@ -52,9 +49,7 @@
     "autoprefixer": "^10.4.24",
     "eslint": "^9",
     "eslint-config-next": "15.4.6",
-    "opennextjs-cloudflare": "^1.0.0",
     "tailwindcss": "^4",
-    "typescript": "^5.7.4",
-    "wrangler": "^4.61.1"
+    "typescript": "^5.7.4"
   }
 }

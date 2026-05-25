@@ -275,4 +275,4 @@ export default {
       return jsonResponse({ error: "Internal server error" }, 500);
     }
   },
-} satisfies ExportedHandler<Env>;
+};
