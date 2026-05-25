@@ -27,7 +27,6 @@ import { getTemplateBySlug } from "@/lib/templates";
 import { stripFrontmatter } from "@/lib/frontmatter";
 import { formatTimeHHMM } from "@/lib/ui/time";
 import { AppLoader } from "@/components/ui/AppLoader";
-import { AiAssistPanel } from "@/components/app/AiAssistPanel";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type SaveState = "saved" | "saving";
@@ -61,7 +60,6 @@ function AppPageContent() {
   const [copyLinkPulse, setCopyLinkPulse] = useState(false);
 
   const [focusMode, setFocusMode] = useState(false);
-  const [showAiPanel, setShowAiPanel] = useState(false);
 
   const toast = useToast();
   const focusFnRef = useRef<null | (() => void)>(null);
@@ -670,12 +668,6 @@ function AppPageContent() {
         setFocusMode((f) => !f);
         return;
       }
-
-      if (mod && (e.key === "i" || e.key === "I") && !e.shiftKey) {
-        e.preventDefault();
-        setShowAiPanel((v) => !v);
-        return;
-      }
     }
 
     window.addEventListener("keydown", onKeyDown);
@@ -716,8 +708,6 @@ function AppPageContent() {
         publishedId={lastPublishedId}
         focusMode={focusMode}
         onToggleFocusMode={() => setFocusMode((f) => !f)}
-        showAiPanel={showAiPanel}
-        onToggleAiPanel={() => setShowAiPanel((v) => !v)}
         onSlugSet={(newSlug) => {
           if (!lastPublishedUrl || !lastPublishedId || !activeDraftId) return;
           const newUrl = lastPublishedUrl.replace(/\/p\/[^/]+$/, `/p/${newSlug}`);
@@ -734,15 +724,6 @@ function AppPageContent() {
       <div className="flex-1 min-h-0">
         <AppShell
           focusMode={focusMode}
-          showAiPanel={showAiPanel}
-          aiPanel={
-            <AiAssistPanel
-              raw={raw}
-              onInsert={(text) => setRaw((prev) => (prev ? `${prev}\n\n${text}` : text))}
-              onReplace={(text) => setRaw(text)}
-              onClose={() => setShowAiPanel(false)}
-            />
-          }
           left={
             <PasteInput
               value={raw}

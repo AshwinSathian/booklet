@@ -12,36 +12,6 @@ function getJwtSecret(): Uint8Array {
   return new TextEncoder().encode(secret);
 }
 
-async function sendInviteEmail(
-  to: string,
-  teamName: string,
-  inviteUrl: string,
-): Promise<void> {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
-    console.warn("[teams/invite] RESEND_API_KEY not set — email not sent. Invite URL:", inviteUrl);
-    return;
-  }
-
-  const { Resend } = await import("resend");
-  const resend = new Resend(apiKey);
-
-  await resend.emails.send({
-    from: "Readable <noreply@readable.ashwinsathian.com>",
-    to,
-    subject: `You've been invited to join ${teamName} on Readable`,
-    text: [
-      `You've been invited to join ${teamName} on Readable.`,
-      "",
-      `Accept here: ${inviteUrl}`,
-      "",
-      "This invite expires in 72 hours.",
-      "",
-      "— Readable",
-    ].join("\n"),
-  });
-}
-
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
@@ -74,12 +44,6 @@ export async function POST(
 
   const origin = new URL(req.url).origin;
   const inviteUrl = `${origin}/t/join?token=${token}`;
-
-  try {
-    await sendInviteEmail(email, team.name, inviteUrl);
-  } catch (e) {
-    console.error("[teams/invite] email send failed:", e);
-  }
 
   return NextResponse.json({ ok: true, inviteUrl }, { status: 201 });
 }

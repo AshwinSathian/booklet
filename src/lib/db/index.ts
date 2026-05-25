@@ -5,13 +5,7 @@ import type { DbApiKey, DbCollection, DbCollectionMember, DbPage, DbUser, DbWebh
 // Internal document shapes (MongoDB _id = our string id)
 // ---------------------------------------------------------------------------
 
-type UserDoc = Omit<DbUser, "id"> & {
-  _id: string;
-  // Legacy Stripe fields — ignored on read, not written to new records
-  stripe_customer_id?: string | null;
-  stripe_subscription_id?: string | null;
-  plan_expires_at?: string | null;
-};
+type UserDoc = Omit<DbUser, "id"> & { _id: string };
 type PageDoc = Omit<DbPage, "id"> & { _id: string };
 type ApiKeyDoc = Omit<DbApiKey, "id"> & { _id: string };
 type CollectionDoc = Omit<DbCollection, "id"> & { _id: string };
@@ -19,8 +13,7 @@ type CollectionMemberDoc = Omit<DbCollectionMember, "id"> & { _id: string };
 type WebhookDoc = Omit<DbWebhook, "id"> & { _id: string };
 
 function toUser(doc: UserDoc): DbUser {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { _id, stripe_customer_id, stripe_subscription_id, plan_expires_at, ...rest } = doc;
+  const { _id, ...rest } = doc;
   return { id: _id, ...rest };
 }
 
