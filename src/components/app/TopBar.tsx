@@ -962,6 +962,73 @@ function PostPublishSlugBar({
 }
 
 // ---------------------------------------------------------------------------
+// Anonymous nudge — shown after an anonymous publish
+// ---------------------------------------------------------------------------
+
+function AnonymousNudge({ publishedUrl }: { publishedUrl: string | null }) {
+  const [email, setEmail] = useState("");
+  const [notifyState, setNotifyState] = useState<"idle" | "sending" | "sent" | "error">("idle");
+
+  const handleNotify = async () => {
+    if (!publishedUrl || !email.trim() || notifyState === "sending" || notifyState === "sent") return;
+
+    const pageId = publishedUrl.split("/").pop();
+    if (!pageId) return;
+
+    setNotifyState("sending");
+    try {
+      const res = await fetch("/api/notify/expiry", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ pageId, email: email.trim() }),
+      });
+      setNotifyState(res.ok ? "sent" : "error");
+    } catch {
+      setNotifyState("error");
+    }
+  };
+
+  return (
+    <div className="border-t border-accent/20 bg-accent-dim/60 backdrop-blur-xl px-3 py-2">
+      <div className="mx-auto flex w-full max-w-7xl flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <p className="text-xs text-text-secondary shrink-0">
+          <span className="font-semibold text-text-primary">This page expires in 30 days.</span>
+          {" "}Sign in (free) to make it permanent.
+        </p>
+        <div className="flex items-center gap-2 shrink-0">
+          {notifyState === "sent" ? (
+            <span className="text-xs text-green-400 font-medium">✓ We'll remind you before it expires</span>
+          ) : (
+            <>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => { setEmail(e.target.value); setNotifyState("idle"); }}
+                onKeyDown={(e) => { if (e.key === "Enter") void handleNotify(); }}
+                placeholder="Notify me before expiry"
+                disabled={notifyState === "sending"}
+                className="rounded-lg border border-outline bg-bg px-2.5 py-1 text-xs text-text-primary placeholder:text-text-muted/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft w-44 disabled:opacity-50"
+              />
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => void handleNotify()}
+                disabled={!email.trim() || notifyState === "sending"}
+              >
+                {notifyState === "sending" ? "…" : "Notify me"}
+              </Button>
+            </>
+          )}
+          <Button variant="primary" size="sm" href={ROUTES.signIn} className="shrink-0">
+            Sign in free
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 
 const TOAST_KEYS = {
   copyMd: "copy_md",
@@ -1260,17 +1327,7 @@ export function TopBar({
 
       {/* Post-publish sign-in nudge — shown for anonymous publishes */}
       {status === "published" && !publishedOwned && !isSignedIn ? (
-        <div className="border-t border-accent/20 bg-accent-dim/60 backdrop-blur-xl px-3 py-2">
-          <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3">
-            <p className="text-xs text-text-secondary">
-              <span className="font-semibold text-text-primary">This page expires in 30 days.</span>
-              {" "}Sign in (free) to make it permanent, edit it in place, and track views.
-            </p>
-            <Button variant="primary" size="sm" href={ROUTES.signIn} className="shrink-0">
-              Sign in free
-            </Button>
-          </div>
-        </div>
+        <AnonymousNudge publishedUrl={publishedUrl} />
       ) : null}
 
       {/* Post-publish slug bar — shown once for owned pages until dismissed or slug saved */}
