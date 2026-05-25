@@ -23,10 +23,14 @@ export function AppShell({
   left,
   right,
   focusMode = false,
+  aiPanel,
+  showAiPanel = false,
 }: {
   left: React.ReactNode;
   right: React.ReactNode;
   focusMode?: boolean;
+  aiPanel?: React.ReactNode;
+  showAiPanel?: boolean;
 }) {
   const [pane, setPane] = useState<MobilePane>("edit");
 
@@ -74,7 +78,11 @@ export function AppShell({
       <div
         className={[
           "flex min-h-0 overflow-hidden w-full",
-          focusMode ? "lg:flex-1 lg:flex lg:flex-col" : "lg:max-w-[50%] lg:flex lg:flex-col",
+          focusMode
+            ? "lg:flex-1 lg:flex lg:flex-col"
+            : showAiPanel
+              ? "lg:w-[38%] lg:flex lg:flex-col"
+              : "lg:max-w-[50%] lg:flex lg:flex-col",
           pane === "edit" ? "flex-1 animate-fade-in" : "hidden lg:flex",
         ].join(" ")}
       >
@@ -87,12 +95,26 @@ export function AppShell({
       <div
         className={[
           "flex min-h-0 overflow-hidden w-full",
-          focusMode ? "hidden" : "lg:flex-1 lg:flex lg:flex-col",
+          focusMode
+            ? "hidden"
+            : showAiPanel
+              ? "lg:w-[38%] lg:flex lg:flex-col"
+              : "lg:flex-1 lg:flex lg:flex-col",
           pane === "preview" ? "flex-1 animate-fade-in" : "hidden lg:flex",
         ].join(" ")}
       >
         {right}
       </div>
+
+      {/* AI assist panel — desktop only, 24% width */}
+      {showAiPanel && aiPanel && (
+        <>
+          <div aria-hidden className="hidden lg:block w-px shrink-0 bg-border-subtle" />
+          <div className="hidden lg:flex lg:w-[24%] lg:flex-col min-h-0 overflow-hidden shrink-0">
+            {aiPanel}
+          </div>
+        </>
+      )}
     </div>
   );
 }

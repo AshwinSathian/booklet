@@ -42,7 +42,8 @@ export type IconName =
   | "lock"
   | "star"
   | "star-filled"
-  | "badge";
+  | "badge"
+  | "sparkle";
 
 const PATHS: Record<IconName, string | string[]> = {
   plus:           "M8 3v10M3 8h10",
@@ -87,6 +88,7 @@ const PATHS: Record<IconName, string | string[]> = {
   star:           "M8 2l1.8 3.6L14 6.3l-3 2.9.7 4.1L8 11.2l-3.7 2 .7-4.1L2 6.3l4.2-.6z",
   "star-filled":  "M8 2l1.8 3.6L14 6.3l-3 2.9.7 4.1L8 11.2l-3.7 2 .7-4.1L2 6.3l4.2-.6z",
   badge:          ["M8 1l2 3h3.5L11 6.5 12.5 10 8 7.5 3.5 10 5 6.5 1.5 4H5L8 1z", "M8 11v4"],
+  sparkle:        "M8 1v3M8 12v3M1 8h3M12 8h3M3.5 3.5l2 2M10.5 10.5l2 2M10.5 3.5l-2 2M5.5 10.5l-2 2M8 6a2 2 0 1 0 0 4 2 2 0 0 0 0-4z",
 };
 
 export function Icon({

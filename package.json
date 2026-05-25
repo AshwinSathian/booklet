@@ -20,6 +20,7 @@
     "deploy": "opennextjs-cloudflare build && wrangler deploy"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.98.0",
     "@clerk/nextjs": "^7.2.7",
     "@opennextjs/cloudflare": "^1.15.1",
     "framer-motion": "^12.29.2",

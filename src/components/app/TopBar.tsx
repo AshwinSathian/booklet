@@ -999,6 +999,8 @@ export function TopBar({
   onSlugSet,
   focusMode = false,
   onToggleFocusMode,
+  showAiPanel = false,
+  onToggleAiPanel,
 }: {
   status: EditorStatus;
   canPublish: boolean;
@@ -1029,6 +1031,8 @@ export function TopBar({
   onSlugSet?: (newSlug: string) => void;
   focusMode?: boolean;
   onToggleFocusMode?: () => void;
+  showAiPanel?: boolean;
+  onToggleAiPanel?: () => void;
 }) {
   const [visibleSettings, setVisibleSettings] = useState(false);
   const [visibleMoreActions, setVisibleMoreActions] = useState(false);
@@ -1166,6 +1170,15 @@ export function TopBar({
             onClick={() => setVisibleMoreActions(true)}
             active={visibleMoreActions}
           />
+
+          {onToggleAiPanel && (
+            <IconBtn
+              label={showAiPanel ? "Close AI assist (⌘I)" : "AI assist (⌘I)"}
+              icon="sparkle"
+              onClick={onToggleAiPanel}
+              active={showAiPanel}
+            />
+          )}
 
           {onToggleFocusMode && (
             <IconBtn
