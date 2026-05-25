@@ -306,123 +306,7 @@ export const canUseFeature = (plan: Plan, feature: keyof PlanLimits): boolean =>
 
 Add to `DbUser` in `src/lib/db/types.ts`:
 ```typescript
-plan: "free" | "pro" | "teams";
-stripe_customer_id: string | null;
-stripe_subscription_id: string | null;
-plan_expires_at: string | null;
-```
-
-D1 migration:
-```sql
--- migrations/0006_add_plan_to_users.sql
-ALTER TABLE users ADD COLUMN plan TEXT NOT NULL DEFAULT 'free';
-ALTER TABLE users ADD COLUMN stripe_customer_id TEXT;
-ALTER TABLE users ADD COLUMN stripe_subscription_id TEXT;
-ALTER TABLE users ADD COLUMN plan_expires_at TEXT;
-```
-
-Note: `ROADMAP.md M1.4` removed these columns as dead. They are now live. The migration
-re-adds them with correct semantics.
-
----
-
-### P1-2 — Stripe integration
-
-```bash
-npm install stripe
-```
-
-Required env vars (`.env.local` + Cloudflare Workers secrets):
-```
-STRIPE_SECRET_KEY=sk_live_...
-STRIPE_WEBHOOK_SECRET=whsec_...
-STRIPE_PRICE_ID_PRO_MONTHLY=price_...
-STRIPE_PRICE_ID_PRO_ANNUAL=price_...
-STRIPE_PRICE_ID_TEAMS=price_...
-```
-
-Stripe products to create in the dashboard:
-- **Readable Pro** — $7/month and $60/year subscriptions
-- **Readable Teams** — $12/user/month subscription
-
-**P1-2a — Checkout endpoint** (`src/app/api/billing/checkout/route.ts`):
-
-```typescript
-// POST — body: { priceId: string } — requires Clerk session
-import { auth } from "@clerk/nextjs/server";
-import Stripe from "stripe";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-
-export async function POST(req: Request) {
-  const { userId } = await auth();
-  if (!userId) return Response.json({ error: "Unauthorized" }, { status: 401 });
-  const { priceId } = await req.json() as { priceId: string };
-  const returnUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/my-pages`;
-  const session = await stripe.checkout.sessions.create({
-    mode: "subscription",
-    line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${returnUrl}?checkout=success`,
-    cancel_url: `${returnUrl}?checkout=cancelled`,
-    metadata: { userId },
-    allow_promotion_codes: true,
-  });
-  return Response.json({ checkoutUrl: session.url });
-}
-```
-
-**P1-2b — Webhook handler** (`src/app/api/billing/webhook/route.ts`):
-
-```typescript
-export const runtime = "nodejs"; // needs raw body
-
-export async function POST(req: Request) {
-  const sig = req.headers.get("stripe-signature") ?? "";
-  const body = await req.text();
-  let event: Stripe.Event;
-  try {
-    event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET!);
-  } catch {
-    return new Response("Invalid signature", { status: 400 });
-  }
-  switch (event.type) {
-    case "checkout.session.completed": {
-      const s = event.data.object as Stripe.Checkout.Session;
-      if (s.metadata?.userId) {
-        await db.prepare(
-          `UPDATE users SET plan='pro', stripe_customer_id=?, stripe_subscription_id=? WHERE clerk_id=?`
-        ).bind(s.customer, s.subscription, s.metadata.userId).run();
-      }
-      break;
-    }
-    case "customer.subscription.updated": {
-      const sub = event.data.object as Stripe.Subscription;
-      if (sub.status !== "active" && sub.status !== "trialing") {
-        await db.prepare(`UPDATE users SET plan='free' WHERE stripe_subscription_id=?`)
-          .bind(sub.id).run();
-      }
-      break;
-    }
-    case "customer.subscription.deleted": {
-      const sub = event.data.object as Stripe.Subscription;
-      await db.prepare(
-        `UPDATE users SET plan='free', stripe_subscription_id=NULL WHERE stripe_subscription_id=?`
-      ).bind(sub.id).run();
-      break;
-    }
-  }
-  return new Response(null, { status: 200 });
-}
-```
-
-**P1-2c — Customer portal** (`src/app/api/billing/portal/route.ts`):
-```typescript
-// POST — requires auth — returns Stripe Customer Portal URL
-const session = await stripe.billingPortal.sessions.create({
-  customer: user.stripe_customer_id,
-  return_url: `${process.env.NEXT_PUBLIC_SITE_URL}/my-pages`,
-});
-return Response.json({ url: session.url });
+plan: "free";
 ```
 
 ---
@@ -819,33 +703,16 @@ src/app/t/[slug]/admin/page.tsx                Team admin (owner only)
 
 ---
 
-### P3-2 — Team invite flow (email via Resend)
-
-```bash
-npm install resend
-```
-
-Add `RESEND_API_KEY` and `FROM_EMAIL=noreply@readable.ashwinsathian.com` to env vars.
+### P3-2 — Team invite flow
 
 Flow:
 1. Team owner POSTs to `/api/teams/:id/invite` with `{ email }`
-2. Server generates a signed JWT invite token (72-hour expiry, signed with `JWT_SECRET`)
-3. Resend sends invite email: plain text, one link, no HTML libraries
+2. Server generates a signed JWT invite token (72-hour expiry, signed with `INVITE_JWT_SECRET`)
+3. Server returns the invite URL — owner copies and sends it manually
 4. Recipient clicks `/t/join?token=...`
 5. If not signed in: Clerk redirects to sign-in, then returns to join URL
 6. Server validates JWT → creates `team_members` row with `joined_at = now()`
 7. Redirect to `/t/[team-slug]`
-
-Email copy (plain text — no templates):
-```
-You've been invited to join [Team Name] on Readable.
-
-Accept here: [join-link]
-
-This invite expires in 72 hours.
-
-— Readable
-```
 
 ---
 
