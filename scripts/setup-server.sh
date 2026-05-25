@@ -65,7 +65,7 @@ CF_LOG_DIR="$USER_HOME/.readable/logs"
 
 # Domains
 APP_HOSTNAME="readable.ashwinsathian.com"
-MCP_HOSTNAME="mcp.readable.ashwinsathian.com"
+MCP_HOSTNAME="readable-mcp.ashwinsathian.com"
 
 # ─────────────────────────────────────────────────────────────────────────────
 section "Pre-flight checks"

@@ -188,7 +188,7 @@ function TerminalIcon({ size = 18 }: { size?: number }) {
 
 // ─── Platform data ────────────────────────────────────────────────────────────
 
-const MCP_URL = "https://mcp.readable.ashwinsathian.com/mcp";
+const MCP_URL = "https://readable-mcp.ashwinsathian.com/mcp";
 
 type PlatformId = "claude-desktop" | "claude-ai" | "cursor" | "windsurf" | "vscode" | "zed";
 

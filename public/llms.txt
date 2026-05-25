@@ -38,7 +38,7 @@ Full reference: https://readable.ashwinsathian.com/api-docs
 
 Readable has a native MCP server that lets Claude and other MCP-compatible AI assistants publish pages directly in natural language.
 
-MCP endpoint: `https://mcp.readable.ashwinsathian.com/mcp`
+MCP endpoint: `https://readable-mcp.ashwinsathian.com/mcp`
 
 Setup instructions: https://readable.ashwinsathian.com/mcp-setup
 
@@ -48,7 +48,7 @@ To add Readable to Claude Desktop or Claude.ai, add this to your MCP configurati
 {
   "mcpServers": {
     "readable": {
-      "url": "https://mcp.readable.ashwinsathian.com/mcp"
+      "url": "https://readable-mcp.ashwinsathian.com/mcp"
     }
   }
 }

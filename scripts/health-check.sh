@@ -49,7 +49,7 @@ _check "process running"       "ok"        "pgrep -x cloudflared > /dev/null && 
 echo ""
 echo "[ Public Endpoints ]"
 _check "readable domain"       "200"       "curl -s -o /dev/null -w '%{http_code}' --max-time 10 https://readable.ashwinsathian.com"
-_check "MCP domain /health"    '"ok":true' "curl -s --max-time 10 https://mcp.readable.ashwinsathian.com/health"
+_check "MCP domain /health"    '"ok":true' "curl -s --max-time 10 https://readable-mcp.ashwinsathian.com/health"
 
 echo ""
 echo "======================================"

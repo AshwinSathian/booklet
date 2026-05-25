@@ -13,7 +13,7 @@
 
 ## MCP Server
 
-Deployed at: https://mcp.readable.ashwinsathian.com  
+Deployed at: https://readable-mcp.ashwinsathian.com  
 Source: `mcp-server/` (standalone Cloudflare Worker, separate from main app)  
 Deploy: `cd mcp-server && npm run deploy`  
 Last reviewed: May 2026
@@ -126,7 +126,7 @@ The following are confirmed complete and do not need rework.
 | Public explore page | ✅ Done | `/explore` shows recent public pages |
 | Version history | ✅ Done | `/api/pages/[id]/versions`, `snapshotPageVersion` |
 | Webhooks | ✅ Done | `deliverWebhooks` on publish/update, UI in My Pages |
-| MCP server | ✅ Done | `mcp-server/` Cloudflare Worker at `mcp.readable.ashwinsathian.com` |
+| MCP server | ✅ Done | `mcp-server/` Cloudflare Worker at `readable-mcp.ashwinsathian.com` |
 | CLI (`@readable/cli`) | ✅ Done | `packages/cli/` — auth, publish, pages list, --watch mode |
 | Team Spaces | ✅ Done | `/api/teams/`, `/t/[slug]`, `/t/[slug]/admin`, invite via JWT+Resend |
 | KaTeX math rendering | ✅ Done | `remark-math` + `katex`, block + inline, CSS imported |

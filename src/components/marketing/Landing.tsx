@@ -780,7 +780,7 @@ export function Landing() {
   const [copiedMcp, setCopiedMcp] = useState(false);
   const handleCopyMcpConfig = useCallback(() => {
     const config = JSON.stringify(
-      { mcpServers: { readable: { url: "https://mcp.readable.ashwinsathian.com/mcp" } } },
+      { mcpServers: { readable: { url: "https://readable-mcp.ashwinsathian.com/mcp" } } },
       null,
       2,
     );
@@ -1416,7 +1416,7 @@ export function Landing() {
                 <pre className="text-[11px] font-mono bg-bg-soft border border-border-default rounded-lg px-3 py-3 text-text-muted overflow-x-auto leading-relaxed whitespace-pre">{`{
   "mcpServers": {
     "readable": {
-      "url": "https://mcp.readable.ashwinsathian.com/mcp"
+      "url": "https://readable-mcp.ashwinsathian.com/mcp"
     }
   }
 }`}</pre>

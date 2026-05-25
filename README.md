@@ -77,7 +77,7 @@ curl -X POST https://readable.ashwinsathian.com/api/v1/publish \
 
 The MCP server is a Cloudflare Worker that exposes Readable's API to AI assistants supporting the [Model Context Protocol](https://modelcontextprotocol.io).
 
-**Endpoint:** `https://mcp.readable.ashwinsathian.com`  
+**Endpoint:** `https://readable-mcp.ashwinsathian.com`  
 **Tools:** `publish_page`, `update_page`, `list_pages`, `delete_page`
 
 ```bash
