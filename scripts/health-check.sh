@@ -24,22 +24,22 @@ echo "=== Readable Self-Host Health Check ==="
 echo ""
 echo "[ MongoDB ]"
 _check "brew service started"  "started"   "brew services list | grep 'mongodb-community'"
-_check "port 27017 open"       "ok"        "nc -z 127.0.0.1 27017 && echo ok"
+_check "port 27017 open"       "ok"        "nc -z 127.0.0.1 27017 1>/dev/null 2>/dev/null && echo ok"
 
 echo ""
 echo "[ Next.js App ]"
 _check "PM2 process online"    "online"    "pm2 jlist 2>/dev/null | python3 -c \
   \"import sys,json; procs=json.load(sys.stdin); \
     [print(p['pm2_env']['status']) for p in procs if p['name']=='readable-app']\""
-_check "port 3000 open"        "ok"        "nc -z 127.0.0.1 3000 && echo ok"
-_check "HTTP 200 on /"         "200"       "curl -s -o /dev/null -w '%{http_code}' http://localhost:3000"
+_check "port 3100 open"        "ok"        "nc -z 127.0.0.1 3100 1>/dev/null 2>/dev/null && echo ok"
+_check "HTTP 200 on /"         "200"       "curl -s -o /dev/null -w '%{http_code}' http://localhost:3100"
 
 echo ""
 echo "[ MCP Server ]"
 _check "PM2 process online"    "online"    "pm2 jlist 2>/dev/null | python3 -c \
   \"import sys,json; procs=json.load(sys.stdin); \
     [print(p['pm2_env']['status']) for p in procs if p['name']=='readable-mcp']\""
-_check "port 8788 open"        "ok"        "nc -z 127.0.0.1 8788 && echo ok"
+_check "port 8788 open"        "ok"        "nc -z 127.0.0.1 8788 1>/dev/null 2>/dev/null && echo ok"
 _check "/health returns ok"    '"ok":true' "curl -s http://localhost:8788/health"
 
 echo ""

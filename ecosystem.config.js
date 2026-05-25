@@ -8,13 +8,13 @@ module.exports = {
     {
       name: "readable-app",
       script: `${BASE}/node_modules/.bin/next`,
-      args: "start -p 3000",
+      args: "start -p 3100",
       cwd: BASE,
       interpreter: "none",
 
       env: {
         NODE_ENV: "production",
-        PORT: "3000",
+        PORT: "3100",
       },
 
       instances: 1,
@@ -47,7 +47,7 @@ module.exports = {
         NODE_ENV: "production",
         PORT: "8788",
         // Loopback — no tunnel round-trip for internal calls
-        READABLE_API_BASE: "http://localhost:3000",
+        READABLE_API_BASE: "http://localhost:3100",
         MCP_SERVER_NAME: "readable",
         MCP_SERVER_VERSION: "1.0.0",
       },
