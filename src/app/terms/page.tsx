@@ -75,8 +75,8 @@ export default function TermsPage() {
 
           <Section title="Anonymous pages">
             <p>
-              Pages published without an account are stored for 30 days and then automatically deleted. We make
-              no guarantees about the availability or persistence of anonymous pages beyond that window.
+              Pages published without an account are stored indefinitely. We reserve the right to remove anonymous
+              pages that violate these terms or are flagged as abusive.
             </p>
           </Section>
 

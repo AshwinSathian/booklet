@@ -86,7 +86,10 @@ export default function PrivacyPage() {
           </Section>
 
           <Section title="Data retention and deletion">
-            <p>Anonymous pages are automatically deleted after 30 days.</p>
+            <p>
+              Published pages are stored indefinitely. Signed-in users can delete their own pages at any time from
+              the My Pages dashboard. Anonymous pages can be deleted by contacting us.
+            </p>
             <p>
               To delete your account and all associated data, email{" "}
               <a href="mailto:hello@readable.ashwinsathian.com" className="text-accent hover:underline">

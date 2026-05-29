@@ -35,12 +35,7 @@ async function main() {
   await db.collection("api_keys").createIndex({ key_hash: 1 }, { unique: true });
 
   // --- docs ---
-  // TTL index: MongoDB automatically deletes docs when expiresAt is reached.
-  // Permanent docs (owned pages) have no expiresAt field, so the TTL index ignores them.
-  await db.collection("docs").createIndex(
-    { expiresAt: 1 },
-    { expireAfterSeconds: 0, sparse: true },
-  );
+  // No TTL index — all published pages are stored indefinitely.
 
   // --- rate_limits ---
   // Bucket keys expire ~2 minutes after creation.

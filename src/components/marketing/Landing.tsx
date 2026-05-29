@@ -1674,9 +1674,9 @@ export function Landing() {
             hide them from any discovery while keeping the link functional.
           </FaqItem>
           <FaqItem question="How long do pages last?">
-            30 days from the time of publishing for anonymous pages. The page shows an expiry
-            countdown badge so your reader always knows. Signed-in users get permanent pages
-            that never expire.
+            Pages are permanent — there is no expiry. Anonymous pages stay live indefinitely;
+            signed-in users additionally get the ability to edit, delete, and track views on
+            their pages.
           </FaqItem>
           <FaqItem question="Can I edit after publishing?">
             Anonymous pages can&apos;t be edited after publishing — update your draft and republish for a new link.

@@ -155,10 +155,9 @@ export default function PricingPage() {
             Anonymous vs. signed-in
           </h2>
           <p className="text-sm text-text-secondary leading-relaxed mb-4">
-            You can publish immediately without creating an account. Anonymous pages
-            last 30 days and show a countdown to your reader. Creating a free account
-            upgrades your pages to permanent, unlocks custom slugs, the My Pages dashboard,
-            analytics, version history, the API, and all other features listed above.
+            You can publish immediately without creating an account — no sign-up required.
+            Creating a free account unlocks editing pages in place, custom slugs, the My Pages
+            dashboard, analytics, version history, the API, and all other features listed above.
           </p>
           <Button variant="secondary" size="sm" href={ROUTES.signUp}>
             Create a free account

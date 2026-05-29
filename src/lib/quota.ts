@@ -3,7 +3,6 @@
 
 export type PlanLimits = {
   pagesPerMonth: number;       // -1 = unlimited
-  permanentPages: boolean;
   customSlugs: boolean;
   analytics: boolean;
   versionHistory: boolean;
@@ -16,7 +15,6 @@ export type PlanLimits = {
 
 export const FREE_LIMITS: PlanLimits = {
   pagesPerMonth: -1,
-  permanentPages: true,
   customSlugs: true,
   analytics: true,
   versionHistory: true,
@@ -29,7 +27,6 @@ export const FREE_LIMITS: PlanLimits = {
 
 export const ANONYMOUS_LIMITS: PlanLimits = {
   pagesPerMonth: 10,
-  permanentPages: false,
   customSlugs: false,
   analytics: false,
   versionHistory: false,

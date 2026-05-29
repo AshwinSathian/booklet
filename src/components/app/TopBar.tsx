@@ -1250,8 +1250,8 @@ export function TopBar({
         <div className="border-t border-accent/20 bg-accent-dim/60 backdrop-blur-xl px-3 py-2">
           <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3">
             <p className="text-xs text-text-secondary">
-              <span className="font-semibold text-text-primary">This page expires in 30 days.</span>
-              {" "}Sign in (free) to make it permanent, edit it in place, and track views.
+              <span className="font-semibold text-text-primary">Want to edit or update this page?</span>
+              {" "}Sign in (free) to edit it in place, track views, and keep it under your account.
             </p>
             <Button variant="primary" size="sm" href={ROUTES.signIn} className="shrink-0">
               Sign in free

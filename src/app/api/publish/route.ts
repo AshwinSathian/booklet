@@ -75,7 +75,7 @@ export async function POST(req: Request) {
     };
 
     try {
-      await putDoc(id, doc, isAuthenticated);
+      await putDoc(id, doc);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Publish failed";
       return NextResponse.json({ error: msg }, { status: 500 });

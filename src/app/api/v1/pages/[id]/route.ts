@@ -181,7 +181,7 @@ export async function PATCH(
     };
 
     try {
-      await putDoc(id, doc, true);
+      await putDoc(id, doc);
       void snapshotPageVersion(id, doc).catch((err) => {
         console.error("[v1/pages] version snapshot failed:", err);
       });

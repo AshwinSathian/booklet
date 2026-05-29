@@ -5,13 +5,11 @@ import { STORAGE } from "./constants";
 type DocRecord = {
   _id: string;
   doc: PublishedDoc;
-  expiresAt?: Date;
 };
 
 export async function putDoc(
   id: string,
   doc: PublishedDoc,
-  permanent = false,
 ): Promise<void> {
   const json = JSON.stringify(doc);
   const bytes = new TextEncoder().encode(json);
@@ -21,9 +19,6 @@ export async function putDoc(
 
   const db = await getDb();
   const record: DocRecord = { _id: id, doc };
-  if (!permanent) {
-    record.expiresAt = new Date(Date.now() + STORAGE.ttlSeconds * 1000);
-  }
 
   await db
     .collection<DocRecord>("docs")

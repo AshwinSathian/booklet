@@ -343,7 +343,7 @@ function NotFoundOrExpired() {
 
           <h1 className="text-xl font-medium">This page doesn&apos;t exist.</h1>
           <p className="mt-2 text-sm text-text-secondary leading-relaxed">
-            Anonymous pages expire after 30 days. Sign in for pages that never expire.
+            The link may be wrong, or the page may have been deleted by its author.
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
