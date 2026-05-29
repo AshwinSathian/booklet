@@ -12,6 +12,10 @@ module.exports = {
       cwd: BASE,
       interpreter: "none",
 
+      env_production: {
+        NODE_ENV: "production",
+        PORT: "3100",
+      },
       env: {
         NODE_ENV: "production",
         PORT: "3100",
@@ -27,11 +31,13 @@ module.exports = {
       min_uptime: "10s",
       max_restarts: 15,
       max_memory_restart: "1G",
+      kill_timeout: 5000,
 
       out_file: `${LOGS}/readable-app-out.log`,
       error_file: `${LOGS}/readable-app-err.log`,
       merge_logs: true,
       time: true,
+      log_date_format: "YYYY-MM-DD HH:mm:ss Z",
     },
 
     // ─── MCP server (Node.js bridge) ─────────────────────────────────────────
@@ -43,6 +49,13 @@ module.exports = {
       cwd: `${BASE}/mcp-server`,
       interpreter: "none",
 
+      env_production: {
+        NODE_ENV: "production",
+        PORT: "8788",
+        READABLE_API_BASE: "http://localhost:3100",
+        MCP_SERVER_NAME: "readable",
+        MCP_SERVER_VERSION: "1.0.0",
+      },
       env: {
         NODE_ENV: "production",
         PORT: "8788",
@@ -61,11 +74,13 @@ module.exports = {
       min_uptime: "5s",
       max_restarts: 15,
       max_memory_restart: "256M",
+      kill_timeout: 3000,
 
       out_file: `${LOGS}/readable-mcp-out.log`,
       error_file: `${LOGS}/readable-mcp-err.log`,
       merge_logs: true,
       time: true,
+      log_date_format: "YYYY-MM-DD HH:mm:ss Z",
     },
   ],
 };

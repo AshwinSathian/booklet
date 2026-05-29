@@ -11,7 +11,7 @@ const PORT = Number(process.env.PORT ?? 8788);
 
 // Mirror the Env bindings expected by the Worker
 const env = {
-  READABLE_API_BASE: process.env.READABLE_API_BASE ?? "http://localhost:3000",
+  READABLE_API_BASE: process.env.READABLE_API_BASE ?? "http://localhost:3100",
   MCP_SERVER_NAME: process.env.MCP_SERVER_NAME ?? "readable",
   MCP_SERVER_VERSION: process.env.MCP_SERVER_VERSION ?? "1.0.0",
 };

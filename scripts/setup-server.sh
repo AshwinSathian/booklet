@@ -383,6 +383,8 @@ ingress:
     service: http://127.0.0.1:${MCP_PORT}
     originRequest:
       connectTimeout: 10s
+      tcpKeepAlive: 30s
+      keepAliveConnections: 10
       httpHostHeader: ${MCP_HOSTNAME}
 
   - service: http_status:404
@@ -475,6 +477,84 @@ sleep 3
 launchctl list 2>/dev/null | grep -q "com.readable.cloudflared" \
   && ok "com.readable.cloudflared loaded and running" \
   || die "LaunchAgent failed to load. Check: tail -50 $CF_LOG_DIR/cloudflared.err.log"
+
+# ─────────────────────────────────────────────────────────────────────────────
+section "Readable PM2 watchdog LaunchAgent"
+# ─────────────────────────────────────────────────────────────────────────────
+# This agent runs the pm2-startup.sh watchdog at login. It is independent of
+# the brnr PM2 watchdog — it only ensures readable-app and readable-mcp are
+# present in PM2 and starts them from ecosystem.config.js if they're missing.
+
+READABLE_PM2_PLIST="$USER_HOME/Library/LaunchAgents/com.readable.pm2.plist"
+READABLE_PM2_LOG_DIR="$USER_HOME/.readable/logs"
+# launchd cannot read scripts from ~/Documents (TCC restriction).
+# We copy pm2-startup.sh to ~/.readable/ on every setup so launchd can reach it.
+READABLE_STARTUP_SRC="$REPO_ROOT/scripts/pm2-startup.sh"
+READABLE_STARTUP_SCRIPT="$USER_HOME/.readable/pm2-startup.sh"
+
+mkdir -p "$READABLE_PM2_LOG_DIR"
+
+# Keep the deployed copy in sync with the repo source
+cp "$READABLE_STARTUP_SRC" "$READABLE_STARTUP_SCRIPT"
+chmod +x "$READABLE_STARTUP_SCRIPT"
+# Remove provenance xattr so launchd can execute the file
+xattr -d com.apple.provenance "$READABLE_STARTUP_SCRIPT" 2>/dev/null || true
+ok "Copied pm2-startup.sh → $READABLE_STARTUP_SCRIPT"
+
+if [[ -f "$READABLE_PM2_PLIST" ]]; then
+  PLIST_SCRIPT=$(grep -A1 "<string>bash</string>" "$READABLE_PM2_PLIST" 2>/dev/null \
+    | grep "string" | sed 's/.*<string>\(.*\)<\/string>/\1/' | head -1)
+  if [[ "$PLIST_SCRIPT" == "$READABLE_STARTUP_SCRIPT" ]]; then
+    skip "com.readable.pm2 LaunchAgent already correct"
+  else
+    warn "LaunchAgent exists but points to wrong script. Rewriting…"
+    launchctl unload "$READABLE_PM2_PLIST" 2>/dev/null || true
+    REWRITE_PM2_PLIST=true
+  fi
+else
+  REWRITE_PM2_PLIST=true
+fi
+
+if [[ "${REWRITE_PM2_PLIST:-false}" == "true" ]]; then
+  cat > "$READABLE_PM2_PLIST" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.readable.pm2</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>${READABLE_STARTUP_SCRIPT}</string>
+  </array>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>ThrottleInterval</key>
+  <integer>15</integer>
+  <key>StandardOutPath</key>
+  <string>${READABLE_PM2_LOG_DIR}/pm2-startup.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>${READABLE_PM2_LOG_DIR}/pm2-startup.err.log</string>
+</dict>
+</plist>
+EOF
+  ok "Written $READABLE_PM2_PLIST"
+fi
+
+if launchctl list 2>/dev/null | grep -q "com.readable.pm2"; then
+  info "Reloading com.readable.pm2…"
+  launchctl unload "$READABLE_PM2_PLIST" 2>/dev/null || true
+  sleep 1
+fi
+launchctl load "$READABLE_PM2_PLIST"
+sleep 2
+
+launchctl list 2>/dev/null | grep -q "com.readable.pm2" \
+  && ok "com.readable.pm2 loaded" \
+  || warn "com.readable.pm2 failed to load — run: launchctl load $READABLE_PM2_PLIST"
 
 # ─────────────────────────────────────────────────────────────────────────────
 section "Tunnel connectivity"
