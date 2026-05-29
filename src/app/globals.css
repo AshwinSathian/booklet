@@ -195,13 +195,25 @@ body {
   background: var(--color-bg);
 }
 
+html {
+  text-rendering: optimizeLegibility;
+}
+
 body {
   @apply bg-bg text-text-primary antialiased;
   font-family: var(--font-body);
   font-size: 17px;
-  font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01";
+  font-feature-settings: "kern" 1, "liga" 1, "calt" 1, "cv02", "cv03", "cv04", "cv11", "ss01";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
 }
 
 a,

@@ -142,7 +142,7 @@ function Section({
             ) : null}
             <h2
               className={cn(
-                "mt-3 text-balance text-[30px] leading-[1.14] font-bold tracking-[-0.03em] sm:text-[40px]",
+                "mt-3 text-balance text-[clamp(28px,4.5vw,40px)] leading-[1.14] font-extralight tracking-[-0.025em]",
                 center ? "mx-auto max-w-2xl" : "max-w-3xl",
               )}
             >
@@ -1174,7 +1174,7 @@ export function Landing() {
             {/* Headline */}
             <motion.h1
               variants={reduce ? undefined : fadeUp}
-              className="mt-5 max-w-4xl text-balance text-[38px] font-bold leading-[1.06] tracking-[-0.035em] sm:text-[60px] sm:leading-[1.02] sm:tracking-[-0.04em] lg:text-[80px]"
+              className="mt-5 max-w-4xl text-balance text-[clamp(38px,8vw,80px)] font-thin leading-[1.02] tracking-[-0.04em]"
             >
               Write in Markdown.{" "}
               <span className="bg-linear-to-r from-accent via-accent-soft to-accent bg-clip-text text-transparent">
@@ -1731,7 +1731,7 @@ export function Landing() {
               <div className="text-2xs font-semibold tracking-[0.24em] uppercase text-accent">
                 Get started
               </div>
-              <h2 className="mt-4 text-balance text-[30px] font-bold leading-[1.12] tracking-[-0.03em] sm:text-[40px]">
+              <h2 className="mt-4 text-balance text-[clamp(28px,4.5vw,40px)] font-extralight leading-[1.12] tracking-[-0.025em]">
                 Write once. Share a page people actually read.
               </h2>
               <p className="mx-auto mt-5 max-w-md text-[17px] leading-[1.72] text-text-secondary">

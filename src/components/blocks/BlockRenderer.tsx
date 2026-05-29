@@ -44,12 +44,12 @@ export function BlockRenderer({
 
               const cls =
                 b.level === 1
-                  ? "text-[28px] sm:text-[34px] font-bold tracking-[-0.02em] leading-[1.12]"
+                  ? "text-[clamp(26px,3.5vw,34px)] font-extralight tracking-[-0.025em] leading-[1.12]"
                   : b.level === 2
-                    ? "text-[22px] sm:text-[26px] font-semibold tracking-[-0.015em] leading-[1.2]"
+                    ? "text-[clamp(20px,2.5vw,26px)] font-light tracking-[-0.018em] leading-[1.2]"
                     : b.level === 3
-                      ? "text-[18px] sm:text-[20px] font-semibold leading-snug"
-                      : "text-[16px] font-semibold leading-snug";
+                      ? "text-[clamp(17px,2vw,20px)] font-normal leading-snug"
+                      : "text-[16px] font-medium leading-snug";
 
               const anchorId = headingAnchors?.[blockKey];
 
