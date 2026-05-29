@@ -128,7 +128,7 @@ export default async function UserProfilePage({
           )}
 
           <div className="min-w-0">
-            <h1 className="text-2xl font-bold text-text-primary tracking-tight truncate">{name}</h1>
+            <h1 className="text-[clamp(20px,3vw,26px)] text-text-primary truncate">{name}</h1>
             {user.username && (
               <p className="text-sm text-text-muted mt-0.5">@{user.username}</p>
             )}

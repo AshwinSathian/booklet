@@ -50,7 +50,7 @@ export function PasswordGate({ pageId }: { pageId: string }) {
             </svg>
           </div>
 
-          <h1 className="text-lg font-semibold mb-1">This page is protected</h1>
+          <h1 className="text-lg mb-1">This page is protected</h1>
           <p className="text-sm text-text-secondary mb-6">
             Enter the password to view this page.
           </p>

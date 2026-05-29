@@ -37,7 +37,7 @@ export default async function TagsPage() {
 
       <main className="mx-auto w-full max-w-4xl px-4 py-10">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-text-primary tracking-tight">Browse by tag</h1>
+          <h1 className="text-[clamp(20px,3vw,26px)] text-text-primary">Browse by tag</h1>
           <p className="mt-1.5 text-sm text-text-muted">
             Public pages tagged with YAML frontmatter — add <code className="rounded bg-fill-2 px-1 py-0.5 text-xs font-mono">tags: [engineering]</code> to your page to appear here.
           </p>

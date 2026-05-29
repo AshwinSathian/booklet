@@ -106,7 +106,7 @@ export default function PricingPage() {
             <span className="h-1.5 w-1.5 rounded-full bg-accent" />
             Free forever
           </div>
-          <h1 className="text-4xl font-bold tracking-tight text-text-primary">
+          <h1 className="text-[clamp(32px,5vw,48px)] font-thin leading-[1.05] text-text-primary">
             Everything included. No catch.
           </h1>
           <p className="mt-4 text-base text-text-secondary max-w-lg mx-auto leading-relaxed">

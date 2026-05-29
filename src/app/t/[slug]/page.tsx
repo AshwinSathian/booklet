@@ -70,7 +70,7 @@ export default async function TeamPage({
 
       <main className="mx-auto w-full max-w-3xl px-4 py-10">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold tracking-tight">{team.name}</h1>
+          <h1 className="text-[clamp(20px,3vw,26px)]">{team.name}</h1>
           <p className="mt-1 text-sm text-text-secondary">
             {members.length} {members.length === 1 ? "member" : "members"} &middot;{" "}
             {pages.length} {pages.length === 1 ? "page" : "pages"}

@@ -179,13 +179,13 @@ function AdminPageInner({ slug }: { slug: string }) {
       </header>
 
       <main className="mx-auto w-full max-w-2xl px-4 py-10">
-        <h1 className="text-xl font-semibold mb-8">Team settings</h1>
+        <h1 className="text-xl font-medium mb-8">Team settings</h1>
 
         {error && <p className="text-sm text-red-400 mb-4">{error}</p>}
 
         {/* Rename */}
         <section className="mb-8">
-          <h2 className="text-sm font-semibold mb-3">Team name</h2>
+          <h2 className="text-sm font-medium mb-3">Team name</h2>
           <div className="flex items-center gap-2">
             <input
               value={teamName}
@@ -208,7 +208,7 @@ function AdminPageInner({ slug }: { slug: string }) {
 
         {/* Members */}
         <section className="mb-8">
-          <h2 className="text-sm font-semibold mb-3">Members</h2>
+          <h2 className="text-sm font-medium mb-3">Members</h2>
           <div className="flex flex-col gap-2 mb-4">
             {/* Owner row — always first */}
             <div className="flex items-center justify-between rounded-xl border border-outline bg-bg-elevated px-4 py-2.5 gap-3">
@@ -270,7 +270,7 @@ function AdminPageInner({ slug }: { slug: string }) {
 
         {/* Danger zone */}
         <section className="rounded-xl border border-red-500/20 p-5">
-          <h2 className="text-sm font-semibold text-red-400 mb-1">Danger zone</h2>
+          <h2 className="text-sm font-medium text-red-400 mb-1">Danger zone</h2>
           <p className="text-xs text-text-muted mb-4">
             Deleting a team is permanent. Pages are kept but removed from this team.
           </p>

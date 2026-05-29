@@ -242,7 +242,7 @@ export function WebhooksSection({ initialWebhooks }: { initialWebhooks: WebhookR
     <div className="mt-12">
       <div className="mb-4 flex items-baseline justify-between gap-4">
         <div>
-          <h2 className="text-base font-semibold">Webhooks</h2>
+          <h2 className="text-base">Webhooks</h2>
           <p className="mt-0.5 text-sm text-text-secondary">
             Get notified when pages are published or updated.
           </p>

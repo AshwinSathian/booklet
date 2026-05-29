@@ -101,7 +101,7 @@ export default function McpPage() {
           Model Context Protocol
         </div>
 
-        <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-text-primary max-w-2xl mx-auto leading-tight mb-4">
+        <h1 className="text-[clamp(34px,6vw,56px)] font-thin leading-[1.04] text-text-primary max-w-2xl mx-auto mb-4">
           Publish pages from<br />
           <span className="text-accent">any AI editor</span>
         </h1>
@@ -144,7 +144,7 @@ export default function McpPage() {
 
       {/* How it works */}
       <section className="mx-auto w-full max-w-5xl px-4 py-12 border-t border-border-subtle">
-        <h2 className="text-xl font-bold text-text-primary text-center mb-10">How it works</h2>
+        <h2 className="text-xl text-text-primary text-center mb-10">How it works</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <FeatureCard
             icon="🔑"
@@ -168,7 +168,7 @@ export default function McpPage() {
       <section className="mx-auto w-full max-w-5xl px-4 py-12 border-t border-border-subtle">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
           <div>
-            <h2 className="text-xl font-bold text-text-primary mb-3">Available MCP tools</h2>
+            <h2 className="text-xl text-text-primary mb-3">Available MCP tools</h2>
             <p className="text-sm text-text-muted leading-relaxed mb-6">
               Five tools cover the full page lifecycle. Your AI editor can discover and use them autonomously or on request.
             </p>
@@ -188,7 +188,7 @@ export default function McpPage() {
           </div>
 
           <div>
-            <h2 className="text-xl font-bold text-text-primary mb-3">Quick config</h2>
+            <h2 className="text-xl text-text-primary mb-3">Quick config</h2>
             <p className="text-sm text-text-muted mb-4">
               Paste this into your editor&apos;s MCP configuration. Replace{" "}
               <code className="rounded bg-fill-2 px-1 py-0.5 text-xs font-mono text-accent-soft">rdbl_YOUR_KEY</code> with your API key.
@@ -219,7 +219,7 @@ export default function McpPage() {
 
       {/* Use cases */}
       <section className="mx-auto w-full max-w-5xl px-4 py-12 border-t border-border-subtle">
-        <h2 className="text-xl font-bold text-text-primary text-center mb-8">What teams use it for</h2>
+        <h2 className="text-xl text-text-primary text-center mb-8">What teams use it for</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {USE_CASES.map((uc) => (
             <div
@@ -241,7 +241,7 @@ export default function McpPage() {
       {/* CTA */}
       <section className="mx-auto w-full max-w-5xl px-4 py-16 text-center">
         <div className="rounded-2xl border border-border-subtle bg-bg-elevated px-8 py-12">
-          <h2 className="text-2xl font-bold text-text-primary mb-3">
+          <h2 className="text-[clamp(20px,2.5vw,26px)] text-text-primary mb-3">
             Ready to connect?
           </h2>
           <p className="text-sm text-text-muted mb-8 max-w-md mx-auto">

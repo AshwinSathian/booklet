@@ -113,7 +113,7 @@ export default async function TemplatePage({
               {template.category}
             </span>
           )}
-          <h1 className="text-3xl font-bold tracking-tight text-text-primary">
+          <h1 className="text-[clamp(24px,4vw,32px)] text-text-primary">
             {template.headline ?? template.name}
           </h1>
           <p className="mt-3 text-base text-text-secondary leading-relaxed max-w-xl">
@@ -159,7 +159,7 @@ export default async function TemplatePage({
 
         {/* How it works */}
         <section className="mt-14">
-          <h2 className="text-lg font-semibold mb-6">How it works</h2>
+          <h2 className="text-lg mb-6">How it works</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
               {
@@ -206,7 +206,7 @@ export default async function TemplatePage({
         {otherTemplates.length > 0 && (
           <section className="mt-14">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-semibold">More templates</h2>
+              <h2 className="text-base">More templates</h2>
               <Link href="/templates" className="text-xs text-accent hover:text-accent-soft transition">
                 View all →
               </Link>

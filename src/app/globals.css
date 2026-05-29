@@ -24,6 +24,28 @@
   --font-body: var(--font-inter), "Inter", system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", ui-monospace, "SF Mono", monospace;
 
+  /* ── Central type scale — edit here to restyle the entire app ───────────
+     Weight ladder mirrors ashwin-portfolio prose system.
+     Display weights (100/200) used for large marketing headings via
+     explicit Tailwind class (font-thin / font-extralight).
+  ────────────────────────────────────────────────────────────────────── */
+  --type-weight-h1:      200;      /* extralight — page-level titles         */
+  --type-weight-h2:      300;      /* light       — section headings          */
+  --type-weight-h3:      400;      /* normal      — sub-sections              */
+  --type-weight-h4:      500;      /* medium      — labels, callouts          */
+  --type-weight-body:    400;      /* normal      — body copy                 */
+
+  --type-tracking-h1:   -0.025em;
+  --type-tracking-h2:   -0.018em;
+  --type-tracking-h3:   -0.012em;
+  --type-tracking-h4:    0em;
+
+  --type-leading-h1:     1.12;
+  --type-leading-h2:     1.25;
+  --type-leading-h3:     1.375;
+  --type-leading-h4:     1.4;
+  --type-leading-body:   1.75;
+
   /* ── Surfaces (DARK) ────────────────────────────────────────────────────── */
   --color-bg:           #000000;          /* base — Apple-premium pure black   */
   --color-bg-soft:      #0d0d0d;          /* subtle step up — nav, input bg    */
@@ -208,12 +230,37 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-h1, h2, h3, h4, h5, h6 {
-  text-wrap: balance;
-}
-
-p {
-  text-wrap: pretty;
+/* ── Global type defaults (central control — override per-element with
+   Tailwind weight/tracking utilities only where intentionally different) ── */
+@layer base {
+  h1 {
+    font-weight: var(--type-weight-h1);
+    letter-spacing: var(--type-tracking-h1);
+    line-height: var(--type-leading-h1);
+    text-wrap: balance;
+  }
+  h2 {
+    font-weight: var(--type-weight-h2);
+    letter-spacing: var(--type-tracking-h2);
+    line-height: var(--type-leading-h2);
+    text-wrap: balance;
+  }
+  h3 {
+    font-weight: var(--type-weight-h3);
+    letter-spacing: var(--type-tracking-h3);
+    line-height: var(--type-leading-h3);
+    text-wrap: balance;
+  }
+  h4, h5, h6 {
+    font-weight: var(--type-weight-h4);
+    letter-spacing: var(--type-tracking-h4);
+    line-height: var(--type-leading-h4);
+    text-wrap: balance;
+  }
+  p {
+    line-height: var(--type-leading-body);
+    text-wrap: pretty;
+  }
 }
 
 a,

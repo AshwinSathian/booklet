@@ -95,7 +95,7 @@ export default function ChangelogPage() {
       <main className="flex-1 mx-auto w-full max-w-3xl px-4 py-12 sm:py-16">
         <div className="mb-10">
           <p className="text-xs font-semibold uppercase tracking-widest text-text-muted mb-3">What's new</p>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-text-primary mb-2">Changelog</h1>
+          <h1 className="text-[clamp(22px,3.5vw,30px)] text-text-primary mb-2">Changelog</h1>
           <p className="text-sm text-text-secondary">
             A running log of improvements, fixes, and new features in {APP_NAME}.
           </p>
@@ -105,7 +105,7 @@ export default function ChangelogPage() {
           {RELEASES.map((release) => (
             <section key={release.version} className="flex flex-col gap-5">
               <div className="flex items-baseline gap-3 pb-3 border-b border-border-subtle">
-                <h2 className="text-lg font-bold text-text-primary">{release.version}</h2>
+                <h2 className="text-lg text-text-primary">{release.version}</h2>
                 <p className="text-sm text-text-muted">{release.summary}</p>
               </div>
 

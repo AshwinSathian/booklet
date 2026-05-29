@@ -54,7 +54,7 @@ export default async function PageVersionsPage({
       <main className="mx-auto w-full max-w-4xl px-4 py-8">
         <div className="mb-5">
           <p className="text-xs text-text-muted">Version history</p>
-          <h1 className="mt-1 truncate text-2xl font-semibold">{title}</h1>
+          <h1 className="mt-1 truncate text-[clamp(20px,3vw,26px)]">{title}</h1>
         </div>
 
         <VersionsClient

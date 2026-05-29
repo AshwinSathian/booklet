@@ -99,7 +99,7 @@ export function PasskeySection() {
     <section className="mt-10 border-t border-border-subtle pt-8">
       <div className="mb-4 flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-base font-semibold">Passkeys</h2>
+          <h2 className="text-base">Passkeys</h2>
           <p className="mt-0.5 text-sm text-text-secondary">
             Sign in instantly with your device&apos;s biometrics or PIN — no password needed.
           </p>

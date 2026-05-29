@@ -757,7 +757,7 @@ export default function McpSetupPage() {
                 <ClaudeSparkIcon size={20} />
               </div>
               <div>
-                <h1 className="text-2xl font-bold tracking-tight mb-1">
+                <h1 className="text-[clamp(20px,3vw,26px)] mb-1">
                   Connect Readable to your AI
                 </h1>
                 <p className="text-sm text-text-secondary max-w-prose">
@@ -881,7 +881,7 @@ export default function McpSetupPage() {
                   <span className="opacity-80">{p.icon}</span>
                   {p.label}
                   {p.badge && (
-                    <span className="ml-0.5 rounded px-1 py-0.5 text-[10px] bg-amber-500/15 text-amber-400 font-semibold">
+                    <span className="ml-0.5 rounded px-1 py-0.5 text-2xs bg-amber-500/15 text-amber-400 font-semibold">
                       {p.badge}
                     </span>
                   )}

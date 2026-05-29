@@ -79,7 +79,7 @@ export default async function PageAnalyticsPage({
       <main className="mx-auto w-full max-w-4xl px-4 py-8">
         <div className="mb-5">
           <p className="text-xs text-text-muted">Analytics</p>
-          <h1 className="mt-1 truncate text-2xl font-semibold">{title}</h1>
+          <h1 className="mt-1 truncate text-[clamp(20px,3vw,26px)]">{title}</h1>
         </div>
 
         <section className="grid grid-cols-2 overflow-hidden rounded-lg sm:grid-cols-4">
@@ -91,7 +91,7 @@ export default async function PageAnalyticsPage({
 
         <section className="mt-6 rounded-lg border border-outline bg-bg-elevated p-4">
           <div className="mb-4 flex items-center justify-between gap-3">
-            <h2 className="text-sm font-semibold">Views last 30 days</h2>
+            <h2 className="text-sm font-medium">Views last 30 days</h2>
             <span className="text-xs text-text-muted">{maxDayViews} peak day</span>
           </div>
           <div className="flex h-36 items-end gap-1">

@@ -341,7 +341,7 @@ function NotFoundOrExpired() {
             </svg>
           </div>
 
-          <h1 className="text-xl font-semibold">This page doesn&apos;t exist.</h1>
+          <h1 className="text-xl font-medium">This page doesn&apos;t exist.</h1>
           <p className="mt-2 text-sm text-text-secondary leading-relaxed">
             Anonymous pages expire after 30 days. Sign in for pages that never expire.
           </p>

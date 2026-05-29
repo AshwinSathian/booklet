@@ -49,7 +49,7 @@ function MethodBadge({ method }: { method: "GET" | "POST" | "PATCH" | "DELETE" }
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
   return (
     <section id={id} className="scroll-mt-20">
-      <h2 className="text-base font-semibold text-text-primary mb-4 pb-2 border-b border-outline">{title}</h2>
+      <h2 className="text-base text-text-primary mb-4 pb-2 border-b border-outline">{title}</h2>
       {children}
     </section>
   );
@@ -155,7 +155,7 @@ export default function ApiDocsPage() {
         {/* Main content */}
         <main className="flex-1 min-w-0 flex flex-col gap-10">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight mb-2">API Reference</h1>
+            <h1 className="text-[clamp(22px,3vw,28px)] mb-2">API Reference</h1>
             <p className="text-sm text-text-secondary max-w-prose">
               Publish and manage Readable pages programmatically. All endpoints require an API key obtainable from{" "}
               <Link href="/my-pages" className="text-accent hover:underline">My Pages</Link>.

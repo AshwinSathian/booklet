@@ -67,7 +67,7 @@ export default async function MyPagesPage() {
       <main className="flex-1 mx-auto w-full max-w-3xl px-4 py-10">
         <div className="mb-6 flex items-baseline justify-between gap-4">
           <div>
-            <h1 className="text-xl font-semibold">My pages</h1>
+            <h1 className="text-xl font-medium">My pages</h1>
             <p className="mt-0.5 text-sm text-text-secondary">
               {pages.length === 0
                 ? "No pages yet."

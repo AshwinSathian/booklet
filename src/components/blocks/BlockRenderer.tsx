@@ -42,14 +42,15 @@ export function BlockRenderer({
                 b.level === 1 ? "h1" : b.level === 2 ? "h2" : b.level === 3 ? "h3" : "h4"
               ) as keyof JSX.IntrinsicElements;
 
+              // weight/tracking/leading from @layer base; only size is per-level
               const cls =
                 b.level === 1
-                  ? "text-[clamp(26px,3.5vw,34px)] font-extralight tracking-[-0.025em] leading-[1.12]"
+                  ? "text-[clamp(26px,3.5vw,34px)]"
                   : b.level === 2
-                    ? "text-[clamp(20px,2.5vw,26px)] font-light tracking-[-0.018em] leading-[1.2]"
+                    ? "text-[clamp(20px,2.5vw,26px)]"
                     : b.level === 3
-                      ? "text-[clamp(17px,2vw,20px)] font-normal leading-snug"
-                      : "text-[16px] font-medium leading-snug";
+                      ? "text-[clamp(17px,2vw,20px)]"
+                      : "text-[16px]";
 
               const anchorId = headingAnchors?.[blockKey];
 

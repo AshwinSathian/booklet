@@ -83,7 +83,7 @@ export default async function TagPage({
               #{decoded}
             </span>
           </div>
-          <h1 className="text-2xl font-bold text-text-primary tracking-tight">
+          <h1 className="text-[clamp(20px,3vw,26px)] text-text-primary">
             Pages tagged &ldquo;{decoded}&rdquo;
           </h1>
           <p className="mt-1.5 text-sm text-text-muted">

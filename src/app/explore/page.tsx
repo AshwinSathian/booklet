@@ -38,7 +38,7 @@ export default async function ExplorePage() {
 
       <main className="flex-1 mx-auto w-full max-w-4xl px-4 py-10">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold tracking-tight">Explore</h1>
+          <h1 className="text-[clamp(22px,3vw,28px)]">Explore</h1>
           <p className="mt-1 text-sm text-text-secondary">
             Pages from the {APP_NAME} community.
           </p>

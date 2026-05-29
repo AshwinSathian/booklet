@@ -160,7 +160,7 @@ export function ApiKeysSection({ initialKeys }: { initialKeys: KeyRow[] }) {
     <div className="mt-12">
       <div className="mb-4 flex items-baseline justify-between gap-4">
         <div>
-          <h2 className="text-base font-semibold">API keys</h2>
+          <h2 className="text-base">API keys</h2>
           <p className="mt-0.5 text-sm text-text-secondary">
             Use these keys with the Readable API to publish programmatically.
           </p>

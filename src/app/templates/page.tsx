@@ -53,7 +53,7 @@ export default function TemplatesPage() {
       <main className="mx-auto w-full max-w-3xl px-4 py-12">
         {/* Hero */}
         <div className="mb-10 text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-text-primary">
+          <h1 className="text-[clamp(24px,4vw,32px)] text-text-primary">
             Free document templates
           </h1>
           <p className="mt-3 text-base text-text-secondary max-w-md mx-auto leading-relaxed">
