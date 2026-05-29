@@ -13,16 +13,24 @@ const SECURITY_HEADERS: Record<string, string> = {
   "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
   "Content-Security-Policy": [
     "default-src 'self'",
+    // Clerk's FAPI serves its own JS bundle; also need Google Tag Manager.
     `script-src 'self' 'unsafe-inline' 'unsafe-eval' ${CLERK_HOST} https://challenges.cloudflare.com https://www.googletagmanager.com`,
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob: https:",
+    // Allow profile avatars from Clerk's image CDN and any HTTPS source.
+    "img-src 'self' data: blob: https: https://img.clerk.com",
     "font-src 'self' data:",
-    `connect-src 'self' ${CLERK_HOST} https://www.google-analytics.com https://region1.google-analytics.com`,
-    `frame-src ${CLERK_HOST} https://challenges.cloudflare.com`,
+    // connect-src: Clerk FAPI + Google OAuth token endpoints + Analytics.
+    // accounts.google.com needed when Clerk's SDK verifies Google ID tokens client-side.
+    // appleid.apple.com needed for Apple Sign In token verification.
+    `connect-src 'self' ${CLERK_HOST} https://accounts.google.com https://oauth2.googleapis.com https://appleid.apple.com https://www.google-analytics.com https://region1.google-analytics.com`,
+    // frame-src: Clerk FAPI (account iframes/modals), Cloudflare Turnstile, Google OAuth popup.
+    `frame-src ${CLERK_HOST} https://challenges.cloudflare.com https://accounts.google.com https://appleid.apple.com`,
     "worker-src blob:",
     "object-src 'none'",
     "base-uri 'self'",
-    "form-action 'self'",
+    // form-action: Clerk's <SignIn>/<SignUp> components render <form> elements that
+    // POST to the Clerk FAPI.  'self' alone blocks those submissions.
+    `form-action 'self' ${CLERK_HOST}`,
   ].join("; "),
 };
 

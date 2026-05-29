@@ -1,9 +1,10 @@
 import { Analytics } from "@/components/analytics/Analytics";
 import { APP_NAME } from "@/lib/constants";
-import { clerkAppearance } from "@/lib/clerk-appearance";
+import { buildClerkAppearance, isAppleDevice } from "@/lib/clerk-appearance";
 import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import { headers } from "next/headers";
 import { ThemeProvider } from "next-themes";
 import { Suspense } from "react";
 import "./globals.css";
@@ -99,13 +100,22 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const hdrs = await headers();
+  const ua = hdrs.get("user-agent") ?? "";
+  const apple = isAppleDevice(ua);
+  const clerkAppearance = buildClerkAppearance({ hideApple: !apple });
+
   return (
-    <ClerkProvider appearance={clerkAppearance}>
+    <ClerkProvider
+      appearance={clerkAppearance}
+      signInFallbackRedirectUrl="/app"
+      signUpFallbackRedirectUrl="/app"
+    >
       <html lang="en" suppressHydrationWarning className={inter.variable}>
         <body>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>

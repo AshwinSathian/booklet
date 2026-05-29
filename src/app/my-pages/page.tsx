@@ -8,6 +8,7 @@ import { headers } from "next/headers";
 import { MyPagesList } from "./MyPagesClient";
 import { ApiKeysSection } from "./ApiKeysClient";
 import { WebhooksSection } from "./WebhooksClient";
+import { PasskeySection } from "./PasskeyClient";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -125,6 +126,11 @@ export default async function MyPagesPage() {
             last_triggered_at: w.last_triggered_at,
           }))}
         />
+
+        {/* Client component: renders only when the device supports platform authenticators */}
+        <div id="security">
+          <PasskeySection />
+        </div>
       </main>
     </div>
   );
