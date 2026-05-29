@@ -86,12 +86,12 @@ export async function PATCH(
       console.error("[patch-publish] DB updated_at write failed:", dbErr);
     }
 
-    const url = new URL(req.url);
-    url.pathname = `/p/${record.slug ?? id}`;
-    url.search = "";
-    url.hash = "";
+    const siteOrigin = process.env.NEXT_PUBLIC_SITE_URL
+      ? new URL(process.env.NEXT_PUBLIC_SITE_URL).origin
+      : new URL(req.url).origin;
+    const publishedUrl = `${siteOrigin}/p/${record.slug ?? id}`;
 
-    return NextResponse.json({ id, url: url.toString(), updated_at: updatedAt });
+    return NextResponse.json({ id, url: publishedUrl, updated_at: updatedAt });
   } catch (e: unknown) {
     console.error("[patch-publish] Unhandled error:", e);
     const msg = e instanceof Error ? e.message : "An unexpected error occurred";

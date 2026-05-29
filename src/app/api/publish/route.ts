@@ -113,14 +113,14 @@ export async function POST(req: Request) {
       }
     }
 
-    const url = new URL(req.url);
-    url.pathname = ROUTES.publish(id);
-    url.search = "";
-    url.hash = "";
+    const siteOrigin = process.env.NEXT_PUBLIC_SITE_URL
+      ? new URL(process.env.NEXT_PUBLIC_SITE_URL).origin
+      : new URL(req.url).origin;
+    const publishedUrl = `${siteOrigin}${ROUTES.publish(id)}`;
 
     return NextResponse.json({
       id,
-      url: url.toString(),
+      url: publishedUrl,
       owned: isAuthenticated,
     });
   } catch (e: unknown) {

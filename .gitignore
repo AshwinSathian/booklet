@@ -55,3 +55,7 @@ mcp-server/.wrangler/
 
 # clerk configuration (can include secrets)
 /.clerk/
+
+# Playwright
+test-results/
+playwright-report/
