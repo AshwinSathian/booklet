@@ -33,7 +33,7 @@ export function AppLogo({ onlyIcon = false }: { onlyIcon?: boolean }) {
     >
       <ReadableMark size={28} />
       {!onlyIcon ? (
-        <span className="text-sm font-semibold tracking-tight text-text-primary">
+        <span className="text-sm font-light tracking-[-0.01em] text-text-primary">
           {APP_NAME}
         </span>
       ) : null}
