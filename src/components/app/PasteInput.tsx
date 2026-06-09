@@ -1,7 +1,7 @@
 "use client";
 
 import { Icon } from "@/components/ui/Icon";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 // ---------------------------------------------------------------------------
 // Format actions
@@ -36,6 +36,11 @@ const FORMATS: Record<string, FormatSpec> = {
   ordered:    { kind: "line", prefix: "1. " },
 };
 
+const TABLE_TEMPLATE = `| Column 1 | Column 2 | Column 3 |
+| --- | --- | --- |
+| Cell | Cell | Cell |
+| Cell | Cell | Cell |`;
+
 function applyFormat(
   ta: HTMLTextAreaElement,
   formatKey: string,
@@ -61,7 +66,6 @@ function applyFormat(
       ta.setSelectionRange(cursorStart, cursorEnd);
     });
   } else {
-    // Line prefix: apply to every line in the selection.
     const { prefix } = spec;
     const lineStart = value.lastIndexOf("\n", start - 1) + 1;
     const lineEnd = value.indexOf("\n", end - 1);
@@ -70,7 +74,6 @@ function applyFormat(
     const block = value.slice(lineStart, blockEnd);
     const lines = block.split("\n");
 
-    // Toggle: if every line already has this prefix, remove it; otherwise add it.
     const allHavePrefix = lines.every((l) => l.startsWith(prefix));
     const newLines = allHavePrefix
       ? lines.map((l) => l.slice(prefix.length))
@@ -88,13 +91,369 @@ function applyFormat(
   }
 }
 
+function insertTable(ta: HTMLTextAreaElement, onChange: (v: string) => void) {
+  const { selectionStart: start, value } = ta;
+  const before = value.slice(0, start);
+  const after = value.slice(start);
+
+  // Ensure table is on its own line
+  const needsLeadingNewline = before.length > 0 && !before.endsWith("\n");
+  const needsTrailingNewline = after.length > 0 && !after.startsWith("\n");
+
+  const insertion =
+    (needsLeadingNewline ? "\n\n" : "") +
+    TABLE_TEMPLATE +
+    (needsTrailingNewline ? "\n\n" : "");
+
+  const newValue = before + insertion + after;
+  onChange(newValue);
+
+  // Place cursor on the first cell
+  const headerOffset = (needsLeadingNewline ? 2 : 0);
+  const firstCellStart = before.length + headerOffset + 2; // after "| "
+  requestAnimationFrame(() => {
+    ta.focus();
+    ta.setSelectionRange(firstCellStart, firstCellStart + 8); // select "Column 1"
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Keyboard shortcuts reference
+// ---------------------------------------------------------------------------
+
+const SHORTCUT_GROUPS = [
+  {
+    group: "Formatting",
+    shortcuts: [
+      { keys: ["⌘", "B"], label: "Bold" },
+      { keys: ["⌘", "I"], label: "Italic" },
+      { keys: ["⌘", "`"], label: "Inline code" },
+      { keys: ["⌘", "K"], label: "Focus editor" },
+    ],
+  },
+  {
+    group: "Editor",
+    shortcuts: [
+      { keys: ["⌘", "F"], label: "Find & replace" },
+      { keys: ["⌘", "↵"], label: "Publish" },
+      { keys: ["Tab"], label: "Indent (2 spaces)" },
+      { keys: ["⇧", "Tab"], label: "Unindent" },
+    ],
+  },
+  {
+    group: "Toolbar",
+    shortcuts: [
+      { keys: ["H1", "H2", "H3"], label: "Heading buttons" },
+      { keys: [">"], label: "Blockquote button" },
+      { keys: ["-"], label: "Bullet list" },
+      { keys: ["1."], label: "Ordered list" },
+    ],
+  },
+];
+
+function ShortcutsModal({ onClose }: { onClose: () => void }) {
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
+      onMouseDown={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="w-full max-w-sm rounded-2xl border border-border-subtle bg-bg shadow-xl">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border-subtle">
+          <span className="text-sm font-semibold text-text-primary">Keyboard shortcuts</span>
+          <button
+            type="button"
+            onClick={onClose}
+            className="h-6 w-6 flex items-center justify-center rounded text-text-muted transition hover:text-text-primary hover:bg-fill-2"
+            aria-label="Close shortcuts"
+          >
+            <svg width="12" height="12" fill="none" viewBox="0 0 12 12" aria-hidden>
+              <path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+        <div className="px-4 py-4 flex flex-col gap-5">
+          {SHORTCUT_GROUPS.map((group) => (
+            <div key={group.group}>
+              <p className="text-2xs font-semibold uppercase tracking-widest text-text-muted mb-2">{group.group}</p>
+              <div className="flex flex-col gap-1">
+                {group.shortcuts.map((s) => (
+                  <div key={s.label} className="flex items-center justify-between">
+                    <span className="text-sm text-text-secondary">{s.label}</span>
+                    <div className="flex items-center gap-1">
+                      {s.keys.map((k) => (
+                        <kbd
+                          key={k}
+                          className="inline-flex h-5 min-w-5 px-1 items-center justify-center rounded border border-border-subtle bg-fill-2 text-2xs font-mono text-text-muted"
+                        >
+                          {k}
+                        </kbd>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Find & Replace panel
+// ---------------------------------------------------------------------------
+
+function getAllMatches(text: string, query: string, caseSensitive: boolean): number[] {
+  if (!query) return [];
+  const positions: number[] = [];
+  const haystack = caseSensitive ? text : text.toLowerCase();
+  const needle = caseSensitive ? query : query.toLowerCase();
+  let idx = 0;
+  while (idx < haystack.length) {
+    const pos = haystack.indexOf(needle, idx);
+    if (pos === -1) break;
+    positions.push(pos);
+    idx = pos + Math.max(1, needle.length);
+  }
+  return positions;
+}
+
+function FindReplaceBar({
+  value,
+  onChange,
+  textareaRef,
+  onClose,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  textareaRef: React.RefObject<HTMLTextAreaElement | null>;
+  onClose: () => void;
+}) {
+  const [findText, setFindText] = useState("");
+  const [replaceText, setReplaceText] = useState("");
+  const [caseSensitive, setCaseSensitive] = useState(false);
+  const [matchIdx, setMatchIdx] = useState(0);
+  const findInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    findInputRef.current?.focus();
+    findInputRef.current?.select();
+  }, []);
+
+  const matches = useMemo(
+    () => getAllMatches(value, findText, caseSensitive),
+    [value, findText, caseSensitive],
+  );
+
+  const safeMatchIdx = matches.length > 0 ? matchIdx % matches.length : 0;
+
+  // Scroll textarea to and select the current match
+  const jumpToMatch = useCallback(
+    (idx: number, positions: number[]) => {
+      const ta = textareaRef.current;
+      if (!ta || positions.length === 0) return;
+      const pos = positions[idx % positions.length];
+      const needle = findText;
+      requestAnimationFrame(() => {
+        ta.focus();
+        ta.setSelectionRange(pos, pos + needle.length);
+        // Scroll the textarea to show the selection
+        const linesBefore = value.slice(0, pos).split("\n").length;
+        const lineHeight = 21; // ~1.65 * 13px font
+        ta.scrollTop = Math.max(0, (linesBefore - 3) * lineHeight);
+      });
+    },
+    [textareaRef, findText, value],
+  );
+
+  const handlePrev = useCallback(() => {
+    if (!matches.length) return;
+    const next = (safeMatchIdx - 1 + matches.length) % matches.length;
+    setMatchIdx(next);
+    jumpToMatch(next, matches);
+  }, [matches, safeMatchIdx, jumpToMatch]);
+
+  const handleNext = useCallback(() => {
+    if (!matches.length) return;
+    const next = (safeMatchIdx + 1) % matches.length;
+    setMatchIdx(next);
+    jumpToMatch(next, matches);
+  }, [matches, safeMatchIdx, jumpToMatch]);
+
+  useEffect(() => {
+    if (matches.length > 0) {
+      setMatchIdx(0);
+      jumpToMatch(0, matches);
+    }
+  // Only run when findText or caseSensitive changes, not on every value change
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [findText, caseSensitive]);
+
+  const handleReplace = useCallback(() => {
+    if (!matches.length || !findText) return;
+    const pos = matches[safeMatchIdx];
+    const before = value.slice(0, pos);
+    const after = value.slice(pos + findText.length);
+    onChange(before + replaceText + after);
+    // matchIdx stays the same; next match will be at updated positions
+  }, [matches, safeMatchIdx, findText, replaceText, value, onChange]);
+
+  const handleReplaceAll = useCallback(() => {
+    if (!findText) return;
+    const flags = caseSensitive ? "g" : "gi";
+    const escaped = findText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    onChange(value.replace(new RegExp(escaped, flags), replaceText));
+    onClose();
+    textareaRef.current?.focus();
+  }, [findText, replaceText, caseSensitive, value, onChange, onClose, textareaRef]);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+        textareaRef.current?.focus();
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        if (e.shiftKey) handlePrev();
+        else handleNext();
+      }
+    },
+    [onClose, textareaRef, handlePrev, handleNext],
+  );
+
+  return (
+    <div className="shrink-0 border-b border-border-subtle bg-bg-elevated px-2 py-2 flex flex-col gap-1.5">
+      {/* Find row */}
+      <div className="flex items-center gap-1.5">
+        <div className="relative flex-1">
+          <input
+            ref={findInputRef}
+            type="text"
+            value={findText}
+            onChange={(e) => { setFindText(e.target.value); setMatchIdx(0); }}
+            onKeyDown={handleKeyDown}
+            placeholder="Find…"
+            spellCheck={false}
+            className="w-full h-6 rounded border border-border-subtle bg-bg px-2 py-0 text-xs font-mono text-text-primary placeholder:text-text-muted/40 focus:outline-none focus:ring-1 focus:ring-accent-soft pr-14"
+          />
+          {findText && (
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-2xs tabular-nums text-text-muted pointer-events-none">
+              {matches.length === 0
+                ? "0/0"
+                : `${safeMatchIdx + 1}/${matches.length}`}
+            </span>
+          )}
+        </div>
+
+        {/* Case toggle */}
+        <button
+          type="button"
+          title="Case sensitive"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => setCaseSensitive((p) => !p)}
+          className={[
+            "h-6 w-6 shrink-0 rounded flex items-center justify-center text-2xs font-mono font-semibold border transition",
+            caseSensitive
+              ? "border-accent/50 bg-accent/10 text-accent"
+              : "border-border-subtle bg-bg text-text-muted hover:text-text-primary hover:bg-fill-2",
+          ].join(" ")}
+        >
+          Aa
+        </button>
+
+        {/* Prev / Next */}
+        <button
+          type="button"
+          title="Previous match (Shift+Enter)"
+          onClick={handlePrev}
+          disabled={matches.length === 0}
+          className="h-6 w-6 shrink-0 rounded flex items-center justify-center text-text-muted transition hover:text-text-primary hover:bg-fill-2 disabled:opacity-30"
+        >
+          <svg width="10" height="10" fill="none" viewBox="0 0 10 10" aria-hidden>
+            <path d="M2 6.5l3-3 3 3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          title="Next match (Enter)"
+          onClick={handleNext}
+          disabled={matches.length === 0}
+          className="h-6 w-6 shrink-0 rounded flex items-center justify-center text-text-muted transition hover:text-text-primary hover:bg-fill-2 disabled:opacity-30"
+        >
+          <svg width="10" height="10" fill="none" viewBox="0 0 10 10" aria-hidden>
+            <path d="M2 3.5l3 3 3-3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+
+        {/* Close */}
+        <button
+          type="button"
+          title="Close (Escape)"
+          onClick={() => { onClose(); textareaRef.current?.focus(); }}
+          className="h-6 w-6 shrink-0 rounded flex items-center justify-center text-text-muted transition hover:text-text-primary hover:bg-fill-2"
+        >
+          <svg width="10" height="10" fill="none" viewBox="0 0 10 10" aria-hidden>
+            <path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Replace row */}
+      <div className="flex items-center gap-1.5">
+        <input
+          type="text"
+          value={replaceText}
+          onChange={(e) => setReplaceText(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Replace with…"
+          spellCheck={false}
+          className="flex-1 h-6 rounded border border-border-subtle bg-bg px-2 py-0 text-xs font-mono text-text-primary placeholder:text-text-muted/40 focus:outline-none focus:ring-1 focus:ring-accent-soft"
+        />
+        <button
+          type="button"
+          onClick={handleReplace}
+          disabled={!findText || matches.length === 0}
+          className="h-6 shrink-0 px-2 rounded border border-border-subtle bg-bg text-2xs text-text-muted transition hover:text-text-primary hover:bg-fill-2 disabled:opacity-30"
+        >
+          Replace
+        </button>
+        <button
+          type="button"
+          onClick={handleReplaceAll}
+          disabled={!findText || matches.length === 0}
+          className="h-6 shrink-0 px-2 rounded border border-border-subtle bg-bg text-2xs text-text-muted transition hover:text-text-primary hover:bg-fill-2 disabled:opacity-30"
+        >
+          All
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Toolbar
 // ---------------------------------------------------------------------------
 
 type ToolbarBtn =
   | { type: "format"; key: string; label: string; title: string; textLabel?: string }
+  | { type: "action"; key: string; title: string; icon: React.ReactNode }
   | { type: "sep" };
+
+const TOOLBAR_TABLE_ICON = (
+  <svg width="13" height="13" fill="none" viewBox="0 0 16 16" aria-hidden>
+    <rect x="1.5" y="2.5" width="13" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+    <path d="M1.5 6.5h13M6.5 2.5v11" stroke="currentColor" strokeWidth="1.4" />
+  </svg>
+);
 
 const TOOLBAR: ToolbarBtn[] = [
   { type: "format", key: "bold",      label: "bold",      title: "Bold (wrap in **)",        textLabel: "B"  },
@@ -112,18 +471,27 @@ const TOOLBAR: ToolbarBtn[] = [
   { type: "format", key: "quote",     label: "quote",     title: "Blockquote (>)" },
   { type: "format", key: "bullet",    label: "list",      title: "Bullet list (- )" },
   { type: "format", key: "ordered",   label: "list-ordered", title: "Ordered list (1. )",     textLabel: "1." },
+  { type: "sep" },
+  { type: "action", key: "table",     title: "Insert table",  icon: TOOLBAR_TABLE_ICON },
 ];
 
 function FormatToolbar({
   textareaRef,
   onChange,
+  onOpenFind,
 }: {
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
   onChange: (v: string) => void;
+  onOpenFind: () => void;
 }) {
   const handleClick = useCallback(
     (key: string) => {
-      if (textareaRef.current) applyFormat(textareaRef.current, key, onChange);
+      if (!textareaRef.current) return;
+      if (key === "table") {
+        insertTable(textareaRef.current, onChange);
+      } else {
+        applyFormat(textareaRef.current, key, onChange);
+      }
     },
     [textareaRef, onChange],
   );
@@ -135,6 +503,23 @@ function FormatToolbar({
           return <div key={i} className="w-px h-3.5 bg-border-subtle mx-0.5 shrink-0" />;
         }
 
+        if (item.type === "action") {
+          return (
+            <button
+              key={item.key}
+              type="button"
+              title={item.title}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                handleClick(item.key);
+              }}
+              className="shrink-0 h-6 w-6 flex items-center justify-center rounded transition text-text-muted hover:text-text-primary hover:bg-fill-2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft"
+            >
+              {item.icon}
+            </button>
+          );
+        }
+
         const hasTextLabel = Boolean(item.textLabel);
 
         return (
@@ -143,7 +528,6 @@ function FormatToolbar({
             type="button"
             title={item.title}
             onMouseDown={(e) => {
-              // Prevent textarea from losing focus before we read selection.
               e.preventDefault();
               handleClick(item.key);
             }}
@@ -162,11 +546,27 @@ function FormatToolbar({
             {hasTextLabel ? (
               <span>{item.textLabel}</span>
             ) : (
-              <Icon name={item.label as Parameters<typeof Icon>[0]["name"]} size={12} />
+              item.type === "format"
+                ? <Icon name={item.label as Parameters<typeof Icon>[0]["name"]} size={12} />
+                : null
             )}
           </button>
         );
       })}
+
+      {/* Spacer pushes find button to the far right */}
+      <div className="flex-1" />
+      <button
+        type="button"
+        title="Find & replace (⌘F)"
+        onMouseDown={(e) => { e.preventDefault(); onOpenFind(); }}
+        className="shrink-0 h-6 w-6 flex items-center justify-center rounded transition text-text-muted hover:text-text-primary hover:bg-fill-2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft"
+      >
+        <svg width="12" height="12" fill="none" viewBox="0 0 16 16" aria-hidden>
+          <circle cx="6.5" cy="6.5" r="4" stroke="currentColor" strokeWidth="1.4" />
+          <path d="M10 10l3.5 3.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+        </svg>
+      </button>
     </div>
   );
 }
@@ -185,12 +585,30 @@ export function PasteInput({
   onFocusShortcutRequested?: (focusFn: () => void) => void;
 }) {
   const ref = useRef<HTMLTextAreaElement | null>(null);
+  const [showFindReplace, setShowFindReplace] = useState(false);
+  const [showShortcuts, setShowShortcuts] = useState(false);
 
   useEffect(() => {
     if (onFocusShortcutRequested) {
       onFocusShortcutRequested(() => ref.current?.focus());
     }
   }, [onFocusShortcutRequested]);
+
+  // Cmd/Ctrl+F opens find & replace
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "f") {
+        // Only intercept if the textarea (or toolbar) is the active area
+        const active = document.activeElement;
+        if (active === ref.current || ref.current?.contains(active)) {
+          e.preventDefault();
+          setShowFindReplace(true);
+        }
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
 
   const wordCount = useMemo(() => {
     const trimmed = value.trim();
@@ -199,88 +617,125 @@ export function PasteInput({
   }, [value]);
 
   const charCount = value.length;
+  const readingMins = Math.max(1, Math.round(wordCount / 200));
 
   return (
-    <div className="flex h-full max-h-full min-h-0 flex-col overflow-hidden w-full">
-      {/* Formatting toolbar — acts as the pane header */}
-      <FormatToolbar textareaRef={ref} onChange={onChange} />
+    <>
+      <div className="flex h-full max-h-full min-h-0 flex-col overflow-hidden w-full">
+        {/* Formatting toolbar */}
+        <FormatToolbar
+          textareaRef={ref}
+          onChange={onChange}
+          onOpenFind={() => setShowFindReplace(true)}
+        />
 
-      {/* Textarea */}
-      <div className="flex-1 min-h-0 overflow-hidden w-full">
-        <textarea
-          ref={ref}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key !== "Tab") return;
-            e.preventDefault();
-            const ta = e.currentTarget;
-            const { selectionStart: start, selectionEnd: end, value: v } = ta;
+        {/* Find & replace panel */}
+        {showFindReplace && (
+          <FindReplaceBar
+            value={value}
+            onChange={onChange}
+            textareaRef={ref}
+            onClose={() => setShowFindReplace(false)}
+          />
+        )}
 
-            if (!e.shiftKey) {
-              if (start === end) {
-                const next = v.slice(0, start) + "  " + v.slice(end);
-                onChange(next);
-                requestAnimationFrame(() => { ta.focus(); ta.setSelectionRange(start + 2, start + 2); });
+        {/* Textarea */}
+        <div className="flex-1 min-h-0 overflow-hidden w-full">
+          <textarea
+            ref={ref}
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key !== "Tab") return;
+              e.preventDefault();
+              const ta = e.currentTarget;
+              const { selectionStart: start, selectionEnd: end, value: v } = ta;
+
+              if (!e.shiftKey) {
+                if (start === end) {
+                  const next = v.slice(0, start) + "  " + v.slice(end);
+                  onChange(next);
+                  requestAnimationFrame(() => { ta.focus(); ta.setSelectionRange(start + 2, start + 2); });
+                } else {
+                  const lineStart = v.lastIndexOf("\n", start - 1) + 1;
+                  const lineEnd = v.indexOf("\n", end - 1);
+                  const blockEnd = lineEnd === -1 ? v.length : lineEnd;
+                  const block = v.slice(lineStart, blockEnd);
+                  const newBlock = block.split("\n").map((l) => "  " + l).join("\n");
+                  const delta = newBlock.length - block.length;
+                  onChange(v.slice(0, lineStart) + newBlock + v.slice(blockEnd));
+                  requestAnimationFrame(() => { ta.focus(); ta.setSelectionRange(start + 2, end + delta); });
+                }
               } else {
                 const lineStart = v.lastIndexOf("\n", start - 1) + 1;
                 const lineEnd = v.indexOf("\n", end - 1);
                 const blockEnd = lineEnd === -1 ? v.length : lineEnd;
                 const block = v.slice(lineStart, blockEnd);
-                const newBlock = block.split("\n").map((l) => "  " + l).join("\n");
+                const lines = block.split("\n");
+                const newLines = lines.map((l) =>
+                  l.startsWith("  ") ? l.slice(2) : l.startsWith(" ") ? l.slice(1) : l,
+                );
+                const newBlock = newLines.join("\n");
                 const delta = newBlock.length - block.length;
+                const removedFirst = lines[0].startsWith("  ") ? 2 : lines[0].startsWith(" ") ? 1 : 0;
                 onChange(v.slice(0, lineStart) + newBlock + v.slice(blockEnd));
-                requestAnimationFrame(() => { ta.focus(); ta.setSelectionRange(start + 2, end + delta); });
+                requestAnimationFrame(() => {
+                  ta.focus();
+                  ta.setSelectionRange(Math.max(lineStart, start - removedFirst), end + delta);
+                });
               }
-            } else {
-              const lineStart = v.lastIndexOf("\n", start - 1) + 1;
-              const lineEnd = v.indexOf("\n", end - 1);
-              const blockEnd = lineEnd === -1 ? v.length : lineEnd;
-              const block = v.slice(lineStart, blockEnd);
-              const lines = block.split("\n");
-              const newLines = lines.map((l) =>
-                l.startsWith("  ") ? l.slice(2) : l.startsWith(" ") ? l.slice(1) : l,
-              );
-              const newBlock = newLines.join("\n");
-              const delta = newBlock.length - block.length;
-              const removedFirst = lines[0].startsWith("  ") ? 2 : lines[0].startsWith(" ") ? 1 : 0;
-              onChange(v.slice(0, lineStart) + newBlock + v.slice(blockEnd));
-              requestAnimationFrame(() => {
-                ta.focus();
-                ta.setSelectionRange(Math.max(lineStart, start - removedFirst), end + delta);
-              });
-            }
-          }}
-          placeholder="Write or paste Markdown…"
-          spellCheck={false}
-          className={[
-            "h-full w-full min-h-0 min-w-0",
-            "resize-none overflow-y-auto",
-            "bg-bg text-text-primary",
-            "font-mono text-sm leading-[1.65]",
-            "px-5 py-4",
-            "placeholder:text-text-muted/40",
-            "focus:outline-none",
-            "caret-accent",
-          ].join(" ")}
-        />
+            }}
+            placeholder="Write or paste Markdown…"
+            spellCheck={false}
+            className={[
+              "h-full w-full min-h-0 min-w-0",
+              "resize-none overflow-y-auto",
+              "bg-bg text-text-primary",
+              "font-mono text-sm leading-[1.65]",
+              "px-5 py-4",
+              "placeholder:text-text-muted/40",
+              "focus:outline-none",
+              "caret-accent",
+            ].join(" ")}
+          />
+        </div>
+
+        {/* Status bar */}
+        <div className="shrink-0 flex items-center justify-between border-t border-border-subtle px-3 py-1">
+          <div className="flex items-center gap-2">
+            <span className="text-2xs text-text-muted tabular-nums">
+              {wordCount.toLocaleString()} {wordCount === 1 ? "word" : "words"}
+            </span>
+            <span className="text-2xs text-text-muted/30" aria-hidden>·</span>
+            <span className="text-2xs text-text-muted tabular-nums">
+              {charCount.toLocaleString()} chars
+            </span>
+            {wordCount > 50 && (
+              <>
+                <span className="text-2xs text-text-muted/30" aria-hidden>·</span>
+                <span className="text-2xs text-text-muted tabular-nums">
+                  {readingMins} min read
+                </span>
+              </>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-2xs text-text-muted/50 hidden sm:inline">
+              <kbd className="font-mono">⌘K</kbd> focus · <kbd className="font-mono">⌘↵</kbd> publish
+            </span>
+            <button
+              type="button"
+              title="Keyboard shortcuts"
+              onClick={() => setShowShortcuts(true)}
+              className="h-5 w-5 flex items-center justify-center rounded border border-border-subtle text-2xs font-mono text-text-muted/50 transition hover:text-text-muted hover:border-border-default hover:bg-fill-2"
+            >
+              ?
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* Status bar */}
-      <div className="shrink-0 flex items-center justify-between border-t border-border-subtle px-3 py-1">
-        <div className="flex items-center gap-2">
-          <span className="text-2xs text-text-muted tabular-nums">
-            {wordCount.toLocaleString()} {wordCount === 1 ? "word" : "words"}
-          </span>
-          <span className="text-2xs text-text-muted/30" aria-hidden>·</span>
-          <span className="text-2xs text-text-muted tabular-nums">
-            {charCount.toLocaleString()} chars
-          </span>
-        </div>
-        <span className="text-2xs text-text-muted/50 hidden sm:inline">
-          <kbd className="font-mono">⌘K</kbd> focus · <kbd className="font-mono">⌘↵</kbd> publish
-        </span>
-      </div>
-    </div>
+      {showShortcuts && <ShortcutsModal onClose={() => setShowShortcuts(false)} />}
+    </>
   );
 }
