@@ -440,180 +440,6 @@ function FindReplaceBar({
 }
 
 // ---------------------------------------------------------------------------
-// AI Assist button + popover
-// ---------------------------------------------------------------------------
-
-const AI_ACTIONS = [
-  { key: "improve",     label: "Improve writing",  desc: "Clearer, more concise" },
-  { key: "fix_grammar", label: "Fix grammar",       desc: "Spelling & punctuation" },
-  { key: "summarize",   label: "Summarize",         desc: "3–5 bullet summary" },
-  { key: "shorten",     label: "Make shorter",      desc: "Remove verbosity" },
-  { key: "expand",      label: "Make longer",       desc: "Add detail & context" },
-] as const;
-
-type AiActionKey = (typeof AI_ACTIONS)[number]["key"];
-
-function AiAssistButton({
-  textareaRef,
-  value,
-  onChange,
-}: {
-  textareaRef: React.RefObject<HTMLTextAreaElement | null>;
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState<AiActionKey | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const menuRef = useRef<HTMLDivElement | null>(null);
-  const btnRef = useRef<HTMLButtonElement | null>(null);
-
-  // Close on outside click
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (
-        menuRef.current &&
-        !menuRef.current.contains(e.target as Node) &&
-        !btnRef.current?.contains(e.target as Node)
-      ) {
-        setOpen(false);
-        setError(null);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [open]);
-
-  const handleAction = async (actionKey: AiActionKey) => {
-    const ta = textareaRef.current;
-    if (!ta) return;
-
-    const { selectionStart: start, selectionEnd: end } = ta;
-    const hasSelection = start !== end;
-    const text = hasSelection ? value.slice(start, end) : value;
-
-    if (!text.trim()) {
-      setError("Nothing to process");
-      return;
-    }
-
-    setLoading(actionKey);
-    setError(null);
-
-    try {
-      const res = await fetch("/api/ai/assist", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: actionKey, text }),
-      });
-
-      if (res.status === 401) {
-        setError("Sign in to use AI features");
-        setLoading(null);
-        return;
-      }
-
-      const data = await res.json() as { result?: string; error?: string };
-
-      if (!res.ok || !data.result) {
-        setError(data.error ?? "AI request failed");
-        setLoading(null);
-        return;
-      }
-
-      if (hasSelection) {
-        const newValue = value.slice(0, start) + data.result + value.slice(end);
-        onChange(newValue);
-        requestAnimationFrame(() => {
-          ta.focus();
-          ta.setSelectionRange(start, start + data.result!.length);
-        });
-      } else {
-        onChange(data.result);
-      }
-
-      setOpen(false);
-    } catch {
-      setError("Network error");
-    } finally {
-      setLoading(null);
-    }
-  };
-
-  const isLoading = loading !== null;
-
-  return (
-    <div className="relative">
-      <button
-        ref={btnRef}
-        type="button"
-        title="AI writing assistant"
-        onMouseDown={(e) => {
-          e.preventDefault();
-          setOpen((p) => !p);
-          if (open) setError(null);
-        }}
-        className={[
-          "shrink-0 h-6 px-1.5 flex items-center gap-1 rounded transition",
-          "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft",
-          isLoading
-            ? "text-accent bg-accent/10 border border-accent/30 animate-pulse"
-            : open
-            ? "text-accent bg-accent/10 border border-accent/20"
-            : "text-text-muted hover:text-accent hover:bg-accent/8 border border-transparent",
-        ].join(" ")}
-      >
-        <svg width="12" height="12" fill="none" viewBox="0 0 16 16" aria-hidden>
-          <path d="M8 1l1.5 4.5L14 7l-4.5 1.5L8 13l-1.5-4.5L2 7l4.5-1.5L8 1z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
-        </svg>
-        <span className="text-2xs font-semibold hidden sm:inline">AI</span>
-      </button>
-
-      {open && (
-        <div
-          ref={menuRef}
-          className="absolute top-full right-0 mt-1 z-30 w-52 rounded-xl border border-border-subtle bg-bg shadow-xl py-1"
-        >
-          <p className="px-3 py-1.5 text-2xs font-semibold uppercase tracking-widest text-text-muted border-b border-border-subtle mb-1">
-            AI assist
-            {textareaRef.current?.selectionStart !== textareaRef.current?.selectionEnd
-              ? " · selection"
-              : " · full doc"}
-          </p>
-          {AI_ACTIONS.map((action) => (
-            <button
-              key={action.key}
-              type="button"
-              disabled={isLoading}
-              onMouseDown={(e) => {
-                e.preventDefault();
-                handleAction(action.key);
-              }}
-              className={[
-                "w-full flex flex-col px-3 py-2 text-left transition",
-                loading === action.key
-                  ? "bg-accent/10 text-accent"
-                  : "text-text-primary hover:bg-fill-1",
-                isLoading && loading !== action.key ? "opacity-40" : "",
-              ].join(" ")}
-            >
-              <span className="text-xs font-medium">{action.label}</span>
-              <span className="text-2xs text-text-muted">{action.desc}</span>
-            </button>
-          ))}
-          {error && (
-            <p className="px-3 py-2 text-2xs text-red-400 border-t border-border-subtle mt-1">
-              {error}
-            </p>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Toolbar
 // ---------------------------------------------------------------------------
 
@@ -651,12 +477,10 @@ const TOOLBAR: ToolbarBtn[] = [
 
 function FormatToolbar({
   textareaRef,
-  value,
   onChange,
   onOpenFind,
 }: {
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
-  value: string;
   onChange: (v: string) => void;
   onOpenFind: () => void;
 }) {
@@ -732,8 +556,6 @@ function FormatToolbar({
 
       {/* Spacer pushes right-side buttons to the far right */}
       <div className="flex-1" />
-      <AiAssistButton textareaRef={textareaRef} value={value} onChange={onChange} />
-      <div className="w-px h-3.5 bg-border-subtle mx-0.5 shrink-0" />
       <button
         type="button"
         title="Find & replace (⌘F)"
@@ -803,7 +625,6 @@ export function PasteInput({
         {/* Formatting toolbar */}
         <FormatToolbar
           textareaRef={ref}
-          value={value}
           onChange={onChange}
           onOpenFind={() => setShowFindReplace(true)}
         />
