@@ -59,7 +59,7 @@ export default async function SignInPage({
             On this Apple device you can also use{" "}
             <span className="font-medium text-text-secondary">Touch ID / Face ID</span>{" "}
             via a passkey — register one after signing in from{" "}
-            <Link href={ROUTES.myPages} className="text-accent hover:text-accent-soft transition-colors">
+            <Link href={`${ROUTES.myPages}#security`} className="text-accent hover:text-accent-soft transition-colors">
               My Pages → Security
             </Link>.
           </p>
