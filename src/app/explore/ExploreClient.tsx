@@ -20,19 +20,21 @@ function timeAgo(iso: string): string {
 }
 
 function PageCard({ page, featured: isFeatured }: { page: ExploreItem; featured?: boolean }) {
+  const hasTags = page.tags && page.tags.length > 0;
+
   return (
     <Link
       href={pageHref(page)}
       target="_blank"
       rel="noopener noreferrer"
       className={[
-        "group flex flex-col justify-between rounded-xl border p-4 transition",
+        "group flex flex-col rounded-xl border p-4 transition",
         isFeatured
           ? "border-accent-soft/30 bg-accent-dim/20 hover:border-accent-soft/60 hover:bg-accent-dim/40"
           : "border-border-subtle bg-bg-elevated hover:border-accent-soft/30 hover:bg-fill-1",
       ].join(" ")}
     >
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-2 mb-1">
           <p className="text-sm font-medium text-text-primary group-hover:text-accent transition line-clamp-2 leading-snug">
             {page.title ?? "Untitled"}
@@ -43,9 +45,22 @@ function PageCard({ page, featured: isFeatured }: { page: ExploreItem; featured?
             </span>
           )}
         </div>
-        <p className="text-2xs text-text-muted/60 font-mono truncate">
+        <p className="text-2xs text-text-muted/60 font-mono truncate mb-2">
           {page.slug ? `/p/${page.slug}` : `/p/${page.id}`}
         </p>
+
+        {hasTags && (
+          <div className="flex flex-wrap gap-1 mt-1">
+            {page.tags!.slice(0, 3).map((tag) => (
+              <span
+                key={tag}
+                className="rounded-pill bg-fill-1 border border-border-subtle text-2xs text-text-muted px-1.5 py-0.5"
+              >
+                #{tag}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="mt-3 flex items-center justify-between">
@@ -71,6 +86,7 @@ export function ExploreClient({
 }) {
   const [tab, setTab] = useState<Tab>("recent");
   const [query, setQuery] = useState("");
+  const [activeTag, setActiveTag] = useState<string | null>(null);
 
   const all = useMemo(() => {
     const seen = new Set<string>();
@@ -80,6 +96,21 @@ export function ExploreClient({
     }
     return merged;
   }, [featured, recent]);
+
+  // Top tags derived from the page data, sorted by frequency
+  const popularTags = useMemo(() => {
+    const freq = new Map<string, number>();
+    for (const p of all) {
+      if (!p.tags) continue;
+      for (const t of p.tags) {
+        freq.set(t, (freq.get(t) ?? 0) + 1);
+      }
+    }
+    return [...freq.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 12)
+      .map(([tag]) => tag);
+  }, [all]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -93,9 +124,17 @@ export function ExploreClient({
       pool = [...all].sort((a, b) => b.created_at.localeCompare(a.created_at));
     }
 
+    if (activeTag) {
+      pool = pool.filter((p) => p.tags?.includes(activeTag));
+    }
+
     if (!q) return pool;
-    return pool.filter((p) => (p.title ?? "").toLowerCase().includes(q) || (p.slug ?? "").toLowerCase().includes(q));
-  }, [tab, query, all, featured]);
+    return pool.filter((p) =>
+      (p.title ?? "").toLowerCase().includes(q) ||
+      (p.slug ?? "").toLowerCase().includes(q) ||
+      (p.tags ?? []).some((t) => t.toLowerCase().includes(q)),
+    );
+  }, [tab, query, activeTag, all, featured]);
 
   const TABS: { id: Tab; label: string }[] = [
     { id: "recent", label: "Recent" },
@@ -106,7 +145,7 @@ export function ExploreClient({
   return (
     <div>
       {/* Controls */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4">
         {/* Tab bar */}
         <div className="flex items-center gap-0.5 rounded-lg border border-outline bg-bg-soft p-0.5">
           {TABS.map(({ id, label }) => (
@@ -147,17 +186,61 @@ export function ExploreClient({
           />
         </div>
 
-        {query && (
+        {(query || activeTag) && (
           <span className="text-xs text-text-muted shrink-0">
             {filtered.length} result{filtered.length !== 1 ? "s" : ""}
           </span>
         )}
       </div>
 
+      {/* Popular tags strip */}
+      {popularTags.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mb-6">
+          {activeTag && (
+            <button
+              type="button"
+              onClick={() => setActiveTag(null)}
+              className="inline-flex items-center gap-1 rounded-pill border border-border-subtle bg-fill-2 px-2.5 py-1 text-2xs text-text-muted transition hover:text-text-primary hover:bg-fill-1"
+            >
+              <svg width="8" height="8" fill="none" viewBox="0 0 8 8" aria-hidden>
+                <path d="M1 1l6 6M7 1L1 7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+              </svg>
+              Clear
+            </button>
+          )}
+          {popularTags.map((tag) => (
+            <button
+              key={tag}
+              type="button"
+              onClick={() => setActiveTag(activeTag === tag ? null : tag)}
+              className={[
+                "rounded-pill border px-2.5 py-1 text-2xs font-medium transition",
+                activeTag === tag
+                  ? "border-accent/40 bg-accent/10 text-accent"
+                  : "border-border-subtle bg-bg-elevated text-text-muted hover:border-accent/30 hover:text-text-primary hover:bg-fill-1",
+              ].join(" ")}
+            >
+              #{tag}
+            </button>
+          ))}
+          <Link
+            href="/tags"
+            className="rounded-pill border border-border-subtle bg-bg-elevated px-2.5 py-1 text-2xs text-text-muted transition hover:text-text-primary hover:bg-fill-1 hidden sm:inline-flex items-center gap-1"
+          >
+            All tags
+            <svg width="8" height="8" fill="none" viewBox="0 0 8 8" aria-hidden>
+              <path d="M1.5 6.5L6.5 1.5M6.5 1.5H3M6.5 1.5V5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </Link>
+        </div>
+      )}
+
       {/* Grid */}
       {filtered.length === 0 ? (
         <div className="rounded-xl border border-dashed border-outline py-16 text-center text-sm text-text-muted">
-          {query ? `No pages match "${query}"` : "No pages yet."}
+          {query || activeTag
+            ? `No pages match${activeTag ? ` #${activeTag}` : ""}${query ? ` "${query}"` : ""}`
+            : "No pages yet."}
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">

@@ -156,14 +156,36 @@ export async function getPublicPagesByUser(userId: string, limit = 100): Promise
     .find({ user_id: userId, visibility: "public", password_hash: null })
     .sort({ created_at: -1 })
     .limit(limit)
-    .project<Pick<PageDoc, "_id" | "slug" | "title" | "view_count" | "created_at">>({
-      _id: 1, slug: 1, title: 1, view_count: 1, created_at: 1,
-    })
+    .project<ExploreProjection>(EXPLORE_PROJECTION)
     .toArray();
-  return docs.map((d) => ({ id: d._id, slug: d.slug, title: d.title, view_count: d.view_count, created_at: d.created_at }));
+  return docs.map(toExploreItem);
 }
 
-export type ExploreItem = Pick<DbPage, "id" | "slug" | "title" | "view_count" | "created_at">;
+export type ExploreItem = Pick<DbPage, "id" | "slug" | "title" | "view_count" | "created_at"> & {
+  tags: string[] | null;
+};
+
+type ExploreProjection = Pick<PageDoc, "_id" | "slug" | "title" | "view_count" | "created_at" | "frontmatter_meta">;
+
+function extractTags(meta: Record<string, unknown> | null | undefined): string[] | null {
+  const tags = meta?.tags;
+  if (!Array.isArray(tags) || tags.length === 0) return null;
+  const strings = tags.filter((t): t is string => typeof t === "string");
+  return strings.length > 0 ? strings : null;
+}
+
+const EXPLORE_PROJECTION = { _id: 1, slug: 1, title: 1, view_count: 1, created_at: 1, frontmatter_meta: 1 } as const;
+
+function toExploreItem(d: ExploreProjection): ExploreItem {
+  return {
+    id: d._id,
+    slug: d.slug,
+    title: d.title,
+    view_count: d.view_count,
+    created_at: d.created_at,
+    tags: extractTags(d.frontmatter_meta),
+  };
+}
 
 export async function getRecentPublicPages(limit = 48): Promise<ExploreItem[]> {
   const db = await getDb();
@@ -172,21 +194,9 @@ export async function getRecentPublicPages(limit = 48): Promise<ExploreItem[]> {
     .find({ visibility: "public", password_hash: null })
     .sort({ created_at: -1 })
     .limit(limit)
-    .project<Pick<PageDoc, "_id" | "slug" | "title" | "view_count" | "created_at">>({
-      _id: 1,
-      slug: 1,
-      title: 1,
-      view_count: 1,
-      created_at: 1,
-    })
+    .project<ExploreProjection>(EXPLORE_PROJECTION)
     .toArray();
-  return docs.map((d) => ({
-    id: d._id,
-    slug: d.slug,
-    title: d.title,
-    view_count: d.view_count,
-    created_at: d.created_at,
-  }));
+  return docs.map(toExploreItem);
 }
 
 export async function getFeaturedPages(limit = 50): Promise<ExploreItem[]> {
@@ -196,11 +206,9 @@ export async function getFeaturedPages(limit = 50): Promise<ExploreItem[]> {
     .find({ featured: true, visibility: "public", password_hash: null })
     .sort({ created_at: -1 })
     .limit(limit)
-    .project<Pick<PageDoc, "_id" | "slug" | "title" | "view_count" | "created_at">>({
-      _id: 1, slug: 1, title: 1, view_count: 1, created_at: 1,
-    })
+    .project<ExploreProjection>(EXPLORE_PROJECTION)
     .toArray();
-  return docs.map((d) => ({ id: d._id, slug: d.slug, title: d.title, view_count: d.view_count, created_at: d.created_at }));
+  return docs.map(toExploreItem);
 }
 
 export async function getPagesByTag(tag: string, limit = 100): Promise<ExploreItem[]> {
@@ -214,11 +222,9 @@ export async function getPagesByTag(tag: string, limit = 100): Promise<ExploreIt
     })
     .sort({ created_at: -1 })
     .limit(limit)
-    .project<Pick<PageDoc, "_id" | "slug" | "title" | "view_count" | "created_at">>({
-      _id: 1, slug: 1, title: 1, view_count: 1, created_at: 1,
-    })
+    .project<ExploreProjection>(EXPLORE_PROJECTION)
     .toArray();
-  return docs.map((d) => ({ id: d._id, slug: d.slug, title: d.title, view_count: d.view_count, created_at: d.created_at }));
+  return docs.map(toExploreItem);
 }
 
 export async function getDistinctTags(limit = 200): Promise<Array<{ tag: string; count: number }>> {
@@ -243,11 +249,9 @@ export async function getPagesByCollection(collectionId: string): Promise<Explor
     .find({ collection_id: collectionId, visibility: "public" })
     .sort({ created_at: -1 })
     .limit(200)
-    .project<Pick<PageDoc, "_id" | "slug" | "title" | "view_count" | "created_at">>({
-      _id: 1, slug: 1, title: 1, view_count: 1, created_at: 1,
-    })
+    .project<ExploreProjection>(EXPLORE_PROJECTION)
     .toArray();
-  return docs.map((d) => ({ id: d._id, slug: d.slug, title: d.title, view_count: d.view_count, created_at: d.created_at }));
+  return docs.map(toExploreItem);
 }
 
 // ---------------------------------------------------------------------------
