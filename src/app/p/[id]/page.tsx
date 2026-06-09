@@ -20,6 +20,8 @@ import { PasswordGate } from "@/components/share/PasswordGate";
 import { EmbedButton } from "@/components/share/EmbedButton";
 import { StickyHeader } from "@/components/share/StickyHeader";
 import { Reactions } from "@/components/share/Reactions";
+import { ShareButtons } from "@/components/share/ShareButtons";
+import { ScrollCta } from "@/components/share/ScrollCta";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -139,10 +141,14 @@ export default async function SharePage({
   const pageTitle = extractTitle(doc.blocks) ?? "Shared page";
   const readMins = readingTimeMinutes(doc.blocks ?? []);
 
+  const pageUrl = absoluteUrl(`/p/${pageRecord?.slug ?? resolvedId}`);
+  const isPublic = pageRecord?.visibility === "public";
+
   return (
     <div className="min-h-screen bg-bg text-text-primary">
       <ReadingProgress />
       <AnalyticsBeacon pageId={resolvedId} />
+      {isPublic && <ScrollCta href={ROUTES.app} />}
 
       {/* ── Sticky header ── */}
       <StickyHeader
@@ -206,14 +212,18 @@ export default async function SharePage({
 
         <div className="flex flex-col lg:flex-row gap-12">
           <div className="min-w-0 flex-1">
-            <FrontmatterMetaStrip meta={pageRecord?.frontmatter_meta ?? null} />
+            <FrontmatterMetaStrip
+              meta={pageRecord?.frontmatter_meta ?? null}
+              userId={pageRecord?.user_id ?? null}
+            />
             <BlockRenderer
               blocks={doc.blocks}
               settings={doc.settings}
               headingAnchors={anchorMap}
             />
-            {pageRecord?.visibility === "public" && (
-              <Reactions pageId={resolvedId} />
+            {isPublic && <Reactions pageId={resolvedId} />}
+            {isPublic && (
+              <ShareButtons url={pageUrl} title={pageTitle} />
             )}
           </div>
           {showToc ? <DesktopTocClient toc={toc} /> : null}
@@ -265,7 +275,13 @@ export default async function SharePage({
 // Frontmatter metadata strip
 // ---------------------------------------------------------------------------
 
-function FrontmatterMetaStrip({ meta }: { meta: Record<string, unknown> | null }) {
+function FrontmatterMetaStrip({
+  meta,
+  userId,
+}: {
+  meta: Record<string, unknown> | null;
+  userId: string | null;
+}) {
   if (!meta) return null;
 
   const author = typeof meta.author === "string" ? meta.author : null;
@@ -291,7 +307,17 @@ function FrontmatterMetaStrip({ meta }: { meta: Record<string, unknown> | null }
     <div className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-text-secondary print:mb-4">
       {author && (
         <span>
-          by <span className="font-medium text-text-primary">{author}</span>
+          by{" "}
+          {userId ? (
+            <Link
+              href={`/u/${userId}`}
+              className="font-medium text-text-primary transition hover:text-accent"
+            >
+              {author}
+            </Link>
+          ) : (
+            <span className="font-medium text-text-primary">{author}</span>
+          )}
         </span>
       )}
       {formattedDate && (
