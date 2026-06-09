@@ -633,7 +633,7 @@ const NAV_LINKS = [
   { href: "#features", label: "Features" },
   { href: "#how", label: "How it works" },
   { href: "#examples", label: "Examples" },
-  { href: "#integrations", label: "Integrations" },
+  { href: "/integrations", label: "Integrations" },
   { href: "/api-docs", label: "API" },
   { href: "/templates", label: "Templates" },
 ];
@@ -1789,6 +1789,7 @@ export function Landing() {
                 <Link href={ROUTES.app} className="transition hover:text-text-primary">Editor</Link>
                 <Link href="/templates" className="transition hover:text-text-primary">Templates</Link>
                 <Link href="/explore" className="transition hover:text-text-primary">Explore</Link>
+                <Link href="/integrations" className="transition hover:text-text-primary">Integrations</Link>
                 <Link href="/api-docs" className="transition hover:text-text-primary">API docs</Link>
                 <Link href="/changelog" className="transition hover:text-text-primary">Changelog</Link>
                 <Link href="/about" className="transition hover:text-text-primary">About</Link>

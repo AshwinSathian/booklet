@@ -300,12 +300,13 @@ function FrontmatterMetaStrip({ meta }: { meta: Record<string, unknown> | null }
       {tags.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {tags.map((tag) => (
-            <span
+            <Link
               key={tag}
-              className="rounded-pill bg-accent-dim text-accent text-xs px-2 py-0.5 font-medium"
+              href={`/tags/${encodeURIComponent(tag)}`}
+              className="rounded-pill bg-accent-dim text-accent text-xs px-2 py-0.5 font-medium transition hover:bg-accent/20 hover:text-accent"
             >
-              {tag}
-            </span>
+              #{tag}
+            </Link>
           ))}
         </div>
       )}

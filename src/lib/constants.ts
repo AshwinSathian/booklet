@@ -8,6 +8,7 @@ export const ROUTES = {
   signUp: "/sign-up",
   myPages: "/my-pages",
   mcpSetup: "/mcp-setup",
+  integrations: "/integrations",
 } as const;
 
 export const STORAGE = {

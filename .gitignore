@@ -59,3 +59,6 @@ mcp-server/.wrangler/
 # Playwright
 test-results/
 playwright-report/
+
+# Private strategy documents
+MARKET_PLAN.md
