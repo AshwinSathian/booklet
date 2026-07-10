@@ -13,6 +13,7 @@
     "serve": "next start",
     "lint": "eslint .",
     "test": "tsc --noEmit",
+    "test:unit": "playwright test --config=playwright.unit.config.ts",
     "postinstall": "node scripts/stub-og.cjs",
     "prepare": "git config core.hooksPath .githooks || true",
     "deploy": "bash scripts/redeploy.sh"

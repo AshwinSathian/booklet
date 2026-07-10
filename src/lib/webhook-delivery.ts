@@ -1,4 +1,5 @@
 import { getWebhooksByUser, touchWebhookTriggered } from "@/lib/db";
+import { bareHostname, resolveHostSafely } from "@/lib/ssrf-guard";
 import type { DbWebhook } from "@/lib/db/types";
 
 type WebhookEvent = DbWebhook["events"][number];
@@ -39,8 +40,22 @@ export async function deliverWebhooks(
 
   await Promise.allSettled(
     relevant.map(async (webhook) => {
-      const signature = await signPayload(webhook.secret, body);
       try {
+        // Re-resolve and re-check the hostname immediately before the
+        // outbound request. The URL passed creation-time validation, but
+        // DNS answers can change afterwards (DNS rebinding) — a hostname
+        // that resolved to a public IP when the webhook was registered
+        // could resolve to an internal address by the time we deliver.
+        let parsed: URL;
+        try {
+          parsed = new URL(webhook.url);
+        } catch {
+          return;
+        }
+        const check = await resolveHostSafely(bareHostname(parsed));
+        if (!check.safe) return;
+
+        const signature = await signPayload(webhook.secret, body);
         const res = await fetch(webhook.url, {
           method: "POST",
           headers: {
@@ -49,6 +64,12 @@ export async function deliverWebhooks(
             "X-Readable-Event": event,
           },
           body,
+          // Never follow redirects for webhook delivery: a legitimate
+          // receiver doesn't need us to, and following one blindly would
+          // let a URL that passed the denylist check redirect us to an
+          // internal address at delivery time. A 3xx response is treated
+          // as a delivery failure (res.ok is false for it).
+          redirect: "manual",
           signal: AbortSignal.timeout(10_000),
         });
         if (res.ok) {
