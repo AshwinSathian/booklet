@@ -19,6 +19,44 @@ import type {
 type DraftsPersistErrorCode =
   (typeof DRAFTS_PERSIST)["errorCode"][keyof (typeof DRAFTS_PERSIST)["errorCode"]];
 
+/**
+ * Emitted after every successful local mutation. Consumed exclusively by
+ * the cloud-sync observer layer (./cloud-sync.ts), which debounce-pushes
+ * changes to the server for signed-in users. store.ts intentionally knows
+ * nothing about auth or networking — it just announces "this changed."
+ */
+export type DraftMutationEvent =
+  | { type: "upsert"; draft: DraftDoc }
+  | { type: "delete"; id: string };
+
+type DraftMutationListener = (event: DraftMutationEvent) => void;
+
+const mutationListeners = new Set<DraftMutationListener>();
+
+/**
+ * Subscribe to local draft mutations. Returns an unsubscribe function.
+ * Safe to call from non-browser environments (no-op listeners just never
+ * fire, since mutations themselves are localStorage-gated).
+ */
+export function subscribeToDraftMutations(
+  listener: DraftMutationListener,
+): () => void {
+  mutationListeners.add(listener);
+  return () => {
+    mutationListeners.delete(listener);
+  };
+}
+
+function notifyMutation(event: DraftMutationEvent): void {
+  for (const listener of mutationListeners) {
+    try {
+      listener(event);
+    } catch {
+      // Observers must never break local persistence.
+    }
+  }
+}
+
 let lastPersistError: DraftsPersistErrorCode | null = null;
 
 export function getLastDraftsPersistError(): DraftsPersistErrorCode | null {
@@ -217,6 +255,7 @@ export function createDraft(initial?: DraftCreateInput): DraftDoc {
   };
 
   upsertAndPersist(db, doc);
+  notifyMutation({ type: "upsert", draft: doc });
   return doc;
 }
 
@@ -238,6 +277,7 @@ export function updateDraft(
   };
 
   upsertAndPersist(db, saved);
+  notifyMutation({ type: "upsert", draft: saved });
   return saved;
 }
 
@@ -245,7 +285,9 @@ export function deleteDraft(id: string): boolean {
   const db = readDb();
   if (!db.drafts[id]) return false;
   delete db.drafts[id];
-  return writeDb(db);
+  const ok = writeDb(db);
+  if (ok) notifyMutation({ type: "delete", id });
+  return ok;
 }
 
 export function duplicateDraft(id: string): DraftDoc | null {
@@ -267,7 +309,22 @@ export function duplicateDraft(id: string): DraftDoc | null {
   };
 
   upsertAndPersist(db, copy);
+  notifyMutation({ type: "upsert", draft: copy });
   return copy;
+}
+
+/**
+ * Write a full draft document into the local store exactly as given — no
+ * id/timestamp regeneration, no mutation-listener notification. Used
+ * exclusively by the cloud-sync pull path (./cloud-sync.ts) to reconcile a
+ * newer cloud copy into localStorage. Deliberately silent: writing a
+ * cloud-sourced draft back into local storage is not a new local edit, so
+ * echoing it straight back to the server would be a pointless round-trip.
+ */
+export function restoreDraft(doc: DraftDoc): DraftDoc {
+  const db = readDb();
+  upsertAndPersist(db, doc);
+  return doc;
 }
 
 /**
@@ -299,5 +356,6 @@ export function setDraftLastPublished(
   };
 
   upsertAndPersist(db, saved);
+  notifyMutation({ type: "upsert", draft: saved });
   return saved;
 }

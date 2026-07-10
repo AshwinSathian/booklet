@@ -85,6 +85,27 @@ function isDraftDocV2(v: unknown): v is DraftDoc {
   return true;
 }
 
+/**
+ * Coerce an arbitrary unknown value (e.g. server JSON response, or a
+ * localStorage-persisted draft) into a well-formed DraftDoc, or null if it
+ * doesn't look like one at all. Shared by the localStorage DB migration
+ * below and by cloud-sync.ts, which must not trust a server response's
+ * shape any more than localStorage's.
+ */
+export function coerceDraftDoc(v: unknown): DraftDoc | null {
+  if (!isDraftDocV2(v)) return null;
+
+  return {
+    ...v,
+    v: isNumber(v.v) ? v.v : DRAFT_DOC.version,
+    title: v.title || DRAFT_DOC.defaultTitle,
+    raw: v.raw ?? "",
+    settings: coerceSettings(v.settings),
+    lastPublished: coercePublishedSnapshotRef((v as DraftDoc).lastPublished),
+    publishHistory: coercePublishHistory((v as DraftDoc).publishHistory),
+  };
+}
+
 function coerceDbV2(raw: unknown): DraftsDbV2 {
   if (!isPlainObject(raw)) return emptyDb();
   if (raw.schemaVersion !== 2) return emptyDb();
@@ -93,20 +114,10 @@ function coerceDbV2(raw: unknown): DraftsDbV2 {
 
   const drafts: Record<string, DraftDoc> = {};
   for (const [id, doc] of Object.entries(draftsRaw)) {
-    if (!isDraftDocV2(doc)) continue;
-    if (doc.id !== id) continue;
-
-    drafts[id] = {
-      ...doc,
-      v: isNumber(doc.v) ? doc.v : DRAFT_DOC.version,
-      title: doc.title || DRAFT_DOC.defaultTitle,
-      raw: doc.raw ?? "",
-      settings: coerceSettings(doc.settings),
-      lastPublished: coercePublishedSnapshotRef(
-        (doc as DraftDoc).lastPublished,
-      ),
-      publishHistory: coercePublishHistory((doc as DraftDoc).publishHistory),
-    };
+    if (!isPlainObject(doc) || doc.id !== id) continue;
+    const coerced = coerceDraftDoc(doc);
+    if (!coerced) continue;
+    drafts[id] = coerced;
   }
 
   return { schemaVersion: 2, drafts };
