@@ -255,48 +255,40 @@ export default async function SharePage({
       {/* ── Footer colophon ── */}
       <footer className="mt-12 border-t border-border-subtle print:hidden">
         <div className={`mx-auto w-full px-4 py-8 ${maxW}`}>
-          {/* Colophon row. The branded half (logo/app-name/CTA) is the actual
-              "Made with Readable" attribution and respects
-              remove_attribution_badge (signed-in pages default to no badge,
-              anonymous pages always show it, either can toggle per-page via
-              PATCH — see PAYWALL_HISTORY.md). Publish date / read time is
-              genuinely useful reader info, independent of attribution, so it
-              stays either way. */}
+          {/* Colophon row — always shown, for all pages. remove_attribution_badge
+              still exists on DbPage but the toggle to change it was deliberately
+              removed (changelog 2026-05-25: "Attribution badge toggle removed —
+              the badge is always on, for all pages, always"); no UI or API path
+              sets it to true anymore, so this footer must not gate on it. */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              {!pageRecord?.remove_attribution_badge && (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden className="shrink-0">
-                  <rect width="24" height="24" rx="5.5" fill="var(--color-accent)" />
-                  <path
-                    d="M 6.5 5 L 6.5 19 M 6.5 5 L 13 5 Q 17 5 17 9 Q 17 13 13 13 L 6.5 13 M 11.5 13 L 17 19"
-                    stroke="white"
-                    strokeWidth="2.2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              )}
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden className="shrink-0">
+                <rect width="24" height="24" rx="5.5" fill="var(--color-accent)" />
+                <path
+                  d="M 6.5 5 L 6.5 19 M 6.5 5 L 13 5 Q 17 5 17 9 Q 17 13 13 13 L 6.5 13 M 11.5 13 L 17 19"
+                  stroke="white"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
               <div>
-                {!pageRecord?.remove_attribution_badge && (
-                  <div className="text-xs font-semibold text-text-primary">{APP_NAME}</div>
-                )}
+                <div className="text-xs font-semibold text-text-primary">{APP_NAME}</div>
                 <div className="text-2xs text-text-muted">
                   Published {createdAt.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
                   {readMins > 0 && <> · ~{readMins} min read</>}
                 </div>
               </div>
             </div>
-            {!pageRecord?.remove_attribution_badge && (
-              <Link
-                href={ROUTES.app}
-                className="inline-flex items-center gap-1.5 rounded-pill border border-outline px-3.5 py-1.5 text-xs font-medium text-text-secondary transition hover:border-accent-soft/50 hover:text-text-primary"
-              >
-                Write your own page
-                <svg width="10" height="10" fill="none" viewBox="0 0 12 12" aria-hidden>
-                  <path d="M2.5 9.5 9.5 2.5M9.5 2.5H4M9.5 2.5V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </Link>
-            )}
+            <Link
+              href={ROUTES.app}
+              className="inline-flex items-center gap-1.5 rounded-pill border border-outline px-3.5 py-1.5 text-xs font-medium text-text-secondary transition hover:border-accent-soft/50 hover:text-text-primary"
+            >
+              Write your own page
+              <svg width="10" height="10" fill="none" viewBox="0 0 12 12" aria-hidden>
+                <path d="M2.5 9.5 9.5 2.5M9.5 2.5H4M9.5 2.5V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </Link>
           </div>
         </div>
       </footer>
