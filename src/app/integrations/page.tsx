@@ -1,4 +1,5 @@
-import { AppLogo } from "@/components/ui/AppLogo";
+import { SiteFooter } from "@/components/marketing/SiteFooter";
+import { SiteHeader } from "@/components/marketing/SiteHeader";
 import { Button } from "@/components/ui/Button";
 import { absoluteUrl, buildMetadata } from "@/lib/seo";
 import { APP_NAME, ROUTES } from "@/lib/constants";
@@ -89,23 +90,7 @@ const NAV_ITEMS = [
 export default function IntegrationsPage() {
   return (
     <div className="min-h-screen bg-bg text-text-primary">
-      {/* Header */}
-      <header className="sticky top-0 z-20 border-b border-border-subtle bg-bg/85 backdrop-blur-xl">
-        <div className="mx-auto w-full max-w-5xl px-4 py-3 flex items-center justify-between gap-3">
-          <AppLogo onlyIcon={false} />
-          <div className="flex items-center gap-3">
-            <Link
-              href="/api-docs"
-              className="hidden sm:inline text-sm text-text-muted transition hover:text-text-primary"
-            >
-              API docs
-            </Link>
-            <Button variant="primary" size="md" href={ROUTES.app}>
-              Open editor
-            </Button>
-          </div>
-        </div>
-      </header>
+      <SiteHeader ctaTrackLocation="integrations_topbar" />
 
       {/* Hero */}
       <section className="mx-auto w-full max-w-5xl px-4 pt-16 pb-10 text-center">
@@ -602,18 +587,7 @@ if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-border-subtle">
-        <div className="mx-auto w-full max-w-5xl px-4 py-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <AppLogo onlyIcon={false} />
-          <div className="flex items-center gap-4 text-xs text-text-muted">
-            <Link href="/mcp" className="transition hover:text-text-primary">MCP</Link>
-            <Link href="/api-docs" className="transition hover:text-text-primary">API docs</Link>
-            <Link href="/explore" className="transition hover:text-text-primary">Explore</Link>
-            <Link href={ROUTES.app} className="transition hover:text-text-primary">Editor</Link>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

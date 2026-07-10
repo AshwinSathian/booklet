@@ -1,4 +1,5 @@
-import { AppLogo } from "@/components/ui/AppLogo";
+import { SiteFooter } from "@/components/marketing/SiteFooter";
+import { SiteHeader } from "@/components/marketing/SiteHeader";
 import { Button } from "@/components/ui/Button";
 import { APP_NAME, ROUTES } from "@/lib/constants";
 import { buildMetadata } from "@/lib/seo";
@@ -88,16 +89,7 @@ const FEATURE_GROUPS: { heading: string; items: string[] }[] = [
 export default function PricingPage() {
   return (
     <div className="min-h-screen bg-bg text-text-primary">
-      <header className="border-b border-border-subtle bg-bg/85 backdrop-blur-xl sticky top-0 z-20">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-6 h-12">
-          <Link href="/">
-            <AppLogo onlyIcon={false} />
-          </Link>
-          <Button variant="primary" size="md" href={ROUTES.app}>
-            Start writing
-          </Button>
-        </div>
-      </header>
+      <SiteHeader ctaLabel="Start writing" ctaTrackLocation="pricing_topbar" />
 
       <main className="mx-auto max-w-3xl px-6 py-16">
         {/* Hero */}
@@ -175,19 +167,7 @@ export default function PricingPage() {
         </div>
       </main>
 
-      <footer className="mt-8 border-t border-border-subtle">
-        <div className="mx-auto w-full max-w-3xl px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-text-muted">
-          <div className="flex items-center gap-2">
-            <AppLogo onlyIcon={true} />
-            <span>{APP_NAME} — Beautiful markdown pages, instantly.</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <Link href="/templates" className="hover:text-text-primary transition">Templates</Link>
-            <Link href="/explore" className="hover:text-text-primary transition">Explore</Link>
-            <Link href={ROUTES.app} className="text-accent hover:text-accent-soft transition">Start writing →</Link>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter className="mt-8" />
     </div>
   );
 }

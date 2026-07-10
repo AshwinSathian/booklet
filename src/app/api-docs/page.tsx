@@ -1,5 +1,5 @@
-import { AppLogo } from "@/components/ui/AppLogo";
-import { ROUTES } from "@/lib/constants";
+import { SiteFooter } from "@/components/marketing/SiteFooter";
+import { SiteHeader } from "@/components/marketing/SiteHeader";
 import { absoluteUrl, buildMetadata } from "@/lib/seo";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -109,25 +109,11 @@ export default function ApiDocsPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <header className="sticky top-0 z-20 border-b border-border-subtle bg-bg/85 backdrop-blur-xl">
-        <div className="mx-auto w-full max-w-5xl px-4 h-12 flex items-center justify-between gap-4">
-          <Link href={ROUTES.home}>
-            <AppLogo onlyIcon={false} />
-          </Link>
-          <nav className="flex items-center gap-3">
-            <Link
-              href={ROUTES.app}
-              className="hidden sm:inline-flex items-center gap-1.5 rounded-pill border border-outline px-3.5 py-1.5 text-xs font-medium text-text-secondary transition hover:border-accent-soft/50 hover:text-text-primary"
-            >
-              Open editor
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <SiteHeader ctaTrackLocation="api_docs_topbar" />
 
       <div className="flex-1 mx-auto w-full max-w-5xl px-4 py-10 flex gap-10">
         {/* Sidebar nav */}
-        <aside className="hidden lg:block shrink-0 w-44 sticky top-20 self-start">
+        <aside className="hidden lg:block shrink-0 w-44 sticky top-24 self-start">
           <p className="text-[0.65rem] font-semibold uppercase tracking-widest text-text-muted mb-3">On this page</p>
           <nav className="flex flex-col gap-1 text-xs">
             {[
@@ -513,18 +499,7 @@ jobs:
         </main>
       </div>
 
-      <footer className="border-t border-outline py-8">
-        <div className="mx-auto max-w-5xl px-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-text-muted">
-          <Link href={ROUTES.home} className="hover:text-text-primary transition">
-            readable
-          </Link>
-          <div className="flex items-center gap-4">
-            <Link href={ROUTES.home} className="hover:text-text-primary transition">Home</Link>
-            <Link href={ROUTES.app} className="hover:text-text-primary transition">Editor</Link>
-            <Link href="/my-pages" className="hover:text-text-primary transition">My pages</Link>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

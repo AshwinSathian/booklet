@@ -1,4 +1,5 @@
-import { AppLogo } from "@/components/ui/AppLogo";
+import { SiteFooter } from "@/components/marketing/SiteFooter";
+import { SiteHeader } from "@/components/marketing/SiteHeader";
 import { Button } from "@/components/ui/Button";
 import { APP_NAME, ROUTES } from "@/lib/constants";
 import { absoluteUrl, buildMetadata } from "@/lib/seo";
@@ -39,16 +40,7 @@ export default function TemplatesPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <header className="border-b border-border-subtle bg-bg/85 backdrop-blur-xl sticky top-0 z-20">
-        <div className="mx-auto w-full max-w-3xl px-4 h-12 flex items-center justify-between gap-4">
-          <Link href="/">
-            <AppLogo onlyIcon={false} />
-          </Link>
-          <Button variant="primary" size="md" href={ROUTES.app}>
-            Start writing
-          </Button>
-        </div>
-      </header>
+      <SiteHeader ctaLabel="Start writing" ctaTrackLocation="templates_topbar" />
 
       <main className="mx-auto w-full max-w-3xl px-4 py-12">
         {/* Hero */}
@@ -109,18 +101,7 @@ export default function TemplatesPage() {
         </div>
       </main>
 
-      <footer className="mt-8 border-t border-border-subtle">
-        <div className="mx-auto w-full max-w-3xl px-4 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-text-muted">
-          <div className="flex items-center gap-2">
-            <AppLogo onlyIcon={true} />
-            <span>{APP_NAME} — Beautiful markdown pages, instantly.</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <Link href="/explore" className="hover:text-text-primary transition">Explore</Link>
-            <Link href={ROUTES.app} className="text-accent hover:text-accent-soft transition">Start writing →</Link>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter className="mt-8" />
     </div>
   );
 }
