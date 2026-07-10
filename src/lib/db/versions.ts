@@ -4,11 +4,38 @@ import type { PageVersion } from "./types";
 
 const MAX_VERSIONS_PER_PAGE = 50;
 
+// Bounded retry count for the compare-and-swap-via-retry loop below — a
+// clear thrown error after this many attempts is correct; we must not spin
+// forever under sustained contention (e.g. a pathological autosave loop).
+const MAX_SNAPSHOT_RETRIES = 5;
+
 export type PageVersionListItem = Pick<
   PageVersion,
   "id" | "page_id" | "version_number" | "created_at" | "size_bytes"
 >;
 
+function isDuplicateKeyError(err: unknown): boolean {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    "code" in err &&
+    (err as { code?: unknown }).code === 11000
+  );
+}
+
+/**
+ * Snapshots `doc` as the next version of `pageId`.
+ *
+ * Concurrency: two callers (e.g. an autosave and a CLI publish, or two
+ * collaborators) can race to read the same "latest" version_number and both
+ * try to insert the same next number. A unique index on
+ * `(page_id, version_number)` (see scripts/setup-mongodb.mjs /
+ * src/lib/db/index-specs.mjs) turns the second insert into a duplicate-key
+ * error (11000) instead of silent corruption; we catch that, re-read the
+ * current max, and retry with a fresh candidate number — a bounded
+ * compare-and-swap-via-retry loop rather than a blind "read old max, write
+ * new max" race.
+ */
 export async function snapshotPageVersion(
   pageId: string,
   doc: PublishedDoc,
@@ -16,24 +43,41 @@ export async function snapshotPageVersion(
   const db = await getDb();
   const coll = db.collection<PageVersion>("page_versions");
 
-  const latest = await coll
-    .find({ page_id: pageId })
-    .sort({ version_number: -1 })
-    .limit(1)
-    .toArray();
-
   const json = JSON.stringify(doc);
   const encoded = new TextEncoder().encode(json);
-  const versionNumber = (latest[0]?.version_number ?? 0) + 1;
 
-  await coll.insertOne({
-    id: crypto.randomUUID(),
-    page_id: pageId,
-    version_number: versionNumber,
-    doc_snapshot: json,
-    created_at: new Date().toISOString(),
-    size_bytes: encoded.byteLength,
-  });
+  let inserted = false;
+  for (let attempt = 0; attempt < MAX_SNAPSHOT_RETRIES && !inserted; attempt++) {
+    const latest = await coll
+      .find({ page_id: pageId })
+      .sort({ version_number: -1 })
+      .limit(1)
+      .toArray();
+    const versionNumber = (latest[0]?.version_number ?? 0) + 1;
+
+    try {
+      await coll.insertOne({
+        id: crypto.randomUUID(),
+        page_id: pageId,
+        version_number: versionNumber,
+        doc_snapshot: json,
+        created_at: new Date().toISOString(),
+        size_bytes: encoded.byteLength,
+      });
+      inserted = true;
+    } catch (err) {
+      if (isDuplicateKeyError(err)) {
+        continue; // another writer took this version_number — re-read and retry
+      }
+      throw err;
+    }
+  }
+
+  if (!inserted) {
+    throw new Error(
+      `snapshotPageVersion: exhausted ${MAX_SNAPSHOT_RETRIES} retries for page ${pageId} — sustained write contention on this page's version_number`,
+    );
+  }
 
   const stale = await coll
     .find({ page_id: pageId })
