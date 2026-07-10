@@ -3,7 +3,7 @@ import { APP_NAME } from "@/lib/constants";
 import { buildClerkAppearance, isAppleDevice } from "@/lib/clerk-appearance";
 import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Source_Serif_4 } from "next/font/google";
 import { headers } from "next/headers";
 import { ThemeProvider } from "next-themes";
 import { Suspense } from "react";
@@ -13,6 +13,19 @@ const inter = Inter({
   subsets: ["latin"],
   weight: ["100", "200", "300", "400", "500", "600", "700"],
   variable: "--font-inter",
+  display: "swap",
+});
+
+// Distinct reading typeface for published-page body content — see
+// --font-reading in globals.css and DocSettings.typeface in src/lib/blocks.ts.
+// Deliberately separate from Inter (the UI/chrome font): "type is the
+// product" means the thing people screenshot and share should read as a
+// considered editorial artifact, not generic app chrome.
+const sourceSerif4 = Source_Serif_4({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
+  variable: "--font-source-serif-4",
   display: "swap",
 });
 
@@ -116,7 +129,7 @@ export default async function RootLayout({
       signInFallbackRedirectUrl="/app"
       signUpFallbackRedirectUrl="/app"
     >
-      <html lang="en" suppressHydrationWarning className={inter.variable}>
+      <html lang="en" suppressHydrationWarning className={`${inter.variable} ${sourceSerif4.variable}`}>
         <body>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             <Suspense fallback={null}>

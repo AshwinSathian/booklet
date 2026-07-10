@@ -23,6 +23,10 @@
 
   --font-body: var(--font-inter), "Inter", system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", ui-monospace, "SF Mono", monospace;
+  /* Distinct reading typeface for published-page body content (BlockRenderer)
+     — deliberately separate from --font-body (app/editor chrome stays Inter).
+     See DocSettings.typeface in src/lib/blocks.ts for the per-document toggle. */
+  --font-reading: var(--font-source-serif-4), Georgia, "Times New Roman", serif;
 
   /* ── Central type scale — edit here to restyle the entire app ───────────
      Weight ladder mirrors ashwin-portfolio prose system.
@@ -192,6 +196,7 @@ html.dark {
   /* Fonts */
   --font-body: var(--font-body);
   --font-mono: var(--font-mono);
+  --font-reading: var(--font-reading);
 
   /* ── Type scale ──────────────────────────────────────────────────────────
      Dense-but-coherent small-size scale. Tailwind defaults for base/lg/xl/2xl/3xl remain.

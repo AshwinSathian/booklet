@@ -38,6 +38,14 @@ export type DocSettings = {
   spacing: "compact" | "comfortable";
   width: "normal" | "wide";
   code: "show" | "collapse";
+  // Reading typeface for published-page body content — "serif" is the
+  // distinctive reading face (--font-reading, Source Serif 4); "sans" opts
+  // back into the UI's own font (--font-body, Inter) for authors who prefer
+  // it. Docs published before this field existed have no stored value —
+  // BlockRenderer treats a missing/undefined typeface as "serif" (the
+  // current default), not as "sans", so old docs pick up the new reading
+  // typography rather than silently opting out of it.
+  typeface?: "sans" | "serif";
 };
 
 export type PublishedDoc = {
@@ -52,6 +60,7 @@ export const DEFAULT_SETTINGS: DocSettings = {
   spacing: "comfortable",
   width: "normal",
   code: "collapse",
+  typeface: "serif",
 };
 
 /** Diagram languages that trigger the diagram block type. */
