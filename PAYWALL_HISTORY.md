@@ -5,8 +5,11 @@
 > Purpose: Allow complete, accurate reinstatement of any or all paywalls at a future date.
 >
 > All paywalls were removed in May 2026 as part of an "everything free during early access" policy.
-> The billing infrastructure (Stripe, pricing page, quota.ts, UpgradeGate component) was **preserved
-> in full** and can be re-enabled without rebuilding anything from scratch.
+> The billing infrastructure (Stripe, pricing page, quota.ts) was **preserved in full** and can be
+> re-enabled without rebuilding anything from scratch. The `UpgradeGate` lock-overlay component was
+> deleted in a 2026-07 cleanup pass (zero call sites, confirmed dead code) — re-enabling paywalls
+> will need a new gate component; it was a small presentational wrapper, not meaningfully "rebuilding
+> from scratch."
 
 ---
 
@@ -21,8 +24,11 @@ the product has demonstrated enough value to justify asking for payment. The cor
 - `src/lib/stripe.ts` — Stripe SDK client.
 - `src/app/api/billing/` — checkout, webhook, and portal endpoints.
 - `src/app/pricing/page.tsx` — three-tier pricing page (now shows early-access banner).
-- `src/components/ui/UpgradeGate.tsx` — lock overlay component (unused in UI; ready for reinstatement).
 - Stripe plan IDs and env vars remain in place.
+
+**What was removed (2026-07):**
+- `src/components/ui/UpgradeGate.tsx` — lock overlay component, deleted as confirmed-dead code
+  (zero call sites). Re-enabling paywalls will need a small new gate component.
 
 ---
 

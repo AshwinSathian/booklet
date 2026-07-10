@@ -120,7 +120,7 @@ The following are confirmed complete and do not need rework.
 | Stripe billing (checkout, webhooks) | ❌ Removed | No paid plans; portal route retained for history |
 | Pricing page | ✅ Converted | `/pricing` now shows "free forever" feature list |
 | Attribution badge ("Made with Readable") | ✅ Done | Share page, hidden when `remove_attribution_badge = true` |
-| Password-protected pages | ✅ Done | `PasswordGate`, bcrypt hash in DB, cookie-based auth |
+| Password-protected pages | ✅ Done | `PasswordGate`, PBKDF2-SHA256 hash in DB, signed cookie-based auth |
 | YAML frontmatter support | ✅ Done | Parsed from raw Markdown; `frontmatter_meta` in DB |
 | Template SEO landing pages | ✅ Done | `/templates`, `/templates/[slug]` with full content |
 | Public explore page | ✅ Done | `/explore` shows recent public pages |

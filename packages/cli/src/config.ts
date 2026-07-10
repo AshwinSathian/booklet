@@ -1,6 +1,6 @@
 import { homedir } from "os";
 import { join } from "path";
-import { readFile, writeFile, mkdir } from "fs/promises";
+import { readFile, writeFile, mkdir, chmod } from "fs/promises";
 
 const CONFIG_DIR = join(homedir(), ".readable");
 const CONFIG_PATH = join(CONFIG_DIR, "config.json");
@@ -23,8 +23,14 @@ export async function readConfig(): Promise<Config> {
 }
 
 export async function writeConfig(config: Config): Promise<void> {
-  await mkdir(CONFIG_DIR, { recursive: true });
-  await writeFile(CONFIG_PATH, JSON.stringify(config, null, 2) + "\n", "utf8");
+  // Config stores a plaintext API key — owner-only permissions. `mode` on
+  // mkdir/writeFile only applies at creation time, so re-chmod on every
+  // write to also tighten a dir/file left world-readable by an older CLI
+  // version.
+  await mkdir(CONFIG_DIR, { recursive: true, mode: 0o700 });
+  await chmod(CONFIG_DIR, 0o700);
+  await writeFile(CONFIG_PATH, JSON.stringify(config, null, 2) + "\n", { encoding: "utf8", mode: 0o600 });
+  await chmod(CONFIG_PATH, 0o600);
 }
 
 export async function getApiKey(): Promise<string | null> {

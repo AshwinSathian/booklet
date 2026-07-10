@@ -17,7 +17,7 @@ export type DbPage = {
   team_id: string | null;         // null = personal page
   view_count: number;
   remove_attribution_badge: boolean;
-  password_hash: string | null;   // bcrypt hash; null = no password
+  password_hash: string | null;   // PBKDF2-SHA256 hash (see src/lib/password.ts); null = no password
   featured: boolean;              // opt-in: appear on /explore featured section
   frontmatter_meta: Record<string, unknown> | null;  // parsed YAML frontmatter fields
   created_at: string;
