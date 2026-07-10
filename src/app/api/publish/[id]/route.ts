@@ -4,6 +4,7 @@ import { BLOCKS, STORAGE } from "@/lib/constants";
 import { getPageRecord, updatePageRecord } from "@/lib/db";
 import { snapshotPageVersion } from "@/lib/db/versions";
 import { putDoc } from "@/lib/storage";
+import { logError } from "@/lib/logger";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
@@ -72,7 +73,7 @@ export async function PATCH(
     try {
       await putDoc(id, doc);
       void snapshotPageVersion(id, doc).catch((err) => {
-        console.error("[patch-publish] version snapshot failed:", err);
+        logError("patch-publish", "Version snapshot failed", err);
       });
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Update failed";
@@ -83,7 +84,7 @@ export async function PATCH(
     try {
       await updatePageRecord(id, { updated_at: updatedAt });
     } catch (dbErr) {
-      console.error("[patch-publish] DB updated_at write failed:", dbErr);
+      logError("patch-publish", "DB updated_at write failed", dbErr);
     }
 
     const siteOrigin = process.env.NEXT_PUBLIC_SITE_URL
@@ -93,7 +94,7 @@ export async function PATCH(
 
     return NextResponse.json({ id, url: publishedUrl, updated_at: updatedAt });
   } catch (e: unknown) {
-    console.error("[patch-publish] Unhandled error:", e);
+    logError("patch-publish", "Unhandled error", e);
     const msg = e instanceof Error ? e.message : "An unexpected error occurred";
     return NextResponse.json({ error: msg }, { status: 500 });
   }

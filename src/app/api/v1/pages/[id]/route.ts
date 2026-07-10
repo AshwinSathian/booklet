@@ -10,6 +10,7 @@ import { getDoc, putDoc, deleteDoc } from "@/lib/storage";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { ROUTES } from "@/lib/constants";
 import { isValidSlug, SLUG_RULES_MESSAGE } from "@/lib/slug";
+import { logError } from "@/lib/logger";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -181,7 +182,7 @@ export async function PATCH(
     try {
       await putDoc(id, doc);
       void snapshotPageVersion(id, doc).catch((err) => {
-        console.error("[v1/pages] version snapshot failed:", err);
+        logError("v1/pages", "Version snapshot failed", err);
       });
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Update failed";
@@ -195,7 +196,7 @@ export async function PATCH(
       isUpdate: true,
       contentLength: rawLength,
       source: "api",
-    }).catch((err) => console.error("[v1/pages] event record failed:", err));
+    }).catch((err) => logError("v1/pages", "Event record failed", err));
 
     metaPatch.updated_at = new Date().toISOString();
   }
@@ -204,7 +205,7 @@ export async function PATCH(
     try {
       await updatePageRecord(id, metaPatch);
     } catch (dbErr) {
-      console.error("[v1/pages] DB patch write failed:", dbErr);
+      logError("v1/pages", "DB patch write failed", dbErr);
     }
   }
 
@@ -260,7 +261,7 @@ export async function DELETE(
     await deletePageRecord(id);
     await deletePageVersions(id);
   } catch (dbErr) {
-    console.error("[v1/pages] DB delete failed:", dbErr);
+    logError("v1/pages", "DB delete failed", dbErr);
   }
 
   return NextResponse.json({ ok: true });

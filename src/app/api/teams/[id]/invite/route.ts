@@ -1,5 +1,6 @@
 import { getCollectionRecord } from "@/lib/db";
 import { signInviteToken } from "@/lib/invite-token";
+import { logError } from "@/lib/logger";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
@@ -33,7 +34,7 @@ export async function POST(
   try {
     token = await signInviteToken({ teamId: id, invitedEmail: email, invitedBy: userId });
   } catch (err) {
-    console.error("[teams/invite] failed to sign invite token:", err);
+    logError("teams/invite", "Failed to sign invite token", err);
     return NextResponse.json({ error: "Invite creation is misconfigured. Contact the administrator." }, { status: 500 });
   }
 

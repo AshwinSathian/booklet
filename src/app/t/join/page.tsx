@@ -1,6 +1,7 @@
 import { addCollectionMember, getCollectionRecord } from "@/lib/db";
 import { createId } from "@/lib/id";
 import { verifyInviteToken } from "@/lib/invite-token";
+import { logError } from "@/lib/logger";
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 
@@ -23,7 +24,7 @@ export default async function TeamJoinPage({
     payload = await verifyInviteToken(token);
   } catch (err) {
     if (err instanceof Error && err.message.startsWith("INVITE_JWT_SECRET")) {
-      console.error("[t/join] failed to verify invite token:", err);
+      logError("t/join", "Failed to verify invite token", err);
       return <ErrorPage message="Joining a team isn't available right now. Please contact the administrator." />;
     }
     return <ErrorPage message="This invite link has expired or is invalid." />;

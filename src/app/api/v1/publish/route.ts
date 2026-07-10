@@ -14,6 +14,7 @@ import { parseToBlocks } from "@/lib/parse";
 import { putDoc } from "@/lib/storage";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { isValidSlug, SLUG_RULES_MESSAGE } from "@/lib/slug";
+import { logError } from "@/lib/logger";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -104,7 +105,7 @@ export async function POST(req: Request) {
     isUpdate: false,
     contentLength: rawLength,
     source: "api",
-  }).catch((err) => console.error("[v1/publish] event record failed:", err));
+  }).catch((err) => logError("v1/publish", "Event record failed", err));
 
   try {
     const title = fm.title ?? extractDocTitle(payload.blocks);
@@ -118,11 +119,11 @@ export async function POST(req: Request) {
     if (fm.visibility) postPatch.visibility = fm.visibility;
     if (normalizedSlug) postPatch.slug = normalizedSlug;
     if (Object.keys(postPatch).length > 0) {
-      await updatePageRecord(id, postPatch).catch((e) => console.error("[v1/publish] patch failed:", e));
+      await updatePageRecord(id, postPatch).catch((e) => logError("v1/publish", "Patch failed", e));
     }
 
     void snapshotPageVersion(id, doc).catch((err) => {
-      console.error("[v1/publish] version snapshot failed:", err);
+      logError("v1/publish", "Version snapshot failed", err);
     });
     void deliverWebhooks(userId, "page.published", {
       page_id: id,
@@ -131,7 +132,7 @@ export async function POST(req: Request) {
       published_at: doc.createdAt,
     }).catch(() => {});
   } catch (dbErr) {
-    console.error("[v1/publish] DB write failed:", dbErr);
+    logError("v1/publish", "DB write failed", dbErr);
   }
 
   const url = new URL(req.url);

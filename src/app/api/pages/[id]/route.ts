@@ -3,6 +3,7 @@ import { deletePageVersions } from "@/lib/db/versions";
 import { deleteDoc, getDoc } from "@/lib/storage";
 import { hashPassword } from "@/lib/password";
 import { isValidSlug, SLUG_RULES_MESSAGE } from "@/lib/slug";
+import { logError } from "@/lib/logger";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
@@ -167,7 +168,7 @@ export async function DELETE(
     await deletePageRecord(id);
     await deletePageVersions(id);
   } catch (dbErr) {
-    console.error("[delete-page] DB delete failed:", dbErr);
+    logError("delete-page", "DB delete failed", dbErr);
   }
 
   return new NextResponse(null, { status: 204 });

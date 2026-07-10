@@ -12,6 +12,7 @@ import { checkRateLimit, checkMonthlyQuota } from "@/lib/rate-limit";
 import { ANONYMOUS_LIMITS } from "@/lib/quota";
 import { deliverWebhooks } from "@/lib/webhook-delivery";
 import { getClientIp } from "@/lib/request-ip";
+import { logError } from "@/lib/logger";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
@@ -95,7 +96,7 @@ export async function POST(req: Request) {
       isUpdate: false,
       contentLength: rawLength,
       source: "browser",
-    }).catch((err) => console.error("[publish] event record failed:", err));
+    }).catch((err) => logError("publish", "Event record failed", err));
 
     if (isAuthenticated && userId) {
       try {
@@ -107,7 +108,7 @@ export async function POST(req: Request) {
         await ensureDbUser(userId, email);
         await createPageRecord(id, userId, title);
         void snapshotPageVersion(id, doc).catch((err) => {
-          console.error("[publish] version snapshot failed:", err);
+          logError("publish", "Version snapshot failed", err);
         });
         void deliverWebhooks(userId, "page.published", {
           page_id: id,
@@ -116,7 +117,7 @@ export async function POST(req: Request) {
           published_at: doc.createdAt,
         }).catch(() => {});
       } catch (dbErr) {
-        console.error("[publish] DB ownership write failed:", dbErr);
+        logError("publish", "DB ownership write failed", dbErr);
       }
     }
 
@@ -131,7 +132,7 @@ export async function POST(req: Request) {
       owned: isAuthenticated,
     });
   } catch (e: unknown) {
-    console.error("[publish] Unhandled error:", e);
+    logError("publish", "Unhandled error", e);
     const msg = e instanceof Error ? e.message : "An unexpected error occurred";
     return NextResponse.json({ error: msg }, { status: 500 });
   }

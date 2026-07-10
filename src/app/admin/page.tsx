@@ -1,4 +1,5 @@
 import { getAdminMetrics } from "@/lib/db/admin-metrics";
+import { logError } from "@/lib/logger";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -33,7 +34,7 @@ export default async function AdminPage() {
   try {
     m = await getAdminMetrics();
   } catch (err) {
-    console.error("[admin] failed to load metrics:", err);
+    logError("admin", "Failed to load metrics", err);
     return (
       <div className="min-h-screen bg-bg p-12 text-text-primary">
         <h1 className="text-xl font-bold mb-4">Admin — Error</h1>

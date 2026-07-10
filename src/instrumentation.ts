@@ -21,6 +21,8 @@ export async function register() {
   // The mongodb driver is Node-only; skip entirely on the edge runtime.
   if (process.env.NEXT_RUNTIME !== "nodejs") return;
 
+  const { logInfo, logError } = await import("@/lib/logger");
+
   try {
     const [{ getDb }, { ensureIndexes }] = await Promise.all([
       import("@/lib/mongodb"),
@@ -28,8 +30,8 @@ export async function register() {
     ]);
     const db = await getDb();
     await ensureIndexes(db);
-    console.log("[startup] MongoDB indexes ensured.");
+    logInfo("startup", "MongoDB indexes ensured.");
   } catch (err) {
-    console.error("[startup] Failed to ensure MongoDB indexes (continuing to start anyway):", err);
+    logError("startup", "Failed to ensure MongoDB indexes (continuing to start anyway)", err);
   }
 }

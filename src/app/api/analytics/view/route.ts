@@ -2,6 +2,7 @@ import { getDb } from "@/lib/mongodb";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/request-ip";
 import { hashSession } from "@/lib/session-hash";
+import { logError } from "@/lib/logger";
 import type { AnalyticsEvent } from "@/lib/db/types";
 
 export const runtime = "nodejs";
@@ -70,7 +71,7 @@ export async function POST(req: Request) {
       { upsert: true },
     );
   } catch (err) {
-    console.error("[analytics] event write failed:", err);
+    logError("analytics", "Event write failed", err);
   }
 
   return new Response(null, { status: 204 });
