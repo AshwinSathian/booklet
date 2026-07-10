@@ -60,6 +60,11 @@ export async function POST(req: Request) {
           country,
           session_hash: sessionHash,
           created_at: new Date().toISOString(),
+          // Separate BSON Date field for the TTL index — Mongo's TTL monitor
+          // only expires documents whose indexed field is a real Date, and
+          // `created_at` is deliberately kept as an ISO string everywhere in
+          // this codebase for display/range-query consistency.
+          expires_at: new Date(),
         },
       },
       { upsert: true },

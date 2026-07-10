@@ -63,16 +63,12 @@ export const INDEX_SPECS = [
     spec: { session_hash: 1, page_id: 1, event: 1 },
     options: { unique: true },
   },
-  // NOTE: TTL indexes only expire documents where the indexed field holds an
-  // actual BSON Date — every `created_at` in this codebase (here and in the
-  // new view_dedupe/reaction_state collections below) is written as
-  // `new Date().toISOString()`, i.e. a *string*. Mongo's TTL monitor will
-  // not expire these as currently written. Pre-existing behavior, not
-  // introduced by the reactions fix — flagged here rather than silently
-  // carried forward again; fixing it (switching created_at to a real Date)
-  // is a separate follow-up since it touches shared, already-deployed
-  // conventions.
-  { collection: "analytics_events", spec: { created_at: 1 }, options: { expireAfterSeconds: 7_776_000 } },
+  // TTL indexes only expire documents where the indexed field holds an
+  // actual BSON Date — `created_at` everywhere in this codebase is written
+  // as `new Date().toISOString()` (a string) for display/range-query
+  // consistency, so it can't back a TTL index. `expires_at` is a dedicated
+  // BSON Date field written alongside `created_at` for this sole purpose.
+  { collection: "analytics_events", spec: { expires_at: 1 }, options: { expireAfterSeconds: 7_776_000 } },
 
   // --- page_versions ---
   { collection: "page_versions", spec: { page_id: 1, created_at: -1 } },
@@ -132,10 +128,9 @@ export const INDEX_SPECS = [
     spec: { session_hash: 1, page_id: 1 },
     options: { unique: true },
   },
-  // Same retention window as analytics_events (90 days) for consistency —
-  // see the TTL/BSON-Date-vs-string caveat noted above analytics_events'
-  // own TTL index; it applies identically here.
-  { collection: "view_dedupe", spec: { created_at: 1 }, options: { expireAfterSeconds: 7_776_000 } },
+  // Same retention window as analytics_events (90 days) for consistency;
+  // same `expires_at` BSON-Date-for-TTL rationale as analytics_events above.
+  { collection: "view_dedupe", spec: { expires_at: 1 }, options: { expireAfterSeconds: 7_776_000 } },
 ];
 
 /**

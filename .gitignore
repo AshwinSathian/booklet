@@ -62,3 +62,6 @@ playwright-report/
 
 # Private strategy documents
 MARKET_PLAN.md
+
+# Claude Code agent worktrees (scratch checkouts, merged/discarded per-task)
+/.claude/worktrees/

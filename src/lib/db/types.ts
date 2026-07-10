@@ -63,6 +63,7 @@ export type AnalyticsEvent = {
   country: string | null;
   session_hash: string;
   created_at: string;
+  expires_at: Date;
 };
 
 export type PageVersion = {

@@ -384,7 +384,7 @@ export async function getTeamSpacesByMembership(userId: string): Promise<DbColle
   return docs.map(toCollection);
 }
 
-type ViewDedupeDoc = { session_hash: string; page_id: string; created_at: string };
+type ViewDedupeDoc = { session_hash: string; page_id: string; created_at: string; expires_at: Date };
 
 /**
  * Increments view_count at most once per (sessionHash, pageId) — mirroring
@@ -403,7 +403,17 @@ export async function incrementViewCount(pageId: string, sessionHash: string): P
 
   const dedupeResult = await db.collection<ViewDedupeDoc>("view_dedupe").updateOne(
     { session_hash: sessionHash, page_id: pageId },
-    { $setOnInsert: { session_hash: sessionHash, page_id: pageId, created_at: new Date().toISOString() } },
+    {
+      $setOnInsert: {
+        session_hash: sessionHash,
+        page_id: pageId,
+        created_at: new Date().toISOString(),
+        // BSON Date for the TTL index — see the analytics_events write site
+        // (src/app/api/analytics/view/route.ts) for why this is separate
+        // from the string `created_at`.
+        expires_at: new Date(),
+      },
+    },
     { upsert: true },
   );
   if (dedupeResult.upsertedCount === 0) return;
