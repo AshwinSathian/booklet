@@ -55,10 +55,15 @@
   /* ── Text (DARK) ────────────────────────────────────────────────────────── */
   --color-text-primary:   #f5f5f7;        /* Apple primary label               */
   --color-text-secondary: #98989f;        /* Apple secondary label             */
-  --color-text-muted:     #636366;        /* Apple tertiary label              */
+  /* Lifted from #636366 (was 3.5:1 on bg, 3.0:1 on bg-elevated — failed WCAG
+     AA's 4.5:1). Now 5.3:1 on bg, 4.5:1 on bg-elevated (the harder case). */
+  --color-text-muted:     #7f7f82;        /* Apple tertiary label              */
 
   /* ── Accent (DARK) ──────────────────────────────────────────────────────── */
-  --color-accent:       #7c5cfc;          /* Readable signature purple         */
+  /* Deepened from #7c5cfc (4.38:1 with white button-label text — failed WCAG
+     AA's 4.5:1). Now 5.0:1, mirroring how the light-mode accent below is
+     already darker than a naive same-lightness translation and passes. */
+  --color-accent:       #7255e8;          /* Readable signature purple         */
   --color-accent-hover: #6b48f0;
   --color-accent-soft:  #a78bfa;          /* for focus rings, secondary tints  */
   --color-accent-warm:  #f59e0b;          /* amber — warnings, expiry          */
@@ -103,7 +108,9 @@ html.light {
   /* ── Text (LIGHT) ───────────────────────────────────────────────────────── */
   --color-text-primary:   #1d1d1f;        /* Apple label                       */
   --color-text-secondary: #6e6e73;        /* Apple secondaryLabel              */
-  --color-text-muted:     #86868b;        /* Apple tertiaryLabel               */
+  /* Darkened from #86868b (was 3.6:1 on bg, 3.0:1 on bg-elevated — failed
+     WCAG AA's 4.5:1). Now 5.7:1 on bg, 4.7:1 on bg-elevated (the harder case). */
+  --color-text-muted:     #66666a;        /* Apple tertiaryLabel               */
 
   /* ── Accent (LIGHT) ─────────────────────────────────────────────────────── */
   --color-accent:       #6741f0;
@@ -364,6 +371,25 @@ button {
   --animate-drawer-backdrop-out: drawerBackdropOut 160ms ease-in both;
   --animate-drawer-panel-in:     drawerPanelIn 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-drawer-panel-out:    drawerPanelOut 160ms cubic-bezier(0.7, 0, 0.84, 0) both;
+}
+
+/* ── Reduced motion ───────────────────────────────────────────────────────
+   Global gate for every CSS-driven animation above (dialog/dropdown/toast/
+   drawer entrances+exits, plus the two infinite loops — shimmer, dotPulse)
+   none of which previously checked prefers-reduced-motion at all. The one
+   exception was the landing page, which already calls framer-motion's
+   useReducedMotion() correctly for its own JS-driven animations — this
+   media query is what extends the same respect to everywhere else.
+────────────────────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* ── Transitions ─────────────────────────────────────────────────────────── */
