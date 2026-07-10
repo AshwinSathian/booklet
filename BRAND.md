@@ -114,7 +114,8 @@ Use sparingly — one gradient element per page maximum.
 
 ## Typography
 
-**Primary typeface:** Inter (all weights). Self-hosted via Next.js `next/font`.  
+**Primary typeface:** Inter (all weights). Self-hosted via Next.js `next/font`. Used for all app/editor chrome.  
+**Reading typeface:** Source Serif 4 (400/500/600/700, italic). Self-hosted via `next/font`. Used for published-page body content (`BlockRenderer` in serif mode — `DocSettings.typeface`, default `"serif"`) — deliberately distinct from the UI font, so the artifact people screenshot and share reads as a considered editorial page, not generic app chrome. Authors can opt back into Inter per-document via the editor's "Reading typeface" toggle. Body copy in this mode: 18–19px, 1.7 line-height, ~68ch measure.  
 **Monospace typeface:** JetBrains Mono → Fira Code → Cascadia Code → SF Mono (system fallback).  
 **Font features:** `"cv02", "cv03", "cv04", "cv11", "ss01"` — enables Inter's alternate digit forms and refined punctuation.  
 **Base font size:** 17px (Apple canonical body size).

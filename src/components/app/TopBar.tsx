@@ -558,6 +558,20 @@ function SettingsPanel({
             onChange={(v) => onSettingsChange({ ...settings, code: v })}
           />
         </div>
+
+        <div>
+          <div className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-text-muted">
+            Reading typeface
+          </div>
+          <SegmentedControl
+            value={settings.typeface ?? "serif"}
+            options={[
+              { label: "Serif", value: "serif" },
+              { label: "Sans", value: "sans" },
+            ]}
+            onChange={(v) => onSettingsChange({ ...settings, typeface: v })}
+          />
+        </div>
       </div>
     </div>
   );

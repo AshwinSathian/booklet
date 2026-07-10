@@ -19,6 +19,25 @@ function proseWidthClass(settings: DocSettings): string {
   return settings.width === "wide" ? "max-w-4xl" : "max-w-3xl";
 }
 
+// Docs published before `typeface` existed have no stored value — treat
+// missing as "serif" (the reading-typography default), not "sans", so old
+// docs pick up the new typography rather than silently opting out of it.
+function isSerifMode(settings: DocSettings): boolean {
+  return settings.typeface !== "sans";
+}
+
+// Prose (continuous-reading) text gets the distinct reading face, a larger
+// optical size, and a measure capped at ~68ch — the classic "readable line
+// length" constraint. Non-prose content (tables, code, images, diagrams)
+// stays full-width and in the UI font, since a character-measure cap makes
+// no sense for tabular/code content. In "sans" mode (opt-out), everything
+// reverts to the original compact Inter treatment.
+function proseTextClass(settings: DocSettings): string {
+  return isSerifMode(settings)
+    ? "font-reading text-[18px] sm:text-[19px] leading-[1.7] max-w-[68ch]"
+    : "text-[15px] sm:text-[16px] leading-[1.62]";
+}
+
 export function BlockRenderer({
   blocks,
   settings,
@@ -30,6 +49,21 @@ export function BlockRenderer({
   headingAnchors?: Record<string, string>;
   keyPrefix?: string;
 }) {
+  const serif = isSerifMode(settings);
+  // First top-level paragraph (either the very first block, or the first
+  // block right after an opening H1) gets a "lede" treatment — one signature
+  // reading detail, applied regardless of document type (technical or not).
+  // Only meaningful at the top level: a nested recursive call (list items,
+  // blockquote children) passes keyPrefix, so !keyPrefix identifies the
+  // outermost render.
+  const ledeIdx = !keyPrefix
+    ? blocks[0]?.t === "paragraph"
+      ? 0
+      : blocks[0]?.t === "heading" && blocks[1]?.t === "paragraph"
+        ? 1
+        : -1
+    : -1;
+
   return (
     <div className={["w-full", proseWidthClass(settings)].join(" ")}>
       <div className={["flex flex-col w-full", spacingClass(settings)].join(" ")}>
@@ -52,6 +86,19 @@ export function BlockRenderer({
                       ? "text-[clamp(17px,2vw,20px)]"
                       : "text-[16px]";
 
+              // Refined heading rhythm: more air before a heading than after
+              // it, so it reads as introducing what follows rather than
+              // floating equidistant between two sections. idx > 0 skips
+              // the extra top margin on a doc-opening H1.
+              const rhythm =
+                serif && idx > 0
+                  ? b.level === 2
+                    ? "mt-3"
+                    : b.level === 3
+                      ? "mt-1.5"
+                      : ""
+                  : "";
+
               const anchorId = headingAnchors?.[blockKey];
 
               return (
@@ -60,7 +107,9 @@ export function BlockRenderer({
                   id={anchorId}
                   className={[
                     "group scroll-mt-24 text-text-primary",
+                    serif ? "font-reading" : "",
                     cls,
+                    rhythm,
                     anchorId ? "relative" : "",
                   ].join(" ")}
                 >
@@ -87,15 +136,30 @@ export function BlockRenderer({
               );
             }
 
-            case "paragraph":
+            case "paragraph": {
+              const isLede = idx === ledeIdx;
               return (
                 <p
                   key={idx}
-                  className="text-[15px] sm:text-[16px] leading-[1.62] text-text-primary"
+                  className={[
+                    proseTextClass(settings),
+                    "text-text-primary",
+                    // Signature reading detail: the opening paragraph reads
+                    // as a lede — slightly larger, the classic editorial
+                    // "deck" treatment. Stays text-primary (not muted) since
+                    // the opening line is often the most load-bearing
+                    // sentence in a technical doc (an incident summary, a
+                    // decision's one-line verdict), not a de-emphasized
+                    // aside. Scales from the already-serif size rather than
+                    // a fixed px value so it stays proportionate at any
+                    // base size.
+                    isLede ? "text-[1.15em]" : "",
+                  ].join(" ")}
                 >
                   <InlineRenderer inl={b.inl} />
                 </p>
               );
+            }
 
             case "list": {
               const renderItem = (it: ListItem | unknown[], i: number) => {
@@ -137,14 +201,14 @@ export function BlockRenderer({
               return b.ordered ? (
                 <ol
                   key={idx}
-                  className="list-decimal pl-6 space-y-1.5 text-[15px] sm:text-[16px] leading-[1.62] text-text-primary"
+                  className={["list-decimal pl-6 space-y-1.5 text-text-primary", proseTextClass(settings)].join(" ")}
                 >
                   {b.items.map(renderItem)}
                 </ol>
               ) : (
                 <ul
                   key={idx}
-                  className="list-disc pl-6 space-y-1.5 text-[15px] sm:text-[16px] leading-[1.62] text-text-primary"
+                  className={["list-disc pl-6 space-y-1.5 text-text-primary", proseTextClass(settings)].join(" ")}
                 >
                   {b.items.map(renderItem)}
                 </ul>
@@ -155,10 +219,16 @@ export function BlockRenderer({
               return (
                 <div
                   key={idx}
-                  className="relative pl-4 py-0.5"
+                  className={serif ? "relative pl-5 py-0.5" : "relative pl-4 py-0.5"}
                 >
-                  <div className="absolute left-0 top-0 bottom-0 w-0.75 rounded-full bg-accent/50" />
-                  <div className="text-[15px] leading-[1.62] text-text-muted italic">
+                  <div className={serif ? "absolute left-0 top-0 bottom-0 w-1 rounded-full bg-accent/60" : "absolute left-0 top-0 bottom-0 w-0.75 rounded-full bg-accent/50"} />
+                  <div
+                    className={
+                      serif
+                        ? "font-reading text-[19px] sm:text-[20px] leading-[1.6] text-text-primary italic"
+                        : "text-[15px] leading-[1.62] text-text-muted italic"
+                    }
+                  >
                     <BlockRenderer
                       blocks={b.blocks}
                       settings={settings}
