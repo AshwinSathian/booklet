@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 type MobilePane = "edit" | "preview";
 
@@ -23,12 +23,32 @@ export function AppShell({
   left,
   right,
   focusMode = false,
+  isEmpty = false,
+  isReady = true,
 }: {
   left: React.ReactNode;
   right: React.ReactNode;
   focusMode?: boolean;
+  /** True once the active draft's content is known to be empty. Used only to
+   * choose the initial mobile tab — never fights a manual tab switch afterward. */
+  isEmpty?: boolean;
+  /** True once the draft has hydrated and `isEmpty` reflects real content
+   * (rather than the transient blank state before hydration runs). */
+  isReady?: boolean;
 }) {
   const [pane, setPane] = useState<MobilePane>("edit");
+  const didSetDefaultPaneRef = useRef(false);
+
+  // Choose the first-run mobile tab once, right after hydration tells us
+  // whether the draft actually has content. A brand-new/empty draft opens on
+  // Preview (onboarding/sample content); any existing draft keeps opening on
+  // Write, matching prior behavior. Purely a one-time default — doesn't
+  // override a tab the visitor picks afterward.
+  useEffect(() => {
+    if (!isReady || didSetDefaultPaneRef.current) return;
+    didSetDefaultPaneRef.current = true;
+    if (isEmpty) setPane("preview");
+  }, [isReady, isEmpty]);
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden lg:flex-row">

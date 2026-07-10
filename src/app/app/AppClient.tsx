@@ -724,6 +724,8 @@ function AppPageContent() {
       <div className="flex-1 min-h-0">
         <AppShell
           focusMode={focusMode}
+          isEmpty={isEmpty}
+          isReady={isReady}
           left={
             <PasteInput
               value={raw}
@@ -731,6 +733,8 @@ function AppPageContent() {
               onFocusShortcutRequested={(fn) => {
                 focusFnRef.current = fn;
               }}
+              isEmpty={isEmpty}
+              onInsertSample={onInsertSample}
             />
           }
           right={
