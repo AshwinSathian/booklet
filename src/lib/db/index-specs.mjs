@@ -131,6 +131,13 @@ export const INDEX_SPECS = [
   // Same retention window as analytics_events (90 days) for consistency;
   // same `expires_at` BSON-Date-for-TTL rationale as analytics_events above.
   { collection: "view_dedupe", spec: { expires_at: 1 }, options: { expireAfterSeconds: 7_776_000 } },
+
+  // --- drafts ---
+  // Cloud draft sync for signed-in users (P4-2, src/lib/db/drafts.ts). Backs
+  // getDraftsByUser's per-user listing, sorted by recency. Note this
+  // collection stores DraftDoc's own camelCase `updatedAt` field (mirroring
+  // the client document as-is), unlike `pages`' snake_case `created_at`.
+  { collection: "drafts", spec: { user_id: 1, updatedAt: -1 } },
 ];
 
 /**

@@ -16,7 +16,9 @@ import {
   getActiveDraftId,
   getDraft,
   getLastDraftsPersistError,
+  pullCloudDrafts,
   setActiveDraftId,
+  setCloudSyncUser,
   setDraftLastPublished,
   updateDraft,
 } from "@/lib/drafts";
@@ -27,6 +29,7 @@ import { getTemplateBySlug } from "@/lib/templates";
 import { stripFrontmatter } from "@/lib/frontmatter";
 import { formatTimeHHMM } from "@/lib/ui/time";
 import { AppLoader } from "@/components/ui/AppLoader";
+import { useUser } from "@clerk/nextjs";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type SaveState = "saved" | "saving";
@@ -62,8 +65,10 @@ function AppPageContent() {
   const [focusMode, setFocusMode] = useState(false);
 
   const toast = useToast();
+  const { isLoaded: isUserLoaded, isSignedIn, user } = useUser();
   const focusFnRef = useRef<null | (() => void)>(null);
   const openDraftsFnRef = useRef<null | (() => void)>(null);
+  const cloudPulledForUserIdRef = useRef<string | null>(null);
 
   const autosaveTimerRef = useRef<number | null>(null);
   const skipNextAutosaveRef = useRef(true);
@@ -248,6 +253,47 @@ function AppPageContent() {
       has_last_published: Boolean(draft.lastPublished),
     });
   }, []);
+
+  // Tell the cloud-sync observer layer who's signed in (if anyone). Fires
+  // before any pull/push so mutations that happen while this resolves still
+  // get attributed correctly. Anonymous sessions never call this with a
+  // truthy id, so cloud-sync stays fully inert — zero network calls, exactly
+  // today's localStorage-only behavior.
+  useEffect(() => {
+    if (!isUserLoaded) return;
+    setCloudSyncUser(isSignedIn ? (user?.id ?? null) : null);
+  }, [isUserLoaded, isSignedIn, user?.id]);
+
+  // Pull + reconcile cloud drafts once per signed-in session (see
+  // src/lib/drafts/cloud-sync.ts for the last-write-wins reconciliation and
+  // account-claim rules). Best-effort: local drafts remain fully usable
+  // even if this fails or the user is offline.
+  useEffect(() => {
+    if (!isUserLoaded || !isSignedIn || !user?.id) return;
+    if (cloudPulledForUserIdRef.current === user.id) return;
+    cloudPulledForUserIdRef.current = user.id;
+
+    void pullCloudDrafts(user.id).then(() => {
+      // The active draft may have been overwritten by a newer cloud copy —
+      // refresh in-memory state to match, but only if the user hasn't since
+      // switched to a different draft.
+      const currentId = getActiveDraftId();
+      if (!currentId || currentId !== activeDraftId) return;
+
+      const latest = getDraft(currentId);
+      if (!latest) return;
+
+      setRaw(latest.raw);
+      setDraftTitle(latest.title ?? "");
+      setSettings(latest.settings);
+      setLastPublishedUrl(latest.lastPublished?.url ?? null);
+      setLastPublishedId(latest.lastPublished?.id ?? null);
+      setLastPublishedOwned(latest.lastPublished?.owned ?? false);
+      setLastSavedAtLabel(
+        latest.updatedAt ? formatTimeHHMM(new Date(latest.updatedAt)) : null,
+      );
+    });
+  }, [isUserLoaded, isSignedIn, user?.id, activeDraftId]);
 
   const normalized = useMemo(
     // Strip frontmatter for rendering/parsing — the raw textarea preserves it for editing.
