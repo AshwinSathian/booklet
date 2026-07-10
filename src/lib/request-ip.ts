@@ -25,13 +25,18 @@
  * In development there is no Cloudflare in front of the app at all, so
  * falling back to `x-forwarded-for` (or a fixed "dev" sentinel) is fine —
  * there's no real security/rate-limit stake locally.
+ *
+ * Takes a `Headers` object (not a full `Request`) so it can be called from
+ * both Route Handlers (`req.headers`) and Server Components, which only have
+ * access to `next/headers`' `headers()` result — a `Headers`-compatible
+ * object with no enclosing `Request`.
  */
-export function getClientIp(req: Request): string {
-  const cf = req.headers.get("cf-connecting-ip")?.trim();
+export function getClientIp(headers: Headers): string {
+  const cf = headers.get("cf-connecting-ip")?.trim();
   if (cf) return cf;
 
   if (process.env.NODE_ENV === "development") {
-    const xff = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+    const xff = headers.get("x-forwarded-for")?.split(",")[0]?.trim();
     return xff || "dev";
   }
 

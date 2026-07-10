@@ -63,6 +63,15 @@ export const INDEX_SPECS = [
     spec: { session_hash: 1, page_id: 1, event: 1 },
     options: { unique: true },
   },
+  // NOTE: TTL indexes only expire documents where the indexed field holds an
+  // actual BSON Date — every `created_at` in this codebase (here and in the
+  // new view_dedupe/reaction_state collections below) is written as
+  // `new Date().toISOString()`, i.e. a *string*. Mongo's TTL monitor will
+  // not expire these as currently written. Pre-existing behavior, not
+  // introduced by the reactions fix — flagged here rather than silently
+  // carried forward again; fixing it (switching created_at to a real Date)
+  // is a separate follow-up since it touches shared, already-deployed
+  // conventions.
   { collection: "analytics_events", spec: { created_at: 1 }, options: { expireAfterSeconds: 7_776_000 } },
 
   // --- page_versions ---
@@ -93,14 +102,40 @@ export const INDEX_SPECS = [
   { collection: "webhooks", spec: { user_id: 1, created_at: -1 } },
 
   // --- reactions ---
-  // No additional index today: getPageReactions currently does a
-  // `{ _id: { $regex: `^${pageId}:` } }` prefix match, which is served by
-  // the collection's default _id index (anchored-prefix regex on an
-  // indexed field can use the index). NOTE: a parallel workstream is fixing
-  // a $regex-injection issue in src/lib/db/reactions.ts and may change this
-  // to an equality match on a new indexed field (likely `page_id`) instead
-  // of an `_id` prefix — re-check this list once that lands and add
-  // `{ collection: "reactions", spec: { page_id: 1 } }` (or similar) then.
+  // getPageReactions queries `{ page_id: pageId }` (an equality match, not
+  // the old `{ _id: { $regex: `^${pageId}:` } }` prefix scan it used to do
+  // — that was a $regex-injection issue: an unvalidated pageId route param
+  // built directly into a regex could over-match other pages' reaction
+  // docs, or cause ReDoS via a pathological pattern). This index serves
+  // that equality match.
+  { collection: "reactions", spec: { page_id: 1 } },
+
+  // --- reaction_state ---
+  // Per-session toggle state for reactions (addReactionForSession /
+  // removeReactionForSession in src/lib/db/reactions.ts) — "has this
+  // session already reacted with this emoji on this page." Authoritative
+  // guard so a session can only contribute +1 to a given (page, emoji)
+  // count at a time, no matter how many times it clicks/replays.
+  {
+    collection: "reaction_state",
+    spec: { session_hash: 1, page_id: 1, emoji: 1 },
+    options: { unique: true },
+  },
+
+  // --- view_dedupe ---
+  // View-count dedupe (incrementViewCount in src/lib/db/index.ts) — one
+  // counted view per session_hash per page, mirroring analytics_events'
+  // session-scoped dedupe so a single visitor's reloads/bot re-fetches
+  // don't keep inflating the page's view_count.
+  {
+    collection: "view_dedupe",
+    spec: { session_hash: 1, page_id: 1 },
+    options: { unique: true },
+  },
+  // Same retention window as analytics_events (90 days) for consistency —
+  // see the TTL/BSON-Date-vs-string caveat noted above analytics_events'
+  // own TTL index; it applies identically here.
+  { collection: "view_dedupe", spec: { created_at: 1 }, options: { expireAfterSeconds: 7_776_000 } },
 ];
 
 /**

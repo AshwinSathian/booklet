@@ -384,8 +384,30 @@ export async function getTeamSpacesByMembership(userId: string): Promise<DbColle
   return docs.map(toCollection);
 }
 
-export async function incrementViewCount(pageId: string): Promise<void> {
+type ViewDedupeDoc = { session_hash: string; page_id: string; created_at: string };
+
+/**
+ * Increments view_count at most once per (sessionHash, pageId) — mirroring
+ * analytics_events' session-scoped dedupe (same session_hash derivation,
+ * see src/lib/session-hash.ts) so a single visitor's reloads, prefetches,
+ * or a bot re-fetching the same URL don't keep inflating the counter.
+ * Two different visitors (different session hashes) viewing the same page
+ * both count, same as before.
+ *
+ * `updateOne`'s `upsertedCount` tells us atomically whether this is the
+ * first time this session has been recorded against this page — only then
+ * do we bump the real counter.
+ */
+export async function incrementViewCount(pageId: string, sessionHash: string): Promise<void> {
   const db = await getDb();
+
+  const dedupeResult = await db.collection<ViewDedupeDoc>("view_dedupe").updateOne(
+    { session_hash: sessionHash, page_id: pageId },
+    { $setOnInsert: { session_hash: sessionHash, page_id: pageId, created_at: new Date().toISOString() } },
+    { upsert: true },
+  );
+  if (dedupeResult.upsertedCount === 0) return;
+
   await db
     .collection<PageDoc>("pages")
     .updateOne({ _id: pageId }, { $inc: { view_count: 1 } });

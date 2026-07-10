@@ -25,7 +25,7 @@ type PublishPayload = {
 
 export async function POST(req: Request) {
   try {
-    const ip = getClientIp(req);
+    const ip = getClientIp(req.headers);
 
     // Rate limiting is best-effort — a DB failure must not block publish.
     const rl = await checkRateLimit(`publish__ip__${ip}`, 12).catch(() => null);

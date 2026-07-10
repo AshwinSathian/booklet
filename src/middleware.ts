@@ -47,7 +47,7 @@ export default clerkMiddleware(async (auth, req) => {
 
     // Layer 1: IP allowlist. Fails closed — an empty/unset ADMIN_IPS means
     // nobody passes, not "no restriction configured".
-    const ip = getClientIp(req);
+    const ip = getClientIp(req.headers);
     const allowedIps = (process.env.ADMIN_IPS ?? "")
       .split(",")
       .map((s) => s.trim())

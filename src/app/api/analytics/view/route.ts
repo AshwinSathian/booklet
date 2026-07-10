@@ -1,6 +1,7 @@
 import { getDb } from "@/lib/mongodb";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/request-ip";
+import { hashSession } from "@/lib/session-hash";
 import type { AnalyticsEvent } from "@/lib/db/types";
 
 export const runtime = "nodejs";
@@ -23,13 +24,6 @@ function bucketReferrer(ref: string): AnalyticsEvent["referrer_bucket"] {
   return "other";
 }
 
-async function hashSession(input: string): Promise<string> {
-  const hashBuffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input));
-  return Array.from(new Uint8Array(hashBuffer))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
-
 export async function POST(req: Request) {
   let body: AnalyticsPayload;
   try {
@@ -42,12 +36,11 @@ export async function POST(req: Request) {
     return new Response(null, { status: 204 });
   }
 
-  const ip = getClientIp(req);
+  const ip = getClientIp(req.headers);
   const rl = await checkRateLimit(`analytics__${ip}`, 100).catch(() => null);
   if (rl) return new Response(null, { status: 204 });
 
-  const today = new Date().toISOString().slice(0, 10);
-  const sessionHash = await hashSession(`${ip}|${req.headers.get("user-agent") ?? ""}|${today}`);
+  const sessionHash = await hashSession(ip, req.headers.get("user-agent") ?? "");
   const country = req.headers.get("cf-ipcountry") || null;
 
   try {

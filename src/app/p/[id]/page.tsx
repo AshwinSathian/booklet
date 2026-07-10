@@ -12,7 +12,9 @@ import { buildToc, MIN_TOC_HEADINGS } from "@/lib/toc";
 import { verifyUnlockToken } from "@/lib/unlock-token";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
+import { getClientIp } from "@/lib/request-ip";
+import { hashSession } from "@/lib/session-hash";
 import { Button } from "@/components/ui/Button";
 import { DesktopTocClient, MobileTocClient } from "@/components/share/TocClient";
 import { ExportMenu } from "@/components/share/ExportMenu";
@@ -141,8 +143,15 @@ export default async function SharePage({
     }
   }
 
-  // Fire-and-forget view count — non-blocking, non-fatal.
-  void incrementViewCount(resolvedId).catch(() => {});
+  // Fire-and-forget view count — non-blocking, non-fatal. Deduped per
+  // session (see incrementViewCount) so reloads/bot re-fetches from the
+  // same visitor don't keep inflating it.
+  void (async () => {
+    const hdrs = await headers();
+    const ip = getClientIp(hdrs);
+    const sessionHash = await hashSession(ip, hdrs.get("user-agent") ?? "");
+    await incrementViewCount(resolvedId, sessionHash);
+  })().catch(() => {});
 
 
   const createdAt = new Date(doc.createdAt);

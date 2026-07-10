@@ -19,7 +19,7 @@ export async function POST(
   const { id } = await params;
 
   // Strict rate limit: 5 attempts per minute per page+IP to prevent brute-force.
-  const ip = getClientIp(req);
+  const ip = getClientIp(req.headers);
   const rl = await checkRateLimit(`unlock__${id}__${ip}`, 5).catch(() => null);
   if (rl) return rl;
 

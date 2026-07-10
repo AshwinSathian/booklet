@@ -1,7 +1,8 @@
-import { getPageReactions, incrementReaction, decrementReaction } from "@/lib/db/reactions";
+import { getPageReactions, addReactionForSession, removeReactionForSession } from "@/lib/db/reactions";
 import { getPageRecord } from "@/lib/db";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/request-ip";
+import { hashSession } from "@/lib/session-hash";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -32,7 +33,7 @@ export async function POST(
     return NextResponse.json({ error: "Missing pageId" }, { status: 400 });
   }
 
-  const ip = getClientIp(req);
+  const ip = getClientIp(req.headers);
   const rl = await checkRateLimit(`reaction__${ip}`, 30).catch(() => null);
   if (rl) return rl;
 
@@ -55,9 +56,17 @@ export async function POST(
   }
 
   try {
+    // Dedupe per session — mirrors the analytics_events session_hash
+    // pattern (see src/lib/session-hash.ts) so repeated add clicks from the
+    // same visitor don't keep incrementing, and so a spammed "remove"
+    // can't grief a count the session never contributed to. Legitimate
+    // toggle-on/toggle-off (add, then remove, then add again) still works —
+    // see addReactionForSession/removeReactionForSession in
+    // src/lib/db/reactions.ts for the per-session state this relies on.
+    const sessionHash = await hashSession(ip, req.headers.get("user-agent") ?? "");
     const count = action === "remove"
-      ? await decrementReaction(pageId, emoji)
-      : await incrementReaction(pageId, emoji);
+      ? await removeReactionForSession(pageId, emoji, sessionHash)
+      : await addReactionForSession(pageId, emoji, sessionHash);
     return NextResponse.json({ emoji, count });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Failed";
