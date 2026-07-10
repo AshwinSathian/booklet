@@ -1,5 +1,6 @@
 import { createWebhook, getWebhooksByUser } from "@/lib/db";
 import { createId } from "@/lib/id";
+import { isUrlSafe } from "@/lib/ssrf-guard";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import type { DbWebhook } from "@/lib/db/types";
@@ -8,15 +9,6 @@ export const runtime = "nodejs";
 
 const ALLOWED_EVENTS = new Set<DbWebhook["events"][number]>(["page.published", "page.updated"]);
 const MAX_WEBHOOKS = 5;
-
-function isValidUrl(url: string): boolean {
-  try {
-    const u = new URL(url);
-    return u.protocol === "https:" || u.protocol === "http:";
-  } catch {
-    return false;
-  }
-}
 
 export async function GET() {
   const { userId } = await auth();
@@ -41,8 +33,12 @@ export async function POST(req: Request) {
   }
 
   const url = body.url?.trim();
-  if (!url || !isValidUrl(url)) {
+  if (!url) {
     return NextResponse.json({ error: "Valid HTTPS URL required" }, { status: 422 });
+  }
+  const urlCheck = await isUrlSafe(url);
+  if (!urlCheck.safe) {
+    return NextResponse.json({ error: urlCheck.reason }, { status: 422 });
   }
 
   const rawEvents = Array.isArray(body.events) ? body.events : ["page.published"];
