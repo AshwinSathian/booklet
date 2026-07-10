@@ -2,6 +2,7 @@ import { AppLogo } from "@/components/ui/AppLogo";
 import { ROUTES } from "@/lib/constants";
 import { isAppleDevice } from "@/lib/clerk-appearance";
 import { buildMetadata } from "@/lib/seo";
+import { isSafeRedirect } from "@/lib/safe-redirect";
 import { SignIn } from "@clerk/nextjs";
 import { headers } from "next/headers";
 import Link from "next/link";
@@ -15,11 +16,6 @@ export const metadata: Metadata = buildMetadata({
   pathname: "/sign-in",
   noIndex: true,
 });
-
-// Only allow relative paths as redirect targets — prevents open-redirect abuse
-function isSafeRedirect(url: string | undefined): url is string {
-  return typeof url === "string" && url.startsWith("/") && !url.startsWith("//");
-}
 
 export default async function SignInPage({
   searchParams,

@@ -1,6 +1,7 @@
 import { AppLogo } from "@/components/ui/AppLogo";
 import { ROUTES } from "@/lib/constants";
 import { buildMetadata } from "@/lib/seo";
+import { isSafeRedirect } from "@/lib/safe-redirect";
 import { SignUp } from "@clerk/nextjs";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -12,10 +13,6 @@ export const metadata: Metadata = buildMetadata({
   pathname: "/sign-up",
   noIndex: true,
 });
-
-function isSafeRedirect(url: string | undefined): url is string {
-  return typeof url === "string" && url.startsWith("/") && !url.startsWith("//");
-}
 
 export default async function SignUpPage({
   searchParams,
