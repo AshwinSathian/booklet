@@ -176,40 +176,47 @@ export function BlockRenderer({
 
             case "table":
               return (
+                // A single scrolling+bordered container (not a border-clipping
+                // outer div wrapping a separately-scrolling inner div) — the
+                // previous nested overflow-hidden/overflow-auto split caused
+                // the last column to visually clip against the rounded corner
+                // when scrolled fully right, since the outer rounded mask
+                // followed the wrapper's box while the inner content scrolled
+                // independently of it. Keeping the border on the scroll
+                // container itself means the border/radius travel with the
+                // viewport, not the content, so nothing gets clipped.
                 <div
                   key={idx}
-                  className="rounded-xl border border-border-default overflow-hidden"
+                  className="overflow-x-auto rounded-xl border border-border-default [-webkit-overflow-scrolling:touch]"
                 >
-                  <div className="overflow-auto">
-                    <table className="min-w-2xl w-full text-[14px]">
-                      <thead className="bg-fill-2">
-                        <tr>
-                          {b.head.map((cell, i) => (
-                            <th
-                              key={i}
-                              className="text-left px-4 py-2.5 font-semibold text-text-primary border-b border-border-default"
+                  <table className="w-full min-w-max text-[14px]">
+                    <thead className="bg-fill-2">
+                      <tr>
+                        {b.head.map((cell, i) => (
+                          <th
+                            key={i}
+                            className="text-left px-4 py-2.5 font-semibold text-text-primary border-b border-border-default whitespace-nowrap"
+                          >
+                            <InlineRenderer inl={cell} />
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {b.rows.map((row, r) => (
+                        <tr key={r} className="odd:bg-fill-1 transition hover:bg-fill-3">
+                          {row.map((cell, c) => (
+                            <td
+                              key={c}
+                              className="px-4 py-2.5 align-top border-b border-border-subtle text-text-primary wrap-break-word"
                             >
                               <InlineRenderer inl={cell} />
-                            </th>
+                            </td>
                           ))}
                         </tr>
-                      </thead>
-                      <tbody>
-                        {b.rows.map((row, r) => (
-                          <tr key={r} className="odd:bg-fill-1 transition hover:bg-fill-3">
-                            {row.map((cell, c) => (
-                              <td
-                                key={c}
-                                className="px-4 py-2.5 align-top border-b border-border-subtle text-text-primary"
-                              >
-                                <InlineRenderer inl={cell} />
-                              </td>
-                            ))}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               );
 
