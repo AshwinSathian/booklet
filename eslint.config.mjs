@@ -17,6 +17,7 @@ const eslintConfig = [
 			".wrangler/**",
 			"out/**",
 			"dist/**",
+			"packages/*/dist/**",
 			"node_modules/**",
 			"mcp-server/**",
 			"public/primereact-themes/**",
