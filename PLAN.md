@@ -14,12 +14,12 @@
 ## MCP Server
 
 Deployed at: https://readable-mcp.ashwinsathian.com  
-Source: `mcp-server/` (standalone Cloudflare Worker, separate from main app)  
-Deploy: `cd mcp-server && npm run deploy`  
-Last reviewed: May 2026
+Source: `mcp-server/` (plain Node process, `src/node-server.ts`, run under PM2 as `readable-mcp` — see `ecosystem.config.js`)  
+Deploy: `npm run deploy` at the repo root (`scripts/redeploy.sh` builds and reloads both `readable-app` and `readable-mcp` via PM2)  
+Last reviewed: 2026-07 (was a standalone Cloudflare Worker prior to the 2026-05-25 infra rollback, `9254448`)
 
 ### Architecture
-- Standalone Cloudflare Worker (not part of the Next.js/OpenNext bundle)
+- Plain Node HTTP server (not a Cloudflare Worker — reverse-proxied to its public hostname via the same Cloudflare Tunnel as the main app)
 - HTTP+SSE transport per MCP spec (protocol version 2024-11-05)
 - Auth: `extractApiKey` validates Bearer token format (prefix + 32-char minimum suffix) before forwarding to the Readable REST API — no additional auth layer
 - Sessions: in-memory `Map<string, Session>`, 10-minute TTL, cleaned on each new `/sse` connection; 25-second keepalive pings prevent Cloudflare from closing idle streams
@@ -126,7 +126,7 @@ The following are confirmed complete and do not need rework.
 | Public explore page | ✅ Done | `/explore` shows recent public pages |
 | Version history | ✅ Done | `/api/pages/[id]/versions`, `snapshotPageVersion` |
 | Webhooks | ✅ Done | `deliverWebhooks` on publish/update, UI in My Pages |
-| MCP server | ✅ Done | `mcp-server/` Cloudflare Worker at `readable-mcp.ashwinsathian.com` |
+| MCP server | ✅ Done | `mcp-server/` — plain Node process (`node-server.ts`) managed by PM2, reverse-proxied via Cloudflare Tunnel to `readable-mcp.ashwinsathian.com`. Was a Cloudflare Worker prior to 2026-05-25's infra rollback (`9254448`). |
 | CLI (`@readable/cli`) | ✅ Done | `packages/cli/` — auth, publish, pages list, --watch mode |
 | Team Spaces | ✅ Done | `/api/teams/`, `/t/[slug]`, `/t/[slug]/admin`, invite via JWT+Resend |
 | KaTeX math rendering | ✅ Done | `remark-math` + `katex`, block + inline, CSS imported |
@@ -902,7 +902,7 @@ Things we will not build. These are decided. Do not re-litigate them.
 | Custom Markdown extensions / plugin API | CommonMark + GFM covers 99% of technical writing. A plugin system requires a compatibility layer forever. |
 | Real-time preview sync via WebSocket | The 120ms debounce is fast enough. WebSockets add infrastructure cost. |
 | Collaborative editing | Requires WebSocket infrastructure. Not this year. |
-| Vercel deployment | App is on Cloudflare Workers via OpenNext. Vercel adds cost and complexity. |
+| Vercel deployment | App runs as a single PM2 process on a personal Mac behind a Cloudflare Tunnel (Cloudflare Workers/OpenNext was tried and removed 2026-05-25, see docs/OPERATIONS.md). Vercel adds cost and complexity. |
 | HTML rendering in Markdown | Security policy. Raw HTML in Markdown is intentionally blocked. |
 
 ---
