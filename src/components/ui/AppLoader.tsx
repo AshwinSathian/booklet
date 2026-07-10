@@ -2,41 +2,40 @@
 
 import { useEffect, useState } from "react";
 
-const MESSAGES = [
-  "Loading editor…",
-  "Restoring drafts…",
-  "Preparing workspace…",
-  "Ready.",
-];
+// AppLoader is a pure branding moment, not a real loading indicator: the
+// real editor (AppPageContent) mounts as its sibling in AppClient, already
+// fully ready underneath this overlay — there is no actual multi-stage
+// async process happening while this displays. The previous version staged
+// four fake status messages ("Loading editor…", "Restoring drafts…",
+// "Preparing workspace…", "Ready.") on a fixed timer, narrating work that
+// wasn't really happening in that sequence, and held every user for a
+// mandatory ~1.7s regardless. This version is honest about being a brief
+// brand flash, not a progress report, and is much shorter.
+const EXIT_MS = 450;
+const FADE_MS = 220;
 
-const PROGRESS_START_MS = 320;
-const PROGRESS_DURATION_MS = 1050;
-const EXIT_MS = 1700;
-const FADE_MS = 380;
+type Phase = "pre" | "entering" | "exiting" | "done";
 
-type Phase = "pre" | "entering" | "running" | "exiting" | "done";
+function prefersReducedMotion(): boolean {
+  return typeof window !== "undefined" &&
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
+}
 
 export function AppLoader() {
   const [phase, setPhase] = useState<Phase>("pre");
-  const [msgIdx, setMsgIdx] = useState(0);
 
   useEffect(() => {
+    // No real loading is masked here (see comment above) — someone who's
+    // asked for reduced motion shouldn't be held on a mandatory delay for a
+    // decorative flash, so skip it entirely.
+    if (prefersReducedMotion()) {
+      setPhase("done");
+      return;
+    }
+
     const timers: ReturnType<typeof setTimeout>[] = [];
     let rafId = requestAnimationFrame(() => {
       rafId = requestAnimationFrame(() => setPhase("entering"));
-    });
-
-    timers.push(setTimeout(() => setPhase("running"), PROGRESS_START_MS));
-
-    // Cycle status messages evenly across the progress duration
-    const msgStep = PROGRESS_DURATION_MS / (MESSAGES.length - 1);
-    MESSAGES.slice(1).forEach((_, i) => {
-      timers.push(
-        setTimeout(
-          () => setMsgIdx(i + 1),
-          PROGRESS_START_MS + (i + 1) * msgStep,
-        ),
-      );
     });
 
     timers.push(setTimeout(() => setPhase("exiting"), EXIT_MS));
@@ -52,7 +51,7 @@ export function AppLoader() {
 
   if (phase === "done") return null;
 
-  const isEntered = phase === "entering" || phase === "running" || phase === "exiting";
+  const isEntered = phase === "entering" || phase === "exiting";
   const isExiting = phase === "exiting";
 
   return (
@@ -116,37 +115,6 @@ export function AppLoader() {
         {/* Name */}
         <span className="text-[15px] font-semibold tracking-[-0.01em] text-text-primary">
           Readable
-        </span>
-
-        {/* Progress bar — CSS-transition-only, no rAF loop.
-            Transition is always set so when width changes to 100% in "running"
-            phase the browser can smoothly animate it without a race condition. */}
-        <div
-          className="overflow-hidden rounded-full"
-          style={{
-            width: 168,
-            height: 2,
-            background: "var(--color-border-subtle)",
-          }}
-        >
-          <div
-            style={{
-              height: "100%",
-              width: phase === "running" || phase === "exiting" ? "100%" : "0%",
-              background: "var(--color-accent)",
-              borderRadius: 9999,
-              transition: `width ${PROGRESS_DURATION_MS}ms cubic-bezier(0.4,0,0.2,1)`,
-            }}
-          />
-        </div>
-
-        {/* Status message */}
-        <span
-          key={msgIdx}
-          style={{ animation: "loaderMsgIn 0.22s ease both" }}
-          className="h-4 text-[11px] font-mono tracking-wide text-text-muted"
-        >
-          {MESSAGES[msgIdx]}
         </span>
       </div>
     </div>
