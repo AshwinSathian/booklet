@@ -10,6 +10,7 @@ import { recordPublishEvent } from "@/lib/db/publish-events";
 import { putDoc } from "@/lib/storage";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { deliverWebhooks } from "@/lib/webhook-delivery";
+import { getClientIp } from "@/lib/request-ip";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
@@ -20,16 +21,6 @@ type PublishPayload = {
   settings?: PublishedDoc["settings"];
   raw?: string;
 };
-
-function getClientIp(req: Request): string {
-  const cf = req.headers.get("cf-connecting-ip");
-  if (cf) return cf;
-
-  const xff = req.headers.get("x-forwarded-for");
-  if (xff) return xff.split(",")[0]?.trim() || "unknown";
-
-  return "unknown";
-}
 
 export async function POST(req: Request) {
   try {

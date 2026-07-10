@@ -294,3 +294,54 @@ test.describe("API health checks", () => {
     expect(res.status()).not.toBe(500);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Suite 8: Security — client IP trust & /admin gating
+//
+// Regression coverage for the audit findings fixed alongside this suite:
+//   - spoofable client IP defeated rate limits / the admin IP allowlist
+//     (only `cf-connecting-ip` — never `x-forwarded-for` — may be trusted
+//     for security decisions; see src/lib/request-ip.ts)
+//   - /admin had no auth beyond the IP allowlist
+//
+// These assertions assume TEST_BASE_URL points at a non-development server
+// (NODE_ENV !== "development"), same as the rest of this suite (see the
+// "must never be https://localhost" check above) — both the IP-spoofing
+// fallback and the /admin gate are intentionally bypassed in local dev for
+// convenience, since there's no real security stake on a developer machine.
+// ---------------------------------------------------------------------------
+
+test.describe("Security — client IP trust & /admin gating", () => {
+  test("GET /admin is forbidden without an authenticated admin session", async ({ request }) => {
+    // Playwright's `request` fixture carries no Clerk session cookie, so
+    // this always hits the app unauthenticated — the userId check in
+    // middleware.ts must reject it (403) regardless of the IP allowlist.
+    const res = await request.get(`${BASE}/admin`, { maxRedirects: 0 });
+    expect(res.status()).toBe(403);
+  });
+
+  test("spoofed X-Forwarded-For does not grant a fresh rate-limit bucket", async ({ request }) => {
+    // Previously: `.split(',')[0]` on a client-supplied X-Forwarded-For was
+    // trusted as the rate-limit key, so rotating the header per request
+    // reset the bucket every time (live-confirmed: 15/15 requests
+    // succeeded against a 12/min limit). Now, absent a genuine
+    // `cf-connecting-ip` (which only Cloudflare's edge can set), every
+    // request collapses onto the same "unknown" bucket — so spoofing a
+    // different X-Forwarded-For on every request must NOT let all of them
+    // through once the shared bucket is exhausted.
+    const attempts = 40;
+    const statuses: number[] = [];
+    for (let i = 0; i < attempts; i++) {
+      const res = await request.post(`${BASE}/api/reactions/${sharedPublishedId}`, {
+        headers: { "X-Forwarded-For": `10.0.0.${i}` },
+        data: {},
+      });
+      statuses.push(res.status());
+    }
+    // The reaction endpoint rate-limits at 30/min per (spoofable-in-theory)
+    // IP bucket; sending 40 rapid requests with a distinct fake
+    // X-Forwarded-For each time must still trip the limit at least once —
+    // proving the header rotation isn't creating fresh buckets.
+    expect(statuses).toContain(429);
+  });
+});

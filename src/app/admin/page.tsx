@@ -33,10 +33,11 @@ export default async function AdminPage() {
   try {
     m = await getAdminMetrics();
   } catch (err) {
+    console.error("[admin] failed to load metrics:", err);
     return (
       <div className="min-h-screen bg-bg p-12 text-text-primary">
         <h1 className="text-xl font-bold mb-4">Admin — Error</h1>
-        <pre className="text-sm text-red-400">{String(err)}</pre>
+        <p className="text-sm text-red-400">Something went wrong loading metrics.</p>
       </div>
     );
   }

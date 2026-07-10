@@ -1,6 +1,7 @@
 import { getPageRecord } from "@/lib/db";
 import { verifyPassword } from "@/lib/password";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/request-ip";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -9,14 +10,6 @@ export const runtime = "nodejs";
 // Path: /p/ — covers both /p/<id> and /p/<slug> access patterns.
 // Expires 8 hours from unlock.
 const UNLOCK_TTL = 8 * 60 * 60;
-
-function getClientIp(req: Request): string {
-  return (
-    req.headers.get("cf-connecting-ip") ??
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    "unknown"
-  );
-}
 
 export async function POST(
   req: Request,

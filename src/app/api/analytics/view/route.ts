@@ -1,5 +1,6 @@
 import { getDb } from "@/lib/mongodb";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/request-ip";
 import type { AnalyticsEvent } from "@/lib/db/types";
 
 export const runtime = "nodejs";
@@ -11,16 +12,6 @@ type AnalyticsPayload = {
 };
 
 const ALLOWED_EVENTS = new Set<AnalyticsEvent["event"]>(["view", "read_50", "read_100", "cta_click"]);
-
-function getClientIp(req: Request): string {
-  const cf = req.headers.get("cf-connecting-ip");
-  if (cf) return cf;
-
-  const xff = req.headers.get("x-forwarded-for");
-  if (xff) return xff.split(",")[0]?.trim() || "unknown";
-
-  return "unknown";
-}
 
 function bucketReferrer(ref: string): AnalyticsEvent["referrer_bucket"] {
   const value = ref.toLowerCase();

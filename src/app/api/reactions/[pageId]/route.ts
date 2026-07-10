@@ -1,17 +1,10 @@
 import { getPageReactions, incrementReaction, decrementReaction } from "@/lib/db/reactions";
 import { getPageRecord } from "@/lib/db";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/request-ip";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
-
-function getClientIp(req: Request): string {
-  const cf = req.headers.get("cf-connecting-ip");
-  if (cf) return cf;
-  const xff = req.headers.get("x-forwarded-for");
-  if (xff) return xff.split(",")[0]?.trim() || "unknown";
-  return "unknown";
-}
 
 export async function GET(
   _req: Request,

@@ -1,5 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { getClientIp } from "@/lib/request-ip";
 
 const isProtected = createRouteMatcher(["/my-pages(.*)"]);
 
@@ -35,16 +36,43 @@ const SECURITY_HEADERS: Record<string, string> = {
 };
 
 export default clerkMiddleware(async (auth, req) => {
-  // Admin route: IP-allowlist only — never reaches Clerk auth
+  // Admin route: two independent checks must BOTH pass — an IP allowlist
+  // AND a signed-in, allowlisted admin user. Neither check alone is
+  // sufficient (see P0-9 / P1-5 in the security audit): the IP check can
+  // only ever be as trustworthy as `cf-connecting-ip` (see getClientIp),
+  // and a leaked/allowlisted IP must not be enough on its own to reach an
+  // internal dashboard.
   if (req.nextUrl.pathname.startsWith("/admin")) {
-    const ip =
-      req.headers.get("cf-connecting-ip") ??
-      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-      "unknown";
-    const allowed = (process.env.ADMIN_IPS ?? "").split(",").map((s) => s.trim()).filter(Boolean);
-    // In development always allow loopback
-    if (process.env.NODE_ENV !== "development" && !allowed.includes(ip)) {
+    const isDev = process.env.NODE_ENV === "development";
+
+    // Layer 1: IP allowlist. Fails closed — an empty/unset ADMIN_IPS means
+    // nobody passes, not "no restriction configured".
+    const ip = getClientIp(req);
+    const allowedIps = (process.env.ADMIN_IPS ?? "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    // In development always allow loopback — there's no Cloudflare/real IP
+    // to check locally.
+    if (!isDev && !allowedIps.includes(ip)) {
       return new Response("Forbidden", { status: 403 });
+    }
+
+    // Layer 2: authenticated + allowlisted admin user. Checked explicitly
+    // (rather than via auth.protect()'s sign-in redirect) so an
+    // unauthenticated visitor is rejected outright with 403 instead of
+    // being parked on a sign-in page that later succeeds without this
+    // check being re-evaluated. Fails closed — an empty/unset
+    // ADMIN_USER_IDS means the route is inaccessible to everyone.
+    if (!isDev) {
+      const { userId } = await auth();
+      const allowedUserIds = (process.env.ADMIN_USER_IDS ?? "")
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      if (!userId || allowedUserIds.length === 0 || !allowedUserIds.includes(userId)) {
+        return new Response("Forbidden", { status: 403 });
+      }
     }
   }
 
