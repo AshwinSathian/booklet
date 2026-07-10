@@ -1,7 +1,7 @@
 import type { PublishedDoc } from "@/lib/blocks";
 import { DEFAULT_SETTINGS } from "@/lib/blocks";
 import { BLOCKS, ROUTES, STORAGE } from "@/lib/constants";
-import { createPageRecord, updatePageRecord } from "@/lib/db";
+import { createPageRecord, getPageBySlug, updatePageRecord } from "@/lib/db";
 import { ensureDbUser } from "@/lib/db/ensure-user";
 import { createId } from "@/lib/id";
 import { resolveApiKey } from "@/lib/api-key-auth";
@@ -13,6 +13,7 @@ import { deliverWebhooks } from "@/lib/webhook-delivery";
 import { parseToBlocks } from "@/lib/parse";
 import { putDoc } from "@/lib/storage";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { isValidSlug, SLUG_RULES_MESSAGE } from "@/lib/slug";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -51,6 +52,26 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Nothing to publish — provide `blocks` or `raw` markdown." }, { status: 400 });
   }
 
+  const fm = frontmatterMeta as import("@/lib/frontmatter").FrontmatterMeta;
+
+  // Validate + collision-check a frontmatter-supplied slug up front, before
+  // any writes happen — unlike the UI PATCH path (api/pages/[id]/route.ts),
+  // this previously applied fm.slug with no validation or feedback at all.
+  let normalizedSlug: string | null = null;
+  if (fm.slug) {
+    normalizedSlug = fm.slug.trim().toLowerCase();
+    if (!isValidSlug(normalizedSlug)) {
+      return NextResponse.json(
+        { error: `Invalid slug in frontmatter. ${SLUG_RULES_MESSAGE}` },
+        { status: 422 },
+      );
+    }
+    const existing = await getPageBySlug(normalizedSlug);
+    if (existing) {
+      return NextResponse.json({ error: "Slug is already taken." }, { status: 409 });
+    }
+  }
+
   try {
     const bytes = new TextEncoder().encode(JSON.stringify(payload));
     if (bytes.byteLength > STORAGE.maxDocBytes) {
@@ -86,16 +107,16 @@ export async function POST(req: Request) {
   }).catch((err) => console.error("[v1/publish] event record failed:", err));
 
   try {
-    const fm = frontmatterMeta as import("@/lib/frontmatter").FrontmatterMeta;
     const title = fm.title ?? extractDocTitle(payload.blocks);
     const fmRecord = Object.keys(fm).length > 0 ? (fm as Record<string, unknown>) : null;
     await ensureDbUser(userId, null);
     await createPageRecord(id, userId, title, null, fmRecord);
 
-    // Apply frontmatter-derived settings (visibility, slug)
+    // Apply frontmatter-derived settings (visibility, slug) — slug was
+    // already validated + collision-checked above, before putDoc.
     const postPatch: Parameters<typeof updatePageRecord>[1] = {};
     if (fm.visibility) postPatch.visibility = fm.visibility;
-    if (fm.slug) postPatch.slug = fm.slug;
+    if (normalizedSlug) postPatch.slug = normalizedSlug;
     if (Object.keys(postPatch).length > 0) {
       await updatePageRecord(id, postPatch).catch((e) => console.error("[v1/publish] patch failed:", e));
     }

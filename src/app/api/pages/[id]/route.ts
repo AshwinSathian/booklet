@@ -2,15 +2,9 @@ import { getPageBySlug, getPageRecord, updatePageRecord, deletePageRecord } from
 import { deletePageVersions } from "@/lib/db/versions";
 import { deleteDoc, getDoc } from "@/lib/storage";
 import { hashPassword } from "@/lib/password";
+import { isValidSlug, SLUG_RULES_MESSAGE } from "@/lib/slug";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-
-// Slug rules: 3-60 chars, lowercase alphanumeric + hyphens, no leading/trailing hyphens.
-const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,58}[a-z0-9]$|^[a-z0-9]{3,60}$/;
-
-function isValidSlug(s: string): boolean {
-  return SLUG_RE.test(s) && !s.includes("--");
-}
 
 export const runtime = "nodejs";
 
@@ -101,7 +95,7 @@ export async function PATCH(
 
     if (slug !== null && !isValidSlug(slug)) {
       return NextResponse.json(
-        { error: "Invalid slug. Use 1-60 lowercase letters, numbers, or hyphens." },
+        { error: `Invalid slug. ${SLUG_RULES_MESSAGE}` },
         { status: 422 },
       );
     }

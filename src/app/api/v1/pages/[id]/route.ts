@@ -9,13 +9,11 @@ import { parseToBlocks } from "@/lib/parse";
 import { getDoc, putDoc, deleteDoc } from "@/lib/storage";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { ROUTES } from "@/lib/constants";
+import { isValidSlug, SLUG_RULES_MESSAGE } from "@/lib/slug";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,58}[a-z0-9]$|^[a-z0-9]{1,60}$/;
-function isValidSlug(s: string) { return SLUG_RE.test(s) && !s.includes("--"); }
 
 type ContentPayload = {
   blocks?: PublishedDoc["blocks"];
@@ -128,7 +126,7 @@ export async function PATCH(
       const slug = rawSlug === null ? null : rawSlug?.trim().toLowerCase() ?? null;
       if (slug !== null && !isValidSlug(slug)) {
         return NextResponse.json(
-          { error: "Invalid slug. Use 1–60 lowercase letters, numbers, or hyphens." },
+          { error: `Invalid slug. ${SLUG_RULES_MESSAGE}` },
           { status: 422 },
         );
       }
