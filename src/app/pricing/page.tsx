@@ -90,9 +90,7 @@ export default function PricingPage() {
     <div className="min-h-screen bg-bg text-text-primary">
       <header className="border-b border-border-subtle bg-bg/85 backdrop-blur-xl sticky top-0 z-20">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-6 h-12">
-          <Link href="/">
-            <AppLogo onlyIcon={false} />
-          </Link>
+          <AppLogo onlyIcon={false} />
           <Button variant="primary" size="md" href={ROUTES.app}>
             Start writing
           </Button>
@@ -178,7 +176,7 @@ export default function PricingPage() {
       <footer className="mt-8 border-t border-border-subtle">
         <div className="mx-auto w-full max-w-3xl px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-text-muted">
           <div className="flex items-center gap-2">
-            <AppLogo onlyIcon={true} />
+          <AppLogo onlyIcon={true} />
             <span>{APP_NAME} — Beautiful markdown pages, instantly.</span>
           </div>
           <div className="flex items-center gap-4">

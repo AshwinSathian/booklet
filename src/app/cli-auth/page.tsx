@@ -35,9 +35,7 @@ function ErrorPage({ title, body }: { title: string; body: string }) {
     <div className="min-h-screen bg-bg text-text-primary flex flex-col">
       <header className="border-b border-border-subtle">
         <div className="mx-auto w-full max-w-md px-4 py-3">
-          <Link href="/">
-            <AppLogo onlyIcon={false} />
-          </Link>
+          <AppLogo onlyIcon={false} />
         </div>
       </header>
       <main className="flex-1 flex flex-col items-center justify-center px-4 py-12">

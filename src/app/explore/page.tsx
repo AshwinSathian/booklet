@@ -27,9 +27,7 @@ export default async function ExplorePage() {
     <div className="min-h-screen bg-bg text-text-primary flex flex-col">
       <header className="border-b border-border-subtle bg-bg/85 backdrop-blur-xl sticky top-0 z-20">
         <div className="mx-auto w-full max-w-4xl px-4 h-12 flex items-center justify-between gap-4">
-          <Link href="/">
-            <AppLogo onlyIcon={false} />
-          </Link>
+          <AppLogo onlyIcon={false} />
           <Button variant="primary" size="md" href={ROUTES.app}>
             Create a page
           </Button>
@@ -65,7 +63,7 @@ export default async function ExplorePage() {
       <footer className="mt-8 border-t border-border-subtle">
         <div className="mx-auto w-full max-w-4xl px-4 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-text-muted">
           <div className="flex items-center gap-2">
-            <AppLogo onlyIcon={true} />
+          <AppLogo onlyIcon={true} />
             <span>{APP_NAME} — Beautiful markdown pages, instantly.</span>
           </div>
           <div className="flex items-center gap-4">

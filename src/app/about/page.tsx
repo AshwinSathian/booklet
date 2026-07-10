@@ -16,9 +16,7 @@ export default function AboutPage() {
     <div className="min-h-screen bg-bg text-text-primary flex flex-col">
       <header className="sticky top-0 z-20 border-b border-border-subtle bg-bg/85 backdrop-blur-xl">
         <div className="mx-auto w-full max-w-3xl px-4 h-12 flex items-center justify-between gap-4">
-          <Link href={ROUTES.home}>
-            <AppLogo onlyIcon={false} />
-          </Link>
+          <AppLogo onlyIcon={false} />
           <Link
             href={ROUTES.app}
             className="hidden sm:inline-flex items-center gap-1.5 rounded-pill border border-outline px-3.5 py-1.5 text-xs font-medium text-text-secondary transition hover:border-accent-soft/50 hover:text-text-primary"

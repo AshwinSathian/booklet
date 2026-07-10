@@ -54,9 +54,7 @@ export default async function TeamPage({
     <div className="min-h-screen bg-bg text-text-primary">
       <header className="border-b border-border-subtle bg-bg/85 backdrop-blur-xl sticky top-0 z-20">
         <div className="mx-auto w-full max-w-3xl px-4 h-12 flex items-center justify-between gap-4">
-          <Link href="/">
-            <AppLogo onlyIcon={false} />
-          </Link>
+          <AppLogo onlyIcon={false} />
           {(isOwner || isMember) && (
             <Link
               href={`/t/${slug}/admin`}

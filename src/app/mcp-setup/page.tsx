@@ -438,7 +438,7 @@ function CursorInstructions({ apiKey }: { apiKey: string }) {
 
         <Step n={3} title="Reload Cursor">
           <p className="text-sm text-text-secondary">
-            Cursor auto-detects config changes, but if the server doesn't appear, open the Command
+            Cursor auto-detects config changes, but if the server doesn&apos;t appear, open the Command
             Palette (<Code>⌘ ⇧ P</Code>) and run{" "}
             <Code>MCP: Reload servers</Code>.
           </p>
@@ -685,9 +685,7 @@ export default function McpSetupPage() {
       {/* Header */}
       <header className="sticky top-0 z-20 border-b border-border-subtle bg-bg/85 backdrop-blur-xl">
         <div className="mx-auto w-full max-w-5xl px-4 h-12 flex items-center justify-between gap-4">
-          <Link href={ROUTES.home}>
-            <AppLogo onlyIcon={false} />
-          </Link>
+          <AppLogo onlyIcon={false} />
           <nav className="flex items-center gap-3">
             <Link
               href="/api-docs"
@@ -761,7 +759,7 @@ export default function McpSetupPage() {
                   Connect Readable to your AI
                 </h1>
                 <p className="text-sm text-text-secondary max-w-prose">
-                  Readable's MCP server lets Claude, Cursor, Windsurf, and other AI tools publish,
+                  Readable&apos;s MCP server lets Claude, Cursor, Windsurf, and other AI tools publish,
                   update, and manage your pages — entirely through conversation. One-time setup, no
                   copy-pasting.
                 </p>
@@ -1095,7 +1093,7 @@ export default function McpSetupPage() {
             <div className="mt-6 rounded-xl border border-outline bg-bg-elevated p-4 text-sm">
               <p className="font-semibold text-text-primary mb-1">Security note</p>
               <p className="text-text-secondary text-xs leading-relaxed">
-                Your API key is sent directly from the MCP client to Readable's API on each tool
+                Your API key is sent directly from the MCP client to Readable&apos;s API on each tool
                 call. The MCP server acts as a stateless proxy and never writes your key to
                 persistent storage. To revoke MCP access at any time, delete the key from{" "}
                 <Link href={ROUTES.myPages} className="text-accent hover:underline">

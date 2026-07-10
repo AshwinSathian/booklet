@@ -80,9 +80,7 @@ export default function ChangelogPage() {
     <div className="min-h-screen bg-bg text-text-primary flex flex-col">
       <header className="sticky top-0 z-20 border-b border-border-subtle bg-bg/85 backdrop-blur-xl">
         <div className="mx-auto w-full max-w-3xl px-4 h-12 flex items-center justify-between gap-4">
-          <Link href={ROUTES.home}>
-            <AppLogo onlyIcon={false} />
-          </Link>
+          <AppLogo onlyIcon={false} />
           <Link
             href={ROUTES.app}
             className="hidden sm:inline-flex items-center gap-1.5 rounded-pill border border-outline px-3.5 py-1.5 text-xs font-medium text-text-secondary transition hover:border-accent-soft/50 hover:text-text-primary"
@@ -94,7 +92,7 @@ export default function ChangelogPage() {
 
       <main className="flex-1 mx-auto w-full max-w-3xl px-4 py-12 sm:py-16">
         <div className="mb-10">
-          <p className="text-xs font-semibold uppercase tracking-widest text-text-muted mb-3">What's new</p>
+          <p className="text-xs font-semibold uppercase tracking-widest text-text-muted mb-3">What&apos;s new</p>
           <h1 className="text-[clamp(22px,3.5vw,30px)] text-text-primary mb-2">Changelog</h1>
           <p className="text-sm text-text-secondary">
             A running log of improvements, fixes, and new features in {APP_NAME}.

@@ -39,9 +39,7 @@ export default async function PageVersionsPage({
     <div className="min-h-screen bg-bg text-text-primary">
       <header className="sticky top-0 z-20 border-b border-border-subtle bg-bg/85 backdrop-blur-xl">
         <div className="mx-auto flex h-12 w-full max-w-4xl items-center justify-between gap-4 px-4">
-          <Link href={ROUTES.home}>
-            <AppLogo onlyIcon={false} />
-          </Link>
+          <AppLogo onlyIcon={false} />
           <Link
             href={ROUTES.myPages}
             className="inline-flex items-center rounded-pill border border-outline px-3.5 py-1.5 text-xs font-medium text-text-secondary transition hover:border-accent-soft/50 hover:text-text-primary"
