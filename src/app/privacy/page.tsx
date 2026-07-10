@@ -1,5 +1,6 @@
 import { AppLogo } from "@/components/ui/AppLogo";
 import { APP_NAME, ROUTES } from "@/lib/constants";
+import { ANONYMOUS_LIMITS } from "@/lib/quota";
 import { buildMetadata } from "@/lib/seo";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -48,9 +49,11 @@ export default function PrivacyPage() {
           <Section title="What we collect">
             <p>
               <strong className="text-text-primary">Anonymous visitors</strong> — When you publish a page without signing in,
-              your content is stored in Cloudflare KV with a 30-day TTL and automatically deleted. We store no
-              personal data. A session token is issued to associate the page with your browser so you can see it
-              in your history, but we do not track you across sites.
+              your content is stored indefinitely in our database (MongoDB), the same as signed-in pages — there
+              is no expiry. We store no personal data alongside it. A session token is issued to associate the
+              page with your browser so you can see it in your history, but we do not track you across sites.
+              Anonymous publishing is capped at {ANONYMOUS_LIMITS.pagesPerMonth} pages per month per IP address to
+              keep the service sustainable for everyone; signing in removes that cap.
             </p>
             <p>
               <strong className="text-text-primary">Signed-in accounts</strong> — We use Clerk for authentication. When you
@@ -73,7 +76,7 @@ export default function PrivacyPage() {
           <Section title="How we use your data">
             <p>We use collected data solely to operate the service: storing and serving your pages, associating
               pages with your account, delivering analytics you asked for, and sending transactional emails (such as
-              welcome messages or expiry reminders for anonymous pages, if you opt in).</p>
+              welcome messages, if you opt in).</p>
             <p>We do not serve ads, sell your data to third parties, or use your content to train AI models.</p>
           </Section>
 
@@ -103,8 +106,8 @@ export default function PrivacyPage() {
             <p>We use the following third-party services:</p>
             <ul className="list-disc list-inside flex flex-col gap-1.5">
               <li><strong className="text-text-primary">Clerk</strong> — authentication and user management (<a href="https://clerk.com/privacy" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">clerk.com/privacy</a>)</li>
-              <li><strong className="text-text-primary">Cloudflare Workers & KV</strong> — edge hosting and anonymous document storage</li>
-              <li><strong className="text-text-primary">MongoDB Atlas</strong> — primary database for user and page records</li>
+              <li><strong className="text-text-primary">Cloudflare</strong> — edge network and tunnel in front of our servers</li>
+              <li><strong className="text-text-primary">MongoDB Atlas</strong> — primary database for all page records, including anonymous ones</li>
               <li><strong className="text-text-primary">Resend</strong> — transactional email delivery</li>
             </ul>
           </Section>

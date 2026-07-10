@@ -8,7 +8,8 @@ import { extractDocTitle } from "@/lib/doc-title";
 import { snapshotPageVersion } from "@/lib/db/versions";
 import { recordPublishEvent } from "@/lib/db/publish-events";
 import { putDoc } from "@/lib/storage";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { checkRateLimit, checkMonthlyQuota } from "@/lib/rate-limit";
+import { ANONYMOUS_LIMITS } from "@/lib/quota";
 import { deliverWebhooks } from "@/lib/webhook-delivery";
 import { getClientIp } from "@/lib/request-ip";
 import { auth } from "@clerk/nextjs/server";
@@ -54,6 +55,21 @@ export async function POST(req: Request) {
       }
     } catch {
       return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+    }
+
+    // Anonymous publishes have no DB "pages" record and no owner, so they're
+    // otherwise unbounded — enforce the advertised anonymous quota here,
+    // per-IP, rolling calendar month. Gated on `!isAuthenticated` so a
+    // signed-in user publishing from the same browser/IP is never subject to
+    // this — no double-penalizing, and no risk of an anonymous burst from
+    // that IP earlier in the month blocking their authenticated publish.
+    if (!isAuthenticated) {
+      const quota = await checkMonthlyQuota(
+        `publish__ip__${ip}`,
+        ANONYMOUS_LIMITS.pagesPerMonth,
+        `You've reached the anonymous publishing limit (${ANONYMOUS_LIMITS.pagesPerMonth} pages per month). Sign in for unlimited publishing.`,
+      ).catch(() => null);
+      if (quota) return quota;
     }
 
     const id = createId(10);
