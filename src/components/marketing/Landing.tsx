@@ -1,15 +1,15 @@
 "use client";
 
-import { AppLogo } from "@/components/ui/AppLogo";
-import ThemeToggle from "@/components/ui/ThemeToggle";
+import { SiteFooter } from "@/components/marketing/SiteFooter";
+import { SiteHeader } from "@/components/marketing/SiteHeader";
 import { trackEvent } from "@/lib/analytics";
 import { APP_NAME, ROUTES } from "@/lib/constants";
-import { UserButton, useUser } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
 import type { Easing, Variants } from "framer-motion";
 import { motion, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
-import { type ReactNode, useEffect, useMemo, useState, useCallback } from "react";
+import { type ReactNode, useMemo, useState, useCallback } from "react";
 import { TEMPLATES } from "@/lib/templates";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -625,131 +625,9 @@ Authorization: Bearer rdbl_...`}
 // Main Landing component
 // ─────────────────────────────────────────────────────────────────────────────
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Mobile nav panel
-// ─────────────────────────────────────────────────────────────────────────────
-
-const NAV_LINKS = [
-  { href: "#features", label: "Features" },
-  { href: "#how", label: "How it works" },
-  { href: "#examples", label: "Examples" },
-  { href: "/integrations", label: "Integrations" },
-  { href: "/api-docs", label: "API" },
-  { href: "/templates", label: "Templates" },
-];
-
-function MobileNavPanel({
-  open,
-  isSignedIn,
-  isLoaded,
-  onClose,
-}: {
-  open: boolean;
-  isSignedIn: boolean | null | undefined;
-  isLoaded: boolean;
-  onClose: () => void;
-}) {
-  // Lock body scroll when open
-  useEffect(() => {
-    if (open) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => { document.body.style.overflow = ""; };
-  }, [open]);
-
-  // Close on Escape
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [open, onClose]);
-
-  if (!open) return null;
-
-  return (
-    <>
-      {/* Backdrop */}
-      <div
-        aria-hidden
-        onClick={onClose}
-        className="fixed inset-0 z-30 bg-bg/60 backdrop-blur-sm"
-        style={{ animation: "fadeIn 0.18s ease both" }}
-      />
-
-      {/* Panel */}
-      <div
-        role="dialog"
-        aria-label="Navigation menu"
-        className="fixed inset-x-0 top-0 z-40 bg-bg border-b border-border-default shadow-glass"
-        style={{ animation: "mobileNavIn 0.28s cubic-bezier(0.16,1,0.3,1) both" }}
-      >
-        {/* Header row */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border-subtle">
-          <AppLogo onlyIcon={false} />
-          <button
-            type="button"
-            aria-label="Close navigation"
-            onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-text-muted transition hover:bg-fill-2 hover:text-text-primary"
-          >
-            <svg width="16" height="16" fill="none" viewBox="0 0 16 16" aria-hidden>
-              <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Nav links */}
-        <nav aria-label="Mobile site navigation" className="px-3 py-3">
-          {NAV_LINKS.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              onClick={onClose}
-              className="flex items-center px-3 py-3.5 rounded-xl text-[15px] font-medium text-text-secondary transition hover:bg-fill-2 hover:text-text-primary active:scale-[0.99]"
-            >
-              {link.label}
-            </a>
-          ))}
-        </nav>
-
-        {/* CTA strip */}
-        <div className="border-t border-border-subtle px-5 py-4 flex flex-col gap-3">
-          <Button
-            variant="primary"
-            size="lg"
-            href={ROUTES.app}
-            onClick={() => { onClose(); trackEvent("open_editor_clicked", { location: "mobile_nav" }); }}
-            className="w-full justify-center"
-          >
-            Open editor
-            <svg width="12" height="12" fill="none" viewBox="0 0 12 12" aria-hidden>
-              <path d="M2.5 9.5 9.5 2.5M9.5 2.5H4M9.5 2.5V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </Button>
-          {isLoaded && isSignedIn ? (
-            <Button variant="secondary" size="lg" href={ROUTES.myPages} onClick={onClose} className="w-full justify-center">
-              My pages
-            </Button>
-          ) : isLoaded ? (
-            <Button variant="secondary" size="lg" href={ROUTES.signIn} onClick={onClose} className="w-full justify-center">
-              Sign in
-            </Button>
-          ) : null}
-        </div>
-      </div>
-    </>
-  );
-}
-
 export function Landing() {
   const reduce = useReducedMotion();
   const { isSignedIn, isLoaded } = useUser();
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const closeNav = useCallback(() => setMobileNavOpen(false), []);
-  const openNav = useCallback(() => setMobileNavOpen(true), []);
 
   const steps = useMemo(
     () => [
@@ -1047,103 +925,7 @@ export function Landing() {
   return (
     <div className="relative min-h-screen bg-bg text-text-primary">
 
-      <MobileNavPanel
-        open={mobileNavOpen}
-        isSignedIn={isSignedIn}
-        isLoaded={isLoaded}
-        onClose={closeNav}
-      />
-
-      {/* ──────────────────────────────────────────────────────────────────── */}
-      {/* Sticky navigation                                                    */}
-      {/* ──────────────────────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-20 border-b border-border-default/60 bg-bg/80 backdrop-blur-xl">
-        <Container>
-          <div className="flex items-center justify-between py-3.5 sm:py-4">
-            <AppLogo onlyIcon={false} />
-
-            {/* Desktop nav — hidden below lg */}
-            <nav
-              className="hidden items-center gap-6 lg:flex"
-              aria-label="Site navigation"
-            >
-              {NAV_LINKS.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  className="text-sm text-text-muted transition hover:text-text-primary"
-                >
-                  {link.label}
-                </a>
-              ))}
-            </nav>
-
-            {/* Right controls */}
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              <ThemeToggle />
-
-              {/* Desktop: sign in / my pages */}
-              {isLoaded && isSignedIn ? (
-                <div className="hidden lg:flex items-center gap-3">
-                  <Link
-                    href={ROUTES.myPages}
-                    className="text-sm text-text-muted transition hover:text-text-primary"
-                  >
-                    My pages
-                  </Link>
-                  <UserButton />
-                </div>
-              ) : (
-                <span
-                  className={cn(
-                    "hidden lg:inline",
-                    !isLoaded && "pointer-events-none opacity-0",
-                  )}
-                  aria-hidden={!isLoaded || undefined}
-                >
-                  <GhostButton href={ROUTES.signIn}>Sign in</GhostButton>
-                </span>
-              )}
-
-              {/* Mobile: avatar when signed in */}
-              {isLoaded && isSignedIn && (
-                <div className="lg:hidden">
-                  <UserButton />
-                </div>
-              )}
-
-              <PrimaryButton
-                href={ROUTES.app}
-                onClick={() => trackEvent("open_editor_clicked", { location: "topbar" })}
-              >
-                Open editor
-                <svg width="12" height="12" fill="none" viewBox="0 0 12 12" aria-hidden>
-                  <path
-                    d="M2.5 9.5 9.5 2.5M9.5 2.5H4M9.5 2.5V8"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </PrimaryButton>
-
-              {/* Hamburger — mobile only */}
-              <button
-                type="button"
-                aria-label="Open navigation"
-                aria-expanded={mobileNavOpen}
-                onClick={openNav}
-                className="lg:hidden flex h-8 w-8 items-center justify-center rounded-lg text-text-muted transition hover:bg-fill-2 hover:text-text-primary"
-              >
-                <svg width="16" height="16" fill="none" viewBox="0 0 16 16" aria-hidden>
-                  <path d="M2 4h12M2 8h12M2 12h8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </Container>
-      </header>
+      <SiteHeader ctaTrackLocation="topbar" />
 
       {/* ──────────────────────────────────────────────────────────────────── */}
       {/* Hero                                                                  */}
@@ -1765,46 +1547,7 @@ export function Landing() {
         </Container>
       </section>
 
-      {/* ──────────────────────────────────────────────────────────────────── */}
-      {/* Footer                                                                */}
-      {/* ──────────────────────────────────────────────────────────────────── */}
-      <footer className="border-t border-border-default">
-        <Container>
-          <div className="py-10 sm:py-12">
-            {/* Top row: logo + primary links */}
-            <div className="flex flex-col gap-8 sm:flex-row sm:items-start sm:justify-between">
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-3">
-                  <AppLogo onlyIcon={true} />
-                  <span className="text-[13px] font-semibold text-text-primary">{APP_NAME}</span>
-                </div>
-                <span className="text-[13px] text-text-muted">Built for clarity.</span>
-              </div>
-
-              {/* Link columns — 2-col grid on mobile, horizontal on sm+ */}
-              <nav
-                className="grid grid-cols-2 gap-x-10 gap-y-3 text-[13px] text-text-muted sm:flex sm:flex-wrap sm:items-center sm:gap-6"
-                aria-label="Footer navigation"
-              >
-                <Link href={ROUTES.app} className="transition hover:text-text-primary">Editor</Link>
-                <Link href="/templates" className="transition hover:text-text-primary">Templates</Link>
-                <Link href="/explore" className="transition hover:text-text-primary">Explore</Link>
-                <Link href="/integrations" className="transition hover:text-text-primary">Integrations</Link>
-                <Link href="/api-docs" className="transition hover:text-text-primary">API docs</Link>
-                <Link href="/changelog" className="transition hover:text-text-primary">Changelog</Link>
-                <Link href="/about" className="transition hover:text-text-primary">About</Link>
-                <Link href="/privacy" className="transition hover:text-text-primary">Privacy</Link>
-                <Link href="/terms" className="transition hover:text-text-primary">Terms</Link>
-              </nav>
-            </div>
-
-            {/* Bottom row: copyright */}
-            <div className="mt-8 border-t border-border-subtle pt-6 text-[12px] text-text-muted">
-              © {new Date().getFullYear()} {APP_NAME}. All rights reserved.
-            </div>
-          </div>
-        </Container>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

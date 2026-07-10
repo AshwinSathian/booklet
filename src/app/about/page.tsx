@@ -1,4 +1,5 @@
-import { AppLogo } from "@/components/ui/AppLogo";
+import { SiteFooter } from "@/components/marketing/SiteFooter";
+import { SiteHeader } from "@/components/marketing/SiteHeader";
 import { APP_NAME, ROUTES } from "@/lib/constants";
 import { buildMetadata } from "@/lib/seo";
 import Link from "next/link";
@@ -14,17 +15,7 @@ export const metadata: Metadata = buildMetadata({
 export default function AboutPage() {
   return (
     <div className="min-h-screen bg-bg text-text-primary flex flex-col">
-      <header className="sticky top-0 z-20 border-b border-border-subtle bg-bg/85 backdrop-blur-xl">
-        <div className="mx-auto w-full max-w-3xl px-4 h-12 flex items-center justify-between gap-4">
-          <AppLogo onlyIcon={false} />
-          <Link
-            href={ROUTES.app}
-            className="hidden sm:inline-flex items-center gap-1.5 rounded-pill border border-outline px-3.5 py-1.5 text-xs font-medium text-text-secondary transition hover:border-accent-soft/50 hover:text-text-primary"
-          >
-            Open editor
-          </Link>
-        </div>
-      </header>
+      <SiteHeader ctaTrackLocation="about_topbar" />
 
       <main className="flex-1 mx-auto w-full max-w-3xl px-4 py-12 sm:py-16">
         <div className="max-w-2xl">
@@ -88,15 +79,7 @@ export default function AboutPage() {
         </div>
       </main>
 
-      <footer className="border-t border-border-subtle">
-        <div className="mx-auto w-full max-w-3xl px-4 py-6 flex flex-wrap items-center justify-between gap-3 text-xs text-text-muted">
-          <span>© {new Date().getFullYear()} {APP_NAME}</span>
-          <nav className="flex items-center gap-4">
-            <Link href="/privacy" className="hover:text-text-primary transition">Privacy</Link>
-            <Link href="/terms" className="hover:text-text-primary transition">Terms</Link>
-          </nav>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

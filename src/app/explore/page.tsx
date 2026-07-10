@@ -1,10 +1,10 @@
-import { AppLogo } from "@/components/ui/AppLogo";
+import { SiteFooter } from "@/components/marketing/SiteFooter";
+import { SiteHeader } from "@/components/marketing/SiteHeader";
 import { Button } from "@/components/ui/Button";
 import { APP_NAME, ROUTES } from "@/lib/constants";
 import { getFeaturedPages, getRecentPublicPages } from "@/lib/db";
 import { buildMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { ExploreClient } from "./ExploreClient";
 
 export const runtime = "nodejs";
@@ -25,14 +25,7 @@ export default async function ExplorePage() {
 
   return (
     <div className="min-h-screen bg-bg text-text-primary flex flex-col">
-      <header className="border-b border-border-subtle bg-bg/85 backdrop-blur-xl sticky top-0 z-20">
-        <div className="mx-auto w-full max-w-4xl px-4 h-12 flex items-center justify-between gap-4">
-          <AppLogo onlyIcon={false} />
-          <Button variant="primary" size="md" href={ROUTES.app}>
-            Create a page
-          </Button>
-        </div>
-      </header>
+      <SiteHeader ctaLabel="Create a page" ctaTrackLocation="explore_topbar" />
 
       <main className="flex-1 mx-auto w-full max-w-4xl px-4 py-10">
         <div className="mb-8">
@@ -60,19 +53,7 @@ export default async function ExplorePage() {
         </div>
       </main>
 
-      <footer className="mt-8 border-t border-border-subtle">
-        <div className="mx-auto w-full max-w-4xl px-4 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-text-muted">
-          <div className="flex items-center gap-2">
-          <AppLogo onlyIcon={true} />
-            <span>{APP_NAME} — Beautiful markdown pages, instantly.</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <Link href="/templates" className="hover:text-text-primary transition">Templates</Link>
-            <Link href="/about" className="hover:text-text-primary transition">About</Link>
-            <Link href={ROUTES.app} className="text-accent hover:text-accent-soft transition">Start writing →</Link>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter className="mt-8" />
     </div>
   );
 }
