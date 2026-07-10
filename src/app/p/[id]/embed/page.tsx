@@ -1,8 +1,10 @@
 import { BlockRenderer } from "@/components/blocks/BlockRenderer";
 import { APP_NAME } from "@/lib/constants";
 import { buildMetadata } from "@/lib/seo";
+import { buildLockedPageMetadata } from "@/lib/locked-page-metadata";
 import { getDoc } from "@/lib/storage";
 import { getPageBySlug, getPageRecord } from "@/lib/db";
+import { verifyUnlockToken } from "@/lib/unlock-token";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { cookies } from "next/headers";
@@ -51,8 +53,18 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id: idOrSlug } = await params;
-  const { doc } = await resolveEmbedPage(idOrSlug);
+  const { doc, pageRecord } = await resolveEmbedPage(idOrSlug);
   if (!doc) return buildMetadata({ title: "Not found", noIndex: true });
+
+  // Locked pages: generic metadata only — see src/lib/locked-page-metadata.ts.
+  // Must come before extractTitle() below touches real content.
+  if (pageRecord?.password_hash) {
+    return {
+      ...buildLockedPageMetadata(`/p/${idOrSlug}/embed`),
+      robots: { index: false, follow: false },
+    };
+  }
+
   const title = extractTitle(doc.blocks as Parameters<typeof extractTitle>[0]) ?? "Shared page";
   return {
     ...buildMetadata({ title, noIndex: true }),
@@ -79,7 +91,8 @@ export default async function EmbedPage({
   // Password-protected: show a placeholder in embeds
   if (pageRecord?.password_hash) {
     const cookieStore = await cookies();
-    const unlocked = cookieStore.get(`readable_unlock_${resolvedId}`)?.value === "1";
+    const cookieValue = cookieStore.get(`readable_unlock_${resolvedId}`)?.value;
+    const unlocked = await verifyUnlockToken(resolvedId, pageRecord.password_hash, cookieValue);
     if (!unlocked) {
       return (
         <div className="flex min-h-50 items-center justify-center bg-bg text-center p-8">

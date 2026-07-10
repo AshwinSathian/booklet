@@ -5,9 +5,11 @@ import type { Block } from "@/lib/blocks";
 import { APP_NAME, ROUTES } from "@/lib/constants";
 import { getPageBySlug, getPageRecord, incrementViewCount } from "@/lib/db";
 import { absoluteUrl, buildMetadata } from "@/lib/seo";
+import { buildLockedPageMetadata } from "@/lib/locked-page-metadata";
 import { getDoc } from "@/lib/storage";
 import { readingTimeMinutes } from "@/lib/reading-time";
 import { buildToc, MIN_TOC_HEADINGS } from "@/lib/toc";
+import { verifyUnlockToken } from "@/lib/unlock-token";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { cookies } from "next/headers";
@@ -72,6 +74,15 @@ export async function generateMetadata({
     });
   }
 
+  // Locked pages: return generic, non-identifying metadata and never touch
+  // the real title/description/images below. generateMetadata() runs
+  // regardless of the page component's own password gate (see
+  // src/lib/locked-page-metadata.ts for the full rationale), so this check
+  // must come before any of the real-content extraction that follows.
+  if (pageRecord?.password_hash) {
+    return buildLockedPageMetadata(`/p/${idOrSlug}`);
+  }
+
   const isUnlisted = pageRecord?.visibility === "unlisted";
   const title = extractTitle(doc.blocks) ?? "Shared page";
   const fmMeta = pageRecord?.frontmatter_meta as Record<string, unknown> | null | undefined;
@@ -123,7 +134,8 @@ export default async function SharePage({
   // Password gate: check cookie before revealing content.
   if (pageRecord?.password_hash) {
     const cookieStore = await cookies();
-    const unlocked = cookieStore.get(`readable_unlock_${resolvedId}`)?.value === "1";
+    const cookieValue = cookieStore.get(`readable_unlock_${resolvedId}`)?.value;
+    const unlocked = await verifyUnlockToken(resolvedId, pageRecord.password_hash, cookieValue);
     if (!unlocked) {
       return <PasswordGate pageId={resolvedId} />;
     }

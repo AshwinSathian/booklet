@@ -2,6 +2,7 @@ import { getPageRecord } from "@/lib/db";
 import { verifyPassword } from "@/lib/password";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/request-ip";
+import { signUnlockToken } from "@/lib/unlock-token";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -45,8 +46,14 @@ export async function POST(
     return NextResponse.json({ error: "Incorrect password" }, { status: 401 });
   }
 
+  // Cookie value is an HMAC over pageId + the page's *current* password_hash
+  // — unguessable, and automatically invalidated if the password is ever
+  // changed (password_hash changes, so old tokens stop verifying). See
+  // src/lib/unlock-token.ts.
+  const token = await signUnlockToken(id, page.password_hash);
+
   const res = NextResponse.json({ ok: true });
-  res.cookies.set(`readable_unlock_${id}`, "1", {
+  res.cookies.set(`readable_unlock_${id}`, token, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
