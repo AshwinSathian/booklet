@@ -345,3 +345,63 @@ test.describe("Security — client IP trust & /admin gating", () => {
     expect(statuses).toContain(429);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Suite 9: Security — MathDisplay XSS regression
+//
+// A malformed math block whose source forces KaTeX to throw (deep brace
+// nesting causes a JS RangeError, which bypasses `throwOnError: false` since
+// that option only suppresses KaTeX's own ParseError) used to fall back to
+// `dangerouslySetInnerHTML={{ __html: `<code>${code}</code>` }}` — an
+// attacker-controlled string interpolated straight into raw HTML. A payload
+// containing `</code><img src=x onerror=...>` broke out of the <code> tag and
+// executed. The fix renders the fallback as an escaped JSX child instead.
+// ---------------------------------------------------------------------------
+
+test.describe("Security: MathDisplay XSS regression", () => {
+  test("malformed math block renders as inert escaped text, never executes", async ({
+    page,
+    request,
+  }) => {
+    // Deep brace nesting forces KaTeX to throw a RangeError even with
+    // throwOnError:false, so the payload reaches MathDisplay's catch block.
+    const marker = "xssMarker12345";
+    const payload =
+      "{".repeat(2000) + "x" + "}".repeat(2000) + `</code><img src=x onerror=window.${marker}=true>`;
+
+    const res = await request.post(`${BASE}/api/publish`, {
+      data: {
+        blocks: [{ t: "math", display: true, code: payload }],
+        raw: `$$${payload}$$`,
+      },
+    });
+
+    if (res.status() === 429) {
+      test.skip(true, "rate limited from a previous run");
+      return;
+    }
+    expect(res.status()).toBe(200);
+    const body = (await res.json()) as { id: string; url: string };
+    expect(body.id).toBeTruthy();
+
+    await page.goto(`${BASE}/p/${body.id}`);
+    await expect(page.locator("body")).not.toContainText("Application error");
+
+    // The injected <img onerror=...> must never become a real DOM element —
+    // if the payload executed, `img[onerror]` would exist and the handler
+    // would have already fired (Playwright loads images by default).
+    await expect(page.locator("img[onerror]")).toHaveCount(0);
+
+    // The onerror handler must never have run.
+    const xssFired = await page.evaluate(
+      (key) => (window as unknown as Record<string, unknown>)[key] === true,
+      marker,
+    );
+    expect(xssFired).toBe(false);
+
+    // The user's raw math source should still be visible as inert text, not
+    // silently dropped — the fallback's whole point is to show broken math
+    // source, just safely.
+    await expect(page.locator("body")).toContainText(marker);
+  });
+});
