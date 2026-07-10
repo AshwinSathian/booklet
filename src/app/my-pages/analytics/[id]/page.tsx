@@ -7,6 +7,7 @@ import { getDoc } from "@/lib/storage";
 import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ViewsChart } from "./ViewsChart";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -31,8 +32,8 @@ function pctWidth(value: number, max: number): string {
 
 function Stat({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="border border-outline bg-bg-elevated px-4 py-3">
-      <div className="text-2xl font-semibold tabular-nums text-text-primary">{value}</div>
+    <div className="rounded-lg border border-outline bg-bg-elevated px-4 py-3">
+      <div className="text-2xl font-semibold text-text-primary">{value}</div>
       <div className="mt-1 text-xs text-text-muted">{label}</div>
     </div>
   );
@@ -82,9 +83,9 @@ export default async function PageAnalyticsPage({
           <h1 className="mt-1 truncate text-[clamp(20px,3vw,26px)]">{title}</h1>
         </div>
 
-        <section className="grid grid-cols-2 overflow-hidden rounded-lg sm:grid-cols-4">
-          <Stat label="Views" value={summary.total_views} />
-          <Stat label="Unique" value={summary.unique_views} />
+        <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <Stat label="Views" value={summary.total_views.toLocaleString()} />
+          <Stat label="Unique" value={summary.unique_views.toLocaleString()} />
           <Stat label="Read 50%" value={`${summary.read_50_pct}%`} />
           <Stat label="Read 100%" value={`${summary.read_100_pct}%`} />
         </section>
@@ -92,19 +93,9 @@ export default async function PageAnalyticsPage({
         <section className="mt-6 rounded-lg border border-outline bg-bg-elevated p-4">
           <div className="mb-4 flex items-center justify-between gap-3">
             <h2 className="text-sm font-medium">Views last 30 days</h2>
-            <span className="text-xs text-text-muted">{maxDayViews} peak day</span>
+            <span className="text-xs text-text-muted">{maxDayViews.toLocaleString()} peak day</span>
           </div>
-          <div className="flex h-36 items-end gap-1">
-            {summary.views_by_day.map((row) => (
-              <div key={row.date} className="flex min-w-0 flex-1 items-end">
-                <div
-                  className="w-full rounded-t bg-accent/70"
-                  style={{ height: pctWidth(row.views, maxDayViews) }}
-                  title={`${row.date}: ${row.views} views`}
-                />
-              </div>
-            ))}
-          </div>
+          <ViewsChart data={summary.views_by_day} />
         </section>
 
         <div className="mt-6 grid gap-6 md:grid-cols-2">
