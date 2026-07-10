@@ -154,7 +154,7 @@ if [[ -f "$ENV_FILE" ]]; then
   ok ".env.production.local exists"
   # Verify required keys are set (non-empty, non-placeholder)
   MISSING=()
-  for key in MONGODB_URI NEXT_PUBLIC_SITE_URL NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY CLERK_SECRET_KEY; do
+  for key in MONGODB_URI NEXT_PUBLIC_SITE_URL NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY CLERK_SECRET_KEY INVITE_JWT_SECRET; do
     val=$(grep "^${key}=" "$ENV_FILE" 2>/dev/null | cut -d= -f2- || true)
     if [[ -z "$val" || "$val" == *"REPLACE_ME"* ]]; then
       MISSING+=("$key")
@@ -171,6 +171,7 @@ else
   printf "\n"
   printf "  Edit %s and fill in:\n" "$ENV_FILE"
   printf "    • CLERK_SECRET_KEY  (from Clerk dashboard)\n"
+  printf "    • INVITE_JWT_SECRET (dedicated random secret, e.g. via: openssl rand -base64 32)\n"
   printf "    • MONGODB_URI       (use: mongodb://127.0.0.1:27017/readable?directConnection=true)\n"
   printf "    • Any other keys marked REPLACE_ME\n\n"
   die "Fill in .env.production.local then re-run this script."

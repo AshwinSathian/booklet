@@ -1,16 +1,11 @@
 import { addCollectionMember, getCollectionRecord } from "@/lib/db";
 import { createId } from "@/lib/id";
+import { verifyInviteToken } from "@/lib/invite-token";
 import { auth, currentUser } from "@clerk/nextjs/server";
-import { jwtVerify } from "jose";
 import { redirect } from "next/navigation";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-function getJwtSecret(): Uint8Array {
-  const secret = process.env.INVITE_JWT_SECRET ?? process.env.CLERK_SECRET_KEY ?? "readable-invite-dev-secret";
-  return new TextEncoder().encode(secret);
-}
 
 export default async function TeamJoinPage({
   searchParams,
@@ -25,9 +20,12 @@ export default async function TeamJoinPage({
 
   let payload: { teamId: string; invitedEmail: string; invitedBy: string };
   try {
-    const { payload: p } = await jwtVerify(token, getJwtSecret());
-    payload = p as typeof payload;
-  } catch {
+    payload = await verifyInviteToken(token);
+  } catch (err) {
+    if (err instanceof Error && err.message.startsWith("INVITE_JWT_SECRET")) {
+      console.error("[t/join] failed to verify invite token:", err);
+      return <ErrorPage message="Joining a team isn't available right now. Please contact the administrator." />;
+    }
     return <ErrorPage message="This invite link has expired or is invalid." />;
   }
 

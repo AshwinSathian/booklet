@@ -132,7 +132,9 @@ NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
 CLERK_SECRET_KEY=sk_test_...
 MONGODB_URI=mongodb+srv://...
 
-# Optional — signs team invite JWT tokens (falls back to CLERK_SECRET_KEY)
+# Required — dedicated secret that signs/verifies team-invite JWT tokens.
+# Must be its own random value; there is no fallback, and invite creation
+# and joining fail closed if this is unset. Generate with: openssl rand -base64 32
 INVITE_JWT_SECRET=<random-secret>
 ```
 

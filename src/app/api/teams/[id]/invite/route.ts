@@ -1,16 +1,9 @@
 import { getCollectionRecord } from "@/lib/db";
+import { signInviteToken } from "@/lib/invite-token";
 import { auth } from "@clerk/nextjs/server";
-import { SignJWT } from "jose";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
-
-const INVITE_TTL_SECONDS = 72 * 60 * 60; // 72 hours
-
-function getJwtSecret(): Uint8Array {
-  const secret = process.env.INVITE_JWT_SECRET ?? process.env.CLERK_SECRET_KEY ?? "readable-invite-dev-secret";
-  return new TextEncoder().encode(secret);
-}
 
 export async function POST(
   req: Request,
@@ -36,11 +29,13 @@ export async function POST(
     return NextResponse.json({ error: "Valid email required" }, { status: 422 });
   }
 
-  const token = await new SignJWT({ teamId: id, invitedEmail: email, invitedBy: userId })
-    .setProtectedHeader({ alg: "HS256" })
-    .setExpirationTime(`${INVITE_TTL_SECONDS}s`)
-    .setIssuedAt()
-    .sign(getJwtSecret());
+  let token: string;
+  try {
+    token = await signInviteToken({ teamId: id, invitedEmail: email, invitedBy: userId });
+  } catch (err) {
+    console.error("[teams/invite] failed to sign invite token:", err);
+    return NextResponse.json({ error: "Invite creation is misconfigured. Contact the administrator." }, { status: 500 });
+  }
 
   const origin = new URL(req.url).origin;
   const inviteUrl = `${origin}/t/join?token=${token}`;
