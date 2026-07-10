@@ -4,7 +4,8 @@
   "description": "GitHub Action: publish Markdown to Readable",
   "private": true,
   "scripts": {
-    "build": "tsc && node -e \"const fs=require('fs');const src=fs.readFileSync('dist/main.js','utf8');fs.writeFileSync('dist/main.js','#!/usr/bin/env node\\n'+src);\""
+    "build": "tsc && node -e \"const fs=require('fs');const src=fs.readFileSync('dist/main.js','utf8');fs.writeFileSync('dist/main.js','#!/usr/bin/env node\\n'+src);\"",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@actions/core": "^1.10.0"
