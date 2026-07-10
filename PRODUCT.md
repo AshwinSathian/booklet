@@ -512,7 +512,7 @@ Sign-in is via Clerk (Google, GitHub, or email).
 | Styling | Tailwind CSS v4 | CSS-variable design tokens, dark-first |
 | Auth | Clerk | Google, GitHub, email sign-in |
 | Markdown parsing | unified / remark / remark-gfm | Pipeline: parse → process → AST |
-| Rendering | Custom AST block renderer | Never `dangerouslySetInnerHTML` — XSS safe |
+| Rendering | Custom AST block renderer | `dangerouslySetInnerHTML` used only for library-sanitised output (KaTeX, highlight.js); no unescaped user input reaches it |
 | Storage — published pages | Cloudflare KV | Edge-distributed, 30-day TTL for anonymous |
 | Storage — owned pages / user data | Cloudflare D1 | SQLite-compatible, permanent records |
 | Infrastructure | Cloudflare Workers via OpenNext | Edge-deployed Next.js |
@@ -525,7 +525,7 @@ Sign-in is via Clerk (Google, GitHub, or email).
 
 - **Drafts are 100% private until publish.** They live in `localStorage` and are never sent to any server.
 - **Published pages are edge-cached globally.** Cloudflare KV is distributed — pages load fast worldwide.
-- **The custom renderer makes all Markdown content XSS-safe.** No `dangerouslySetInnerHTML` is used anywhere; the AST is sanitised before display.
+- **The custom renderer makes all Markdown content XSS-safe.** `dangerouslySetInnerHTML` is used in a few places (KaTeX math, highlight.js code blocks), but only with each library's own sanitised/escaped output — no unescaped user input reaches it. Render-failure fallbacks (e.g. malformed math) render the raw source as an escaped JSX child, not raw HTML.
 - **The platform is stateless for anonymous users.** No cookies, no sessions, no tracking until the moment of publish.
 - **Permanent pages use Cloudflare D1** (SQLite at the edge) so they're never subject to KV TTL expiry.
 
