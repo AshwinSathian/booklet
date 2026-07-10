@@ -1,0 +1,177 @@
+# CI gate for the Readable monorepo.
+#
+# Runs on every pull request targeting main (and on push to main, so main
+# itself always has a green build). Five jobs cover everything that can run
+# without secrets this repo doesn't have in GitHub Actions:
+#   - lint            eslint over the whole repo
+#   - typecheck-root  tsc --noEmit for the Next.js app (src/**)
+#   - typecheck-packages   tsc --noEmit for mcp-server + packages/* (excluded
+#                          from the root tsconfig.json, so they need their own
+#                          typecheck pass)
+#   - build           next build with dummy NEXT_PUBLIC_* values (no server
+#                     secret is read at build time — see comment below)
+#   - unit-tests      tests/unit/** against a real MongoDB service container
+#
+# The full Playwright e2e suite (tests/e2e/) is intentionally NOT run here —
+# see the e2e-manual job at the bottom for why and what it would take to
+# enable it.
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "20"
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - run: npm ci --prefer-offline
+      - run: npm run lint
+
+  typecheck-root:
+    name: Typecheck (root)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - run: npm ci --prefer-offline
+      # "npm run test" is tsc --noEmit — see package.json
+      - run: npm run test
+
+  typecheck-packages:
+    name: Typecheck (${{ matrix.package }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [mcp-server, packages/cli, packages/vscode, packages/github-action]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - run: npm ci --prefix ${{ matrix.package }} --prefer-offline
+      - run: npm run typecheck --prefix ${{ matrix.package }}
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    env:
+      NODE_ENV: production
+      # Next.js only needs NEXT_PUBLIC_* vars at build time (they get inlined
+      # into the client bundle). Every non-NEXT_PUBLIC_ var in .env.example
+      # (MONGODB_URI, CLERK_SECRET_KEY, INVITE_JWT_SECRET, UNLOCK_TOKEN_SECRET,
+      # ADMIN_IPS, ADMIN_USER_IDS, API_KEY_PEPPER, READABLE_WEBHOOK_SECRET) is
+      # read lazily inside function bodies at request time (src/lib/mongodb.ts,
+      # src/lib/unlock-token.ts, src/lib/invite-token.ts, src/middleware.ts,
+      # src/lib/api-key.ts, etc.) — none of it is touched during
+      # `next build`/generateStaticParams, so none of it is needed here.
+      # Verified locally: a build with only the placeholders below (and no
+      # other env vars at all) completes successfully.
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_ci_placeholder
+      NEXT_PUBLIC_CLERK_SIGN_IN_URL: /sign-in
+      NEXT_PUBLIC_CLERK_SIGN_UP_URL: /sign-up
+      NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL: /app
+      NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL: /app
+      NEXT_PUBLIC_CLERK_AFTER_SIGN_OUT_URL: /
+      NEXT_PUBLIC_SITE_URL: http://localhost:3100
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - run: npm ci --prefer-offline
+      - run: npm run build
+
+  unit-tests:
+    name: Unit tests (real MongoDB)
+    runs-on: ubuntu-latest
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand({ ping: 1 })' --quiet"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 6
+    env:
+      # Same URI shape as .env.example / src/lib/mongodb.ts, pointed at the
+      # service container instead of a locally brew-installed mongod.
+      MONGODB_URI: "mongodb://localhost:27017/readable?retryWrites=true&w=majority"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - run: npm ci --prefer-offline
+      # tests/unit/** run via @playwright/test as a plain Node test runner —
+      # no browser is launched, so no `playwright install` step is needed.
+      - run: npm run test:unit
+
+  # ── Full Playwright e2e suite — NOT part of the required PR gate ────────────
+  # tests/e2e/happy-paths.spec.ts and tests/e2e/unit/safe-redirect.spec.ts
+  # drive a live `next start` instance through real Clerk sign-in/sign-up
+  # flows and expect a real-ish MongoDB with production-like data. Faking
+  # Clerk auth isn't attempted here. To enable this job for real:
+  #   1. Add repo secrets: NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY (a real Clerk
+  #      test-mode key), CLERK_SECRET_KEY, and a MONGODB_URI pointed at a
+  #      throwaway Atlas cluster (or extend the mongo:7 service container
+  #      approach from unit-tests, if the e2e flows don't need Atlas-only
+  #      features).
+  #   2. Add Clerk test credentials the suite can drive through sign-in/
+  #      sign-up (Clerk's testing tokens: https://clerk.com/docs/testing/e2e-testing).
+  #   3. Change `if:` below from `workflow_dispatch` to `pull_request`/`push`
+  #      once (1) and (2) are in place, and add it as a required check.
+  e2e-manual:
+    name: E2E (manual — needs Clerk + Mongo secrets)
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - run: npm ci --prefer-offline
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+        env:
+          NODE_ENV: production
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          NEXT_PUBLIC_SITE_URL: http://localhost:3100
+      - run: npm start &
+        env:
+          PORT: "3100"
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+      - name: Wait for server to be ready
+        run: |
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:3100 >/dev/null && exit 0
+            sleep 1
+          done
+          echo "Server did not become ready in time" >&2
+          exit 1
+      - run: npx playwright test --config=playwright.config.ts
+        env:
+          TEST_BASE_URL: http://localhost:3100
+

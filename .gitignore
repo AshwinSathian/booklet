@@ -15,6 +15,7 @@
 
 # next.js
 /.next/
+/.next.previous/
 /out/
 
 # production
@@ -52,6 +53,11 @@ next-env.d.ts
 # MCP server — separate npm workspace; ignore its build artefacts
 mcp-server/node_modules/
 mcp-server/.wrangler/
+
+# packages/* — each is its own standalone npm package (own lockfile,
+# own node_modules), not an npm workspace of the root
+packages/*/node_modules/
+packages/*/dist/
 
 # clerk configuration (can include secrets)
 /.clerk/

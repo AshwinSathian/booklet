@@ -49,6 +49,7 @@
   },
   "scripts": {
     "build": "tsc -p ./tsconfig.json",
+    "typecheck": "tsc --noEmit",
     "vscode:prepublish": "npm run build"
   },
   "devDependencies": {
