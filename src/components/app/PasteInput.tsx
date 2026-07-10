@@ -579,10 +579,14 @@ export function PasteInput({
   value,
   onChange,
   onFocusShortcutRequested,
+  isEmpty = false,
+  onInsertSample,
 }: {
   value: string;
   onChange: (v: string) => void;
   onFocusShortcutRequested?: (focusFn: () => void) => void;
+  isEmpty?: boolean;
+  onInsertSample?: () => void;
 }) {
   const ref = useRef<HTMLTextAreaElement | null>(null);
   const [showFindReplace, setShowFindReplace] = useState(false);
@@ -637,6 +641,24 @@ export function PasteInput({
             textareaRef={ref}
             onClose={() => setShowFindReplace(false)}
           />
+        )}
+
+        {/* First-run empty state — disappears the moment there's any content */}
+        {isEmpty && (
+          <div className="shrink-0 flex items-center justify-between gap-3 border-b border-border-subtle bg-accent-dim/40 px-4 py-2 animate-fade-in">
+            <span className="text-xs text-text-secondary">
+              Write your first line, or see how it looks.
+            </span>
+            {onInsertSample && (
+              <button
+                type="button"
+                onClick={onInsertSample}
+                className="shrink-0 text-xs font-semibold text-accent transition hover:text-accent-soft"
+              >
+                Insert sample
+              </button>
+            )}
+          </div>
         )}
 
         {/* Textarea */}
