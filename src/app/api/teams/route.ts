@@ -1,4 +1,4 @@
-import { addCollectionMember, createCollectionRecord, getCollectionsByUser, getTeamSpacesByMembership, updateCollectionRecord } from "@/lib/db";
+import { addCollectionMember, createCollectionRecord, deleteCollectionRecord, getCollectionBySlug, getCollectionsByUser, getTeamSpacesByMembership, updateCollectionRecord } from "@/lib/db";
 import { createId } from "@/lib/id";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
@@ -47,11 +47,31 @@ export async function POST(req: Request) {
   const slug = body.slug?.trim() ? slugify(body.slug.trim()) : slugify(name);
   if (!slug) return NextResponse.json({ error: "Could not derive a valid slug from the name." }, { status: 422 });
 
+  // Fast, friendly rejection for the common case. This is a check-then-act
+  // race in the worst case (two simultaneous requests for the same slug),
+  // so it is NOT the source of truth — the unique index on
+  // `collections.slug` (see src/lib/db/index-specs.mjs) is, and its
+  // duplicate-key error is what we authoritatively act on below.
+  const existing = await getCollectionBySlug(slug);
+  if (existing) {
+    return NextResponse.json({ error: "That team URL is already taken." }, { status: 409 });
+  }
+
   const id = createId(10);
 
   try {
     await createCollectionRecord(id, userId, name, true);
-    await updateCollectionRecord(id, { slug });
+    try {
+      await updateCollectionRecord(id, { slug });
+    } catch (e) {
+      const isDuplicateKey =
+        typeof e === "object" && e !== null && "code" in e && (e as { code?: unknown }).code === 11000;
+      if (isDuplicateKey) {
+        await deleteCollectionRecord(id, userId).catch(() => {});
+        return NextResponse.json({ error: "That team URL is already taken." }, { status: 409 });
+      }
+      throw e;
+    }
     // Add creator as first member so getCollectionMembers returns a non-empty list
     await addCollectionMember(createId(10), id, userId, null, "editor", userId);
   } catch (e) {

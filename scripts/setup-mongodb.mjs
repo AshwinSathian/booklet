@@ -1,11 +1,18 @@
 /**
- * One-time setup script: creates all MongoDB collections and indexes.
- * Run once against a fresh Atlas cluster:
+ * Standalone index-setup script. Indexes are now also created automatically
+ * at server startup (see src/instrumentation.ts), so running this script by
+ * hand is optional in most environments — but it's still useful to run
+ * explicitly against a fresh Atlas cluster before the first request, so
+ * that request doesn't pay the index-build cost.
+ *
+ * Both this script and the startup hook delegate to the single shared index
+ * list in src/lib/db/index-specs.mjs so they can never drift apart.
  *
  *   MONGODB_URI="mongodb+srv://..." node scripts/setup-mongodb.mjs
  */
 
 import { MongoClient } from "mongodb";
+import { ensureIndexes } from "../src/lib/db/index-specs.mjs";
 
 const uri = process.env.MONGODB_URI;
 if (!uri) {
@@ -19,51 +26,7 @@ async function main() {
   await client.connect();
   const db = client.db("readable");
 
-  // --- users ---
-  await db.collection("users").createIndex({ _id: 1 }); // already primary; explicit for clarity
-
-  // --- pages ---
-  await db.collection("pages").createIndex({ user_id: 1, created_at: -1 });
-  await db.collection("pages").createIndex({ collection_id: 1, user_id: 1 });
-  await db.collection("pages").createIndex(
-    { slug: 1 },
-    { unique: true, sparse: true }, // slug is optional; unique when present
-  );
-
-  // --- api_keys ---
-  await db.collection("api_keys").createIndex({ user_id: 1, created_at: -1 });
-  await db.collection("api_keys").createIndex({ key_hash: 1 }, { unique: true });
-
-  // --- docs ---
-  // No TTL index — all published pages are stored indefinitely.
-
-  // --- rate_limits ---
-  // Bucket keys expire ~2 minutes after creation.
-  await db.collection("rate_limits").createIndex(
-    { expiresAt: 1 },
-    { expireAfterSeconds: 0 },
-  );
-
-  // --- analytics_events ---
-  await db.collection("analytics_events").createIndex({ page_id: 1, created_at: -1 });
-  await db.collection("analytics_events").createIndex(
-    { session_hash: 1, page_id: 1, event: 1 },
-    { unique: true },
-  );
-  await db.collection("analytics_events").createIndex(
-    { created_at: 1 },
-    { expireAfterSeconds: 7776000 },
-  );
-
-  // --- page_versions ---
-  await db.collection("page_versions").createIndex({ page_id: 1, version_number: -1 });
-  await db.collection("page_versions").createIndex({ page_id: 1, created_at: -1 });
-
-  // --- collections ---
-  await db.collection("collections").createIndex(
-    { user_id: 1, name: 1 },
-    { unique: true },
-  );
+  await ensureIndexes(db);
 
   console.log("MongoDB indexes created successfully.");
   await client.close();
