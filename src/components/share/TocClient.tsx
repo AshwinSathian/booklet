@@ -9,15 +9,25 @@ export function DesktopTocClient({ toc }: { toc: TocItem[] }) {
 
   useEffect(() => {
     const headingIds = toc.map((t) => t.id);
+    // IntersectionObserver's callback only reports entries whose intersection
+    // state *changed* since the last callback — not every currently-visible
+    // target. Picking the first isIntersecting entry in that batch (the
+    // previous approach) picks an arbitrary changed heading, not necessarily
+    // the topmost one actually on screen — most visible when scrolling fast
+    // enough that several headings change state in one callback, which then
+    // highlighted the wrong section. Tracking intersecting state per heading
+    // and always recomputing from headingIds' document order fixes this
+    // regardless of batch order or how many entries changed at once.
+    const intersecting = new Set<string>();
 
     observerRef.current = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
-          if (entry.isIntersecting) {
-            setActiveId(entry.target.id);
-            break;
-          }
+          if (entry.isIntersecting) intersecting.add(entry.target.id);
+          else intersecting.delete(entry.target.id);
         }
+        const topmost = headingIds.find((id) => intersecting.has(id));
+        if (topmost) setActiveId(topmost);
       },
       { rootMargin: "-20% 0% -70% 0%", threshold: 0 },
     );
