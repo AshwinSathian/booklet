@@ -93,7 +93,12 @@ export default async function CliAuthPage({
     );
   }
 
-  // Create the CLI key
+  // Create the CLI key. `redirect()` below throws a NEXT_REDIRECT error that
+  // Next.js catches higher up the tree — it must NOT be inside this try, or
+  // that throw gets swallowed here and every successful login renders the
+  // catch's error page instead of completing (found live: this was firing
+  // on every login attempt, success or not).
+  let callbackUrl: string;
   try {
     const raw = generateRawKey();
     const keyHash = await hashApiKey(raw);
@@ -102,11 +107,10 @@ export default async function CliAuthPage({
 
     // Redirect to the CLI's local callback server — browser follows the 307
     // 127.0.0.1 is exempt from HSTS (RFC 6797 §8.3) so HTTP is safe here
-    const callbackUrl =
+    callbackUrl =
       `http://127.0.0.1:${port}/callback` +
       `?key=${encodeURIComponent(raw)}` +
       `&state=${encodeURIComponent(state)}`;
-    redirect(callbackUrl);
   } catch {
     return (
       <ErrorPage
@@ -115,4 +119,5 @@ export default async function CliAuthPage({
       />
     );
   }
+  redirect(callbackUrl);
 }

@@ -129,6 +129,20 @@ production afterward):
   incident — see the "Publish URL bug fix" note this doc's sibling files
   reference — but it was never extended to `/api/v1/*`, and was itself
   inconsistently applied (the webhook payload didn't use it even there).
+- `src/app/cli-auth/page.tsx` created the CLI's API key and then called
+  `redirect(callbackUrl)` **inside** the same `try` block as the key
+  creation. Next.js's `redirect()` (from `next/navigation`) works by
+  throwing an internal `NEXT_REDIRECT` error that the framework's own
+  machinery catches further up the render tree — wrapping it in a local
+  `try/catch` swallows that throw instead, so the `catch` rendered
+  "Something went wrong" on *every single successful login*, not just
+  failures. The API key was actually created correctly each time; the
+  browser just never got redirected back to the CLI's local callback
+  server, so `readable login` hung until its 5-minute timeout. Found live
+  from a real user report (not caught by CI, since the existing e2e suite
+  didn't exercise `readable login`'s real browser-driven flow). Fixed by
+  moving `redirect()` outside the `try` block. Verified against production
+  with `scripts/production-verify/cli-mcp-verify.mjs` — see below.
 
 ## readable-api.ashwinsathian.com
 
@@ -167,6 +181,28 @@ TEST_API_BASE_URL=https://readable-api.ashwinsathian.com \
 MONGODB_URI="mongodb://127.0.0.1:27017/readable?directConnection=true" \
 CLAIM_TOKEN_SECRET=<same value as .env.production.local> \
 npx playwright test --config=scripts/production-verify/playwright.config.ts
+```
+
+`scripts/production-verify/cli-mcp-verify.mjs` covers what the Playwright
+suite above doesn't: the real `readable login` browser-redirect handshake,
+the rest of the CLI's command surface (`whoami`, `pages list/delete`,
+`publish`, `logout`), and the MCP server's JSON-RPC tool surface
+(`initialize`, `tools/list`, `publish_page`, `list_pages`, `get_page`,
+`update_page`, `delete_page`) — all against the live hostnames, using a
+real signed-up throwaway account. It drives the CLI as an actual child
+process with an isolated `$HOME` (so it never touches your real
+`~/.readable/config.json`) and feeds the session cookie through
+`/cli-auth` exactly as a browser would, including following the redirect
+to the CLI's loopback callback server — this is the flow that would have
+caught the `redirect()`-inside-`try` bug above before a real user hit it.
+Same self-cleaning discipline: everything is tagged
+`e2e-cli-verify-<timestamp>` and deleted at the end, scoped to what the run
+created. Run it after any deploy touching `src/app/cli-auth`,
+`packages/cli`, or `mcp-server`:
+
+```bash
+MONGODB_URI="mongodb://127.0.0.1:27017/readable?directConnection=true" \
+node scripts/production-verify/cli-mcp-verify.mjs
 ```
 
 ## npm workspaces + the shared API client
