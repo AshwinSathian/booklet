@@ -6,9 +6,16 @@ import type { DbApiKey, DbCollection, DbCollectionMember, DbPage, DbUser, DbWebh
 // ---------------------------------------------------------------------------
 
 type UserDoc = Omit<DbUser, "id"> & { _id: string };
-type PageDoc = Omit<DbPage, "id"> & { _id: string };
+// `slug` is optional here (unlike the public DbPage.slug: string | null
+// contract) because it must be OMITTED, not set to null, when absent — the
+// unique index on `slug` is sparse, which only excludes documents where the
+// field is genuinely missing. A present `slug: null` is still an indexed
+// value, so a second slug-less page would collide with the first. See
+// createPageRecord/updatePageRecord.
+type PageDoc = Omit<DbPage, "id" | "slug"> & { _id: string; slug?: string | null };
 type ApiKeyDoc = Omit<DbApiKey, "id"> & { _id: string };
-type CollectionDoc = Omit<DbCollection, "id"> & { _id: string };
+// Same sparse-index reasoning as PageDoc — see createCollectionRecord/updateCollectionRecord.
+type CollectionDoc = Omit<DbCollection, "id" | "slug"> & { _id: string; slug?: string | null };
 type CollectionMemberDoc = Omit<DbCollectionMember, "id"> & { _id: string };
 type WebhookDoc = Omit<DbWebhook, "id"> & { _id: string };
 
@@ -27,6 +34,7 @@ function toPage(doc: PageDoc): DbPage {
   return {
     id: _id,
     ...rest,
+    slug: rest.slug ?? null,
     collection_id: rest.collection_id ?? null,
     team_id: rest.team_id ?? null,
     password_hash: rest.password_hash ?? null,
@@ -97,7 +105,7 @@ export async function createPageRecord(
   await db.collection<PageDoc>("pages").insertOne({
     _id: pageId,
     user_id: userId,
-    slug: null,
+    // slug intentionally omitted — see PageDoc's comment above.
     title,
     visibility: "public",
     collection_id: null,
@@ -149,9 +157,21 @@ export async function updatePageRecord(
 ): Promise<void> {
   if (Object.keys(patch).length === 0) return;
   const db = await getDb();
-  await db
-    .collection<PageDoc>("pages")
-    .updateOne({ _id: pageId }, { $set: patch });
+
+  // slug=null means "clear the custom slug" — must $unset, not $set to
+  // null, or the sparse unique index collides (see PageDoc's comment).
+  const { slug, ...rest } = patch;
+  const update: { $set?: typeof patch; $unset?: { slug: "" } } = {};
+  if (Object.keys(rest).length > 0) update.$set = rest;
+  if ("slug" in patch) {
+    if (slug === null) {
+      update.$unset = { slug: "" };
+    } else {
+      update.$set = { ...update.$set, slug };
+    }
+  }
+
+  await db.collection<PageDoc>("pages").updateOne({ _id: pageId }, update);
 }
 
 export async function getPublicPagesByUser(userId: string, limit = 100): Promise<ExploreItem[]> {
@@ -184,7 +204,7 @@ const EXPLORE_PROJECTION = { _id: 1, slug: 1, title: 1, view_count: 1, created_a
 function toExploreItem(d: ExploreProjection): ExploreItem {
   return {
     id: d._id,
-    slug: d.slug,
+    slug: d.slug ?? null,
     title: d.title,
     view_count: d.view_count,
     created_at: d.created_at,
@@ -296,7 +316,7 @@ export async function createCollectionRecord(
     _id: collectionId,
     user_id: userId,
     name,
-    slug: null,
+    // slug intentionally omitted — see CollectionDoc's comment above.
     is_team_space: isTeamSpace,
     created_at: now,
     updated_at: now,
@@ -315,9 +335,21 @@ export async function updateCollectionRecord(
 ): Promise<void> {
   if (Object.keys(patch).length === 0) return;
   const db = await getDb();
-  await db
-    .collection<CollectionDoc>("collections")
-    .updateOne({ _id: collectionId }, { $set: patch });
+
+  // Same sparse-index reasoning as updatePageRecord — clearing a slug must
+  // $unset it, not $set it to null.
+  const { slug, ...rest } = patch;
+  const update: { $set?: typeof patch; $unset?: { slug: "" } } = {};
+  if (Object.keys(rest).length > 0) update.$set = rest;
+  if ("slug" in patch) {
+    if (slug === null) {
+      update.$unset = { slug: "" };
+    } else {
+      update.$set = { ...update.$set, slug };
+    }
+  }
+
+  await db.collection<CollectionDoc>("collections").updateOne({ _id: collectionId }, update);
 }
 
 export async function deleteCollectionRecord(collectionId: string, userId: string): Promise<void> {
