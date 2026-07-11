@@ -1,6 +1,7 @@
-import { getPageRecord } from "@/lib/db";
 import { getPageVersion } from "@/lib/db/versions";
 import { getSession } from "@/lib/auth/session";
+import { getOwnedPage } from "@/server/pages";
+import { toErrorResponse } from "@/server/errors";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -13,9 +14,11 @@ export async function GET(
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id, versionNumber } = await params;
-  const page = await getPageRecord(id);
-  if (!page) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if (page.user_id !== userId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  try {
+    await getOwnedPage(id, userId);
+  } catch (e) {
+    return toErrorResponse(e);
+  }
 
   const parsedVersion = Number(versionNumber);
   if (!Number.isInteger(parsedVersion) || parsedVersion < 1) {

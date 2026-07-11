@@ -1,7 +1,7 @@
 import type { PublishedDoc } from "@/lib/blocks";
 import { DEFAULT_SETTINGS } from "@/lib/blocks";
 import { BLOCKS, STORAGE } from "@/lib/constants";
-import { getPageBySlug, getPageRecord, updatePageRecord, deletePageRecord } from "@/lib/db";
+import { updatePageRecord, deletePageRecord } from "@/lib/db";
 import { deletePageVersions, snapshotPageVersion } from "@/lib/db/versions";
 import { recordPublishEvent } from "@/lib/db/publish-events";
 import { resolveApiKey } from "@/lib/api-key-auth";
@@ -9,8 +9,9 @@ import { parseToBlocks } from "@/lib/parse";
 import { getDoc, putDoc, deleteDoc } from "@/lib/storage";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { ROUTES } from "@/lib/constants";
-import { isValidSlug, SLUG_RULES_MESSAGE } from "@/lib/slug";
 import { logError } from "@/lib/logger";
+import { getOwnedPage, getOwnedPageByIdOrSlug, assertSlugAvailable } from "@/server/pages";
+import { toErrorResponse } from "@/server/errors";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -49,12 +50,11 @@ export async function GET(
   }
 
   // Accept both page ID and custom slug
-  const record = (await getPageRecord(id)) ?? (await getPageBySlug(id));
-  if (!record) {
-    return NextResponse.json({ error: "Page not found" }, { status: 404 });
-  }
-  if (record.user_id !== userId) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  let record;
+  try {
+    record = await getOwnedPageByIdOrSlug(id, userId);
+  } catch (e) {
+    return toErrorResponse(e);
   }
 
   const doc = await getDoc(record.id);
@@ -94,12 +94,11 @@ export async function PATCH(
     return NextResponse.json({ error: "Missing page id" }, { status: 400 });
   }
 
-  const record = await getPageRecord(id);
-  if (!record) {
-    return NextResponse.json({ error: "Page not found" }, { status: 404 });
-  }
-  if (record.user_id !== userId) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  let record;
+  try {
+    record = await getOwnedPage(id, userId);
+  } catch (e) {
+    return toErrorResponse(e);
   }
 
   let payload: PatchPayload | null = null;
@@ -125,16 +124,11 @@ export async function PATCH(
     if ("slug" in payload) {
       const rawSlug = payload.slug;
       const slug = rawSlug === null ? null : rawSlug?.trim().toLowerCase() ?? null;
-      if (slug !== null && !isValidSlug(slug)) {
-        return NextResponse.json(
-          { error: `Invalid slug. ${SLUG_RULES_MESSAGE}` },
-          { status: 422 },
-        );
-      }
       if (slug !== null) {
-        const existing = await getPageBySlug(slug);
-        if (existing && existing.id !== id) {
-          return NextResponse.json({ error: "Slug is already taken." }, { status: 409 });
+        try {
+          await assertSlugAvailable(slug, id);
+        } catch (e) {
+          return toErrorResponse(e);
         }
       }
       metaPatch.slug = slug;
@@ -242,12 +236,10 @@ export async function DELETE(
     return NextResponse.json({ error: "Missing page id" }, { status: 400 });
   }
 
-  const record = await getPageRecord(id);
-  if (!record) {
-    return NextResponse.json({ error: "Page not found" }, { status: 404 });
-  }
-  if (record.user_id !== userId) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  try {
+    await getOwnedPage(id, userId);
+  } catch (e) {
+    return toErrorResponse(e);
   }
 
   try {

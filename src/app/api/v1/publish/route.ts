@@ -1,7 +1,7 @@
 import type { PublishedDoc } from "@/lib/blocks";
 import { DEFAULT_SETTINGS } from "@/lib/blocks";
 import { BLOCKS, ROUTES, STORAGE } from "@/lib/constants";
-import { createPageRecord, getPageBySlug, updatePageRecord } from "@/lib/db";
+import { createPageRecord, updatePageRecord } from "@/lib/db";
 import { createId } from "@/lib/id";
 import { resolveApiKey } from "@/lib/api-key-auth";
 import { extractDocTitle } from "@/lib/doc-title";
@@ -12,7 +12,8 @@ import { deliverWebhooks } from "@/lib/webhook-delivery";
 import { parseToBlocks } from "@/lib/parse";
 import { putDoc } from "@/lib/storage";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { isValidSlug, SLUG_RULES_MESSAGE } from "@/lib/slug";
+import { assertSlugAvailable } from "@/server/pages";
+import { toErrorResponse } from "@/server/errors";
 import { logError } from "@/lib/logger";
 import { NextResponse } from "next/server";
 
@@ -60,15 +61,10 @@ export async function POST(req: Request) {
   let normalizedSlug: string | null = null;
   if (fm.slug) {
     normalizedSlug = fm.slug.trim().toLowerCase();
-    if (!isValidSlug(normalizedSlug)) {
-      return NextResponse.json(
-        { error: `Invalid slug in frontmatter. ${SLUG_RULES_MESSAGE}` },
-        { status: 422 },
-      );
-    }
-    const existing = await getPageBySlug(normalizedSlug);
-    if (existing) {
-      return NextResponse.json({ error: "Slug is already taken." }, { status: 409 });
+    try {
+      await assertSlugAvailable(normalizedSlug, null);
+    } catch (e) {
+      return toErrorResponse(e);
     }
   }
 

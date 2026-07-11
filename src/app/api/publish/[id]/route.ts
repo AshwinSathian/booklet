@@ -1,11 +1,13 @@
 import type { PublishedDoc } from "@/lib/blocks";
 import { DEFAULT_SETTINGS } from "@/lib/blocks";
 import { BLOCKS, STORAGE } from "@/lib/constants";
-import { getPageRecord, updatePageRecord } from "@/lib/db";
+import { updatePageRecord } from "@/lib/db";
 import { snapshotPageVersion } from "@/lib/db/versions";
 import { putDoc } from "@/lib/storage";
 import { logError } from "@/lib/logger";
 import { getSession } from "@/lib/auth/session";
+import { getOwnedPage } from "@/server/pages";
+import { toErrorResponse } from "@/server/errors";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -31,12 +33,11 @@ export async function PATCH(
       return NextResponse.json({ error: "Missing page id" }, { status: 400 });
     }
 
-    const record = await getPageRecord(id);
-    if (!record) {
-      return NextResponse.json({ error: "Page not found" }, { status: 404 });
-    }
-    if (record.user_id !== userId) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    let record;
+    try {
+      record = await getOwnedPage(id, userId);
+    } catch (e) {
+      return toErrorResponse(e);
     }
 
     let payload: UpdatePayload | null = null;

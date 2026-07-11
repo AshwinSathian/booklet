@@ -1,14 +1,8 @@
 import { getPageBySlug } from "@/lib/db";
+import { isValidSlug } from "@/lib/slug";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
-
-// Mirrors the validation in /api/pages/[id]/route.ts
-const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,58}[a-z0-9]$|^[a-z0-9]{3,60}$/;
-
-function isValidSlug(s: string): boolean {
-  return SLUG_RE.test(s) && !s.includes("--");
-}
 
 /**
  * GET /api/pages/check-slug?slug=my-slug&exclude=pageId
