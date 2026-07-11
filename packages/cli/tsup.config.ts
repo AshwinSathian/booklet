@@ -20,8 +20,8 @@ export default defineConfig({
   minify: false,
   sourcemap: false,
   dts: false,
-  // Bundle commander into the output — zero runtime deps, single file
-  noExternal: ["commander"],
+  // Bundle all deps into the output — zero runtime deps, single file
+  noExternal: ["commander", "readable-api-client", "zod"],
   banner: {
     js: "#!/usr/bin/env node",
   },

@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { createClient, ReadableApiError } from "readable-api-client";
 
 async function doPublish(content: string, title: string): Promise<void> {
   const config = vscode.workspace.getConfiguration("readable");
@@ -18,26 +19,10 @@ async function doPublish(content: string, title: string): Promise<void> {
 
   let result: { id: string; url: string };
   try {
-    const res = await fetch(`${baseUrl}/api/v1/publish`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-        "X-Readable-Source": "vscode",
-      },
-      body: JSON.stringify({ raw: content }),
-    });
-
-    if (!res.ok) {
-      const body = (await res.json().catch(() => ({}))) as { error?: string };
-      throw new Error(body.error ?? `HTTP ${res.status}`);
-    }
-
-    result = (await res.json()) as { id: string; url: string };
+    result = await createClient({ baseUrl, apiKey, source: "vscode" }).publishPage(content);
   } catch (e) {
-    void vscode.window.showErrorMessage(
-      `Readable publish failed: ${e instanceof Error ? e.message : String(e)}`,
-    );
+    const message = e instanceof ReadableApiError ? e.message : e instanceof Error ? e.message : String(e);
+    void vscode.window.showErrorMessage(`Readable publish failed: ${message}`);
     return;
   }
 

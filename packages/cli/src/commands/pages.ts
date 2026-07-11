@@ -1,19 +1,8 @@
 import { Command } from "commander";
-import { apiRequest } from "../api.js";
+import { getClient, apiErrorMessage, NOT_AUTHENTICATED_ERROR } from "../api.js";
 import { success, error, info, bold, dim, gray, openUrl } from "../fmt.js";
 import { table } from "../fmt.js";
 import { createInterface } from "readline";
-
-type PageItem = {
-  id: string;
-  title: string | null;
-  slug: string | null;
-  visibility: string;
-  view_count: number;
-  url: string;
-  created_at: string;
-  updated_at: string;
-};
 
 function formatDate(iso: string): string {
   try {
@@ -48,14 +37,19 @@ export function registerPagesCommand(program: Command) {
     .description("List all your pages")
     .option("--json", "Output raw JSON")
     .action(async (opts: { json?: boolean }) => {
-      const res = await apiRequest<{ pages: PageItem[] }>("/api/v1/pages");
-
-      if (!res.ok) {
-        error(res.error);
+      const client = await getClient();
+      if (!client) {
+        error(NOT_AUTHENTICATED_ERROR);
         process.exit(1);
       }
 
-      const items = res.data.pages;
+      let items;
+      try {
+        items = (await client.listPages()).pages;
+      } catch (e) {
+        error(apiErrorMessage(e));
+        process.exit(1);
+      }
 
       if (opts.json) {
         console.log(JSON.stringify(items, null, 2));
@@ -87,12 +81,20 @@ export function registerPagesCommand(program: Command) {
     .description("Open a page in your browser (use --print to just print the URL)")
     .option("--print", "Print the URL instead of opening a browser")
     .action(async (id: string, opts: { print?: boolean }) => {
-      const res = await apiRequest<{ pages: PageItem[] }>("/api/v1/pages");
-      if (!res.ok) {
-        error(res.error);
+      const client = await getClient();
+      if (!client) {
+        error(NOT_AUTHENTICATED_ERROR);
         process.exit(1);
       }
-      const page = res.data.pages.find((p) => p.id === id || p.slug === id);
+
+      let pages;
+      try {
+        pages = (await client.listPages()).pages;
+      } catch (e) {
+        error(apiErrorMessage(e));
+        process.exit(1);
+      }
+      const page = pages.find((p) => p.id === id || p.slug === id);
       if (!page) {
         error(`Page not found: ${id}`);
         process.exit(1);
@@ -108,12 +110,18 @@ export function registerPagesCommand(program: Command) {
     .description("Delete a page by ID or slug")
     .option("-y, --yes", "Skip confirmation prompt")
     .action(async (id: string, opts: { yes?: boolean }) => {
+      const client = await getClient();
+      if (!client) {
+        error(NOT_AUTHENTICATED_ERROR);
+        process.exit(1);
+      }
+
       // Resolve the real page ID (DELETE endpoint does not accept slugs).
       // This fetch also gives us the title and URL for the confirmation prompt.
-      const listRes = await apiRequest<{ pages: PageItem[] }>("/api/v1/pages");
-      const page = listRes.ok
-        ? listRes.data.pages.find((p) => p.id === id || p.slug === id)
-        : null;
+      const page = await client
+        .listPages()
+        .then(({ pages }) => pages.find((p) => p.id === id || p.slug === id))
+        .catch(() => null);
 
       // Canonical ID to pass to the DELETE endpoint
       const pageId = page?.id ?? id;
@@ -130,12 +138,10 @@ export function registerPagesCommand(program: Command) {
         }
       }
 
-      const res = await apiRequest<{ ok: boolean }>(`/api/v1/pages/${pageId}`, {
-        method: "DELETE",
-      });
-
-      if (!res.ok) {
-        error(`Delete failed: ${res.error}`);
+      try {
+        await client.deletePage(pageId);
+      } catch (e) {
+        error(`Delete failed: ${apiErrorMessage(e)}`);
         process.exit(1);
       }
 

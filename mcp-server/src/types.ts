@@ -30,47 +30,8 @@ export interface PromptGetParams {
   arguments?: Record<string, string>;
 }
 
-// Readable API response types
-export interface PublishResponse {
-  id: string;
-  url: string;
-}
-
-export interface PageListItem {
-  id: string;
-  title: string | null;
-  slug: string | null;
-  url: string;
-  visibility: "public" | "unlisted";
-  view_count: number;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface PageListResponse {
-  pages: PageListItem[];
-  total: number;
-  limit: number;
-  offset: number;
-}
-
-export interface PageDetailResponse {
-  id: string;
-  title: string | null;
-  slug: string | null;
-  url: string;
-  visibility: "public" | "unlisted";
-  view_count: number;
-  created_at: string;
-  updated_at: string;
-  raw: string | null;
-}
-
-export interface UpdateResponse {
-  id: string;
-  url: string;
-  updated_at: string;
-}
+// Readable API response types now live in readable-api-client (packages/shared)
+// — see src/tools.ts's import.
 
 // Worker env bindings
 export interface Env {

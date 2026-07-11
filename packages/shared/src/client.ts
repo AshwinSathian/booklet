@@ -1,10 +1,31 @@
 /**
  * Thin typed fetch client for /api/v1/*. Deliberately no dependencies beyond
- * global fetch (Node 18+) — every consumer (CLI, GitHub Action, VS Code
- * extension, MCP server) already runs on a fetch-capable runtime.
+ * global fetch (Node 18+) and zod — every consumer (CLI, GitHub Action, VS
+ * Code extension, MCP server) already runs on a fetch-capable runtime.
+ *
+ * Throws ReadableApiError on any non-2xx response, carrying both the
+ * upstream HTTP status and the server's own `{error}` message when present.
+ * Two of the four consumers (packages/github-action, packages/vscode)
+ * already used exactly this throw-and-catch shape before this package
+ * existed; the other two (packages/cli, mcp-server) each build their own
+ * non-throwing `{ok, ...}` wrapper on top for command-flow control (e.g.
+ * `process.exit(1)`) — a thin adapter around this client, not a rewrite of
+ * their command logic.
  */
 
-import { ListPagesResponseSchema, type ListPagesResponse } from "./schemas.js";
+import {
+  ListPagesResponseSchema,
+  PageDetailResponseSchema,
+  PatchPageResponseSchema,
+  PublishResponseSchema,
+  DeletePageResponseSchema,
+  type ListPagesResponse,
+  type PageDetailResponse,
+  type PatchPageRequest,
+  type PatchPageResponse,
+  type PublishResponse,
+  type DeletePageResponse,
+} from "./schemas.js";
 
 export type ClientOptions = {
   baseUrl: string;
@@ -28,28 +49,39 @@ export function createClient(options: ClientOptions) {
   const { baseUrl, apiKey, source, fetchTimeoutMs = 15_000 } = options;
 
   async function request(path: string, init?: RequestInit): Promise<unknown> {
-    const res = await fetch(`${baseUrl}${path}`, {
-      ...init,
-      headers: {
-        ...init?.headers,
-        Authorization: `Bearer ${apiKey}`,
-        "X-Readable-Source": source,
-      },
-      signal: AbortSignal.timeout(fetchTimeoutMs),
-    });
+    let res: Response;
+    try {
+      res = await fetch(`${baseUrl}${path}`, {
+        ...init,
+        headers: {
+          ...init?.headers,
+          Authorization: `Bearer ${apiKey}`,
+          "X-Readable-Source": source,
+          ...(init?.body ? { "Content-Type": "application/json" } : {}),
+        },
+        signal: AbortSignal.timeout(fetchTimeoutMs),
+      });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      throw new ReadableApiError(`Network error: ${msg}`, 0);
+    }
+
+    let body: unknown = null;
+    try {
+      body = await res.json();
+    } catch {
+      /* no/invalid JSON body — fall through to status-only handling below */
+    }
 
     if (!res.ok) {
-      let message = `HTTP ${res.status}`;
-      try {
-        const body = (await res.json()) as { error?: unknown };
-        if (typeof body.error === "string") message = body.error;
-      } catch {
-        /* ignore — fall back to the generic status message */
-      }
+      const message =
+        body && typeof body === "object" && "error" in body && typeof body.error === "string"
+          ? body.error
+          : `HTTP ${res.status}`;
       throw new ReadableApiError(message, res.status);
     }
 
-    return res.json();
+    return body;
   }
 
   return {
@@ -61,5 +93,33 @@ export function createClient(options: ClientOptions) {
       const body = await request(`/api/v1/pages${qs ? `?${qs}` : ""}`);
       return ListPagesResponseSchema.parse(body);
     },
+
+    async publishPage(raw: string): Promise<PublishResponse> {
+      const body = await request("/api/v1/publish", {
+        method: "POST",
+        body: JSON.stringify({ raw }),
+      });
+      return PublishResponseSchema.parse(body);
+    },
+
+    async updatePage(id: string, patch: PatchPageRequest): Promise<PatchPageResponse> {
+      const body = await request(`/api/v1/pages/${encodeURIComponent(id)}`, {
+        method: "PATCH",
+        body: JSON.stringify(patch),
+      });
+      return PatchPageResponseSchema.parse(body);
+    },
+
+    async getPage(id: string): Promise<PageDetailResponse> {
+      const body = await request(`/api/v1/pages/${encodeURIComponent(id)}`);
+      return PageDetailResponseSchema.parse(body);
+    },
+
+    async deletePage(id: string): Promise<DeletePageResponse> {
+      const body = await request(`/api/v1/pages/${encodeURIComponent(id)}`, { method: "DELETE" });
+      return DeletePageResponseSchema.parse(body);
+    },
   };
 }
+
+export type ReadableClient = ReturnType<typeof createClient>;

@@ -1,10 +1,7 @@
 import { Command } from "commander";
 import { readFile, watch } from "fs/promises";
-import { apiRequest } from "../api.js";
+import { getClient, apiErrorMessage, NOT_AUTHENTICATED_ERROR } from "../api.js";
 import { success, error, info, warn, bold, dim, openUrl } from "../fmt.js";
-
-type PublishResult = { id: string; url: string };
-type PatchResult = { id: string; url: string; updated_at?: string };
 
 async function readInput(filePath: string): Promise<string> {
   if (filePath === "-") {
@@ -27,71 +24,66 @@ async function doPublish(
   },
   isWatch = false,
 ): Promise<{ id: string; url: string } | null> {
+  const client = await getClient();
+  if (!client) {
+    error(NOT_AUTHENTICATED_ERROR);
+    return null;
+  }
+
   if (opts.update) {
     // PATCH existing page — content + optional metadata in one call
-    const patchBody: Record<string, unknown> = { raw };
-    if (opts.slug) patchBody.slug = opts.slug;
-    if (opts.visibility) patchBody.visibility = opts.visibility;
+    const patch: { raw: string; slug?: string; visibility?: "public" | "unlisted" } = { raw };
+    if (opts.slug) patch.slug = opts.slug;
+    if (opts.visibility === "public" || opts.visibility === "unlisted") patch.visibility = opts.visibility;
 
-    const res = await apiRequest<PatchResult>(`/api/v1/pages/${opts.update}`, {
-      method: "PATCH",
-      body: patchBody,
-    });
-
-    if (!res.ok) {
-      error(`Update failed: ${res.error}`);
+    let result;
+    try {
+      result = await client.updatePage(opts.update, patch);
+    } catch (e) {
+      error(`Update failed: ${apiErrorMessage(e)}`);
       return null;
     }
 
     if (isWatch) {
-      info(`Updated → ${bold(res.data.url)}`);
+      info(`Updated → ${bold(result.url)}`);
     } else {
-      success(`Updated: ${bold(res.data.url)}`);
+      success(`Updated: ${bold(result.url)}`);
     }
-    if (opts.open && !isWatch) openUrl(res.data.url);
-    return res.data;
+    if (opts.open && !isWatch) openUrl(result.url);
+    return result;
   }
 
   // POST new page — only send raw content. The server applies frontmatter and
   // DEFAULT_SETTINGS. Sending settings here would corrupt DocSettings with
   // non-layout fields (visibility is not a DocSettings key).
-  const res = await apiRequest<PublishResult>("/api/v1/publish", {
-    method: "POST",
-    body: { raw },
-  });
-
-  if (!res.ok) {
-    error(`Publish failed: ${res.error}`);
+  let id: string, url: string;
+  try {
+    ({ id, url } = await client.publishPage(raw));
+  } catch (e) {
+    error(`Publish failed: ${apiErrorMessage(e)}`);
     return null;
   }
-
-  const { id, url } = res.data;
 
   // Apply CLI-specified metadata (slug / visibility) via a separate PATCH.
   // Frontmatter in the document is handled server-side during the POST.
   if (opts.slug || (opts.visibility && opts.visibility !== "public")) {
-    const metaPatch: Record<string, unknown> = {};
+    const metaPatch: { slug?: string; visibility?: "public" | "unlisted" } = {};
     if (opts.slug) metaPatch.slug = opts.slug;
-    if (opts.visibility) metaPatch.visibility = opts.visibility;
+    if (opts.visibility === "public" || opts.visibility === "unlisted") metaPatch.visibility = opts.visibility;
 
-    const patchRes = await apiRequest<PatchResult>(`/api/v1/pages/${id}`, {
-      method: "PATCH",
-      body: metaPatch,
-    });
-
-    if (!patchRes.ok) {
-      warn(`Published but metadata patch failed: ${patchRes.error}`);
+    try {
+      const patched = await client.updatePage(id, metaPatch);
+      success(`Published: ${bold(patched.url)}`);
+      console.log(dim(`  ID: ${id}`));
+      if (opts.open) openUrl(patched.url);
+      return { id, url: patched.url };
+    } catch (e) {
+      warn(`Published but metadata patch failed: ${apiErrorMessage(e)}`);
       success(`Published: ${bold(url)}`);
       console.log(dim(`  ID: ${id}`));
       if (opts.open) openUrl(url);
       return { id, url };
     }
-
-    const finalUrl = patchRes.data.url;
-    success(`Published: ${bold(finalUrl)}`);
-    console.log(dim(`  ID: ${id}`));
-    if (opts.open) openUrl(finalUrl);
-    return { id, url: finalUrl };
   }
 
   success(`Published: ${bold(url)}`);

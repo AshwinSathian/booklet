@@ -1,5 +1,5 @@
 import { ERRORS, McpValidationError, type McpErrorShape } from "./errors.js";
-import type { PageListItem, PageDetailResponse, PublishResponse, UpdateResponse } from "./types.js";
+import { createClient, ReadableApiError, type PageListItem, type PatchPageRequest } from "readable-api-client";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tool definitions (JSON Schema)
@@ -261,65 +261,33 @@ function validateDeleteArgs(args: unknown): { id: string } {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Readable API client
+// Readable API client — one instance per MCP call (stateless server; apiKey
+// and apiBase both vary per incoming request, see src/index.ts). Delegates
+// the actual HTTP/auth/JSON-parsing work to readable-api-client, shared with
+// packages/cli, packages/github-action, and packages/vscode.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const UPSTREAM_TIMEOUT_MS = 10_000;
 
-async function callReadableApi(
-  path: string,
-  method: string,
-  apiKey: string,
-  apiBase: string,
-  body?: unknown,
-): Promise<{ ok: boolean; status: number; data: unknown }> {
-  const hasBody = body !== undefined;
-
-  const headers: Record<string, string> = {
-    Authorization: `Bearer ${apiKey}`,
-    "User-Agent": "Readable-MCP/1.0",
-  };
-  if (hasBody) {
-    headers["Content-Type"] = "application/json";
-  }
-
-  const res = await fetch(`${apiBase}${path}`, {
-    method,
-    headers,
-    body: hasBody ? JSON.stringify(body) : null,
-    signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
-  });
-
-  let data: unknown = null;
-  try {
-    data = await res.json();
-  } catch {
-    data = { error: "Non-JSON response from Readable API" };
-  }
-
-  return { ok: res.ok, status: res.status, data };
+function client(apiKey: string, apiBase: string) {
+  return createClient({ baseUrl: apiBase, apiKey, source: "mcp", fetchTimeoutMs: UPSTREAM_TIMEOUT_MS });
 }
 
 /**
- * `data` is the parsed JSON body from callReadableApi — for 400/409/422 the
- * REST API already returns a specific `{ error: string }` message (e.g.
- * "Invalid slug. Use 3-60 lowercase letters..." or "Slug is already
- * taken."); surface that verbatim rather than falling through to the
- * generic "HTTP <status>" message, which was the only option before this
- * fix and left validation failures unhelpfully vague for MCP clients.
+ * For 400/409/422 the REST API already returns a specific, human-readable
+ * message (e.g. "Invalid slug. Use 3-60 lowercase letters..." or "Slug is
+ * already taken.") — ReadableApiError.message carries that verbatim, so
+ * surfacing it directly keeps MCP clients (Claude, Cursor, etc.) able to act
+ * on the failure instead of seeing a generic "HTTP <status>".
  */
-function mapUpstreamError(status: number, data?: unknown): McpErrorShape {
+function mapUpstreamError(err: ReadableApiError): McpErrorShape {
+  const { status, message } = err;
   if (status === 401) return ERRORS.UNAUTHORIZED();
   if (status === 403) return ERRORS.FORBIDDEN();
   if (status === 404) return ERRORS.NOT_FOUND("Page");
   if (status === 413) return ERRORS.DOCUMENT_TOO_LARGE();
   if (status === 429) return ERRORS.RATE_LIMITED();
-  if (status === 400 || status === 409 || status === 422) {
-    const message = data && typeof data === "object" && "error" in data && typeof data.error === "string"
-      ? data.error
-      : undefined;
-    if (message) return ERRORS.VALIDATION(message);
-  }
+  if (status === 400 || status === 409 || status === 422) return ERRORS.VALIDATION(message);
   return ERRORS.UPSTREAM(status);
 }
 
@@ -362,22 +330,13 @@ export async function handlePublishPage(
       finalRaw = fmLines.join("\n") + "\n" + raw;
     }
 
-    const { ok, status, data } = await callReadableApi(
-      "/api/v1/publish",
-      "POST",
-      apiKey,
-      apiBase,
-      { raw: finalRaw },
-    );
-
-    if (!ok) return errorResult(mapUpstreamError(status, data).message);
-
-    const r = data as PublishResponse;
+    const r = await client(apiKey, apiBase).publishPage(finalRaw);
     return successResult(
       `Page published.\n\nURL: ${r.url}\nID: ${r.id}\n\nShare this link. The page is live and permanent.`,
     );
   } catch (e) {
     if (e instanceof McpValidationError) return errorResult(e.message);
+    if (e instanceof ReadableApiError) return errorResult(mapUpstreamError(e).message);
     if (e instanceof DOMException && e.name === "TimeoutError") {
       return errorResult("Request to Readable API timed out. Try again.");
     }
@@ -394,28 +353,19 @@ export async function handleUpdatePage(
   try {
     const { id, raw, slug, visibility } = validateUpdateArgs(args);
 
-    const body: Record<string, unknown> = {};
-    if (raw !== undefined) body["raw"] = raw;
-    if (slug !== undefined) body["slug"] = slug;
-    if (visibility !== undefined) body["visibility"] = visibility;
+    const patch: PatchPageRequest = {};
+    if (raw !== undefined) patch.raw = raw;
+    if (slug !== undefined) patch.slug = slug;
+    if (visibility !== undefined) patch.visibility = visibility;
 
-    const { ok, status, data } = await callReadableApi(
-      `/api/v1/pages/${encodeURIComponent(id)}`,
-      "PATCH",
-      apiKey,
-      apiBase,
-      body,
-    );
-
-    if (!ok) return errorResult(mapUpstreamError(status, data).message);
-
-    const r = data as UpdateResponse;
+    const r = await client(apiKey, apiBase).updatePage(id, patch);
     const lines = [`Page updated.\n\nURL: ${r.url}`];
     if (r.updated_at) lines.push(`Updated: ${r.updated_at}`);
     lines.push("\nVisitors who already have the link will see the new content.");
     return successResult(lines.join("\n"));
   } catch (e) {
     if (e instanceof McpValidationError) return errorResult(e.message);
+    if (e instanceof ReadableApiError) return errorResult(mapUpstreamError(e).message);
     if (e instanceof DOMException && e.name === "TimeoutError") {
       return errorResult("Request to Readable API timed out. Try again.");
     }
@@ -432,16 +382,7 @@ export async function handleGetPage(
   try {
     const { id } = validateGetArgs(args);
 
-    const { ok, status, data } = await callReadableApi(
-      `/api/v1/pages/${encodeURIComponent(id)}`,
-      "GET",
-      apiKey,
-      apiBase,
-    );
-
-    if (!ok) return errorResult(mapUpstreamError(status, data).message);
-
-    const r = data as PageDetailResponse;
+    const r = await client(apiKey, apiBase).getPage(id);
     const sections: string[] = [
       `**${r.title ?? "(untitled)"}**`,
       `ID: ${r.id}${r.slug ? ` · Slug: ${r.slug}` : ""}`,
@@ -460,6 +401,7 @@ export async function handleGetPage(
     return successResult(sections.join("\n"));
   } catch (e) {
     if (e instanceof McpValidationError) return errorResult(e.message);
+    if (e instanceof ReadableApiError) return errorResult(mapUpstreamError(e).message);
     if (e instanceof DOMException && e.name === "TimeoutError") {
       return errorResult("Request to Readable API timed out. Try again.");
     }
@@ -476,16 +418,7 @@ export async function handleListPages(
   try {
     const { limit, offset } = validateListArgs(args);
 
-    const { ok, status, data } = await callReadableApi(
-      `/api/v1/pages?limit=${limit}&offset=${offset}`,
-      "GET",
-      apiKey,
-      apiBase,
-    );
-
-    if (!ok) return errorResult(mapUpstreamError(status, data).message);
-
-    const result = data as { pages: PageListItem[]; total: number; limit: number; offset: number };
+    const result = await client(apiKey, apiBase).listPages({ limit, offset });
     const pages = result.pages ?? [];
     const total = result.total ?? pages.length;
 
@@ -511,6 +444,7 @@ export async function handleListPages(
     return successResult(`Your Readable pages (${pages.length}):\n\n${header}\n${rows}${paginationNote}`);
   } catch (e) {
     if (e instanceof McpValidationError) return errorResult(e.message);
+    if (e instanceof ReadableApiError) return errorResult(mapUpstreamError(e).message);
     if (e instanceof DOMException && e.name === "TimeoutError") {
       return errorResult("Request to Readable API timed out. Try again.");
     }
@@ -527,18 +461,11 @@ export async function handleDeletePage(
   try {
     const { id } = validateDeleteArgs(args);
 
-    const { ok, status, data } = await callReadableApi(
-      `/api/v1/pages/${encodeURIComponent(id)}`,
-      "DELETE",
-      apiKey,
-      apiBase,
-    );
-
-    if (!ok) return errorResult(mapUpstreamError(status, data).message);
-
+    await client(apiKey, apiBase).deletePage(id);
     return successResult(`Page ${id} deleted. The URL is no longer accessible.`);
   } catch (e) {
     if (e instanceof McpValidationError) return errorResult(e.message);
+    if (e instanceof ReadableApiError) return errorResult(mapUpstreamError(e).message);
     if (e instanceof DOMException && e.name === "TimeoutError") {
       return errorResult("Request to Readable API timed out. Try again.");
     }
@@ -556,18 +483,13 @@ export async function handleResourcesList(
   apiKey: string,
   apiBase: string,
 ): Promise<unknown> {
-  const { ok, data } = await callReadableApi(
-    "/api/v1/pages?limit=100&offset=0",
-    "GET",
-    apiKey,
-    apiBase,
-  );
-
-  if (!ok) {
+  let result: { pages: PageListItem[] };
+  try {
+    result = await client(apiKey, apiBase).listPages({ limit: 100, offset: 0 });
+  } catch {
     return { resources: [] };
   }
 
-  const result = data as { pages: PageListItem[] };
   const resources = (result.pages ?? []).map((p) => ({
     uri: `readable://pages/${p.id}`,
     name: p.title ?? p.id,
@@ -591,20 +513,15 @@ export async function handleResourcesRead(
   }
 
   const id = match[1] ?? "";
-  const { ok, data } = await callReadableApi(
-    `/api/v1/pages/${encodeURIComponent(id)}`,
-    "GET",
-    apiKey,
-    apiBase,
-  );
-
-  if (!ok) {
+  let r;
+  try {
+    r = await client(apiKey, apiBase).getPage(id);
+  } catch {
     return {
       contents: [{ uri, mimeType: "text/plain", text: `Error: Page not found or access denied.` }],
     };
   }
 
-  const r = data as PageDetailResponse;
   const text = r.raw ?? `*(No raw Markdown stored for page ${id})*`;
 
   return {

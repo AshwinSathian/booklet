@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { createClient, ReadableApiError } from "readable-api-client";
 
 export async function setApiKey(): Promise<void> {
   const key = await vscode.window.showInputBox({
@@ -13,16 +14,14 @@ export async function setApiKey(): Promise<void> {
   const config = vscode.workspace.getConfiguration("readable");
   const baseUrl = config.get<string>("baseUrl") ?? "https://readable.ashwinsathian.com";
 
-  // Validate the key
-  let valid = false;
+  // Validate the key. Network errors (status 0, see ReadableApiError) are
+  // treated as valid — don't block saving a key just because the API was
+  // briefly unreachable; only a real auth rejection should.
+  let valid = true;
   try {
-    const res = await fetch(`${baseUrl}/api/v1/pages`, {
-      headers: { Authorization: `Bearer ${key}` },
-    });
-    valid = res.ok;
-  } catch {
-    // ignore network errors — allow saving anyway
-    valid = true;
+    await createClient({ baseUrl, apiKey: key, source: "vscode" }).listPages();
+  } catch (e) {
+    if (e instanceof ReadableApiError && e.status !== 0) valid = false;
   }
 
   if (!valid) {

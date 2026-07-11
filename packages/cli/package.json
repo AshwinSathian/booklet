@@ -19,6 +19,7 @@
   "devDependencies": {
     "@types/node": "^20.19.0",
     "commander": "^12.1.0",
+    "readable-api-client": "^0.1.0",
     "tsup": "^8.5.1",
     "typescript": "^5.7.0"
   },

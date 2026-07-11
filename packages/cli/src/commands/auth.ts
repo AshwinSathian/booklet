@@ -1,10 +1,11 @@
 import { Command } from "commander";
 import { createServer } from "node:http";
 import { randomBytes } from "node:crypto";
+import { createClient } from "readable-api-client";
 import { readConfig, writeConfig, getApiKey, getApiBase } from "../config.js";
+import { apiErrorMessage } from "../api.js";
 import { success, error, info, bold, dim, gray, openUrl } from "../fmt.js";
 
-const REQUEST_TIMEOUT_MS = 10_000;
 const BROWSER_AUTH_TIMEOUT_MS = 5 * 60_000; // 5 minutes
 
 // Served by the local callback server so the user gets a clean close-this-tab page
@@ -41,28 +42,11 @@ async function validateKey(
   base: string,
 ): Promise<{ ok: true; pageCount: number } | { ok: false; error: string }> {
   try {
-    const res = await fetch(`${base}/api/v1/pages`, {
-      headers: {
-        Authorization: `Bearer ${key}`,
-        "X-Readable-Source": "cli",
-      },
-      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-    });
-
-    if (!res.ok) {
-      let msg = `HTTP ${res.status}`;
-      try {
-        const body = (await res.json()) as Record<string, unknown>;
-        if (typeof body.error === "string") msg = body.error;
-      } catch { /* ignore */ }
-      return { ok: false, error: msg };
-    }
-
-    const body = (await res.json()) as { pages: unknown[] };
-    return { ok: true, pageCount: body.pages?.length ?? 0 };
+    const client = createClient({ baseUrl: base, apiKey: key, source: "cli" });
+    const { pages } = await client.listPages();
+    return { ok: true, pageCount: pages.length };
   } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    return { ok: false, error: `Network error: ${msg}` };
+    return { ok: false, error: apiErrorMessage(e) };
   }
 }
 
