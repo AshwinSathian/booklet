@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect } from "@playwright/test";
 
 const BASE = process.env.TEST_BASE_URL ?? "http://localhost:3100";
 
