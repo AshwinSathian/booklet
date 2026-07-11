@@ -41,7 +41,7 @@
         },
         "readable.baseUrl": {
           "type": "string",
-          "default": "https://readable.ashwinsathian.com",
+          "default": "https://readable-api.ashwinsathian.com",
           "description": "Readable API base URL"
         }
       }

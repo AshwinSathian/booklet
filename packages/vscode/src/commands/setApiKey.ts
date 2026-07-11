@@ -12,7 +12,7 @@ export async function setApiKey(): Promise<void> {
   if (!key) return;
 
   const config = vscode.workspace.getConfiguration("readable");
-  const baseUrl = config.get<string>("baseUrl") ?? "https://readable.ashwinsathian.com";
+  const baseUrl = config.get<string>("baseUrl") ?? "https://readable-api.ashwinsathian.com";
 
   // Validate the key. Network errors (status 0, see ReadableApiError) are
   // treated as valid — don't block saving a key just because the API was

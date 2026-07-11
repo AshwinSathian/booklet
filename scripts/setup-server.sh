@@ -65,6 +65,7 @@ CF_LOG_DIR="$USER_HOME/.readable/logs"
 
 # Domains
 APP_HOSTNAME="readable.ashwinsathian.com"
+API_HOSTNAME="readable-api.ashwinsathian.com"
 MCP_HOSTNAME="readable-mcp.ashwinsathian.com"
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -380,6 +381,17 @@ ingress:
       keepAliveConnections: 10
       httpHostHeader: ${APP_HOSTNAME}
 
+  # Same app/port as above — dedicated hostname for external API consumers
+  # (CLI/GitHub Action/VS Code/MCP). src/middleware.ts restricts this
+  # hostname to /api/* only.
+  - hostname: ${API_HOSTNAME}
+    service: http://127.0.0.1:${APP_PORT}
+    originRequest:
+      connectTimeout: 10s
+      tcpKeepAlive: 30s
+      keepAliveConnections: 10
+      httpHostHeader: ${API_HOSTNAME}
+
   - hostname: ${MCP_HOSTNAME}
     service: http://127.0.0.1:${MCP_PORT}
     originRequest:
@@ -409,6 +421,7 @@ setup_dns() {
 }
 
 setup_dns "$APP_HOSTNAME"
+setup_dns "$API_HOSTNAME"
 setup_dns "$MCP_HOSTNAME"
 ok "DNS routes configured"
 

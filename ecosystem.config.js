@@ -43,9 +43,17 @@ module.exports = {
     // ─── MCP server (Node.js bridge) ─────────────────────────────────────────
     {
       name: "readable-mcp",
-      // Use the tsx binary installed inside mcp-server's own node_modules
-      script: `${BASE}/mcp-server/node_modules/.bin/tsx`,
-      args: "src/node-server.ts",
+      // Resolve the tsx binary via npx rather than a hardcoded node_modules/.bin
+      // path — under npm workspaces (see PLAN-backend-auth-migration.md), a
+      // dependency shared across workspaces (tsx is also used transitively
+      // elsewhere) can get hoisted to the repo root's node_modules/.bin
+      // instead of staying nested under mcp-server/node_modules/.bin, and
+      // which one happens is not guaranteed stable across `npm install` runs.
+      // A hardcoded path silently breaks (ENOENT) the moment hoisting shifts;
+      // npx resolves through normal Node module resolution regardless of
+      // where it landed.
+      script: "npx",
+      args: "tsx src/node-server.ts",
       cwd: `${BASE}/mcp-server`,
       interpreter: "none",
 

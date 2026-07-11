@@ -472,7 +472,7 @@ jobs:
 
           <div className="flex flex-col gap-4">
             <CodeBlock>{`# Publish a page
-curl -X POST https://readable.ashwinsathian.com/api/v1/publish \\
+curl -X POST https://readable-api.ashwinsathian.com/api/v1/publish \\
   -H "Authorization: Bearer rdbl_YOUR_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -489,7 +489,7 @@ curl -X POST https://readable.ashwinsathian.com/api/v1/publish \\
 }
 
 # Update existing page
-curl -X PATCH https://readable.ashwinsathian.com/api/v1/pages/page_abc123 \\
+curl -X PATCH https://readable-api.ashwinsathian.com/api/v1/pages/page_abc123 \\
   -H "Authorization: Bearer rdbl_YOUR_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{"raw": "# Updated content"}'`}</CodeBlock>

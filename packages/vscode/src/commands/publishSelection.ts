@@ -15,7 +15,7 @@ export async function publishSelection(): Promise<void> {
 
   const config = vscode.workspace.getConfiguration("readable");
   const apiKey = config.get<string>("apiKey");
-  const baseUrl = config.get<string>("baseUrl") ?? "https://readable.ashwinsathian.com";
+  const baseUrl = config.get<string>("baseUrl") ?? "https://readable-api.ashwinsathian.com";
 
   if (!apiKey) {
     const action = await vscode.window.showErrorMessage(

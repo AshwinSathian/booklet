@@ -5,6 +5,11 @@ import { readFile, writeFile, mkdir, chmod } from "fs/promises";
 const CONFIG_DIR = join(homedir(), ".readable");
 const CONFIG_PATH = join(CONFIG_DIR, "config.json");
 
+// Deliberately NOT readable-api.ashwinsathian.com: `readable login`'s
+// browser flow opens `${base}/cli-auth`, a web UI page, not an API route —
+// src/middleware.ts restricts the dedicated API hostname to /api/* only.
+// The CLI needs one base that serves both, and readable.ashwinsathian.com
+// already serves /api/v1/* too, so it stays the default here.
 export const DEFAULT_API_BASE = "https://readable.ashwinsathian.com";
 
 export type Config = {

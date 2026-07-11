@@ -23,7 +23,7 @@ inputs:
   base-url:
     description: "Readable API base URL"
     required: false
-    default: "https://readable.ashwinsathian.com"
+    default: "https://readable-api.ashwinsathian.com"
 
 outputs:
   url:

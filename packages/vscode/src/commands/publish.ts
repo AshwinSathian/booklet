@@ -4,7 +4,7 @@ import { createClient, ReadableApiError } from "readable-api-client";
 async function doPublish(content: string, title: string): Promise<void> {
   const config = vscode.workspace.getConfiguration("readable");
   const apiKey = config.get<string>("apiKey");
-  const baseUrl = config.get<string>("baseUrl") ?? "https://readable.ashwinsathian.com";
+  const baseUrl = config.get<string>("baseUrl") ?? "https://readable-api.ashwinsathian.com";
 
   if (!apiKey) {
     const action = await vscode.window.showErrorMessage(

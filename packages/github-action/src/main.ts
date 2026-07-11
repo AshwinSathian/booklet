@@ -8,7 +8,7 @@ async function run(): Promise<void> {
   const apiKey = core.getInput("api-key", { required: true });
   const pageId = core.getInput("page-id") || null;
   const visibility = core.getInput("visibility") || "unlisted";
-  const baseUrl = core.getInput("base-url") || "https://readable.ashwinsathian.com";
+  const baseUrl = core.getInput("base-url") || "https://readable-api.ashwinsathian.com";
 
   if (visibility !== "public" && visibility !== "unlisted") {
     core.setFailed(`Invalid visibility: "${visibility}" — must be "public" or "unlisted"`);

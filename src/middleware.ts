@@ -25,7 +25,25 @@ const SECURITY_HEADERS: Record<string, string> = {
   ].join("; "),
 };
 
+// readable-api.ashwinsathian.com is the same Next.js process as
+// readable.ashwinsathian.com (see ecosystem.config.js — one PM2 app, one
+// port), routed under its own hostname purely so external API consumers
+// (CLI, GitHub Action, VS Code extension, MCP server) have a stable,
+// clearly-scoped entry point distinct from the marketing/editor UI. This is
+// enforced here, not just a DNS-level convention: that hostname serves
+// /api/* only, everything else 404s. The main hostname keeps serving both
+// the UI and /api/* as before (the web app's own client-side code calls
+// same-origin /api/* routes — those must keep working there too).
+const API_HOSTNAME = "readable-api.ashwinsathian.com";
+
 export default function middleware(req: NextRequest) {
+  const host = req.headers.get("host") ?? "";
+  if (host === API_HOSTNAME || host.startsWith(`${API_HOSTNAME}:`)) {
+    if (!req.nextUrl.pathname.startsWith("/api/")) {
+      return new Response("Not found", { status: 404 });
+    }
+  }
+
   // Admin route: IP allowlist. Fails closed — an empty/unset ADMIN_IPS means
   // nobody passes, not "no restriction configured". The authoritative
   // session + ADMIN_USER_IDS check lives in src/app/admin/layout.tsx (a

@@ -106,6 +106,8 @@ _check "pre-push is executable" "ok" \
 echo ""
 echo "[ Public Endpoints ]"
 _check "readable domain"       "200"       "curl -s -o /dev/null -w '%{http_code}' --max-time 10 https://readable.ashwinsathian.com"
+_check "readable-api domain (v1, no key -> 401)" "401" "curl -s -o /dev/null -w '%{http_code}' --max-time 10 https://readable-api.ashwinsathian.com/api/v1/pages"
+_check "readable-api rejects non-API paths" "404" "curl -s -o /dev/null -w '%{http_code}' --max-time 10 https://readable-api.ashwinsathian.com/"
 _check "MCP domain /health"    '"ok":true' "curl -s --max-time 10 https://readable-mcp.ashwinsathian.com/health"
 _warn  "cloudflared version"   "2026"      "cloudflared --version 2>&1 | head -1"
 

@@ -33893,7 +33893,7 @@ async function run() {
   const apiKey = getInput("api-key", { required: true });
   const pageId = getInput("page-id") || null;
   const visibility = getInput("visibility") || "unlisted";
-  const baseUrl = getInput("base-url") || "https://readable.ashwinsathian.com";
+  const baseUrl = getInput("base-url") || "https://readable-api.ashwinsathian.com";
   if (visibility !== "public" && visibility !== "unlisted") {
     setFailed(`Invalid visibility: "${visibility}" \u2014 must be "public" or "unlisted"`);
     return;
