@@ -20,6 +20,18 @@
 export const INDEX_SPECS = [
   // --- users ---
   { collection: "users", spec: { _id: 1 } }, // already primary; explicit for clarity
+  // Sparse: only enforced once email is populated for every doc (post-Clerk-
+  // migration, see PLAN-backend-auth-migration.md) — sparse avoids a
+  // duplicate-null collision across legacy docs missing the field.
+  { collection: "users", spec: { email: 1 }, options: { unique: true, sparse: true } },
+
+  // --- sessions ---
+  // In-house auth (src/lib/auth/session.ts). token_hash is the authoritative
+  // lookup for a session cookie; user_id backs "log out everywhere"; the TTL
+  // index expires sessions server-side in lockstep with their sliding window.
+  { collection: "sessions", spec: { token_hash: 1 }, options: { unique: true } },
+  { collection: "sessions", spec: { user_id: 1 } },
+  { collection: "sessions", spec: { expires_at: 1 }, options: { expireAfterSeconds: 0 } },
 
   // --- pages ---
   { collection: "pages", spec: { user_id: 1, created_at: -1 } },

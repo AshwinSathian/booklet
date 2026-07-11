@@ -6,6 +6,10 @@
     "name": "Ashwin Sathian",
     "email": "ashwinsathyan19@gmail.com"
   },
+  "workspaces": [
+    "mcp-server",
+    "packages/*"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -20,6 +24,7 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^7.2.7",
+    "argon2": "^0.44.0",
     "framer-motion": "^12.29.2",
     "highlight.js": "^11.11.1",
     "jose": "^6.2.3",
@@ -37,7 +42,8 @@
     "remark-math": "^6.0.0",
     "remark-parse": "^11.0.0",
     "unified": "^11.0.5",
-    "unist-util-visit": "^5.1.0"
+    "unist-util-visit": "^5.1.0",
+    "zod": "^4.4.3"
   },
   "overrides": {
     "next": {

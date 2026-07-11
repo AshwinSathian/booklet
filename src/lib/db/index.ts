@@ -14,7 +14,12 @@ type WebhookDoc = Omit<DbWebhook, "id"> & { _id: string };
 
 function toUser(doc: UserDoc): DbUser {
   const { _id, ...rest } = doc;
-  return { id: _id, ...rest };
+  return {
+    id: _id,
+    ...rest,
+    password_hash: rest.password_hash ?? null,
+    display_name: rest.display_name ?? null,
+  };
 }
 
 function toPage(doc: PageDoc): DbPage {

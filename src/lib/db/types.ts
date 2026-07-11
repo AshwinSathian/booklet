@@ -1,10 +1,23 @@
 export type UserPlan = "free";
 
 export type DbUser = {
-  id: string;           // Clerk user ID
+  id: string;                     // app-owned; preserved as-is for users migrated off Clerk
+  // Nullable for the remainder of the Clerk-removal migration (Phase 1 tightens
+  // this to `string` once every signup/login path guarantees it) — see
+  // PLAN-backend-auth-migration.md.
   email: string | null;
+  password_hash: string | null;   // argon2id hash (src/lib/auth/password.ts); null = pre-Phase-1 user or migrated user pending /claim
+  display_name: string | null;
   plan: UserPlan;
   created_at: string;
+};
+
+export type DbSession = {
+  id: string;
+  user_id: string;
+  token_hash: string;   // HMAC-SHA256(raw token, SESSION_TOKEN_PEPPER) — see src/lib/auth/session-token.ts
+  created_at: string;
+  expires_at: Date;     // BSON Date — TTL index, sliding 30-day window
 };
 
 export type DbPage = {
