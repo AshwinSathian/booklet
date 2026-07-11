@@ -513,7 +513,7 @@ Sign-in is via Clerk (Google, GitHub, or email).
 | Auth | Clerk | Google, GitHub, email sign-in |
 | Markdown parsing | unified / remark / remark-gfm | Pipeline: parse → process → AST |
 | Rendering | Custom AST block renderer | `dangerouslySetInnerHTML` used only for library-sanitised output (KaTeX, highlight.js); no unescaped user input reaches it |
-| Storage — all pages, users, teams, etc. | MongoDB Atlas | Single database for anonymous and owned pages alike; anonymous pages stored indefinitely, no TTL (see PAYWALL_HISTORY.md-adjacent decision record) |
+| Storage — all pages, users, teams, etc. | MongoDB Atlas | Single database for anonymous and owned pages alike; anonymous pages stored indefinitely, no TTL |
 | Infrastructure | Single PM2 process on a personal Mac, behind a Cloudflare Tunnel | Cloudflare Workers/OpenNext was fully built and deployed, then deliberately removed 2026-05-25 (`9254448`) in favor of this — not an incomplete migration |
 | Rate limiting | MongoDB-backed counter (`src/lib/rate-limit.ts`) | 12 publishes/min per IP; monthly anonymous-publish quota also enforced server-side |
 | Analytics | Google Analytics 4 | |
