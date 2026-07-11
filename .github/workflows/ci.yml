@@ -73,32 +73,38 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    env:
-      NODE_ENV: production
-      # Next.js only needs NEXT_PUBLIC_* vars at build time (they get inlined
-      # into the client bundle). Every non-NEXT_PUBLIC_ var in .env.example
-      # (MONGODB_URI, CLERK_SECRET_KEY, INVITE_JWT_SECRET, UNLOCK_TOKEN_SECRET,
-      # ADMIN_IPS, ADMIN_USER_IDS, API_KEY_PEPPER, READABLE_WEBHOOK_SECRET) is
-      # read lazily inside function bodies at request time (src/lib/mongodb.ts,
-      # src/lib/unlock-token.ts, src/lib/invite-token.ts, src/middleware.ts,
-      # src/lib/api-key.ts, etc.) — none of it is touched during
-      # `next build`/generateStaticParams, so none of it is needed here.
-      # Verified locally: a build with only the placeholders below (and no
-      # other env vars at all) completes successfully.
-      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_ci_placeholder
-      NEXT_PUBLIC_CLERK_SIGN_IN_URL: /sign-in
-      NEXT_PUBLIC_CLERK_SIGN_UP_URL: /sign-up
-      NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL: /app
-      NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL: /app
-      NEXT_PUBLIC_CLERK_AFTER_SIGN_OUT_URL: /
-      NEXT_PUBLIC_SITE_URL: http://localhost:3100
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+      # NODE_ENV must NOT be set here — `npm ci` respects NODE_ENV=production
+      # by skipping devDependencies (e.g. @tailwindcss/postcss, needed by
+      # Next.js's PostCSS/Turbopack pipeline at build time), which broke this
+      # job on every push once NODE_ENV was set job-wide instead of scoped to
+      # just the build step below.
       - run: npm ci --prefer-offline
       - run: npm run build
+        env:
+          NODE_ENV: production
+          # Next.js only needs NEXT_PUBLIC_* vars at build time (they get
+          # inlined into the client bundle). Every non-NEXT_PUBLIC_ var in
+          # .env.example (MONGODB_URI, CLERK_SECRET_KEY, INVITE_JWT_SECRET,
+          # UNLOCK_TOKEN_SECRET, ADMIN_IPS, ADMIN_USER_IDS, API_KEY_PEPPER,
+          # READABLE_WEBHOOK_SECRET) is read lazily inside function bodies at
+          # request time (src/lib/mongodb.ts, src/lib/unlock-token.ts,
+          # src/lib/invite-token.ts, src/middleware.ts, src/lib/api-key.ts,
+          # etc.) — none of it is touched during `next build`/
+          # generateStaticParams, so none of it is needed here. Verified
+          # locally: a build with only the placeholders below (and no other
+          # env vars at all) completes successfully.
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_ci_placeholder
+          NEXT_PUBLIC_CLERK_SIGN_IN_URL: /sign-in
+          NEXT_PUBLIC_CLERK_SIGN_UP_URL: /sign-up
+          NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL: /app
+          NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL: /app
+          NEXT_PUBLIC_CLERK_AFTER_SIGN_OUT_URL: /
+          NEXT_PUBLIC_SITE_URL: http://localhost:3100
 
   unit-tests:
     name: Unit tests (real MongoDB)
