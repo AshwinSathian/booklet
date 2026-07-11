@@ -1,9 +1,15 @@
 # RFC: In-house auth + formalized backend service layer
-> Status: OPEN FOR REVIEW
+> Status: IMPLEMENTED — Phases 0–4 complete (commits 07e3a27..9a8efef, 2026-07-11)
 > Scale: Epic
 > Target start: 2026-07-11
 > Created: 2026-07-11
 > Author: Ashwin Sathian (via Claude)
+>
+> **Production cutover (the deploy + migration-script run against real
+> data) has NOT happened yet** — see docs/OPERATIONS.md's "Production
+> cutover runbook" section for that remaining, deliberately-manual step.
+> Everything else in this RFC — the code, tests, CI/CD, and all 4 external
+> integrations — is done, merged to main, and verified.
 
 ---
 
