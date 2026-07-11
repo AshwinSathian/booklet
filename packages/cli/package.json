@@ -1,6 +1,6 @@
 {
   "name": "readable-cli",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "CLI for Readable — publish Markdown from your terminal",
   "bin": {
     "readable": "dist/index.js"
