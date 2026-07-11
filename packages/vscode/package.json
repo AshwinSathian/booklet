@@ -1,9 +1,9 @@
 {
-  "name": "readable-hq",
+  "name": "readable-vscode",
   "displayName": "Readable",
   "description": "Publish Markdown to a beautifully formatted, shareable Readable page — right from the editor",
   "version": "0.2.0",
-  "publisher": "readable-hq",
+  "publisher": "AshwinSathian",
   "icon": "images/icon.png",
   "license": "MIT",
   "homepage": "https://readable.ashwinsathian.com",
@@ -53,11 +53,6 @@
     "configuration": {
       "title": "Readable",
       "properties": {
-        "readable.apiKey": {
-          "type": "string",
-          "default": "",
-          "description": "Your Readable API key"
-        },
         "readable.defaultVisibility": {
           "type": "string",
           "enum": [

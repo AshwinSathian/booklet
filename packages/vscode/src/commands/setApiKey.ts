@@ -1,7 +1,8 @@
 import * as vscode from "vscode";
 import { createClient, ReadableApiError } from "readable-api-client";
+import { setApiKeySecret } from "../secretStorage";
 
-export async function setApiKey(): Promise<void> {
+export async function setApiKey(context: vscode.ExtensionContext): Promise<void> {
   const key = await vscode.window.showInputBox({
     prompt: "Enter your Readable API key",
     password: true,
@@ -33,16 +34,7 @@ export async function setApiKey(): Promise<void> {
     if (proceed !== "Save") return;
   }
 
-  const scope = await vscode.window.showQuickPick(["User settings (all workspaces)", "Workspace settings"], {
-    placeHolder: "Where should the key be saved?",
-  });
-
-  if (!scope) return;
-
-  const target = scope.startsWith("User")
-    ? vscode.ConfigurationTarget.Global
-    : vscode.ConfigurationTarget.Workspace;
-
-  await config.update("apiKey", key, target);
+  // Stored in VS Code's SecretStorage (OS keychain), never in settings.json.
+  await setApiKeySecret(context, key);
   void vscode.window.showInformationMessage("Readable API key saved.");
 }

@@ -7,6 +7,9 @@ All notable changes to the Readable VS Code extension are documented here.
 - First public Marketplace release.
 - Rebranded to the new Readable mark and metadata (icon, description,
   keywords, repository link).
+- API keys now stored in VS Code's secret storage (OS keychain) instead of
+  plaintext `settings.json`. The `readable.apiKey` setting is gone — use
+  **Readable: Set API Key**.
 - Moved `readable-api-client` to a runtime dependency (previously
   listed as dev-only despite being bundled into the shipped extension).
 

@@ -218,13 +218,13 @@ cat README.md | npx @readable/cli publish -`}</CodeBlock>
                 Run <strong>Readable: Set API Key</strong> from the command palette. Stored securely in VS Code secret storage.
               </Step>
               <Step n={3} title="Publish with one command">
-                Open any <code className="rounded bg-fill-2 px-1 py-0.5 text-xs font-mono text-accent-soft">.md</code> file and run <strong>Readable: Publish</strong>. The URL is copied to your clipboard.
+                Open any <code className="rounded bg-fill-2 px-1 py-0.5 text-xs font-mono text-accent-soft">.md</code> file and run <strong>Readable: Publish Current File</strong>. The URL is copied to your clipboard.
               </Step>
             </div>
 
             <div className="mt-6">
               <a
-                href="https://marketplace.visualstudio.com/items?itemName=readable.readable-vscode"
+                href="https://marketplace.visualstudio.com/items?itemName=AshwinSathian.readable-vscode"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent transition hover:text-accent-soft"
@@ -241,7 +241,7 @@ cat README.md | npx @readable/cli publish -`}</CodeBlock>
             <div className="rounded-xl border border-border-subtle bg-bg-elevated p-5 flex flex-col gap-3">
               <p className="text-xs font-semibold uppercase tracking-widest text-text-muted">Command palette</p>
               {[
-                { cmd: "Readable: Publish", desc: "Publish the current file as a new page" },
+                { cmd: "Readable: Publish Current File", desc: "Publish the current file as a new page" },
                 { cmd: "Readable: Publish Selection", desc: "Publish only the highlighted text" },
                 { cmd: "Readable: Set API Key", desc: "Save your key to VS Code secret storage" },
               ].map((item) => (

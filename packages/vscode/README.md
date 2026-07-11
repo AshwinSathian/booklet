@@ -10,8 +10,9 @@ page without leaving VS Code.
 - **Readable: Publish Current File** — publishes the whole active file.
 - **Readable: Publish Selection** — publishes just the highlighted text (falls
   back to the full file if nothing is selected).
-- **Readable: Set API Key** — stores your API key in User or Workspace
-  settings, validated against the API before it's saved.
+- **Readable: Set API Key** — validates your key against the API and stores
+  it in VS Code's built-in secret storage (OS keychain), never in
+  `settings.json`.
 - On success you get the shareable link immediately, with one-click **Copy
   URL** or **Open in Browser**.
 
@@ -27,9 +28,10 @@ page without leaving VS Code.
 
 | Setting | Default | Description |
 |---|---|---|
-| `readable.apiKey` | `""` | Your Readable API key (`rdbl_...`). Set via **Readable: Set API Key** rather than editing directly. |
-| `readable.defaultVisibility` | `"unlisted"` | Visibility for newly published pages: `public` or `unlisted`. |
 | `readable.baseUrl` | `https://readable-api.ashwinsathian.com` | The Readable API host. Only change this if you're self-hosting. |
+
+Your API key (`rdbl_...`) isn't a setting — it's stored in VS Code's secret
+storage via **Readable: Set API Key**, not in `settings.json`.
 
 ## Why Readable
 

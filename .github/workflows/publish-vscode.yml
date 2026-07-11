@@ -3,7 +3,7 @@
 # Trigger: push to main that touches packages/vscode/, OR manual dispatch.
 #
 # Required secret: VSCE_PAT — a VS Code Marketplace Personal Access Token
-# for the "readable-hq" publisher, created at https://dev.azure.com under
+# for the "AshwinSathian" publisher, created at https://dev.azure.com under
 # User Settings → Personal Access Tokens, scoped to
 # "Marketplace (Manage)" on the Azure DevOps org tied to that publisher.
 # See https://code.visualstudio.com/api/working-with-extensions/publishing-extension
@@ -52,7 +52,7 @@ jobs:
         run: |
           PKG_VERSION=$(node -p "require('./package.json').version")
           echo "version=$PKG_VERSION" >> $GITHUB_OUTPUT
-          PUBLISHED=$(npx vsce show readable-hq.readable-hq --json 2>/dev/null | node -p "try{JSON.parse(require('fs').readFileSync(0,'utf8')).versions[0].version}catch{''}" || true)
+          PUBLISHED=$(npx vsce show AshwinSathian.readable-vscode --json 2>/dev/null | node -p "try{JSON.parse(require('fs').readFileSync(0,'utf8')).versions[0].version}catch{''}" || true)
           if [ "$PUBLISHED" = "$PKG_VERSION" ]; then
             echo "already_published=true" >> $GITHUB_OUTPUT
           else
@@ -68,4 +68,4 @@ jobs:
 
       - name: Skip (already published)
         if: steps.version_check.outputs.already_published == 'true'
-        run: echo "readable-hq.readable-hq@${{ steps.version_check.outputs.version }} already on the Marketplace — bump version to publish."
+        run: echo "AshwinSathian.readable-vscode@${{ steps.version_check.outputs.version }} already on the Marketplace — bump version to publish."

@@ -1,7 +1,8 @@
 import * as vscode from "vscode";
 import { createClient, ReadableApiError } from "readable-api-client";
+import { getApiKey } from "../secretStorage";
 
-export async function publishSelection(): Promise<void> {
+export async function publishSelection(context: vscode.ExtensionContext): Promise<void> {
   const editor = vscode.window.activeTextEditor;
   if (!editor) {
     void vscode.window.showWarningMessage("No active editor.");
@@ -14,7 +15,7 @@ export async function publishSelection(): Promise<void> {
     : editor.document.getText(selection);
 
   const config = vscode.workspace.getConfiguration("readable");
-  const apiKey = config.get<string>("apiKey");
+  const apiKey = await getApiKey(context);
   const baseUrl = config.get<string>("baseUrl") ?? "https://readable-api.ashwinsathian.com";
 
   if (!apiKey) {

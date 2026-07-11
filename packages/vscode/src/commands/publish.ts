@@ -1,9 +1,10 @@
 import * as vscode from "vscode";
 import { createClient, ReadableApiError } from "readable-api-client";
+import { getApiKey } from "../secretStorage";
 
-async function doPublish(content: string, title: string): Promise<void> {
+async function doPublish(context: vscode.ExtensionContext, content: string, title: string): Promise<void> {
   const config = vscode.workspace.getConfiguration("readable");
-  const apiKey = config.get<string>("apiKey");
+  const apiKey = await getApiKey(context);
   const baseUrl = config.get<string>("baseUrl") ?? "https://readable-api.ashwinsathian.com";
 
   if (!apiKey) {
@@ -39,7 +40,7 @@ async function doPublish(content: string, title: string): Promise<void> {
   }
 }
 
-export async function publishFile(): Promise<void> {
+export async function publishFile(context: vscode.ExtensionContext): Promise<void> {
   const editor = vscode.window.activeTextEditor;
   if (!editor) {
     void vscode.window.showWarningMessage("No active editor.");
@@ -48,5 +49,5 @@ export async function publishFile(): Promise<void> {
 
   const content = editor.document.getText();
   const title = editor.document.fileName.split("/").pop() ?? "Untitled";
-  await doPublish(content, title);
+  await doPublish(context, content, title);
 }
