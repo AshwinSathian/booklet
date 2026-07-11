@@ -26,7 +26,7 @@ Paste Markdown into the editor, preview it live, and share a polished read-only 
 - **REST API** — publish, update, list, and delete pages programmatically
 - **MCP server** — expose the API to AI assistants (Claude, etc.) via the MCP protocol
 - **CLI** — publish Markdown from your terminal (`npx readable-cli`)
-- **VS Code extension** — publish from the editor with `Readable: Publish`
+<!-- VS Code extension: built, not yet on the Marketplace — re-add once AshwinSathian.readable-vscode is published -->
 - **GitHub Action** — publish docs in CI via `packages/github-action/`
 - **Frontmatter** — YAML frontmatter sets title, slug, visibility, tags, author, date
 

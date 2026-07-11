@@ -6,18 +6,24 @@ import { APP_NAME, ROUTES } from "@/lib/constants";
 import type { Metadata } from "next";
 import Link from "next/link";
 
+// The VS Code extension is built and ready but not yet published to the
+// Marketplace — flip this once `AshwinSathian.readable-vscode` is live so
+// its nav item, metadata mentions, and dedicated section reappear. Search
+// this file for VSCODE_EXTENSION_PUBLISHED to find every gated spot.
+const VSCODE_EXTENSION_PUBLISHED = false;
+
 export const metadata: Metadata = {
   ...buildMetadata({
-    title: `${APP_NAME} Integrations — CLI, VS Code, GitHub Actions, MCP & API`,
+    title: `${APP_NAME} Integrations — CLI, GitHub Actions, MCP & API`,
     description:
-      "Publish Markdown pages from your terminal, VS Code, GitHub Actions, Claude AI, or any script. Readable integrates into your existing workflow — no context switching.",
+      "Publish Markdown pages from your terminal, GitHub Actions, Claude AI, or any script. Readable integrates into your existing workflow — no context switching.",
     pathname: "/integrations",
   }),
   openGraph: {
     type: "website",
     title: `${APP_NAME} Integrations`,
     description:
-      "Publish Markdown pages from your terminal, VS Code, GitHub Actions, Claude AI, or any script.",
+      "Publish Markdown pages from your terminal, GitHub Actions, Claude AI, or any script.",
     url: absoluteUrl("/integrations"),
   },
 };
@@ -76,7 +82,7 @@ function Step({
 
 const NAV_ITEMS = [
   { href: "#cli", label: "CLI" },
-  { href: "#vscode", label: "VS Code" },
+  ...(VSCODE_EXTENSION_PUBLISHED ? [{ href: "#vscode", label: "VS Code" }] : []),
   { href: "#github-actions", label: "GitHub Actions" },
   { href: "#mcp", label: "MCP / AI editors" },
   { href: "#rest-api", label: "REST API" },
@@ -195,70 +201,72 @@ cat README.md | npx @readable/cli publish -`}</CodeBlock>
       </section>
 
       {/* ─── VS Code ─────────────────────────────────────────────────────────── */}
-      <section className="mx-auto w-full max-w-5xl px-4 py-14 border-t border-border-subtle">
-        <SectionAnchor id="vscode" />
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
-          <div>
-            <IntegrationBadge label="VS Code" color="border-sky-500/30 bg-sky-500/8 text-sky-400" />
-            <h2 className="text-2xl font-light text-text-primary mt-3 mb-3">
-              Readable for VS Code
-            </h2>
-            <p className="text-sm text-text-muted leading-relaxed mb-6">
-              Publish the current Markdown file — or just your current selection —
-              without leaving VS Code. The extension adds three commands to the
-              command palette and can store your API key in VS Code&apos;s
-              secret storage so it never touches your filesystem.
-            </p>
+      {VSCODE_EXTENSION_PUBLISHED && (
+        <section className="mx-auto w-full max-w-5xl px-4 py-14 border-t border-border-subtle">
+          <SectionAnchor id="vscode" />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
+            <div>
+              <IntegrationBadge label="VS Code" color="border-sky-500/30 bg-sky-500/8 text-sky-400" />
+              <h2 className="text-2xl font-light text-text-primary mt-3 mb-3">
+                Readable for VS Code
+              </h2>
+              <p className="text-sm text-text-muted leading-relaxed mb-6">
+                Publish the current Markdown file — or just your current selection —
+                without leaving VS Code. The extension adds three commands to the
+                command palette and can store your API key in VS Code&apos;s
+                secret storage so it never touches your filesystem.
+              </p>
 
-            <div className="flex flex-col gap-5">
-              <Step n={1} title="Install the extension">
-                Search for <em>Readable</em> in the VS Code Extensions panel, or install from the marketplace.
-              </Step>
-              <Step n={2} title="Set your API key">
-                Run <strong>Readable: Set API Key</strong> from the command palette. Stored securely in VS Code secret storage.
-              </Step>
-              <Step n={3} title="Publish with one command">
-                Open any <code className="rounded bg-fill-2 px-1 py-0.5 text-xs font-mono text-accent-soft">.md</code> file and run <strong>Readable: Publish Current File</strong>. The URL is copied to your clipboard.
-              </Step>
+              <div className="flex flex-col gap-5">
+                <Step n={1} title="Install the extension">
+                  Search for <em>Readable</em> in the VS Code Extensions panel, or install from the marketplace.
+                </Step>
+                <Step n={2} title="Set your API key">
+                  Run <strong>Readable: Set API Key</strong> from the command palette. Stored securely in VS Code secret storage.
+                </Step>
+                <Step n={3} title="Publish with one command">
+                  Open any <code className="rounded bg-fill-2 px-1 py-0.5 text-xs font-mono text-accent-soft">.md</code> file and run <strong>Readable: Publish Current File</strong>. The URL is copied to your clipboard.
+                </Step>
+              </div>
+
+              <div className="mt-6">
+                <a
+                  href="https://marketplace.visualstudio.com/items?itemName=AshwinSathian.readable-vscode"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent transition hover:text-accent-soft"
+                >
+                  View on VS Code Marketplace
+                  <svg width="11" height="11" fill="none" viewBox="0 0 12 12" aria-hidden>
+                    <path d="M2.5 9.5 9.5 2.5M9.5 2.5H4M9.5 2.5V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </a>
+              </div>
             </div>
 
-            <div className="mt-6">
-              <a
-                href="https://marketplace.visualstudio.com/items?itemName=AshwinSathian.readable-vscode"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent transition hover:text-accent-soft"
-              >
-                View on VS Code Marketplace
-                <svg width="11" height="11" fill="none" viewBox="0 0 12 12" aria-hidden>
-                  <path d="M2.5 9.5 9.5 2.5M9.5 2.5H4M9.5 2.5V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </a>
+            <div className="flex flex-col gap-4">
+              <div className="rounded-xl border border-border-subtle bg-bg-elevated p-5 flex flex-col gap-3">
+                <p className="text-xs font-semibold uppercase tracking-widest text-text-muted">Command palette</p>
+                {[
+                  { cmd: "Readable: Publish Current File", desc: "Publish the current file as a new page" },
+                  { cmd: "Readable: Publish Selection", desc: "Publish only the highlighted text" },
+                  { cmd: "Readable: Set API Key", desc: "Save your key to VS Code secret storage" },
+                ].map((item) => (
+                  <div key={item.cmd} className="flex items-start gap-3 rounded-lg border border-border-subtle bg-bg-soft px-3.5 py-3">
+                    <code className="shrink-0 rounded bg-accent/10 border border-accent/20 px-1.5 py-0.5 text-xs font-mono text-accent">
+                      {item.cmd}
+                    </code>
+                    <span className="text-xs text-text-muted leading-relaxed">{item.desc}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-text-muted">
+                The extension works in VS Code, VS Code Insiders, and any fork that supports the VS Code extension API.
+              </p>
             </div>
           </div>
-
-          <div className="flex flex-col gap-4">
-            <div className="rounded-xl border border-border-subtle bg-bg-elevated p-5 flex flex-col gap-3">
-              <p className="text-xs font-semibold uppercase tracking-widest text-text-muted">Command palette</p>
-              {[
-                { cmd: "Readable: Publish Current File", desc: "Publish the current file as a new page" },
-                { cmd: "Readable: Publish Selection", desc: "Publish only the highlighted text" },
-                { cmd: "Readable: Set API Key", desc: "Save your key to VS Code secret storage" },
-              ].map((item) => (
-                <div key={item.cmd} className="flex items-start gap-3 rounded-lg border border-border-subtle bg-bg-soft px-3.5 py-3">
-                  <code className="shrink-0 rounded bg-accent/10 border border-accent/20 px-1.5 py-0.5 text-xs font-mono text-accent">
-                    {item.cmd}
-                  </code>
-                  <span className="text-xs text-text-muted leading-relaxed">{item.desc}</span>
-                </div>
-              ))}
-            </div>
-            <p className="text-xs text-text-muted">
-              The extension works in VS Code, VS Code Insiders, and any fork that supports the VS Code extension API.
-            </p>
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ─── GitHub Actions ──────────────────────────────────────────────────── */}
       <section className="mx-auto w-full max-w-5xl px-4 py-14 border-t border-border-subtle">
@@ -441,7 +449,7 @@ jobs:
                 { method: "PATCH", path: "/api/v1/pages/:id", desc: "Update content, slug, or visibility" },
                 { method: "DELETE", path: "/api/v1/pages/:id", desc: "Permanently delete a page" },
               ].map((ep) => (
-                <div key={ep.path} className="flex items-start gap-3 rounded-lg border border-border-subtle bg-bg-elevated px-3.5 py-3">
+                <div key={`${ep.method} ${ep.path}`} className="flex items-start gap-3 rounded-lg border border-border-subtle bg-bg-elevated px-3.5 py-3">
                   <span className={[
                     "shrink-0 inline-flex items-center rounded px-1.5 py-0.5 text-[0.65rem] font-bold font-mono uppercase tracking-wide",
                     ep.method === "GET" ? "bg-emerald-500/15 text-emerald-400" :
