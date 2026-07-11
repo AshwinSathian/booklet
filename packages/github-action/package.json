@@ -1,6 +1,6 @@
 {
   "name": "@readable/github-action",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "GitHub Action: publish Markdown to Readable",
   "private": true,
   "scripts": {
@@ -8,7 +8,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@actions/core": "^1.10.0"
+    "@actions/core": "^3.0.1"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
