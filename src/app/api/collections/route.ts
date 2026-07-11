@@ -4,7 +4,7 @@ import {
   getTeamSpacesByMembership,
 } from "@/lib/db";
 import { createId } from "@/lib/id";
-import { auth } from "@clerk/nextjs/server";
+import { getSession } from "@/lib/auth/session";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -14,7 +14,7 @@ function cleanName(value: unknown): string {
 }
 
 export async function GET() {
-  const { userId } = await auth();
+  const userId = (await getSession())?.userId ?? null;
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const [owned, memberOf] = await Promise.all([
@@ -28,7 +28,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const { userId } = await auth();
+  const userId = (await getSession())?.userId ?? null;
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   let body: { name?: unknown; is_team_space?: unknown };

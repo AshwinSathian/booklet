@@ -93,7 +93,7 @@ cd mcp-server && npm run deploy
 | Framework | Next.js 16 (App Router) |
 | Language | TypeScript 5 (strict) |
 | Styling | Tailwind CSS v4 |
-| Auth | Clerk |
+| Auth | In-house (email + password, argon2id, DB-backed sessions) |
 | Database | MongoDB (pages, users, API keys, webhooks) |
 | Storage | Cloudflare KV (rendered documents) |
 | Deployment | Cloudflare Workers via OpenNext |
@@ -110,7 +110,6 @@ cd mcp-server && npm run deploy
 
 - Node.js 20+
 - MongoDB connection string
-- Clerk account (for auth)
 - Cloudflare account with a KV namespace
 
 ### Install & run
@@ -128,8 +127,6 @@ Create `.env.local`:
 ```env
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
-CLERK_SECRET_KEY=sk_test_...
 MONGODB_URI=mongodb+srv://...
 
 # Required — dedicated secret that signs/verifies team-invite JWT tokens.
@@ -137,6 +134,8 @@ MONGODB_URI=mongodb+srv://...
 # and joining fail closed if this is unset. Generate with: openssl rand -base64 32
 INVITE_JWT_SECRET=<random-secret>
 ```
+
+See `.env.example` for the full list of required secrets (session auth, API keys, page-unlock tokens, etc.) — each documents its own generation command and fail-closed behavior.
 
 ### Deploy
 

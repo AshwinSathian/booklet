@@ -1,8 +1,9 @@
 import { addCollectionMember, getCollectionRecord } from "@/lib/db";
+import { getUserById } from "@/lib/db/auth";
 import { createId } from "@/lib/id";
 import { verifyInviteToken } from "@/lib/invite-token";
 import { logError } from "@/lib/logger";
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { getSession } from "@/lib/auth/session";
 import { redirect } from "next/navigation";
 
 export const runtime = "nodejs";
@@ -30,13 +31,14 @@ export default async function TeamJoinPage({
     return <ErrorPage message="This invite link has expired or is invalid." />;
   }
 
-  const { userId } = await auth();
-  if (!userId) {
+  const session = await getSession();
+  if (!session) {
     redirect(`/sign-in?redirect_url=/t/join?token=${encodeURIComponent(token)}`);
   }
+  const { userId } = session;
 
-  const user = await currentUser();
-  const userEmail = user?.emailAddresses?.[0]?.emailAddress?.toLowerCase() ?? null;
+  const user = await getUserById(userId);
+  const userEmail = user?.email?.toLowerCase() ?? null;
 
   if (userEmail && payload.invitedEmail && userEmail !== payload.invitedEmail.toLowerCase()) {
     return (

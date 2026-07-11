@@ -89,21 +89,14 @@ jobs:
           NODE_ENV: production
           # Next.js only needs NEXT_PUBLIC_* vars at build time (they get
           # inlined into the client bundle). Every non-NEXT_PUBLIC_ var in
-          # .env.example (MONGODB_URI, CLERK_SECRET_KEY, INVITE_JWT_SECRET,
-          # UNLOCK_TOKEN_SECRET, ADMIN_IPS, ADMIN_USER_IDS, API_KEY_PEPPER,
-          # READABLE_WEBHOOK_SECRET) is read lazily inside function bodies at
-          # request time (src/lib/mongodb.ts, src/lib/unlock-token.ts,
-          # src/lib/invite-token.ts, src/middleware.ts, src/lib/api-key.ts,
-          # etc.) — none of it is touched during `next build`/
-          # generateStaticParams, so none of it is needed here. Verified
-          # locally: a build with only the placeholders below (and no other
-          # env vars at all) completes successfully.
-          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_ci_placeholder
-          NEXT_PUBLIC_CLERK_SIGN_IN_URL: /sign-in
-          NEXT_PUBLIC_CLERK_SIGN_UP_URL: /sign-up
-          NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL: /app
-          NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL: /app
-          NEXT_PUBLIC_CLERK_AFTER_SIGN_OUT_URL: /
+          # .env.example (MONGODB_URI, INVITE_JWT_SECRET, UNLOCK_TOKEN_SECRET,
+          # SESSION_TOKEN_PEPPER, CLAIM_TOKEN_SECRET, ADMIN_IPS,
+          # ADMIN_USER_IDS, API_KEY_PEPPER, READABLE_WEBHOOK_SECRET) is read
+          # lazily inside function bodies at request time (src/lib/mongodb.ts,
+          # src/lib/unlock-token.ts, src/lib/invite-token.ts,
+          # src/lib/auth/session-token.ts, src/middleware.ts,
+          # src/lib/api-key.ts, etc.) — none of it is touched during
+          # `next build`/generateStaticParams, so none of it is needed here.
           NEXT_PUBLIC_SITE_URL: http://localhost:3100
 
   unit-tests:
@@ -135,20 +128,18 @@ jobs:
 
   # ── Full Playwright e2e suite — NOT part of the required PR gate ────────────
   # tests/e2e/happy-paths.spec.ts and tests/e2e/unit/safe-redirect.spec.ts
-  # drive a live `next start` instance through real Clerk sign-in/sign-up
-  # flows and expect a real-ish MongoDB with production-like data. Faking
-  # Clerk auth isn't attempted here. To enable this job for real:
-  #   1. Add repo secrets: NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY (a real Clerk
-  #      test-mode key), CLERK_SECRET_KEY, and a MONGODB_URI pointed at a
-  #      throwaway Atlas cluster (or extend the mongo:7 service container
-  #      approach from unit-tests, if the e2e flows don't need Atlas-only
-  #      features).
-  #   2. Add Clerk test credentials the suite can drive through sign-in/
-  #      sign-up (Clerk's testing tokens: https://clerk.com/docs/testing/e2e-testing).
-  #   3. Change `if:` below from `workflow_dispatch` to `pull_request`/`push`
-  #      once (1) and (2) are in place, and add it as a required check.
+  # drive a live `next start` instance through real sign-in/sign-up flows
+  # (in-house auth — see PLAN-backend-auth-migration.md) and expect a
+  # real-ish MongoDB with production-like data. To enable this job for real:
+  #   1. Add repo secrets: MONGODB_URI (pointed at a throwaway instance, or
+  #      extend the mongo:7 service container approach from unit-tests),
+  #      INVITE_JWT_SECRET, UNLOCK_TOKEN_SECRET, API_KEY_PEPPER,
+  #      SESSION_TOKEN_PEPPER, CLAIM_TOKEN_SECRET (openssl rand values, see
+  #      .env.example for generation commands).
+  #   2. Change `if:` below from `workflow_dispatch` to `pull_request`/`push`
+  #      once (1) is in place, and add it as a required check.
   e2e-manual:
-    name: E2E (manual — needs Clerk + Mongo secrets)
+    name: E2E (manual — needs Mongo + secret env vars)
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
@@ -161,14 +152,16 @@ jobs:
       - run: npm run build
         env:
           NODE_ENV: production
-          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
           NEXT_PUBLIC_SITE_URL: http://localhost:3100
       - run: npm start &
         env:
           PORT: "3100"
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
-          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
-          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          INVITE_JWT_SECRET: ${{ secrets.INVITE_JWT_SECRET }}
+          UNLOCK_TOKEN_SECRET: ${{ secrets.UNLOCK_TOKEN_SECRET }}
+          API_KEY_PEPPER: ${{ secrets.API_KEY_PEPPER }}
+          SESSION_TOKEN_PEPPER: ${{ secrets.SESSION_TOKEN_PEPPER }}
+          CLAIM_TOKEN_SECRET: ${{ secrets.CLAIM_TOKEN_SECRET }}
       - name: Wait for server to be ready
         run: |
           for i in $(seq 1 30); do

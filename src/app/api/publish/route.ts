@@ -2,7 +2,6 @@ import type { PublishedDoc } from "@/lib/blocks";
 import { DEFAULT_SETTINGS } from "@/lib/blocks";
 import { BLOCKS, ROUTES, STORAGE } from "@/lib/constants";
 import { createPageRecord } from "@/lib/db";
-import { ensureDbUser } from "@/lib/db/ensure-user";
 import { createId } from "@/lib/id";
 import { extractDocTitle } from "@/lib/doc-title";
 import { snapshotPageVersion } from "@/lib/db/versions";
@@ -13,7 +12,7 @@ import { ANONYMOUS_LIMITS } from "@/lib/quota";
 import { deliverWebhooks } from "@/lib/webhook-delivery";
 import { getClientIp } from "@/lib/request-ip";
 import { logError } from "@/lib/logger";
-import { auth } from "@clerk/nextjs/server";
+import { getSession } from "@/lib/auth/session";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -32,7 +31,7 @@ export async function POST(req: Request) {
     const rl = await checkRateLimit(`publish__ip__${ip}`, 12).catch(() => null);
     if (rl) return rl;
 
-    const { userId, sessionClaims } = await auth();
+    const userId = (await getSession())?.userId ?? null;
     const isAuthenticated = Boolean(userId);
 
     let payload: PublishPayload | null = null;
@@ -100,12 +99,7 @@ export async function POST(req: Request) {
 
     if (isAuthenticated && userId) {
       try {
-        const email =
-          (sessionClaims?.email as string | undefined) ??
-          (sessionClaims?.primary_email_address as string | undefined) ??
-          null;
         const title = extractDocTitle(payload.blocks);
-        await ensureDbUser(userId, email);
         await createPageRecord(id, userId, title);
         void snapshotPageVersion(id, doc).catch((err) => {
           logError("publish", "Version snapshot failed", err);

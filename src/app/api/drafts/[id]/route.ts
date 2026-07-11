@@ -4,11 +4,10 @@ import {
   getDraftRecord,
   upsertDraftRecord,
 } from "@/lib/db/drafts";
-import { ensureDbUser } from "@/lib/db/ensure-user";
 import { coerceDraftDoc } from "@/lib/drafts/migrate";
 import { logError } from "@/lib/logger";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { auth } from "@clerk/nextjs/server";
+import { getSession } from "@/lib/auth/session";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -17,7 +16,7 @@ export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const { userId } = await auth();
+  const userId = (await getSession())?.userId ?? null;
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -43,7 +42,7 @@ export async function PUT(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const { userId } = await auth();
+  const userId = (await getSession())?.userId ?? null;
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -91,7 +90,6 @@ export async function PUT(
   }
 
   try {
-    await ensureDbUser(userId, null);
     await upsertDraftRecord(id, userId, draft);
   } catch (e: unknown) {
     logError("drafts-sync", "Upsert failed", e);
@@ -106,7 +104,7 @@ export async function DELETE(
   _req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const { userId } = await auth();
+  const userId = (await getSession())?.userId ?? null;
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

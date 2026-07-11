@@ -2,7 +2,6 @@ import type { PublishedDoc } from "@/lib/blocks";
 import { DEFAULT_SETTINGS } from "@/lib/blocks";
 import { BLOCKS, ROUTES, STORAGE } from "@/lib/constants";
 import { createPageRecord, getPageBySlug, updatePageRecord } from "@/lib/db";
-import { ensureDbUser } from "@/lib/db/ensure-user";
 import { createId } from "@/lib/id";
 import { resolveApiKey } from "@/lib/api-key-auth";
 import { extractDocTitle } from "@/lib/doc-title";
@@ -110,7 +109,6 @@ export async function POST(req: Request) {
   try {
     const title = fm.title ?? extractDocTitle(payload.blocks);
     const fmRecord = Object.keys(fm).length > 0 ? (fm as Record<string, unknown>) : null;
-    await ensureDbUser(userId, null);
     await createPageRecord(id, userId, title, null, fmRecord);
 
     // Apply frontmatter-derived settings (visibility, slug) — slug was

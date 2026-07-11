@@ -1,11 +1,6 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { getClientIp } from "@/lib/request-ip";
-
-const isProtected = createRouteMatcher(["/my-pages(.*)"]);
-
-// Clerk FAPI host — derived from the publishable key (pk_live_Y2xlcmsuYXNod2luc2F0aGlhbi5jb20k → clerk.ashwinsathian.com)
-const CLERK_HOST = "https://clerk.ashwinsathian.com";
+import { SESSION_COOKIE_NAME } from "@/lib/auth/constants";
 
 const SECURITY_HEADERS: Record<string, string> = {
   "X-Frame-Options": "DENY",
@@ -14,70 +9,46 @@ const SECURITY_HEADERS: Record<string, string> = {
   "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
   "Content-Security-Policy": [
     "default-src 'self'",
-    // Clerk's FAPI serves its own JS bundle; also need Google Tag Manager.
-    `script-src 'self' 'unsafe-inline' 'unsafe-eval' ${CLERK_HOST} https://challenges.cloudflare.com https://www.googletagmanager.com`,
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com",
     "style-src 'self' 'unsafe-inline'",
-    // Allow profile avatars from Clerk's image CDN and any HTTPS source.
-    "img-src 'self' data: blob: https: https://img.clerk.com",
+    "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
-    // connect-src: Clerk FAPI + Google OAuth token endpoints + Analytics.
-    // accounts.google.com needed when Clerk's SDK verifies Google ID tokens client-side.
-    // appleid.apple.com needed for Apple Sign In token verification.
-    `connect-src 'self' ${CLERK_HOST} https://accounts.google.com https://oauth2.googleapis.com https://appleid.apple.com https://www.google-analytics.com https://region1.google-analytics.com`,
-    // frame-src: Clerk FAPI (account iframes/modals), Cloudflare Turnstile, Google OAuth popup.
-    `frame-src ${CLERK_HOST} https://challenges.cloudflare.com https://accounts.google.com https://appleid.apple.com`,
+    "connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com",
+    "frame-src 'none'",
+    // Modern replacement for X-Frame-Options; overridden to '*' for /p/[id]/embed
+    // below. X-Frame-Options is also still set for older-browser defense in depth.
+    "frame-ancestors 'none'",
     "worker-src blob:",
     "object-src 'none'",
     "base-uri 'self'",
-    // form-action: Clerk's <SignIn>/<SignUp> components render <form> elements that
-    // POST to the Clerk FAPI.  'self' alone blocks those submissions.
-    `form-action 'self' ${CLERK_HOST}`,
+    "form-action 'self'",
   ].join("; "),
 };
 
-export default clerkMiddleware(async (auth, req) => {
-  // Admin route: two independent checks must BOTH pass — an IP allowlist
-  // AND a signed-in, allowlisted admin user. Neither check alone is
-  // sufficient (see P0-9 / P1-5 in the security audit): the IP check can
-  // only ever be as trustworthy as `cf-connecting-ip` (see getClientIp),
-  // and a leaked/allowlisted IP must not be enough on its own to reach an
-  // internal dashboard.
+export default function middleware(req: NextRequest) {
+  // Admin route: IP allowlist. Fails closed — an empty/unset ADMIN_IPS means
+  // nobody passes, not "no restriction configured". The authoritative
+  // session + ADMIN_USER_IDS check lives in src/app/admin/layout.tsx (a
+  // real Mongo-backed session lookup belongs in a Node.js-runtime Route
+  // Handler/Server Component, not in Edge middleware).
   if (req.nextUrl.pathname.startsWith("/admin")) {
     const isDev = process.env.NODE_ENV === "development";
-
-    // Layer 1: IP allowlist. Fails closed — an empty/unset ADMIN_IPS means
-    // nobody passes, not "no restriction configured".
     const ip = getClientIp(req.headers);
     const allowedIps = (process.env.ADMIN_IPS ?? "")
       .split(",")
       .map((s) => s.trim())
       .filter(Boolean);
-    // In development always allow loopback — there's no Cloudflare/real IP
-    // to check locally.
     if (!isDev && !allowedIps.includes(ip)) {
       return new Response("Forbidden", { status: 403 });
     }
-
-    // Layer 2: authenticated + allowlisted admin user. Checked explicitly
-    // (rather than via auth.protect()'s sign-in redirect) so an
-    // unauthenticated visitor is rejected outright with 403 instead of
-    // being parked on a sign-in page that later succeeds without this
-    // check being re-evaluated. Fails closed — an empty/unset
-    // ADMIN_USER_IDS means the route is inaccessible to everyone.
-    if (!isDev) {
-      const { userId } = await auth();
-      const allowedUserIds = (process.env.ADMIN_USER_IDS ?? "")
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
-      if (!userId || allowedUserIds.length === 0 || !allowedUserIds.includes(userId)) {
-        return new Response("Forbidden", { status: 403 });
-      }
-    }
   }
 
-  if (isProtected(req)) {
-    await auth.protect();
+  // /my-pages: cheap, non-authoritative UX redirect for the common case of
+  // no session cookie at all — avoids rendering a server component that
+  // would just redirect anyway. This is NOT the security boundary; every
+  // /my-pages page performs its own authoritative getSession() check.
+  if (req.nextUrl.pathname.startsWith("/my-pages") && !req.cookies.has(SESSION_COOKIE_NAME)) {
+    return NextResponse.redirect(new URL("/sign-in", req.url));
   }
 
   const res = NextResponse.next();
@@ -93,7 +64,7 @@ export default clerkMiddleware(async (auth, req) => {
     res.headers.set(key, value);
   }
   return res;
-});
+}
 
 export const config = {
   matcher: [

@@ -1,7 +1,7 @@
 import { getCollectionRecord } from "@/lib/db";
 import { signInviteToken } from "@/lib/invite-token";
 import { logError } from "@/lib/logger";
-import { auth } from "@clerk/nextjs/server";
+import { getSession } from "@/lib/auth/session";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -10,7 +10,7 @@ export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const { userId } = await auth();
+  const userId = (await getSession())?.userId ?? null;
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;

@@ -41,7 +41,7 @@ export default function PrivacyPage() {
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest text-text-muted mb-3">Legal</p>
             <h1 className="text-[clamp(22px,3.5vw,30px)] text-text-primary mb-2">Privacy Policy</h1>
-            <p className="text-sm text-text-muted">Last updated: May 2026</p>
+            <p className="text-sm text-text-muted">Last updated: July 2026</p>
           </div>
 
           <Section title="What we collect">
@@ -54,10 +54,10 @@ export default function PrivacyPage() {
               keep the service sustainable for everyone; signing in removes that cap.
             </p>
             <p>
-              <strong className="text-text-primary">Signed-in accounts</strong> — We use Clerk for authentication. When you
-              sign in, Clerk collects your email address and manages your session. We store your user ID and email
-              in our database (MongoDB) to associate pages with your account. We do not store passwords — Clerk
-              handles credential management.
+              <strong className="text-text-primary">Signed-in accounts</strong> — Authentication is handled entirely by us,
+              with no third-party identity provider. When you create an account, we store your email address and a
+              salted, memory-hard hash of your password (argon2id) — never the password itself. Signing in issues a
+              random session token, stored server-side and referenced only by an httpOnly cookie in your browser.
             </p>
             <p>
               <strong className="text-text-primary">Page analytics</strong> — We count views, track scroll depth (50% and 100%
@@ -73,16 +73,17 @@ export default function PrivacyPage() {
 
           <Section title="How we use your data">
             <p>We use collected data solely to operate the service: storing and serving your pages, associating
-              pages with your account, delivering analytics you asked for, and sending transactional emails (such as
-              welcome messages, if you opt in).</p>
+              pages with your account, and delivering analytics you asked for. We do not currently send any
+              transactional or marketing email.</p>
             <p>We do not serve ads, sell your data to third parties, or use your content to train AI models.</p>
           </Section>
 
           <Section title="Cookies and local storage">
             <p>
               {APP_NAME} uses browser <strong className="text-text-primary">localStorage</strong> to save your editor drafts
-              locally — this data never leaves your device unless you publish. We use session cookies
-              issued by Clerk for authentication. We do not use third-party tracking cookies.
+              locally — this data never leaves your device unless you publish. We use one first-party, httpOnly
+              session cookie (issued directly by us, not a third party) for signed-in auth. We do not use
+              third-party tracking cookies.
             </p>
           </Section>
 
@@ -101,12 +102,11 @@ export default function PrivacyPage() {
           </Section>
 
           <Section title="Third-party services">
-            <p>We use the following third-party services:</p>
+            <p>We keep this list short by design — authentication, sessions, and all page data are handled entirely
+              on infrastructure we run ourselves, with no third-party identity or data processor in the loop.</p>
             <ul className="list-disc list-inside flex flex-col gap-1.5">
-              <li><strong className="text-text-primary">Clerk</strong> — authentication and user management (<a href="https://clerk.com/privacy" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">clerk.com/privacy</a>)</li>
               <li><strong className="text-text-primary">Cloudflare</strong> — edge network and tunnel in front of our servers</li>
-              <li><strong className="text-text-primary">MongoDB Atlas</strong> — primary database for all page records, including anonymous ones</li>
-              <li><strong className="text-text-primary">Resend</strong> — transactional email delivery</li>
+              <li><strong className="text-text-primary">MongoDB</strong> — self-hosted primary database for all page and account records, including anonymous pages</li>
             </ul>
           </Section>
 

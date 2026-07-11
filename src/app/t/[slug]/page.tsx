@@ -1,7 +1,7 @@
 import { AppLogo } from "@/components/ui/AppLogo";
 import { ROUTES } from "@/lib/constants";
 import { getCollectionBySlug, getCollectionMembers, getCollectionMemberships, getPagesByCollection } from "@/lib/db";
-import { auth } from "@clerk/nextjs/server";
+import { getSession } from "@/lib/auth/session";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -39,7 +39,7 @@ export default async function TeamPage({
   const team = await getCollectionBySlug(slug);
   if (!team) notFound();
 
-  const { userId } = await auth();
+  const userId = (await getSession())?.userId ?? null;
   const isMember = userId
     ? (await getCollectionMemberships(userId)).some((m) => m.collection_id === team.id)
     : false;

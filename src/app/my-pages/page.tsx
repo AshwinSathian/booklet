@@ -1,14 +1,13 @@
 import { AppLogo } from "@/components/ui/AppLogo";
+import { AccountMenu } from "@/components/auth/AccountMenu";
 import { ROUTES } from "@/lib/constants";
 import { getApiKeysByUser, getCollectionsByUser, getPagesByUser, getTeamSpacesByMembership, getWebhooksByUser } from "@/lib/db";
-import { auth } from "@clerk/nextjs/server";
-import { UserButton } from "@clerk/nextjs";
+import { getSession } from "@/lib/auth/session";
 import Link from "next/link";
 import { headers } from "next/headers";
 import { MyPagesList } from "./MyPagesClient";
 import { ApiKeysSection } from "./ApiKeysClient";
 import { WebhooksSection } from "./WebhooksClient";
-import { PasskeySection } from "./PasskeyClient";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,11 +23,13 @@ function getBaseUrl(req: Headers): string {
 }
 
 export default async function MyPagesPage() {
-  const { userId } = await auth();
-  // Middleware guarantees userId is set; this is a safety guard.
-  if (!userId) {
+  const session = await getSession();
+  // Middleware only does a cheap cookie-presence redirect; this is the
+  // authoritative check (see PLAN-backend-auth-migration.md).
+  if (!session) {
     return null;
   }
+  const { userId } = session;
 
   const hdrs = await headers();
   const baseUrl = getBaseUrl(hdrs);
@@ -56,7 +57,7 @@ export default async function MyPagesPage() {
             >
               Back to editor
             </Link>
-            <UserButton />
+            <AccountMenu />
           </div>
         </div>
       </header>
@@ -124,11 +125,6 @@ export default async function MyPagesPage() {
             last_triggered_at: w.last_triggered_at,
           }))}
         />
-
-        {/* Client component: renders only when the device supports platform authenticators */}
-        <div id="security">
-          <PasskeySection />
-        </div>
       </main>
     </div>
   );

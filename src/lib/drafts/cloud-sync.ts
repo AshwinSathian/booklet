@@ -165,7 +165,7 @@ function ensureSubscribed(): void {
 
 /**
  * Tell the sync layer which account (if any) is currently signed in.
- * Call with `null` on sign-out / before Clerk has resolved. Anonymous
+ * Call with `null` on sign-out / before the session has resolved. Anonymous
  * sessions should simply never call this with a truthy id — no other
  * gating is required.
  */

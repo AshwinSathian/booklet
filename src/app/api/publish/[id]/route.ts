@@ -5,7 +5,7 @@ import { getPageRecord, updatePageRecord } from "@/lib/db";
 import { snapshotPageVersion } from "@/lib/db/versions";
 import { putDoc } from "@/lib/storage";
 import { logError } from "@/lib/logger";
-import { auth } from "@clerk/nextjs/server";
+import { getSession } from "@/lib/auth/session";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -21,7 +21,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { userId } = await auth();
+    const userId = (await getSession())?.userId ?? null;
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

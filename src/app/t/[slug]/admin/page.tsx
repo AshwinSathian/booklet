@@ -4,7 +4,7 @@ import { AppLogo } from "@/components/ui/AppLogo";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
 import { use, useCallback, useEffect, useState } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useSession } from "@/components/auth/SessionProvider";
 
 type Member = {
   id: string;
@@ -22,7 +22,7 @@ type TeamData = {
 };
 
 function AdminPageInner({ slug }: { slug: string }) {
-  const { user, isLoaded } = useUser();
+  const { userId, email, isLoaded } = useSession();
   const [team, setTeam] = useState<TeamData | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
@@ -154,7 +154,7 @@ function AdminPageInner({ slug }: { slug: string }) {
     );
   }
 
-  if (team.user_id !== user?.id) {
+  if (team.user_id !== userId) {
     return (
       <div className="min-h-screen bg-bg flex items-center justify-center">
         <p className="text-sm text-text-muted">Only the team owner can access settings.</p>
@@ -212,7 +212,7 @@ function AdminPageInner({ slug }: { slug: string }) {
             <div className="flex items-center justify-between rounded-xl border border-outline bg-bg-elevated px-4 py-2.5 gap-3">
               <div className="min-w-0">
                 <p className="text-sm text-text-primary truncate">
-                  {user?.primaryEmailAddress?.emailAddress ?? user?.id}
+                  {email ?? userId}
                 </p>
                 <p className="text-xs text-text-muted">Owner</p>
               </div>

@@ -4,7 +4,7 @@ import { getPageRecord } from "@/lib/db";
 import { getPageVersions } from "@/lib/db/versions";
 import { extractDocTitle } from "@/lib/doc-title";
 import { getDoc } from "@/lib/storage";
-import { auth } from "@clerk/nextjs/server";
+import { getSession } from "@/lib/auth/session";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { VersionsClient } from "./VersionsClient";
@@ -21,7 +21,7 @@ export default async function PageVersionsPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { userId } = await auth();
+  const userId = (await getSession())?.userId ?? null;
   if (!userId) return null;
 
   const { id } = await params;

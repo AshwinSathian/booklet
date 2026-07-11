@@ -1,9 +1,8 @@
-import { auth } from "@clerk/nextjs/server";
+import { getSession } from "@/lib/auth/session";
 import { redirect } from "next/navigation";
 import { createApiKey, getApiKeysByUser } from "@/lib/db";
 import { generateRawKey, hashApiKey } from "@/lib/api-key";
 import { createId } from "@/lib/id";
-import { ensureDbUser } from "@/lib/db/ensure-user";
 import { AppLogo } from "@/components/ui/AppLogo";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -74,13 +73,14 @@ export default async function CliAuthPage({
     );
   }
 
-  const { userId } = await auth();
+  const session = await getSession();
 
-  if (!userId) {
-    // Not signed in — send to Clerk sign-in, which will redirect back here after auth
+  if (!session) {
+    // Not signed in — send to sign-in, which will redirect back here after auth
     const returnUrl = encodeURIComponent(`/cli-auth?port=${port}&state=${state}`);
     redirect(`/sign-in?redirect_url=${returnUrl}`);
   }
+  const { userId } = session;
 
   // Signed in — check key limit before creating
   const existing = await getApiKeysByUser(userId);
@@ -95,7 +95,6 @@ export default async function CliAuthPage({
 
   // Create the CLI key
   try {
-    await ensureDbUser(userId, null);
     const raw = generateRawKey();
     const keyHash = await hashApiKey(raw);
     const id = createId(16);

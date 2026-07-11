@@ -1,46 +1,31 @@
 import { AppLogo } from "@/components/ui/AppLogo";
 import { Button } from "@/components/ui/Button";
 import { getPublicPagesByUser } from "@/lib/db";
+import { getUserById } from "@/lib/db/auth";
+import type { DbUser } from "@/lib/db/types";
 import { APP_NAME, ROUTES } from "@/lib/constants";
 import { buildMetadata } from "@/lib/seo";
 import type { ExploreItem } from "@/lib/db";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { clerkClient } from "@clerk/nextjs/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-type ClerkUser = {
-  id: string;
-  firstName: string | null;
-  lastName: string | null;
-  username: string | null;
-  imageUrl: string;
-};
-
-async function getClerkUser(userId: string): Promise<ClerkUser | null> {
-  try {
-    const client = await clerkClient();
-    const user = await client.users.getUser(userId);
-    return {
-      id: user.id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      username: user.username,
-      imageUrl: user.imageUrl,
-    };
-  } catch {
-    return null;
-  }
+function displayName(user: DbUser): string {
+  return user.display_name?.trim() || "Readable user";
 }
 
-function displayName(user: ClerkUser): string {
-  if (user.firstName && user.lastName) return `${user.firstName} ${user.lastName}`;
-  if (user.firstName) return user.firstName;
-  if (user.username) return user.username;
-  return "Readable user";
+// Deterministic hue from the user id so the same author always gets the
+// same avatar color, with no external avatar service (Gravatar, etc.)
+// and no image asset to store.
+function avatarHue(userId: string): number {
+  let hash = 0;
+  for (let i = 0; i < userId.length; i++) {
+    hash = (hash * 31 + userId.charCodeAt(i)) >>> 0;
+  }
+  return hash % 360;
 }
 
 export async function generateMetadata({
@@ -49,7 +34,7 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  const user = await getClerkUser(id);
+  const user = await getUserById(id);
   if (!user) return buildMetadata({ title: "User not found", noIndex: true });
   const name = displayName(user);
   return buildMetadata({
@@ -79,7 +64,7 @@ export default async function UserProfilePage({
 }) {
   const { id } = await params;
   const [user, pages] = await Promise.all([
-    getClerkUser(id),
+    getUserById(id),
     getPublicPagesByUser(id).catch(() => [] as ExploreItem[]),
   ]);
 
@@ -111,27 +96,21 @@ export default async function UserProfilePage({
       <main className="mx-auto w-full max-w-4xl px-4 py-10">
         {/* Profile hero */}
         <div className="flex items-center gap-4 mb-10">
-          {/* Avatar */}
-          {user.imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={user.imageUrl}
-              alt={name}
-              width={64}
-              height={64}
-              className="h-16 w-16 rounded-full border border-border-subtle object-cover shrink-0"
-            />
-          ) : (
-            <div className="h-16 w-16 rounded-full bg-accent/15 border border-accent/20 flex items-center justify-center shrink-0">
-              <span className="text-xl font-bold text-accent">{initials}</span>
-            </div>
-          )}
+          {/* Avatar — deterministic initials, no external image service */}
+          <div
+            className="h-16 w-16 rounded-full border flex items-center justify-center shrink-0"
+            style={{
+              backgroundColor: `hsl(${avatarHue(user.id)} 70% 92% / 1)`,
+              borderColor: `hsl(${avatarHue(user.id)} 70% 80% / 1)`,
+            }}
+          >
+            <span className="text-xl font-bold" style={{ color: `hsl(${avatarHue(user.id)} 60% 40%)` }}>
+              {initials}
+            </span>
+          </div>
 
           <div className="min-w-0">
             <h1 className="text-[clamp(20px,3vw,26px)] text-text-primary truncate">{name}</h1>
-            {user.username && (
-              <p className="text-sm text-text-muted mt-0.5">@{user.username}</p>
-            )}
             <p className="text-sm text-text-muted mt-1">
               {pages.length === 0
                 ? "No public pages yet."

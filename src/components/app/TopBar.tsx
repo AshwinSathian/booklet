@@ -16,7 +16,8 @@ import { copyTextToClipboard, markdownToHtml } from "@/lib/export";
 import { TEMPLATES, type Template } from "@/lib/templates";
 import { DEFAULT_THEME_ID, THEMES } from "@/lib/themes";
 import { formatRelativeTimeFromIso, formatUpdatedAtLong } from "@/lib/ui/time";
-import { UserButton, useUser } from "@clerk/nextjs";
+import { useSession } from "@/components/auth/SessionProvider";
+import { AccountMenu } from "@/components/auth/AccountMenu";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ActionDrawer, DrawerSection } from "../ui/ActionDrawer";
 import { AppLogo } from "../ui/AppLogo";
@@ -1137,7 +1138,7 @@ export function TopBar({
     }
   }, [onImportMarkdown, toast]);
 
-  const { isSignedIn } = useUser();
+  const { isSignedIn } = useSession();
 
   useEffect(() => {
     if (onOpenDraftsShortcutRegistered) {
@@ -1238,15 +1239,7 @@ export function TopBar({
 
           {/* ── Auth ── */}
           {isSignedIn ? (
-            <UserButton>
-              <UserButton.MenuItems>
-                <UserButton.Link
-                  label="My pages"
-                  labelIcon={<Icon name="external" size={14} />}
-                  href={ROUTES.myPages}
-                />
-              </UserButton.MenuItems>
-            </UserButton>
+            <AccountMenu />
           ) : (
             <Button variant="secondary" size="sm" href={ROUTES.signIn}>
               Sign in

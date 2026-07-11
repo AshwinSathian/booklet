@@ -21,7 +21,7 @@
  *
  * Legitimate destinations found in the codebase (see grep for
  * `redirect_url` across `src/app`):
- *   - `/app`        — Clerk's configured post sign-in/up fallback
+ *   - `/app`        — default post sign-in/up redirect (see src/app/sign-in/AuthForm.tsx)
  *   - `/my-pages`   — dashboard, linked post-auth in various places
  *   - `/cli-auth`   — `?port=&state=` return target for `readable login`
  *   - `/t/join`     — `?token=` team-invite return target

@@ -10,7 +10,7 @@ export const DRAFTS_STORAGE_KEYS = {
   db: "readable:draftsDb",
   activeDraftId: "readable:activeDraftId",
   /**
-   * Client-side-only map of draftId -> Clerk userId, tracking which signed-in
+   * Client-side-only map of draftId -> userId, tracking which signed-in
    * account (if any) has "claimed" a given local draft for cloud sync. Never
    * sent to the server — it exists purely so cloud-sync.ts never silently
    * attributes a draft to whichever account happens to be signed in later

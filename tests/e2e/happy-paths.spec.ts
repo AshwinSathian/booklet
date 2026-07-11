@@ -255,7 +255,7 @@ test.describe("Core routes", () => {
     await page.goto("/my-pages");
     const url = page.url();
     const body = await page.locator("body").innerText();
-    const isRedirectedToSignIn = url.includes("sign-in") || url.includes("clerk");
+    const isRedirectedToSignIn = url.includes("sign-in");
     const showsAuthPrompt = /sign.in|log.in|you must be/i.test(body);
     expect(isRedirectedToSignIn || showsAuthPrompt).toBe(true);
   });
@@ -313,9 +313,10 @@ test.describe("API health checks", () => {
 
 test.describe("Security — client IP trust & /admin gating", () => {
   test("GET /admin is forbidden without an authenticated admin session", async ({ request }) => {
-    // Playwright's `request` fixture carries no Clerk session cookie, so
-    // this always hits the app unauthenticated — the userId check in
-    // middleware.ts must reject it (403) regardless of the IP allowlist.
+    // Playwright's `request` fixture carries no session cookie, so this
+    // always hits the app unauthenticated — the IP allowlist in
+    // middleware.ts must reject it (403) before the session check in
+    // src/app/admin/layout.tsx is ever reached.
     const res = await request.get(`${BASE}/admin`, { maxRedirects: 0 });
     expect(res.status()).toBe(403);
   });
@@ -403,5 +404,75 @@ test.describe("Security: MathDisplay XSS regression", () => {
     // silently dropped — the fallback's whole point is to show broken math
     // source, just safely.
     await expect(page.locator("body")).toContainText(marker);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Suite 10: In-house auth — signup, session-gated access, logout, login
+//
+// Unlike the Clerk-based auth this replaced (see PLAN-backend-auth-migration.md),
+// this flow is entirely first-party, so it can actually be driven end-to-end
+// here — the previous suite could only assert the sign-in/sign-up pages
+// rendered, never a real credentialed round trip.
+//
+// Note: the session cookie is Secure-flagged when NODE_ENV=production (see
+// src/lib/auth/session.ts). In real deployments the browser-facing
+// connection is always HTTPS (via the Cloudflare Tunnel), so this is
+// correct; if TEST_BASE_URL points at a plain-HTTP origin (e.g. a bare
+// `npm start` with no TLS in front), the browser will silently drop the
+// cookie and this suite will fail at the /my-pages assertions — point
+// TEST_BASE_URL at an HTTPS-fronted target to exercise this suite.
+// ---------------------------------------------------------------------------
+
+test.describe("Auth — signup, session-gated access, logout, login", () => {
+  test("sign up, reach a session-gated page, sign out, sign back in", async ({ page }) => {
+    const email = `e2e-${Date.now()}@example.test`;
+    const password = "correct horse battery staple";
+
+    await page.goto("/sign-up");
+    await page.locator("#email").fill(email);
+    await page.locator("#password").fill(password);
+    await page.locator('button[type="submit"]').first().click();
+    await page.waitForURL(/\/app/, { timeout: 10000 });
+
+    // /my-pages was previously gated (redirects to /sign-in) — now reachable.
+    await page.goto("/my-pages");
+    await expect(page).toHaveURL(/\/my-pages/);
+    await expect(page.locator("body")).not.toContainText("Application error");
+
+    const logoutRes = await page.request.post(`${BASE}/api/auth/logout`);
+    expect(logoutRes.status()).toBe(200);
+    await page.goto("/my-pages");
+    await expect(page).toHaveURL(/sign-in/);
+
+    await page.goto("/sign-in");
+    await page.locator("#email").fill(email);
+    await page.locator("#password").fill(password);
+    await page.locator('button[type="submit"]').first().click();
+    await page.waitForURL(/\/app/, { timeout: 10000 });
+  });
+
+  test("login rejects an unknown email with a generic error (no user enumeration)", async ({ request }) => {
+    const res = await request.post(`${BASE}/api/auth/login`, {
+      data: { email: `nobody-${Date.now()}@example.test`, password: "whatever12345" },
+    });
+    expect(res.status()).toBe(401);
+    const body = (await res.json()) as { error: string };
+    expect(body.error).toBe("Invalid email or password");
+  });
+
+  test("signup rejects a password shorter than 8 characters", async ({ request }) => {
+    const res = await request.post(`${BASE}/api/auth/signup`, {
+      data: { email: `short-${Date.now()}@example.test`, password: "short" },
+    });
+    expect(res.status()).toBe(400);
+  });
+
+  test("signup/login reject a cross-origin Origin header (login-CSRF mitigation)", async ({ request }) => {
+    const res = await request.post(`${BASE}/api/auth/login`, {
+      headers: { origin: "https://evil.example" },
+      data: { email: "whoever@example.test", password: "whatever12345" },
+    });
+    expect(res.status()).toBe(403);
   });
 });

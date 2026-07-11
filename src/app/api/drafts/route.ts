@@ -1,5 +1,5 @@
 import { getDraftsByUser } from "@/lib/db/drafts";
-import { auth } from "@clerk/nextjs/server";
+import { getSession } from "@/lib/auth/session";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -10,7 +10,7 @@ export const runtime = "nodejs";
  * pullCloudDrafts() reconciliation on app load.
  */
 export async function GET() {
-  const { userId } = await auth();
+  const userId = (await getSession())?.userId ?? null;
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

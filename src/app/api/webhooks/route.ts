@@ -1,7 +1,7 @@
 import { createWebhook, getWebhooksByUser } from "@/lib/db";
 import { createId } from "@/lib/id";
 import { isUrlSafe } from "@/lib/ssrf-guard";
-import { auth } from "@clerk/nextjs/server";
+import { getSession } from "@/lib/auth/session";
 import { NextResponse } from "next/server";
 import type { DbWebhook } from "@/lib/db/types";
 
@@ -11,7 +11,7 @@ const ALLOWED_EVENTS = new Set<DbWebhook["events"][number]>(["page.published", "
 const MAX_WEBHOOKS = 5;
 
 export async function GET() {
-  const { userId } = await auth();
+  const userId = (await getSession())?.userId ?? null;
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const webhooks = await getWebhooksByUser(userId);
@@ -22,7 +22,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const { userId } = await auth();
+  const userId = (await getSession())?.userId ?? null;
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   let body: { url?: string; events?: unknown[] };

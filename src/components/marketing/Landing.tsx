@@ -4,7 +4,7 @@ import { SiteFooter } from "@/components/marketing/SiteFooter";
 import { SiteHeader } from "@/components/marketing/SiteHeader";
 import { trackEvent } from "@/lib/analytics";
 import { APP_NAME, ROUTES } from "@/lib/constants";
-import { useUser } from "@clerk/nextjs";
+import { useSession } from "@/components/auth/SessionProvider";
 import type { Easing, Variants } from "framer-motion";
 import { motion, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
@@ -632,7 +632,7 @@ Authorization: Bearer rdbl_...`}
 
 export function Landing() {
   const reduce = useReducedMotion();
-  const { isSignedIn, isLoaded } = useUser();
+  const { isSignedIn, isLoaded } = useSession();
 
   const steps = useMemo(
     () => [

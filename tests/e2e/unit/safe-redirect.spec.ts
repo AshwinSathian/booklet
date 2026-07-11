@@ -31,7 +31,7 @@ const bypassCases: Array<{ name: string; input: string | undefined }> = [
 ];
 
 const allowCases: Array<{ name: string; input: string | undefined }> = [
-  { name: "bare /app (Clerk fallback redirect)", input: "/app" },
+  { name: "bare /app (default post sign-in/up redirect)", input: "/app" },
   { name: "/app with query string", input: "/app?foo=bar" },
   { name: "bare /my-pages", input: "/my-pages" },
   { name: "/my-pages with hash", input: "/my-pages#security" },

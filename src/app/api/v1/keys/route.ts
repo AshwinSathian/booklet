@@ -1,7 +1,7 @@
 import { createApiKey, getApiKeysByUser } from "@/lib/db";
 import { generateRawKey, hashApiKey } from "@/lib/api-key";
 import { createId } from "@/lib/id";
-import { auth } from "@clerk/nextjs/server";
+import { getSession } from "@/lib/auth/session";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 const MAX_KEYS_PER_USER = 10;
 
 export async function GET() {
-  const { userId } = await auth();
+  const userId = (await getSession())?.userId ?? null;
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -26,7 +26,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const { userId } = await auth();
+  const userId = (await getSession())?.userId ?? null;
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

@@ -29,7 +29,7 @@ import { getTemplateBySlug } from "@/lib/templates";
 import { stripFrontmatter } from "@/lib/frontmatter";
 import { formatTimeHHMM } from "@/lib/ui/time";
 import { AppLoader } from "@/components/ui/AppLoader";
-import { useUser } from "@clerk/nextjs";
+import { useSession } from "@/components/auth/SessionProvider";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type SaveState = "saved" | "saving";
@@ -65,7 +65,7 @@ function AppPageContent() {
   const [focusMode, setFocusMode] = useState(false);
 
   const toast = useToast();
-  const { isLoaded: isUserLoaded, isSignedIn, user } = useUser();
+  const { isLoaded: isUserLoaded, isSignedIn, userId } = useSession();
   const focusFnRef = useRef<null | (() => void)>(null);
   const openDraftsFnRef = useRef<null | (() => void)>(null);
   const cloudPulledForUserIdRef = useRef<string | null>(null);
@@ -261,19 +261,19 @@ function AppPageContent() {
   // today's localStorage-only behavior.
   useEffect(() => {
     if (!isUserLoaded) return;
-    setCloudSyncUser(isSignedIn ? (user?.id ?? null) : null);
-  }, [isUserLoaded, isSignedIn, user?.id]);
+    setCloudSyncUser(isSignedIn ? userId : null);
+  }, [isUserLoaded, isSignedIn, userId]);
 
   // Pull + reconcile cloud drafts once per signed-in session (see
   // src/lib/drafts/cloud-sync.ts for the last-write-wins reconciliation and
   // account-claim rules). Best-effort: local drafts remain fully usable
   // even if this fails or the user is offline.
   useEffect(() => {
-    if (!isUserLoaded || !isSignedIn || !user?.id) return;
-    if (cloudPulledForUserIdRef.current === user.id) return;
-    cloudPulledForUserIdRef.current = user.id;
+    if (!isUserLoaded || !isSignedIn || !userId) return;
+    if (cloudPulledForUserIdRef.current === userId) return;
+    cloudPulledForUserIdRef.current = userId;
 
-    void pullCloudDrafts(user.id).then(() => {
+    void pullCloudDrafts(userId).then(() => {
       // The active draft may have been overwritten by a newer cloud copy —
       // refresh in-memory state to match, but only if the user hasn't since
       // switched to a different draft.
@@ -293,7 +293,7 @@ function AppPageContent() {
         latest.updatedAt ? formatTimeHHMM(new Date(latest.updatedAt)) : null,
       );
     });
-  }, [isUserLoaded, isSignedIn, user?.id, activeDraftId]);
+  }, [isUserLoaded, isSignedIn, userId, activeDraftId]);
 
   const normalized = useMemo(
     // Strip frontmatter for rendering/parsing — the raw textarea preserves it for editing.

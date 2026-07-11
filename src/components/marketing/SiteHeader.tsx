@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/Button";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import { trackEvent } from "@/lib/analytics";
 import { ROUTES } from "@/lib/constants";
-import { UserButton, useUser } from "@clerk/nextjs";
+import { useSession } from "@/components/auth/SessionProvider";
+import { AccountMenu } from "@/components/auth/AccountMenu";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -177,7 +178,7 @@ export function SiteHeader({
   sticky = true,
   className,
 }: SiteHeaderProps) {
-  const { isSignedIn, isLoaded } = useUser();
+  const { isSignedIn, isLoaded } = useSession();
   const pathname = usePathname();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const closeNav = useCallback(() => setMobileNavOpen(false), []);
@@ -240,7 +241,7 @@ export function SiteHeader({
                   >
                     My pages
                   </Link>
-                  <UserButton />
+                  <AccountMenu />
                 </div>
               ) : (
                 <span
@@ -257,7 +258,7 @@ export function SiteHeader({
               {/* Mobile: avatar when signed in */}
               {isLoaded && isSignedIn && (
                 <div className="lg:hidden">
-                  <UserButton />
+                  <AccountMenu />
                 </div>
               )}
 

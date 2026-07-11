@@ -18,8 +18,9 @@ import {
   touchSessionExpiry,
 } from "@/lib/db/auth";
 import { generateSessionToken, hashSessionToken } from "./session-token";
+import { SESSION_COOKIE_NAME } from "./constants";
 
-export const SESSION_COOKIE_NAME = "readable_session";
+export { SESSION_COOKIE_NAME };
 
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 const REFRESH_THRESHOLD_MS = SESSION_TTL_MS / 2; // slide forward once past the halfway point
