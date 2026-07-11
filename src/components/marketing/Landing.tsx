@@ -316,12 +316,17 @@ function HeroMock() {
           <span className="h-3 w-3 rounded-full bg-[#febc2e]" />
           <span className="h-3 w-3 rounded-full bg-[#28c840]" />
         </div>
-        <div className="flex flex-1 justify-center">
-          <div className="rounded-md bg-bg-glass px-8 py-1 text-xs text-text-muted font-mono backdrop-blur">
+        <div className="flex flex-1 min-w-0 justify-center">
+          <div className="min-w-0 truncate rounded-md bg-bg-glass px-8 py-1 text-xs text-text-muted font-mono backdrop-blur">
             readable.ashwinsathian.com
           </div>
         </div>
-        <div className="flex items-center gap-1.5 rounded-full bg-accent px-3.5 py-1 text-2xs font-semibold text-white">
+        {/* shrink-0: on narrow viewports the flex row was compressing this
+            below its content's width (default flex-shrink:1), clipping
+            "Publish" down to "Pub." against the parent's overflow-hidden.
+            The URL bar above absorbs the shrinkage instead — it degrades
+            gracefully via truncate, unlike a half-cut-off button label. */}
+        <div className="flex shrink-0 items-center gap-1.5 rounded-full bg-accent px-3.5 py-1 text-2xs font-semibold text-white">
           Publish
           <svg width="9" height="9" fill="none" viewBox="0 0 9 9" aria-hidden>
             <path
@@ -742,43 +747,6 @@ export function Landing() {
       {
         icon: (
           <svg width="18" height="18" fill="none" viewBox="0 0 24 24" aria-hidden>
-            <path
-              d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"
-              stroke="currentColor"
-              strokeWidth="1.75"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        ),
-        title: "Auto Table of Contents",
-        desc: "Documents with three or more headings get a scroll-tracked navigation sidebar on desktop, accordion on mobile.",
-      },
-      {
-        icon: (
-          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" aria-hidden>
-            <path
-              d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"
-              stroke="currentColor"
-              strokeWidth="1.75"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M17 21v-8H7v8M7 3v5h8"
-              stroke="currentColor"
-              strokeWidth="1.75"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        ),
-        title: "Multiple drafts",
-        desc: "Keep all your work organized. Unlimited named drafts, auto-saved to your browser, persistent across sessions.",
-      },
-      {
-        icon: (
-          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" aria-hidden>
             <circle cx="18" cy="5" r="3" stroke="currentColor" strokeWidth="1.75" />
             <circle cx="6" cy="12" r="3" stroke="currentColor" strokeWidth="1.75" />
             <circle cx="18" cy="19" r="3" stroke="currentColor" strokeWidth="1.75" />
@@ -797,44 +765,12 @@ export function Landing() {
       {
         icon: (
           <svg width="18" height="18" fill="none" viewBox="0 0 24 24" aria-hidden>
-            <path d="M4 7V4h16v3" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M9 20h6" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M12 4v16" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M5 12h3M16 12h3" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        ),
-        title: "Formatting toolbar",
-        desc: "Not sure about the syntax? Bold, italic, headings, links, code blocks — one click inserts the right Markdown. Works on your selection.",
-      },
-      {
-        icon: (
-          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" aria-hidden>
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-            <polyline points="7 10 12 15 17 10" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-            <line x1="12" y1="15" x2="12" y2="3" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-          </svg>
-        ),
-        title: "Export from the share page",
-        desc: "Download the original Markdown source, a self-contained HTML file, or print to PDF — right from the published page.",
-      },
-      {
-        icon: (
-          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" aria-hidden>
             <path d="M12 20h9" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
             <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         ),
         title: "Version history",
         desc: "Every publish creates a snapshot. Restore any of the last 10 versions of your page with one click from My Pages.",
-      },
-      {
-        icon: (
-          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" aria-hidden>
-            <path d="M18 20V10M12 20V4M6 20v-6" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        ),
-        title: "Page analytics",
-        desc: "See view counts, read-depth (50% and 100% read), and referrer breakdown for every page you publish.",
       },
       {
         icon: (
@@ -846,28 +782,6 @@ export function Landing() {
         ),
         title: "Password-protected pages",
         desc: "Restrict sensitive pages with a password. Readers enter it once and the page unlocks — the link stays shareable.",
-      },
-      {
-        icon: (
-          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" aria-hidden>
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-            <polyline points="14 2 14 8 20 8" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-            <line x1="9" y1="15" x2="15" y2="15" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-            <line x1="9" y1="11" x2="15" y2="11" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-          </svg>
-        ),
-        title: "9 ready-to-use templates",
-        desc: "Incident reports, postmortems, ADRs, runbooks, release notes, meeting notes, and more. Open, fill in, publish.",
-      },
-      {
-        icon: (
-          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" aria-hidden>
-            <path d="M10 9H5L3 7V3h14v4l-2 2h-5z" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        ),
-        title: "Collections",
-        desc: "Group related pages into named collections. Drag to reorder, share a collection, invite collaborators.",
       },
       {
         icon: (
