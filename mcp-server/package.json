@@ -1,6 +1,7 @@
 {
   "name": "@readable/mcp-server",
   "version": "1.0.0",
+  "description": "MCP server for publishing Markdown to Readable from AI assistants and agents",
   "private": true,
   "scripts": {
     "dev": "tsx src/node-server.ts",

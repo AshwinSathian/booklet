@@ -5,21 +5,13 @@ import Link from "next/link";
 
 function ReadableMark({ size = 28 }: { size?: number }) {
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden
-    >
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
       <rect width="24" height="24" rx="5.5" fill="var(--color-accent)" />
-      <path
-        d="M 6.5 5 L 6.5 19 M 6.5 5 L 13 5 Q 17 5 17 9 Q 17 13 13 13 L 6.5 13 M 11.5 13 L 17 19"
-        stroke="white"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <rect x="8.85" y="6.35" width="1.9" height="11.3" rx="0.95" fill="white" />
+      <rect x="13.25" y="6.35" width="1.9" height="11.3" rx="0.95" fill="white" />
+      <rect x="6.35" y="8.85" width="11.3" height="1.9" rx="0.95" fill="white" />
+      <rect x="6.35" y="13.25" width="11.3" height="1.9" rx="0.95" fill="white" />
+      <rect x="15.55" y="6.7" width="1.75" height="1.7" rx="0.5" fill="white" fillOpacity="0.55" />
     </svg>
   );
 }

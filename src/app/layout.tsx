@@ -40,6 +40,8 @@ export const metadata: Metadata = {
 
   applicationName: APP_NAME,
 
+  manifest: "/manifest.json",
+
   keywords: [
     "markdown viewer",
     "share markdown online",

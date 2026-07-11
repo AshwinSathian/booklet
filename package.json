@@ -1,6 +1,7 @@
 {
   "name": "readable",
   "version": "0.1.0",
+  "description": "Write Markdown, get a beautifully formatted page with one shareable link.",
   "private": true,
   "author": {
     "name": "Ashwin Sathian",

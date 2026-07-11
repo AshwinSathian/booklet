@@ -160,13 +160,22 @@ Section H2:
 
 ## Logo & Mark
 
-### The mark
+### The mark (locked July 2026)
 
-A rounded square in Readable Purple (`#7c5cfc`) containing a clean SVG letterform of the letter **R**:
-- Vertical stem, upper arch, diagonal leg
-- Rendered in `#ffffff` (white)
-- 2.2px stroke weight, round caps and joins
-- Corner radius matches the container's rounded square
+The mark is Markdown's own `#` heading syntax, redrawn as a precise geometric glyph — the one piece of syntax every Readable page starts from. It replaces the earlier generic "R-in-a-square" monogram (a pattern shared by dozens of SaaS logos) with something that can only be Readable.
+
+Construction, on a 24×24 grid:
+- Two vertical + two horizontal bars, each `1.9` wide, rounded ends (`rx 0.95`), forming a symmetric `#`
+- One cell — top-right — carries a small solid accent chip: the "cell that rendered." This is the mark's signature detail and must always be present
+- Corner radius of the container tile matches the container's own rounded-square convention (`rx 5.5` at 24px scale; `rx 112` at 512px app-icon scale)
+
+Two authorised tile treatments:
+| Treatment | Background | Bars | Accent chip | Use |
+|---|---|---|---|---|
+| Purple tile | Readable Purple (`#7c5cfc` dark / `#6741f0` light) | White | White at 55% opacity | In-product nav, header, footer, UI chrome |
+| Black tile | Pure black `#000000` | `#f5f5f7` off-white | Readable Purple `#7c5cfc` | Favicon, app icon, OS home-screen icon, social avatars, OG/Twitter card lockup |
+
+Source of truth: `src/components/ui/AppLogo.tsx` (purple tile, in-app) and `src/app/icon/route.ts` / `src/app/apple-icon/route.ts` (black tile, standalone icon contexts) — keep both in sync if the mark changes again.
 
 ### The wordmark
 
@@ -184,6 +193,7 @@ A rounded square in Readable Purple (`#7c5cfc`) containing a clean SVG letterfor
 
 - Never stretch, squash, recolour, or apply drop shadows to the mark
 - Never place the mark on a coloured background other than pure black, pure white, or the exact Readable Purple
+- Never omit the accent chip in the top-right cell — an unaccented `#` is not the Readable mark
 - Minimum clear space: equal to the mark's border-radius on all four sides
 - Minimum mark size: 16px × 16px (favicon context); 24px × 24px (any visible UI context)
 
