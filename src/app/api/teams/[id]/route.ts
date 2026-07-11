@@ -1,5 +1,7 @@
-import { deleteCollectionRecord, getCollectionRecord, updateCollectionRecord } from "@/lib/db";
+import { deleteCollectionRecord, updateCollectionRecord } from "@/lib/db";
 import { getSession } from "@/lib/auth/session";
+import { getOwnedTeamSpace } from "@/server/collections";
+import { toErrorResponse } from "@/server/errors";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -12,9 +14,11 @@ export async function PATCH(
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const team = await getCollectionRecord(id);
-  if (!team || !team.is_team_space) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if (team.user_id !== userId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  try {
+    await getOwnedTeamSpace(id, userId);
+  } catch (e) {
+    return toErrorResponse(e);
+  }
 
   let body: { name?: string };
   try {
@@ -39,9 +43,11 @@ export async function DELETE(
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const team = await getCollectionRecord(id);
-  if (!team || !team.is_team_space) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if (team.user_id !== userId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  try {
+    await getOwnedTeamSpace(id, userId);
+  } catch (e) {
+    return toErrorResponse(e);
+  }
 
   await deleteCollectionRecord(id, userId);
 

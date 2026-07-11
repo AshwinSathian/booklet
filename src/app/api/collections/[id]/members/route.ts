@@ -1,12 +1,13 @@
 import {
   addCollectionMember,
   getCollectionMembers,
-  getCollectionRecord,
   getUserByEmail,
   removeCollectionMember,
 } from "@/lib/db";
 import { createId } from "@/lib/id";
 import { getSession } from "@/lib/auth/session";
+import { getOwnedCollection } from "@/server/collections";
+import { toErrorResponse } from "@/server/errors";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -20,9 +21,11 @@ export async function GET(
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const collection = await getCollectionRecord(id);
-  if (!collection) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if (collection.user_id !== userId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  try {
+    await getOwnedCollection(id, userId);
+  } catch (e) {
+    return toErrorResponse(e);
+  }
 
   const members = await getCollectionMembers(id);
   return NextResponse.json({ members });
@@ -37,9 +40,12 @@ export async function POST(
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const collection = await getCollectionRecord(id);
-  if (!collection) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if (collection.user_id !== userId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  let collection;
+  try {
+    collection = await getOwnedCollection(id, userId);
+  } catch (e) {
+    return toErrorResponse(e);
+  }
   if (!collection.is_team_space) return NextResponse.json({ error: "Not a team space" }, { status: 400 });
 
   let body: { email?: string; role?: string };
@@ -75,9 +81,11 @@ export async function DELETE(
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const collection = await getCollectionRecord(id);
-  if (!collection) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if (collection.user_id !== userId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  try {
+    await getOwnedCollection(id, userId);
+  } catch (e) {
+    return toErrorResponse(e);
+  }
 
   let body: { user_id?: string };
   try {

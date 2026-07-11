@@ -1,9 +1,7 @@
-import {
-  deleteCollectionRecord,
-  getCollectionRecord,
-  updateCollectionRecord,
-} from "@/lib/db";
+import { deleteCollectionRecord, updateCollectionRecord } from "@/lib/db";
 import { getSession } from "@/lib/auth/session";
+import { getOwnedCollection } from "@/server/collections";
+import { toErrorResponse } from "@/server/errors";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -20,9 +18,12 @@ export async function PATCH(
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const collection = await getCollectionRecord(id);
-  if (!collection) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if (collection.user_id !== userId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  let collection;
+  try {
+    collection = await getOwnedCollection(id, userId);
+  } catch (e) {
+    return toErrorResponse(e);
+  }
 
   let body: { name?: unknown };
   try {
@@ -58,9 +59,11 @@ export async function DELETE(
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const collection = await getCollectionRecord(id);
-  if (!collection) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  if (collection.user_id !== userId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  try {
+    await getOwnedCollection(id, userId);
+  } catch (e) {
+    return toErrorResponse(e);
+  }
 
   await deleteCollectionRecord(id, userId);
   return new NextResponse(null, { status: 204 });
