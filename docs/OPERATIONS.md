@@ -1,7 +1,109 @@
 # Operations notes
 
 Punch-list style, not a full runbook. Written 2026-07 as part of closing out
-`AUDIT_REMEDIATION_PLAN.md`'s P1 items.
+`AUDIT_REMEDIATION_PLAN.md`'s P1 items. Updated 2026-07 with the in-house
+auth migration (see `PLAN-backend-auth-migration.md` for the full design).
+
+## Auth: in-house (Clerk removed)
+
+**Current state:** Email + password, no third-party identity provider.
+Passwords are hashed with `argon2id` (`src/lib/auth/password.ts`). Sessions
+are opaque, DB-backed tokens (`sessions` collection, TTL-indexed, 30-day
+sliding window), hashed with an HMAC pepper before storage — the same
+generate-raw/hash-with-pepper/store-hash-only pattern already used for API
+keys (`src/lib/api-key.ts`) — and delivered via an httpOnly/Secure/
+SameSite=Lax cookie (`readable_session`). See `src/lib/auth/session.ts`.
+
+**Required env vars** (fail closed if unset, no fallback — see
+`.env.example` for generation commands): `SESSION_TOKEN_PEPPER`,
+`CLAIM_TOKEN_SECRET`. `ADMIN_USER_IDS` is unchanged in meaning (still a
+comma-separated list of user IDs) but no longer refers to Clerk IDs for new
+signups — see the migration note below for why existing admin IDs don't
+need to change.
+
+**Admin gating is split across two layers**, not one: `src/middleware.ts`
+does a cheap, Edge-safe IP allowlist check (`ADMIN_IPS`) only; the
+authoritative session + `ADMIN_USER_IDS` check lives in
+`src/app/admin/layout.tsx`, which needs Node.js runtime for the Mongo-backed
+session lookup. Both must pass. `/my-pages`'s cookie-presence redirect in
+middleware is similarly non-authoritative — the real check is
+`getSession()` inside each page/route.
+
+**No email delivery.** Password reset and email verification are
+out of scope for this iteration (see PLAN-backend-auth-migration.md's
+"Follow-up Work"). Account recovery for users migrated off Clerk uses the
+same signed-link-shared-manually pattern as team invites — see the
+migration runbook below.
+
+## Production cutover runbook (Clerk → in-house auth)
+
+This only needs to run once, at the point `main` is deployed with Clerk
+removed. It is **not idempotent-and-forgettable** — re-running after users
+have started claiming accounts is safe (see the script's own idempotency
+guarantees), but the *cutover* itself (deploying Clerk-free code to
+production) is a one-way door once real users hit it.
+
+1. **Back up MongoDB first.** This deployment has no automated backup
+   pipeline (see the single-machine-deployment section below) — take a
+   manual `mongodump` of the `readable` database before touching anything.
+2. **Rehearse against a restored copy**, not production directly: restore
+   the backup to a scratch local `mongod` (or a second database name),
+   point `MONGODB_URI` at it, and run `node scripts/migrate-clerk-users.mjs`
+   with `CLERK_SECRET_KEY` (still valid at this point) and
+   `CLAIM_TOKEN_SECRET` set. Confirm the printed summary line's counts match
+   expectations and spot-check a few generated `/claim?token=...` links
+   resolve correctly against a locally-running app pointed at that same
+   scratch database.
+3. **Deploy the Clerk-free build** via the normal `scripts/redeploy.sh`
+   path (pre-push hook, or run it directly) — this already has
+   backup-before-build + health-check + auto-rollback-on-failure built in
+   for the *application* layer. Add the new required env vars
+   (`SESSION_TOKEN_PEPPER`, `CLAIM_TOKEN_SECRET`) to
+   `.env.production.local` before this step, or every session-dependent
+   request fails closed immediately after deploy.
+4. **Run the real migration**: `node scripts/migrate-clerk-users.mjs`
+   against the real `MONGODB_URI`, with `CLERK_SECRET_KEY` still set (it's
+   only needed for this one script, not the app itself — safe to remove
+   from `.env.production.local` once every user has claimed). It prints one
+   `email\t/claim?token=...` line per user needing to set a password;
+   nothing here sends email — share these links with the affected users
+   through whatever channel you'd already use to reach them.
+5. **Verify**: sign up a fresh test account, sign in, publish, and confirm
+   `/admin` is still reachable with the existing `ADMIN_USER_IDS` value —
+   Clerk user IDs are preserved as-is as the new local user IDs (see
+   PLAN-backend-auth-migration.md's Key Decisions), so no admin
+   reconfiguration should be needed.
+6. **Revoke `CLERK_SECRET_KEY`** (delete the Clerk application, or just
+   rotate/revoke the key) once step 4's migration has run and you don't
+   expect to re-run it. Nothing in the running app reads it — only the
+   one-time migration script does.
+
+**Rollback**: if the Clerk-free deploy needs to be reverted, `git revert`
+back to the last Clerk-based commit and redeploy — the `users` collection
+gained new fields (`password_hash`, `display_name`) and a new `sessions`
+collection, but nothing about the rollback removes or corrupts pre-existing
+Clerk-era data (the migration script only ever adds/backfills, never
+deletes). Note this only reverts the *application*; anyone who already
+claimed a password-based account keeps that password_hash — reverting to
+Clerk doesn't retroactively invalidate it, so treat a rollback as a
+one-way decision too, not a clean undo.
+
+## npm workspaces + the shared API client
+
+The repo is an npm workspace (`mcp-server`, `packages/*`) — one root
+`package.json`/lockfile covers every package; there's no more
+`packages/*/package-lock.json`. `packages/shared` (published to npm as
+`readable-api-client`) is the single source of truth for the `/api/v1/*`
+request/response contract (zod schemas + a thin typed fetch client) —
+`mcp-server`, `packages/cli`, `packages/github-action`, and
+`packages/vscode` all depend on it instead of hand-rolling their own fetch
+calls. Three of those four (`cli`, `github-action`, `vscode`) bundle it at
+build time via `tsup` (`noExternal`) into a single self-contained output
+file, since none of them get a real `npm install` step wherever they
+actually run (a published npm package, a GitHub Actions runner with no
+install step, a VS Code Extension Host). `mcp-server` resolves it normally
+via `node_modules` since it runs as a regular long-lived Node process under
+PM2. See `PLAN-backend-auth-migration.md` Phase 3 for the full design.
 
 ## Error tracking / structured logging
 

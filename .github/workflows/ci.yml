@@ -61,14 +61,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        package: [mcp-server, packages/cli, packages/vscode, packages/github-action]
+        package: [mcp-server, packages/shared, packages/cli, packages/vscode, packages/github-action]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-      - run: npm ci --prefix ${{ matrix.package }} --prefer-offline
-      - run: npm run typecheck --prefix ${{ matrix.package }}
+      # npm workspaces (see PLAN-backend-auth-migration.md) — one root
+      # lockfile/install covers every package; no more per-package
+      # package-lock.json to `npm ci --prefix` against.
+      - run: npm ci --prefer-offline
+      - run: npm run typecheck --workspace ${{ matrix.package }}
 
   build:
     name: Build
@@ -98,6 +101,29 @@ jobs:
           # src/lib/api-key.ts, etc.) — none of it is touched during
           # `next build`/generateStaticParams, so none of it is needed here.
           NEXT_PUBLIC_SITE_URL: http://localhost:3100
+
+  github-action-dist-check:
+    name: GitHub Action dist/ is up to date
+    runs-on: ubuntu-latest
+    # packages/github-action ships dist/main.js directly (runs.main in
+    # action.yml — GitHub's node20 runner executes it with no install/build
+    # step). It was previously never committed at all, so the action never
+    # actually worked (see the fix that added this guard) — this job fails
+    # CI if src/ changes without a matching dist/ rebuild, instead of
+    # silently shipping a stale or broken action a second time.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - run: npm ci --prefer-offline
+      - run: npm run build --workspace packages/github-action
+      - run: |
+          if ! git diff --quiet -- packages/github-action/dist; then
+            echo "::error::packages/github-action/dist/ is out of date. Run 'npm run build --workspace packages/github-action' and commit the result." >&2
+            git diff --stat -- packages/github-action/dist
+            exit 1
+          fi
 
   unit-tests:
     name: Unit tests (real MongoDB)
