@@ -415,13 +415,13 @@ test.describe("Security: MathDisplay XSS regression", () => {
 // here — the previous suite could only assert the sign-in/sign-up pages
 // rendered, never a real credentialed round trip.
 //
-// Note: the session cookie is Secure-flagged when NODE_ENV=production (see
-// src/lib/auth/session.ts). In real deployments the browser-facing
-// connection is always HTTPS (via the Cloudflare Tunnel), so this is
-// correct; if TEST_BASE_URL points at a plain-HTTP origin (e.g. a bare
-// `npm start` with no TLS in front), the browser will silently drop the
-// cookie and this suite will fail at the /my-pages assertions — point
-// TEST_BASE_URL at an HTTPS-fronted target to exercise this suite.
+// The session cookie's Secure flag is derived from the x-forwarded-proto
+// header (see src/lib/auth/session.ts's isSecureRequest), not NODE_ENV —
+// `next start` forces NODE_ENV=production internally regardless of what's
+// actually in front of it, which previously made this suite fail against a
+// plain-HTTP target (e.g. CI's e2e-manual job, bare `next start` with no
+// Cloudflare Tunnel in front) even though the app itself was healthy: the
+// browser silently drops a Secure cookie set over HTTP.
 // ---------------------------------------------------------------------------
 
 test.describe("Auth — signup, session-gated access, logout, login", () => {

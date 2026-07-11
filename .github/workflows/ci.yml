@@ -166,19 +166,31 @@ jobs:
   # ── Full Playwright e2e suite — NOT part of the required PR gate ────────────
   # tests/e2e/happy-paths.spec.ts and tests/e2e/unit/safe-redirect.spec.ts
   # drive a live `next start` instance through real sign-in/sign-up flows
-  # (in-house auth — see PLAN-backend-auth-migration.md) and expect a
-  # real-ish MongoDB with production-like data. To enable this job for real:
-  #   1. Add repo secrets: MONGODB_URI (pointed at a throwaway instance, or
-  #      extend the mongo:7 service container approach from unit-tests),
-  #      INVITE_JWT_SECRET, UNLOCK_TOKEN_SECRET, API_KEY_PEPPER,
-  #      SESSION_TOKEN_PEPPER, CLAIM_TOKEN_SECRET (openssl rand values, see
-  #      .env.example for generation commands).
-  #   2. Change `if:` below from `workflow_dispatch` to `pull_request`/`push`
-  #      once (1) is in place, and add it as a required check.
+  # (in-house auth — see PLAN-backend-auth-migration.md). Deliberately still
+  # workflow_dispatch-only (not a required PR gate) — full browser e2e on
+  # every push is a real time/flake-risk tradeoff a solo maintainer may not
+  # want, so that stays an explicit choice rather than something this fix
+  # silently opts into. To make it a required check: change `if:` below to
+  # `pull_request`/`push`.
+  #
+  # The crypto secrets (INVITE_JWT_SECRET etc.) are dedicated CI-only values,
+  # unrelated to and not reused from production's — this job's MongoDB is a
+  # throwaway per-run service container (same pattern as unit-tests), so
+  # there is no real data at stake here regardless.
   e2e-manual:
     name: E2E (manual — needs Mongo + secret env vars)
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand({ ping: 1 })' --quiet"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 6
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -193,7 +205,7 @@ jobs:
       - run: npm start &
         env:
           PORT: "3100"
-          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          MONGODB_URI: "mongodb://localhost:27017/readable?retryWrites=true&w=majority"
           INVITE_JWT_SECRET: ${{ secrets.INVITE_JWT_SECRET }}
           UNLOCK_TOKEN_SECRET: ${{ secrets.UNLOCK_TOKEN_SECRET }}
           API_KEY_PEPPER: ${{ secrets.API_KEY_PEPPER }}

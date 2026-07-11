@@ -9,7 +9,7 @@
  * Server Components). `getSession` is read-only and safe anywhere.
  */
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import {
   createSessionRecord,
   deleteAllUserSessions,
@@ -27,6 +27,23 @@ const REFRESH_THRESHOLD_MS = SESSION_TTL_MS / 2; // slide forward once past the 
 
 export type SessionUser = { userId: string };
 
+/**
+ * Whether to mark the session cookie Secure. `next start` forces
+ * NODE_ENV=production internally regardless of the parent shell, so that
+ * alone can't distinguish "genuinely served over HTTPS" (real production,
+ * behind the Cloudflare Tunnel, which always sets x-forwarded-proto) from
+ * "production build served directly over plain HTTP" (e.g. a CI job
+ * smoke-testing `next start` with no proxy in front). Trusting
+ * x-forwarded-proto's presence — rather than NODE_ENV — gets both cases
+ * right for this app's single real deployment topology (always behind that
+ * tunnel); an operator who runs `next start` exposed directly with no
+ * reverse proxy at all is not a topology this app supports today (see
+ * docs/OPERATIONS.md).
+ */
+async function isSecureRequest(): Promise<boolean> {
+  return (await headers()).get("x-forwarded-proto") === "https";
+}
+
 export async function createSession(userId: string): Promise<void> {
   const raw = generateSessionToken();
   const tokenHash = await hashSessionToken(raw);
@@ -35,7 +52,7 @@ export async function createSession(userId: string): Promise<void> {
 
   (await cookies()).set(SESSION_COOKIE_NAME, raw, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: await isSecureRequest(),
     sameSite: "lax",
     path: "/",
     maxAge: SESSION_TTL_MS / 1000,
