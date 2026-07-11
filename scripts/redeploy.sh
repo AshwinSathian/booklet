@@ -51,12 +51,10 @@ if [[ -f "$REPO/scripts/pm2-startup.sh" ]]; then
 fi
 
 echo ""
-log "── Installing root dependencies ──────────────────────"
+log "── Installing dependencies (npm workspaces — one install covers"
+log "   the root app and mcp-server/packages/*, see"
+log "   PLAN-backend-auth-migration.md) ────────────────────"
 run "npm ci --prefer-offline"
-
-echo ""
-log "── Installing MCP server dependencies ────────────────"
-run "npm ci --prefix mcp-server --prefer-offline"
 
 echo ""
 log "── Backing up previous build output ──────────────────"

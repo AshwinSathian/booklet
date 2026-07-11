@@ -182,11 +182,9 @@ fi
 section "npm dependencies"
 # ─────────────────────────────────────────────────────────────────────────────
 
-info "Installing root dependencies…"
+info "Installing dependencies (npm workspaces — one install covers the root"
+info "app and mcp-server/packages/*, see PLAN-backend-auth-migration.md)…"
 npm ci --prefer-offline 2>&1 | tail -3
-
-info "Installing mcp-server dependencies…"
-npm ci --prefix mcp-server --prefer-offline 2>&1 | tail -3
 
 ok "Dependencies installed"
 
