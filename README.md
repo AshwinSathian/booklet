@@ -65,23 +65,25 @@ All endpoints are under `/api/v1/` and authenticated with `Authorization: Bearer
 **Publish example:**
 
 ```bash
-curl -X POST https://readable.ashwinsathian.com/api/v1/publish \
+curl -X POST https://readable-api.ashwinsathian.com/api/v1/publish \
   -H "Authorization: Bearer rdbl_..." \
   -H "Content-Type: application/json" \
   -d '{"raw": "# Hello\n\nThis is my page."}'
 ```
 
+`readable-api.ashwinsathian.com` is a dedicated hostname for the API surface (same app/process as the main site, just scoped — see `docs/OPERATIONS.md`). `readable.ashwinsathian.com` serves `/api/v1/*` too, so either works.
+
 ---
 
 ## MCP Server
 
-The MCP server is a Cloudflare Worker that exposes Readable's API to AI assistants supporting the [Model Context Protocol](https://modelcontextprotocol.io).
+A plain Node process (`mcp-server/`) that exposes Readable's API to AI assistants supporting the [Model Context Protocol](https://modelcontextprotocol.io), run under PM2 alongside the main app — not a Cloudflare Worker (that was the original design, changed when the rest of the app moved off Cloudflare Workers; see `docs/OPERATIONS.md`).
 
 **Endpoint:** `https://readable-mcp.ashwinsathian.com`  
 **Tools:** `publish_page`, `update_page`, `list_pages`, `delete_page`
 
 ```bash
-cd mcp-server && npm run deploy
+cd mcp-server && npm run dev
 ```
 
 ---
@@ -164,16 +166,17 @@ src/
     blocks.ts       # Block/Inline type definitions
     parse.ts        # Markdown → Block[] (unified pipeline)
     db/             # MongoDB helpers
-    storage.ts      # Cloudflare KV wrappers
+    storage.ts      # Document content storage (MongoDB)
     quota.ts        # Feature flags
     frontmatter.ts  # YAML frontmatter parser (js-yaml)
-packages/
+packages/           # npm workspaces — one root lockfile covers all of these
+  shared/           # readable-api-client: shared /api/v1 schemas + client
   cli/              # readable-cli npm package
   github-action/    # GitHub Action: publish Markdown in CI
   vscode/           # VS Code extension: publish from editor
-mcp-server/         # Cloudflare Worker MCP server
+mcp-server/         # MCP server (plain Node process, run under PM2)
 .github/
-  workflows/        # publish-cli.yml — auto-publish CLI to npm
+  workflows/        # ci.yml, publish-cli.yml, publish-shared.yml
   examples/         # publish-to-readable.yml — use in your own repo
 ```
 

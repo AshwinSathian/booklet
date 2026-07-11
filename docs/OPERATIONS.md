@@ -35,25 +35,33 @@ out of scope for this iteration (see PLAN-backend-auth-migration.md's
 same signed-link-shared-manually pattern as team invites — see the
 migration runbook below.
 
-## Production cutover runbook (Clerk → in-house auth)
+## Production cutover — DONE (2026-07-11)
 
-This only needs to run once, at the point `main` is deployed with Clerk
-removed. It is **not idempotent-and-forgettable** — re-running after users
-have started claiming accounts is safe (see the script's own idempotency
-guarantees), but the *cutover* itself (deploying Clerk-free code to
-production) is a one-way door once real users hit it.
+The Clerk → in-house auth cutover described below has been executed
+against real production. Kept as a runbook (not rewritten into past tense)
+because the same sequence applies to any *future* from-scratch server
+setup or disaster recovery restore — this is what `scripts/setup-server.sh`
+and a from-backup restore both still need to follow.
+
+**What actually happened**, for the record: at cutover time production had
+**zero real Clerk users** (confirmed via the Clerk API,
+`GET https://api.clerk.com/v1/users/count`) — 91 real anonymous published
+pages existed (no accounts), so `scripts/migrate-clerk-users.mjs` ran as a
+genuine no-op. `CLERK_SECRET_KEY` has been removed from
+`.env.production.local`; the Clerk application itself can be deleted in the
+Clerk dashboard whenever convenient (not required — nothing depends on it).
 
 1. **Back up MongoDB first.** This deployment has no automated backup
    pipeline (see the single-machine-deployment section below) — take a
    manual `mongodump` of the `readable` database before touching anything.
-2. **Rehearse against a restored copy**, not production directly: restore
-   the backup to a scratch local `mongod` (or a second database name),
-   point `MONGODB_URI` at it, and run `node scripts/migrate-clerk-users.mjs`
-   with `CLERK_SECRET_KEY` (still valid at this point) and
-   `CLAIM_TOKEN_SECRET` set. Confirm the printed summary line's counts match
-   expectations and spot-check a few generated `/claim?token=...` links
-   resolve correctly against a locally-running app pointed at that same
-   scratch database.
+2. **Rehearse against a restored copy**, not production directly, if the
+   real user count is non-zero: restore the backup to a scratch local
+   `mongod` (or a second database name), point `MONGODB_URI` at it, and run
+   `node scripts/migrate-clerk-users.mjs` with `CLERK_SECRET_KEY` (still
+   valid at this point) and `CLAIM_TOKEN_SECRET` set. Confirm the printed
+   summary line's counts match expectations and spot-check a few generated
+   `/claim?token=...` links resolve correctly against a locally-running app
+   pointed at that same scratch database.
 3. **Deploy the Clerk-free build** via the normal `scripts/redeploy.sh`
    path (pre-push hook, or run it directly) — this already has
    backup-before-build + health-check + auto-rollback-on-failure built in
@@ -72,7 +80,9 @@ production) is a one-way door once real users hit it.
    `/admin` is still reachable with the existing `ADMIN_USER_IDS` value —
    Clerk user IDs are preserved as-is as the new local user IDs (see
    PLAN-backend-auth-migration.md's Key Decisions), so no admin
-   reconfiguration should be needed.
+   reconfiguration should be needed. `scripts/production-verify/` has a
+   scoped, self-cleaning Playwright suite for exactly this — see its own
+   section below.
 6. **Revoke `CLERK_SECRET_KEY`** (delete the Clerk application, or just
    rotate/revoke the key) once step 4's migration has run and you don't
    expect to re-run it. Nothing in the running app reads it — only the
@@ -87,6 +97,77 @@ deletes). Note this only reverts the *application*; anyone who already
 claimed a password-based account keeps that password_hash — reverting to
 Clerk doesn't retroactively invalidate it, so treat a rollback as a
 one-way decision too, not a clean undo.
+
+**Incidents found and fixed during this cutover** (all in
+`PLAN-backend-auth-migration.md`'s commit range, all verified against live
+production afterward):
+- `ecosystem.config.js` hardcoded `mcp-server/node_modules/.bin/tsx`, which
+  npm workspace hoisting had moved to the repo root — `readable-mcp` was
+  silently crash-looping (`Script not found`) from the moment this
+  session's workspaces conversion ran `npm install`. Fixed by resolving
+  `tsx` via `npx` instead of a hardcoded path.
+- `scripts/redeploy.sh` and `scripts/setup-server.sh` both still ran
+  `npm ci --prefix mcp-server`, which requires a lockfile workspaces
+  deleted — every real deploy from that point would have failed at that
+  step. Removed; the root `npm ci` already covers it.
+- `cloudflared tunnel route dns <NAME> <hostname>` routed
+  `readable-api.ashwinsathian.com` to the *wrong* tunnel on the first
+  attempt (a different project's tunnel happened to share a name-resolution
+  quirk) — `scripts/setup-server.sh`'s own header comment already warned
+  about this exact pitfall and uses UUIDs for this reason; the live
+  troubleshooting session didn't, hit it, and fixed it with
+  `-f <TUNNEL_UUID>` instead.
+- Every `/api/v1/*` route (and the outbound webhook payload) built its
+  `url`/`page_url` from the request's own origin — correct only when called
+  directly from a browser/external client, and *wrong* whenever a request
+  arrives over an internal hop, which is exactly what the MCP server does
+  (`READABLE_API_BASE=http://localhost:3100`, loopback, no tunnel round
+  trip). A page published through the MCP server got back
+  `"url": "http://localhost:3100/p/..."`. Fixed centrally in
+  `src/lib/site-url.ts`'s `getSiteOrigin()`. `/api/publish` (the browser
+  route) already had a narrower version of this fix from an earlier
+  incident — see the "Publish URL bug fix" note this doc's sibling files
+  reference — but it was never extended to `/api/v1/*`, and was itself
+  inconsistently applied (the webhook payload didn't use it even there).
+
+## readable-api.ashwinsathian.com
+
+Dedicated hostname for external API consumers (CLI, GitHub Action, VS Code
+extension, MCP server), added alongside the cutover. It is **not** a
+separate backend service or process — same `readable-app` PM2 app, same
+port 3100, routed through the same Cloudflare Tunnel
+(`~/.cloudflared/readable-config.yml`) under a second hostname.
+`src/middleware.ts` enforces the separation: requests with
+`Host: readable-api.ashwinsathian.com` get a 404 for anything outside
+`/api/*`. `readable.ashwinsathian.com` is unchanged and still serves both
+the UI and `/api/*` (the web app's own client-side code calls same-origin
+`/api/*` routes, and `readable login`'s browser flow needs a UI page on
+whatever base the CLI uses — see `packages/cli/src/config.ts`'s comment for
+why the CLI deliberately keeps the main hostname as its default while
+GitHub Action/VS Code, which never load a web page, default to the API
+hostname). `scripts/health-check.sh` checks both that the hostname routes
+correctly *and* that it actually rejects a non-API path, not just that DNS
+resolves.
+
+## Manual production verification
+
+`scripts/production-verify/prod-smoke.spec.ts` is a scoped, self-cleaning
+Playwright suite for verifying a live deployment end-to-end — signup,
+editor publish, my-pages, logout/login, CSRF rejection, admin gating, the
+full v1 API surface via `readable-api.ashwinsathian.com`, and the
+migrated-user claim flow. Deliberately kept outside `tests/e2e/` (it has
+its own `playwright.config.ts`) so it's never picked up by the normal
+dev/CI test run — every account/page it creates is tagged
+`e2e-verify-<timestamp>` and deleted in `afterAll`, scoped precisely to
+what that run created. Run it after any production deploy:
+
+```bash
+TEST_BASE_URL=https://readable.ashwinsathian.com \
+TEST_API_BASE_URL=https://readable-api.ashwinsathian.com \
+MONGODB_URI="mongodb://127.0.0.1:27017/readable?directConnection=true" \
+CLAIM_TOKEN_SECRET=<same value as .env.production.local> \
+npx playwright test --config=scripts/production-verify/playwright.config.ts
+```
 
 ## npm workspaces + the shared API client
 
