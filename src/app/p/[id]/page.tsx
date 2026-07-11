@@ -10,6 +10,7 @@ import { getDoc } from "@/lib/storage";
 import { readingTimeMinutes } from "@/lib/reading-time";
 import { buildToc, MIN_TOC_HEADINGS } from "@/lib/toc";
 import { verifyUnlockToken } from "@/lib/unlock-token";
+import { getTheme, themeScopeClass, themeStyleTagContent } from "@/lib/themes";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { cookies, headers } from "next/headers";
@@ -164,9 +165,14 @@ export default async function SharePage({
 
   const pageUrl = absoluteUrl(`/p/${pageRecord?.slug ?? resolvedId}`);
   const isPublic = pageRecord?.visibility === "public";
+  const theme = getTheme(doc.settings?.theme);
 
   return (
-    <div className="min-h-screen bg-bg text-text-primary">
+    <div className={`min-h-screen bg-bg text-text-primary ${themeScopeClass(theme)}`}>
+      {/* Theme token overrides — theme is always resolved via getTheme(), a
+          fixed developer-authored lookup; theme.id can never come directly
+          from stored/request input, so this is safe to render verbatim. */}
+      <style dangerouslySetInnerHTML={{ __html: themeStyleTagContent(theme) }} />
       <ReadingProgress />
       <AnalyticsBeacon pageId={resolvedId} />
       {isPublic && <ScrollCta href={ROUTES.app} />}

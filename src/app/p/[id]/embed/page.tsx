@@ -5,6 +5,7 @@ import { buildLockedPageMetadata } from "@/lib/locked-page-metadata";
 import { getDoc } from "@/lib/storage";
 import { getPageBySlug, getPageRecord } from "@/lib/db";
 import { verifyUnlockToken } from "@/lib/unlock-token";
+import { getTheme, themeScopeClass, themeStyleTagContent } from "@/lib/themes";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { cookies } from "next/headers";
@@ -124,9 +125,11 @@ export default async function EmbedPage({
   }
 
   const maxW = doc.settings?.width === "wide" ? "max-w-4xl" : "max-w-3xl";
+  const theme = getTheme(doc.settings?.theme);
 
   return (
-    <div className="bg-bg text-text-primary min-h-screen">
+    <div className={`bg-bg text-text-primary min-h-screen ${themeScopeClass(theme)}`}>
+      <style dangerouslySetInnerHTML={{ __html: themeStyleTagContent(theme) }} />
       <main className={`mx-auto w-full px-5 py-8 ${maxW}`}>
         <BlockRenderer
           blocks={doc.blocks}

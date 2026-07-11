@@ -14,6 +14,7 @@ import {
 } from "@/lib/drafts";
 import { copyTextToClipboard, markdownToHtml } from "@/lib/export";
 import { TEMPLATES, type Template } from "@/lib/templates";
+import { DEFAULT_THEME_ID, THEMES } from "@/lib/themes";
 import { formatRelativeTimeFromIso, formatUpdatedAtLong } from "@/lib/ui/time";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -571,6 +572,35 @@ function SettingsPanel({
             ]}
             onChange={(v) => onSettingsChange({ ...settings, typeface: v })}
           />
+        </div>
+
+        <div>
+          <div className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-text-muted">
+            Theme
+          </div>
+          <div className="flex items-center gap-2">
+            {THEMES.map((t) => {
+              const isSelected = (settings.theme ?? DEFAULT_THEME_ID) === t.id;
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => onSettingsChange({ ...settings, theme: t.id })}
+                  title={t.name}
+                  aria-label={`${t.name} theme${isSelected ? " (selected)" : ""}`}
+                  aria-pressed={isSelected}
+                  className={[
+                    "h-7 w-7 shrink-0 rounded-full transition",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg-elevated",
+                    isSelected
+                      ? "ring-2 ring-offset-2 ring-accent ring-offset-bg-elevated"
+                      : "ring-1 ring-outline hover:ring-border-strong",
+                  ].join(" ")}
+                  style={{ background: t.swatch }}
+                />
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>

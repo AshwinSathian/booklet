@@ -46,6 +46,11 @@ export type DocSettings = {
   // current default), not as "sans", so old docs pick up the new reading
   // typography rather than silently opting out of it.
   typeface?: "sans" | "serif";
+  // Curated CSS theme id for published-page presentation (src/lib/themes.ts)
+  // — a fixed, developer-authored set of CSS custom-property overrides, not
+  // arbitrary user CSS. Missing/unknown/tampered values always resolve to
+  // the default theme via getTheme(), never indexed directly.
+  theme?: string;
 };
 
 export type PublishedDoc = {
