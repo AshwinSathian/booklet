@@ -21,6 +21,12 @@ export const ERRORS = {
   DOCUMENT_TOO_LARGE: () => mcpError(-32005, "Document exceeds 350 KB limit"),
   UPSTREAM: (status: number) =>
     mcpError(-32006, `Readable API returned an unexpected error (HTTP ${status})`),
+  // For client-error statuses the REST API already returns a specific,
+  // human-readable `{ error: string }` body (invalid/colliding slug, bad
+  // visibility value, etc.) — surface that verbatim instead of a generic
+  // "HTTP 422" so an MCP client (Claude, Cursor, etc.) can actually act on
+  // it, e.g. by trying a different slug.
+  VALIDATION: (message: string) => mcpError(-32007, message),
 };
 
 export class McpValidationError extends Error {

@@ -25,7 +25,7 @@ export const TOOL_DEFINITIONS = [
         slug: {
           type: "string",
           description:
-            "Custom URL slug (e.g. \"my-release-notes\"). 1–60 lowercase letters, numbers, or hyphens. Results in a URL like /p/my-release-notes.",
+            "Custom URL slug (e.g. \"my-release-notes\"). 3-60 lowercase letters, numbers, or hyphens (no leading/trailing/consecutive hyphens). Results in a URL like /p/my-release-notes.",
         },
         visibility: {
           type: "string",
@@ -125,7 +125,15 @@ export const TOOL_DEFINITIONS = [
 // Input validation
 // ─────────────────────────────────────────────────────────────────────────────
 
-const SLUG_PATTERN = /^[a-z0-9][a-z0-9-]{0,58}[a-z0-9]$|^[a-z0-9]{1,2}$/;
+// Mirrors src/lib/slug.ts's canonical rule in the main app (3-60 chars,
+// no leading/trailing/consecutive hyphens) — this package is a standalone
+// npm workspace with no shared build step with the main app, so the rule
+// is duplicated here rather than imported. Keep in sync if that file
+// changes: the two previously drifted (this used to allow 1-2 char slugs,
+// which the REST API's v1/publish and v1/pages routes now reject with a
+// 422 after the slug-validation unification), causing a wasted round trip
+// for anything shorter than 3 characters.
+const SLUG_PATTERN = /^[a-z0-9][a-z0-9-]{1,58}[a-z0-9]$|^[a-z0-9]{3,60}$/;
 function isValidSlug(s: string): boolean {
   return SLUG_PATTERN.test(s) && !s.includes("--");
 }
@@ -147,7 +155,7 @@ function validatePublishArgs(args: unknown): { raw: string; title?: string; slug
   if (a["slug"] !== undefined) {
     if (typeof a["slug"] !== "string") throw new McpValidationError("`slug` must be a string");
     if (!isValidSlug(a["slug"])) {
-      throw new McpValidationError("`slug` must be 1–60 lowercase letters, numbers, or hyphens (no leading/trailing/double hyphens)");
+      throw new McpValidationError("`slug` must be 3-60 lowercase letters, numbers, or hyphens (no leading/trailing/consecutive hyphens)");
     }
   }
   if (a["visibility"] !== undefined && a["visibility"] !== "public" && a["visibility"] !== "unlisted") {
@@ -180,7 +188,7 @@ function validateUpdateArgs(args: unknown): { id: string; raw?: string; slug?: s
   if (a["slug"] !== undefined && a["slug"] !== null) {
     if (typeof a["slug"] !== "string") throw new McpValidationError("`slug` must be a string or null");
     if (!isValidSlug(a["slug"])) {
-      throw new McpValidationError("`slug` must be 1–60 lowercase letters, numbers, or hyphens");
+      throw new McpValidationError("`slug` must be 3-60 lowercase letters, numbers, or hyphens (no leading/trailing/consecutive hyphens)");
     }
   }
   if (a["visibility"] !== undefined && a["visibility"] !== "public" && a["visibility"] !== "unlisted") {
@@ -292,12 +300,26 @@ async function callReadableApi(
   return { ok: res.ok, status: res.status, data };
 }
 
-function mapUpstreamError(status: number): McpErrorShape {
+/**
+ * `data` is the parsed JSON body from callReadableApi — for 400/409/422 the
+ * REST API already returns a specific `{ error: string }` message (e.g.
+ * "Invalid slug. Use 3-60 lowercase letters..." or "Slug is already
+ * taken."); surface that verbatim rather than falling through to the
+ * generic "HTTP <status>" message, which was the only option before this
+ * fix and left validation failures unhelpfully vague for MCP clients.
+ */
+function mapUpstreamError(status: number, data?: unknown): McpErrorShape {
   if (status === 401) return ERRORS.UNAUTHORIZED();
   if (status === 403) return ERRORS.FORBIDDEN();
   if (status === 404) return ERRORS.NOT_FOUND("Page");
   if (status === 413) return ERRORS.DOCUMENT_TOO_LARGE();
   if (status === 429) return ERRORS.RATE_LIMITED();
+  if (status === 400 || status === 409 || status === 422) {
+    const message = data && typeof data === "object" && "error" in data && typeof data.error === "string"
+      ? data.error
+      : undefined;
+    if (message) return ERRORS.VALIDATION(message);
+  }
   return ERRORS.UPSTREAM(status);
 }
 
@@ -348,7 +370,7 @@ export async function handlePublishPage(
       { raw: finalRaw },
     );
 
-    if (!ok) return errorResult(mapUpstreamError(status).message);
+    if (!ok) return errorResult(mapUpstreamError(status, data).message);
 
     const r = data as PublishResponse;
     return successResult(
@@ -385,7 +407,7 @@ export async function handleUpdatePage(
       body,
     );
 
-    if (!ok) return errorResult(mapUpstreamError(status).message);
+    if (!ok) return errorResult(mapUpstreamError(status, data).message);
 
     const r = data as UpdateResponse;
     const lines = [`Page updated.\n\nURL: ${r.url}`];
@@ -417,7 +439,7 @@ export async function handleGetPage(
       apiBase,
     );
 
-    if (!ok) return errorResult(mapUpstreamError(status).message);
+    if (!ok) return errorResult(mapUpstreamError(status, data).message);
 
     const r = data as PageDetailResponse;
     const sections: string[] = [
@@ -461,7 +483,7 @@ export async function handleListPages(
       apiBase,
     );
 
-    if (!ok) return errorResult(mapUpstreamError(status).message);
+    if (!ok) return errorResult(mapUpstreamError(status, data).message);
 
     const result = data as { pages: PageListItem[]; total: number; limit: number; offset: number };
     const pages = result.pages ?? [];
@@ -505,14 +527,14 @@ export async function handleDeletePage(
   try {
     const { id } = validateDeleteArgs(args);
 
-    const { ok, status } = await callReadableApi(
+    const { ok, status, data } = await callReadableApi(
       `/api/v1/pages/${encodeURIComponent(id)}`,
       "DELETE",
       apiKey,
       apiBase,
     );
 
-    if (!ok) return errorResult(mapUpstreamError(status).message);
+    if (!ok) return errorResult(mapUpstreamError(status, data).message);
 
     return successResult(`Page ${id} deleted. The URL is no longer accessible.`);
   } catch (e) {
