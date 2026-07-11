@@ -2,7 +2,16 @@
 
 > **Single source of truth for all product and engineering work.**
 > Replaces `ROADMAP.md`, `IMPLEMENTATION_PLAN.md`, and `STRATEGY_EXECUTION_PLAN.md`.
-> Last updated: May 2026.
+> Last updated: 2026-07.
+
+> **2026-07-11 audit remediation:** a 4-agent audit (SDET, principal engineer, product
+> strategist, product designer) found 10 P0 security issues, 8 P1 reliability gaps, 10 P2
+> cleanup items, 9 P3 design findings, and 6 P4 feature gaps. All were addressed (or
+> explicitly descoped with a documented reason — anonymous-page TTL, Cloudflare Workers
+> migration, image uploads, email-based subscriptions) across commits `207f946..66a7737`
+> on `main`. The working punch-list (`AUDIT_REMEDIATION_PLAN.md`) is deleted in the closing
+> commit of that range — see `docs/OPERATIONS.md` and `docs/FEATURE_SCOPE_*.md` for what
+> was descoped and why.
 
 > **Direction update (May 2026):** Readable is fully free. No paid plans, no upgrade prompts,
 > no paywalls. All features — version history, analytics, password protection, the API,
