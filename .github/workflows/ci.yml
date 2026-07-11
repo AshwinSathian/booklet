@@ -71,6 +71,14 @@ jobs:
       # lockfile/install covers every package; no more per-package
       # package-lock.json to `npm ci --prefix` against.
       - run: npm ci --prefer-offline
+      # mcp-server/cli/vscode/github-action all import readable-api-client
+      # (packages/shared) — npm workspaces symlinks the *source* directory,
+      # but its package.json's types/main/module fields point at dist/,
+      # which only exists after packages/shared's own build runs. Skipping
+      # this step fails every other package's typecheck with "Cannot find
+      # module 'readable-api-client'" (found live: this exact failure on
+      # the push that introduced it).
+      - run: npm run build --workspace packages/shared
       - run: npm run typecheck --workspace ${{ matrix.package }}
 
   build:
@@ -117,6 +125,9 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
       - run: npm ci --prefer-offline
+      # packages/github-action bundles readable-api-client — see the
+      # typecheck-packages job's comment on why this must be built first.
+      - run: npm run build --workspace packages/shared
       - run: npm run build --workspace packages/github-action
       - run: |
           if ! git diff --quiet -- packages/github-action/dist; then

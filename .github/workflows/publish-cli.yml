@@ -34,6 +34,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # packages/cli bundles readable-api-client (packages/shared) at build
+      # time — the workspace symlink points at its *source*, and its
+      # package.json's main/types fields point at dist/, which only exists
+      # once packages/shared has been built. Skipping this step fails the
+      # CLI's tsup build with "Could not resolve readable-api-client"
+      # (found live: this exact failure the first time this workflow ran
+      # after packages/shared was introduced).
+      - name: Build shared client
+        run: npm run build --workspace packages/shared
+
       - name: Build
         run: npm run build --workspace packages/cli
 
