@@ -9,6 +9,12 @@
 # See https://code.visualstudio.com/api/working-with-extensions/publishing-extension
 #
 # Add it at: repo → Settings → Secrets → Actions → VSCE_PAT
+#
+# Until that secret exists, this workflow intentionally no-ops on the
+# publish step (see "VSCE_PAT not configured" below) instead of failing —
+# the publisher account is a manual, one-time setup only the account owner
+# can do, so a red X here on every push touching packages/vscode would just
+# be permanent noise nobody could act on from inside a workflow run.
 
 name: Publish VS Code Extension
 
@@ -23,6 +29,8 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    env:
+      VSCE_PAT: ${{ secrets.VSCE_PAT }}
 
     steps:
       - uses: actions/checkout@v4
@@ -59,12 +67,14 @@ jobs:
             echo "already_published=false" >> $GITHUB_OUTPUT
           fi
 
+      - name: VSCE_PAT not configured
+        if: steps.version_check.outputs.already_published == 'false' && env.VSCE_PAT == ''
+        run: echo "::warning::VSCE_PAT secret is not set — skipping publish. See the comment at the top of this workflow for setup steps."
+
       - name: Publish to VS Code Marketplace
-        if: steps.version_check.outputs.already_published == 'false'
+        if: steps.version_check.outputs.already_published == 'false' && env.VSCE_PAT != ''
         working-directory: packages/vscode
         run: npx vsce publish --no-dependencies -p "$VSCE_PAT"
-        env:
-          VSCE_PAT: ${{ secrets.VSCE_PAT }}
 
       - name: Skip (already published)
         if: steps.version_check.outputs.already_published == 'true'
