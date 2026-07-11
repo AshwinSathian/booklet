@@ -80,3 +80,6 @@ MARKET_PLAN.md
 
 # Claude Code agent worktrees (scratch checkouts, merged/discarded per-task)
 /.claude/worktrees/
+
+# vsce package output — built by CI/publish, not committed
+packages/vscode/*.vsix

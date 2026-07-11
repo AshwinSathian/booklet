@@ -1,13 +1,38 @@
 {
   "name": "readable-hq",
   "displayName": "Readable",
-  "description": "Publish Markdown to Readable from VS Code",
-  "version": "0.1.0",
+  "description": "Publish Markdown to a beautifully formatted, shareable Readable page — right from the editor",
+  "version": "0.2.0",
   "publisher": "readable-hq",
+  "icon": "images/icon.png",
+  "license": "MIT",
+  "homepage": "https://readable.ashwinsathian.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AshwinSathian/readable.git",
+    "directory": "packages/vscode"
+  },
+  "bugs": {
+    "url": "https://github.com/AshwinSathian/readable/issues"
+  },
+  "author": {
+    "name": "Ashwin Sathian",
+    "email": "ashwinsathyan19@gmail.com"
+  },
+  "keywords": [
+    "markdown",
+    "publish",
+    "share",
+    "readable",
+    "docs",
+    "preview"
+  ],
   "engines": {
     "vscode": "^1.85.0"
   },
-  "categories": ["Other"],
+  "categories": [
+    "Other"
+  ],
   "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
@@ -35,7 +60,10 @@
         },
         "readable.defaultVisibility": {
           "type": "string",
-          "enum": ["public", "unlisted"],
+          "enum": [
+            "public",
+            "unlisted"
+          ],
           "default": "unlisted",
           "description": "Default visibility for published pages"
         },
@@ -50,12 +78,17 @@
   "scripts": {
     "build": "tsup",
     "typecheck": "tsc --noEmit",
-    "vscode:prepublish": "npm run build"
+    "vscode:prepublish": "npm run build",
+    "package": "vsce package --no-dependencies",
+    "publish": "vsce publish --no-dependencies"
+  },
+  "dependencies": {
+    "readable-api-client": "^0.1.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
     "@types/vscode": "^1.85.0",
-    "readable-api-client": "^0.1.0",
+    "@vscode/vsce": "^3.9.2",
     "tsup": "^8.5.1",
     "typescript": "^5.0.0"
   }
