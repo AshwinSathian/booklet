@@ -12,6 +12,7 @@ import { ROUTES } from "@/lib/constants";
 import { logError } from "@/lib/logger";
 import { getOwnedPage, getOwnedPageByIdOrSlug, assertSlugAvailable } from "@/server/pages";
 import { toErrorResponse } from "@/server/errors";
+import { getSiteOrigin } from "@/lib/site-url";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -59,8 +60,7 @@ export async function GET(
 
   const doc = await getDoc(record.id);
 
-  const base = new URL(req.url);
-  const url = `${base.origin}${ROUTES.publish(record.slug ?? record.id)}`;
+  const url = `${getSiteOrigin(req)}${ROUTES.publish(record.slug ?? record.id)}`;
 
   return NextResponse.json({
     id: record.id,
@@ -204,15 +204,11 @@ export async function PATCH(
   }
 
   const effectiveSlug = "slug" in metaPatch ? metaPatch.slug : record.slug;
-
-  const url = new URL(req.url);
-  url.pathname = `/p/${effectiveSlug ?? id}`;
-  url.search = "";
-  url.hash = "";
+  const url = `${getSiteOrigin(req)}/p/${effectiveSlug ?? id}`;
 
   return NextResponse.json({
     id,
-    url: url.toString(),
+    url,
     ...(metaPatch.updated_at ? { updated_at: metaPatch.updated_at } : {}),
   });
 }

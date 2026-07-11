@@ -8,6 +8,7 @@ import { logError } from "@/lib/logger";
 import { getSession } from "@/lib/auth/session";
 import { getOwnedPage } from "@/server/pages";
 import { toErrorResponse } from "@/server/errors";
+import { getSiteOrigin } from "@/lib/site-url";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -88,10 +89,7 @@ export async function PATCH(
       logError("patch-publish", "DB updated_at write failed", dbErr);
     }
 
-    const siteOrigin = process.env.NEXT_PUBLIC_SITE_URL
-      ? new URL(process.env.NEXT_PUBLIC_SITE_URL).origin
-      : new URL(req.url).origin;
-    const publishedUrl = `${siteOrigin}/p/${record.slug ?? id}`;
+    const publishedUrl = `${getSiteOrigin(req)}/p/${record.slug ?? id}`;
 
     return NextResponse.json({ id, url: publishedUrl, updated_at: updatedAt });
   } catch (e: unknown) {

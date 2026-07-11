@@ -11,6 +11,7 @@ import { checkRateLimit, checkMonthlyQuota } from "@/lib/rate-limit";
 import { ANONYMOUS_LIMITS } from "@/lib/quota";
 import { deliverWebhooks } from "@/lib/webhook-delivery";
 import { getClientIp } from "@/lib/request-ip";
+import { getSiteOrigin } from "@/lib/site-url";
 import { logError } from "@/lib/logger";
 import { getSession } from "@/lib/auth/session";
 import { NextResponse } from "next/server";
@@ -106,7 +107,7 @@ export async function POST(req: Request) {
         });
         void deliverWebhooks(userId, "page.published", {
           page_id: id,
-          page_url: `${new URL(req.url).origin}/p/${id}`,
+          page_url: `${getSiteOrigin(req)}/p/${id}`,
           title,
           published_at: doc.createdAt,
         }).catch(() => {});
@@ -115,10 +116,7 @@ export async function POST(req: Request) {
       }
     }
 
-    const siteOrigin = process.env.NEXT_PUBLIC_SITE_URL
-      ? new URL(process.env.NEXT_PUBLIC_SITE_URL).origin
-      : new URL(req.url).origin;
-    const publishedUrl = `${siteOrigin}${ROUTES.publish(id)}`;
+    const publishedUrl = `${getSiteOrigin(req)}${ROUTES.publish(id)}`;
 
     return NextResponse.json({
       id,

@@ -2,6 +2,7 @@ import { resolveApiKey } from "@/lib/api-key-auth";
 import { getPagesByUser } from "@/lib/db";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { ROUTES } from "@/lib/constants";
+import { getSiteOrigin } from "@/lib/site-url";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -27,9 +28,7 @@ export async function GET(req: Request) {
 
   const { pages, total } = await getPagesByUser(userId, { limit, offset });
 
-  const base = new URL(req.url);
-  base.search = "";
-  base.hash = "";
+  const origin = getSiteOrigin(req);
 
   const items = pages.map((p) => {
     const path = ROUTES.publish(p.slug ?? p.id);
@@ -39,7 +38,7 @@ export async function GET(req: Request) {
       slug: p.slug ?? null,
       visibility: p.visibility,
       view_count: p.view_count,
-      url: `${base.origin}${path}`,
+      url: `${origin}${path}`,
       created_at: p.created_at,
       updated_at: p.updated_at,
     };

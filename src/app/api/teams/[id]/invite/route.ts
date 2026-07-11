@@ -3,6 +3,7 @@ import { logError } from "@/lib/logger";
 import { getSession } from "@/lib/auth/session";
 import { getOwnedTeamSpace } from "@/server/collections";
 import { toErrorResponse } from "@/server/errors";
+import { getSiteOrigin } from "@/lib/site-url";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -41,8 +42,7 @@ export async function POST(
     return NextResponse.json({ error: "Invite creation is misconfigured. Contact the administrator." }, { status: 500 });
   }
 
-  const origin = new URL(req.url).origin;
-  const inviteUrl = `${origin}/t/join?token=${token}`;
+  const inviteUrl = `${getSiteOrigin(req)}/t/join?token=${token}`;
 
   return NextResponse.json({ ok: true, inviteUrl }, { status: 201 });
 }

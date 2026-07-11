@@ -14,6 +14,7 @@ import { putDoc } from "@/lib/storage";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { assertSlugAvailable } from "@/server/pages";
 import { toErrorResponse } from "@/server/errors";
+import { getSiteOrigin } from "@/lib/site-url";
 import { logError } from "@/lib/logger";
 import { NextResponse } from "next/server";
 
@@ -121,7 +122,7 @@ export async function POST(req: Request) {
     });
     void deliverWebhooks(userId, "page.published", {
       page_id: id,
-      page_url: `${new URL(req.url).origin}/p/${id}`,
+      page_url: `${getSiteOrigin(req)}/p/${id}`,
       title,
       published_at: doc.createdAt,
     }).catch(() => {});
@@ -129,10 +130,7 @@ export async function POST(req: Request) {
     logError("v1/publish", "DB write failed", dbErr);
   }
 
-  const url = new URL(req.url);
-  url.pathname = ROUTES.publish(id);
-  url.search = "";
-  url.hash = "";
+  const url = `${getSiteOrigin(req)}${ROUTES.publish(id)}`;
 
-  return NextResponse.json({ id, url: url.toString() }, { status: 201 });
+  return NextResponse.json({ id, url }, { status: 201 });
 }
