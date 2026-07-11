@@ -37,7 +37,13 @@ echo "=== Readable Self-Host Health Check ==="
 # ── MongoDB ───────────────────────────────────────────────────────────────────
 echo ""
 echo "[ MongoDB ]"
-_check "brew service started"  "started"   "brew services list | grep 'mongodb-community'"
+# Check the actual mongod process rather than brew's service-tracking
+# metadata: mongod can be alive and healthy (and correctly answering on
+# 27017, checked right below) while brew services list still shows nothing,
+# if it was ever started outside `brew services start` (e.g. manually, or
+# by a prior setup step) — brew's registry can drift from reality in a way
+# the running database itself does not.
+_check "mongod process running" "ok"        "pgrep -x mongod >/dev/null && echo ok"
 _check "port 27017 open"       "ok"        "nc -z 127.0.0.1 27017 1>/dev/null 2>/dev/null && echo ok"
 
 # ── Next.js App ───────────────────────────────────────────────────────────────
