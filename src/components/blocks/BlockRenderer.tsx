@@ -135,8 +135,24 @@ export function BlockRenderer({
                     anchorId ? "relative" : "",
                   ].join(" ")}
                 >
+                  {/* InlineRenderer returns a Fragment — without this wrapping
+                      span, each of its top-level children (every text run,
+                      every inline `code`/strong/em/link) would become its
+                      own direct child of this flex container, and therefore
+                      its own flex item: vertically re-centered by
+                      items-center and gap-2'd apart from its neighbors
+                      instead of flowing as ordinary wrapped text. A heading
+                      that's a single plain-text run never exposed this (one
+                      run == one item, indistinguishable from correct), but
+                      any heading mixing prose with inline code/emphasis/a
+                      link did. Wrapping the whole run in one span — the same
+                      pattern the task-list checkbox case below already
+                      uses — makes it exactly one flex item, alongside the
+                      anchor-link item. */}
                   <span className="inline-flex items-center gap-2">
-                    <InlineRenderer inl={b.inl} />
+                    <span>
+                      <InlineRenderer inl={b.inl} />
+                    </span>
                     {anchorId ? (
                       <a
                         href={`#${anchorId}`}
