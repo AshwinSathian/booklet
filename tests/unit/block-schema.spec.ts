@@ -31,11 +31,16 @@ test.describe("validateBlocks", () => {
         t: "table",
         head: [[{ t: "text", v: "A" }]],
         rows: [[[{ t: "text", v: "1" }]]],
+        align: ["left"],
       },
       { t: "hr" },
       { t: "image", src: "https://example.com/a.png", alt: "alt text" },
       { t: "diagram", lang: "mermaid", code: "graph TD; A-->B;" },
       { t: "math", display: true, code: "x^2" },
+      {
+        t: "footnotes",
+        items: [{ id: "1", n: 1, blocks: [{ t: "paragraph", inl: [{ t: "text", v: "note" }] }] }],
+      },
     ];
     expect(validateBlocks(blocks)).toBeNull();
   });

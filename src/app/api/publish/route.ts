@@ -6,6 +6,8 @@ import { createId } from "@/lib/id";
 import { extractDocTitle } from "@/lib/doc-title";
 import { snapshotPageVersion } from "@/lib/db/versions";
 import { recordPublishEvent } from "@/lib/db/publish-events";
+import { parseToBlocks } from "@/lib/parse";
+import { stripFrontmatter } from "@/lib/frontmatter";
 import { putDoc } from "@/lib/storage";
 import { validateBlocks } from "@/lib/block-schema";
 import { collectRichBlockKinds } from "@/lib/block-usage";
@@ -21,9 +23,8 @@ import { NextResponse } from "next/server";
 export const runtime = "nodejs";
 
 type PublishPayload = {
-  blocks: PublishedDoc["blocks"];
+  raw: string;
   settings?: PublishedDoc["settings"];
-  raw?: string;
 };
 
 export async function POST(req: Request) {
@@ -44,17 +45,37 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
     }
 
-    if (!payload?.blocks?.length) {
+    if (!payload?.raw || typeof payload.raw !== "string" || !payload.raw.trim()) {
+      return NextResponse.json({ error: "Nothing to publish — provide `raw` markdown." }, { status: 400 });
+    }
+
+    // `blocks` is always derived server-side from `raw` — a client can no
+    // longer submit a pre-built block tree directly (see block-schema.ts's
+    // header for why: an unvalidated client-supplied tree was a
+    // stack-overflow DoS vector, reachable here without even
+    // authentication). validateBlocks() below is a defensive invariant
+    // check on parseToBlocks' *own* output, not a client trust boundary.
+    //
+    // The editor's `raw` textarea deliberately keeps any frontmatter block
+    // visible for editing (see stripFrontmatter's own doc comment) — it's
+    // not part of the rendered document, so it's stripped here the same way
+    // the client used to strip it before computing `blocks` itself.
+    const blocks = parseToBlocks(stripFrontmatter(payload.raw));
+    if (!blocks.length) {
       return NextResponse.json({ error: "Nothing to publish" }, { status: 400 });
     }
 
-    const blocksError = validateBlocks(payload.blocks);
+    const blocksError = validateBlocks(blocks);
     if (blocksError) {
-      return NextResponse.json({ error: blocksError }, { status: 400 });
+      logError("publish", "Parser produced an invalid block shape", new Error(blocksError));
+      return NextResponse.json({ error: "Failed to parse document. Please report this." }, { status: 500 });
     }
 
+    // Measures the actual stored shape (parsed blocks + raw), not just the
+    // incoming payload — blocks are now always server-derived, and their
+    // JSON can be larger than the source markdown that produced them.
     try {
-      const bytes = new TextEncoder().encode(JSON.stringify(payload));
+      const bytes = new TextEncoder().encode(JSON.stringify({ blocks, raw: payload.raw }));
       if (bytes.byteLength > STORAGE.maxDocBytes) {
         return NextResponse.json(
           { error: "Document is too large to publish." },
@@ -85,8 +106,8 @@ export async function POST(req: Request) {
       v: BLOCKS.version,
       createdAt: new Date().toISOString(),
       settings: payload.settings ?? DEFAULT_SETTINGS,
-      blocks: payload.blocks,
-      ...(payload.raw ? { raw: payload.raw.slice(0, STORAGE.maxInputChars) } : {}),
+      blocks,
+      raw: payload.raw.slice(0, STORAGE.maxInputChars),
     };
 
     try {
@@ -96,19 +117,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: msg }, { status: 500 });
     }
 
-    const rawLength = payload.raw?.length ?? JSON.stringify(payload.blocks).length;
     void recordPublishEvent({
       userId: userId ?? null,
       pageId: id,
       isUpdate: false,
-      contentLength: rawLength,
-      richBlockKinds: collectRichBlockKinds(payload.blocks),
+      contentLength: payload.raw.length,
+      richBlockKinds: collectRichBlockKinds(blocks),
       source: "browser",
     }).catch((err) => logError("publish", "Event record failed", err));
 
     if (isAuthenticated && userId) {
       try {
-        const title = extractDocTitle(payload.blocks);
+        const title = extractDocTitle(blocks);
         await createPageRecord(id, userId, title);
         void snapshotPageVersion(id, doc).catch((err) => {
           logError("publish", "Version snapshot failed", err);

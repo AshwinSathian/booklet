@@ -24,7 +24,7 @@ import {
 } from "@/lib/drafts";
 import { parseToBlocks } from "@/lib/parse";
 import { SAMPLE_MARKDOWN } from "@/lib/sample";
-import { normalizeInput, stripDangerousSequences } from "@/lib/sanitize";
+import { normalizeInput } from "@/lib/sanitize";
 import { getTemplateBySlug } from "@/lib/templates";
 import { stripFrontmatter } from "@/lib/frontmatter";
 import { formatTimeHHMM } from "@/lib/ui/time";
@@ -297,7 +297,7 @@ function AppPageContent() {
 
   const normalized = useMemo(
     // Strip frontmatter for rendering/parsing — the raw textarea preserves it for editing.
-    () => stripDangerousSequences(normalizeInput(stripFrontmatter(raw))),
+    () => normalizeInput(stripFrontmatter(raw)),
     [raw],
   );
 
@@ -541,7 +541,10 @@ function AppPageContent() {
       const res = await fetch(API.publishPath, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ blocks, settings, raw }),
+        // `blocks` is no longer sent — the server always derives it from
+        // `raw` (see src/lib/block-schema.ts's header for why a
+        // client-computed block tree is no longer trusted directly).
+        body: JSON.stringify({ settings, raw }),
       });
 
       if (!res.ok) {
@@ -611,7 +614,7 @@ function AppPageContent() {
       const res = await fetch(`/api/publish/${lastPublishedId}`, {
         method: "PATCH",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ blocks, settings, raw }),
+        body: JSON.stringify({ settings, raw }),
       });
 
       if (!res.ok) {

@@ -3,6 +3,9 @@ import { DEFAULT_SETTINGS } from "@/lib/blocks";
 import { BLOCKS, STORAGE } from "@/lib/constants";
 import { updatePageRecord } from "@/lib/db";
 import { snapshotPageVersion } from "@/lib/db/versions";
+import { parseToBlocks } from "@/lib/parse";
+import { stripFrontmatter } from "@/lib/frontmatter";
+import { validateBlocks } from "@/lib/block-schema";
 import { putDoc } from "@/lib/storage";
 import { logError } from "@/lib/logger";
 import { getSession } from "@/lib/auth/session";
@@ -14,9 +17,8 @@ import { NextResponse } from "next/server";
 export const runtime = "nodejs";
 
 type UpdatePayload = {
-  blocks: PublishedDoc["blocks"];
+  raw: string;
   settings?: PublishedDoc["settings"];
-  raw?: string;
 };
 
 export async function PATCH(
@@ -48,12 +50,31 @@ export async function PATCH(
       return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
     }
 
-    if (!payload?.blocks?.length) {
+    if (!payload?.raw || typeof payload.raw !== "string" || !payload.raw.trim()) {
+      return NextResponse.json({ error: "Nothing to publish — provide `raw` markdown." }, { status: 400 });
+    }
+
+    // `blocks` is always derived server-side from `raw` — see
+    // src/lib/block-schema.ts's header for why a client-supplied block tree
+    // is no longer accepted anywhere. This route previously accepted
+    // `blocks` directly with no shape validation at all (unlike the other
+    // three publish/patch routes, which at least ran validateBlocks against
+    // a client-supplied tree) — deriving from `raw` here closes that gap
+    // the same way as the others, rather than adding a third, different
+    // partial fix.
+    const blocks = parseToBlocks(stripFrontmatter(payload.raw));
+    if (!blocks.length) {
       return NextResponse.json({ error: "Nothing to publish" }, { status: 400 });
     }
 
+    const blocksError = validateBlocks(blocks);
+    if (blocksError) {
+      logError("patch-publish", "Parser produced an invalid block shape", new Error(blocksError));
+      return NextResponse.json({ error: "Failed to parse document. Please report this." }, { status: 500 });
+    }
+
     try {
-      const bytes = new TextEncoder().encode(JSON.stringify(payload));
+      const bytes = new TextEncoder().encode(JSON.stringify({ blocks, raw: payload.raw }));
       if (bytes.byteLength > STORAGE.maxDocBytes) {
         return NextResponse.json(
           { error: "Document is too large." },
@@ -68,8 +89,8 @@ export async function PATCH(
       v: BLOCKS.version,
       createdAt: record.created_at,
       settings: payload.settings ?? DEFAULT_SETTINGS,
-      blocks: payload.blocks,
-      ...(payload.raw ? { raw: payload.raw.slice(0, STORAGE.maxInputChars) } : {}),
+      blocks,
+      raw: payload.raw.slice(0, STORAGE.maxInputChars),
     };
 
     try {

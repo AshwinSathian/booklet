@@ -21,7 +21,6 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 type ContentPayload = {
-  blocks?: PublishedDoc["blocks"];
   raw?: string;
   settings?: PublishedDoc["settings"];
 };
@@ -110,12 +109,12 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const hasContent = Boolean(payload?.raw || payload?.blocks?.length);
+  const hasContent = Boolean(payload?.raw && typeof payload.raw === "string" && payload.raw.trim());
   const hasMetadata = payload !== null && ("slug" in payload || "visibility" in payload);
 
   if (!hasContent && !hasMetadata) {
     return NextResponse.json(
-      { error: "Provide `raw`, `blocks`, `slug`, or `visibility`." },
+      { error: "Provide `raw`, `slug`, or `visibility`." },
       { status: 400 },
     );
   }
@@ -146,31 +145,26 @@ export async function PATCH(
     }
   }
 
-  if (hasContent && payload) {
-    const hadRaw = Boolean(payload.raw && typeof payload.raw === "string");
-    if (payload.raw && typeof payload.raw === "string") {
-      payload = { ...payload, blocks: parseToBlocks(payload.raw) };
-    }
-
-    if (!payload.blocks?.length) {
+  if (hasContent && payload?.raw) {
+    // `blocks` is always derived server-side from `raw` — see
+    // src/lib/block-schema.ts's header for why a client-supplied block tree
+    // is no longer accepted.
+    const blocks = parseToBlocks(payload.raw);
+    if (!blocks.length) {
       return NextResponse.json(
-        { error: "Nothing to publish — provide `blocks` or `raw` markdown." },
+        { error: "Nothing to publish — the document is empty." },
         { status: 400 },
       );
     }
 
-    // Only validate client-supplied `blocks` shape — blocks derived from
-    // `raw` above came from our own parseToBlocks() and are trusted by
-    // construction.
-    if (!hadRaw) {
-      const blocksError = validateBlocks(payload.blocks);
-      if (blocksError) {
-        return NextResponse.json({ error: blocksError }, { status: 400 });
-      }
+    const blocksError = validateBlocks(blocks);
+    if (blocksError) {
+      logError("v1/pages", "Parser produced an invalid block shape", new Error(blocksError));
+      return NextResponse.json({ error: "Failed to parse document. Please report this." }, { status: 500 });
     }
 
     try {
-      const bytes = new TextEncoder().encode(JSON.stringify(payload));
+      const bytes = new TextEncoder().encode(JSON.stringify({ blocks, raw: payload.raw }));
       if (bytes.byteLength > STORAGE.maxDocBytes) {
         return NextResponse.json({ error: "Document too large." }, { status: 413 });
       }
@@ -182,8 +176,8 @@ export async function PATCH(
       v: BLOCKS.version,
       createdAt: record.created_at,
       settings: payload.settings ?? DEFAULT_SETTINGS,
-      blocks: payload.blocks,
-      ...(payload.raw ? { raw: payload.raw.slice(0, STORAGE.maxInputChars) } : {}),
+      blocks,
+      raw: payload.raw.slice(0, STORAGE.maxInputChars),
     };
 
     try {
@@ -196,13 +190,12 @@ export async function PATCH(
       return NextResponse.json({ error: msg }, { status: 500 });
     }
 
-    const rawLength = payload.raw?.length ?? JSON.stringify(payload.blocks).length;
     void recordPublishEvent({
       userId,
       pageId: id,
       isUpdate: true,
-      contentLength: rawLength,
-      richBlockKinds: collectRichBlockKinds(payload.blocks),
+      contentLength: payload.raw.length,
+      richBlockKinds: collectRichBlockKinds(blocks),
       source: "api",
     }).catch((err) => logError("v1/pages", "Event record failed", err));
 

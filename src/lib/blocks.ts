@@ -6,16 +6,10 @@ export type Inline =
   | { t: "code"; v: string }
   | { t: "link"; href: string; c: Inline[] }
   | { t: "image"; src: string; alt: string }
-  | { t: "math"; v: string };
+  | { t: "math"; v: string }
+  | { t: "footnoteRef"; id: string; n: number };
 
-/**
- * A list item. The `children` field holds nested block content (nested lists,
- * blockquotes, etc.). `checked` is null for regular items, true/false for task
- * list items.
- *
- * Backwards-compat note: older published documents stored items as Inline[]
- * directly. The renderer guards against both shapes.
- */
+/** A list item. `children` holds nested block content (nested lists, blockquotes, etc). */
 export type ListItem = {
   inl: Inline[];
   checked?: boolean | null;
@@ -26,6 +20,12 @@ export type ListItem = {
 export const CALLOUT_KINDS = ["note", "tip", "warning", "important", "caution"] as const;
 export type CalloutKind = (typeof CALLOUT_KINDS)[number];
 
+/** Per-column text alignment for a table, from GFM's `:---:`-style delimiter row. */
+export type TableAlign = "left" | "center" | "right" | null;
+
+/** One resolved footnote: `n` is its 1-based display index, in first-reference order. */
+export type FootnoteItem = { id: string; n: number; blocks: Block[] };
+
 export type Block =
   | { t: "heading"; level: 1 | 2 | 3 | 4; inl: Inline[] }
   | { t: "paragraph"; inl: Inline[] }
@@ -35,11 +35,36 @@ export type Block =
   | { t: "toggle"; summary: string; blocks: Block[] }
   | { t: "columns"; columns: Block[][] }
   | { t: "code"; lang?: string; code: string }
-  | { t: "table"; head: Inline[][]; rows: Inline[][][] }
+  | { t: "table"; head: Inline[][]; rows: Inline[][][]; align: TableAlign[] }
   | { t: "hr" }
   | { t: "image"; src: string; alt: string }
   | { t: "diagram"; lang: string; code: string }
-  | { t: "math"; display: true; code: string };
+  | { t: "math"; display: true; code: string }
+  | { t: "footnotes"; items: FootnoteItem[] };
+
+/**
+ * Hard bounds on a parsed document's shape, enforced during parsing
+ * (src/lib/parse.ts) — not just at the API boundary. Every recursive
+ * consumer of `Block[]` (the React renderer, the HTML exporter, the TOC
+ * builder, the reading-time/rich-block-usage walkers) recurses without its
+ * own depth limit, so a Block[] tree deeper than this would eventually blow
+ * the call stack in *some* consumer even if the parser itself survived
+ * producing it. Bounding depth at the one place all of them originate from
+ * — the parser — is the single choke point that protects every consumer at
+ * once, rather than adding a depth check to each one separately.
+ *
+ * 32 is far below any real document's nesting (double-digit blockquote/list
+ * nesting is already unusual) and orders of magnitude below where V8's
+ * default call stack actually overflows, leaving a comfortable safety
+ * margin for however many stack frames each consumer's own recursion adds
+ * per level.
+ */
+export const MAX_BLOCK_DEPTH = 32;
+
+/** Hard cap on total blocks in a parsed document, independent of depth — bounds
+ * a pathologically wide-but-shallow tree the same way MAX_BLOCK_DEPTH bounds
+ * a deep one. Generous for any real document within STORAGE.maxInputChars. */
+export const MAX_BLOCK_COUNT = 20_000;
 
 /**
  * Block kinds that hold nested Block[] content ("containers"). Centralized
@@ -53,6 +78,7 @@ export type Block =
 export function containerChildGroups(b: Block): Block[][] | null {
   if (b.t === "quote" || b.t === "callout" || b.t === "toggle") return [b.blocks];
   if (b.t === "columns") return b.columns;
+  if (b.t === "footnotes") return b.items.map((it) => it.blocks);
   return null;
 }
 

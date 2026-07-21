@@ -1,18 +1,37 @@
 "use client";
 
-import type { Block, DocSettings, ListItem } from "@/lib/blocks";
+import type { Block, DocSettings, TableAlign } from "@/lib/blocks";
+import { sanitizeImageUrl } from "@/lib/render-shared";
 import dynamic from "next/dynamic";
 import type { JSX } from "react";
 import { Callout } from "./Callout";
+import { CodeBlock } from "./CodeBlock";
 import { Columns } from "./Columns";
 import { InlineRenderer } from "./InlineRenderer";
+import { MathDisplay } from "./MathDisplay";
 import { Toggle } from "./Toggle";
 
-// Heavy libraries (KaTeX, highlight.js, Mermaid) are excluded from the SSR
-// worker bundle by using ssr:false — they load only in the browser.
-const CodeBlock = dynamic(() => import("./CodeBlock").then((m) => m.CodeBlock), { ssr: false });
+// Mermaid/Graphviz need a real DOM (and, for Graphviz, WASM instantiation)
+// to render — genuinely client-only, unlike CodeBlock (highlight.js) and
+// MathDisplay (KaTeX), which are both pure synchronous string transforms
+// and render correctly during SSR. Excluding those two from SSR too (as a
+// previous version of this file did, via ssr:false on every heavy library
+// indiscriminately) meant code blocks and math were invisible in the raw
+// HTML response — absent from crawlers/readers-with-JS-disabled and a
+// guaranteed layout shift on every load, for a product whose entire premise
+// is publishing readable technical documents.
 const DiagramBlock = dynamic(() => import("./DiagramBlock").then((m) => m.DiagramBlock), { ssr: false });
-const MathDisplay = dynamic(() => import("./MathDisplay").then((m) => m.MathDisplay), { ssr: false });
+
+const TABLE_ALIGN_STYLE: Record<Exclude<TableAlign, null>, string> = {
+  left: "text-left",
+  center: "text-center",
+  right: "text-right",
+};
+
+function tableAlignClass(align: TableAlign[] | undefined, i: number): string {
+  const a = align?.[i];
+  return a ? TABLE_ALIGN_STYLE[a] : "text-left";
+}
 
 function spacingClass(settings: DocSettings): string {
   return settings.spacing === "compact" ? "gap-3" : "gap-4";
@@ -165,12 +184,7 @@ export function BlockRenderer({
             }
 
             case "list": {
-              const renderItem = (it: ListItem | unknown[], i: number) => {
-                // Backwards compat: old published docs stored items as Inline[]
-                if (Array.isArray(it)) {
-                  return <li key={i}><InlineRenderer inl={it as never} /></li>;
-                }
-                const item = it as ListItem;
+              const renderItem = (item: (typeof b.items)[number], i: number) => {
                 const isTask = item.checked != null;
                 return (
                   <li key={i} className={isTask ? "list-none" : ""}>
@@ -303,7 +317,10 @@ export function BlockRenderer({
                         {b.head.map((cell, i) => (
                           <th
                             key={i}
-                            className="text-left px-4 py-2.5 font-semibold text-text-primary border-b border-border-default whitespace-nowrap"
+                            className={[
+                              "px-4 py-2.5 font-semibold text-text-primary border-b border-border-default whitespace-nowrap",
+                              tableAlignClass(b.align, i),
+                            ].join(" ")}
                           >
                             <InlineRenderer inl={cell} />
                           </th>
@@ -316,7 +333,10 @@ export function BlockRenderer({
                           {row.map((cell, c) => (
                             <td
                               key={c}
-                              className="px-4 py-2.5 align-top border-b border-border-subtle text-text-primary wrap-break-word"
+                              className={[
+                                "px-4 py-2.5 align-top border-b border-border-subtle text-text-primary wrap-break-word",
+                                tableAlignClass(b.align, c),
+                              ].join(" ")}
                             >
                               <InlineRenderer inl={cell} />
                             </td>
@@ -332,7 +352,7 @@ export function BlockRenderer({
               return <hr key={idx} className="border-border-default" />;
 
             case "image": {
-              const src = /^https?:\/\//i.test(b.src) ? b.src : "";
+              const src = sanitizeImageUrl(b.src);
               if (!src) return null;
               return (
                 <figure key={idx} className="my-0">
@@ -357,6 +377,41 @@ export function BlockRenderer({
 
             case "math":
               return <MathDisplay key={idx} code={b.code} />;
+
+            case "footnotes":
+              return (
+                <section
+                  key={idx}
+                  className="mt-2 border-t border-border-default pt-4 text-[13.5px] leading-[1.6] text-text-muted"
+                  aria-label="Footnotes"
+                >
+                  <ol className="list-decimal space-y-2 pl-5">
+                    {b.items.map((item, i) => (
+                      <li key={item.id} id={`fn-${encodeURIComponent(item.id)}`}>
+                        <span className="[&>div]:inline [&_p]:inline">
+                          <BlockRenderer
+                            blocks={item.blocks}
+                            settings={settings}
+                            headingAnchors={headingAnchors}
+                            // Path must match walkBlocks' scheme (array
+                            // index, not the 1-based display number `n`) —
+                            // toc.ts's anchorMap is keyed by that same
+                            // walkBlocks path via containerChildGroups.
+                            keyPrefix={b.items.length > 1 ? `${blockKey}.${i}` : blockKey}
+                          />
+                        </span>{" "}
+                        <a
+                          href={`#fnref-${encodeURIComponent(item.id)}`}
+                          className="text-accent-soft no-underline hover:underline"
+                          aria-label="Back to content"
+                        >
+                          ↩
+                        </a>
+                      </li>
+                    ))}
+                  </ol>
+                </section>
+              );
 
             default:
               return null;

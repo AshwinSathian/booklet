@@ -83,3 +83,64 @@ test.describe("blocksToHtml — columns export", () => {
     expect(html).toContain("Right content");
   });
 });
+
+// Regression: `renderBlock`'s switch had no `case "math"` at all, so a math
+// block silently vanished (fell to `default: return ""`) from every export
+// path (blocksToHtml / blocksToHtmlDocument / the TopBar "Copy as HTML"
+// button), even though it rendered fine in the live preview.
+test.describe("blocksToHtml — math export", () => {
+  test("a math block is no longer silently dropped", () => {
+    const html = blocksToHtml([{ t: "math", display: true, code: "E = mc^2" }]);
+    expect(html).not.toBe("<div></div>");
+    expect(html).toContain("E = mc^2");
+  });
+
+  test("math source is HTML-escaped, not interpreted", () => {
+    const html = blocksToHtml([{ t: "math", display: true, code: "a < b & c > d" }]);
+    expect(html).toContain("&lt;");
+    expect(html).toContain("&amp;");
+    expect(html).toContain("&gt;");
+  });
+
+  test("inline math is no longer silently dropped", () => {
+    const html = blocksToHtml([
+      { t: "paragraph", inl: [{ t: "text", v: "area is " }, { t: "math", v: "r^2" }] },
+    ]);
+    expect(html).toContain("r^2");
+  });
+});
+
+test.describe("blocksToHtml — footnotes export", () => {
+  test("renders a numbered, cross-linked footnote section", () => {
+    const html = blocksToHtml([
+      { t: "paragraph", inl: [{ t: "text", v: "Fact." }, { t: "footnoteRef", id: "1", n: 1 }] },
+      { t: "footnotes", items: [{ id: "1", n: 1, blocks: [{ t: "paragraph", inl: [{ t: "text", v: "Source." }] }] }] },
+    ]);
+    expect(html).toContain("Source.");
+    expect(html).toContain('href="#fn-1"');
+    expect(html).toContain('id="fn-1"');
+    expect(html).toContain('href="#fnref-1"');
+  });
+});
+
+test.describe("blocksToHtml — table alignment export", () => {
+  test("applies a text-align style per column", () => {
+    const html = blocksToHtml([
+      {
+        t: "table",
+        head: [[{ t: "text", v: "A" }], [{ t: "text", v: "B" }]],
+        rows: [],
+        align: ["center", "right"],
+      },
+    ]);
+    expect(html).toContain('style="text-align:center"');
+    expect(html).toContain('style="text-align:right"');
+  });
+
+  test("an unset column has no alignment style", () => {
+    const html = blocksToHtml([
+      { t: "table", head: [[{ t: "text", v: "A" }]], rows: [], align: [null] },
+    ]);
+    expect(html).not.toContain("text-align");
+  });
+});

@@ -171,16 +171,10 @@ export default function ApiDocsPage() {
             <Endpoint method="POST" path="/api/v1/publish" description="Creates a new published page and returns its public URL.">
               <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">Request body</p>
               <p className="text-sm text-text-secondary mb-2">
-                Supply either <Code>raw</Code> (Markdown string, parsed server-side) <em>or</em> <Code>blocks</Code> (pre-parsed block array):
+                Supply <Code>raw</Code> Markdown — always parsed server-side:
               </p>
-              <Pre>{`// Option A — raw Markdown (recommended for CI)
-{
-  "raw": "# Release Notes\\n\\nWhat changed..."
-}
-
-// Option B — pre-parsed blocks
-{
-  "blocks": [...],
+              <Pre>{`{
+  "raw": "# Release Notes\\n\\nWhat changed...",
   "settings": { "width": "normal" }
 }`}</Pre>
               <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mt-4 mb-2">Response 201</p>
@@ -190,9 +184,9 @@ export default function ApiDocsPage() {
 }`}</Pre>
               <div className="mt-4">
                 <Table rows={[
-                  ["400", "Invalid JSON, empty document, or missing raw/blocks"],
+                  ["400", "Invalid JSON, empty document, or missing raw"],
                   ["401", "Missing or invalid API key"],
-                  ["413", "Document too large (>350 KB)"],
+                  ["413", "Document too large (>600 KB)"],
                   ["429", "Rate limit exceeded (60 req/min)"],
                   ["500", "Internal storage error"],
                 ]} />

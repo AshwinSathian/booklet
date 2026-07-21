@@ -23,7 +23,6 @@ import { NextResponse } from "next/server";
 export const runtime = "nodejs";
 
 type PublishPayload = {
-  blocks?: PublishedDoc["blocks"];
   raw?: string;
   settings?: PublishedDoc["settings"];
 };
@@ -44,32 +43,29 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  // Extract frontmatter metadata before parsing. `hasRawString` (not mere
-  // truthiness of `payload.raw`) gates both this derivation and the
-  // validate-vs-trust decision below — a truthy-but-non-string `raw` (e.g.
-  // an array or object slipped in by a hand-rolled API client) must not
-  // silently skip both derivation AND validation of client-supplied
-  // `blocks`. See src/app/api/v1/pages/[id]/route.ts's `hadRaw` for the
-  // same pattern.
-  let frontmatterMeta = {};
-  const hasRawString = Boolean(payload?.raw && typeof payload.raw === "string");
-  if (hasRawString && payload) {
-    const { meta, body } = parseFrontmatter(payload.raw as string);
-    frontmatterMeta = meta;
-    payload = { ...payload, raw: body, blocks: parseToBlocks(body) };
+  if (!payload?.raw || typeof payload.raw !== "string" || !payload.raw.trim()) {
+    return NextResponse.json({ error: "Nothing to publish — provide `raw` markdown." }, { status: 400 });
   }
 
-  if (!payload?.blocks?.length) {
-    return NextResponse.json({ error: "Nothing to publish — provide `blocks` or `raw` markdown." }, { status: 400 });
+  // Extract frontmatter metadata before parsing.
+  const { meta: frontmatterMeta, body } = parseFrontmatter(payload.raw);
+  const settings = payload.settings;
+
+  // `blocks` is always derived server-side from `raw` — submitting a
+  // pre-built block tree directly (formerly documented as "Option B" in the
+  // API docs) is no longer supported. See src/lib/block-schema.ts's header:
+  // an unvalidated client-supplied tree, reachable by any API key holder,
+  // was a stack-overflow DoS vector once its recursive consumers (the React
+  // renderer, the HTML exporter, the TOC builder) were traced end to end.
+  const blocks = parseToBlocks(body);
+  if (!blocks.length) {
+    return NextResponse.json({ error: "Nothing to publish — the document is empty." }, { status: 400 });
   }
 
-  // Only validate client-supplied `blocks` shape — blocks derived from `raw`
-  // above came from our own parseToBlocks() and are trusted by construction.
-  if (!hasRawString) {
-    const blocksError = validateBlocks(payload.blocks);
-    if (blocksError) {
-      return NextResponse.json({ error: blocksError }, { status: 400 });
-    }
+  const blocksError = validateBlocks(blocks);
+  if (blocksError) {
+    logError("v1/publish", "Parser produced an invalid block shape", new Error(blocksError));
+    return NextResponse.json({ error: "Failed to parse document. Please report this." }, { status: 500 });
   }
 
   const fm = frontmatterMeta as import("@/lib/frontmatter").FrontmatterMeta;
@@ -88,7 +84,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const bytes = new TextEncoder().encode(JSON.stringify(payload));
+    const bytes = new TextEncoder().encode(JSON.stringify({ blocks, raw: body }));
     if (bytes.byteLength > STORAGE.maxDocBytes) {
       return NextResponse.json({ error: "Document too large." }, { status: 413 });
     }
@@ -100,9 +96,9 @@ export async function POST(req: Request) {
   const doc: PublishedDoc = {
     v: BLOCKS.version,
     createdAt: new Date().toISOString(),
-    settings: payload.settings ?? DEFAULT_SETTINGS,
-    blocks: payload.blocks,
-    ...(payload.raw ? { raw: payload.raw.slice(0, STORAGE.maxInputChars) } : {}),
+    settings: settings ?? DEFAULT_SETTINGS,
+    blocks,
+    raw: body.slice(0, STORAGE.maxInputChars),
   };
 
   try {
@@ -112,18 +108,17 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 
-  const rawLength = payload.raw?.length ?? JSON.stringify(payload.blocks).length;
   void recordPublishEvent({
     userId,
     pageId: id,
     isUpdate: false,
-    contentLength: rawLength,
-    richBlockKinds: collectRichBlockKinds(payload.blocks),
+    contentLength: body.length,
+    richBlockKinds: collectRichBlockKinds(blocks),
     source: "api",
   }).catch((err) => logError("v1/publish", "Event record failed", err));
 
   try {
-    const title = fm.title ?? extractDocTitle(payload.blocks);
+    const title = fm.title ?? extractDocTitle(blocks);
     const fmRecord = Object.keys(fm).length > 0 ? (fm as Record<string, unknown>) : null;
     await createPageRecord(id, userId, title, null, fmRecord);
 

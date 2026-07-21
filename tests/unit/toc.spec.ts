@@ -94,4 +94,33 @@ test.describe("buildToc — quote recursion (regression)", () => {
     const { toc } = buildToc(blocks);
     expect(toc).toHaveLength(0);
   });
+
+  // Core-engine rework: buildToc's old hand-rolled `walk()` only recursed
+  // into containerChildGroups, never into list items — a heading nested in
+  // a list item rendered fine (BlockRenderer does recurse into list item
+  // children) but silently never appeared in the sidebar TOC. Fixed by
+  // switching to the shared walkBlocks() (src/lib/block-tree.ts), which
+  // recurses into list items the same way BlockRenderer does.
+  test("a heading nested inside a list item is collected (previously a silent gap)", () => {
+    const blocks: Block[] = [
+      {
+        t: "list",
+        ordered: false,
+        items: [{ inl: [{ t: "text", v: "item" }], children: [heading(2, "In A List Item")] }],
+      },
+    ];
+    const { toc, anchorMap } = buildToc(blocks);
+    expect(toc).toHaveLength(1);
+    expect(toc[0].text).toBe("In A List Item");
+    expect(anchorMap["0.0.0"]).toBe(toc[0].id);
+  });
+
+  test("a heading nested inside a footnote body is collected", () => {
+    const blocks: Block[] = [
+      { t: "footnotes", items: [{ id: "1", n: 1, blocks: [heading(2, "In A Footnote")] }] },
+    ];
+    const { toc } = buildToc(blocks);
+    expect(toc).toHaveLength(1);
+    expect(toc[0].text).toBe("In A Footnote");
+  });
 });

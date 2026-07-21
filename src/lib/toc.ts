@@ -1,4 +1,6 @@
-import { containerChildGroups, type Block, type Inline } from "@/lib/blocks";
+import { walkBlocks } from "@/lib/block-tree";
+import type { Block } from "@/lib/blocks";
+import { inlineToPlainText } from "@/lib/inline-text";
 
 export type TocItem = {
   id: string;
@@ -7,30 +9,6 @@ export type TocItem = {
 };
 
 export const MIN_TOC_HEADINGS = 3;
-
-function inlineToText(inl: Inline[] | Inline | unknown): string {
-  if (!inl) return "";
-  if (Array.isArray(inl)) return inl.map(inlineToText).join("");
-  if (typeof inl === "string") return inl;
-  if (typeof inl !== "object") return "";
-
-  const node = inl as Inline;
-  switch (node.t) {
-    case "text":
-    case "code":
-      return node.v;
-    case "link":
-      return inlineToText(node.c);
-    case "strong":
-    case "em":
-    case "del":
-      return inlineToText(node.c);
-    case "image":
-      return node.alt;
-    default:
-      return "";
-  }
-}
 
 /**
  * Best-effort slugging without external deps.
@@ -71,37 +49,14 @@ export function buildToc(blocks: Block[]): {
     return n === 1 ? base : `${base}-${n}`;
   }
 
-  function walk(list: Block[], path: number[]) {
-    for (let i = 0; i < list.length; i++) {
-      const b = list[i];
-      const key = [...path, i].join(".");
-
-      if (
-        b.t === "heading" &&
-        (b.level === 1 || b.level === 2 || b.level === 3)
-      ) {
-        const text = clampText(inlineToText(b.inl));
-        const anchorId = nextAnchorId(text || "section");
-        toc.push({ id: anchorId, text: text || "Section", level: b.level });
-        anchorMap[key] = anchorId;
-      }
-
-      const groups = containerChildGroups(b);
-      if (groups) {
-        // Single-group containers (quote, and later callout/toggle) keep the
-        // exact same path shape as before this change (no extra path
-        // segment) — this is what makes the refactor behavior-identical for
-        // `quote`. Multi-group containers (later: columns) get one extra
-        // path segment per group so keys stay unique across columns and
-        // match the keyPrefix each column's own BlockRenderer call will use.
-        groups.forEach((group, gi) => {
-          walk(group, groups.length > 1 ? [...path, i, gi] : [...path, i]);
-        });
-      }
+  walkBlocks(blocks ?? [], (b, path) => {
+    if (b.t === "heading" && (b.level === 1 || b.level === 2 || b.level === 3)) {
+      const text = clampText(inlineToPlainText(b.inl));
+      const anchorId = nextAnchorId(text || "section");
+      toc.push({ id: anchorId, text: text || "Section", level: b.level });
+      anchorMap[path.join(".")] = anchorId;
     }
-  }
-
-  walk(blocks ?? [], []);
+  });
 
   return { toc, anchorMap };
 }

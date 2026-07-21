@@ -188,3 +188,142 @@ test.describe("Phase 4: graphviz/dot fenced blocks route to the diagram block ty
     });
   }
 });
+
+// Core-engine rework: reference-style links/images, footnotes, table
+// alignment, and hard depth/count guards against pathological nesting.
+
+test.describe("reference-style links and images", () => {
+  test("[text][ref] resolves against a top-level [ref]: url definition", () => {
+    const b = firstBlock("See [the docs][1].\n\n[1]: https://example.com/docs");
+    expect(b.t).toBe("paragraph");
+    if (b.t === "paragraph") {
+      const link = b.inl.find((i) => i.t === "link");
+      expect(link).toEqual({ t: "link", href: "https://example.com/docs", c: [{ t: "text", v: "the docs" }] });
+    }
+  });
+
+  test("an unresolved reference degrades to its plain text, not a dangling link", () => {
+    const b = firstBlock("See [the docs][missing].");
+    expect(b.t).toBe("paragraph");
+    if (b.t === "paragraph") {
+      expect(b.inl.some((i) => i.t === "link")).toBe(false);
+      expect(b.inl.some((i) => i.t === "text" && i.v.includes("the docs"))).toBe(true);
+    }
+  });
+
+  test("![alt][ref] image reference resolves against its definition", () => {
+    const b = firstBlock('![a cat][img]\n\n[img]: https://example.com/cat.png "title"');
+    // Unlike a direct `![alt](url)` image, a reference-style image doesn't
+    // trip the lone-image-paragraph → image-block collapse (that heuristic
+    // only checks the raw mdast node type, which is "imageReference" here,
+    // not "image") — it resolves to an inline image inside the paragraph.
+    expect(b.t).toBe("paragraph");
+    if (b.t === "paragraph") {
+      expect(b.inl).toEqual([{ t: "image", src: "https://example.com/cat.png", alt: "a cat" }]);
+    }
+  });
+
+  test("an unresolved image reference degrades to its literal text (CommonMark spec behavior)", () => {
+    // Reference resolution happens in remark's own parser, using every
+    // definition in the document — an identifier with no matching
+    // definition never becomes an `imageReference` node in the first place;
+    // the bracket syntax is left as plain text. ctx.definitions is only
+    // ever consulted for identifiers remark has already confirmed resolve.
+    const blocks = parseToBlocks("![a cat][missing]");
+    expect(blocks).toEqual([{ t: "paragraph", inl: [{ t: "text", v: "![a cat][missing]" }] }]);
+  });
+});
+
+test.describe("footnotes", () => {
+  test("a single footnote reference + definition produces a footnoteRef and a trailing footnotes block", () => {
+    const blocks = parseToBlocks("Fact.[^1]\n\n[^1]: The source.");
+    expect(blocks).toHaveLength(2);
+    expect(blocks[0]).toEqual({
+      t: "paragraph",
+      inl: [{ t: "text", v: "Fact." }, { t: "footnoteRef", id: "1", n: 1 }],
+    });
+    expect(blocks[1].t).toBe("footnotes");
+    if (blocks[1].t === "footnotes") {
+      expect(blocks[1].items).toEqual([
+        { id: "1", n: 1, blocks: [{ t: "paragraph", inl: [{ t: "text", v: "The source." }] }] },
+      ]);
+    }
+  });
+
+  test("multiple footnotes are numbered in first-reference order, not definition order", () => {
+    const md = "One[^b] and two[^a].\n\n[^a]: Second definition, referenced second.\n[^b]: First definition, referenced first.";
+    const blocks = parseToBlocks(md);
+    const footnotes = blocks.find((b) => b.t === "footnotes");
+    expect(footnotes?.t).toBe("footnotes");
+    if (footnotes?.t === "footnotes") {
+      expect(footnotes.items.map((i) => i.id)).toEqual(["b", "a"]);
+      expect(footnotes.items.map((i) => i.n)).toEqual([1, 2]);
+    }
+  });
+
+  test("a footnote reference with no matching definition degrades to its literal text (CommonMark spec behavior)", () => {
+    // Same resolve-at-parse-time behavior as reference links/images above —
+    // `[^missing]` with no `[^missing]: ...` definition anywhere in the
+    // document never becomes a footnoteReference node.
+    const blocks = parseToBlocks("Fact.[^missing]");
+    expect(blocks).toEqual([{ t: "paragraph", inl: [{ t: "text", v: "Fact.[^missing]" }] }]);
+  });
+
+  test("a document with no footnote references has no footnotes block", () => {
+    const blocks = parseToBlocks("Just a paragraph.");
+    expect(blocks.some((b) => b.t === "footnotes")).toBe(false);
+  });
+});
+
+test.describe("table column alignment", () => {
+  test("captures left/center/right/unset alignment per column", () => {
+    const md = "| A | B | C | D |\n|:--|:-:|--:|---|\n| 1 | 2 | 3 | 4 |";
+    const b = firstBlock(md);
+    expect(b.t).toBe("table");
+    if (b.t === "table") {
+      expect(b.align).toEqual(["left", "center", "right", null]);
+    }
+  });
+});
+
+test.describe("depth/count guards against pathological nesting", () => {
+  test("parseToBlocks never throws on thousands of nested blockquotes", () => {
+    const md = ">".repeat(20_000) + " hi";
+    expect(() => parseToBlocks(md)).not.toThrow();
+    const blocks = parseToBlocks(md);
+    expect(blocks.length).toBeGreaterThan(0);
+  });
+
+  test("deeply nested (but individually valid) blockquotes are truncated, not stack-overflowed", () => {
+    let md = "bottom";
+    for (let i = 0; i < 200; i++) md = `> ${md}`;
+    expect(() => parseToBlocks(md)).not.toThrow();
+    const blocks = parseToBlocks(md);
+    expect(blocks.length).toBeGreaterThan(0);
+    // Truncation surfaces as a trailing explanatory paragraph.
+    const last = blocks[blocks.length - 1];
+    expect(last.t).toBe("paragraph");
+    if (last.t === "paragraph") {
+      expect(last.inl[0]).toMatchObject({ t: "text" });
+      expect((last.inl[0] as { v: string }).v).toContain("too large or deeply nested");
+    }
+  });
+
+  test("deeply nested (but individually valid) lists are truncated, not stack-overflowed", () => {
+    let md = "- bottom";
+    for (let i = 0; i < 200; i++) md = `- outer\n  ${md.replace(/\n/g, "\n  ")}`;
+    expect(() => parseToBlocks(md)).not.toThrow();
+    expect(parseToBlocks(md).length).toBeGreaterThan(0);
+  });
+
+  test("deeply nested emphasis is truncated, not stack-overflowed", () => {
+    const md = "*".repeat(400) + "x" + "*".repeat(400);
+    expect(() => parseToBlocks(md)).not.toThrow();
+  });
+
+  test("a well-formed, ordinarily-nested document is completely unaffected by the guards", () => {
+    const md = "# Title\n\n> A quote\n>\n> - a list item\n>   - nested once\n\nDone.";
+    const blocks = parseToBlocks(md);
+    expect(blocks.some((b) => b.t === "paragraph" && b.inl.some((i) => i.t === "text" && i.v.includes("truncated")))).toBe(false);
+  });
+});

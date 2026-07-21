@@ -1,18 +1,35 @@
-import type { Block, CalloutKind, Inline } from "@/lib/blocks";
+import type { Block, Inline, TableAlign } from "@/lib/blocks";
 import { parseToBlocks } from "@/lib/parse";
-import { normalizeInput, stripDangerousSequences } from "@/lib/sanitize";
+import { CALLOUT_META, sanitizeImageUrl, sanitizeUrl } from "@/lib/render-shared";
+import { normalizeInput } from "@/lib/sanitize";
 
-// Inline styles (not class names) so callouts render correctly both in the
-// standalone document export (blocksToHtmlDocument, which ships a <style>
-// block) and the unstyled clipboard fragment (markdownToHtml/blocksToHtml,
-// pasted into email/Slack/Docs with no external stylesheet available).
-const CALLOUT_HTML_META: Record<CalloutKind, { label: string; border: string; bg: string; color: string }> = {
-  note: { label: "Note", border: "#0ea5e9", bg: "rgba(14,165,233,.08)", color: "#0ea5e9" },
-  tip: { label: "Tip", border: "#10b981", bg: "rgba(16,185,129,.08)", color: "#10b981" },
-  warning: { label: "Warning", border: "#f59e0b", bg: "rgba(245,158,11,.08)", color: "#f59e0b" },
-  important: { label: "Important", border: "#7c5cfc", bg: "rgba(124,92,252,.08)", color: "#7c5cfc" },
-  caution: { label: "Caution", border: "#ef4444", bg: "rgba(239,68,68,.08)", color: "#ef4444" },
+// Inline styles (not class names) so callouts/tables render correctly both
+// in the standalone document export (blocksToHtmlDocument, which ships a
+// <style> block) and the unstyled clipboard fragment
+// (markdownToHtml/blocksToHtml, pasted into email/Slack/Docs with no
+// external stylesheet available). The label text comes from the single
+// shared CALLOUT_META table (src/lib/render-shared.ts) also used by
+// Callout.tsx — only the color *representation* differs by necessity
+// (Tailwind classes there, inline hex here).
+function calloutBg(hex: string): string {
+  // Every CALLOUT_META.colorVar is a 7-char #rrggbb hex literal, so this is
+  // a fixed-format transform, not general color parsing.
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},.08)`;
+}
+
+const TABLE_ALIGN_STYLE: Record<Exclude<TableAlign, null>, string> = {
+  left: "text-align:left",
+  center: "text-align:center",
+  right: "text-align:right",
 };
+
+function tableAlignStyle(align: TableAlign[] | undefined, i: number): string {
+  const a = align?.[i];
+  return a ? ` style="${TABLE_ALIGN_STYLE[a]}"` : "";
+}
 
 /**
  * Convert the app's markdown (source of truth) into a clean HTML fragment.
@@ -23,17 +40,10 @@ const CALLOUT_HTML_META: Record<CalloutKind, { label: string; border: string; bg
  * - Escape all user strings and defensively sanitize URLs
  */
 export function markdownToHtml(raw: string): string {
-  const normalized = stripDangerousSequences(normalizeInput(raw ?? ""));
-
-  let blocks: Block[] = [];
-  if (normalized.trim()) {
-    try {
-      blocks = parseToBlocks(normalized);
-    } catch {
-      blocks = [];
-    }
-  }
-
+  const normalized = normalizeInput(raw ?? "");
+  // parseToBlocks never throws (see its own doc comment) — a catastrophic
+  // parse failure degrades to an explanatory block, not an exception.
+  const blocks: Block[] = normalized.trim() ? parseToBlocks(normalized) : [];
   return blocksToHtml(blocks);
 }
 
@@ -102,8 +112,6 @@ function renderBlock(b: Block): string {
       const tag = b.ordered ? "ol" : "ul";
       const items = b.items
         .map((it) => {
-          // Backwards compat: old published docs stored items as Inline[]
-          if (Array.isArray(it)) return `<li>${renderInlines(it as never)}</li>`;
           const checkbox =
             it.checked != null
               ? `<input type="checkbox"${it.checked ? " checked" : ""} disabled />`
@@ -120,9 +128,9 @@ function renderBlock(b: Block): string {
       return `<blockquote>${inner}</blockquote>`;
     }
     case "callout": {
-      const meta = CALLOUT_HTML_META[b.kind];
+      const meta = CALLOUT_META[b.kind];
       const inner = b.blocks.map(renderBlock).join("");
-      return `<div style="border:1px solid ${meta.border};background:${meta.bg};border-radius:8px;padding:1rem;margin:0 0 1em"><p style="margin:0 0 .5em;font-weight:700;color:${meta.color}">${escapeHtmlInner(meta.label)}</p>${inner}</div>`;
+      return `<div style="border:1px solid ${meta.colorVar};background:${calloutBg(meta.colorVar)};border-radius:8px;padding:1rem;margin:0 0 1em"><p style="margin:0 0 .5em;font-weight:700;color:${meta.colorVar}">${escapeHtmlInner(meta.label)}</p>${inner}</div>`;
     }
     case "toggle": {
       const inner = b.blocks.map(renderBlock).join("");
@@ -143,14 +151,14 @@ function renderBlock(b: Block): string {
     }
     case "table": {
       const headCells = b.head
-        .map((cell) => `<th>${renderInlines(cell)}</th>`)
+        .map((cell, i) => `<th${tableAlignStyle(b.align, i)}>${renderInlines(cell)}</th>`)
         .join("");
       const head = `<thead><tr>${headCells}</tr></thead>`;
 
       const bodyRows = b.rows
         .map((row) => {
           const tds = row
-            .map((cell) => `<td>${renderInlines(cell)}</td>`)
+            .map((cell, i) => `<td${tableAlignStyle(b.align, i)}>${renderInlines(cell)}</td>`)
             .join("");
           return `<tr>${tds}</tr>`;
         })
@@ -162,13 +170,30 @@ function renderBlock(b: Block): string {
     case "hr":
       return `<hr />`;
     case "image": {
-      const safeSrc = sanitizeHref(b.src);
-      if (!safeSrc || safeSrc === "#") return "";
+      const safeSrc = sanitizeImageUrl(b.src);
+      if (!safeSrc) return "";
       return `<figure><img src="${escapeAttr(safeSrc)}" alt="${escapeAttr(b.alt)}" />${b.alt ? `<figcaption>${escapeHtml(b.alt)}</figcaption>` : ""}</figure>`;
     }
     case "diagram": {
       const langClass = ` class="language-${escapeAttr(b.lang)}"`;
       return `<pre><code${langClass}>${escapeHtml(b.code)}</code></pre>`;
+    }
+    case "math": {
+      // Rendered as source, not compiled via KaTeX — a compiled render
+      // needs KaTeX's CSS (including @font-face declarations) shipped
+      // alongside it to display correctly, which conflicts with this
+      // exporter's "conservative, dependency-free HTML subset" contract
+      // (see file header). Same treatment as `diagram` for the same reason.
+      return `<pre><code class="language-latex">${escapeHtml(b.code)}</code></pre>`;
+    }
+    case "footnotes": {
+      const items = b.items
+        .map((item) => {
+          const inner = item.blocks.map(renderBlock).join("");
+          return `<li id="fn-${escapeAttr(item.id)}">${inner} <a href="#fnref-${escapeAttr(item.id)}">↩</a></li>`;
+        })
+        .join("");
+      return `<hr /><section aria-label="Footnotes"><ol>${items}</ol></section>`;
     }
     default:
       return "";
@@ -190,17 +215,20 @@ function renderInline(i: Inline): string {
     case "code":
       return `<code>${escapeHtml(i.v)}</code>`;
     case "link": {
-      const href = sanitizeHref(i.href);
-      const safeHref = escapeAttr(href);
+      const safeHref = escapeAttr(sanitizeUrl(i.href));
       return `<a href="${safeHref}" rel="noopener noreferrer">${renderInlines(i.c)}</a>`;
     }
     case "del":
       return `<del>${renderInlines(i.c)}</del>`;
     case "image": {
-      const safeSrc = sanitizeHref(i.src);
-      if (!safeSrc || safeSrc === "#") return "";
+      const safeSrc = sanitizeImageUrl(i.src);
+      if (!safeSrc) return "";
       return `<img src="${escapeAttr(safeSrc)}" alt="${escapeAttr(i.alt)}" />`;
     }
+    case "math":
+      return `<code>${escapeHtml(i.v)}</code>`;
+    case "footnoteRef":
+      return `<sup><a href="#fn-${escapeAttr(i.id)}" id="fnref-${escapeAttr(i.id)}">[${i.n}]</a></sup>`;
     default:
       return "";
   }
@@ -218,37 +246,6 @@ function escapeHtml(s: string): string {
 function escapeAttr(s: string): string {
   // Attributes are also escaped, but kept separate for readability.
   return escapeHtml(s);
-}
-
-function sanitizeHref(href: string): string {
-  const raw = (href ?? "").trim();
-  if (!raw) return "#";
-
-  // Disallow javascript/data/vbscript and other odd schemes.
-  const lowered = raw.toLowerCase();
-  if (
-    lowered.startsWith("javascript:") ||
-    lowered.startsWith("data:") ||
-    lowered.startsWith("vbscript:")
-  ) {
-    return "#";
-  }
-
-  // Allow common safe URL shapes.
-  if (
-    lowered.startsWith("http://") ||
-    lowered.startsWith("https://") ||
-    lowered.startsWith("mailto:") ||
-    lowered.startsWith("#") ||
-    lowered.startsWith("/") ||
-    lowered.startsWith("./") ||
-    lowered.startsWith("../")
-  ) {
-    return raw;
-  }
-
-  // Anything else becomes inert.
-  return "#";
 }
 
 function clampHeadingLevel(level: number): 1 | 2 | 3 | 4 {

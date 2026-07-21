@@ -11,10 +11,13 @@ import {
   COLUMNS_MAX,
   COLUMNS_MIN,
   DIAGRAM_LANGS,
+  MAX_BLOCK_COUNT,
+  MAX_BLOCK_DEPTH,
   type Block,
   type CalloutKind,
   type Inline,
   type ListItem,
+  type TableAlign,
 } from "./blocks";
 
 type MdNode = {
@@ -28,10 +31,65 @@ type MdNode = {
   ordered?: unknown;
   checked?: unknown;
   name?: unknown;
+  identifier?: unknown;
+  align?: unknown;
   data?: { directiveLabel?: boolean };
 };
 
-function inlineFromNodes(nodes: MdNode[]): Inline[] {
+/**
+ * Per-parse mutable state, threaded through every recursive function below
+ * instead of living at module scope — parseToBlocks must be safe to call
+ * concurrently (it runs per-request on the server) and re-entrantly (a
+ * footnote body is parsed by re-entering blocksFromChildren after the main
+ * walk already finished), so nothing here can be a module-level variable.
+ *
+ * `nodeCount`/`truncated` are mutated in place by reference — plain numbers
+ * would need to be threaded as extra return values through every recursive
+ * call site instead.
+ */
+type ParseCtx = {
+  /** identifier → resolved URL, from top-level `[label]: url` definitions. */
+  definitions: Map<string, string>;
+  /** identifier → the raw footnoteDefinition node, from `[^id]: body`. */
+  footnoteDefs: Map<string, MdNode>;
+  /** identifier → 1-based display index, assigned in first-reference order. */
+  footnoteOrder: Map<string, number>;
+  nodeCount: number;
+  truncated: boolean;
+};
+
+function newCtx(tree: Root): ParseCtx {
+  const definitions = new Map<string, string>();
+  visit(tree, "definition", (node) => {
+    const n = node as unknown as MdNode;
+    if (typeof n.identifier === "string" && typeof n.url === "string") {
+      definitions.set(n.identifier, n.url);
+    }
+  });
+
+  const footnoteDefs = new Map<string, MdNode>();
+  visit(tree, "footnoteDefinition", (node) => {
+    const n = node as unknown as MdNode;
+    if (typeof n.identifier === "string") footnoteDefs.set(n.identifier, n);
+  });
+
+  return { definitions, footnoteDefs, footnoteOrder: new Map(), nodeCount: 0, truncated: false };
+}
+
+function footnoteIndex(ctx: ParseCtx, id: string): number {
+  const existing = ctx.footnoteOrder.get(id);
+  if (existing !== undefined) return existing;
+  const n = ctx.footnoteOrder.size + 1;
+  ctx.footnoteOrder.set(id, n);
+  return n;
+}
+
+function inlineFromNodes(nodes: MdNode[], ctx: ParseCtx, depth: number): Inline[] {
+  if (depth > MAX_BLOCK_DEPTH) {
+    ctx.truncated = true;
+    return [];
+  }
+
   const out: Inline[] = [];
   for (const n of nodes) {
     if (!n) continue;
@@ -41,13 +99,13 @@ function inlineFromNodes(nodes: MdNode[]): Inline[] {
         out.push({ t: "text", v: String((n as Text).value ?? "") });
         break;
       case "strong":
-        out.push({ t: "strong", c: inlineFromNodes(n.children ?? []) });
+        out.push({ t: "strong", c: inlineFromNodes(n.children ?? [], ctx, depth + 1) });
         break;
       case "emphasis":
-        out.push({ t: "em", c: inlineFromNodes(n.children ?? []) });
+        out.push({ t: "em", c: inlineFromNodes(n.children ?? [], ctx, depth + 1) });
         break;
       case "delete":
-        out.push({ t: "del", c: inlineFromNodes(n.children ?? []) });
+        out.push({ t: "del", c: inlineFromNodes(n.children ?? [], ctx, depth + 1) });
         break;
       case "inlineCode":
         out.push({ t: "code", v: String(n.value ?? "") });
@@ -56,9 +114,21 @@ function inlineFromNodes(nodes: MdNode[]): Inline[] {
         out.push({
           t: "link",
           href: String(n.url ?? ""),
-          c: inlineFromNodes(n.children ?? []),
+          c: inlineFromNodes(n.children ?? [], ctx, depth + 1),
         });
         break;
+      case "linkReference": {
+        // `[text][ref]` / `[text][]` — resolve against the top-level
+        // `[ref]: url` definitions collected up front. An unresolved
+        // reference (dangling/typo'd label) degrades to its plain text
+        // rather than vanishing or linking to nothing.
+        const id = String(n.identifier ?? "");
+        const children = inlineFromNodes(n.children ?? [], ctx, depth + 1);
+        const url = ctx.definitions.get(id);
+        if (url) out.push({ t: "link", href: url, c: children });
+        else out.push(...children);
+        break;
+      }
       case "image":
         out.push({
           t: "image",
@@ -66,6 +136,22 @@ function inlineFromNodes(nodes: MdNode[]): Inline[] {
           alt: String(n.alt ?? ""),
         });
         break;
+      case "imageReference": {
+        // `![alt][ref]` — same definition-table resolution as linkReference.
+        // An unresolved reference is dropped, same as a link with no href
+        // would be inert; there's no sensible inline fallback for an image.
+        const id = String(n.identifier ?? "");
+        const url = ctx.definitions.get(id);
+        if (url) out.push({ t: "image", src: url, alt: String(n.alt ?? "") });
+        break;
+      }
+      case "footnoteReference": {
+        const id = String(n.identifier ?? "");
+        if (ctx.footnoteDefs.has(id)) {
+          out.push({ t: "footnoteRef", id, n: footnoteIndex(ctx, id) });
+        }
+        break;
+      }
       case "inlineMath":
         out.push({ t: "math", v: String(n.value ?? "") });
         break;
@@ -73,7 +159,7 @@ function inlineFromNodes(nodes: MdNode[]): Inline[] {
         out.push({ t: "text", v: "\n" });
         break;
       default:
-        if (Array.isArray(n.children)) out.push(...inlineFromNodes(n.children));
+        if (Array.isArray(n.children)) out.push(...inlineFromNodes(n.children, ctx, depth + 1));
         break;
     }
   }
@@ -95,8 +181,12 @@ function mergeAdjacentText(inl: Inline[]): Inline[] {
 
 /**
  * Parse a listItem node into a ListItem, recursing into nested block children.
+ * `depth` is the depth already charged for this list (see listBlockFromNode)
+ * — an item's own paragraph/inline content stays at that depth; only a
+ * *further* nested container (a list/quote/directive inside this item)
+ * charges another level.
  */
-function listItemFromNode(node: MdNode): ListItem {
+function listItemFromNode(node: MdNode, ctx: ParseCtx, depth: number): ListItem {
   const checked: boolean | null =
     typeof node.checked === "boolean" ? node.checked : null;
 
@@ -106,21 +196,21 @@ function listItemFromNode(node: MdNode): ListItem {
   for (const ch of node.children ?? []) {
     if (ch.type === "paragraph") {
       // Detect paragraphs that are only an image — surfaces as inline image.
-      inl.push(...inlineFromNodes(ch.children ?? []));
+      inl.push(...inlineFromNodes(ch.children ?? [], ctx, depth));
     } else if (ch.type === "list") {
-      // Nested list becomes a child block.
-      children.push(listBlockFromNode(ch));
+      const nested = listBlockFromNode(ch, ctx, depth + 1);
+      if (nested) children.push(nested);
     } else if (ch.type === "blockquote") {
-      const callout = tryParseCallout(ch);
+      const callout = tryParseCallout(ch, ctx, depth + 1);
       if (callout) {
         children.push({ t: "callout", kind: callout.kind, blocks: callout.blocks });
       } else {
-        children.push({ t: "quote", blocks: blocksFromChildren(ch.children ?? []) });
+        children.push({ t: "quote", blocks: blocksFromChildren(ch.children ?? [], ctx, depth + 1) });
       }
     } else if (ch.type === "containerDirective") {
-      children.push(...blocksFromContainerDirective(ch));
+      children.push(...blocksFromContainerDirective(ch, ctx, depth + 1));
     } else if (Array.isArray(ch.children)) {
-      inl.push(...inlineFromNodes(ch.children));
+      inl.push(...inlineFromNodes(ch.children, ctx, depth));
     }
   }
 
@@ -130,9 +220,16 @@ function listItemFromNode(node: MdNode): ListItem {
   return item;
 }
 
-function listBlockFromNode(node: MdNode): Block {
+/** Returns null (instead of an empty list) once MAX_BLOCK_DEPTH is exceeded,
+ * so pure list-in-list-in-list nesting — which never re-enters
+ * blocksFromChildren — is bounded independently of it. */
+function listBlockFromNode(node: MdNode, ctx: ParseCtx, depth: number): Block | null {
+  if (depth > MAX_BLOCK_DEPTH) {
+    ctx.truncated = true;
+    return null;
+  }
   const ordered = Boolean(node.ordered);
-  const items: ListItem[] = (node.children ?? []).map(listItemFromNode);
+  const items: ListItem[] = (node.children ?? []).map((n) => listItemFromNode(n, ctx, depth));
   return { t: "list", ordered, items };
 }
 
@@ -151,7 +248,11 @@ const CALLOUT_MARKER_RE = /^\[!([a-z]+)\]\s*/i;
  * Readable versions or any other CommonMark renderer (it's just a
  * blockquote whose first word looks odd).
  */
-function tryParseCallout(node: MdNode): { kind: CalloutKind; blocks: Block[] } | null {
+function tryParseCallout(
+  node: MdNode,
+  ctx: ParseCtx,
+  depth: number,
+): { kind: CalloutKind; blocks: Block[] } | null {
   const children = node.children ?? [];
   const first = children[0];
   if (!first || first.type !== "paragraph") return null;
@@ -184,7 +285,7 @@ function tryParseCallout(node: MdNode): { kind: CalloutKind; blocks: Block[] } |
       ? [{ type: "paragraph", children: restOfFirstPara }, ...children.slice(1)]
       : children.slice(1);
 
-  return { kind: kind as CalloutKind, blocks: blocksFromChildren(remainingChildren) };
+  return { kind: kind as CalloutKind, blocks: blocksFromChildren(remainingChildren, ctx, depth) };
 }
 
 // ─── Directive containers (:::toggle, :::columns) — remark-directive ──────
@@ -224,10 +325,10 @@ function directiveBodyChildren(node: MdNode): MdNode[] {
   return directiveLabelText(children) !== null ? children.slice(1) : children;
 }
 
-function toggleBlockFromDirective(node: MdNode): Block {
+function toggleBlockFromDirective(node: MdNode, ctx: ParseCtx, depth: number): Block {
   const label = directiveLabelText(node.children ?? []);
   const summary = label?.trim() ? label.trim() : "Details";
-  return { t: "toggle", summary, blocks: blocksFromChildren(directiveBodyChildren(node)) };
+  return { t: "toggle", summary, blocks: blocksFromChildren(directiveBodyChildren(node), ctx, depth) };
 }
 
 /**
@@ -238,7 +339,7 @@ function toggleBlockFromDirective(node: MdNode): Block {
  * folding any extra separators' content into the final column, so the
  * schema's `.max(COLUMNS_MAX)` is always satisfiable from parsed input.
  */
-function columnsBlockFromDirective(node: MdNode): Block | null {
+function columnsBlockFromDirective(node: MdNode, ctx: ParseCtx, depth: number): Block | null {
   const body = directiveBodyChildren(node);
 
   const groups: MdNode[][] = [[]];
@@ -257,36 +358,54 @@ function columnsBlockFromDirective(node: MdNode): Block | null {
       ? [...groups.slice(0, COLUMNS_MAX - 1), groups.slice(COLUMNS_MAX - 1).flat()]
       : groups;
 
-  return { t: "columns", columns: finalGroups.map((g) => blocksFromChildren(g)) };
+  return { t: "columns", columns: finalGroups.map((g) => blocksFromChildren(g, ctx, depth)) };
 }
 
 /** Dispatches a containerDirective node by name. Returns zero or more Blocks
  * to splice into the caller's block list (zero for an unrecognized name, or
  * for `columns` falling back to its unwrapped body). */
-function blocksFromContainerDirective(node: MdNode): Block[] {
+function blocksFromContainerDirective(node: MdNode, ctx: ParseCtx, depth: number): Block[] {
   const name = String(node.name ?? "").toLowerCase();
 
-  if (name === "toggle") return [toggleBlockFromDirective(node)];
+  if (name === "toggle") return [toggleBlockFromDirective(node, ctx, depth)];
 
   if (name === "columns") {
-    const block = columnsBlockFromDirective(node);
-    return block ? [block] : blocksFromChildren(directiveBodyChildren(node));
+    const block = columnsBlockFromDirective(node, ctx, depth);
+    return block ? [block] : blocksFromChildren(directiveBodyChildren(node), ctx, depth);
   }
 
   return [];
 }
 
-function blocksFromChildren(children: MdNode[]): Block[] {
+const TABLE_ALIGN_VALUES = new Set(["left", "center", "right"]);
+
+function tableAlignFromNode(node: MdNode): TableAlign[] {
+  const raw = Array.isArray(node.align) ? node.align : [];
+  return raw.map((a) => (typeof a === "string" && TABLE_ALIGN_VALUES.has(a) ? (a as TableAlign) : null));
+}
+
+function blocksFromChildren(children: MdNode[], ctx: ParseCtx, depth: number): Block[] {
+  if (depth > MAX_BLOCK_DEPTH) {
+    ctx.truncated = true;
+    return [];
+  }
+
   const blocks: Block[] = [];
 
   for (const node of children) {
     if (!node) continue;
 
+    if (ctx.nodeCount >= MAX_BLOCK_COUNT) {
+      ctx.truncated = true;
+      break;
+    }
+
     switch (node.type) {
       case "heading": {
-        const depth = Number(node.depth ?? 2);
-        const level = Math.min(Math.max(depth, 1), 4) as 1 | 2 | 3 | 4;
-        blocks.push({ t: "heading", level, inl: inlineFromNodes(node.children ?? []) });
+        const headingDepth = Number(node.depth ?? 2);
+        const level = Math.min(Math.max(headingDepth, 1), 4) as 1 | 2 | 3 | 4;
+        blocks.push({ t: "heading", level, inl: inlineFromNodes(node.children ?? [], ctx, depth) });
+        ctx.nodeCount++;
         break;
       }
 
@@ -300,28 +419,38 @@ function blocksFromChildren(children: MdNode[]): Block[] {
             alt: String(ch[0].alt ?? ""),
           });
         } else {
-          blocks.push({ t: "paragraph", inl: inlineFromNodes(ch) });
+          blocks.push({ t: "paragraph", inl: inlineFromNodes(ch, ctx, depth) });
+        }
+        ctx.nodeCount++;
+        break;
+      }
+
+      case "list": {
+        const list = listBlockFromNode(node, ctx, depth + 1);
+        if (list) {
+          blocks.push(list);
+          ctx.nodeCount++;
         }
         break;
       }
 
-      case "list":
-        blocks.push(listBlockFromNode(node));
-        break;
-
       case "blockquote": {
-        const callout = tryParseCallout(node);
+        const callout = tryParseCallout(node, ctx, depth + 1);
         if (callout) {
           blocks.push({ t: "callout", kind: callout.kind, blocks: callout.blocks });
         } else {
-          blocks.push({ t: "quote", blocks: blocksFromChildren(node.children ?? []) });
+          blocks.push({ t: "quote", blocks: blocksFromChildren(node.children ?? [], ctx, depth + 1) });
         }
+        ctx.nodeCount++;
         break;
       }
 
-      case "containerDirective":
-        blocks.push(...blocksFromContainerDirective(node));
+      case "containerDirective": {
+        const directiveBlocks = blocksFromContainerDirective(node, ctx, depth + 1);
+        blocks.push(...directiveBlocks);
+        ctx.nodeCount += directiveBlocks.length;
         break;
+      }
 
       case "code": {
         const lang = node.lang ? String(node.lang).trim() : "";
@@ -335,15 +464,18 @@ function blocksFromChildren(children: MdNode[]): Block[] {
             code: String(node.value ?? ""),
           });
         }
+        ctx.nodeCount++;
         break;
       }
 
       case "math":
         blocks.push({ t: "math", display: true, code: String(node.value ?? "") });
+        ctx.nodeCount++;
         break;
 
       case "thematicBreak":
         blocks.push({ t: "hr" });
+        ctx.nodeCount++;
         break;
 
       case "table": {
@@ -352,17 +484,22 @@ function blocksFromChildren(children: MdNode[]): Block[] {
         const headRow = rowNodes[0];
         if (headRow?.type === "tableRow") {
           head.push(
-            ...(headRow.children ?? []).map((c: MdNode) => inlineFromNodes(c.children ?? [])),
+            ...(headRow.children ?? []).map((c: MdNode) => inlineFromNodes(c.children ?? [], ctx, depth)),
           );
         }
         const rows: Inline[][][] = rowNodes.slice(1).map((tr: MdNode) =>
-          (tr.children ?? []).map((c: MdNode) => inlineFromNodes(c.children ?? [])),
+          (tr.children ?? []).map((c: MdNode) => inlineFromNodes(c.children ?? [], ctx, depth)),
         );
-        blocks.push({ t: "table", head, rows });
+        blocks.push({ t: "table", head, rows, align: tableAlignFromNode(node) });
+        ctx.nodeCount++;
         break;
       }
 
       default:
+        // Unhandled node types include `definition` and `footnoteDefinition`
+        // — both are collected up front (see newCtx) and rendered
+        // separately (a resolved link/image, and a trailing "footnotes"
+        // block respectively), so they intentionally produce nothing here.
         break;
     }
   }
@@ -371,14 +508,62 @@ function blocksFromChildren(children: MdNode[]): Block[] {
 }
 
 export function parseToBlocks(input: string): Block[] {
-  const tree = unified()
-    .use(remarkParse)
-    .use(remarkGfm)
-    .use(remarkMath)
-    .use(remarkDirective)
-    .parse(input) as Root;
-  visit(tree, "html", removeRawHtmlNodes);
-  return blocksFromChildren((tree.children ?? []) as unknown as MdNode[]);
+  try {
+    const tree = unified()
+      .use(remarkParse)
+      .use(remarkGfm)
+      .use(remarkMath)
+      .use(remarkDirective)
+      .parse(input) as Root;
+    visit(tree, "html", removeRawHtmlNodes);
+
+    const ctx = newCtx(tree);
+    const blocks = blocksFromChildren((tree.children ?? []) as unknown as MdNode[], ctx, 0);
+
+    if (ctx.footnoteOrder.size > 0) {
+      const items = Array.from(ctx.footnoteOrder.entries())
+        .sort((a, b) => a[1] - b[1])
+        .map(([id, n]) => ({
+          id,
+          n,
+          blocks: blocksFromChildren(ctx.footnoteDefs.get(id)?.children ?? [], ctx, 1),
+        }));
+      blocks.push({ t: "footnotes", items });
+    }
+
+    if (ctx.truncated) {
+      blocks.push({
+        t: "paragraph",
+        inl: [
+          {
+            t: "text",
+            v: "⚠ Some content was omitted — this document is too large or deeply nested to render in full.",
+          },
+        ],
+      });
+    }
+
+    return blocks;
+  } catch {
+    // Parsing itself — remark's own tokenizer, or our tree walk above — can
+    // exceed the call stack on pathological input (e.g. thousands of nested
+    // blockquotes) before ever producing a tree for MAX_BLOCK_DEPTH's own
+    // check to apply to. Every caller (all publish/patch routes, and the
+    // live editor preview) depends on parseToBlocks never throwing, so a
+    // catastrophic failure degrades to one explanatory block instead of an
+    // unhandled exception (a 500, or a crashed preview pane).
+    return [
+      {
+        t: "paragraph",
+        inl: [
+          {
+            t: "text",
+            v: "This document couldn't be parsed — it may contain unusually deep nesting. Try simplifying the structure.",
+          },
+        ],
+      },
+    ];
+  }
 }
 
 function removeRawHtmlNodes(

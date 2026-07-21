@@ -1,20 +1,7 @@
 import type { Inline } from "@/lib/blocks";
-import dynamic from "next/dynamic";
+import { sanitizeImageUrl, sanitizeUrl } from "@/lib/render-shared";
 import React from "react";
-
-const InlineMath = dynamic(() => import("./InlineMath").then((m) => m.InlineMath), { ssr: false });
-
-function safeHref(href: string): string {
-  const trimmed = href.trim();
-  if (/^https?:\/\//i.test(trimmed)) return trimmed;
-  if (/^mailto:/i.test(trimmed)) return trimmed;
-  return "#";
-}
-
-function safeSrc(src: string): string {
-  const trimmed = (src ?? "").trim();
-  return /^https?:\/\//i.test(trimmed) ? trimmed : "";
-}
+import { InlineMath } from "./InlineMath";
 
 export function InlineRenderer({ inl }: { inl: Inline[] }) {
   return (
@@ -50,20 +37,22 @@ export function InlineRenderer({ inl }: { inl: Inline[] }) {
                 {node.v}
               </code>
             );
-          case "link":
+          case "link": {
+            const href = sanitizeUrl(node.href);
             return (
               <a
                 key={i}
-                href={safeHref(node.href)}
-                target={safeHref(node.href) === "#" ? "_self" : "_blank"}
+                href={href}
+                target={href === "#" ? "_self" : "_blank"}
                 rel="noreferrer"
                 className="text-accent-soft underline decoration-accent/40 underline-offset-4 transition hover:decoration-accent-soft"
               >
                 <InlineRenderer inl={node.c} />
               </a>
             );
+          }
           case "image": {
-            const src = safeSrc(node.src);
+            const src = sanitizeImageUrl(node.src);
             if (!src) return null;
             return (
               // Markdown images are arbitrary external URLs; next/image cannot safely optimize them without domain allowlists.
@@ -78,6 +67,19 @@ export function InlineRenderer({ inl }: { inl: Inline[] }) {
           }
           case "math":
             return <InlineMath key={i} code={node.v} />;
+          case "footnoteRef":
+            return (
+              <sup key={i} className="ml-0.5">
+                <a
+                  href={`#fn-${encodeURIComponent(node.id)}`}
+                  id={`fnref-${encodeURIComponent(node.id)}`}
+                  className="text-accent-soft no-underline hover:underline"
+                  aria-label={`Jump to footnote ${node.n}`}
+                >
+                  [{node.n}]
+                </a>
+              </sup>
+            );
           default:
             return null;
         }

@@ -1,40 +1,32 @@
-import type { Block, Inline, ListItem } from "./blocks";
+import { walkBlocks } from "./block-tree";
+import type { Block } from "./blocks";
+import { inlineToPlainText } from "./inline-text";
 
-function inlineWords(inl: Inline[]): number {
-  const text = inl
-    .map((n): string => {
-      if (n.t === "text" || n.t === "code") return n.v;
-      if (n.t === "link" || n.t === "strong" || n.t === "em" || n.t === "del")
-        return inlineWords(n.c as Inline[]).toString();
-      return "";
-    })
-    .join(" ");
+function wordCount(text: string): number {
   return text.trim().split(/\s+/).filter(Boolean).length;
 }
 
-function listItemWords(item: ListItem): number {
-  return (
-    inlineWords(item.inl ?? []) +
-    blockWords(item.children ?? [])
-  );
-}
-
-function blockWords(blocks: Block[]): number {
-  let count = 0;
-  for (const b of blocks ?? []) {
-    if (b.t === "heading" || b.t === "paragraph") {
-      count += inlineWords(b.inl);
-    } else if (b.t === "list") {
-      for (const item of b.items) count += listItemWords(item);
-    } else if (b.t === "quote") {
-      count += blockWords(b.blocks);
-    }
-    // code, table, hr, image, diagram — not counted as reading content
-  }
-  return count;
-}
-
+/**
+ * Words are only counted directly on `heading`/`paragraph`/table-cell text;
+ * walkBlocks already recurses into every container (list items, quotes,
+ * callouts, toggles, columns, footnotes), so nested prose is reached without
+ * this function recursing itself. code/hr/image/diagram/math contribute
+ * nothing — consistent with the pre-existing behavior of not counting code
+ * toward reading time.
+ */
 export function readingTimeMinutes(blocks: Block[]): number {
-  const words = blockWords(blocks);
+  let words = 0;
+
+  walkBlocks(blocks ?? [], (b) => {
+    if (b.t === "heading" || b.t === "paragraph") {
+      words += wordCount(inlineToPlainText(b.inl));
+    } else if (b.t === "list") {
+      for (const item of b.items) words += wordCount(inlineToPlainText(item.inl));
+    } else if (b.t === "table") {
+      for (const cell of b.head) words += wordCount(inlineToPlainText(cell));
+      for (const row of b.rows) for (const cell of row) words += wordCount(inlineToPlainText(cell));
+    }
+  });
+
   return Math.max(1, Math.round(words / 200));
 }
