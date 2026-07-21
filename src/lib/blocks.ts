@@ -22,17 +22,51 @@ export type ListItem = {
   children?: Block[];
 };
 
+/** Callout marker kinds, in the GitHub/Obsidian `> [!KIND]` convention. */
+export const CALLOUT_KINDS = ["note", "tip", "warning", "important", "caution"] as const;
+export type CalloutKind = (typeof CALLOUT_KINDS)[number];
+
 export type Block =
   | { t: "heading"; level: 1 | 2 | 3 | 4; inl: Inline[] }
   | { t: "paragraph"; inl: Inline[] }
   | { t: "list"; ordered: boolean; items: ListItem[] }
   | { t: "quote"; blocks: Block[] }
+  | { t: "callout"; kind: CalloutKind; blocks: Block[] }
+  | { t: "toggle"; summary: string; blocks: Block[] }
+  | { t: "columns"; columns: Block[][] }
   | { t: "code"; lang?: string; code: string }
   | { t: "table"; head: Inline[][]; rows: Inline[][][] }
   | { t: "hr" }
   | { t: "image"; src: string; alt: string }
   | { t: "diagram"; lang: string; code: string }
   | { t: "math"; display: true; code: string };
+
+/**
+ * Block kinds that hold nested Block[] content ("containers"). Centralized
+ * here so every consumer that needs to recurse into nested content — TOC/
+ * anchor generation, adoption-usage counting, and (in the future) anything
+ * else that walks the tree — shares one definition instead of drifting out
+ * of sync as new container kinds (toggle, columns) are added. Returns one
+ * Block[] group per "slot" the container holds — a single slot for quote/
+ * callout/toggle, one slot per column for a future multi-column container.
+ */
+export function containerChildGroups(b: Block): Block[][] | null {
+  if (b.t === "quote" || b.t === "callout" || b.t === "toggle") return [b.blocks];
+  if (b.t === "columns") return b.columns;
+  return null;
+}
+
+/** Block kinds introduced by the Rich Markdown Blocks effort (see
+ * PLAN-rich-markdown-blocks.md), tracked separately so real adoption data —
+ * not the essay that prompted this work — drives whether further phases
+ * (e.g. stat/dashboard blocks) get built at all. */
+export const RICH_BLOCK_KINDS = new Set<Block["t"]>(["callout", "toggle", "columns"]);
+
+/** Column count bounds for the `columns` block — enforced at parse time
+ * (src/lib/parse.ts) and mirrored in the server-side schema
+ * (src/lib/block-schema.ts). */
+export const COLUMNS_MIN = 2;
+export const COLUMNS_MAX = 4;
 
 export type DocSettings = {
   spacing: "compact" | "comfortable";
@@ -68,6 +102,17 @@ export const DEFAULT_SETTINGS: DocSettings = {
   typeface: "serif",
 };
 
+/**
+ * Languages routed to the Graphviz-in-WASM compiler (@viz-js/viz) instead of
+ * Mermaid — Graphviz's DOT language compiles deterministically to static
+ * SVG with no client-side script execution needed, unlike a hosted
+ * rendering service (deliberately rejected — see PLAN-rich-markdown-blocks.md
+ * for why an outbound-call-dependent renderer is unacceptable on the
+ * anonymous, rate-limited publish path) or PlantUML (needs a server-side
+ * Java renderer, also rejected).
+ */
+export const GRAPHVIZ_LANGS = new Set(["dot", "graphviz"]);
+
 /** Diagram languages that trigger the diagram block type. */
 export const DIAGRAM_LANGS = new Set([
   "mermaid",
@@ -83,4 +128,5 @@ export const DIAGRAM_LANGS = new Set([
   "timeline",
   "xychart",
   "sankey",
+  ...GRAPHVIZ_LANGS,
 ]);

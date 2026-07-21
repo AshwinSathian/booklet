@@ -17,6 +17,7 @@ export async function recordPublishEvent(opts: {
   isUpdate: boolean;
   contentLength: number;
   source: PublishEvent["source"];
+  richBlockKinds?: string[];
 }): Promise<void> {
   const db = await getDb();
   await db.collection<PublishEvent>("publish_events").insertOne({
@@ -27,5 +28,6 @@ export async function recordPublishEvent(opts: {
     content_length_bucket: bucketContentLength(opts.contentLength),
     source: opts.source,
     created_at: new Date().toISOString(),
+    ...(opts.richBlockKinds?.length ? { rich_block_kinds: opts.richBlockKinds } : {}),
   });
 }

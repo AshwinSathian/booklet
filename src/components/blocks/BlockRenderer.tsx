@@ -3,7 +3,10 @@
 import type { Block, DocSettings, ListItem } from "@/lib/blocks";
 import dynamic from "next/dynamic";
 import type { JSX } from "react";
+import { Callout } from "./Callout";
+import { Columns } from "./Columns";
 import { InlineRenderer } from "./InlineRenderer";
+import { Toggle } from "./Toggle";
 
 // Heavy libraries (KaTeX, highlight.js, Mermaid) are excluded from the SSR
 // worker bundle by using ssr:false — they load only in the browser.
@@ -237,6 +240,41 @@ export function BlockRenderer({
                     />
                   </div>
                 </div>
+              );
+
+            case "callout":
+              return (
+                <Callout
+                  key={idx}
+                  kind={b.kind}
+                  blocks={b.blocks}
+                  settings={settings}
+                  headingAnchors={headingAnchors}
+                  keyPrefix={blockKey}
+                />
+              );
+
+            case "toggle":
+              return (
+                <Toggle
+                  key={idx}
+                  summary={b.summary}
+                  blocks={b.blocks}
+                  settings={settings}
+                  headingAnchors={headingAnchors}
+                  keyPrefix={blockKey}
+                />
+              );
+
+            case "columns":
+              return (
+                <Columns
+                  key={idx}
+                  columns={b.columns}
+                  settings={settings}
+                  headingAnchors={headingAnchors}
+                  keyPrefix={blockKey}
+                />
               );
 
             case "code":

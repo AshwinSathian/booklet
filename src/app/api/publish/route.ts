@@ -7,6 +7,8 @@ import { extractDocTitle } from "@/lib/doc-title";
 import { snapshotPageVersion } from "@/lib/db/versions";
 import { recordPublishEvent } from "@/lib/db/publish-events";
 import { putDoc } from "@/lib/storage";
+import { validateBlocks } from "@/lib/block-schema";
+import { collectRichBlockKinds } from "@/lib/block-usage";
 import { checkRateLimit, checkMonthlyQuota } from "@/lib/rate-limit";
 import { ANONYMOUS_LIMITS } from "@/lib/quota";
 import { deliverWebhooks } from "@/lib/webhook-delivery";
@@ -44,6 +46,11 @@ export async function POST(req: Request) {
 
     if (!payload?.blocks?.length) {
       return NextResponse.json({ error: "Nothing to publish" }, { status: 400 });
+    }
+
+    const blocksError = validateBlocks(payload.blocks);
+    if (blocksError) {
+      return NextResponse.json({ error: blocksError }, { status: 400 });
     }
 
     try {
@@ -95,6 +102,7 @@ export async function POST(req: Request) {
       pageId: id,
       isUpdate: false,
       contentLength: rawLength,
+      richBlockKinds: collectRichBlockKinds(payload.blocks),
       source: "browser",
     }).catch((err) => logError("publish", "Event record failed", err));
 

@@ -1,6 +1,38 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { GRAPHVIZ_LANGS } from "@/lib/blocks";
+import { sanitizeCompiledSvg } from "@/lib/svg-sanitize";
+
+async function renderMermaid(code: string): Promise<string> {
+  const mermaid = (await import("mermaid")).default;
+  const isDark = !document.documentElement.classList.contains("light");
+
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: isDark ? "dark" : "default",
+    securityLevel: "strict",
+  });
+
+  const uid = `diagram-${Math.random().toString(36).slice(2)}`;
+  const { svg } = await mermaid.render(uid, code.trim());
+  return svg;
+}
+
+async function renderGraphviz(code: string): Promise<string> {
+  const { instance } = await import("@viz-js/viz");
+  const viz = await instance();
+  const result = viz.render(code.trim(), { format: "svg" });
+
+  if (result.status !== "success") {
+    const message = result.errors.map((e) => e.message).join("\n");
+    throw new Error(message || "Failed to render diagram");
+  }
+
+  const sanitized = sanitizeCompiledSvg(result.output);
+  if (!sanitized) throw new Error("Failed to render diagram");
+  return sanitized;
+}
 
 export function DiagramBlock({ lang, code }: { lang: string; code: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -29,17 +61,9 @@ export function DiagramBlock({ lang, code }: { lang: string; code: string }) {
 
     async function go() {
       try {
-        const mermaid = (await import("mermaid")).default;
-        const isDark = !document.documentElement.classList.contains("light");
-
-        mermaid.initialize({
-          startOnLoad: false,
-          theme: isDark ? "dark" : "default",
-          securityLevel: "strict",
-        });
-
-        const uid = `diagram-${Math.random().toString(36).slice(2)}`;
-        const { svg } = await mermaid.render(uid, code.trim());
+        const svg = GRAPHVIZ_LANGS.has(lang)
+          ? await renderGraphviz(code)
+          : await renderMermaid(code);
 
         if (!stale && containerRef.current) {
           containerRef.current.innerHTML = svg;
@@ -56,7 +80,7 @@ export function DiagramBlock({ lang, code }: { lang: string; code: string }) {
     return () => {
       stale = true;
     };
-  }, [code, themeKey]);
+  }, [code, lang, themeKey]);
 
   return (
     <div className="overflow-hidden rounded-xl border border-border-default bg-bg-elevated">

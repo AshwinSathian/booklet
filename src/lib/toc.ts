@@ -1,4 +1,4 @@
-import type { Block, Inline } from "@/lib/blocks";
+import { containerChildGroups, type Block, type Inline } from "@/lib/blocks";
 
 export type TocItem = {
   id: string;
@@ -86,8 +86,17 @@ export function buildToc(blocks: Block[]): {
         anchorMap[key] = anchorId;
       }
 
-      if (b.t === "quote") {
-        walk(b.blocks, [...path, i]);
+      const groups = containerChildGroups(b);
+      if (groups) {
+        // Single-group containers (quote, and later callout/toggle) keep the
+        // exact same path shape as before this change (no extra path
+        // segment) — this is what makes the refactor behavior-identical for
+        // `quote`. Multi-group containers (later: columns) get one extra
+        // path segment per group so keys stay unique across columns and
+        // match the keyPrefix each column's own BlockRenderer call will use.
+        groups.forEach((group, gi) => {
+          walk(group, groups.length > 1 ? [...path, i, gi] : [...path, i]);
+        });
       }
     }
   }

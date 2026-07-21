@@ -10,6 +10,8 @@ import { recordPublishEvent } from "@/lib/db/publish-events";
 import { parseFrontmatter } from "@/lib/frontmatter";
 import { deliverWebhooks } from "@/lib/webhook-delivery";
 import { parseToBlocks } from "@/lib/parse";
+import { validateBlocks } from "@/lib/block-schema";
+import { collectRichBlockKinds } from "@/lib/block-usage";
 import { putDoc } from "@/lib/storage";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { assertSlugAvailable } from "@/server/pages";
@@ -42,16 +44,32 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  // Extract frontmatter metadata before parsing
+  // Extract frontmatter metadata before parsing. `hasRawString` (not mere
+  // truthiness of `payload.raw`) gates both this derivation and the
+  // validate-vs-trust decision below — a truthy-but-non-string `raw` (e.g.
+  // an array or object slipped in by a hand-rolled API client) must not
+  // silently skip both derivation AND validation of client-supplied
+  // `blocks`. See src/app/api/v1/pages/[id]/route.ts's `hadRaw` for the
+  // same pattern.
   let frontmatterMeta = {};
-  if (payload?.raw && typeof payload.raw === "string") {
-    const { meta, body } = parseFrontmatter(payload.raw);
+  const hasRawString = Boolean(payload?.raw && typeof payload.raw === "string");
+  if (hasRawString && payload) {
+    const { meta, body } = parseFrontmatter(payload.raw as string);
     frontmatterMeta = meta;
     payload = { ...payload, raw: body, blocks: parseToBlocks(body) };
   }
 
   if (!payload?.blocks?.length) {
     return NextResponse.json({ error: "Nothing to publish — provide `blocks` or `raw` markdown." }, { status: 400 });
+  }
+
+  // Only validate client-supplied `blocks` shape — blocks derived from `raw`
+  // above came from our own parseToBlocks() and are trusted by construction.
+  if (!hasRawString) {
+    const blocksError = validateBlocks(payload.blocks);
+    if (blocksError) {
+      return NextResponse.json({ error: blocksError }, { status: 400 });
+    }
   }
 
   const fm = frontmatterMeta as import("@/lib/frontmatter").FrontmatterMeta;
@@ -100,6 +118,7 @@ export async function POST(req: Request) {
     pageId: id,
     isUpdate: false,
     contentLength: rawLength,
+    richBlockKinds: collectRichBlockKinds(payload.blocks),
     source: "api",
   }).catch((err) => logError("v1/publish", "Event record failed", err));
 

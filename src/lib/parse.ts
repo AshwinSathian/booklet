@@ -1,11 +1,21 @@
 import type { Parent, Root, Text } from "mdast";
+import remarkDirective from "remark-directive";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import remarkParse from "remark-parse";
 import { unified } from "unified";
 import { visit } from "unist-util-visit";
 import { SKIP } from "unist-util-visit-parents";
-import { DIAGRAM_LANGS, type Block, type Inline, type ListItem } from "./blocks";
+import {
+  CALLOUT_KINDS,
+  COLUMNS_MAX,
+  COLUMNS_MIN,
+  DIAGRAM_LANGS,
+  type Block,
+  type CalloutKind,
+  type Inline,
+  type ListItem,
+} from "./blocks";
 
 type MdNode = {
   type?: string;
@@ -17,6 +27,8 @@ type MdNode = {
   depth?: unknown;
   ordered?: unknown;
   checked?: unknown;
+  name?: unknown;
+  data?: { directiveLabel?: boolean };
 };
 
 function inlineFromNodes(nodes: MdNode[]): Inline[] {
@@ -99,7 +111,14 @@ function listItemFromNode(node: MdNode): ListItem {
       // Nested list becomes a child block.
       children.push(listBlockFromNode(ch));
     } else if (ch.type === "blockquote") {
-      children.push({ t: "quote", blocks: blocksFromChildren(ch.children ?? []) });
+      const callout = tryParseCallout(ch);
+      if (callout) {
+        children.push({ t: "callout", kind: callout.kind, blocks: callout.blocks });
+      } else {
+        children.push({ t: "quote", blocks: blocksFromChildren(ch.children ?? []) });
+      }
+    } else if (ch.type === "containerDirective") {
+      children.push(...blocksFromContainerDirective(ch));
     } else if (Array.isArray(ch.children)) {
       inl.push(...inlineFromNodes(ch.children));
     }
@@ -115,6 +134,146 @@ function listBlockFromNode(node: MdNode): Block {
   const ordered = Boolean(node.ordered);
   const items: ListItem[] = (node.children ?? []).map(listItemFromNode);
   return { t: "list", ordered, items };
+}
+
+// GitHub/Obsidian-convergent callout marker: the blockquote's first line is
+// `[!KIND]`, optionally followed by more text on the same line. Matched
+// case-insensitively; unrecognized kinds fall through to a plain quote so
+// `> [!bogus]` (or any future GFM alert kind not yet in CALLOUT_KINDS)
+// degrades gracefully instead of erroring.
+const CALLOUT_MARKER_RE = /^\[!([a-z]+)\]\s*/i;
+
+/**
+ * Detects the `[!KIND]` marker on a blockquote's first line and, if present
+ * and recognized, returns the parsed callout. Returns null for any
+ * blockquote that isn't a callout, so callers fall back to a plain `quote`
+ * block — this is what makes the syntax degrade gracefully in older
+ * Readable versions or any other CommonMark renderer (it's just a
+ * blockquote whose first word looks odd).
+ */
+function tryParseCallout(node: MdNode): { kind: CalloutKind; blocks: Block[] } | null {
+  const children = node.children ?? [];
+  const first = children[0];
+  if (!first || first.type !== "paragraph") return null;
+
+  const paraChildren: MdNode[] = first.children ?? [];
+  const firstInline = paraChildren[0];
+  if (!firstInline || firstInline.type !== "text" || typeof firstInline.value !== "string") {
+    return null;
+  }
+
+  const match = CALLOUT_MARKER_RE.exec(firstInline.value);
+  if (!match) return null;
+
+  const kind = match[1].toLowerCase();
+  if (!(CALLOUT_KINDS as readonly string[]).includes(kind)) return null;
+
+  const remainder = firstInline.value.slice(match[0].length);
+  let restOfFirstPara = paraChildren.slice(1);
+  if (remainder) {
+    // Same-line content after the marker, e.g. `[!NOTE] inline note text`.
+    restOfFirstPara = [{ type: "text", value: remainder }, ...restOfFirstPara];
+  } else if (restOfFirstPara[0]?.type === "break") {
+    // Marker consumed the whole first line — drop the soft break that
+    // follows it so the callout's body doesn't start with a blank line.
+    restOfFirstPara = restOfFirstPara.slice(1);
+  }
+
+  const remainingChildren: MdNode[] =
+    restOfFirstPara.length > 0
+      ? [{ type: "paragraph", children: restOfFirstPara }, ...children.slice(1)]
+      : children.slice(1);
+
+  return { kind: kind as CalloutKind, blocks: blocksFromChildren(remainingChildren) };
+}
+
+// ─── Directive containers (:::toggle, :::columns) — remark-directive ──────
+//
+// A containerDirective's optional `[Label]` becomes its first child: a
+// paragraph with `data.directiveLabel === true` (see mdast-util-directive).
+// Both `toggle` and `columns` consume that label if present (columns simply
+// discards it — there's nothing to show it as); an unrecognized directive
+// name is dropped entirely, matching the existing "unknown mdast node type"
+// behavior elsewhere in this file, so `:::whatever` degrades gracefully
+// instead of erroring.
+
+function isDirectiveLabel(node: MdNode | undefined): boolean {
+  return Boolean(node && node.type === "paragraph" && node.data?.directiveLabel === true);
+}
+
+function directiveLabelText(children: MdNode[]): string | null {
+  const first = children[0];
+  if (!isDirectiveLabel(first)) return null;
+  return plainTextFromNodes(first?.children ?? []);
+}
+
+function plainTextFromNodes(nodes: MdNode[]): string {
+  let out = "";
+  for (const n of nodes) {
+    if (!n) continue;
+    if (n.type === "text") out += String(n.value ?? "");
+    else if (n.type === "break") out += " ";
+    else if (Array.isArray(n.children)) out += plainTextFromNodes(n.children);
+  }
+  return out;
+}
+
+/** Strips the directive's label paragraph (if any), returning just the body. */
+function directiveBodyChildren(node: MdNode): MdNode[] {
+  const children = node.children ?? [];
+  return directiveLabelText(children) !== null ? children.slice(1) : children;
+}
+
+function toggleBlockFromDirective(node: MdNode): Block {
+  const label = directiveLabelText(node.children ?? []);
+  const summary = label?.trim() ? label.trim() : "Details";
+  return { t: "toggle", summary, blocks: blocksFromChildren(directiveBodyChildren(node)) };
+}
+
+/**
+ * Splits a `:::columns` directive's body into column groups on top-level
+ * `---` (thematicBreak) separators. Returns null when there aren't at least
+ * COLUMNS_MIN groups — callers fall back to rendering the body unwrapped
+ * rather than a single-column "columns" block. Caps at COLUMNS_MAX by
+ * folding any extra separators' content into the final column, so the
+ * schema's `.max(COLUMNS_MAX)` is always satisfiable from parsed input.
+ */
+function columnsBlockFromDirective(node: MdNode): Block | null {
+  const body = directiveBodyChildren(node);
+
+  const groups: MdNode[][] = [[]];
+  for (const ch of body) {
+    if (ch.type === "thematicBreak") {
+      groups.push([]);
+    } else {
+      groups[groups.length - 1].push(ch);
+    }
+  }
+
+  if (groups.length < COLUMNS_MIN) return null;
+
+  const finalGroups =
+    groups.length > COLUMNS_MAX
+      ? [...groups.slice(0, COLUMNS_MAX - 1), groups.slice(COLUMNS_MAX - 1).flat()]
+      : groups;
+
+  return { t: "columns", columns: finalGroups.map((g) => blocksFromChildren(g)) };
+}
+
+/** Dispatches a containerDirective node by name. Returns zero or more Blocks
+ * to splice into the caller's block list (zero for an unrecognized name, or
+ * for `columns` falling back to its unwrapped body). */
+function blocksFromContainerDirective(node: MdNode): Block[] {
+  const name = String(node.name ?? "").toLowerCase();
+
+  if (name === "toggle") return [toggleBlockFromDirective(node)];
+
+  if (name === "columns") {
+    const block = columnsBlockFromDirective(node);
+    return block ? [block] : blocksFromChildren(directiveBodyChildren(node));
+  }
+
+  return [];
 }
 
 function blocksFromChildren(children: MdNode[]): Block[] {
@@ -150,8 +309,18 @@ function blocksFromChildren(children: MdNode[]): Block[] {
         blocks.push(listBlockFromNode(node));
         break;
 
-      case "blockquote":
-        blocks.push({ t: "quote", blocks: blocksFromChildren(node.children ?? []) });
+      case "blockquote": {
+        const callout = tryParseCallout(node);
+        if (callout) {
+          blocks.push({ t: "callout", kind: callout.kind, blocks: callout.blocks });
+        } else {
+          blocks.push({ t: "quote", blocks: blocksFromChildren(node.children ?? []) });
+        }
+        break;
+      }
+
+      case "containerDirective":
+        blocks.push(...blocksFromContainerDirective(node));
         break;
 
       case "code": {
@@ -202,7 +371,12 @@ function blocksFromChildren(children: MdNode[]): Block[] {
 }
 
 export function parseToBlocks(input: string): Block[] {
-  const tree = unified().use(remarkParse).use(remarkGfm).use(remarkMath).parse(input) as Root;
+  const tree = unified()
+    .use(remarkParse)
+    .use(remarkGfm)
+    .use(remarkMath)
+    .use(remarkDirective)
+    .parse(input) as Root;
   visit(tree, "html", removeRawHtmlNodes);
   return blocksFromChildren((tree.children ?? []) as unknown as MdNode[]);
 }

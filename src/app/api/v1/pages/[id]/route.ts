@@ -6,6 +6,8 @@ import { deletePageVersions, snapshotPageVersion } from "@/lib/db/versions";
 import { recordPublishEvent } from "@/lib/db/publish-events";
 import { resolveApiKey } from "@/lib/api-key-auth";
 import { parseToBlocks } from "@/lib/parse";
+import { validateBlocks } from "@/lib/block-schema";
+import { collectRichBlockKinds } from "@/lib/block-usage";
 import { getDoc, putDoc, deleteDoc } from "@/lib/storage";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { ROUTES } from "@/lib/constants";
@@ -145,6 +147,7 @@ export async function PATCH(
   }
 
   if (hasContent && payload) {
+    const hadRaw = Boolean(payload.raw && typeof payload.raw === "string");
     if (payload.raw && typeof payload.raw === "string") {
       payload = { ...payload, blocks: parseToBlocks(payload.raw) };
     }
@@ -154,6 +157,16 @@ export async function PATCH(
         { error: "Nothing to publish — provide `blocks` or `raw` markdown." },
         { status: 400 },
       );
+    }
+
+    // Only validate client-supplied `blocks` shape — blocks derived from
+    // `raw` above came from our own parseToBlocks() and are trusted by
+    // construction.
+    if (!hadRaw) {
+      const blocksError = validateBlocks(payload.blocks);
+      if (blocksError) {
+        return NextResponse.json({ error: blocksError }, { status: 400 });
+      }
     }
 
     try {
@@ -189,6 +202,7 @@ export async function PATCH(
       pageId: id,
       isUpdate: true,
       contentLength: rawLength,
+      richBlockKinds: collectRichBlockKinds(payload.blocks),
       source: "api",
     }).catch((err) => logError("v1/pages", "Event record failed", err));
 

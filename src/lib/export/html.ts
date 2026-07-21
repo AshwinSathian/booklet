@@ -1,6 +1,18 @@
-import type { Block, Inline } from "@/lib/blocks";
+import type { Block, CalloutKind, Inline } from "@/lib/blocks";
 import { parseToBlocks } from "@/lib/parse";
 import { normalizeInput, stripDangerousSequences } from "@/lib/sanitize";
+
+// Inline styles (not class names) so callouts render correctly both in the
+// standalone document export (blocksToHtmlDocument, which ships a <style>
+// block) and the unstyled clipboard fragment (markdownToHtml/blocksToHtml,
+// pasted into email/Slack/Docs with no external stylesheet available).
+const CALLOUT_HTML_META: Record<CalloutKind, { label: string; border: string; bg: string; color: string }> = {
+  note: { label: "Note", border: "#0ea5e9", bg: "rgba(14,165,233,.08)", color: "#0ea5e9" },
+  tip: { label: "Tip", border: "#10b981", bg: "rgba(16,185,129,.08)", color: "#10b981" },
+  warning: { label: "Warning", border: "#f59e0b", bg: "rgba(245,158,11,.08)", color: "#f59e0b" },
+  important: { label: "Important", border: "#7c5cfc", bg: "rgba(124,92,252,.08)", color: "#7c5cfc" },
+  caution: { label: "Caution", border: "#ef4444", bg: "rgba(239,68,68,.08)", color: "#ef4444" },
+};
 
 /**
  * Convert the app's markdown (source of truth) into a clean HTML fragment.
@@ -106,6 +118,24 @@ function renderBlock(b: Block): string {
     case "quote": {
       const inner = b.blocks.map(renderBlock).join("");
       return `<blockquote>${inner}</blockquote>`;
+    }
+    case "callout": {
+      const meta = CALLOUT_HTML_META[b.kind];
+      const inner = b.blocks.map(renderBlock).join("");
+      return `<div style="border:1px solid ${meta.border};background:${meta.bg};border-radius:8px;padding:1rem;margin:0 0 1em"><p style="margin:0 0 .5em;font-weight:700;color:${meta.color}">${escapeHtmlInner(meta.label)}</p>${inner}</div>`;
+    }
+    case "toggle": {
+      const inner = b.blocks.map(renderBlock).join("");
+      // Native <details>/<summary> — every mainstream email/doc-paste target
+      // either renders these correctly or degrades to always-expanded
+      // content, never to nothing, so this is safe as an export fallback too.
+      return `<details style="border:1px solid #e5e7eb;border-radius:8px;padding:.75rem 1rem;margin:0 0 1em"><summary style="cursor:pointer;font-weight:700">${escapeHtmlInner(b.summary)}</summary><div style="margin-top:.75rem">${inner}</div></details>`;
+    }
+    case "columns": {
+      const cols = b.columns
+        .map((col) => `<div style="flex:1 1 0;min-width:0">${col.map(renderBlock).join("")}</div>`)
+        .join("");
+      return `<div style="display:flex;gap:1.25rem;flex-wrap:wrap;margin:0 0 1em">${cols}</div>`;
     }
     case "code": {
       const langClass = b.lang ? ` class="language-${escapeAttr(b.lang)}"` : "";

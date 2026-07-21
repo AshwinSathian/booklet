@@ -106,6 +106,10 @@ export type PublishEvent = {
   content_length_bucket: "xs" | "sm" | "md" | "lg" | "xl";
   source: "browser" | "api" | "cli";
   created_at: string;
+  // Distinct "rich block" kinds (callout, toggle, columns, ...) present in
+  // this publish — see src/lib/block-usage.ts. Optional/absent on events
+  // recorded before this field existed; empty array means none present.
+  rich_block_kinds?: string[];
 };
 
 export type DbReaction = {

@@ -42,7 +42,12 @@ export type IconName =
   | "lock"
   | "star"
   | "star-filled"
-  | "badge";
+  | "badge"
+  | "callout-note"
+  | "callout-tip"
+  | "callout-warning"
+  | "callout-important"
+  | "callout-caution";
 
 const PATHS: Record<IconName, string | string[]> = {
   plus:           "M8 3v10M3 8h10",
@@ -87,6 +92,11 @@ const PATHS: Record<IconName, string | string[]> = {
   star:           "M8 2l1.8 3.6L14 6.3l-3 2.9.7 4.1L8 11.2l-3.7 2 .7-4.1L2 6.3l4.2-.6z",
   "star-filled":  "M8 2l1.8 3.6L14 6.3l-3 2.9.7 4.1L8 11.2l-3.7 2 .7-4.1L2 6.3l4.2-.6z",
   badge:          ["M8 1l2 3h3.5L11 6.5 12.5 10 8 7.5 3.5 10 5 6.5 1.5 4H5L8 1z", "M8 11v4"],
+  "callout-note":      ["M8 14A6 6 0 1 0 8 2a6 6 0 0 0 0 12z", "M8 7v4", "M8 5h.01"],
+  "callout-tip":       ["M8 2a4 4 0 0 0-2 7.5V11h4V9.5A4 4 0 0 0 8 2z", "M6.5 13h3", "M7 15h2"],
+  "callout-warning":   ["M8 2 1 14h14L8 2z", "M8 6.5v3", "M8 12h.01"],
+  "callout-important": ["M8 1 15 8 8 15 1 8 8 1z", "M8 5v4", "M8 11h.01"],
+  "callout-caution":   ["M5 1h6l4 4v6l-4 4H5l-4-4V5l4-4z", "M8 5v4", "M8 11h.01"],
 };
 
 export function Icon({

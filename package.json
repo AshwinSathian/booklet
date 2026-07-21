@@ -24,6 +24,7 @@
     "deploy": "bash scripts/redeploy.sh"
   },
   "dependencies": {
+    "@viz-js/viz": "^3.28.0",
     "argon2": "^0.44.0",
     "framer-motion": "^12.29.2",
     "highlight.js": "^11.11.1",
@@ -38,6 +39,7 @@
     "primereact": "^10.9.7",
     "react": "19.1.5",
     "react-dom": "19.1.5",
+    "remark-directive": "^4.0.0",
     "remark-gfm": "^4.0.1",
     "remark-math": "^6.0.0",
     "remark-parse": "^11.0.0",
@@ -55,6 +57,7 @@
     "@playwright/test": "^1.60.0",
     "@tailwindcss/postcss": "^4.1.18",
     "@types/js-yaml": "^4.0.9",
+    "@types/jsdom": "^28.0.3",
     "@types/katex": "^0.16.8",
     "@types/node": "^20.19.30",
     "@types/react": "^19.1.5",
@@ -62,6 +65,7 @@
     "autoprefixer": "^10.4.24",
     "eslint": "^9",
     "eslint-config-next": "15.4.6",
+    "jsdom": "^29.1.1",
     "playwright": "^1.60.0",
     "tailwindcss": "^4",
     "typescript": "5.9.3"
