@@ -32,6 +32,26 @@ const TAG_COLORS: Record<Entry["tag"], string> = {
 
 const RELEASES: Release[] = [
   {
+    version: "June–July 2026",
+    date: "2026-07-22",
+    summary: "In-house authentication, permanent anonymous pages, rich Markdown blocks, and a hardened parser.",
+    entries: [
+      { date: "2026-07-11", tag: "New", text: "In-house email + password authentication, replacing the previous third-party sign-in provider" },
+      { date: "2026-07-10", tag: "New", text: "Anonymous pages are now permanent (previously a 30-day expiry) — capped at 10 publishes/month per IP; signed-in accounts have no monthly cap" },
+      { date: "2026-07-22", tag: "New", text: "Rich Markdown blocks — callouts, collapsible toggle sections, multi-column layout, and Graphviz diagrams" },
+      { date: "2026-07-11", tag: "New", text: "Distinct reading typography for published pages, with a per-document toggle" },
+      { date: "2026-07-11", tag: "New", text: "Curated CSS theme gallery for published pages" },
+      { date: "2026-07-11", tag: "New", text: "Cloud draft sync for signed-in users — drafts follow you across devices" },
+      { date: "2026-06-09", tag: "New", text: "Find & replace, table insertion, and a keyboard shortcuts help modal in the editor" },
+      { date: "2026-06-09", tag: "New", text: "Clickable tags, tag filtering on Explore, and a dedicated /integrations page" },
+      { date: "2026-06-09", tag: "New", text: "Social share buttons and a scroll-triggered \"make your own\" CTA on share pages" },
+      { date: "2026-07-11", tag: "Improved", text: "Analytics dashboard redesigned to match the app's visual system" },
+      { date: "2026-07-11", tag: "Improved", text: "WCAG AA contrast pass and reduced-motion support across the site" },
+      { date: "2026-07-22", tag: "Improved", text: "Markdown parsing pipeline rebuilt to close a denial-of-service vector in deeply nested input" },
+      { date: "2026-07-11", tag: "Fixed", text: "Hardened authentication, sharing, and integration security across the platform" },
+    ],
+  },
+  {
     version: "May 2026",
     date: "2026-05-25",
     summary: "Major overhaul — simplified pricing, expanded templates, focus mode, and much more.",
