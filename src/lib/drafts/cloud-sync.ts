@@ -16,8 +16,10 @@
  *  - `pullCloudDrafts` runs once on mount for a signed-in user: fetch the
  *    cloud draft list, and for each id that exists both locally and in the
  *    cloud, keep whichever side has the later `updatedAt` and sync the
- *    other direction to match (last-write-wins — see AUDIT_REMEDIATION_PLAN.md
- *    P4-2). Drafts missing on one side are pulled/pushed as appropriate.
+ *    other direction to match (last-write-wins — P4-2 in PLAN.md's audit-remediation
+ *    note; the working punch-list this cites, AUDIT_REMEDIATION_PLAN.md, was deleted
+ *    once its items were resolved). Drafts missing on one side are pulled/pushed as
+ *    appropriate.
  *
  * Account-switch safety: a per-draft "owner" marker is kept in localStorage
  * (DRAFTS_STORAGE_KEYS.cloudOwners, draftId -> userId — never sent to the

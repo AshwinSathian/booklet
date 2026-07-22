@@ -1,5 +1,7 @@
 /**
- * Curated CSS themes for published pages (P4-4 in AUDIT_REMEDIATION_PLAN.md).
+ * Curated CSS themes for published pages (P4-4 — see PLAN.md's audit-remediation
+ * note; the working punch-list this cites, AUDIT_REMEDIATION_PLAN.md, was deleted
+ * once its items were resolved).
  *
  * Deliberately NOT a plugin runtime and NOT arbitrary user CSS — a theme is a
  * fixed, developer-authored set of CSS custom-property overrides, scoped to a

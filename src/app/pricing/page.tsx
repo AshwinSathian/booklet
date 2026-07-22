@@ -48,7 +48,7 @@ const FEATURE_GROUPS: { heading: string; items: string[] }[] = [
       "Mermaid diagram rendering (flowcharts, sequence, architecture)",
       "Formatting toolbar — bold, italic, headings, code, links",
       "YAML frontmatter support (title, author, date, tags, visibility)",
-      "9 ready-to-use templates (incident report, postmortem, ADR, runbook, and more)",
+      "21 ready-to-use templates (incident report, postmortem, ADR, runbook, and more)",
     ],
   },
   {
