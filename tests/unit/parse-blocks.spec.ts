@@ -234,6 +234,59 @@ test.describe("reference-style links and images", () => {
   });
 });
 
+test.describe("inline math vs. prose dollar amounts", () => {
+  test("a well-formed $...$ span still renders as math", () => {
+    const b = firstBlock("Compute $x^2 + y^2$ for the norm.");
+    expect(b.t).toBe("paragraph");
+    if (b.t === "paragraph") {
+      expect(b.inl).toEqual([
+        { t: "text", v: "Compute " },
+        { t: "math", v: "x^2 + y^2" },
+        { t: "text", v: " for the norm." },
+      ]);
+    }
+  });
+
+  test("two unrelated prose dollar amounts in one paragraph are not parsed as a math span", () => {
+    // remark-math's single-`$` tokenizer pairs an opening `$` with whichever
+    // `$` comes next, with no regard for plausibility. "freemium at $5/month
+    // ... reached $5,000/month" has no math intent at all — without a fix,
+    // this greedily captures everything between the two dollar signs
+    // (including the literal "**") as one KaTeX expression.
+    const b = firstBlock(
+      "freemium at $5/month. After roughly two years it reached about **$5,000/month**",
+    );
+    expect(b.t).toBe("paragraph");
+    if (b.t === "paragraph") {
+      expect(b.inl.some((i) => i.t === "math")).toBe(false);
+      const text = b.inl.map((i) => (i.t === "text" ? i.v : i.t === "strong" ? "STRONG" : "")).join("");
+      expect(text).toContain("$5/month");
+      expect(text).toContain("$5,000/month");
+    }
+  });
+
+  test("a lone, unmatched $ in prose is left as literal text", () => {
+    const b = firstBlock("Carrd's $1.5M+ ARR outcome is real but rare.");
+    expect(b.t).toBe("paragraph");
+    if (b.t === "paragraph") {
+      expect(b.inl.some((i) => i.t === "math")).toBe(false);
+      expect(b.inl.some((i) => i.t === "text" && i.v.includes("$1.5M+ ARR"))).toBe(true);
+    }
+  });
+
+  test("legitimate math immediately followed by punctuation (not a digit) is unaffected", () => {
+    const b = firstBlock("The result is $E=mc^2$.");
+    expect(b.t).toBe("paragraph");
+    if (b.t === "paragraph") {
+      expect(b.inl).toEqual([
+        { t: "text", v: "The result is " },
+        { t: "math", v: "E=mc^2" },
+        { t: "text", v: "." },
+      ]);
+    }
+  });
+});
+
 test.describe("footnotes", () => {
   test("a single footnote reference + definition produces a footnoteRef and a trailing footnotes block", () => {
     const blocks = parseToBlocks("Fact.[^1]\n\n[^1]: The source.");

@@ -91,7 +91,8 @@ function inlineFromNodes(nodes: MdNode[], ctx: ParseCtx, depth: number): Inline[
   }
 
   const out: Inline[] = [];
-  for (const n of nodes) {
+  for (let i = 0; i < nodes.length; i++) {
+    const n = nodes[i];
     if (!n) continue;
 
     switch (n.type) {
@@ -152,9 +153,26 @@ function inlineFromNodes(nodes: MdNode[], ctx: ParseCtx, depth: number): Inline[
         }
         break;
       }
-      case "inlineMath":
-        out.push({ t: "math", v: String(n.value ?? "") });
+      case "inlineMath": {
+        // remark-math's single-`$` tokenizer pairs an opening `$` with
+        // whichever `$` comes next, with no regard for plausibility — so
+        // two unrelated prose dollar amounts in one paragraph (e.g. "$5/mo
+        // ... reached $5,000/mo") get parsed as one giant math span
+        // spanning the prose between them. Pandoc's fix for this exact,
+        // well-known false positive: a closing `$` immediately followed by
+        // a digit is not a valid math delimiter. Detect that case here
+        // (the "closing $" is this node's end, so the digit would be the
+        // first character of the very next sibling) and fall back to
+        // literal text instead of rendering it as KaTeX.
+        const nextText =
+          nodes[i + 1]?.type === "text" ? String(nodes[i + 1]!.value ?? "") : "";
+        if (/^[0-9]/.test(nextText)) {
+          out.push({ t: "text", v: `$${String(n.value ?? "")}$` });
+        } else {
+          out.push({ t: "math", v: String(n.value ?? "") });
+        }
         break;
+      }
       case "break":
         out.push({ t: "text", v: "\n" });
         break;
