@@ -120,6 +120,10 @@ export default function McpPage() {
             REST API docs
           </Button>
         </div>
+
+        <p className="mt-6 text-xs text-text-muted">
+          Permanent URL · Not locked in a chat thread · Works with any MCP client, not one vendor&apos;s
+        </p>
       </section>
 
       {/* Supported editors */}
