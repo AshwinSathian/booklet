@@ -84,6 +84,33 @@ function footnoteIndex(ctx: ParseCtx, id: string): number {
   return n;
 }
 
+/**
+ * Re-parses a fragment that remark-math's tokenizer had already swallowed
+ * into a bogus inline-math span (see the "inlineMath" case below), this
+ * time without the math extension in the pipeline at all — so a `$` is
+ * just a literal character and never competes with emphasis/strong
+ * tokenization for the same characters. This recovers formatting (e.g. a
+ * `**bold**` marker) that spanned across the original false math-span
+ * boundary and would otherwise render as literal, unpaired asterisks
+ * forever: by the time we see the mdast tree, the swallowed characters
+ * are already gone from the surrounding text nodes and irrecoverable by
+ * simply re-emitting them as flat text.
+ *
+ * Falls back to flat literal text if the fragment doesn't parse back into
+ * a single plain paragraph (e.g. it happened to start with characters
+ * that read as a heading/list marker once re-parsed standalone) — that's
+ * a rarer, lower-stakes cosmetic miss than the KaTeX-garbling bug this
+ * whole path exists to fix.
+ */
+function reparseSwallowedMathFragment(fragment: string, ctx: ParseCtx, depth: number): Inline[] {
+  const root = unified().use(remarkParse).use(remarkGfm).parse(fragment) as Root;
+  const children = (root.children ?? []) as unknown as MdNode[];
+  if (children.length === 1 && children[0].type === "paragraph") {
+    return inlineFromNodes(children[0].children ?? [], ctx, depth);
+  }
+  return [{ t: "text", v: fragment }];
+}
+
 function inlineFromNodes(nodes: MdNode[], ctx: ParseCtx, depth: number): Inline[] {
   if (depth > MAX_BLOCK_DEPTH) {
     ctx.truncated = true;
@@ -158,18 +185,20 @@ function inlineFromNodes(nodes: MdNode[], ctx: ParseCtx, depth: number): Inline[
         // whichever `$` comes next, with no regard for plausibility — so
         // two unrelated prose dollar amounts in one paragraph (e.g. "$5/mo
         // ... reached $5,000/mo") get parsed as one giant math span
-        // spanning the prose between them. Pandoc's fix for this exact,
-        // well-known false positive: a closing `$` immediately followed by
-        // a digit is not a valid math delimiter. Detect that case here
-        // (the "closing $" is this node's end, so the digit would be the
-        // first character of the very next sibling) and fall back to
-        // literal text instead of rendering it as KaTeX.
-        const nextText =
-          nodes[i + 1]?.type === "text" ? String(nodes[i + 1]!.value ?? "") : "";
-        if (/^[0-9]/.test(nextText)) {
-          out.push({ t: "text", v: `$${String(n.value ?? "")}$` });
+        // spanning the prose between them, which KaTeX then renders as
+        // concatenated, space-stripped italic variables. Pandoc's
+        // documented fix for this exact false positive: a closing `$`
+        // immediately followed by a digit is not a valid math delimiter
+        // (the digit would be the first character of the very next
+        // sibling, since that's what the real closing `$` is adjacent to).
+        const mathValue = String(n.value ?? "");
+        const next = nodes[i + 1];
+        const nextValue = next?.type === "text" ? String(next.value ?? "") : "";
+        if (/^[0-9]/.test(nextValue)) {
+          out.push(...reparseSwallowedMathFragment(`$${mathValue}$${nextValue}`, ctx, depth));
+          i++; // next's text is now folded into the fragment re-parsed above
         } else {
-          out.push({ t: "math", v: String(n.value ?? "") });
+          out.push({ t: "math", v: mathValue });
         }
         break;
       }

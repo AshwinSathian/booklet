@@ -259,9 +259,14 @@ test.describe("inline math vs. prose dollar amounts", () => {
     expect(b.t).toBe("paragraph");
     if (b.t === "paragraph") {
       expect(b.inl.some((i) => i.t === "math")).toBe(false);
-      const text = b.inl.map((i) => (i.t === "text" ? i.v : i.t === "strong" ? "STRONG" : "")).join("");
-      expect(text).toContain("$5/month");
-      expect(text).toContain("$5,000/month");
+      // The "**" around "$5,000/month" also gets recovered as real `strong`
+      // emphasis, not left as literal asterisks — the math tokenizer had
+      // swallowed those very characters as (bogus) math-span data, and the
+      // fix re-parses the swallowed fragment to recover it.
+      expect(b.inl).toEqual([
+        { t: "text", v: "freemium at $5/month. After roughly two years it reached about " },
+        { t: "strong", c: [{ t: "text", v: "$5,000/month" }] },
+      ]);
     }
   });
 
