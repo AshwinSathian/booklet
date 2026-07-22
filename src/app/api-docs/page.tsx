@@ -101,7 +101,7 @@ function Table({ rows }: { rows: [string, string][] }) {
 
 export default function ApiDocsPage() {
   const base = absoluteUrl("").replace(/\/$/, "");
-  const mcpBase = base.replace(/^(https?:\/\/)/, "$1mcp.");
+  const mcpBase = "https://readable-mcp.ashwinsathian.com";
 
   return (
     <div className="min-h-screen bg-bg text-text-primary flex flex-col">
