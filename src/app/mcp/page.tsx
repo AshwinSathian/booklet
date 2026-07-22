@@ -200,11 +200,8 @@ export default function McpPage() {
             <pre className="rounded-xl bg-bg-soft border border-outline p-4 text-xs font-mono text-text-secondary overflow-x-auto leading-relaxed whitespace-pre">{`{
   "mcpServers": {
     "readable": {
-      "command": "npx",
-      "args": ["mcp-remote", "${absoluteUrl("").replace(/^(https?:\/\/)/, "$1mcp.")}/mcp"],
-      "env": {
-        "READABLE_API_KEY": "rdbl_YOUR_KEY"
-      }
+      "url": "https://readable-mcp.ashwinsathian.com/mcp",
+      "headers": { "Authorization": "Bearer rdbl_YOUR_KEY" }
     }
   }
 }`}</pre>

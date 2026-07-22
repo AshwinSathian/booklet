@@ -146,7 +146,7 @@ export default function IntegrationsPage() {
                 No install required — use <code className="rounded bg-fill-2 px-1 py-0.5 text-xs font-mono text-accent-soft">npx</code> for a one-off publish, or install globally for repeated use.
               </Step>
               <Step n={2} title="Set your API key">
-                Run <code className="rounded bg-fill-2 px-1 py-0.5 text-xs font-mono text-accent-soft">readable-cli config set-key rdbl_YOUR_KEY</code> — stored in your home directory, never committed to source.
+                Run <code className="rounded bg-fill-2 px-1 py-0.5 text-xs font-mono text-accent-soft">npx readable-cli login --key rdbl_YOUR_KEY</code> — stored in your home directory, never committed to source.
               </Step>
               <Step n={3} title="Publish">
                 Run the publish command. You get a shareable URL back immediately.
@@ -176,23 +176,23 @@ export default function IntegrationsPage() {
 
           <div className="flex flex-col gap-4">
             <CodeBlock>{`# One-off publish (no install needed)
-npx @readable/cli publish README.md
+npx readable-cli publish README.md
 
 # Publish with a custom slug + public visibility
-npx @readable/cli publish docs/runbook.md \\
+npx readable-cli publish docs/runbook.md \\
   --slug ops-runbook \\
   --visibility public
 
 # Watch mode — updates the page on every file save
-npx @readable/cli publish INCIDENT.md \\
+npx readable-cli publish INCIDENT.md \\
   --watch --slug live-incident
 
 # Update an existing page by ID
-npx @readable/cli publish CHANGELOG.md \\
-  --update page_abc123
+npx readable-cli publish CHANGELOG.md \\
+  --update Ab3k91QxZp
 
 # Pipe from stdin
-cat README.md | npx @readable/cli publish -`}</CodeBlock>
+cat README.md | npx readable-cli publish -`}</CodeBlock>
             <p className="text-xs text-text-muted">
               Flags: <code className="font-mono">--slug</code>, <code className="font-mono">--visibility</code>, <code className="font-mono">--update</code>, <code className="font-mono">--watch</code>, <code className="font-mono">--open</code>
             </p>
@@ -289,10 +289,10 @@ cat README.md | npx @readable/cli publish -`}</CodeBlock>
                 In your repo settings, add a secret named <code className="rounded bg-fill-2 px-1 py-0.5 text-xs font-mono text-accent-soft">READABLE_API_KEY</code> with your Readable API key.
               </Step>
               <Step n={2} title="Add the workflow step">
-                Use the <code className="rounded bg-fill-2 px-1 py-0.5 text-xs font-mono text-accent-soft">readable/publish-action@v1</code> action, pointing it at your Markdown file.
+                Call the REST API directly with <code className="rounded bg-fill-2 px-1 py-0.5 text-xs font-mono text-accent-soft">curl</code> in a run step, pointing it at your Markdown file.
               </Step>
               <Step n={3} title="Use the output URL">
-                The action exposes <code className="rounded bg-fill-2 px-1 py-0.5 text-xs font-mono text-accent-soft">steps.publish.outputs.url</code> — pipe it to a Slack notification, a PR comment, or anywhere else.
+                Parse the JSON response with <code className="rounded bg-fill-2 px-1 py-0.5 text-xs font-mono text-accent-soft">jq</code> to get the page URL — pipe it to a Slack notification, a PR comment, or anywhere else.
               </Step>
             </div>
 
@@ -326,11 +326,15 @@ jobs:
 
       - name: Publish to Readable
         id: publish
-        uses: readable/publish-action@v1
-        with:
-          file: CHANGELOG.md
-          api-key: \${{ secrets.READABLE_API_KEY }}
-          visibility: public
+        env:
+          READABLE_API_KEY: \${{ secrets.READABLE_API_KEY }}
+        run: |
+          BODY=$(jq -n --rawfile raw CHANGELOG.md '{"raw": $raw, "visibility": "public"}')
+          URL=$(curl -fsSL -X POST https://readable-api.ashwinsathian.com/api/v1/publish \\
+            -H "Authorization: Bearer $READABLE_API_KEY" \\
+            -H "Content-Type: application/json" \\
+            -d "$BODY" | jq -r '.url')
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
 
       - name: Post URL to Slack
         run: |
@@ -392,14 +396,13 @@ jobs:
 {
   "mcpServers": {
     "readable": {
-      "command": "npx",
-      "args": ["mcp-remote", "https://readable-mcp.ashwinsathian.com/mcp"],
-      "env": {
-        "READABLE_API_KEY": "rdbl_YOUR_KEY"
-      }
+      "url": "https://readable-mcp.ashwinsathian.com/mcp",
+      "headers": { "Authorization": "Bearer rdbl_YOUR_KEY" }
     }
   }
-}`}</CodeBlock>
+}
+
+// Zed uses a stdio bridge instead — see /mcp-setup for its exact config`}</CodeBlock>
 
             <div className="rounded-xl border border-border-subtle bg-bg-elevated p-4">
               <p className="text-xs font-semibold text-text-muted uppercase tracking-widest mb-3">Works with</p>
