@@ -5,7 +5,7 @@
   "version": "0.2.0",
   "publisher": "AshwinSathian",
   "icon": "images/icon.png",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "homepage": "https://readable.ashwinsathian.com",
   "repository": {
     "type": "git",
