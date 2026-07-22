@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Write Markdown, get a beautifully formatted page with one shareable link.",
   "private": true,
+  "license": "UNLICENSED",
   "author": {
     "name": "Ashwin Sathian",
     "email": "ashwinsathyan19@gmail.com"

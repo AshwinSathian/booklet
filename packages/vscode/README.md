@@ -48,4 +48,4 @@ and version history.
 
 ## License
 
-MIT
+Proprietary — © Ashwin Sathian. All rights reserved. See [LICENSE](https://github.com/AshwinSathian/readable/blob/main/LICENSE).
