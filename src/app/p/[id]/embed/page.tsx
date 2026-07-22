@@ -84,7 +84,7 @@ export default async function EmbedPage({
   if (!doc) {
     return (
       <div className="flex min-h-50 items-center justify-center bg-bg text-center p-8">
-        <p className="text-sm text-text-muted">This page doesn&apos;t exist or has expired.</p>
+        <p className="text-sm text-text-muted">This page doesn&apos;t exist or was deleted.</p>
       </div>
     );
   }

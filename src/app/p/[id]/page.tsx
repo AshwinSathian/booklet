@@ -71,7 +71,7 @@ export async function generateMetadata({
   if (!doc) {
     return buildMetadata({
       title: "Not found",
-      description: "This page doesn't exist or it has expired.",
+      description: "This page doesn't exist, or the link is incorrect.",
       pathname: `/p/${idOrSlug}`,
       noIndex: true,
     });
@@ -376,9 +376,9 @@ function FrontmatterMetaStrip({
 // ---------------------------------------------------------------------------
 
 const EXAMPLE_PAGES = [
-  { label: "Incident Report", href: "https://readable.ashwinsathian.com/p/GqfTrJQg0t" },
-  { label: "Architecture Decision Record", href: "https://readable.ashwinsathian.com/p/Vmm78unhPg" },
-  { label: "Technical Docs", href: "https://readable.ashwinsathian.com/p/6MTZfx3M6q" },
+  { label: "Incident Report", href: "https://readable.ashwinsathian.com/p/example-incident-report" },
+  { label: "Architecture Decision Record", href: "https://readable.ashwinsathian.com/p/example-adr" },
+  { label: "Technical Docs", href: "https://readable.ashwinsathian.com/p/example-readme" },
 ] as const;
 
 function NotFoundOrExpired() {
