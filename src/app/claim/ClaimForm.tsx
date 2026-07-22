@@ -79,7 +79,7 @@ export function ClaimForm({ token }: { token: string }) {
         />
       </div>
 
-      {error && <p className="text-xs text-red-400">{error}</p>}
+      {error && <p role="alert" className="text-xs text-red-400">{error}</p>}
 
       <Button type="submit" variant="primary" size="md" disabled={submitting} className="w-full justify-center">
         {submitting ? "Please wait…" : "Set password & sign in"}

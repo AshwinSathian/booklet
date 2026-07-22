@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { createApiKey, getApiKeysByUser } from "@/lib/db";
 import { generateRawKey, hashApiKey } from "@/lib/api-key";
 import { createId } from "@/lib/id";
-import { AppLogo } from "@/components/ui/AppLogo";
+import { AuthLayout } from "@/components/auth/AuthLayout";
 import Link from "next/link";
 import type { Metadata } from "next";
 
@@ -31,26 +31,19 @@ function isValidState(v: string | undefined): v is string {
 
 function ErrorPage({ title, body }: { title: string; body: string }) {
   return (
-    <div className="min-h-screen bg-bg text-text-primary flex flex-col">
-      <header className="border-b border-border-subtle">
-        <div className="mx-auto w-full max-w-md px-4 py-3">
-          <AppLogo onlyIcon={false} />
-        </div>
-      </header>
-      <main className="flex-1 flex flex-col items-center justify-center px-4 py-12">
-        <div className="max-w-sm w-full rounded-2xl border border-border-subtle bg-bg-elevated p-8 text-center space-y-3">
-          <p className="text-3xl">⚠</p>
-          <h1 className="text-base font-semibold">{title}</h1>
-          <p className="text-sm text-text-secondary leading-relaxed">{body}</p>
-          <Link
-            href="/my-pages"
-            className="inline-block mt-2 text-sm text-accent hover:text-accent-soft transition-colors"
-          >
-            Go to My Pages →
-          </Link>
-        </div>
-      </main>
-    </div>
+    <AuthLayout>
+      <p className="text-3xl">⚠</p>
+      <div className="text-center space-y-1.5">
+        <h1 className="text-base font-semibold">{title}</h1>
+        <p className="text-sm text-text-secondary leading-relaxed">{body}</p>
+      </div>
+      <Link
+        href="/my-pages"
+        className="text-sm text-accent hover:text-accent-soft transition-colors"
+      >
+        Go to My Pages →
+      </Link>
+    </AuthLayout>
   );
 }
 

@@ -79,7 +79,7 @@ export function AuthForm({
         />
       </div>
 
-      {error && <p className="text-xs text-red-400">{error}</p>}
+      {error && <p role="alert" className="text-xs text-red-400">{error}</p>}
 
       <Button type="submit" variant="primary" size="md" disabled={submitting} className="w-full justify-center">
         {submitting ? "Please wait…" : mode === "sign-in" ? "Sign in" : "Create account"}

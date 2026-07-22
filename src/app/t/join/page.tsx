@@ -4,6 +4,7 @@ import { createId } from "@/lib/id";
 import { verifyInviteToken } from "@/lib/invite-token";
 import { logError } from "@/lib/logger";
 import { getSession } from "@/lib/auth/session";
+import { AuthLayout } from "@/components/auth/AuthLayout";
 import { redirect } from "next/navigation";
 
 export const runtime = "nodejs";
@@ -65,16 +66,14 @@ export default async function TeamJoinPage({
 
 function ErrorPage({ message }: { message: string }) {
   return (
-    <div className="min-h-screen bg-bg text-text-primary flex items-center justify-center px-4">
-      <div className="max-w-sm text-center">
-        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-card bg-fill-2 text-text-muted mx-auto">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
-            <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5" />
-            <path d="M12 8v4M12 16h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-        </div>
-        <p className="text-sm text-text-secondary">{message}</p>
+    <AuthLayout>
+      <div className="flex h-12 w-12 items-center justify-center rounded-card bg-fill-2 text-text-muted">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
+          <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5" />
+          <path d="M12 8v4M12 16h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        </svg>
       </div>
-    </div>
+      <p className="text-sm text-text-secondary text-center max-w-sm">{message}</p>
+    </AuthLayout>
   );
 }

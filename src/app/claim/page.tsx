@@ -1,4 +1,4 @@
-import { AppLogo } from "@/components/ui/AppLogo";
+import { AuthLayout } from "@/components/auth/AuthLayout";
 import { buildMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
 import { ClaimForm } from "./ClaimForm";
@@ -20,30 +20,22 @@ export default async function ClaimPage({
   const { token } = await searchParams;
 
   return (
-    <div className="min-h-screen bg-bg text-text-primary flex flex-col">
-      <header className="border-b border-border-subtle">
-        <div className="mx-auto w-full max-w-md px-4 py-3">
-          <AppLogo onlyIcon={false} />
-        </div>
-      </header>
-
-      <main className="flex-1 flex flex-col items-center justify-center px-4 py-12 gap-5">
-        {token ? (
-          <>
-            <div className="text-center max-w-sm">
-              <h1 className="text-lg font-medium">Welcome back</h1>
-              <p className="mt-1 text-sm text-text-secondary">
-                Readable now uses email + password sign-in. Set a password for your account to continue.
-              </p>
-            </div>
-            <ClaimForm token={token} />
-          </>
-        ) : (
-          <p className="text-sm text-text-secondary text-center max-w-sm">
-            This link is missing its claim token. Use the link you were sent to set your password.
-          </p>
-        )}
-      </main>
-    </div>
+    <AuthLayout>
+      {token ? (
+        <>
+          <div className="text-center max-w-sm">
+            <h1 className="text-lg font-medium">Welcome back</h1>
+            <p className="mt-1 text-sm text-text-secondary">
+              Readable now uses email + password sign-in. Set a password for your account to continue.
+            </p>
+          </div>
+          <ClaimForm token={token} />
+        </>
+      ) : (
+        <p className="text-sm text-text-secondary text-center max-w-sm">
+          This link is missing its claim token. Use the link you were sent to set your password.
+        </p>
+      )}
+    </AuthLayout>
   );
 }

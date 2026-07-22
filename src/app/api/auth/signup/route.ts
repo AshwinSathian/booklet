@@ -30,7 +30,23 @@ export async function POST(req: Request) {
   }
 
   const passwordHash = await hashUserPassword(password);
-  const user = await createUser(createId(20), email, passwordHash);
+
+  // The getUserByEmail check above is a friendly pre-check, not the
+  // authoritative guard — the unique index on users.email is (see
+  // src/lib/db/index-specs.mjs). Two concurrent signups for the same email
+  // can both pass that check before either inserts, so the second insertOne
+  // here throws E11000; catch it and report the same 409 rather than letting
+  // it surface as an unhandled 500.
+  let user;
+  try {
+    user = await createUser(createId(20), email, passwordHash);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "";
+    if (message.includes("E11000")) {
+      return NextResponse.json({ error: "An account with this email already exists" }, { status: 409 });
+    }
+    throw err;
+  }
   await createSession(user.id);
 
   return NextResponse.json({ ok: true, email: user.email }, { status: 201 });
