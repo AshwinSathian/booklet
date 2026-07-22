@@ -791,13 +791,12 @@ export default function McpSetupPage() {
             </p>
 
             <div className="space-y-4">
-              <Step n={1} title="Go to My Pages → Settings → API Keys">
+              <Step n={1} title="Go to My Pages → API Keys">
                 <p className="text-sm text-text-secondary">
                   <Link href={ROUTES.myPages} className="text-accent hover:underline">
                     Open My Pages
                   </Link>{" "}
-                  → scroll to the <strong>API Keys</strong> section (or click the gear icon if
-                  visible).
+                  → scroll to the <strong>API Keys</strong> section.
                 </p>
               </Step>
 
@@ -919,12 +918,12 @@ export default function McpSetupPage() {
                     {
                       name: "publish_page",
                       desc: "Create a new Readable page from Markdown",
-                      inputs: "content (markdown), title, slug, visibility",
+                      inputs: "raw (markdown), title, slug, visibility",
                     },
                     {
                       name: "update_page",
                       desc: "Update an existing page's content or metadata",
-                      inputs: "id or slug, content, title, visibility",
+                      inputs: "id or slug, raw, new slug, visibility",
                     },
                     {
                       name: "get_page",
@@ -1024,7 +1023,7 @@ export default function McpSetupPage() {
               {[
                 {
                   q: "The server shows as connected but tools aren't working",
-                  a: "Check your API key — it must start with rdbl_ and not have been revoked. Go to My Pages → Settings → API Keys to verify.",
+                  a: "Check your API key — it must start with rdbl_ and not have been revoked. Go to My Pages → API Keys to verify.",
                 },
                 {
                   q: "Claude Desktop doesn't show the Readable server",
