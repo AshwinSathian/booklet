@@ -11,7 +11,7 @@ import { AuthForm } from "../sign-in/AuthForm";
 export const metadata: Metadata = buildMetadata({
   title: "Create free account",
   description:
-    "Create a free Readable account. Keep pages permanently, edit them in place, get analytics, version history, and full API access. No credit card required.",
+    "Create a free Readable account. Publish without a monthly cap, edit pages in place, get analytics, version history, and full API access. No credit card required.",
   pathname: "/sign-up",
   noIndex: true,
 });
@@ -37,7 +37,7 @@ export default async function SignUpPage({
         <p className="text-sm text-text-secondary">
           {redirectUrl?.startsWith("/cli-auth")
             ? "Create a free account to authorize the Readable CLI."
-            : "Create a free account. Keep pages permanently. Access them anywhere."}
+            : "Create a free account. No monthly publish cap. Edit pages in place, from anywhere."}
         </p>
       </div>
 
