@@ -144,7 +144,7 @@ From the published share page (Export menu in header):
 ### Character and size limits
 
 - Editor accepts up to **200,000 characters** of Markdown input
-- Published page payloads are capped at **600,000 bytes** (Cloudflare KV storage — increased from 350KB to accommodate optional raw markdown alongside blocks)
+- Published page payloads are capped at **600,000 bytes** (MongoDB storage — increased from 350KB to accommodate optional raw markdown alongside blocks)
 
 ---
 
@@ -161,12 +161,14 @@ From the published share page (Export menu in header):
 ### Rate limiting
 
 Publishing is rate-limited to **12 publishes per minute per IP** to prevent abuse. This is implemented
-via a Cloudflare KV counter — no auth required, entirely edge-enforced.
+via a MongoDB-backed sliding-window counter — no auth required. Anonymous publishing is also capped
+at **10 pages per month per IP**; signed-in accounts have no monthly cap.
 
 ### Immutability
 
 Published pages are **immutable snapshots**. You cannot edit a published page. To update, edit your
-local draft and republish — which creates a new URL. The old URL continues to work until it expires.
+local draft and republish — which creates a new URL. The old URL continues to work indefinitely;
+nothing is deleted automatically.
 
 This is intentional: a shared link should always show exactly what was sent to the recipient.
 
@@ -180,7 +182,6 @@ A minimal sticky header containing:
 - Readable logo + wordmark
 - Theme toggle (dark/light)
 - **Export menu** — dropdown with: Download Markdown (if available), Download HTML, Print / Save as PDF
-- Expiry countdown badge (anonymous pages only)
 - "Make your own →" CTA button (links to `/app`)
 
 ### Content rendering
@@ -221,13 +222,6 @@ Automatically generated for documents with **3 or more headings**:
 - Active heading highlighted as you scroll
 - Smooth-scroll to heading on click
 
-### Expiry badge
-
-Anonymous pages show an expiry countdown at the top right of the header:
-- > 7 days remaining: neutral badge ("Expires in N days")
-- ≤ 7 days remaining: amber badge with dot ("Expires in N days")
-- Expired: red badge ("Expired")
-
 ### Export from the share page
 
 The **Export** dropdown in the share page header offers three options:
@@ -250,13 +244,15 @@ The **Export** dropdown in the share page header offers three options:
 
 ## Page Lifespan
 
-| User type | Page lifespan |
-|---|---|
-| Anonymous (no account) | **30 days** from time of publish |
-| Signed-in user (account owner) | **Permanent** — no expiry |
+| User type | Page lifespan | Pages per month |
+|---|---|---|
+| Anonymous (no account) | **Permanent** — no expiry | **10** per IP |
+| Signed-in user (account owner) | **Permanent** — no expiry | Unlimited |
 
-The expiry countdown is visible on anonymous pages so readers always know. There is no warning email
-before expiry. After 30 days, the URL returns "Page not found."
+Anonymous publishing is not a trial of a temporary product — pages published without an account are
+stored exactly the same way as owned pages and never auto-delete. The only anonymous-tier constraint
+is a 10-page-per-month publish quota; an account removes that cap and adds ownership (My Pages,
+custom slugs, analytics, version history, API access), not permanence.
 
 ---
 
@@ -279,15 +275,14 @@ before expiry. After 30 days, the URL returns "Page not found."
 | **Theme toggle** | Dark / light mode; dark is the default; persists across sessions |
 | **Export (editor)** | Copy as Markdown or HTML from the editor overflow menu |
 | **Export (share page)** | Download Markdown (when available), Download HTML, Print / Save as PDF |
-| **Expiry badge** | Countdown badge on anonymous published pages |
 | **Link-only sharing** | No index, no feed — published pages are only accessible via direct link |
 | **File import** | Drag-and-drop or file picker for `.md` files up to 500KB |
 
-### Account features (free, requires sign-in via Clerk)
+### Account features (free, requires an account)
 
 | Feature | Detail |
 |---|---|
-| **Permanent pages** | Published pages don't expire |
+| **Unlimited pages** | No monthly publish cap (anonymous is capped at 10/month per IP) |
 | **Custom slugs** | Human-readable URL: `readable.app/p/q4-incident-summary` (1–60 chars, lowercase/numbers/hyphens) |
 | **Unlisted pages** | Published but excluded from any discovery; link-only access |
 | **View counts** | Track how many times each published page has been viewed |
@@ -481,7 +476,7 @@ Per-page actions:
 - **Open page** — opens the published page in a new tab
 - **Toggle visibility** — switches between public and unlisted
 - **Edit slug** — opens an inline slug editor (`{host}/p/` prefix shown)
-- **Delete** — two-step confirmation to delete the page (removes from KV + D1)
+- **Delete** — two-step confirmation to delete the page (removes the page document and its DB record)
 
 ---
 
@@ -492,7 +487,8 @@ Per-page actions:
 | Create & edit drafts | ✓ | ✓ |
 | Publish pages | ✓ | ✓ |
 | All rendering features | ✓ | ✓ |
-| Page lifespan | 30 days | Permanent |
+| Page lifespan | Permanent | Permanent |
+| Pages per month | 10 (per IP) | Unlimited |
 | Custom slugs | — | ✓ |
 | Unlisted pages | — | ✓ |
 | View counts | — | ✓ |
@@ -500,7 +496,7 @@ Per-page actions:
 | REST API + API keys | — | ✓ |
 | Update published pages | — | ✓ |
 
-Sign-in is via Clerk (Google, GitHub, or email).
+Sign-in is email + password — in-house auth, no third-party identity provider.
 
 ---
 
@@ -510,10 +506,10 @@ Sign-in is via Clerk (Google, GitHub, or email).
 |---|---|---|
 | Framework | Next.js 16 (App Router) | React 19, TypeScript strict |
 | Styling | Tailwind CSS v4 | CSS-variable design tokens, dark-first |
-| Auth | Clerk | Google, GitHub, email sign-in |
+| Auth | In-house (email + password) | argon2id hashing, DB-backed opaque sessions, API keys for programmatic access — no third-party identity provider |
 | Markdown parsing | unified / remark / remark-gfm | Pipeline: parse → process → AST |
 | Rendering | Custom AST block renderer | `dangerouslySetInnerHTML` used only for library-sanitised output (KaTeX, highlight.js); no unescaped user input reaches it |
-| Storage — all pages, users, teams, etc. | MongoDB Atlas | Single database for anonymous and owned pages alike; anonymous pages stored indefinitely, no TTL |
+| Storage — all pages, users, teams, etc. | Self-hosted MongoDB | Single database for anonymous and owned pages alike; anonymous pages stored indefinitely, no TTL |
 | Infrastructure | Single PM2 process on a personal Mac, behind a Cloudflare Tunnel | Cloudflare Workers/OpenNext was fully built and deployed, then deliberately removed 2026-05-25 (`9254448`) in favor of this — not an incomplete migration |
 | Rate limiting | MongoDB-backed counter (`src/lib/rate-limit.ts`) | 12 publishes/min per IP; monthly anonymous-publish quota also enforced server-side |
 | Analytics | Google Analytics 4 | |
@@ -523,10 +519,8 @@ Sign-in is via Clerk (Google, GitHub, or email).
 ### Key architectural facts relevant to product copy
 
 - **Drafts are 100% private until publish.** They live in `localStorage` and are never sent to any server.
-- **Published pages are edge-cached globally.** Cloudflare KV is distributed — pages load fast worldwide.
 - **The custom renderer makes all Markdown content XSS-safe.** `dangerouslySetInnerHTML` is used in a few places (KaTeX math, highlight.js code blocks), but only with each library's own sanitised/escaped output — no unescaped user input reaches it. Render-failure fallbacks (e.g. malformed math) render the raw source as an escaped JSX child, not raw HTML.
 - **The platform is stateless for anonymous users.** No cookies, no sessions, no tracking until the moment of publish.
-- **Permanent pages use Cloudflare D1** (SQLite at the edge) so they're never subject to KV TTL expiry.
 
 ---
 
@@ -538,7 +532,6 @@ These are intentional omissions:
 |---|---|
 | No real-time collaborative editing | Readable is not a shared editor. Collaboration happens via the published link. |
 | No editing after publish | Published pages are immutable snapshots; stability of shared links is a feature |
-| No permanent storage for anonymous users | 30-day TTL is generous for sharing; permanence requires identity |
 | No rich text / WYSIWYG | Markdown only — no drag-and-drop block editor; the formatting toolbar assists with syntax but does not hide it |
 | No embedded media | External image URLs rendered; no video/audio/iframes |
 | No search or directory | No public index of Readable pages |
@@ -569,16 +562,16 @@ Readable supports GFM — the most widely used Markdown dialect:
 ## Frequently Asked Questions
 
 **Do I need an account to use Readable?**  
-No. Paste, preview, and publish immediately — no signup, no email, no password. An account unlocks permanent pages, custom slugs, the API, view counts, and the My Pages dashboard.
+No. Paste, preview, and publish immediately — no signup, no email, no password. An account removes the 10-pages-per-month cap and unlocks custom slugs, the API, view counts, and the My Pages dashboard.
 
 **Is my content private before I publish?**  
 Yes. Drafts are stored entirely in your browser's localStorage and are never transmitted to any server. Nothing leaves your device until you click Publish.
 
 **Can I edit a page after publishing?**  
-No for anonymous pages. Account holders can use `PATCH /api/v1/pages/{id}` to republish updated content to the same page ID. For anonymous pages, edit your local draft and republish — creating a new URL. The old URL works until it expires.
+No for anonymous pages. Account holders can use `PATCH /api/v1/pages/{id}` to republish updated content to the same page ID. For anonymous pages, edit your local draft and republish — creating a new URL. The old URL keeps working indefinitely.
 
-**What happens when a page expires?**  
-After 30 days, the page is removed from storage and the URL returns "Page not found." There is no warning email. The page itself shows an expiry countdown badge.
+**Do published pages ever expire?**  
+No. Published pages — anonymous or account-owned — are permanent and never auto-delete. The only anonymous-tier limit is a 10-page-per-month publish quota per IP; there's no limit for signed-in accounts.
 
 **Can I use Readable for sensitive or confidential content?**  
 Signed-in users can password-protect pages. The "unlisted" option hides the page from discovery, but anyone who has the URL can still open it. For genuinely confidential content, combine password protection with careful link sharing.

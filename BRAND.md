@@ -425,9 +425,8 @@ Lead with what changed for the user, not what changed in the code. One sentence 
 Be explicit in all positioning to avoid misleading copy:
 
 - **Not a CMS** — published pages are immutable snapshots, not editable posts
-- **Not a collaboration tool** — no comments, no co-editing, no version history
+- **Not a collaboration tool** — no comments, no co-editing, no shared cursors
 - **Not a note-taking app** — Readable publishes notes, not stores them
-- **Not permanent for anonymous users** — 30-day TTL (account unlocks permanent pages)
 - **Not access-controlled** — published pages are publicly accessible to anyone with the link
 
 ---
