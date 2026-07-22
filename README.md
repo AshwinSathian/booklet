@@ -96,9 +96,8 @@ cd mcp-server && npm run dev
 | Language | TypeScript 5 (strict) |
 | Styling | Tailwind CSS v4 |
 | Auth | In-house (email + password, argon2id, DB-backed sessions) |
-| Database | MongoDB (pages, users, API keys, webhooks) |
-| Storage | Cloudflare KV (rendered documents) |
-| Deployment | Cloudflare Workers via OpenNext |
+| Database | Self-hosted MongoDB (pages, users, API keys, webhooks, rendered documents) |
+| Deployment | PM2 process on a Mac behind a Cloudflare Tunnel (Cloudflare Workers/OpenNext was built, shipped, then deliberately rolled back 2026-05-25 — see `docs/OPERATIONS.md`) |
 | Markdown | unified + remark-parse + remark-gfm + remark-math |
 | Math | KaTeX |
 | Diagrams | Mermaid |
@@ -111,15 +110,13 @@ cd mcp-server && npm run dev
 ### Prerequisites
 
 - Node.js 20+
-- MongoDB connection string
-- Cloudflare account with a KV namespace
+- MongoDB connection string (a local `mongod`, or any self-hosted/managed instance)
 
 ### Install & run
 
 ```bash
 npm install
 npm run dev        # Next.js dev server at http://localhost:3000
-npm run preview    # Full Cloudflare Workers runtime via Wrangler
 ```
 
 ### Environment variables
@@ -129,7 +126,7 @@ Create `.env.local`:
 ```env
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
-MONGODB_URI=mongodb+srv://...
+MONGODB_URI=mongodb://localhost:27017/readable
 
 # Required — dedicated secret that signs/verifies team-invite JWT tokens.
 # Must be its own random value; there is no fallback, and invite creation
@@ -142,7 +139,7 @@ See `.env.example` for the full list of required secrets (session auth, API keys
 ### Deploy
 
 ```bash
-npm run deploy     # builds via OpenNext then wrangler deploy
+npm run deploy     # rebuilds and restarts the PM2-managed app + MCP server (scripts/redeploy.sh)
 ```
 
 ---
