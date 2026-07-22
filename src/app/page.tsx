@@ -37,7 +37,7 @@ const jsonLd = {
         "Table rendering",
         "No account required",
         "Draft auto-save to localStorage",
-        "30-day page expiry",
+        "Permanent published pages",
       ],
       creator: {
         "@type": "Person",
