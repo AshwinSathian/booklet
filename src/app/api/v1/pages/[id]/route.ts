@@ -15,6 +15,7 @@ import { logError } from "@/lib/logger";
 import { getOwnedPage, getOwnedPageByIdOrSlug, assertSlugAvailable } from "@/server/pages";
 import { toErrorResponse } from "@/server/errors";
 import { getSiteOrigin } from "@/lib/site-url";
+import { resolveApiClientSource } from "@/lib/request-source";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -196,7 +197,7 @@ export async function PATCH(
       isUpdate: true,
       contentLength: payload.raw.length,
       richBlockKinds: collectRichBlockKinds(blocks),
-      source: "api",
+      source: resolveApiClientSource(req),
     }).catch((err) => logError("v1/pages", "Event record failed", err));
 
     metaPatch.updated_at = new Date().toISOString();

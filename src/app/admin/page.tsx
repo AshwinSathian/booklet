@@ -54,7 +54,18 @@ export default async function AdminPage() {
         <Row label="New pages published" value={m.weeklyNewPages} />
         <Row label="In-place updates" value={m.weeklyUpdates} />
         <Row label="Anonymous publish share" value={`${m.anonymousPublishPct}%`} sub="publishes with no user_id" />
-        <Row label="API / CLI publish share" value={`${m.apiPublishPct}%`} sub="non-browser origin" />
+      </Section>
+
+      <Section title="Publish source — last 7 days">
+        {m.sourceBreakdown.length === 0 ? (
+          <tr>
+            <td className="py-2 text-sm text-text-muted">No data yet</td>
+          </tr>
+        ) : (
+          m.sourceBreakdown.map((s) => (
+            <Row key={s.source} label={s.source} value={`${s.pct}%`} sub={`${s.count} publishes`} />
+          ))
+        )}
       </Section>
 
       <Section title="Retention — last 30 days">

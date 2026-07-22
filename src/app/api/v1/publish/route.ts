@@ -17,6 +17,7 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { assertSlugAvailable } from "@/server/pages";
 import { toErrorResponse } from "@/server/errors";
 import { getSiteOrigin } from "@/lib/site-url";
+import { resolveApiClientSource } from "@/lib/request-source";
 import { logError } from "@/lib/logger";
 import { NextResponse } from "next/server";
 
@@ -114,7 +115,7 @@ export async function POST(req: Request) {
     isUpdate: false,
     contentLength: body.length,
     richBlockKinds: collectRichBlockKinds(blocks),
-    source: "api",
+    source: resolveApiClientSource(req),
   }).catch((err) => logError("v1/publish", "Event record failed", err));
 
   try {

@@ -7,7 +7,11 @@ export type AdminMetrics = {
   weeklyUpdates: number;
   monthlyRepublishRate: number;       // % of users who published 2+ times in 30 days
   anonymousPublishPct: number;        // % of publishes with no user_id
-  apiPublishPct: number;              // % of publishes via API (not browser)
+  // Per-source share of weekly publishes — browser vs. each first-party API
+  // client (cli, github-action, vscode, mcp) vs. generic "api". Sorted by
+  // count desc. This is what actually makes machine/agent-driven publish
+  // volume (in particular mcp) visible instead of collapsed into "api".
+  sourceBreakdown: Array<{ source: PublishEvent["source"]; count: number; pct: number }>;
   // Share page funnel
   weeklyShareViews: number;
   ctaClickRate: number;               // cta_click / view (last 7 days, %)
@@ -76,10 +80,15 @@ export async function getAdminMetrics(): Promise<AdminMetrics> {
       ? Math.round((weeklyPublishes.filter((e) => !e.user_id).length / weeklyPublishes.length) * 100)
       : 0;
 
-  const apiPublishPct =
-    weeklyPublishes.length > 0
-      ? Math.round((weeklyPublishes.filter((e) => e.source === "api" || e.source === "cli").length / weeklyPublishes.length) * 100)
-      : 0;
+  const sourceCounts = new Map<PublishEvent["source"], number>();
+  for (const e of weeklyPublishes) {
+    sourceCounts.set(e.source, (sourceCounts.get(e.source) ?? 0) + 1);
+  }
+  const sourceBreakdown = Array.from(sourceCounts, ([source, count]) => ({
+    source,
+    count,
+    pct: weeklyPublishes.length > 0 ? Math.round((count / weeklyPublishes.length) * 100) : 0,
+  })).sort((a, b) => b.count - a.count);
 
   const usersWhoRepublished = monthlyPublishes.filter((u) => u.count >= 2).length;
   const totalMonthlyPublishers = monthlyPublishes.length;
@@ -115,7 +124,7 @@ export async function getAdminMetrics(): Promise<AdminMetrics> {
     weeklyUpdates,
     monthlyRepublishRate,
     anonymousPublishPct,
-    apiPublishPct,
+    sourceBreakdown,
     weeklyShareViews,
     ctaClickRate,
     readCompletionRate,

@@ -104,7 +104,11 @@ export type PublishEvent = {
   page_id: string;
   is_update: boolean;           // true = re-publish to existing page
   content_length_bucket: "xs" | "sm" | "md" | "lg" | "xl";
-  source: "browser" | "api" | "cli";
+  // "api" is the fallback bucket for any /api/v1 caller that doesn't send a
+  // recognized X-Readable-Source header (raw curl, an unlisted integration).
+  // The 4 first-party clients each send their own value — see
+  // src/lib/request-source.ts, which is what actually assigns this field.
+  source: "browser" | "api" | "cli" | "github-action" | "vscode" | "mcp";
   created_at: string;
   // Distinct "rich block" kinds (callout, toggle, columns, ...) present in
   // this publish — see src/lib/block-usage.ts. Optional/absent on events
