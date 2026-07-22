@@ -1,6 +1,9 @@
+import { BlockRenderer } from "@/components/blocks/BlockRenderer";
 import { AppLogo } from "@/components/ui/AppLogo";
 import { Button } from "@/components/ui/Button";
+import { DEFAULT_SETTINGS } from "@/lib/blocks";
 import { APP_NAME, ROUTES } from "@/lib/constants";
+import { parseToBlocks } from "@/lib/parse";
 import { absoluteUrl, buildMetadata } from "@/lib/seo";
 import { TEMPLATES, getTemplateBySlug } from "@/lib/templates";
 import type { Metadata } from "next";
@@ -40,6 +43,10 @@ export default async function TemplatePage({
 
   const editorUrl = `${ROUTES.app}?template=${template.slug}`;
   const otherTemplates = TEMPLATES.filter((t) => t.slug && t.slug !== slug).slice(0, 4);
+  // Rendered through the real block pipeline (not a raw-markdown <pre>) so the
+  // preview actually demonstrates the typeset output — the thing that
+  // differentiates Readable from a plain .md file — rather than the source.
+  const previewBlocks = parseToBlocks(template.content.trim());
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -142,17 +149,17 @@ export default async function TemplatePage({
           </div>
         </div>
 
-        {/* Template preview */}
-        <div className="rounded-xl border border-border-subtle bg-bg-elevated overflow-hidden">
-          <div className="flex items-center justify-between border-b border-border-subtle px-4 py-2.5">
-            <span className="text-xs font-medium text-text-muted">Template preview</span>
+        {/* Template preview — rendered exactly as the published page would look */}
+        <div className="rounded-xl border border-border-subtle bg-bg overflow-hidden">
+          <div className="flex items-center justify-between border-b border-border-subtle bg-bg-elevated px-4 py-2.5">
+            <span className="text-xs font-medium text-text-muted">What readers see</span>
             <Button variant="ghost" size="sm" href={editorUrl}>
               Open in editor →
             </Button>
           </div>
-          <pre className="overflow-x-auto px-5 py-4 text-xs leading-relaxed text-text-secondary font-mono whitespace-pre-wrap max-h-96 overflow-y-auto">
-            {template.content.trim()}
-          </pre>
+          <div className="max-h-128 overflow-y-auto px-5 py-6 sm:px-8">
+            <BlockRenderer blocks={previewBlocks} settings={DEFAULT_SETTINGS} />
+          </div>
         </div>
 
         {/* How it works */}
