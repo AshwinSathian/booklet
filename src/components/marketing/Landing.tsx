@@ -559,7 +559,7 @@ function ApiBlock() {
             },
             {
               title: "Incident tooling integration",
-              desc: "Publish a post-mortem page directly from PagerDuty, Opsgenie, or your on-call runbook — no copy-paste, no formatting step.",
+              desc: "Wire the REST API into your incident workflow — publish a post-mortem page straight from your on-call automation, no copy-paste, no formatting step.",
             },
             {
               title: "Update pages in place",
@@ -803,19 +803,19 @@ export function Landing() {
         tag: "Incident",
         title: "Incident summaries",
         desc: "Timeline, severity, root cause, next steps — structured enough to forward to leadership the moment the incident closes.",
-        href: "https://readable.ashwinsathian.com/p/GqfTrJQg0t",
+        href: "https://readable.ashwinsathian.com/p/example-incident-report",
       },
       {
         tag: "ADR",
         title: "Design decisions",
         desc: "Architecture decisions and tradeoffs that make sense even to someone outside the codebase. No repo navigation required.",
-        href: "https://readable.ashwinsathian.com/p/Vmm78unhPg",
+        href: "https://readable.ashwinsathian.com/p/example-adr",
       },
       {
         tag: "Docs",
         title: "README-style docs",
         desc: "Documentation you can share without sending someone to GitHub first. Clean URL, proper headings, code blocks intact.",
-        href: "https://readable.ashwinsathian.com/p/6MTZfx3M6q",
+        href: "https://readable.ashwinsathian.com/p/example-readme",
       },
       {
         tag: "Release",
@@ -1216,7 +1216,7 @@ export function Landing() {
         id="templates"
         eyebrow="Templates"
         title="Start with structure."
-        subtitle="Nine templates for the documents engineers and teams reach for most. Click one — the editor opens pre-loaded."
+        subtitle="21 templates for the documents engineers and teams reach for most. Click one — the editor opens pre-loaded."
       >
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {TEMPLATES.filter((t) => t.slug).map((t) => (
@@ -1281,14 +1281,14 @@ export function Landing() {
                 "Mermaid diagram rendering",
                 "Formatting toolbar",
                 "YAML frontmatter (title, author, date, tags)",
-                "9 ready-to-use templates",
+                "21 ready-to-use templates",
                 "Unlimited local drafts, auto-saved to browser",
               ],
             },
             {
               group: "Pages & sharing",
               items: [
-                "Permanent pages (never expire)",
+                "Unlimited pages (anonymous is capped at 10/month)",
                 "Custom URL slugs",
                 "Unlisted pages",
                 "Password-protected pages",
@@ -1360,8 +1360,9 @@ export function Landing() {
         <div className="mx-auto max-w-2xl rounded-2xl border border-border-default bg-bg-elevated px-7 shadow-card">
           <FaqItem question="Do I need an account?">
             No. {APP_NAME} works immediately — no signup, no email, no password. Just
-            write and publish. Creating an account (free) upgrades your pages to permanent,
-            unlocks custom slugs, analytics, version history, the API, and My Pages.
+            write and publish (up to 10 pages a month). Creating an account (free) removes
+            that monthly cap and unlocks custom slugs, analytics, version history, the API,
+            and My Pages. Pages are permanent either way.
             Everything is free — there is no paid plan.
           </FaqItem>
           <FaqItem question="Are published pages public?">
