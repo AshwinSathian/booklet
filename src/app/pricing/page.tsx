@@ -54,12 +54,12 @@ const FEATURE_GROUPS: { heading: string; items: string[] }[] = [
   {
     heading: "Pages & sharing",
     items: [
-      "Permanent pages for signed-in users",
+      "Unlimited pages (anonymous publishing is capped at 10/month)",
       "Custom URL slugs (e.g. /p/my-incident-report)",
       "Unlisted pages — accessible by link, not discoverable",
       "Password-protected pages",
       "Per-page view analytics with read-depth tracking",
-      "Version history — restore any of the last 10 snapshots",
+      "Version history — restore any of the last 50 snapshots",
       "Auto Table of Contents for long documents",
       "Reading time displayed on every shared page",
     ],

@@ -43,9 +43,9 @@ export default function AboutPage() {
             </p>
 
             <p>
-              For teams that want permanence — custom URLs, version history, analytics, password protection,
+              For teams that want more — custom URLs, version history, analytics, password protection,
               API access, and a CI integration to publish directly from a repository — signing in unlocks all of
-              that, free.
+              that, free. (Pages are permanent either way, account or not.)
             </p>
 
             <p>
@@ -58,7 +58,7 @@ export default function AboutPage() {
               >
                 Ashwin Sathian
               </a>
-              . It runs on Next.js, Cloudflare Workers, and MongoDB.
+              . It runs on Next.js and MongoDB.
             </p>
           </div>
 

@@ -770,7 +770,7 @@ export function Landing() {
           </svg>
         ),
         title: "Version history",
-        desc: "Every publish creates a snapshot. Restore any of the last 10 versions of your page with one click from My Pages.",
+        desc: "Every publish creates a snapshot. Restore any of the last 50 versions of your page with one click from My Pages.",
       },
       {
         icon: (
