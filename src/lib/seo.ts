@@ -26,9 +26,9 @@ type BuildMetaArgs = {
   origin?: string;
 };
 
-const DEFAULT_TITLE = `${APP_NAME} — Share Beautiful Markdown Pages Instantly`;
+const DEFAULT_TITLE = `${APP_NAME} — Written in Markdown, Read by Everyone Else`;
 const DEFAULT_DESC =
-  "Convert any Markdown into a clean, beautifully formatted shareable page in seconds. Perfect for incident reports, ADRs, READMEs, and technical docs. Free, no account required.";
+  "Turn incident reports, ADRs, and runbooks into a clean page anyone can open and read — no account, no formatting step. Free, in seconds.";
 
 export function buildMetadata({
   title,
@@ -77,7 +77,7 @@ export function buildMetadata({
           url: ogImage,
           width: 1200,
           height: 630,
-          alt: `${APP_NAME} — Share Beautiful Markdown Pages`,
+          alt: `${APP_NAME} — Written in Markdown, Read by Everyone Else`,
         },
       ],
     },
@@ -91,7 +91,7 @@ export function buildMetadata({
           url: twitterImage,
           width: 1200,
           height: 630,
-          alt: `${APP_NAME} — Share Beautiful Markdown Pages`,
+          alt: `${APP_NAME} — Written in Markdown, Read by Everyone Else`,
         },
       ],
     },
