@@ -35,16 +35,14 @@ const SECURITY_HEADERS: Record<string, string> = {
 // the UI and /api/* as before (the web app's own client-side code calls
 // same-origin /api/* routes — those must keep working there too).
 //
-// readable-api.ashwinsathian.com is kept in this list during the Readable
-// -> Booklet rename's compatibility window — the domain still resolves
-// (see ~/.cloudflared/readable-config.yml) so already-configured API
-// clients (CLI/VS Code/GitHub Action/MCP installs pointed at the old host)
-// keep working without an immediate forced upgrade.
-const API_HOSTNAMES = ["booklet-api.ashwinsathian.com", "readable-api.ashwinsathian.com"];
+// The old readable-api.ashwinsathian.com hostname (pre-rename) was
+// decommissioned at the Cloudflare Tunnel level 2026-07-23 — it 404s before
+// ever reaching this app now, so it's intentionally not listed here.
+const API_HOSTNAME = "booklet-api.ashwinsathian.com";
 
 export default function middleware(req: NextRequest) {
   const host = req.headers.get("host") ?? "";
-  if (API_HOSTNAMES.some((h) => host === h || host.startsWith(`${h}:`))) {
+  if (host === API_HOSTNAME || host.startsWith(`${API_HOSTNAME}:`)) {
     if (!req.nextUrl.pathname.startsWith("/api/")) {
       return new Response("Not found", { status: 404 });
     }
