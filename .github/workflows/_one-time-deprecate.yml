@@ -1,0 +1,29 @@
+# One-time, manual-only workflow to deprecate the pre-rename npm packages
+# (readable-cli, readable-api-client) in favor of their Booklet-named
+# replacements (booklet-cli, booklet-api-client). Uses the same NPM_TOKEN
+# secret publish-cli.yml/publish-shared.yml already rely on. Delete this
+# file once it's been run.
+
+name: One-time — deprecate pre-rename npm packages
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  deprecate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Deprecate readable-cli
+        run: npm deprecate readable-cli@"*" "Renamed to booklet-cli — https://www.npmjs.com/package/booklet-cli"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Deprecate readable-api-client
+        run: npm deprecate readable-api-client@"*" "Renamed to booklet-api-client — https://www.npmjs.com/package/booklet-api-client"
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
