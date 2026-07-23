@@ -33,10 +33,10 @@ const SITE_URL =
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
 
-  title: `${APP_NAME} — Share Beautiful Markdown Pages Instantly`,
+  title: `${APP_NAME} — Written in Markdown, Read by Everyone Else`,
 
   description:
-    "Convert any Markdown into a clean, beautifully formatted shareable page in seconds. Perfect for incident reports, ADRs, READMEs, and technical docs. Free, no account required.",
+    "Turn incident reports, ADRs, and runbooks into a clean page anyone can open and read — no account, no formatting step. Free, in seconds.",
 
   applicationName: APP_NAME,
 
@@ -54,7 +54,8 @@ export const metadata: Metadata = {
     "ADR template",
     "README viewer",
     "markdown formatter",
-    "readable pages",
+    "postmortem template",
+    "runbook template",
   ],
 
   authors: [{ name: "Ashwin Sathian" }],

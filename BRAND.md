@@ -6,6 +6,21 @@
 
 ---
 
+## Positioning (locked July 2026)
+
+Booklet does not compete on "fastest anonymous Markdown link" — that space is
+crowded with near-identical tools (JotBird, mdto.page, and others) that ship
+the same zero-signup publish flow. Booklet's defensible claim is narrower and
+more specific: **it translates an engineer's Markdown into something a
+non-technical reader can actually open and understand** — the PM who gets CC'd
+on the incident report, the exec who's handed the ADR, the customer who
+receives the release notes. Every hero, use-case, and social message should
+lead with *who receives the page*, not with publish speed. Speed/zero-account
+remain real, true, worth stating — as supporting proof, after the translation
+claim, never as the headline itself.
+
+---
+
 ## Design Philosophy
 
 **Booklet's design north star: Apple-quality execution.**
@@ -199,6 +214,29 @@ Source of truth: `src/components/ui/AppLogo.tsx` (purple tile, in-app) and `src/
 
 ---
 
+## Signature Element — the paper tab (added July 2026)
+
+One deliberate, bounded visual signature ties the visual system to the
+Booklet name itself, without touching the core dark/purple identity above:
+
+- **What:** a small warm-paper-coloured tab (`--color-paper`, `#f4ecdc` both
+  modes), rounded top corners, slightly rotated, peeking above the "after"
+  card in the before/after Markdown comparison (`ProblemMock` in
+  `Landing.tsx`) — like a page you'd flag to find again in a bound booklet.
+- **Where:** exactly one place — the marketing page's before/after
+  comparison. Never in app chrome, never as a second UI accent, never
+  repeated elsewhere on the page.
+- **Why paper, and why there:** the name "Booklet" means a small, finished,
+  bound document. The before/after comparison is the moment that concept
+  becomes literally true — raw Markdown becomes something worth flagging and
+  keeping. Everything else on the page stays disciplined so this one detail
+  reads as intentional rather than decorative.
+- **Rule:** `--color-paper` is reserved for this single use. Do not introduce
+  it as a general-purpose accent, category colour, or background fill —
+  that would dilute the one place it currently means something.
+
+---
+
 ## Motion & Animation
 
 ### Principles
@@ -320,16 +358,17 @@ The brand voice is a senior engineer who writes as well as they code: direct, co
 
 ### Hero headlines (pick any)
 
-- "Write in Markdown. Get a page worth sharing." ← **primary / canonical**
-- "Markdown, made beautiful."
+- "Written in Markdown. Read by everyone else." ← **primary / canonical (July 2026)**
+- "The postmortem your exec will actually read."
+- "Markdown your team writes. A page anyone can read."
 - "Paste once. Share a page people actually read."
 - "Your writing, the way it was meant to be read."
-- "Beautiful pages. Instantly."
 - "The space between writing Markdown and making it readable."
 
 ### Sub-headlines / body copy
 
-- "Booklet turns your plain text into a beautifully formatted page — with proper headings, code blocks, and tables — shareable with a single link. No setup, no noise." ← **canonical subtitle**
+- "Your incident reports, ADRs, and runbooks are already in Markdown. Booklet turns them into a clean page the PM, exec, or customer on the other end can actually open and read — no account, no formatting step, no raw asterisks." ← **canonical subtitle (July 2026)**
+- "Booklet turns your plain text into a beautifully formatted page — with proper headings, code blocks, and tables — shareable with a single link. No setup, no noise." ← prior canonical; still accurate, now secondary to the translation-led version above
 - "No signup, no onboarding. Paste and you're in the editor."
 - "Typography, spacing, and layout — handled so your content lands the way you meant it."
 - "When your message gets escalated or CC'd, the structure stays intact."
@@ -444,10 +483,10 @@ Be explicit in all positioning to avoid misleading copy:
 
 | Element | Value |
 |---|---|
-| Root `<title>` | `Booklet — Share Beautiful Markdown Pages Instantly` |
-| Root `<meta description>` | `Convert any Markdown into a clean, beautifully formatted shareable page in seconds. Perfect for incident reports, ADRs, READMEs, and technical docs. Free, no account required.` (155 chars) |
+| Root `<title>` | `Booklet — Written in Markdown, Read by Everyone Else` |
+| Root `<meta description>` | `Turn incident reports, ADRs, and runbooks into a clean page anyone can open and read — no account, no formatting step. Free, in seconds.` |
 | Title pattern | `{Page title} — Booklet` |
-| Primary keywords | markdown viewer, share markdown online, markdown to html, markdown preview, shareable markdown link, incident report template, ADR template, README viewer, technical writing tool |
+| Primary keywords | markdown viewer, share markdown online, markdown to html, markdown preview, shareable markdown link, incident report template, ADR template, postmortem template, runbook template, README viewer, technical writing tool |
 | Schema types | `SoftwareApplication + WebSite + WebPage` on home page |
 | OG image | `/opengraph-image` — 1200×630 |
 | Twitter card | `summary_large_image` |
@@ -462,4 +501,4 @@ Be explicit in all positioning to avoid misleading copy:
 
 ---
 
-*Last updated: April 2026. Contact: Ashwin Sathian — ashwinsathyan19@gmail.com*
+*Last updated: July 2026 — Readable → Booklet rename, stakeholder-translation positioning, paper-tab signature element. Contact: Ashwin Sathian — ashwinsathyan19@gmail.com*

@@ -72,6 +72,12 @@
   --color-accent-soft:  #a78bfa;          /* for focus rings, secondary tints  */
   --color-accent-warm:  #f59e0b;          /* amber — warnings, expiry          */
   --color-accent-dim:   rgba(124, 92, 252, 0.12); /* icon backgrounds         */
+  /* Warm paper tone — the one deliberate signature accent tied to the Booklet
+     name itself (a small bound, printed document). Used in exactly one place:
+     the "translated" side of the before/after comparison on the marketing
+     page (ProblemMock) — never in app chrome, never as a second UI accent.
+     See BRAND.md's "Signature Element" section. */
+  --color-paper:        #f4ecdc;
 
   /* ── Borders — pre-computed, never composed in component classes (DARK) ── */
   --color-border-strong:  rgba(255, 255, 255, 0.16);
@@ -122,6 +128,7 @@ html.light {
   --color-accent-soft:  #8b6cf7;
   --color-accent-warm:  #d97706;
   --color-accent-dim:   rgba(103, 65, 240, 0.10);
+  --color-paper:        #f4ecdc;
 
   /* ── Borders (LIGHT) ────────────────────────────────────────────────────── */
   --color-border-strong:  rgba(0, 0, 0, 0.14);
@@ -172,6 +179,7 @@ html.dark {
   --color-accent-soft:  var(--color-accent-soft);
   --color-accent-warm:  var(--color-accent-warm);
   --color-accent-dim:   var(--color-accent-dim);
+  --color-paper:        var(--color-paper);
 
   /* Semantic borders */
   --color-border-strong:  var(--color-border-strong);

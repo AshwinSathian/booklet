@@ -496,7 +496,17 @@ pool_size: 5 # was 50
           </span>
           <span className="text-[12px] font-semibold text-text-muted">Shared as a Booklet link</span>
         </div>
-        <div className="overflow-hidden rounded-2xl border border-emerald-500/12 bg-bg-elevated shadow-card">
+        <div className="relative">
+          {/* Signature page-tab — the one deliberate "this is now a booklet"
+              cue, in the warm paper tone reserved for exactly this moment
+              (see BRAND.md's Signature Element). A small folded tab, like a
+              page you'd flag in a bound booklet to find again. */}
+          <div
+            aria-hidden
+            className="absolute -top-2.5 left-6 h-5 w-9 rounded-t-md bg-paper shadow-[0_-1px_3px_rgba(0,0,0,0.15)]"
+            style={{ transform: "rotate(-2deg)" }}
+          />
+          <div className="relative overflow-hidden rounded-2xl border border-emerald-500/12 bg-bg-elevated shadow-card">
           {/* Browser bar */}
           <div className="flex items-center gap-2.5 border-b border-border-default bg-bg-soft px-4 py-2.5">
             <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-400" />
@@ -535,6 +545,7 @@ pool_size: 5 # was 50
               {": 5  "}
               <span className="text-text-muted/60"># was 50</span>
             </div>
+          </div>
           </div>
         </div>
       </div>
@@ -665,7 +676,7 @@ export function Landing() {
     const config = JSON.stringify(
       {
         mcpServers: {
-          readable: {
+          booklet: {
             url: "https://booklet-mcp.ashwinsathian.com/mcp",
             headers: { Authorization: "Bearer bklt_YOUR_KEY" },
           },
@@ -879,9 +890,9 @@ export function Landing() {
               variants={reduce ? undefined : fadeUp}
               className="mt-5 max-w-4xl text-balance text-[clamp(38px,8vw,80px)] font-extrabold leading-[1.02] tracking-[-0.04em]"
             >
-              Write in Markdown.{" "}
+              Written in Markdown.{" "}
               <span className="bg-linear-to-r from-accent via-accent-soft to-accent bg-clip-text text-transparent">
-                Get a page worth sharing.
+                Read by everyone else.
               </span>
             </motion.h1>
 
@@ -890,8 +901,9 @@ export function Landing() {
               variants={reduce ? undefined : fadeUp}
               className="mt-6 max-w-2xl text-pretty text-[18px] leading-[1.75] text-text-secondary"
             >
-              Booklet turns your Markdown into a beautifully formatted page — headings,
-              code blocks, tables, diagrams — shareable with one link. No setup. No noise.
+              Your incident reports, ADRs, and runbooks are already in Markdown. Booklet
+              turns them into a clean page the PM, exec, or customer on the other end can
+              actually open and read — no account, no formatting step, no raw asterisks.
             </motion.p>
 
             {/* CTAs */}

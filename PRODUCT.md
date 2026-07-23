@@ -10,8 +10,9 @@
 
 ## The One-Sentence Version
 
-Booklet is a free web tool that turns Markdown text into a clean, beautifully formatted,
-publicly shareable page — instantly, with no account required.
+Booklet is a free web tool that turns the Markdown engineers already write into a clean,
+beautifully formatted page the non-technical person on the other end — a PM, an exec, a
+customer — can actually open and read, instantly, with no account required.
 
 ---
 
@@ -613,4 +614,4 @@ Contact: ashwinsathyan19@gmail.com
 
 ---
 
-*Last updated: April 2026.*
+*Last updated: July 2026 — renamed Readable → Booklet.*
