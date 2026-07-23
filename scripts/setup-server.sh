@@ -64,9 +64,9 @@ CF_LAUNCHAGENT="$USER_HOME/Library/LaunchAgents/com.readable.cloudflared.plist"
 CF_LOG_DIR="$USER_HOME/.readable/logs"
 
 # Domains
-APP_HOSTNAME="readable.ashwinsathian.com"
-API_HOSTNAME="readable-api.ashwinsathian.com"
-MCP_HOSTNAME="readable-mcp.ashwinsathian.com"
+APP_HOSTNAME="booklet.ashwinsathian.com"
+API_HOSTNAME="booklet-api.ashwinsathian.com"
+MCP_HOSTNAME="booklet-mcp.ashwinsathian.com"
 
 # ─────────────────────────────────────────────────────────────────────────────
 section "Pre-flight checks"
