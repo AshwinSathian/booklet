@@ -1,6 +1,6 @@
 {
-  "name": "Readable — Share Beautiful Markdown Pages Instantly",
-  "short_name": "Readable",
+  "name": "Booklet — Share Beautiful Markdown Pages Instantly",
+  "short_name": "Booklet",
   "description": "Write Markdown, get a beautifully formatted page with one shareable link. No setup, no noise.",
   "start_url": "/",
   "display": "standalone",

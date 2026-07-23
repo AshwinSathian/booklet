@@ -1,19 +1,19 @@
 {
-  "name": "readable-vscode",
-  "displayName": "Readable",
-  "description": "Publish Markdown to a beautifully formatted, shareable Readable page — right from the editor",
+  "name": "booklet-vscode",
+  "displayName": "Booklet",
+  "description": "Publish Markdown to a beautifully formatted, shareable Booklet page — right from the editor",
   "version": "0.2.0",
   "publisher": "AshwinSathian",
   "icon": "images/icon.png",
   "license": "MIT",
-  "homepage": "https://readable.ashwinsathian.com",
+  "homepage": "https://booklet.ashwinsathian.com",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/AshwinSathian/readable.git",
+    "url": "git+https://github.com/AshwinSathian/booklet.git",
     "directory": "packages/vscode"
   },
   "bugs": {
-    "url": "https://github.com/AshwinSathian/readable/issues"
+    "url": "https://github.com/AshwinSathian/booklet/issues"
   },
   "author": {
     "name": "Ashwin Sathian",
@@ -23,7 +23,7 @@
     "markdown",
     "publish",
     "share",
-    "readable",
+    "booklet",
     "docs",
     "preview"
   ],
@@ -38,22 +38,22 @@
   "contributes": {
     "commands": [
       {
-        "command": "readable.publish",
-        "title": "Readable: Publish Current File"
+        "command": "booklet.publish",
+        "title": "Booklet: Publish Current File"
       },
       {
-        "command": "readable.publishSelection",
-        "title": "Readable: Publish Selection"
+        "command": "booklet.publishSelection",
+        "title": "Booklet: Publish Selection"
       },
       {
-        "command": "readable.setApiKey",
-        "title": "Readable: Set API Key"
+        "command": "booklet.setApiKey",
+        "title": "Booklet: Set API Key"
       }
     ],
     "configuration": {
-      "title": "Readable",
+      "title": "Booklet",
       "properties": {
-        "readable.defaultVisibility": {
+        "booklet.defaultVisibility": {
           "type": "string",
           "enum": [
             "public",
@@ -62,10 +62,10 @@
           "default": "unlisted",
           "description": "Default visibility for published pages"
         },
-        "readable.baseUrl": {
+        "booklet.baseUrl": {
           "type": "string",
-          "default": "https://readable-api.ashwinsathian.com",
-          "description": "Readable API base URL"
+          "default": "https://booklet-api.ashwinsathian.com",
+          "description": "Booklet API base URL"
         }
       }
     }
@@ -78,7 +78,7 @@
     "publish": "vsce publish --no-dependencies"
   },
   "dependencies": {
-    "readable-api-client": "^0.1.0"
+    "booklet-api-client": "^0.1.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

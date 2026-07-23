@@ -1,6 +1,6 @@
-# Readable — Brand Reference
+# Booklet — Brand Reference
 
-> The canonical source of truth for Readable's brand identity. Paste this document into
+> The canonical source of truth for Booklet's brand identity. Paste this document into
 > Claude before generating any branding materials, marketing copy, social posts, ad creative,
 > email campaigns, design briefs, or UI copy decisions.
 
@@ -8,7 +8,7 @@
 
 ## Design Philosophy
 
-**Readable's design north star: Apple-quality execution.**
+**Booklet's design north star: Apple-quality execution.**
 
 That means:
 
@@ -26,16 +26,16 @@ That means:
 
 **Calm. Precise. Confident. Invisible.**
 
-Readable mirrors its product: it exists to make other things look good, not to call attention to itself. The brand communicates like a senior engineer who is also a great writer — direct, clear, no noise, no filler.
+Booklet mirrors its product: it exists to make other things look good, not to call attention to itself. The brand communicates like a senior engineer who is also a great writer — direct, clear, no noise, no filler.
 
 | Adjective | What it means in practice |
 |---|---|
 | **Calm** | No urgency theatre, no countdown timers, no exclamation marks in UI |
 | **Precise** | Concrete numbers, specific examples, correct technical vocabulary |
 | **Confident** | Declarative statements, not hedged claims |
-| **Invisible** | The product surfaces the user's content; Readable's brand gets out of the way |
+| **Invisible** | The product surfaces the user's content; Booklet's brand gets out of the way |
 
-Readable is not playful. It is not corporate. It is not aspirational in a Silicon Valley sense. It is quietly excellent.
+Booklet is not playful. It is not corporate. It is not aspirational in a Silicon Valley sense. It is quietly excellent.
 
 ---
 
@@ -52,7 +52,7 @@ Readable is not playful. It is not corporate. It is not aspirational in a Silico
 | `--color-text-primary` | `#f5f5f7` | Apple primary label |
 | `--color-text-secondary` | `#98989f` | Apple secondary label |
 | `--color-text-muted` | `#636366` | Apple tertiary label |
-| `--color-accent` | `#7c5cfc` | Readable signature purple — action/active |
+| `--color-accent` | `#7c5cfc` | Booklet signature purple — action/active |
 | `--color-accent-hover` | `#6b48f0` | Accent on hover |
 | `--color-accent-soft` | `#a78bfa` | Focus rings, secondary tints |
 | `--color-accent-warm` | `#f59e0b` | Amber — warnings, expiry, time-sensitive |
@@ -79,7 +79,7 @@ Readable is not playful. It is not corporate. It is not aspirational in a Silico
 | `--color-text-primary` | `#1d1d1f` | Apple label |
 | `--color-text-secondary` | `#6e6e73` | Apple secondaryLabel |
 | `--color-text-muted` | `#86868b` | Apple tertiaryLabel |
-| `--color-accent` | `#6741f0` | Readable purple, light variant |
+| `--color-accent` | `#6741f0` | Booklet purple, light variant |
 | `--color-accent-hover` | `#5530de` | |
 | `--color-accent-soft` | `#8b6cf7` | |
 | `--color-accent-warm` | `#d97706` | |
@@ -162,7 +162,7 @@ Section H2:
 
 ### The mark (locked July 2026)
 
-The mark is Markdown's own `#` heading syntax, redrawn as a precise geometric glyph — the one piece of syntax every Readable page starts from. It replaces the earlier generic "R-in-a-square" monogram (a pattern shared by dozens of SaaS logos) with something that can only be Readable.
+The mark is Markdown's own `#` heading syntax, redrawn as a precise geometric glyph — the one piece of syntax every Booklet page starts from. It replaces the earlier generic "R-in-a-square" monogram (a pattern shared by dozens of SaaS logos) with something that can only be Booklet.
 
 Construction, on a 24×24 grid:
 - Two vertical + two horizontal bars, each `1.9` wide, rounded ends (`rx 0.95`), forming a symmetric `#`
@@ -172,14 +172,14 @@ Construction, on a 24×24 grid:
 Two authorised tile treatments:
 | Treatment | Background | Bars | Accent chip | Use |
 |---|---|---|---|---|
-| Purple tile | Readable Purple (`#7c5cfc` dark / `#6741f0` light) | White | White at 55% opacity | In-product nav, header, footer, UI chrome |
-| Black tile | Pure black `#000000` | `#f5f5f7` off-white | Readable Purple `#7c5cfc` | Favicon, app icon, OS home-screen icon, social avatars, OG/Twitter card lockup |
+| Purple tile | Booklet Purple (`#7c5cfc` dark / `#6741f0` light) | White | White at 55% opacity | In-product nav, header, footer, UI chrome |
+| Black tile | Pure black `#000000` | `#f5f5f7` off-white | Booklet Purple `#7c5cfc` | Favicon, app icon, OS home-screen icon, social avatars, OG/Twitter card lockup |
 
 Source of truth: `src/components/ui/AppLogo.tsx` (purple tile, in-app) and `src/app/icon/route.ts` / `src/app/apple-icon/route.ts` (black tile, standalone icon contexts) — keep both in sync if the mark changes again.
 
 ### The wordmark
 
-"Readable" set in Inter Semibold (600), tight tracking, in `#f5f5f7` (dark mode) or `#1d1d1f` (light mode).
+"Booklet" set in Inter Semibold (600), tight tracking, in `#f5f5f7` (dark mode) or `#1d1d1f` (light mode).
 
 ### Lockups
 
@@ -192,8 +192,8 @@ Source of truth: `src/components/ui/AppLogo.tsx` (purple tile, in-app) and `src/
 ### Usage rules
 
 - Never stretch, squash, recolour, or apply drop shadows to the mark
-- Never place the mark on a coloured background other than pure black, pure white, or the exact Readable Purple
-- Never omit the accent chip in the top-right cell — an unaccented `#` is not the Readable mark
+- Never place the mark on a coloured background other than pure black, pure white, or the exact Booklet Purple
+- Never omit the accent chip in the top-right cell — an unaccented `#` is not the Booklet mark
 - Minimum clear space: equal to the mark's border-radius on all four sides
 - Minimum mark size: 16px × 16px (favicon context); 24px × 24px (any visible UI context)
 
@@ -293,7 +293,7 @@ The brand voice is a senior engineer who writes as well as they code: direct, co
 | Do | Don't |
 |---|---|
 | Short sentences. One idea at a time. | Multi-clause run-on sentences |
-| Confident declarations ("Readable turns your text into…") | Hedged language ("can help you maybe…") |
+| Confident declarations ("Booklet turns your text into…") | Hedged language ("can help you maybe…") |
 | Concrete use cases ("incident reports, ADRs, READMEs") | Vague abstractions ("all kinds of content") |
 | Second person, present tense | Third person or passive voice |
 | Correct technical vocabulary (Markdown, ADR, GFM, KV) | Dumbing down tech concepts |
@@ -329,7 +329,7 @@ The brand voice is a senior engineer who writes as well as they code: direct, co
 
 ### Sub-headlines / body copy
 
-- "Readable turns your plain text into a beautifully formatted page — with proper headings, code blocks, and tables — shareable with a single link. No setup, no noise." ← **canonical subtitle**
+- "Booklet turns your plain text into a beautifully formatted page — with proper headings, code blocks, and tables — shareable with a single link. No setup, no noise." ← **canonical subtitle**
 - "No signup, no onboarding. Paste and you're in the editor."
 - "Typography, spacing, and layout — handled so your content lands the way you meant it."
 - "When your message gets escalated or CC'd, the structure stays intact."
@@ -357,15 +357,15 @@ The brand voice is a senior engineer who writes as well as they code: direct, co
 
 ## Use Cases (with pain and proof)
 
-| Use case | The pain | Readable's role |
+| Use case | The pain | Booklet's role |
 |---|---|---|
 | **Incident summaries / post-mortems** | Raw MD pasted to Slack is noise; Google Docs requires an account | A link anyone can open — timeline, severity, root cause all intact |
 | **Architecture decision records (ADRs)** | ADRs live in repos — non-engineers can't navigate them | A shareable link that explains the decision without GitHub |
 | **README-style docs** | GitHub requires login, repo navigation, mental model overhead | A plain URL that reads like a proper document |
 | **Release notes** | Buried in PRs or CHANGELOG.md | A clean page stakeholders can actually read |
-| **Onboarding guides** | Google Docs for internal docs requires IT provisioning | A Readable link pasted in the welcome Slack message |
+| **Onboarding guides** | Google Docs for internal docs requires IT provisioning | A Booklet link pasted in the welcome Slack message |
 | **Proposals / briefs** | Writing in Markdown, formatting in another tool wastes time | Publish from the Markdown, skip the formatting step |
-| **CI/CD via API** | Manual publishing doesn't scale | The Readable API publishes pages from pipelines automatically |
+| **CI/CD via API** | Manual publishing doesn't scale | The Booklet API publishes pages from pipelines automatically |
 
 ---
 
@@ -392,9 +392,9 @@ Lead with what changed for the user, not what changed in the code. One sentence 
 
 - Subject: specific scenario, not product feature
   - ✅ "Stop pasting raw Markdown into Slack"
-  - ❌ "Announcing Readable's new sharing features"
+  - ❌ "Announcing Booklet's new sharing features"
 - Body: 3 paragraphs max. Problem → Solution → CTA.
-- Signature: *"Built for clarity. — The Readable team"*
+- Signature: *"Built for clarity. — The Booklet team"*
 
 ### Developer / technical content
 
@@ -407,7 +407,7 @@ Lead with what changed for the user, not what changed in the code. One sentence 
 
 ## Competitive Positioning
 
-| Tool | Why users reach for it | Why Readable wins |
+| Tool | Why users reach for it | Why Booklet wins |
 |---|---|---|
 | Google Docs | Rich formatting, familiar | Requires Google account; not Markdown-native |
 | Notion | Beautiful output, flexible | Requires workspace access; heavy onboarding |
@@ -416,17 +416,17 @@ Lead with what changed for the user, not what changed in the code. One sentence 
 | Confluence | Enterprise docs | Requires corporate SSO; heavyweight |
 | Pasting into Slack/email | Zero friction | Destroys all formatting; no permanent link |
 
-**Readable's position:** The fastest, most beautiful path from Markdown to a link someone can actually read. Not a full tool — a sharp one.
+**Booklet's position:** The fastest, most beautiful path from Markdown to a link someone can actually read. Not a full tool — a sharp one.
 
 ---
 
-## What Readable Is Not
+## What Booklet Is Not
 
 Be explicit in all positioning to avoid misleading copy:
 
 - **Not a CMS** — published pages are immutable snapshots, not editable posts
 - **Not a collaboration tool** — no comments, no co-editing, no shared cursors
-- **Not a note-taking app** — Readable publishes notes, not stores them
+- **Not a note-taking app** — Booklet publishes notes, not stores them
 - **Not access-controlled** — published pages are publicly accessible to anyone with the link
 
 ---
@@ -444,9 +444,9 @@ Be explicit in all positioning to avoid misleading copy:
 
 | Element | Value |
 |---|---|
-| Root `<title>` | `Readable — Share Beautiful Markdown Pages Instantly` |
+| Root `<title>` | `Booklet — Share Beautiful Markdown Pages Instantly` |
 | Root `<meta description>` | `Convert any Markdown into a clean, beautifully formatted shareable page in seconds. Perfect for incident reports, ADRs, READMEs, and technical docs. Free, no account required.` (155 chars) |
-| Title pattern | `{Page title} — Readable` |
+| Title pattern | `{Page title} — Booklet` |
 | Primary keywords | markdown viewer, share markdown online, markdown to html, markdown preview, shareable markdown link, incident report template, ADR template, README viewer, technical writing tool |
 | Schema types | `SoftwareApplication + WebSite + WebPage` on home page |
 | OG image | `/opengraph-image` — 1200×630 |

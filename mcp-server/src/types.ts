@@ -30,12 +30,12 @@ export interface PromptGetParams {
   arguments?: Record<string, string>;
 }
 
-// Readable API response types now live in readable-api-client (packages/shared)
+// Booklet API response types now live in booklet-api-client (packages/shared)
 // — see src/tools.ts's import.
 
 // Worker env bindings
 export interface Env {
-  READABLE_API_BASE: string;
+  BOOKLET_API_BASE: string;
   MCP_SERVER_NAME: string;
   MCP_SERVER_VERSION: string;
 }

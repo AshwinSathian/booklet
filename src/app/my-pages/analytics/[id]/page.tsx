@@ -12,7 +12,7 @@ import { ViewsChart } from "./ViewsChart";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const metadata = {
-  title: "Page analytics — Readable",
+  title: "Page analytics — Booklet",
   robots: { index: false, follow: false },
 };
 

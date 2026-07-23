@@ -25,8 +25,8 @@ const SECURITY_HEADERS: Record<string, string> = {
   ].join("; "),
 };
 
-// readable-api.ashwinsathian.com is the same Next.js process as
-// readable.ashwinsathian.com (see ecosystem.config.js — one PM2 app, one
+// booklet-api.ashwinsathian.com is the same Next.js process as
+// booklet.ashwinsathian.com (see ecosystem.config.js — one PM2 app, one
 // port), routed under its own hostname purely so external API consumers
 // (CLI, GitHub Action, VS Code extension, MCP server) have a stable,
 // clearly-scoped entry point distinct from the marketing/editor UI. This is
@@ -34,11 +34,17 @@ const SECURITY_HEADERS: Record<string, string> = {
 // /api/* only, everything else 404s. The main hostname keeps serving both
 // the UI and /api/* as before (the web app's own client-side code calls
 // same-origin /api/* routes — those must keep working there too).
-const API_HOSTNAME = "readable-api.ashwinsathian.com";
+//
+// readable-api.ashwinsathian.com is kept in this list during the Readable
+// -> Booklet rename's compatibility window — the domain still resolves
+// (see ~/.cloudflared/readable-config.yml) so already-configured API
+// clients (CLI/VS Code/GitHub Action/MCP installs pointed at the old host)
+// keep working without an immediate forced upgrade.
+const API_HOSTNAMES = ["booklet-api.ashwinsathian.com", "readable-api.ashwinsathian.com"];
 
 export default function middleware(req: NextRequest) {
   const host = req.headers.get("host") ?? "";
-  if (host === API_HOSTNAME || host.startsWith(`${API_HOSTNAME}:`)) {
+  if (API_HOSTNAMES.some((h) => host === h || host.startsWith(`${h}:`))) {
     if (!req.nextUrl.pathname.startsWith("/api/")) {
       return new Response("Not found", { status: 404 });
     }

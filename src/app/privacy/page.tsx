@@ -94,8 +94,8 @@ export default function PrivacyPage() {
             </p>
             <p>
               To delete your account and all associated data, email{" "}
-              <a href="mailto:hello@readable.ashwinsathian.com" className="text-accent hover:underline">
-                hello@readable.ashwinsathian.com
+              <a href="mailto:hello@booklet.ashwinsathian.com" className="text-accent hover:underline">
+                hello@booklet.ashwinsathian.com
               </a>
               . We will process your request within 30 days.
             </p>
@@ -113,8 +113,8 @@ export default function PrivacyPage() {
           <Section title="Contact">
             <p>
               Questions? Email{" "}
-              <a href="mailto:hello@readable.ashwinsathian.com" className="text-accent hover:underline">
-                hello@readable.ashwinsathian.com
+              <a href="mailto:hello@booklet.ashwinsathian.com" className="text-accent hover:underline">
+                hello@booklet.ashwinsathian.com
               </a>
               .
             </p>

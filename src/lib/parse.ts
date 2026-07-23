@@ -292,7 +292,7 @@ const CALLOUT_MARKER_RE = /^\[!([a-z]+)\]\s*/i;
  * and recognized, returns the parsed callout. Returns null for any
  * blockquote that isn't a callout, so callers fall back to a plain `quote`
  * block — this is what makes the syntax degrade gracefully in older
- * Readable versions or any other CommonMark renderer (it's just a
+ * Booklet versions or any other CommonMark renderer (it's just a
  * blockquote whose first word looks odd).
  */
 function tryParseCallout(

@@ -318,7 +318,7 @@ function HeroMock() {
         </div>
         <div className="flex flex-1 min-w-0 justify-center">
           <div className="min-w-0 truncate rounded-md bg-bg-glass px-8 py-1 text-xs text-text-muted font-mono backdrop-blur">
-            readable.ashwinsathian.com
+            booklet.ashwinsathian.com
           </div>
         </div>
         {/* shrink-0: on narrow viewports the flex row was compressing this
@@ -422,7 +422,7 @@ pool_size: 5 # was 50
       <div className="flex items-center gap-2.5 border-t border-border-default bg-bg-soft px-4 py-2.5">
         <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-400" />
         <span className="flex-1 truncate font-mono text-2xs text-text-muted">
-          readable.ashwinsathian.com/p/Ab3k91QxZp
+          booklet.ashwinsathian.com/p/Ab3k91QxZp
         </span>
         <button
           type="button"
@@ -436,7 +436,7 @@ pool_size: 5 # was 50
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Problem section mock — before (raw MD) vs after (Readable page)
+// Problem section mock — before (raw MD) vs after (Booklet page)
 // ─────────────────────────────────────────────────────────────────────────────
 
 function ProblemMock() {
@@ -486,7 +486,7 @@ pool_size: 5 # was 50
         </div>
       </div>
 
-      {/* After: clean Readable published page */}
+      {/* After: clean Booklet published page */}
       <div>
         <div className="mb-3 flex items-center gap-2">
           <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400">
@@ -494,14 +494,14 @@ pool_size: 5 # was 50
               <path d="M2 6.5 4.5 9 10 3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </span>
-          <span className="text-[12px] font-semibold text-text-muted">Shared as a Readable link</span>
+          <span className="text-[12px] font-semibold text-text-muted">Shared as a Booklet link</span>
         </div>
         <div className="overflow-hidden rounded-2xl border border-emerald-500/12 bg-bg-elevated shadow-card">
           {/* Browser bar */}
           <div className="flex items-center gap-2.5 border-b border-border-default bg-bg-soft px-4 py-2.5">
             <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-400" />
             <span className="font-mono text-2xs text-text-muted truncate">
-              readable.ashwinsathian.com/p/Ab3k91QxZp
+              booklet.ashwinsathian.com/p/Ab3k91QxZp
             </span>
           </div>
           {/* Clean rendered content */}
@@ -604,7 +604,7 @@ function ApiBlock() {
           <pre className="overflow-x-auto font-mono text-[12px] leading-[1.78] text-text-secondary">
 {`# Publish a new page
 POST /api/v1/publish
-Authorization: Bearer rdbl_...
+Authorization: Bearer bklt_...
 
 {
   "blocks": [ ... ]
@@ -613,12 +613,12 @@ Authorization: Bearer rdbl_...
 # Response
 {
   "id": "Ab3k91QxZp",
-  "url": "https://readable.ashwinsathian.com/p/Ab3k91QxZp"
+  "url": "https://booklet.ashwinsathian.com/p/Ab3k91QxZp"
 }
 
 # Update an existing page (same URL)
 PATCH /api/v1/pages/Ab3k91QxZp
-Authorization: Bearer rdbl_...`}
+Authorization: Bearer bklt_...`}
           </pre>
         </div>
       </div>
@@ -644,7 +644,7 @@ export function Landing() {
       {
         n: "02",
         title: "See it rendered instantly",
-        desc: "Readable formats headings, code, lists, and tables live as you type.",
+        desc: "Booklet formats headings, code, lists, and tables live as you type.",
       },
       {
         n: "03",
@@ -666,8 +666,8 @@ export function Landing() {
       {
         mcpServers: {
           readable: {
-            url: "https://readable-mcp.ashwinsathian.com/mcp",
-            headers: { Authorization: "Bearer rdbl_YOUR_KEY" },
+            url: "https://booklet-mcp.ashwinsathian.com/mcp",
+            headers: { Authorization: "Bearer bklt_YOUR_KEY" },
           },
         },
       },
@@ -810,19 +810,19 @@ export function Landing() {
         tag: "Incident",
         title: "Incident summaries",
         desc: "Timeline, severity, root cause, next steps — structured enough to forward to leadership the moment the incident closes.",
-        href: "https://readable.ashwinsathian.com/p/example-incident-report",
+        href: "https://booklet.ashwinsathian.com/p/example-incident-report",
       },
       {
         tag: "ADR",
         title: "Design decisions",
         desc: "Architecture decisions and tradeoffs that make sense even to someone outside the codebase. No repo navigation required.",
-        href: "https://readable.ashwinsathian.com/p/example-adr",
+        href: "https://booklet.ashwinsathian.com/p/example-adr",
       },
       {
         tag: "Docs",
         title: "README-style docs",
         desc: "Documentation you can share without sending someone to GitHub first. Clean URL, proper headings, code blocks intact.",
-        href: "https://readable.ashwinsathian.com/p/example-readme",
+        href: "https://booklet.ashwinsathian.com/p/example-readme",
       },
       {
         tag: "Release",
@@ -832,7 +832,7 @@ export function Landing() {
       {
         tag: "Onboarding",
         title: "Onboarding guides",
-        desc: "New hire guides, team wikis, service runbooks. Drop the Readable link in a welcome Slack message — zero setup for the reader.",
+        desc: "New hire guides, team wikis, service runbooks. Drop the Booklet link in a welcome Slack message — zero setup for the reader.",
       },
       {
         tag: "Proposal",
@@ -890,7 +890,7 @@ export function Landing() {
               variants={reduce ? undefined : fadeUp}
               className="mt-6 max-w-2xl text-pretty text-[18px] leading-[1.75] text-text-secondary"
             >
-              Readable turns your Markdown into a beautifully formatted page — headings,
+              Booklet turns your Markdown into a beautifully formatted page — headings,
               code blocks, tables, diagrams — shareable with one link. No setup. No noise.
             </motion.p>
 
@@ -999,7 +999,7 @@ export function Landing() {
                 <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               <span className="text-[14px] text-text-secondary">
-                <span className="font-semibold text-text-primary">Readable</span> — write, publish, share a link. No account, no access to grant, no formatting step.
+                <span className="font-semibold text-text-primary">Booklet</span> — write, publish, share a link. No account, no access to grant, no formatting step.
               </span>
             </div>
           </div>
@@ -1061,7 +1061,7 @@ export function Landing() {
         id="examples"
         eyebrow="Examples"
         title="Real pages, real use cases."
-        subtitle="If it ends up in Slack, email, or a ticket — it belongs in Readable."
+        subtitle="If it ends up in Slack, email, or a ticket — it belongs in Booklet."
       >
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {useCases.map((c) => (
@@ -1081,7 +1081,7 @@ export function Landing() {
         id="api"
         eyebrow="API"
         title="Publish from anywhere."
-        subtitle="Readable's REST API lets you publish pages directly from CI/CD pipelines, incident tools, and automation scripts. Sign in to generate a key."
+        subtitle="Booklet's REST API lets you publish pages directly from CI/CD pipelines, incident tools, and automation scripts. Sign in to generate a key."
       >
         <ApiBlock />
       </Section>
@@ -1095,7 +1095,7 @@ export function Landing() {
         id="integrations"
         eyebrow="CONNECT"
         title="Works where you already are."
-        subtitle="Readable connects to the tools in your workflow — publish directly from your AI assistant, your terminal, or your CI pipeline."
+        subtitle="Booklet connects to the tools in your workflow — publish directly from your AI assistant, your terminal, or your CI pipeline."
       >
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {/* Claude MCP */}
@@ -1112,15 +1112,16 @@ export function Landing() {
                 <div className="text-[12px] text-text-muted mt-0.5">via MCP</div>
               </div>
               <div className="text-[15px] leading-[1.72] text-text-secondary">
-                Add Readable to Claude Desktop or Claude.ai. Then ask Claude to publish, update, or list your pages — all in plain language.
+                Add Booklet to Claude Desktop or Claude.ai. Then ask Claude to publish, update, or list your pages — all in plain language.
               </div>
               {/* Config snippet with copy button */}
               <div className="relative group">
                 <pre className="text-[11px] font-mono bg-bg-soft border border-border-default rounded-lg px-3 py-3 text-text-muted overflow-x-auto leading-relaxed whitespace-pre">{`{
   "mcpServers": {
-    "readable": {
-      "url": "https://readable-mcp.ashwinsathian.com/mcp",
-      "headers": { "Authorization": "Bearer rdbl_YOUR_KEY" }
+
+      "booklet": {
+      "url": "https://booklet-mcp.ashwinsathian.com/mcp",
+      "headers": { "Authorization": "Bearer bklt_YOUR_KEY" }
     }
   }
 }`}</pre>
@@ -1166,13 +1167,13 @@ export function Landing() {
               </div>
               <div className="text-[15px] font-semibold tracking-tight">Terminal</div>
               <div className="text-[15px] leading-[1.72] text-text-secondary">
-                <code className="text-[13px] font-mono">readable-cli</code> publishes Markdown files from any terminal in one command. Works in CI too.
+                <code className="text-[13px] font-mono">booklet-cli</code> publishes Markdown files from any terminal in one command. Works in CI too.
               </div>
               <code className="text-[12px] font-mono bg-bg-soft border border-border-default rounded-lg px-3 py-2 text-text-muted break-all">
-                npx readable-cli publish README.md
+                npx booklet-cli publish README.md
               </code>
               <a
-                href="https://www.npmjs.com/package/readable-cli"
+                href="https://www.npmjs.com/package/booklet-cli"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 text-[13px] font-semibold text-accent transition hover:text-accent-soft mt-auto"
@@ -1400,7 +1401,7 @@ export function Landing() {
             <a href="/api-docs" className="text-accent hover:underline">API reference</a>.
           </FaqItem>
           <FaqItem question="What Markdown is supported?">
-            Readable supports GitHub-Flavored Markdown (GFM): H1–H4 headings, bold, italic,
+            Booklet supports GitHub-Flavored Markdown (GFM): H1–H4 headings, bold, italic,
             strikethrough, code (inline and fenced), tables, ordered/unordered/nested lists,
             task lists, blockquotes, links, images (external URLs), Mermaid diagrams, and
             KaTeX math — inline <strong>$...$</strong> and display <strong>$$...$$</strong>.

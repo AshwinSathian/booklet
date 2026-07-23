@@ -54,7 +54,7 @@ export function blocksToHtml(blocks: Block[]): string {
 
 export function blocksToHtmlDocument(blocks: Block[], title: string): string {
   const body = blocks.map(renderBlock).join("\n");
-  const safeTitle = escapeHtmlInner(title || "Readable export");
+  const safeTitle = escapeHtmlInner(title || "Booklet export");
   return `<!DOCTYPE html>
 <html lang="en">
 <head>

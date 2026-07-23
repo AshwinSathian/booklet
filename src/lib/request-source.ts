@@ -1,7 +1,7 @@
 import type { PublishEvent } from "@/lib/db/types";
 
 // The 4 first-party API clients (packages/cli, packages/github-action,
-// packages/vscode, mcp-server) already send X-Readable-Source on every
+// packages/vscode, mcp-server) already send X-Booklet-Source on every
 // request — see packages/shared/src/client.ts's createClient(). The server
 // side never read it before this file existed, so every one of those
 // clients (plus raw API-key usage) collapsed into a single "api" bucket —
@@ -22,7 +22,7 @@ const KNOWN_CLIENT_SOURCES = new Set<PublishEvent["source"]>([
  * rather than writing an arbitrary caller-supplied string into analytics.
  */
 export function resolveApiClientSource(req: Request): PublishEvent["source"] {
-  const header = req.headers.get("x-readable-source")?.trim().toLowerCase();
+  const header = req.headers.get("x-booklet-source")?.trim().toLowerCase();
   if (header && KNOWN_CLIENT_SOURCES.has(header as PublishEvent["source"])) {
     return header as PublishEvent["source"];
   }

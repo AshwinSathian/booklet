@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 const SCROLL_THRESHOLD = 0.6; // show after 60% of page height scrolled
-const DISMISS_KEY = "readable_scroll_cta_dismissed";
+const DISMISS_KEY = "booklet_scroll_cta_dismissed";
 
 export function ScrollCta({ href }: { href: string }) {
   const [visible, setVisible] = useState(false);

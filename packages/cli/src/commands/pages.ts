@@ -30,7 +30,7 @@ async function confirm(question: string): Promise<boolean> {
 export function registerPagesCommand(program: Command) {
   const pages = program
     .command("pages")
-    .description("Manage your Readable pages");
+    .description("Manage your Booklet pages");
 
   pages
     .command("list")
@@ -57,7 +57,7 @@ export function registerPagesCommand(program: Command) {
       }
 
       if (items.length === 0) {
-        info("No pages yet. Run `readable publish <file>` to create one.");
+        info("No pages yet. Run `booklet publish <file>` to create one.");
         return;
       }
 

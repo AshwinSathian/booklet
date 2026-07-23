@@ -13,9 +13,14 @@ test.describe("api-key hashing", () => {
 
   test("generated keys have the expected prefix/length and pass isApiKeyFormat", () => {
     const raw = generateRawKey();
-    expect(raw.startsWith("rdbl_")).toBe(true);
-    expect(raw.length).toBe("rdbl_".length + 40);
+    expect(raw.startsWith("bklt_")).toBe(true);
+    expect(raw.length).toBe("bklt_".length + 40);
     expect(isApiKeyFormat(raw)).toBe(true);
+  });
+
+  test("a legacy rdbl_-prefixed key (issued before the Readable -> Booklet rename) still passes isApiKeyFormat", () => {
+    expect(isApiKeyFormat("rdbl_" + "a".repeat(40))).toBe(true);
+    expect(isApiKeyFormat("rdbl_tooshort")).toBe(false);
   });
 
   test("hashApiKey is deterministic for the same key + pepper", async () => {

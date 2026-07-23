@@ -10,12 +10,12 @@ import { Icon } from "@/components/ui/Icon";
 import { ActionDrawer, DrawerSection } from "@/components/ui/ActionDrawer";
 
 function sanitizeFilename(title: string): string {
-  return (title || "readable-export")
+  return (title || "booklet-export")
     .trim()
     .toLowerCase()
     .replace(/[^\w\s-]/g, "")
     .replace(/\s+/g, "-")
-    .slice(0, 80) || "readable-export";
+    .slice(0, 80) || "booklet-export";
 }
 
 function downloadBlob(content: string, filename: string, mimeType: string) {
@@ -116,7 +116,7 @@ export function ExportMenu({
             </span>
             <span className="min-w-0 flex-1">
               <span className="block text-text-primary">Print or Save as PDF</span>
-              <span className="mt-0.5 block text-xs text-text-muted">Uses Readable&apos;s print-optimized layout</span>
+              <span className="mt-0.5 block text-xs text-text-muted">Uses Booklet&apos;s print-optimized layout</span>
             </span>
           </button>
         </DrawerSection>

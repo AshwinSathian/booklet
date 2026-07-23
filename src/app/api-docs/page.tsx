@@ -7,18 +7,18 @@ import type { Metadata } from "next";
 export const metadata: Metadata = buildMetadata({
   title: "REST API Reference",
   description:
-    "Complete REST API reference for Readable — publish pages, update content, manage slugs, and set up webhooks programmatically. Includes GitHub Actions integration examples.",
+    "Complete REST API reference for Booklet — publish pages, update content, manage slugs, and set up webhooks programmatically. Includes GitHub Actions integration examples.",
   pathname: "/api-docs",
 });
 
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "TechArticle",
-  name: "Readable REST API Reference",
+  name: "Booklet REST API Reference",
   description:
-    "Complete REST API reference for Readable — publish pages, update content, manage slugs, and set up webhooks programmatically.",
+    "Complete REST API reference for Booklet — publish pages, update content, manage slugs, and set up webhooks programmatically.",
   url: absoluteUrl("/api-docs"),
-  author: { "@type": "Organization", name: "Readable" },
+  author: { "@type": "Organization", name: "Booklet" },
   proficiencyLevel: "Expert",
   articleSection: "API Documentation",
   keywords: "REST API, markdown, publish pages, webhooks, GitHub Actions",
@@ -101,7 +101,7 @@ function Table({ rows }: { rows: [string, string][] }) {
 
 export default function ApiDocsPage() {
   const base = absoluteUrl("").replace(/\/$/, "");
-  const mcpBase = "https://readable-mcp.ashwinsathian.com";
+  const mcpBase = "https://booklet-mcp.ashwinsathian.com";
 
   return (
     <div className="min-h-screen bg-bg text-text-primary flex flex-col">
@@ -143,7 +143,7 @@ export default function ApiDocsPage() {
           <div>
             <h1 className="text-[clamp(22px,3vw,28px)] mb-2">API Reference</h1>
             <p className="text-sm text-text-secondary max-w-prose">
-              Publish and manage Readable pages programmatically. All endpoints require an API key obtainable from{" "}
+              Publish and manage Booklet pages programmatically. All endpoints require an API key obtainable from{" "}
               <Link href="/my-pages" className="text-accent hover:underline">My Pages</Link>.
             </p>
           </div>
@@ -157,7 +157,7 @@ export default function ApiDocsPage() {
             <p className="text-sm text-text-secondary mb-3">
               Pass your API key in the <Code>Authorization</Code> header:
             </p>
-            <Pre>{`Authorization: Bearer rdbl_live_<your-key>`}</Pre>
+            <Pre>{`Authorization: Bearer bklt_live_<your-key>`}</Pre>
             <p className="mt-3 text-sm text-text-secondary">
               Generate keys at <Link href="/my-pages" className="text-accent hover:underline">/my-pages</Link>. Keys are scoped to your account and never expire (delete and regenerate to rotate).
             </p>
@@ -339,7 +339,7 @@ slug: incident-auth-2026-05
   "id": "Wk9xZ2mP1q",
   "url": "https://hooks.example.com/readable",
   "events": ["page.published"],
-  "secret": "rdbl_whsec_abc123..."
+  "secret": "bklt_whsec_abc123..."
 }`}</Pre>
             </Endpoint>
 
@@ -349,7 +349,7 @@ slug: incident-auth-2026-05
             <div className="rounded-xl border border-border-subtle bg-bg-elevated p-5 text-sm">
               <p className="font-semibold text-text-primary mb-2">Verifying webhook signatures</p>
               <p className="text-text-secondary mb-3">
-                Every delivery includes an <Code>X-Readable-Signature</Code> header containing <Code>sha256=&lt;HMAC-SHA256&gt;</Code> of the raw request body, computed with your webhook secret. Verify this before trusting the payload.
+                Every delivery includes an <Code>X-Booklet-Signature</Code> header containing <Code>sha256=&lt;HMAC-SHA256&gt;</Code> of the raw request body, computed with your webhook secret. Verify this before trusting the payload.
               </p>
               <Pre>{`// Node.js example
 const crypto = require('crypto');
@@ -390,7 +390,7 @@ function verifySignature(rawBody, secret, header) {
 
           <Section id="github-actions" title="GitHub Actions">
             <p className="text-sm text-text-secondary mb-3">
-              Use the dedicated <Code>readable-cli</Code> action, or call the REST API directly with <Code>curl</Code>:
+              Use the dedicated <Code>booklet-cli</Code> action, or call the REST API directly with <Code>curl</Code>:
             </p>
 
             <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">Option A — CLI (recommended)</p>
@@ -407,20 +407,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Publish to Readable
+      - name: Publish to Booklet
         env:
           READABLE_API_KEY: \${{ secrets.READABLE_API_KEY }}
         run: |
           if [ -n "\${{ vars.READABLE_PAGE_ID }}" ]; then
-            npx readable-cli publish CHANGELOG.md \\
+            npx booklet-cli publish CHANGELOG.md \\
               --update \${{ vars.READABLE_PAGE_ID }}
           else
-            npx readable-cli publish CHANGELOG.md \\
+            npx booklet-cli publish CHANGELOG.md \\
               --slug release-notes --visibility public
           fi`}</Pre>
 
             <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mt-5 mb-2">Option B — raw curl</p>
-            <Pre>{`      - name: Publish to Readable
+            <Pre>{`      - name: Publish to Booklet
         env:
           READABLE_API_KEY: \${{ secrets.READABLE_API_KEY }}
           PAGE_ID: \${{ vars.READABLE_PAGE_ID }}   # optional: update in-place
@@ -445,7 +445,7 @@ jobs:
 
           <Section id="mcp" title="Use with Claude (MCP)">
             <p className="text-sm text-text-secondary mb-4">
-              Readable has an MCP server that lets Claude, Cursor, Windsurf, VS Code, and Zed
+              Booklet has an MCP server that lets Claude, Cursor, Windsurf, VS Code, and Zed
               publish and manage pages on your behalf — entirely through conversation.
             </p>
 
@@ -476,7 +476,7 @@ jobs:
               </div>
               <div className="rounded-lg border border-outline p-3">
                 <p className="text-xs font-semibold text-text-primary mb-1">Auth header</p>
-                <Code>Authorization: Bearer rdbl_YOUR_KEY</Code>
+                <Code>Authorization: Bearer bklt_YOUR_KEY</Code>
               </div>
             </div>
 

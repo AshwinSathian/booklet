@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 
-const API_KEY_SECRET = "readable.apiKey";
+const API_KEY_SECRET = "booklet.apiKey";
 
 export function getApiKey(context: vscode.ExtensionContext): Thenable<string | undefined> {
   return context.secrets.get(API_KEY_SECRET);

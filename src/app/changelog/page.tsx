@@ -63,7 +63,7 @@ const RELEASES: Release[] = [
       { date: "2026-05-25", tag: "New", text: "Explore page rebuilt: tabs (Recent / Trending / Featured), search/filter, 3-column grid, 96 pages shown" },
       { date: "2026-05-25", tag: "New", text: "Welcome email sent to new sign-ups via Resend" },
       { date: "2026-05-25", tag: "New", text: "Duplicate in editor: copy any published page into a local draft from My Pages" },
-      { date: "2026-05-25", tag: "New", text: "/about, /privacy, /terms pages — the legal and identity content Readable was missing" },
+      { date: "2026-05-25", tag: "New", text: "/about, /privacy, /terms pages — the legal and identity content Booklet was missing" },
       { date: "2026-05-25", tag: "Improved", text: "Version history limit raised from 10 to 50 snapshots per page" },
       { date: "2026-05-25", tag: "Improved", text: "System theme is now the default on first visit (respects OS dark/light preference)" },
       { date: "2026-05-25", tag: "Improved", text: "API docs: all code examples use the live site URL instead of hardcoded strings" },
@@ -76,7 +76,7 @@ const RELEASES: Release[] = [
     date: "2026-04-29",
     summary: "Complete design overhaul, SEO improvements, and MCP server.",
     entries: [
-      { date: "2026-04-29", tag: "New", text: "MCP server — publish Readable pages from Claude, Cursor, Windsurf, and VS Code" },
+      { date: "2026-04-29", tag: "New", text: "MCP server — publish Booklet pages from Claude, Cursor, Windsurf, and VS Code" },
       { date: "2026-04-29", tag: "New", text: "Complete visual redesign: new design system, typography, color tokens, and brand identity" },
       { date: "2026-04-29", tag: "New", text: "Comprehensive SEO: JSON-LD structured data, llms.txt, sitemap, and Open Graph images" },
       { date: "2026-04-29", tag: "New", text: "Mobile reading experience overhaul: sticky header, floating controls, scroll-aware TOC" },

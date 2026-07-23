@@ -7,7 +7,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 // The VS Code extension is built and ready but not yet published to the
-// Marketplace — flip this once `AshwinSathian.readable-vscode` is live so
+// Marketplace — flip this once `AshwinSathian.booklet-vscode` is live so
 // its nav item, metadata mentions, and dedicated section reappear. Search
 // this file for VSCODE_EXTENSION_PUBLISHED to find every gated spot.
 const VSCODE_EXTENSION_PUBLISHED = false;
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   ...buildMetadata({
     title: `${APP_NAME} Integrations — CLI, GitHub Actions, MCP & API`,
     description:
-      "Publish Markdown pages from your terminal, GitHub Actions, Claude AI, or any script. Readable integrates into your existing workflow — no context switching.",
+      "Publish Markdown pages from your terminal, GitHub Actions, Claude AI, or any script. Booklet integrates into your existing workflow — no context switching.",
     pathname: "/integrations",
   }),
   openGraph: {
@@ -132,7 +132,7 @@ export default function IntegrationsPage() {
           <div>
             <IntegrationBadge label="Terminal" color="border-emerald-500/30 bg-emerald-500/8 text-emerald-400" />
             <h2 className="text-2xl font-light text-text-primary mt-3 mb-3">
-              readable-cli
+              booklet-cli
             </h2>
             <p className="text-sm text-text-muted leading-relaxed mb-6">
               Publish any Markdown file from your terminal in one command. Supports
@@ -146,7 +146,7 @@ export default function IntegrationsPage() {
                 No install required — use <code className="rounded bg-fill-2 px-1 py-0.5 text-xs font-mono text-accent-soft">npx</code> for a one-off publish, or install globally for repeated use.
               </Step>
               <Step n={2} title="Set your API key">
-                Run <code className="rounded bg-fill-2 px-1 py-0.5 text-xs font-mono text-accent-soft">npx readable-cli login --key rdbl_YOUR_KEY</code> — stored in your home directory, never committed to source.
+                Run <code className="rounded bg-fill-2 px-1 py-0.5 text-xs font-mono text-accent-soft">npx booklet-cli login --key bklt_YOUR_KEY</code> — stored in your home directory, never committed to source.
               </Step>
               <Step n={3} title="Publish">
                 Run the publish command. You get a shareable URL back immediately.
@@ -155,7 +155,7 @@ export default function IntegrationsPage() {
 
             <div className="mt-6 flex items-center gap-3">
               <a
-                href="https://www.npmjs.com/package/readable-cli"
+                href="https://www.npmjs.com/package/booklet-cli"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent transition hover:text-accent-soft"
@@ -176,23 +176,23 @@ export default function IntegrationsPage() {
 
           <div className="flex flex-col gap-4">
             <CodeBlock>{`# One-off publish (no install needed)
-npx readable-cli publish README.md
+npx booklet-cli publish README.md
 
 # Publish with a custom slug + public visibility
-npx readable-cli publish docs/runbook.md \\
+npx booklet-cli publish docs/runbook.md \\
   --slug ops-runbook \\
   --visibility public
 
 # Watch mode — updates the page on every file save
-npx readable-cli publish INCIDENT.md \\
+npx booklet-cli publish INCIDENT.md \\
   --watch --slug live-incident
 
 # Update an existing page by ID
-npx readable-cli publish CHANGELOG.md \\
+npx booklet-cli publish CHANGELOG.md \\
   --update Ab3k91QxZp
 
 # Pipe from stdin
-cat README.md | npx readable-cli publish -`}</CodeBlock>
+cat README.md | npx booklet-cli publish -`}</CodeBlock>
             <p className="text-xs text-text-muted">
               Flags: <code className="font-mono">--slug</code>, <code className="font-mono">--visibility</code>, <code className="font-mono">--update</code>, <code className="font-mono">--watch</code>, <code className="font-mono">--open</code>
             </p>
@@ -208,7 +208,7 @@ cat README.md | npx readable-cli publish -`}</CodeBlock>
             <div>
               <IntegrationBadge label="VS Code" color="border-sky-500/30 bg-sky-500/8 text-sky-400" />
               <h2 className="text-2xl font-light text-text-primary mt-3 mb-3">
-                Readable for VS Code
+                Booklet for VS Code
               </h2>
               <p className="text-sm text-text-muted leading-relaxed mb-6">
                 Publish the current Markdown file — or just your current selection —
@@ -219,19 +219,19 @@ cat README.md | npx readable-cli publish -`}</CodeBlock>
 
               <div className="flex flex-col gap-5">
                 <Step n={1} title="Install the extension">
-                  Search for <em>Readable</em> in the VS Code Extensions panel, or install from the marketplace.
+                  Search for <em>Booklet</em> in the VS Code Extensions panel, or install from the marketplace.
                 </Step>
                 <Step n={2} title="Set your API key">
-                  Run <strong>Readable: Set API Key</strong> from the command palette. Stored securely in VS Code secret storage.
+                  Run <strong>Booklet: Set API Key</strong> from the command palette. Stored securely in VS Code secret storage.
                 </Step>
                 <Step n={3} title="Publish with one command">
-                  Open any <code className="rounded bg-fill-2 px-1 py-0.5 text-xs font-mono text-accent-soft">.md</code> file and run <strong>Readable: Publish Current File</strong>. The URL is copied to your clipboard.
+                  Open any <code className="rounded bg-fill-2 px-1 py-0.5 text-xs font-mono text-accent-soft">.md</code> file and run <strong>Booklet: Publish Current File</strong>. The URL is copied to your clipboard.
                 </Step>
               </div>
 
               <div className="mt-6">
                 <a
-                  href="https://marketplace.visualstudio.com/items?itemName=AshwinSathian.readable-vscode"
+                  href="https://marketplace.visualstudio.com/items?itemName=AshwinSathian.booklet-vscode"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent transition hover:text-accent-soft"
@@ -248,9 +248,9 @@ cat README.md | npx readable-cli publish -`}</CodeBlock>
               <div className="rounded-xl border border-border-subtle bg-bg-elevated p-5 flex flex-col gap-3">
                 <p className="text-xs font-semibold uppercase tracking-widest text-text-muted">Command palette</p>
                 {[
-                  { cmd: "Readable: Publish Current File", desc: "Publish the current file as a new page" },
-                  { cmd: "Readable: Publish Selection", desc: "Publish only the highlighted text" },
-                  { cmd: "Readable: Set API Key", desc: "Save your key to VS Code secret storage" },
+                  { cmd: "Booklet: Publish Current File", desc: "Publish the current file as a new page" },
+                  { cmd: "Booklet: Publish Selection", desc: "Publish only the highlighted text" },
+                  { cmd: "Booklet: Set API Key", desc: "Save your key to VS Code secret storage" },
                 ].map((item) => (
                   <div key={item.cmd} className="flex items-start gap-3 rounded-lg border border-border-subtle bg-bg-soft px-3.5 py-3">
                     <code className="shrink-0 rounded bg-accent/10 border border-accent/20 px-1.5 py-0.5 text-xs font-mono text-accent">
@@ -286,7 +286,7 @@ cat README.md | npx readable-cli publish -`}</CodeBlock>
 
             <div className="flex flex-col gap-5">
               <Step n={1} title="Add your API key as a secret">
-                In your repo settings, add a secret named <code className="rounded bg-fill-2 px-1 py-0.5 text-xs font-mono text-accent-soft">READABLE_API_KEY</code> with your Readable API key.
+                In your repo settings, add a secret named <code className="rounded bg-fill-2 px-1 py-0.5 text-xs font-mono text-accent-soft">READABLE_API_KEY</code> with your Booklet API key.
               </Step>
               <Step n={2} title="Add the workflow step">
                 Call the REST API directly with <code className="rounded bg-fill-2 px-1 py-0.5 text-xs font-mono text-accent-soft">curl</code> in a run step, pointing it at your Markdown file.
@@ -324,13 +324,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Publish to Readable
+      - name: Publish to Booklet
         id: publish
         env:
           READABLE_API_KEY: \${{ secrets.READABLE_API_KEY }}
         run: |
           BODY=$(jq -n --rawfile raw CHANGELOG.md '{"raw": $raw, "visibility": "public"}')
-          URL=$(curl -fsSL -X POST https://readable-api.ashwinsathian.com/api/v1/publish \\
+          URL=$(curl -fsSL -X POST https://booklet-api.ashwinsathian.com/api/v1/publish \\
             -H "Authorization: Bearer $READABLE_API_KEY" \\
             -H "Content-Type: application/json" \\
             -d "$BODY" | jq -r '.url')
@@ -396,8 +396,8 @@ jobs:
 {
   "mcpServers": {
     "readable": {
-      "url": "https://readable-mcp.ashwinsathian.com/mcp",
-      "headers": { "Authorization": "Bearer rdbl_YOUR_KEY" }
+      "url": "https://booklet-mcp.ashwinsathian.com/mcp",
+      "headers": { "Authorization": "Bearer bklt_YOUR_KEY" }
     }
   }
 }
@@ -483,8 +483,8 @@ jobs:
 
           <div className="flex flex-col gap-4">
             <CodeBlock>{`# Publish a page
-curl -X POST https://readable-api.ashwinsathian.com/api/v1/publish \\
-  -H "Authorization: Bearer rdbl_YOUR_KEY" \\
+curl -X POST https://booklet-api.ashwinsathian.com/api/v1/publish \\
+  -H "Authorization: Bearer bklt_YOUR_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
     "raw": "# Hello\\n\\nThis is my page.",
@@ -495,13 +495,13 @@ curl -X POST https://readable-api.ashwinsathian.com/api/v1/publish \\
 # Response
 {
   "id": "page_abc123",
-  "url": "https://readable.ashwinsathian.com/p/my-page",
+  "url": "https://booklet.ashwinsathian.com/p/my-page",
   "slug": "my-page"
 }
 
 # Update existing page
-curl -X PATCH https://readable-api.ashwinsathian.com/api/v1/pages/page_abc123 \\
-  -H "Authorization: Bearer rdbl_YOUR_KEY" \\
+curl -X PATCH https://booklet-api.ashwinsathian.com/api/v1/pages/page_abc123 \\
+  -H "Authorization: Bearer bklt_YOUR_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{"raw": "# Updated content"}'`}</CodeBlock>
           </div>
@@ -529,7 +529,7 @@ curl -X PATCH https://readable-api.ashwinsathian.com/api/v1/pages/page_abc123 \\
                 Call <code className="rounded bg-fill-2 px-1 py-0.5 text-xs font-mono text-accent-soft">POST /api/v1/webhooks</code> with your endpoint URL and the events you care about.
               </Step>
               <Step n={2} title="Verify the signature">
-                Every request includes an <code className="rounded bg-fill-2 px-1 py-0.5 text-xs font-mono text-accent-soft">X-Readable-Signature</code> HMAC-SHA256 header. Verify it against your webhook secret before processing.
+                Every request includes an <code className="rounded bg-fill-2 px-1 py-0.5 text-xs font-mono text-accent-soft">X-Booklet-Signature</code> HMAC-SHA256 header. Verify it against your webhook secret before processing.
               </Step>
               <Step n={3} title="Respond with 200">
                 Return a <code className="rounded bg-fill-2 px-1 py-0.5 text-xs font-mono text-accent-soft">200</code> status within 5 seconds. {APP_NAME} retries on failure with exponential backoff.
@@ -552,7 +552,7 @@ curl -X PATCH https://readable-api.ashwinsathian.com/api/v1/pages/page_abc123 \\
 {
   "event": "page.published",
   "page_id": "page_abc123",
-  "url": "https://readable.ashwinsathian.com/p/my-page",
+  "url": "https://booklet.ashwinsathian.com/p/my-page",
   "slug": "my-page",
   "title": "My Page Title",
   "visibility": "public",
@@ -562,9 +562,9 @@ curl -X PATCH https://readable-api.ashwinsathian.com/api/v1/pages/page_abc123 \\
 // Verify HMAC-SHA256 signature (Node.js example)
 import crypto from "crypto";
 
-const sig = req.headers["x-readable-signature"];
+const sig = req.headers["x-booklet-signature"];
 const expected = crypto
-  .createHmac("sha256", process.env.READABLE_WEBHOOK_SECRET)
+  .createHmac("sha256", process.env.BOOKLET_WEBHOOK_SECRET)
   .update(rawBody)
   .digest("hex");
 

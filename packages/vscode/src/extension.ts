@@ -5,9 +5,9 @@ import { setApiKey } from "./commands/setApiKey";
 
 export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
-    vscode.commands.registerCommand("readable.publish", () => void publishFile(context)),
-    vscode.commands.registerCommand("readable.publishSelection", () => void publishSelection(context)),
-    vscode.commands.registerCommand("readable.setApiKey", () => void setApiKey(context)),
+    vscode.commands.registerCommand("booklet.publish", () => void publishFile(context)),
+    vscode.commands.registerCommand("booklet.publishSelection", () => void publishSelection(context)),
+    vscode.commands.registerCommand("booklet.setApiKey", () => void setApiKey(context)),
   );
 }
 

@@ -1,16 +1,16 @@
-# Readable — Product Explainer
+# Booklet — Product Explainer
 
-> A plain-English document explaining what Readable is, how it works, who it's for, and what
+> A plain-English document explaining what Booklet is, how it works, who it's for, and what
 > makes it distinct. Use this as context for any conversation where you need the product
 > explained accurately — content creation, FAQs, docs, pitches, investor briefs, demo scripts,
-> onboarding copy, support answers, API documentation, or any Claude session where Readable
+> onboarding copy, support answers, API documentation, or any Claude session where Booklet
 > is the subject.
 
 ---
 
 ## The One-Sentence Version
 
-Readable is a free web tool that turns Markdown text into a clean, beautifully formatted,
+Booklet is a free web tool that turns Markdown text into a clean, beautifully formatted,
 publicly shareable page — instantly, with no account required.
 
 ---
@@ -58,11 +58,11 @@ experience and make the content feel unfinished.
 | HackMD / StackEdit | Collaborative overkill; not optimised for share-only use |
 | Paste into Slack/email | Destroys all formatting; no permanent link; no structure preserved |
 
-**Readable solves this with one step: paste and publish.**
+**Booklet solves this with one step: paste and publish.**
 
 ---
 
-## What Readable Does
+## What Booklet Does
 
 1. **You paste Markdown** into the editor. Any Markdown — a README, a post-mortem, an ADR,
    a proposal, a changelog, meeting notes, a runbook, anything.
@@ -71,7 +71,7 @@ experience and make the content feel unfinished.
    code blocks, tables, bullet lists, task checkboxes, blockquotes, inline code, and diagrams —
    all rendered with beautiful typography and proper spacing.
 
-3. **You hit Publish** (or press `⌘↵`). Readable generates a unique public URL in under a second.
+3. **You hit Publish** (or press `⌘↵`). Booklet generates a unique public URL in under a second.
 
 4. **You send the link.** The recipient opens a clean, well-formatted reading page in their browser.
    No login. No app. No friction.
@@ -153,9 +153,9 @@ From the published share page (Export menu in header):
 ### The publish flow
 
 1. Click the **Publish** button in the top bar, or press `⌘↵`
-2. Readable parses the Markdown, converts it to a portable block format, and stores it server-side
+2. Booklet parses the Markdown, converts it to a portable block format, and stores it server-side
 3. A unique **10-character random ID** is generated (e.g. `Ab3k91QxZp`)
-4. The full public URL is returned instantly: `readable.app/p/Ab3k91QxZp`
+4. The full public URL is returned instantly: `booklet.ashwinsathian.com/p/Ab3k91QxZp`
 5. The URL is shown in a toast with a one-click copy button
 
 ### Rate limiting
@@ -179,7 +179,7 @@ This is intentional: a shared link should always show exactly what was sent to t
 ### Header
 
 A minimal sticky header containing:
-- Readable logo + wordmark
+- Booklet logo + wordmark
 - Theme toggle (dark/light)
 - **Export menu** — dropdown with: Download Markdown (if available), Download HTML, Print / Save as PDF
 - "Make your own →" CTA button (links to `/app`)
@@ -196,7 +196,7 @@ The published page renders all Markdown elements with care:
 | Fenced code blocks | macOS-style header, language label, line count, copy button, collapse for long blocks |
 | Inline code | Monospace, subtle background |
 | Tables | Alternating row shading, hover highlight, horizontal scroll on mobile |
-| Blockquotes | Left border in Readable Purple, indented |
+| Blockquotes | Left border in Booklet Purple, indented |
 | Task lists | Read-only checkboxes |
 | Ordered/unordered lists | Nested support |
 | Images | External URLs only, rounded corners, optional caption (alt text) |
@@ -236,7 +236,7 @@ The **Export** dropdown in the share page header offers three options:
 
 ### Footer
 
-- Readable logo
+- Booklet logo
 - Publish date
 - "Create your own →" link to `/app`
 
@@ -283,7 +283,7 @@ custom slugs, analytics, version history, API access), not permanence.
 | Feature | Detail |
 |---|---|
 | **Unlimited pages** | No monthly publish cap (anonymous is capped at 10/month per IP) |
-| **Custom slugs** | Human-readable URL: `readable.app/p/q4-incident-summary` (1–60 chars, lowercase/numbers/hyphens) |
+| **Custom slugs** | Human-readable URL: `booklet.ashwinsathian.com/p/q4-incident-summary` (1–60 chars, lowercase/numbers/hyphens) |
 | **Unlisted pages** | Published but excluded from any discovery; link-only access |
 | **View counts** | Track how many times each published page has been viewed |
 | **My Pages dashboard** | Manage all published pages — view, copy link, toggle visibility, edit slug, delete |
@@ -295,7 +295,7 @@ custom slugs, analytics, version history, API access), not permanence.
 
 ## The REST API
 
-Readable exposes a REST API for publishing pages programmatically. Requires a signed-in account
+Booklet exposes a REST API for publishing pages programmatically. Requires a signed-in account
 and a generated API key.
 
 ### Authentication
@@ -336,7 +336,7 @@ Supply either `raw` (Markdown string — parsed server-side) or `blocks` (pre-pa
 ```json
 {
   "id": "Ab3k91QxZp",
-  "url": "https://readable.app/p/Ab3k91QxZp"
+  "url": "https://booklet.ashwinsathian.com/p/Ab3k91QxZp"
 }
 ```
 
@@ -364,7 +364,7 @@ Republishes content to an existing page ID (account-owned pages only). Maintains
 ```json
 {
   "id": "Ab3k91QxZp",
-  "url": "https://readable.app/p/Ab3k91QxZp",
+  "url": "https://booklet.ashwinsathian.com/p/Ab3k91QxZp",
   "updated_at": "2026-04-29T12:00:00.000Z"
 }
 ```
@@ -397,7 +397,7 @@ Returns all pages owned by the authenticated account.
       "slug": "my-doc",
       "visibility": "public",
       "view_count": 42,
-      "url": "https://readable.app/p/my-doc",
+      "url": "https://booklet.ashwinsathian.com/p/my-doc",
       "created_at": "2026-04-29T10:00:00.000Z",
       "updated_at": "2026-04-29T10:00:00.000Z"
     }
@@ -409,7 +409,7 @@ Returns all pages owned by the authenticated account.
 
 ### GitHub Actions workflow example
 
-Publish or update a Readable page every time you push a release tag:
+Publish or update a Booklet page every time you push a release tag:
 
 ```yaml
 # .github/workflows/publish-release-notes.yml
@@ -425,7 +425,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Publish to Readable
+      - name: Publish to Booklet
         env:
           READABLE_API_KEY: ${{ secrets.READABLE_API_KEY }}
           PAGE_ID: ${{ vars.READABLE_PAGE_ID }}   # optional: set to update in-place
@@ -434,13 +434,13 @@ jobs:
 
           if [ -n "$PAGE_ID" ]; then
             # Update existing page
-            curl -fsSL -X PATCH "https://readable.app/api/v1/pages/$PAGE_ID" \
+            curl -fsSL -X PATCH "https://booklet.ashwinsathian.com/api/v1/pages/$PAGE_ID" \
               -H "Authorization: Bearer $READABLE_API_KEY" \
               -H "Content-Type: application/json" \
               -d "$BODY"
           else
             # Publish new page, print URL
-            curl -fsSL -X POST "https://readable.app/api/v1/publish" \
+            curl -fsSL -X POST "https://booklet.ashwinsathian.com/api/v1/publish" \
               -H "Authorization: Bearer $READABLE_API_KEY" \
               -H "Content-Type: application/json" \
               -d "$BODY" | jq -r '.url'
@@ -524,24 +524,24 @@ Sign-in is email + password — in-house auth, no third-party identity provider.
 
 ---
 
-## What Readable Does Not Do
+## What Booklet Does Not Do
 
 These are intentional omissions:
 
 | Omission | Why intentional |
 |---|---|
-| No real-time collaborative editing | Readable is not a shared editor. Collaboration happens via the published link. |
+| No real-time collaborative editing | Booklet is not a shared editor. Collaboration happens via the published link. |
 | No editing after publish | Published pages are immutable snapshots; stability of shared links is a feature |
 | No rich text / WYSIWYG | Markdown only — no drag-and-drop block editor; the formatting toolbar assists with syntax but does not hide it |
 | No embedded media | External image URLs rendered; no video/audio/iframes |
-| No search or directory | No public index of Readable pages |
+| No search or directory | No public index of Booklet pages |
 | No comments or reactions | Read-only for recipients |
 
 ---
 
 ## Supported Markdown (GitHub-Flavored Markdown)
 
-Readable supports GFM — the most widely used Markdown dialect:
+Booklet supports GFM — the most widely used Markdown dialect:
 
 - Headings H1–H4
 - Bold, italic, strikethrough
@@ -561,7 +561,7 @@ Readable supports GFM — the most widely used Markdown dialect:
 
 ## Frequently Asked Questions
 
-**Do I need an account to use Readable?**  
+**Do I need an account to use Booklet?**  
 No. Paste, preview, and publish immediately — no signup, no email, no password. An account removes the 10-pages-per-month cap and unlocks custom slugs, the API, view counts, and the My Pages dashboard.
 
 **Is my content private before I publish?**  
@@ -573,15 +573,15 @@ No for anonymous pages. Account holders can use `PATCH /api/v1/pages/{id}` to re
 **Do published pages ever expire?**  
 No. Published pages — anonymous or account-owned — are permanent and never auto-delete. The only anonymous-tier limit is a 10-page-per-month publish quota per IP; there's no limit for signed-in accounts.
 
-**Can I use Readable for sensitive or confidential content?**  
+**Can I use Booklet for sensitive or confidential content?**  
 Signed-in users can password-protect pages. The "unlisted" option hides the page from discovery, but anyone who has the URL can still open it. For genuinely confidential content, combine password protection with careful link sharing.
 
-**Does Readable support all Markdown features?**  
-Readable supports GitHub-Flavored Markdown (GFM). HTML in Markdown is not rendered for security reasons.
+**Does Booklet support all Markdown features?**  
+Booklet supports GitHub-Flavored Markdown (GFM). HTML in Markdown is not rendered for security reasons.
 
 **What does the URL look like?**  
-- Anonymous / account without slug: `readable.app/p/Ab3k91QxZp` (10-character random ID)
-- Account with custom slug: `readable.app/p/q4-incident-summary`
+- Anonymous / account without slug: `booklet.ashwinsathian.com/p/Ab3k91QxZp` (10-character random ID)
+- Account with custom slug: `booklet.ashwinsathian.com/p/q4-incident-summary`
 
 **Is there a character limit?**  
 The editor accepts up to 200,000 characters. Published payloads are capped at 600,000 bytes.
@@ -592,20 +592,22 @@ Entirely in your browser's `localStorage`. Clearing browser storage will delete 
 **Can I use the API without signing in?**  
 No. API access requires a signed-in account and a generated API key.
 
-**Does Readable support Mermaid diagrams?**  
+**Does Booklet support Mermaid diagrams?**  
 Yes. Mermaid diagram blocks (` ```mermaid `) are rendered inline on both the editor preview and the published page.
 
 ---
 
 ## The Name
 
-"Readable" is a direct statement of the product's purpose: it makes Markdown *readable* to people who don't know Markdown. The name is a quality descriptor, not a company name — it describes what the output is, not who made it.
+A booklet is a small, finished publication — something bound and handed to someone to read, not a rough draft. That's exactly the transformation the product performs: a scattered Markdown file becomes one clean, presentable document, ready to give to a reader who was never going to open the raw source. The name describes the output, not the company.
+
+(The product was previously named "Booklet" — renamed to resolve a collision with an unrelated, long-established readability-scoring SaaS at readable.com.)
 
 ---
 
 ## Founder
 
-Readable was built by **Ashwin Sathian**, a software engineer. It started as a personal tool to solve a problem encountered daily: writing beautifully structured Markdown, then watching it fall apart when shared with non-technical colleagues. The product is intentionally minimal — it solves one problem very well.
+Booklet was built by **Ashwin Sathian**, a software engineer. It started as a personal tool to solve a problem encountered daily: writing beautifully structured Markdown, then watching it fall apart when shared with non-technical colleagues. The product is intentionally minimal — it solves one problem very well.
 
 Contact: ashwinsathyan19@gmail.com
 

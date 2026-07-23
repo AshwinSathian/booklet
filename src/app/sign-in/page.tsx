@@ -11,7 +11,7 @@ import { AuthForm } from "./AuthForm";
 export const metadata: Metadata = buildMetadata({
   title: "Sign in",
   description:
-    "Sign in to Readable. Edit pages in place, unlock analytics, version history, custom slugs, and the REST API.",
+    "Sign in to Booklet. Edit pages in place, unlock analytics, version history, custom slugs, and the REST API.",
   pathname: "/sign-in",
   noIndex: true,
 });
@@ -37,7 +37,7 @@ export default async function SignInPage({
       <div className="text-center">
         <p className="text-sm text-text-secondary">
           {redirectUrl?.startsWith("/cli-auth")
-            ? "Sign in to authorize the Readable CLI."
+            ? "Sign in to authorize the Booklet CLI."
             : "Sign in to edit your pages in place and manage them from anywhere."}
         </p>
       </div>

@@ -14,7 +14,7 @@ import type { CalloutKind } from "./blocks";
  * sync as new schemes are considered.
  *
  * A published page is a standalone document with no concept of "relative to
- * itself" (there's no meaningful `/foo` on `readable`'s domain from a
+ * itself" (there's no meaningful `/foo` on `booklet`'s domain from a
  * reader's page), so only fully-qualified http(s)/mailto survive; anything
  * else (javascript:, data:, vbscript:, bare relative paths, unknown
  * schemes) becomes inert (`#`) rather than silently doing nothing — an

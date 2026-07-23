@@ -3,18 +3,18 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
 export const metadata: Metadata = buildMetadata({
-  title: "Add Readable to Claude — MCP Setup",
+  title: "Add Booklet to Claude — MCP Setup",
   description:
-    "Connect Readable to Claude Desktop, Claude.ai, or any MCP-compatible AI assistant. Publish and manage Markdown pages directly from your AI assistant in plain language.",
+    "Connect Booklet to Claude Desktop, Claude.ai, or any MCP-compatible AI assistant. Publish and manage Markdown pages directly from your AI assistant in plain language.",
   pathname: "/mcp-setup",
 });
 
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "WebPage",
-  name: "Add Readable to Claude — MCP Setup",
+  name: "Add Booklet to Claude — MCP Setup",
   description:
-    "Connect Readable to Claude Desktop, Claude.ai, or any MCP-compatible AI assistant. Publish and manage Markdown pages directly from your AI assistant.",
+    "Connect Booklet to Claude Desktop, Claude.ai, or any MCP-compatible AI assistant. Publish and manage Markdown pages directly from your AI assistant.",
   url: absoluteUrl("/mcp-setup"),
   breadcrumb: {
     "@type": "BreadcrumbList",

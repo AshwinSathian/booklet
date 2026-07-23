@@ -11,8 +11,8 @@ const PORT = Number(process.env.PORT ?? 8788);
 
 // Mirror the Env bindings expected by the Worker
 const env = {
-  READABLE_API_BASE: process.env.READABLE_API_BASE ?? "http://localhost:3100",
-  MCP_SERVER_NAME: process.env.MCP_SERVER_NAME ?? "readable",
+  BOOKLET_API_BASE: process.env.BOOKLET_API_BASE ?? "http://localhost:3100",
+  MCP_SERVER_NAME: process.env.MCP_SERVER_NAME ?? "booklet",
   MCP_SERVER_VERSION: process.env.MCP_SERVER_VERSION ?? "1.0.0",
 };
 
@@ -56,7 +56,7 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(cfRes.status, resHeaders);
     res.end(Buffer.from(await cfRes.arrayBuffer()));
   } catch (err) {
-    console.error("[readable-mcp] Unhandled error:", err);
+    console.error("[booklet-mcp] Unhandled error:", err);
     res.writeHead(500, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ error: "Internal server error" }));
   }
@@ -64,7 +64,7 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, "127.0.0.1", () => {
   console.log(
-    `[readable-mcp] Node bridge listening on :${PORT} → ${env.READABLE_API_BASE}`,
+    `[booklet-mcp] Node bridge listening on :${PORT} → ${env.BOOKLET_API_BASE}`,
   );
 });
 

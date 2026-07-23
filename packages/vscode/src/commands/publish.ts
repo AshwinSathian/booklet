@@ -1,19 +1,19 @@
 import * as vscode from "vscode";
-import { createClient, ReadableApiError } from "readable-api-client";
+import { createClient, BookletApiError } from "booklet-api-client";
 import { getApiKey } from "../secretStorage";
 
 async function doPublish(context: vscode.ExtensionContext, content: string, title: string): Promise<void> {
-  const config = vscode.workspace.getConfiguration("readable");
+  const config = vscode.workspace.getConfiguration("booklet");
   const apiKey = await getApiKey(context);
-  const baseUrl = config.get<string>("baseUrl") ?? "https://readable-api.ashwinsathian.com";
+  const baseUrl = config.get<string>("baseUrl") ?? "https://booklet-api.ashwinsathian.com";
 
   if (!apiKey) {
     const action = await vscode.window.showErrorMessage(
-      "No Readable API key set.",
+      "No Booklet API key set.",
       "Set API Key",
     );
     if (action === "Set API Key") {
-      await vscode.commands.executeCommand("readable.setApiKey");
+      await vscode.commands.executeCommand("booklet.setApiKey");
     }
     return;
   }
@@ -22,8 +22,8 @@ async function doPublish(context: vscode.ExtensionContext, content: string, titl
   try {
     result = await createClient({ baseUrl, apiKey, source: "vscode" }).publishPage(content);
   } catch (e) {
-    const message = e instanceof ReadableApiError ? e.message : e instanceof Error ? e.message : String(e);
-    void vscode.window.showErrorMessage(`Readable publish failed: ${message}`);
+    const message = e instanceof BookletApiError ? e.message : e instanceof Error ? e.message : String(e);
+    void vscode.window.showErrorMessage(`Booklet publish failed: ${message}`);
     return;
   }
 

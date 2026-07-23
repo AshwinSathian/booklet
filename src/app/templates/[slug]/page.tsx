@@ -45,7 +45,7 @@ export default async function TemplatePage({
   const otherTemplates = TEMPLATES.filter((t) => t.slug && t.slug !== slug).slice(0, 4);
   // Rendered through the real block pipeline (not a raw-markdown <pre>) so the
   // preview actually demonstrates the typeset output — the thing that
-  // differentiates Readable from a plain .md file — rather than the source.
+  // differentiates Booklet from a plain .md file — rather than the source.
   const previewBlocks = parseToBlocks(template.content.trim());
 
   const jsonLd = {
@@ -54,7 +54,7 @@ export default async function TemplatePage({
     name: template.headline ?? template.name,
     description: template.metaDescription ?? template.description,
     url: absoluteUrl(`/templates/${slug}`),
-    tool: [{ "@type": "HowToTool", name: "Readable editor" }],
+    tool: [{ "@type": "HowToTool", name: "Booklet editor" }],
     step: [
       {
         "@type": "HowToStep",

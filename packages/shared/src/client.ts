@@ -3,7 +3,7 @@
  * global fetch (Node 18+) and zod — every consumer (CLI, GitHub Action, VS
  * Code extension, MCP server) already runs on a fetch-capable runtime.
  *
- * Throws ReadableApiError on any non-2xx response, carrying both the
+ * Throws BookletApiError on any non-2xx response, carrying both the
  * upstream HTTP status and the server's own `{error}` message when present.
  * Two of the four consumers (packages/github-action, packages/vscode)
  * already used exactly this throw-and-catch shape before this package
@@ -30,18 +30,18 @@ import {
 export type ClientOptions = {
   baseUrl: string;
   apiKey: string;
-  /** Sent as X-Readable-Source, e.g. "cli" | "github-action" | "vscode" | "mcp". */
+  /** Sent as X-Booklet-Source, e.g. "cli" | "github-action" | "vscode" | "mcp". */
   source: string;
   fetchTimeoutMs?: number;
 };
 
-export class ReadableApiError extends Error {
+export class BookletApiError extends Error {
   constructor(
     message: string,
     public readonly status: number,
   ) {
     super(message);
-    this.name = "ReadableApiError";
+    this.name = "BookletApiError";
   }
 }
 
@@ -56,14 +56,14 @@ export function createClient(options: ClientOptions) {
         headers: {
           ...init?.headers,
           Authorization: `Bearer ${apiKey}`,
-          "X-Readable-Source": source,
+          "X-Booklet-Source": source,
           ...(init?.body ? { "Content-Type": "application/json" } : {}),
         },
         signal: AbortSignal.timeout(fetchTimeoutMs),
       });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      throw new ReadableApiError(`Network error: ${msg}`, 0);
+      throw new BookletApiError(`Network error: ${msg}`, 0);
     }
 
     let body: unknown = null;
@@ -78,7 +78,7 @@ export function createClient(options: ClientOptions) {
         body && typeof body === "object" && "error" in body && typeof body.error === "string"
           ? body.error
           : `HTTP ${res.status}`;
-      throw new ReadableApiError(message, res.status);
+      throw new BookletApiError(message, res.status);
     }
 
     return body;
@@ -122,4 +122,4 @@ export function createClient(options: ClientOptions) {
   };
 }
 
-export type ReadableClient = ReturnType<typeof createClient>;
+export type BookletClient = ReturnType<typeof createClient>;

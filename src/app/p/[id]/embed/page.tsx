@@ -92,7 +92,7 @@ export default async function EmbedPage({
   // Password-protected: show a placeholder in embeds
   if (pageRecord?.password_hash) {
     const cookieStore = await cookies();
-    const cookieValue = cookieStore.get(`readable_unlock_${resolvedId}`)?.value;
+    const cookieValue = cookieStore.get(`booklet_unlock_${resolvedId}`)?.value;
     const unlocked = await verifyUnlockToken(resolvedId, pageRecord.password_hash, cookieValue);
     if (!unlocked) {
       return (

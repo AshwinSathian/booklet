@@ -1,0 +1,40 @@
+# Example: Publish a Markdown file to Booklet from a GitHub Action.
+#
+# Setup:
+#   1. Create an API key at https://booklet.ashwinsathian.com → My Pages → Settings → API Keys
+#   2. Add it as a repo secret: Settings → Secrets → Actions → BOOKLET_API_KEY
+#   3. Optionally add BOOKLET_PAGE_ID as a repo variable to update the same page each run.
+#
+# Usage:
+#   - Copy this file to .github/workflows/ in your own repo.
+#   - Adjust the `file` input and trigger as needed.
+
+name: Publish to Booklet
+
+on:
+  release:
+    types: [published]
+  # Or trigger on push:
+  # push:
+  #   branches: [main]
+  #   paths: [CHANGELOG.md]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Publish to Booklet
+        id: publish
+        env:
+          BOOKLET_API_KEY: ${{ secrets.BOOKLET_API_KEY }}
+        run: |
+          if [ -n "${{ vars.BOOKLET_PAGE_ID }}" ]; then
+            npx booklet-cli publish CHANGELOG.md \
+              --update ${{ vars.BOOKLET_PAGE_ID }}
+          else
+            npx booklet-cli publish CHANGELOG.md \
+              --slug release-notes \
+              --visibility public
+          fi

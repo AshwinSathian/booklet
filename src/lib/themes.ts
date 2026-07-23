@@ -76,7 +76,7 @@ export const DEFAULT_THEME_ID = "default";
 /**
  * Curated set — intentionally small (5, not dozens). Each theme is a
  * coherent, tasteful variation on the existing token system:
- *  - default: the current Readable palette, unchanged (also the safe fallback).
+ *  - default: the current Booklet palette, unchanged (also the safe fallback).
  *  - verdant / ember: distinct colour-accent variations (cool green, warm
  *    terracotta) that keep the accent role strictly action/link-only, per
  *    BRAND.md's "purple = action only" principle generalized to "accent =
@@ -92,7 +92,7 @@ export const THEMES: Theme[] = [
   {
     id: "default",
     name: "Signature",
-    description: "The default Readable palette — violet accent, pure-black dark mode, Apple-white light mode.",
+    description: "The default Booklet palette — violet accent, pure-black dark mode, Apple-white light mode.",
     swatch: "#7255e8",
     dark: {
       "--color-bg": "#000000",

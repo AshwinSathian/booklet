@@ -1,6 +1,12 @@
 # Changelog
 
-All notable changes to the Readable VS Code extension are documented here.
+All notable changes to the Booklet VS Code extension are documented here.
+
+## [Unreleased]
+
+- Renamed from Readable to Booklet (package, commands, config namespace,
+  secret-storage key) ahead of the extension's first Marketplace publish —
+  no external users were on the old identifiers yet.
 
 ## [0.2.0] — 2026-07-11
 
@@ -9,7 +15,7 @@ All notable changes to the Readable VS Code extension are documented here.
   keywords, repository link).
 - API keys now stored in VS Code's secret storage (OS keychain) instead of
   plaintext `settings.json`. The `readable.apiKey` setting is gone — use
-  **Readable: Set API Key**.
+  **Set API Key**.
 - Moved `readable-api-client` to a runtime dependency (previously
   listed as dev-only despite being bundled into the shipped extension).
 

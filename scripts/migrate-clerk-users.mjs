@@ -34,7 +34,7 @@ const MONGODB_URI = process.env.MONGODB_URI;
 const CLERK_SECRET_KEY = process.env.CLERK_SECRET_KEY;
 const CLAIM_TOKEN_SECRET = process.env.CLAIM_TOKEN_SECRET;
 const SITE_URL =
-  process.env.SITE_URL ?? process.env.NEXT_PUBLIC_SITE_URL ?? "https://readable.ashwinsathian.com";
+  process.env.SITE_URL ?? process.env.NEXT_PUBLIC_SITE_URL ?? "https://booklet.ashwinsathian.com";
 const CLAIM_TTL_SECONDS = 30 * 24 * 60 * 60;
 const CLERK_PAGE_SIZE = 100;
 

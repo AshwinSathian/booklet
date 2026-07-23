@@ -46,7 +46,7 @@ export default async function AdminPage() {
   return (
     <div className="min-h-screen bg-bg p-10 text-text-primary max-w-2xl">
       <div className="mb-8 flex items-baseline gap-4">
-        <h1 className="text-xl font-bold">Readable — Internal Metrics</h1>
+        <h1 className="text-xl font-bold">Booklet — Internal Metrics</h1>
         <span className="text-xs text-text-muted">{new Date().toUTCString()}</span>
       </div>
 

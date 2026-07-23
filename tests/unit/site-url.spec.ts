@@ -9,9 +9,9 @@ import { getSiteOrigin } from "@/lib/site-url";
 
 test.describe("getSiteOrigin", () => {
   test("prefers NEXT_PUBLIC_SITE_URL over the request's own origin", () => {
-    process.env.NEXT_PUBLIC_SITE_URL = "https://readable.ashwinsathian.com";
+    process.env.NEXT_PUBLIC_SITE_URL = "https://booklet.ashwinsathian.com";
     const req = new Request("http://localhost:3100/api/v1/publish");
-    expect(getSiteOrigin(req)).toBe("https://readable.ashwinsathian.com");
+    expect(getSiteOrigin(req)).toBe("https://booklet.ashwinsathian.com");
   });
 
   test("falls back to the request's origin when NEXT_PUBLIC_SITE_URL is unset", () => {
@@ -28,9 +28,9 @@ test.describe("getSiteOrigin", () => {
   });
 
   test("strips any path/query from a configured NEXT_PUBLIC_SITE_URL, origin only", () => {
-    process.env.NEXT_PUBLIC_SITE_URL = "https://readable.ashwinsathian.com/some/path?x=1";
+    process.env.NEXT_PUBLIC_SITE_URL = "https://booklet.ashwinsathian.com/some/path?x=1";
     const req = new Request("http://localhost:3100/api/v1/publish");
-    expect(getSiteOrigin(req)).toBe("https://readable.ashwinsathian.com");
+    expect(getSiteOrigin(req)).toBe("https://booklet.ashwinsathian.com");
     delete process.env.NEXT_PUBLIC_SITE_URL;
   });
 });

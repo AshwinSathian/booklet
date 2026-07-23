@@ -28,7 +28,7 @@ const sourceSerif4 = Source_Serif_4({
 });
 
 const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://readable.ashwinsathian.com";
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://booklet.ashwinsathian.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

@@ -2,11 +2,11 @@ import { test, expect } from "@playwright/test";
 import { signUnlockToken, verifyUnlockToken } from "@/lib/unlock-token";
 
 // Regression coverage for the audit finding fixed alongside this suite:
-//   the readable_unlock_<pageId> cookie used to be the literal string "1" —
+//   the booklet_unlock_<pageId> cookie used to be the literal string "1" —
 //   unsigned, not derived from anything secret. httpOnly stopped page JS
 //   from reading it but did nothing to stop an attacker from setting it
 //   directly via a raw request. Live-confirmed:
-//     curl -H "Cookie: readable_unlock_<id>=1" /p/<id>
+//     curl -H "Cookie: booklet_unlock_<id>=1" /p/<id>
 //   returned the full protected body with no password ever entered.
 //
 // These tests exercise the pure signing/verification functions directly

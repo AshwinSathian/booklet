@@ -941,7 +941,7 @@ function PostPublishSlugBar({
   const hostLabel =
     typeof window !== "undefined"
       ? window.location.host
-      : "readable.page";
+      : "booklet.page";
 
   const canSave =
     draft.trim().length > 0 &&
@@ -1178,7 +1178,7 @@ export function TopBar({
     {
       title: "Navigation",
       items: [
-        { label: "Go to homepage", detail: "Return to Readable's public page.", icon: "home", onClick: () => { window.location.href = "/"; } },
+        { label: "Go to homepage", detail: "Return to Booklet's public page.", icon: "home", onClick: () => { window.location.href = "/"; } },
       ],
     },
   ];

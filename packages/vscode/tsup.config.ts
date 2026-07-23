@@ -13,7 +13,7 @@ export default defineConfig({
   // vscode.d.ts has no runtime module — the Extension Host injects the real
   // "vscode" module at load time, so it must stay external, never bundled.
   external: ["vscode"],
-  noExternal: ["readable-api-client", "zod"],
+  noExternal: ["booklet-api-client", "zod"],
   sourcemap: true,
   dts: false,
 });

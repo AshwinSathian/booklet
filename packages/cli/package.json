@@ -1,9 +1,9 @@
 {
-  "name": "readable-cli",
-  "version": "0.1.5",
-  "description": "CLI for Readable — publish Markdown from your terminal",
+  "name": "booklet-cli",
+  "version": "0.1.0",
+  "description": "CLI for Booklet — publish Markdown from your terminal",
   "bin": {
-    "readable": "dist/index.js"
+    "booklet": "dist/index.js"
   },
   "main": "./dist/index.js",
   "files": [
@@ -18,8 +18,8 @@
   "dependencies": {},
   "devDependencies": {
     "@types/node": "^20.19.0",
+    "booklet-api-client": "^0.1.0",
     "commander": "^12.1.0",
-    "readable-api-client": "^0.1.0",
     "tsup": "^8.5.1",
     "typescript": "^5.7.0"
   },
@@ -34,14 +34,14 @@
     "email": "ashwinsathyan19@gmail.com"
   },
   "license": "MIT",
-  "homepage": "https://readable.ashwinsathian.com",
+  "homepage": "https://booklet.ashwinsathian.com",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/AshwinSathian/readable.git",
+    "url": "git+https://github.com/AshwinSathian/booklet.git",
     "directory": "packages/cli"
   },
   "keywords": [
-    "readable",
+    "booklet",
     "markdown",
     "publish",
     "cli"

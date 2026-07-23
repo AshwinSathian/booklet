@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   ...buildMetadata({
     title: `${APP_NAME} MCP — Publish Pages from Claude, Cursor & Windsurf`,
     description:
-      "The Readable MCP server lets Claude, Cursor, Windsurf, VS Code, and Zed publish and manage Readable pages directly through conversation. Zero context-switching.",
+      "The Booklet MCP server lets Claude, Cursor, Windsurf, VS Code, and Zed publish and manage Booklet pages directly through conversation. Zero context-switching.",
     pathname: "/mcp",
   }),
   openGraph: {
@@ -153,7 +153,7 @@ export default function McpPage() {
           <FeatureCard
             icon="🔑"
             title="1. Connect your API key"
-            body="Generate an API key in your Readable account, then add the MCP endpoint to your editor's config. One-time setup."
+            body="Generate an API key in your Booklet account, then add the MCP endpoint to your editor's config. One-time setup."
           />
           <FeatureCard
             icon="💬"
@@ -200,7 +200,7 @@ export default function McpPage() {
             <pre className="rounded-xl bg-bg-soft border border-outline p-4 text-xs font-mono text-text-secondary overflow-x-auto leading-relaxed whitespace-pre">{`{
   "mcpServers": {
     "readable": {
-      "url": "https://readable-mcp.ashwinsathian.com/mcp",
+      "url": "https://booklet-mcp.ashwinsathian.com/mcp",
       "headers": { "Authorization": "Bearer rdbl_YOUR_KEY" }
     }
   }

@@ -28,7 +28,7 @@ test.describe("buildLockedPageMetadata", () => {
 
   test("uses a generic, fixed title and description", () => {
     const meta = buildLockedPageMetadata("/p/some-id");
-    expect(meta.title).toBe("Password-protected page — Readable");
+    expect(meta.title).toBe("Password-protected page — Booklet");
     expect(meta.description).toContain("password protected");
   });
 

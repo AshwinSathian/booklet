@@ -50,10 +50,10 @@ function jsonResponse(data: unknown, status = 200): Response {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const SERVER_MANIFEST = {
-  name: "readable",
+  name: "booklet",
   version: "1.0.0",
   description:
-    "Publish, update, read, list, and delete Readable pages from your AI conversation. Includes pre-built templates for incident reports, ADRs, release notes, RFCs, and runbooks.",
+    "Publish, update, read, list, and delete Booklet pages from your AI conversation. Includes pre-built templates for incident reports, ADRs, release notes, RFCs, and runbooks.",
 };
 
 const INITIALIZE_RESULT = {
@@ -63,7 +63,7 @@ const INITIALIZE_RESULT = {
     resources: {},
     prompts: {},
   },
-  serverInfo: { name: "readable", version: "1.0.0" },
+  serverInfo: { name: "booklet", version: "1.0.0" },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -139,19 +139,19 @@ async function handleMcpPost(request: Request, env: Env): Promise<Response> {
 
       switch (params.name) {
         case "publish_page":
-          toolResult = await handlePublishPage(toolArgs, apiKey, env.READABLE_API_BASE);
+          toolResult = await handlePublishPage(toolArgs, apiKey, env.BOOKLET_API_BASE);
           break;
         case "update_page":
-          toolResult = await handleUpdatePage(toolArgs, apiKey, env.READABLE_API_BASE);
+          toolResult = await handleUpdatePage(toolArgs, apiKey, env.BOOKLET_API_BASE);
           break;
         case "get_page":
-          toolResult = await handleGetPage(toolArgs, apiKey, env.READABLE_API_BASE);
+          toolResult = await handleGetPage(toolArgs, apiKey, env.BOOKLET_API_BASE);
           break;
         case "list_pages":
-          toolResult = await handleListPages(toolArgs, apiKey, env.READABLE_API_BASE);
+          toolResult = await handleListPages(toolArgs, apiKey, env.BOOKLET_API_BASE);
           break;
         case "delete_page":
-          toolResult = await handleDeletePage(toolArgs, apiKey, env.READABLE_API_BASE);
+          toolResult = await handleDeletePage(toolArgs, apiKey, env.BOOKLET_API_BASE);
           break;
         default:
           toolResult = {
@@ -165,11 +165,11 @@ async function handleMcpPost(request: Request, env: Env): Promise<Response> {
     }
 
     // ── Resources ──────────────────────────────────────────────────────────
-    // User's Readable pages are exposed as browsable MCP resources with the
-    // URI scheme: readable://pages/<id>
+    // User's Booklet pages are exposed as browsable MCP resources with the
+    // URI scheme: booklet://pages/<id>
 
     case "resources/list": {
-      const result = await handleResourcesList(apiKey, env.READABLE_API_BASE);
+      const result = await handleResourcesList(apiKey, env.BOOKLET_API_BASE);
       responsePayload = rpcResult(body.id, result);
       break;
     }
@@ -180,7 +180,7 @@ async function handleMcpPost(request: Request, env: Env): Promise<Response> {
         responsePayload = rpcError(body.id, ERRORS.INVALID_PARAMS("Missing resource URI"));
         break;
       }
-      const result = await handleResourcesRead(params.uri, apiKey, env.READABLE_API_BASE);
+      const result = await handleResourcesRead(params.uri, apiKey, env.BOOKLET_API_BASE);
       responsePayload = rpcResult(body.id, result);
       break;
     }
@@ -245,7 +245,7 @@ export default {
       if (method === "GET" && url.pathname === "/health") {
         return jsonResponse({
           ok: true,
-          service: "readable-mcp",
+          service: "booklet-mcp",
           version: "1.0.0",
           protocol: PROTOCOL_VERSION,
         });

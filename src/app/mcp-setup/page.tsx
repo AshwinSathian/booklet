@@ -189,7 +189,7 @@ function TerminalIcon({ size = 18 }: { size?: number }) {
 
 // ─── Platform data ────────────────────────────────────────────────────────────
 
-const MCP_URL = "https://readable-mcp.ashwinsathian.com/mcp";
+const MCP_URL = "https://booklet-mcp.ashwinsathian.com/mcp";
 
 type PlatformId = "claude-desktop" | "claude-ai" | "cursor" | "windsurf" | "vscode" | "zed";
 
@@ -215,7 +215,7 @@ function makeDesktopConfig(key = "rdbl_YOUR_API_KEY") {
   return JSON.stringify(
     {
       mcpServers: {
-        readable: {
+        booklet: {
           url: MCP_URL,
           headers: { Authorization: `Bearer ${key}` },
         },
@@ -230,7 +230,7 @@ function makeCursorConfig(key = "rdbl_YOUR_API_KEY") {
   return JSON.stringify(
     {
       mcpServers: {
-        readable: {
+        booklet: {
           url: MCP_URL,
           headers: { Authorization: `Bearer ${key}` },
         },
@@ -245,7 +245,7 @@ function makeVSCodeConfig(key = "rdbl_YOUR_API_KEY") {
   return JSON.stringify(
     {
       servers: {
-        readable: {
+        booklet: {
           type: "http",
           url: MCP_URL,
           headers: { Authorization: `Bearer ${key}` },
@@ -261,7 +261,7 @@ function makeZedConfig(key = "rdbl_YOUR_API_KEY") {
   return JSON.stringify(
     {
       context_servers: {
-        readable: {
+        booklet: {
           source: "custom",
           command: {
             path: "npx",
@@ -323,10 +323,10 @@ function ClaudeDesktopInstructions({ apiKey }: { apiKey: string }) {
           )}
         </Step>
 
-        <Step n={2} title="Add the Readable server">
+        <Step n={2} title="Add the Booklet server">
           <p className="text-sm text-text-secondary mb-2">
             Paste this into the file. If the file already has <Code>mcpServers</Code>, add the{" "}
-            <Code>readable</Code> entry inside the existing object.
+            <Code>booklet</Code> entry inside the existing object.
           </p>
           <CodeBlock code={config} label="claude_desktop_config.json" />
         </Step>
@@ -342,7 +342,7 @@ function ClaudeDesktopInstructions({ apiKey }: { apiKey: string }) {
           <p className="text-sm text-text-secondary">
             In a new conversation, look for the{" "}
             <span className="font-medium text-text-primary">plug icon</span> (⚡ or 🔌) near the
-            input box. Click it — <strong>readable</strong> should appear in the list of connected
+            input box. Click it — <strong>booklet</strong> should appear in the list of connected
             servers.
           </p>
         </Step>
@@ -379,7 +379,7 @@ function ClaudeAiInstructions({ apiKey }: { apiKey: string }) {
             Click <strong>Add integration</strong> and fill in the form:
           </p>
           <div className="rounded-xl border border-outline bg-bg-soft p-4 space-y-3 text-sm">
-            <Field label="Integration name" value="Readable" />
+            <Field label="Integration name" value="Booklet" />
             <Field label="MCP server URL" value={MCP_URL} copyable />
             <Field
               label="Authorization header"
@@ -392,9 +392,9 @@ function ClaudeAiInstructions({ apiKey }: { apiKey: string }) {
 
         <Step n={3} title="Save and start a new conversation">
           <p className="text-sm text-text-secondary">
-            Click <strong>Save</strong>. Open a new chat — the Readable tools will be available
+            Click <strong>Save</strong>. Open a new chat — the Booklet tools will be available
             automatically. You can confirm by asking:{" "}
-            <Code>What Readable tools do you have?</Code>
+            <Code>What Booklet tools do you have?</Code>
           </p>
         </Step>
       </div>
@@ -448,7 +448,7 @@ function CursorInstructions({ apiKey }: { apiKey: string }) {
         <Step n={4} title="Verify">
           <p className="text-sm text-text-secondary">
             In Cursor Chat, click the <strong>Tools</strong> icon and confirm{" "}
-            <strong>readable</strong> is listed.
+            <strong>booklet</strong> is listed.
           </p>
         </Step>
       </div>
@@ -478,7 +478,7 @@ function WindsurfInstructions({ apiKey }: { apiKey: string }) {
             Click <strong>+ Add Server</strong> → choose <strong>HTTP/SSE</strong> and fill in:
           </p>
           <div className="rounded-xl border border-outline bg-bg-soft p-4 space-y-3 text-sm">
-            <Field label="Server name" value="readable" />
+            <Field label="Server name" value="booklet" />
             <Field label="Server URL" value={MCP_URL} copyable />
             <Field label="Authorization" value={headerValue} copyable masked={apiKey === "rdbl_YOUR_API_KEY"} />
           </div>
@@ -487,7 +487,7 @@ function WindsurfInstructions({ apiKey }: { apiKey: string }) {
         <Step n={3} title="Save and verify">
           <p className="text-sm text-text-secondary">
             Click <strong>Save</strong>. The server status should turn green. In a new Cascade
-            conversation, try: <Code>List my Readable pages</Code>
+            conversation, try: <Code>List my Booklet pages</Code>
           </p>
         </Step>
       </div>
@@ -526,13 +526,13 @@ function VSCodeInstructions({ apiKey }: { apiKey: string }) {
           <p className="text-sm text-text-secondary">
             VS Code detects the file automatically. Open Copilot Chat (<Code>⌘ ⌥ I</Code>) and
             switch to <strong>Agent mode</strong> (the @ icon). Click{" "}
-            <strong>Select tools</strong> — <strong>readable</strong> should be listed.
+            <strong>Select tools</strong> — <strong>booklet</strong> should be listed.
           </p>
         </Step>
 
         <Step n={3} title="Approve on first use">
           <p className="text-sm text-text-secondary">
-            The first time you use a Readable tool, VS Code will prompt you to approve it. Click{" "}
+            The first time you use a Booklet tool, VS Code will prompt you to approve it. Click{" "}
             <strong>Allow</strong> (or <strong>Allow always</strong> to skip future prompts).
           </p>
         </Step>
@@ -574,7 +574,7 @@ function ZedInstructions({ apiKey }: { apiKey: string }) {
 
         <Step n={3} title="Verify">
           <p className="text-sm text-text-secondary">
-            Ask the assistant: <Code>List my Readable pages</Code>. Zed should invoke the{" "}
+            Ask the assistant: <Code>List my Booklet pages</Code>. Zed should invoke the{" "}
             <strong>list_pages</strong> tool and return your pages.
           </p>
         </Step>
@@ -733,10 +733,10 @@ export default function McpSetupPage() {
               </div>
               <div>
                 <h1 className="text-[clamp(20px,3vw,26px)] mb-1">
-                  Connect Readable to your AI
+                  Connect Booklet to your AI
                 </h1>
                 <p className="text-sm text-text-secondary max-w-prose">
-                  Readable&apos;s MCP server lets Claude, Cursor, Windsurf, and other AI tools publish,
+                  Booklet&apos;s MCP server lets Claude, Cursor, Windsurf, and other AI tools publish,
                   update, and manage your pages — entirely through conversation. One-time setup, no
                   copy-pasting.
                 </p>
@@ -748,7 +748,7 @@ export default function McpSetupPage() {
                 {
                   icon: <TerminalIcon size={15} />,
                   title: "Say it, publish it",
-                  body: "\"Publish this as a Readable page\" — done.",
+                  body: "\"Publish this as a Booklet page\" — done.",
                 },
                 {
                   icon: (
@@ -786,7 +786,7 @@ export default function McpSetupPage() {
             <SectionAnchor id="" title="Step 1 — Get your API key" />
 
             <p className="text-sm text-text-secondary mb-4">
-              Every MCP request is authenticated with a Readable API key. The key identifies you and
+              Every MCP request is authenticated with a Booklet API key. The key identifies you and
               scopes all operations to your pages.
             </p>
 
@@ -828,7 +828,7 @@ export default function McpSetupPage() {
                   </p>
                 )}
                 <p className="text-xs text-text-muted mt-1">
-                  This value stays in your browser and is never sent to Readable servers.
+                  This value stays in your browser and is never sent to Booklet servers.
                 </p>
               </Step>
             </div>
@@ -877,12 +877,12 @@ export default function McpSetupPage() {
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {[
-                "List all my Readable pages",
-                "Publish this as a Readable page: # Hello World\n\nThis is my first page.",
-                "Create an incident report for a database outage that happened today and publish it to Readable",
+                "List all my Booklet pages",
+                "Publish this as a Booklet page: # Hello World\n\nThis is my first page.",
+                "Create an incident report for a database outage that happened today and publish it to Booklet",
                 "Write an ADR for switching from REST to GraphQL and publish it",
                 "Update my page with slug 'my-page' with this new content: [paste content]",
-                "What Readable tools do you have access to?",
+                "What Booklet tools do you have access to?",
                 "Delete the page with ID [page-id]",
                 "Create a runbook for deploying our app to production and share the link",
               ].map((prompt) => (
@@ -917,7 +917,7 @@ export default function McpSetupPage() {
                   {[
                     {
                       name: "publish_page",
-                      desc: "Create a new Readable page from Markdown",
+                      desc: "Create a new Booklet page from Markdown",
                       inputs: "raw (markdown), title, slug, visibility",
                     },
                     {
@@ -1026,15 +1026,15 @@ export default function McpSetupPage() {
                   a: "Check your API key — it must start with rdbl_ and not have been revoked. Go to My Pages → API Keys to verify.",
                 },
                 {
-                  q: "Claude Desktop doesn't show the Readable server",
+                  q: "Claude Desktop doesn't show the Booklet server",
                   a: "Make sure you fully quit and relaunched Claude Desktop (not just closed the window). Also verify the JSON in your config file is valid — a single extra comma or brace will break parsing.",
                 },
                 {
                   q: "Getting \"Unauthorized\" errors",
-                  a: "The API key in your config doesn't match what Readable expects. Re-generate a key from My Pages → API Keys and update the Authorization header value.",
+                  a: "The API key in your config doesn't match what Booklet expects. Re-generate a key from My Pages → API Keys and update the Authorization header value.",
                 },
                 {
-                  q: "Claude says it doesn't have any Readable tools",
+                  q: "Claude says it doesn't have any Booklet tools",
                   a: "For Claude.ai, this feature requires a Pro or Max plan. For Claude Desktop, restart the app after saving the config. For Cursor/Windsurf, check that the server shows as green/connected in their settings.",
                 },
                 {
@@ -1069,7 +1069,7 @@ export default function McpSetupPage() {
             <div className="mt-6 rounded-xl border border-outline bg-bg-elevated p-4 text-sm">
               <p className="font-semibold text-text-primary mb-1">Security note</p>
               <p className="text-text-secondary text-xs leading-relaxed">
-                Your API key is sent directly from the MCP client to Readable&apos;s API on each tool
+                Your API key is sent directly from the MCP client to Booklet&apos;s API on each tool
                 call. The MCP server acts as a stateless proxy and never writes your key to
                 persistent storage. To revoke MCP access at any time, delete the key from{" "}
                 <Link href={ROUTES.myPages} className="text-accent hover:underline">

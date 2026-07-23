@@ -33815,11 +33815,11 @@ var DeletePageResponseSchema = external_exports.object({
 var ApiErrorSchema = external_exports.object({
   error: external_exports.string()
 });
-var ReadableApiError = class extends Error {
+var BookletApiError = class extends Error {
   constructor(message, status) {
     super(message);
     this.status = status;
-    this.name = "ReadableApiError";
+    this.name = "BookletApiError";
   }
   status;
 };
@@ -33833,14 +33833,14 @@ function createClient(options) {
         headers: {
           ...init?.headers,
           Authorization: `Bearer ${apiKey}`,
-          "X-Readable-Source": source,
+          "X-Booklet-Source": source,
           ...init?.body ? { "Content-Type": "application/json" } : {}
         },
         signal: AbortSignal.timeout(fetchTimeoutMs)
       });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      throw new ReadableApiError(`Network error: ${msg}`, 0);
+      throw new BookletApiError(`Network error: ${msg}`, 0);
     }
     let body = null;
     try {
@@ -33849,7 +33849,7 @@ function createClient(options) {
     }
     if (!res.ok) {
       const message = body && typeof body === "object" && "error" in body && typeof body.error === "string" ? body.error : `HTTP ${res.status}`;
-      throw new ReadableApiError(message, res.status);
+      throw new BookletApiError(message, res.status);
     }
     return body;
   }
@@ -33893,7 +33893,7 @@ async function run() {
   const apiKey = getInput("api-key", { required: true });
   const pageId = getInput("page-id") || null;
   const visibility = getInput("visibility") || "unlisted";
-  const baseUrl = getInput("base-url") || "https://readable-api.ashwinsathian.com";
+  const baseUrl = getInput("base-url") || "https://booklet-api.ashwinsathian.com";
   if (visibility !== "public" && visibility !== "unlisted") {
     setFailed(`Invalid visibility: "${visibility}" \u2014 must be "public" or "unlisted"`);
     return;
@@ -33911,7 +33911,7 @@ async function run() {
   try {
     result = pageId ? await client.updatePage(pageId, { raw, visibility }) : await client.publishPage(raw);
   } catch (e) {
-    const message = e instanceof ReadableApiError ? e.message : e instanceof Error ? e.message : String(e);
+    const message = e instanceof BookletApiError ? e.message : e instanceof Error ? e.message : String(e);
     setFailed(`Publish failed: ${message}`);
     return;
   }

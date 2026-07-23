@@ -21,7 +21,7 @@ export default defineConfig({
   sourcemap: false,
   dts: false,
   // Bundle all deps into the output — zero runtime deps, single file
-  noExternal: ["commander", "readable-api-client", "zod"],
+  noExternal: ["commander", "booklet-api-client", "zod"],
   banner: {
     js: "#!/usr/bin/env node",
   },

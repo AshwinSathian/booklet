@@ -137,7 +137,7 @@ export default async function SharePage({
   // Password gate: check cookie before revealing content.
   if (pageRecord?.password_hash) {
     const cookieStore = await cookies();
-    const cookieValue = cookieStore.get(`readable_unlock_${resolvedId}`)?.value;
+    const cookieValue = cookieStore.get(`booklet_unlock_${resolvedId}`)?.value;
     const unlocked = await verifyUnlockToken(resolvedId, pageRecord.password_hash, cookieValue);
     if (!unlocked) {
       return <PasswordGate pageId={resolvedId} />;
@@ -185,7 +185,7 @@ export default async function SharePage({
             <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
               <ExportMenu blocks={doc.blocks} settings={doc.settings} raw={doc.raw} title={pageTitle} />
               <ThemeToggle />
-              <Button variant="primary" size="md" href={ROUTES.app} data-readable-cta="make-your-own" className="hidden xs:inline-flex">
+              <Button variant="primary" size="md" href={ROUTES.app} data-booklet-cta="make-your-own" className="hidden xs:inline-flex">
                 <span className="hidden sm:inline">Write</span>
                 <svg width="11" height="11" fill="none" viewBox="0 0 11 11" aria-hidden>
                   <path d="M2 9 9 2M9 2H4.5M9 2v4.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
@@ -220,7 +220,7 @@ export default async function SharePage({
               variant="primary"
               size="md"
               href={ROUTES.app}
-              data-readable-cta="make-your-own"
+              data-booklet-cta="make-your-own"
               className="hidden xs:inline-flex"
             >
               <span className="hidden sm:inline">Make your own</span>
@@ -376,9 +376,9 @@ function FrontmatterMetaStrip({
 // ---------------------------------------------------------------------------
 
 const EXAMPLE_PAGES = [
-  { label: "Incident Report", href: "https://readable.ashwinsathian.com/p/example-incident-report" },
-  { label: "Architecture Decision Record", href: "https://readable.ashwinsathian.com/p/example-adr" },
-  { label: "Technical Docs", href: "https://readable.ashwinsathian.com/p/example-readme" },
+  { label: "Incident Report", href: "https://booklet.ashwinsathian.com/p/example-incident-report" },
+  { label: "Architecture Decision Record", href: "https://booklet.ashwinsathian.com/p/example-adr" },
+  { label: "Technical Docs", href: "https://booklet.ashwinsathian.com/p/example-readme" },
 ] as const;
 
 function NotFoundOrExpired() {

@@ -11,7 +11,7 @@ export default defineConfig({
   workers: 1,
   reporter: "list",
   use: {
-    baseURL: process.env.TEST_BASE_URL ?? "https://readable.ashwinsathian.com",
+    baseURL: process.env.TEST_BASE_URL ?? "https://booklet.ashwinsathian.com",
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },

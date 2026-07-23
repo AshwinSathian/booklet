@@ -12,7 +12,7 @@ type StringIdDoc = { _id: string; [key: string]: unknown };
  * testDir glob never picks it up automatically). Run explicitly after a
  * production deploy:
  *
- *   TEST_BASE_URL=https://readable.ashwinsathian.com \
+ *   TEST_BASE_URL=https://booklet.ashwinsathian.com \
  *   MONGODB_URI="mongodb://127.0.0.1:27017/readable?directConnection=true" \
  *   CLAIM_TOKEN_SECRET=<same value as .env.production.local> \
  *   npx playwright test scripts/production-verify/prod-smoke.spec.ts --config=playwright.config.ts
@@ -24,8 +24,8 @@ type StringIdDoc = { _id: string; [key: string]: unknown };
  * accounts) is never touched.
  */
 
-const BASE = process.env.TEST_BASE_URL ?? "https://readable.ashwinsathian.com";
-const API_BASE = process.env.TEST_API_BASE_URL ?? "https://readable-api.ashwinsathian.com";
+const BASE = process.env.TEST_BASE_URL ?? "https://booklet.ashwinsathian.com";
+const API_BASE = process.env.TEST_API_BASE_URL ?? "https://booklet-api.ashwinsathian.com";
 const MONGODB_URI = process.env.MONGODB_URI ?? "mongodb://127.0.0.1:27017/readable?directConnection=true";
 const RUN_ID = Date.now();
 const EMAIL = `e2e-verify-${RUN_ID}@example.test`;
@@ -47,7 +47,7 @@ test.describe("Production verification — core routes", () => {
   }
 });
 
-test.describe("Production verification — readable-api.ashwinsathian.com host restriction", () => {
+test.describe("Production verification — booklet-api.ashwinsathian.com host restriction", () => {
   test("non-API path 404s on the API hostname", async ({ request }) => {
     const res = await request.get(API_BASE, { maxRedirects: 0 });
     expect(res.status()).toBe(404);
@@ -121,7 +121,7 @@ test.describe("Production verification — signup, publish, session lifecycle", 
   });
 });
 
-test.describe("Production verification — v1 API via readable-api.ashwinsathian.com", () => {
+test.describe("Production verification — v1 API via booklet-api.ashwinsathian.com", () => {
   let apiKey: string;
   let apiPageId: string;
 
@@ -134,7 +134,7 @@ test.describe("Production verification — v1 API via readable-api.ashwinsathian
     const keyRes = await request.post(`${BASE}/api/v1/keys`, { data: { label: `e2e-verify-${RUN_ID}` } });
     expect(keyRes.ok()).toBe(true);
     apiKey = (await keyRes.json()).key;
-    expect(apiKey).toMatch(/^rdbl_/);
+    expect(apiKey).toMatch(/^bklt_/);
 
     const publishRes = await request.post(`${API_BASE}/api/v1/publish`, {
       headers: { Authorization: `Bearer ${apiKey}` },

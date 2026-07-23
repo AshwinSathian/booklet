@@ -10,8 +10,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = buildMetadata({
-  title: "Tags — Readable",
-  description: "Browse public pages on Readable by topic tag.",
+  title: "Tags — Booklet",
+  description: "Browse public pages on Booklet by topic tag.",
   pathname: "/tags",
 });
 

@@ -7,7 +7,7 @@ import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
-// Cookie name: readable_unlock_<pageId>
+// Cookie name: booklet_unlock_<pageId>
 // Path: /p/ — covers both /p/<id> and /p/<slug> access patterns.
 // Expires 8 hours from unlock.
 const UNLOCK_TTL = 8 * 60 * 60;
@@ -53,7 +53,7 @@ export async function POST(
   const token = await signUnlockToken(id, page.password_hash);
 
   const res = NextResponse.json({ ok: true });
-  res.cookies.set(`readable_unlock_${id}`, token, {
+  res.cookies.set(`booklet_unlock_${id}`, token, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",

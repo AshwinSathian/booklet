@@ -1,7 +1,7 @@
 {
-  "name": "@readable/mcp-server",
+  "name": "@booklet/mcp-server",
   "version": "1.0.0",
-  "description": "MCP server for publishing Markdown to Readable from AI assistants and agents",
+  "description": "MCP server for publishing Markdown to Booklet from AI assistants and agents",
   "private": true,
   "scripts": {
     "dev": "tsx src/node-server.ts",
@@ -10,7 +10,7 @@
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json"
   },
   "dependencies": {
-    "readable-api-client": "^0.1.0"
+    "booklet-api-client": "^0.1.0"
   },
   "devDependencies": {
     "@types/node": "^25.9.1",

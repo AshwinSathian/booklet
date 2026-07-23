@@ -114,7 +114,7 @@ export function AppLoader() {
 
         {/* Name */}
         <span className="text-[15px] font-semibold tracking-[-0.01em] text-text-primary">
-          Readable
+          Booklet
         </span>
       </div>
     </div>

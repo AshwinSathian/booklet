@@ -9,7 +9,7 @@ import Link from "next/link";
 export const metadata: Metadata = buildMetadata({
   title: "Free — No paid plans",
   description:
-    "Readable is completely free. Publish Markdown pages, get analytics, use the API, version history, password protection — all included. No credit card.",
+    "Booklet is completely free. Publish Markdown pages, get analytics, use the API, version history, password protection — all included. No credit card.",
   pathname: "/pricing",
 });
 
@@ -70,7 +70,7 @@ const FEATURE_GROUPS: { heading: string; items: string[] }[] = [
       "Export to Markdown, self-contained HTML, or PDF",
       "Collections — group related pages into organised sets",
       "My Pages dashboard to manage all your published pages",
-      "Attribution badge on every page (links back to Readable)",
+      "Attribution badge on every page (links back to Booklet)",
     ],
   },
   {
@@ -79,9 +79,9 @@ const FEATURE_GROUPS: { heading: string; items: string[] }[] = [
       "REST API v1 — publish, update, list, and delete pages",
       "API key management (generate, revoke, label keys)",
       "Publish webhooks — get notified on page.published and page.updated",
-      "Claude MCP server — use Readable directly from Claude",
+      "Claude MCP server — use Booklet directly from Claude",
       "GitHub Actions integration — publish from CI/CD pipelines",
-      "CLI — readable-cli npm package, publish from any terminal or CI",
+      "CLI — booklet-cli npm package, publish from any terminal or CI",
     ],
   },
 ];

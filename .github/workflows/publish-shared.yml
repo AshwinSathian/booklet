@@ -1,4 +1,4 @@
-# Publishes readable-api-client to npm when packages/shared/package.json
+# Publishes booklet-api-client to npm when packages/shared/package.json
 # version changes on main. Mirrors publish-cli.yml's pattern exactly.
 # Trigger: push to main that touches packages/shared/, OR manual dispatch.
 #
@@ -39,7 +39,7 @@ jobs:
         run: |
           PKG_VERSION=$(node -p "require('./package.json').version")
           echo "version=$PKG_VERSION" >> $GITHUB_OUTPUT
-          if npm view readable-api-client@$PKG_VERSION version 2>/dev/null; then
+          if npm view booklet-api-client@$PKG_VERSION version 2>/dev/null; then
             echo "already_published=true" >> $GITHUB_OUTPUT
           else
             echo "already_published=false" >> $GITHUB_OUTPUT
@@ -53,4 +53,4 @@ jobs:
 
       - name: Skip (already published)
         if: steps.version_check.outputs.already_published == 'true'
-        run: echo "readable-api-client@${{ steps.version_check.outputs.version }} already on npm — bump version to publish."
+        run: echo "booklet-api-client@${{ steps.version_check.outputs.version }} already on npm — bump version to publish."

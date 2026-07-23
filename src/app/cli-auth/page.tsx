@@ -10,12 +10,12 @@ import type { Metadata } from "next";
 export const runtime = "nodejs";
 
 export const metadata: Metadata = {
-  title: "Authorize CLI — Readable",
+  title: "Authorize CLI — Booklet",
   robots: { index: false },
 };
 
 const MAX_KEYS_PER_USER = 10;
-const CLI_KEY_LABEL = "readable-cli";
+const CLI_KEY_LABEL = "booklet-cli";
 
 function isValidPort(v: string | undefined): v is string {
   if (!v) return false;
@@ -61,7 +61,7 @@ export default async function CliAuthPage({
     return (
       <ErrorPage
         title="Invalid request"
-        body="Missing or invalid parameters. Run `readable login` in your terminal to start a new login flow."
+        body="Missing or invalid parameters. Run `booklet login` in your terminal to start a new login flow."
       />
     );
   }
@@ -81,7 +81,7 @@ export default async function CliAuthPage({
     return (
       <ErrorPage
         title="API key limit reached"
-        body={`You have ${MAX_KEYS_PER_USER} API keys — the maximum allowed. Delete an unused key from My Pages → Settings → API Keys, then run \`readable login\` again.`}
+        body={`You have ${MAX_KEYS_PER_USER} API keys — the maximum allowed. Delete an unused key from My Pages → Settings → API Keys, then run \`booklet login\` again.`}
       />
     );
   }

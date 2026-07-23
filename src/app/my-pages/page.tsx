@@ -12,12 +12,12 @@ import { WebhooksSection } from "./WebhooksClient";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const metadata = {
-  title: "My Pages — Readable",
+  title: "My Pages — Booklet",
   robots: { index: false, follow: false },
 };
 
 function getBaseUrl(req: Headers): string {
-  const host = req.get("host") ?? "readable.page";
+  const host = req.get("host") ?? "booklet.page";
   const proto = req.get("x-forwarded-proto") ?? "https";
   return `${proto}://${host}`;
 }

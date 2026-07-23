@@ -7,8 +7,8 @@ export const DRAFTS_DB = {
 } as const;
 
 export const DRAFTS_STORAGE_KEYS = {
-  db: "readable:draftsDb",
-  activeDraftId: "readable:activeDraftId",
+  db: "booklet:draftsDb",
+  activeDraftId: "booklet:activeDraftId",
   /**
    * Client-side-only map of draftId -> userId, tracking which signed-in
    * account (if any) has "claimed" a given local draft for cloud sync. Never
@@ -17,7 +17,7 @@ export const DRAFTS_STORAGE_KEYS = {
    * (e.g. a pre-existing anonymous draft, or one owned by a different
    * account that previously used this browser). See cloud-sync.ts.
    */
-  cloudOwners: "readable:draftCloudOwners",
+  cloudOwners: "booklet:draftCloudOwners",
 } as const;
 
 export const DRAFT_DOC = {

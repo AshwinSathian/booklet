@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import { createServer } from "node:http";
 import { randomBytes } from "node:crypto";
-import { createClient } from "readable-api-client";
+import { createClient } from "booklet-api-client";
 import { readConfig, writeConfig, getApiKey, getApiBase } from "../config.js";
 import { apiErrorMessage } from "../api.js";
 import { success, error, info, bold, dim, gray, openUrl } from "../fmt.js";
@@ -14,7 +14,7 @@ const CALLBACK_SUCCESS_HTML = `<!DOCTYPE html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Readable CLI — Authorized</title>
+  <title>Booklet CLI — Authorized</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
@@ -74,7 +74,7 @@ function waitForCallback(port: number, expectedState: string): Promise<string> {
     const timer = setTimeout(() => {
       server.close();
       reject(
-        new Error("Login timed out after 5 minutes. Run `readable login` to try again."),
+        new Error("Login timed out after 5 minutes. Run `booklet login` to try again."),
       );
     }, BROWSER_AUTH_TIMEOUT_MS);
 
@@ -133,7 +133,7 @@ async function loginWithBrowser(base: string): Promise<{ key: string; pageCount:
   openUrl(authUrl);
   info(`Opening ${bold(new URL(base).hostname)} in your browser…`);
   console.log(dim(`  Didn't open? Visit: ${authUrl}`));
-  console.log(dim(`  In a non-interactive environment? Use: readable login --key <key>`));
+  console.log(dim(`  In a non-interactive environment? Use: booklet login --key <key>`));
   console.log();
   info("Waiting for authorization… (Ctrl+C to cancel)");
 
@@ -153,7 +153,7 @@ async function loginWithBrowser(base: string): Promise<{ key: string; pageCount:
 export function registerAuthCommands(program: Command) {
   program
     .command("login")
-    .description("Authenticate with Readable")
+    .description("Authenticate with Booklet")
     .option("--key <key>", "Authenticate with an API key directly (for CI/scripts)")
     .option("--api-url <url>", "Override API base URL")
     .option("--force", "Re-authenticate even if already logged in")
@@ -169,7 +169,7 @@ export function registerAuthCommands(program: Command) {
           process.exit(1);
         }
         await writeConfig({ ...existing, apiKey: opts.key, apiBase: base });
-        success("Authenticated. Key saved to ~/.readable/config.json");
+        success("Authenticated. Key saved to ~/.booklet/config.json");
         info(`You have ${result.pageCount} page${result.pageCount === 1 ? "" : "s"}.`);
         return;
       }
@@ -181,7 +181,7 @@ export function registerAuthCommands(program: Command) {
         if (check.ok) {
           success("Already authenticated.");
           info(`You have ${check.pageCount} page${check.pageCount === 1 ? "" : "s"}.`);
-          info(dim("Run `readable login --force` to re-authenticate."));
+          info(dim("Run `booklet login --force` to re-authenticate."));
           return;
         }
         info("Saved key is no longer valid — re-authenticating…");
@@ -198,7 +198,7 @@ export function registerAuthCommands(program: Command) {
 
       await writeConfig({ ...existing, apiKey: result.key, apiBase: base });
       console.log();
-      success("Authenticated. Key saved to ~/.readable/config.json");
+      success("Authenticated. Key saved to ~/.booklet/config.json");
       info(`You have ${result.pageCount} page${result.pageCount === 1 ? "" : "s"}.`);
     });
 
@@ -225,7 +225,7 @@ export function registerAuthCommands(program: Command) {
       const base = await getApiBase();
 
       if (!key) {
-        info("Not authenticated. Run `readable login` to authenticate.");
+        info("Not authenticated. Run `booklet login` to authenticate.");
         return;
       }
 
@@ -236,6 +236,6 @@ export function registerAuthCommands(program: Command) {
 
       console.log(`${bold("Key:")}    ${masked}`);
       console.log(`${bold("Base:")}   ${gray(base)}`);
-      console.log(`${bold("Source:")} ${dim(fromEnv ? "READABLE_API_KEY (env)" : "~/.readable/config.json")}`);
+      console.log(`${bold("Source:")} ${dim(fromEnv ? "BOOKLET_API_KEY (env)" : "~/.booklet/config.json")}`);
     });
 }

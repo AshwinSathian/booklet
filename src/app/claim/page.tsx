@@ -26,7 +26,7 @@ export default async function ClaimPage({
           <div className="text-center max-w-sm">
             <h1 className="text-lg font-medium">Welcome back</h1>
             <p className="mt-1 text-sm text-text-secondary">
-              Readable now uses email + password sign-in. Set a password for your account to continue.
+              Booklet now uses email + password sign-in. Set a password for your account to continue.
             </p>
           </div>
           <ClaimForm token={token} />

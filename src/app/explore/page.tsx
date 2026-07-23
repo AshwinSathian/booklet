@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = buildMetadata({
   title: "Explore",
   description:
-    "Browse recently published pages from the Readable community — incident reports, docs, changelogs, and more.",
+    "Browse recently published pages from the Booklet community — incident reports, docs, changelogs, and more.",
   pathname: "/explore",
 });
 

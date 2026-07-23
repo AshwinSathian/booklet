@@ -42,7 +42,7 @@ export function buildOgSvg(title?: string): string {
   <rect x="99.05" y="106.55" width="33.9" height="5.7" rx="2.85" fill="white"/>
   <rect x="99.05" y="119.75" width="33.9" height="5.7" rx="2.85" fill="white"/>
   <rect x="126.65" y="100.1" width="5.25" height="5.1" rx="1.5" fill="white" fill-opacity="0.55"/>
-  <text x="172" y="130" font-family="system-ui, -apple-system, sans-serif" font-size="36" font-weight="600" fill="#f5f5f7" letter-spacing="-0.5">readable</text>`;
+  <text x="172" y="130" font-family="system-ui, -apple-system, sans-serif" font-size="36" font-weight="600" fill="#f5f5f7" letter-spacing="-0.5">booklet</text>`;
 
   let content: string;
   if (title) {
@@ -53,7 +53,7 @@ export function buildOgSvg(title?: string): string {
     content = `
   <text x="80" y="${y1}" font-family="system-ui, -apple-system, sans-serif" font-size="${fontSize}" font-weight="700" fill="#f5f5f7" letter-spacing="-1.5">${line1}</text>
   ${line2 ? `<text x="80" y="${y2}" font-family="system-ui, -apple-system, sans-serif" font-size="${fontSize}" font-weight="700" fill="url(#heroGrad)" letter-spacing="-1.5">${line2}</text>` : ""}
-  <text x="80" y="490" font-family="system-ui, -apple-system, sans-serif" font-size="24" fill="#636366" letter-spacing="-0.2">Shared via Readable</text>`;
+  <text x="80" y="490" font-family="system-ui, -apple-system, sans-serif" font-size="24" fill="#636366" letter-spacing="-0.2">Shared via Booklet</text>`;
   } else {
     content = `
   <text x="80" y="310" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="700" fill="#f5f5f7" letter-spacing="-2">Write in Markdown.</text>

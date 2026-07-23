@@ -2,13 +2,13 @@
 
 Descoped from this round (no transactional-email service/credentials
 available in this environment) — documented per product decision. Part of
-P4-6 in `AUDIT_REMEDIATION_PLAN.md`: "a tasteful 'Made with Readable'
+P4-6 in `AUDIT_REMEDIATION_PLAN.md`: "a tasteful 'Made with Booklet'
 attribution chip on free pages, plus lightweight author identity + 'subscribe
 to updates' on published pages."
 
 ## What's already shipped (don't re-build)
 
-- The attribution chip ("Made with Readable" colophon footer) already
+- The attribution chip ("Made with Booklet" colophon footer) already
   existed, and this round fixed a real bug where it ignored
   `remove_attribution_badge` and rendered unconditionally — see the commit
   fixing `src/app/p/[id]/page.tsx`'s footer.

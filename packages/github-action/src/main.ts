@@ -1,14 +1,14 @@
 import * as core from "@actions/core";
 import { readFileSync } from "fs";
 import { resolve } from "path";
-import { createClient, ReadableApiError } from "readable-api-client";
+import { createClient, BookletApiError } from "booklet-api-client";
 
 async function run(): Promise<void> {
   const file = core.getInput("file", { required: true });
   const apiKey = core.getInput("api-key", { required: true });
   const pageId = core.getInput("page-id") || null;
   const visibility = core.getInput("visibility") || "unlisted";
-  const baseUrl = core.getInput("base-url") || "https://readable-api.ashwinsathian.com";
+  const baseUrl = core.getInput("base-url") || "https://booklet-api.ashwinsathian.com";
 
   if (visibility !== "public" && visibility !== "unlisted") {
     core.setFailed(`Invalid visibility: "${visibility}" — must be "public" or "unlisted"`);
@@ -33,7 +33,7 @@ async function run(): Promise<void> {
       ? await client.updatePage(pageId, { raw, visibility })
       : await client.publishPage(raw);
   } catch (e) {
-    const message = e instanceof ReadableApiError ? e.message : e instanceof Error ? e.message : String(e);
+    const message = e instanceof BookletApiError ? e.message : e instanceof Error ? e.message : String(e);
     core.setFailed(`Publish failed: ${message}`);
     return;
   }

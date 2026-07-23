@@ -111,7 +111,7 @@ production afterward):
   deleted — every real deploy from that point would have failed at that
   step. Removed; the root `npm ci` already covers it.
 - `cloudflared tunnel route dns <NAME> <hostname>` routed
-  `readable-api.ashwinsathian.com` to the *wrong* tunnel on the first
+  `booklet-api.ashwinsathian.com` to the *wrong* tunnel on the first
   attempt (a different project's tunnel happened to share a name-resolution
   quirk) — `scripts/setup-server.sh`'s own header comment already warned
   about this exact pitfall and uses UUIDs for this reason; the live
@@ -144,7 +144,7 @@ production afterward):
   moving `redirect()` outside the `try` block. Verified against production
   with `scripts/production-verify/cli-mcp-verify.mjs` — see below.
 
-## readable-api.ashwinsathian.com
+## booklet-api.ashwinsathian.com
 
 Dedicated hostname for external API consumers (CLI, GitHub Action, VS Code
 extension, MCP server), added alongside the cutover. It is **not** a
@@ -152,8 +152,8 @@ separate backend service or process — same `readable-app` PM2 app, same
 port 3100, routed through the same Cloudflare Tunnel
 (`~/.cloudflared/readable-config.yml`) under a second hostname.
 `src/middleware.ts` enforces the separation: requests with
-`Host: readable-api.ashwinsathian.com` get a 404 for anything outside
-`/api/*`. `readable.ashwinsathian.com` is unchanged and still serves both
+`Host: booklet-api.ashwinsathian.com` get a 404 for anything outside
+`/api/*`. `booklet.ashwinsathian.com` is unchanged and still serves both
 the UI and `/api/*` (the web app's own client-side code calls same-origin
 `/api/*` routes, and `readable login`'s browser flow needs a UI page on
 whatever base the CLI uses — see `packages/cli/src/config.ts`'s comment for
@@ -168,7 +168,7 @@ resolves.
 `scripts/production-verify/prod-smoke.spec.ts` is a scoped, self-cleaning
 Playwright suite for verifying a live deployment end-to-end — signup,
 editor publish, my-pages, logout/login, CSRF rejection, admin gating, the
-full v1 API surface via `readable-api.ashwinsathian.com`, and the
+full v1 API surface via `booklet-api.ashwinsathian.com`, and the
 migrated-user claim flow. Deliberately kept outside `tests/e2e/` (it has
 its own `playwright.config.ts`) so it's never picked up by the normal
 dev/CI test run — every account/page it creates is tagged
@@ -176,8 +176,8 @@ dev/CI test run — every account/page it creates is tagged
 what that run created. Run it after any production deploy:
 
 ```bash
-TEST_BASE_URL=https://readable.ashwinsathian.com \
-TEST_API_BASE_URL=https://readable-api.ashwinsathian.com \
+TEST_BASE_URL=https://booklet.ashwinsathian.com \
+TEST_API_BASE_URL=https://booklet-api.ashwinsathian.com \
 MONGODB_URI="mongodb://127.0.0.1:27017/readable?directConnection=true" \
 CLAIM_TOKEN_SECRET=<same value as .env.production.local> \
 npx playwright test --config=scripts/production-verify/playwright.config.ts

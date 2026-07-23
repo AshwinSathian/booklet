@@ -17,7 +17,7 @@ export async function generateMetadata({
   const { slug } = await params;
   const team = await getCollectionBySlug(slug);
   if (!team) return { title: "Team not found" };
-  return { title: `${team.name} — Readable` };
+  return { title: `${team.name} — Booklet` };
 }
 
 function timeAgo(iso: string): string {

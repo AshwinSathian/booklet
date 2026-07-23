@@ -1,72 +1,72 @@
-# readable-cli
+# booklet-cli
 
-Publish Markdown pages from your terminal using [Readable](https://readable.ashwinsathian.com).
+Publish Markdown pages from your terminal using [Booklet](https://booklet.ashwinsathian.com).
 
 ## Install
 
 ```bash
-npm install -g readable-cli
+npm install -g booklet-cli
 ```
 
 Or use without installing:
 
 ```bash
-npx readable-cli publish README.md
+npx booklet-cli publish README.md
 ```
 
 ## Authentication
 
 ```bash
-readable login
+booklet login
 ```
 
-This opens your browser to authorize the CLI. Sign in (or create an account) and you're done — no copy-pasting required. Your key is saved automatically to `~/.readable/config.json`.
+This opens your browser to authorize the CLI. Sign in (or create an account) and you're done — no copy-pasting required. Your key is saved automatically to `~/.booklet/config.json`.
 
 **CI / non-interactive environments:** pass your key directly with `--key`:
 
 ```bash
-readable login --key rdbl_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+booklet login --key bklt_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
 You can also set it via environment variable, which takes precedence over the config file:
 
 ```bash
-export READABLE_API_KEY=rdbl_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+export BOOKLET_API_KEY=bklt_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
-Generate keys manually at [readable.ashwinsathian.com](https://readable.ashwinsathian.com) → My Pages → Settings → API Keys.
+Generate keys manually at [booklet.ashwinsathian.com](https://booklet.ashwinsathian.com) → My Pages → Settings → API Keys.
 
 ## Commands
 
-### `readable publish [file]`
+### `booklet publish [file]`
 
-Publish a Markdown file as a Readable page.
+Publish a Markdown file as a Booklet page.
 
 ```bash
-readable publish README.md
-readable publish NOTES.md --slug my-notes
-readable publish NOTES.md --visibility unlisted
-readable publish README.md --open          # opens the page in your browser
+booklet publish README.md
+booklet publish NOTES.md --slug my-notes
+booklet publish NOTES.md --visibility unlisted
+booklet publish README.md --open          # opens the page in your browser
 ```
 
 **Publish from stdin:**
 
 ```bash
-cat CHANGELOG.md | readable publish -
-echo "# Hello world" | readable publish -
+cat CHANGELOG.md | booklet publish -
+echo "# Hello world" | booklet publish -
 ```
 
 **Update an existing page in-place:**
 
 ```bash
-readable publish README.md --update <page-id>
+booklet publish README.md --update <page-id>
 ```
 
 **Watch mode — auto-republish on every save:**
 
 ```bash
-readable publish README.md --watch
-readable publish README.md --update <id> --watch
+booklet publish README.md --watch
+booklet publish README.md --update <id> --watch
 ```
 
 Options:
@@ -81,41 +81,41 @@ Options:
 
 ---
 
-### `readable pages list`
+### `booklet pages list`
 
 List all your published pages.
 
 ```bash
-readable pages list
-readable pages list --json   # machine-readable output
+booklet pages list
+booklet pages list --json   # machine-readable output
 ```
 
-### `readable pages open <id>`
+### `booklet pages open <id>`
 
 Open a page in your browser. Pass `--print` to print the URL without opening a browser.
 
 ```bash
-readable pages open abc123             # opens browser
-readable pages open abc123 --print     # prints URL only
-readable pages open my-custom-slug     # works with slugs too
+booklet pages open abc123             # opens browser
+booklet pages open abc123 --print     # prints URL only
+booklet pages open my-custom-slug     # works with slugs too
 ```
 
-### `readable pages delete <id>`
+### `booklet pages delete <id>`
 
 Delete a page by ID or slug. Shows the page title and URL in the confirmation prompt.
 
 ```bash
-readable pages delete abc123
-readable pages delete abc123 --yes   # skip confirmation prompt
+booklet pages delete abc123
+booklet pages delete abc123 --yes   # skip confirmation prompt
 ```
 
-### `readable whoami`
+### `booklet whoami`
 
 Show the active API key, base URL, and where the key was loaded from (env var or config file).
 
-### `readable logout`
+### `booklet logout`
 
-Remove the saved API key from `~/.readable/config.json`.
+Remove the saved API key from `~/.booklet/config.json`.
 
 ---
 
@@ -155,36 +155,36 @@ Supported frontmatter fields:
 
 | Variable | Description |
 |----------|-------------|
-| `READABLE_API_KEY` | API key — overrides `~/.readable/config.json` |
-| `READABLE_API_URL` | Override API base URL (default: production) |
+| `BOOKLET_API_KEY` | API key — overrides `~/.booklet/config.json` |
+| `BOOKLET_API_URL` | Override API base URL (default: production) |
 | `NO_COLOR` | Set to any value to disable ANSI colour output |
 
 ---
 
 ## CI / GitHub Actions
 
-Use the `READABLE_API_KEY` secret to publish from CI:
+Use the `BOOKLET_API_KEY` secret to publish from CI:
 
 ```yaml
-- name: Publish to Readable
+- name: Publish to Booklet
   env:
-    READABLE_API_KEY: ${{ secrets.READABLE_API_KEY }}
+    BOOKLET_API_KEY: ${{ secrets.BOOKLET_API_KEY }}
   run: |
-    if [ -n "${{ vars.READABLE_PAGE_ID }}" ]; then
-      npx readable-cli publish CHANGELOG.md --update ${{ vars.READABLE_PAGE_ID }}
+    if [ -n "${{ vars.BOOKLET_PAGE_ID }}" ]; then
+      npx booklet-cli publish CHANGELOG.md --update ${{ vars.BOOKLET_PAGE_ID }}
     else
-      npx readable-cli publish CHANGELOG.md --slug release-notes --visibility public
+      npx booklet-cli publish CHANGELOG.md --slug release-notes --visibility public
     fi
 ```
 
-Set `READABLE_API_KEY` under Settings → Secrets → Actions. Set `READABLE_PAGE_ID` as a repository variable to reuse the same URL on every run.
+Set `BOOKLET_API_KEY` under Settings → Secrets → Actions. Set `BOOKLET_PAGE_ID` as a repository variable to reuse the same URL on every run.
 
-See [.github/examples/publish-to-readable.yml](https://github.com/AshwinSathian/readable/blob/main/.github/examples/publish-to-readable.yml) for a complete example workflow.
+See [.github/examples/publish-to-booklet.yml](https://github.com/AshwinSathian/booklet/blob/main/.github/examples/publish-to-booklet.yml) for a complete example workflow.
 
 ---
 
 ## Links
 
-- [readable.ashwinsathian.com](https://readable.ashwinsathian.com) — Create your account
-- [npmjs.com/package/readable-cli](https://www.npmjs.com/package/readable-cli) — npm package
-- [GitHub](https://github.com/AshwinSathian/readable) — Source
+- [booklet.ashwinsathian.com](https://booklet.ashwinsathian.com) — Create your account
+- [npmjs.com/package/booklet-cli](https://www.npmjs.com/package/booklet-cli) — npm package
+- [GitHub](https://github.com/AshwinSathian/booklet) — Source

@@ -1,6 +1,6 @@
-name: "Publish to Readable"
-description: "Publish a Markdown file to Readable and get a shareable URL"
-author: "Readable"
+name: "Publish to Booklet"
+description: "Publish a Markdown file to Booklet and get a shareable URL"
+author: "Booklet"
 
 branding:
   icon: "upload-cloud"
@@ -11,7 +11,7 @@ inputs:
     description: "Path to the Markdown file to publish"
     required: true
   api-key:
-    description: "Readable API key (store as a repo secret)"
+    description: "Booklet API key (store as a repo secret)"
     required: true
   page-id:
     description: "Existing page ID to update in-place (optional)"
@@ -21,9 +21,9 @@ inputs:
     required: false
     default: "unlisted"
   base-url:
-    description: "Readable API base URL"
+    description: "Booklet API base URL"
     required: false
-    default: "https://readable-api.ashwinsathian.com"
+    default: "https://booklet-api.ashwinsathian.com"
 
 outputs:
   url:

@@ -60,8 +60,8 @@ export async function deliverWebhooks(
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "X-Readable-Signature": `sha256=${signature}`,
-            "X-Readable-Event": event,
+            "X-Booklet-Signature": `sha256=${signature}`,
+            "X-Booklet-Event": event,
           },
           body,
           // Never follow redirects for webhook delivery: a legitimate

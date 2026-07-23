@@ -1,4 +1,4 @@
-export const APP_NAME = "Readable";
+export const APP_NAME = "Booklet";
 
 export const ROUTES = {
   home: "/",

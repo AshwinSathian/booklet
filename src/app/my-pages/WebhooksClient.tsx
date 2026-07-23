@@ -135,7 +135,7 @@ function SecretBanner({ reveal, onDismiss }: { reveal: SecretReveal; onDismiss: 
           <p className="text-sm font-semibold text-text-primary">Webhook signing secret</p>
           <p className="mt-0.5 text-xs text-text-secondary">
             Copy it now — it won&apos;t be shown again. Use it to verify{" "}
-            <code className="text-xs font-mono">X-Readable-Signature</code> on incoming requests.
+            <code className="text-xs font-mono">X-Booklet-Signature</code> on incoming requests.
           </p>
         </div>
         <Button variant="ghost" size="sm" iconOnly onClick={onDismiss}>

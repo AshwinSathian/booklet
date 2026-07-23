@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
  * Shared chrome for every auth-adjacent page (sign-in, sign-up, claim,
  * cli-auth, team-invite join) — same ambient accent glow as the marketing
  * homepage hero (src/components/marketing/Landing.tsx) so these pages read
- * as Readable rather than a generic form, plus an elevated card so the
+ * as Booklet rather than a generic form, plus an elevated card so the
  * inputs aren't floating loose against bare bg.
  */
 export function AuthLayout({ children }: { children: ReactNode }) {

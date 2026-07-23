@@ -12,7 +12,7 @@ import { VersionsClient } from "./VersionsClient";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const metadata = {
-  title: "Version history — Readable",
+  title: "Version history — Booklet",
   robots: { index: false, follow: false },
 };
 

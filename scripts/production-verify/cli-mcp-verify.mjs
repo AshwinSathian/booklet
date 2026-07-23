@@ -3,7 +3,7 @@
 // server — NOT part of the default test suite, run explicitly after a
 // deploy that touches src/app/cli-auth, packages/cli, or mcp-server/.
 //
-// Drives the *real* `readable login` browser flow end-to-end: signs up a
+// Drives the *real* `booklet login` browser flow end-to-end: signs up a
 // throwaway account via the real signup API, feeds its session cookie
 // through /cli-auth exactly as a browser would (including following the
 // 307 redirect to the CLI's local loopback callback server), then runs
@@ -25,8 +25,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { MongoClient } from "mongodb";
 
-const BASE = process.env.TEST_BASE_URL ?? "https://readable.ashwinsathian.com";
-const MCP_BASE = process.env.TEST_MCP_BASE_URL ?? "https://readable-mcp.ashwinsathian.com";
+const BASE = process.env.TEST_BASE_URL ?? "https://booklet.ashwinsathian.com";
+const MCP_BASE = process.env.TEST_MCP_BASE_URL ?? "https://booklet-mcp.ashwinsathian.com";
 const MONGODB_URI = process.env.MONGODB_URI ?? "mongodb://127.0.0.1:27017/readable?directConnection=true";
 const CLI_ENTRY = new URL("../../packages/cli/dist/index.js", import.meta.url).pathname;
 
@@ -70,7 +70,7 @@ function runCli(args, { home, env = {}, input } = {}) {
 }
 
 async function main() {
-  console.log(`Readable CLI + MCP production verification — run ${RUN_ID}`);
+  console.log(`Booklet CLI + MCP production verification — run ${RUN_ID}`);
   console.log(`  App: ${BASE}`);
   console.log(`  MCP: ${MCP_BASE}`);
 
@@ -98,9 +98,9 @@ async function main() {
     userId = userDoc?._id;
     ok("user record created in Mongo", Boolean(userId));
 
-    // ── 2. Real `readable login` browser flow ────────────────────────────
+    // ── 2. Real `booklet login` browser flow ────────────────────────────
     section("CLI login (browser flow)");
-    const home = await mkdtemp(join(tmpdir(), "readable-cli-verify-"));
+    const home = await mkdtemp(join(tmpdir(), "booklet-cli-verify-"));
 
     // Spawn with a live stdout listener (rather than runCli's buffer-until-
     // close helper) since we need to read the auth URL while the process is
@@ -171,17 +171,17 @@ async function main() {
     ok("CLI printed 'Authenticated'", stdout.includes("Authenticated"), stdout);
     ok("CLI reported 0 pages for a fresh account", /You have 0 pages/.test(stdout), stdout);
 
-    const config = JSON.parse(await readFile(join(home, ".readable", "config.json"), "utf8"));
+    const config = JSON.parse(await readFile(join(home, ".booklet", "config.json"), "utf8"));
     const apiKey = config.apiKey;
     ok("CLI saved an API key matching rdbl_ prefix", /^rdbl_[0-9A-Za-z]{40}$/.test(apiKey ?? ""));
 
-    // ── 5. `readable whoami` ──────────────────────────────────────────────
+    // ── 5. `booklet whoami` ──────────────────────────────────────────────
     section("CLI commands");
     const whoami = await runCli(["whoami"], { home });
     ok("whoami exits 0", whoami.code === 0);
     ok("whoami shows the configured base URL", whoami.stdout.includes(BASE));
 
-    // ── 6. `readable pages list` (empty) ─────────────────────────────────
+    // ── 6. `booklet pages list` (empty) ─────────────────────────────────
     const listEmpty = await runCli(["pages", "list", "--json"], { home });
     ok("pages list exits 0", listEmpty.code === 0);
     let emptyPages = [];
@@ -192,7 +192,7 @@ async function main() {
     }
     ok("pages list returns an empty array", Array.isArray(emptyPages) && emptyPages.length === 0, listEmpty.stdout);
 
-    // ── 7. `readable publish` ─────────────────────────────────────────────
+    // ── 7. `booklet publish` ─────────────────────────────────────────────
     const tmpFile = join(home, "test-doc.md");
     const docTitle = `e2e-cli-verify-${RUN_ID}`;
     await writeFile(tmpFile, `# ${docTitle}\n\nPublished by the CLI production verification script.\n`);
@@ -211,7 +211,7 @@ async function main() {
       ok("published page is actually reachable", pageRes.status === 200, `got ${pageRes.status}`);
     }
 
-    // ── 8. `readable pages list` (one page) ──────────────────────────────
+    // ── 8. `booklet pages list` (one page) ──────────────────────────────
     const listOne = await runCli(["pages", "list", "--json"], { home });
     let onePages = [];
     try {
@@ -222,7 +222,7 @@ async function main() {
     ok("pages list now shows 1 page", onePages.length === 1, listOne.stdout);
     const cliPageId = onePages[0]?.id;
 
-    // ── 9. `readable pages delete` ────────────────────────────────────────
+    // ── 9. `booklet pages delete` ────────────────────────────────────────
     if (cliPageId) {
       const del = await runCli(["pages", "delete", cliPageId, "-y"], { home });
       ok("pages delete exits 0", del.code === 0, del.stderr);
@@ -236,7 +236,7 @@ async function main() {
     }
     ok("pages list is empty again after delete", afterDelete.length === 0, listAfterDelete.stdout);
 
-    // ── 10. `readable logout` ─────────────────────────────────────────────
+    // ── 10. `booklet logout` ─────────────────────────────────────────────
     const logout = await runCli(["logout"], { home });
     ok("logout exits 0", logout.code === 0);
     const whoamiAfterLogout = await runCli(["whoami"], { home });

@@ -1,7 +1,7 @@
 {
-  "name": "@readable/github-action",
+  "name": "@booklet/github-action",
   "version": "0.1.1",
-  "description": "GitHub Action: publish Markdown to Readable",
+  "description": "GitHub Action: publish Markdown to Booklet",
   "private": true,
   "scripts": {
     "build": "tsup",
@@ -11,7 +11,7 @@
   "devDependencies": {
     "@actions/core": "^3.0.1",
     "@types/node": "^22.0.0",
-    "readable-api-client": "^0.1.0",
+    "booklet-api-client": "^0.1.0",
     "tsup": "^8.5.1",
     "typescript": "^5.0.0"
   }

@@ -8,7 +8,7 @@ declare const __CLI_VERSION__: string;
 const program = new Command();
 
 program
-  .name("readable")
+  .name("booklet")
   .description("Publish Markdown pages from your terminal")
   .version(__CLI_VERSION__);
 

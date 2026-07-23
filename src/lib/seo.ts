@@ -1,7 +1,7 @@
 import { APP_NAME, ROUTES } from "@/lib/constants";
 import type { Metadata } from "next";
 
-const FALLBACK_ORIGIN = "https://readable.ashwinsathian.com";
+const FALLBACK_ORIGIN = "https://booklet.ashwinsathian.com";
 
 export function getEnvOrigin() {
   const env = process.env.NEXT_PUBLIC_SITE_URL;

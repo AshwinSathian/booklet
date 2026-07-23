@@ -1,10 +1,10 @@
-# Readable
+# Booklet
 
 **Publish clean, readable pages from Markdown.**
 
 Paste Markdown into the editor, preview it live, and share a polished read-only URL in one click. Sign in for pages that never expire, version history, analytics, custom slugs, password protection, collections, and a full REST API.
 
-**[readable.ashwinsathian.com](https://readable.ashwinsathian.com)**
+**[booklet.ashwinsathian.com](https://booklet.ashwinsathian.com)**
 
 ---
 
@@ -65,21 +65,21 @@ All endpoints are under `/api/v1/` and authenticated with `Authorization: Bearer
 **Publish example:**
 
 ```bash
-curl -X POST https://readable-api.ashwinsathian.com/api/v1/publish \
+curl -X POST https://booklet-api.ashwinsathian.com/api/v1/publish \
   -H "Authorization: Bearer rdbl_..." \
   -H "Content-Type: application/json" \
   -d '{"raw": "# Hello\n\nThis is my page."}'
 ```
 
-`readable-api.ashwinsathian.com` is a dedicated hostname for the API surface (same app/process as the main site, just scoped — see `docs/OPERATIONS.md`). `readable.ashwinsathian.com` serves `/api/v1/*` too, so either works.
+`booklet-api.ashwinsathian.com` is a dedicated hostname for the API surface (same app/process as the main site, just scoped — see `docs/OPERATIONS.md`). `booklet.ashwinsathian.com` serves `/api/v1/*` too, so either works.
 
 ---
 
 ## MCP Server
 
-A plain Node process (`mcp-server/`) that exposes Readable's API to AI assistants supporting the [Model Context Protocol](https://modelcontextprotocol.io), run under PM2 alongside the main app — not a Cloudflare Worker (that was the original design, changed when the rest of the app moved off Cloudflare Workers; see `docs/OPERATIONS.md`).
+A plain Node process (`mcp-server/`) that exposes Booklet's API to AI assistants supporting the [Model Context Protocol](https://modelcontextprotocol.io), run under PM2 alongside the main app — not a Cloudflare Worker (that was the original design, changed when the rest of the app moved off Cloudflare Workers; see `docs/OPERATIONS.md`).
 
-**Endpoint:** `https://readable-mcp.ashwinsathian.com`  
+**Endpoint:** `https://booklet-mcp.ashwinsathian.com`  
 **Tools:** `publish_page`, `update_page`, `list_pages`, `delete_page`
 
 ```bash
@@ -187,6 +187,6 @@ Push to `main` with a bumped version in `packages/cli/package.json` → automati
 
 Required secret: `NPM_TOKEN` (Granular Access Token with publish + 2FA bypass).
 
-### Publish docs to Readable from your repo
+### Publish docs to Booklet from your repo
 
 See [.github/examples/publish-to-readable.yml](.github/examples/publish-to-readable.yml).

@@ -1,5 +1,5 @@
 import { ERRORS, McpValidationError, type McpErrorShape } from "./errors.js";
-import { createClient, ReadableApiError, type PageListItem, type PatchPageRequest } from "readable-api-client";
+import { createClient, BookletApiError, type PageListItem, type PatchPageRequest } from "booklet-api-client";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tool definitions (JSON Schema)
@@ -9,7 +9,7 @@ export const TOOL_DEFINITIONS = [
   {
     name: "publish_page",
     description:
-      "Publish a new Readable page from Markdown text. Returns a public URL that can be shared immediately. The page is permanent and associated with your Readable account.",
+      "Publish a new Booklet page from Markdown text. Returns a public URL that can be shared immediately. The page is permanent and associated with your Booklet account.",
     inputSchema: {
       type: "object",
       properties: {
@@ -20,7 +20,7 @@ export const TOOL_DEFINITIONS = [
         },
         title: {
           type: "string",
-          description: "Override the page title. If omitted, Readable extracts the first H1.",
+          description: "Override the page title. If omitted, Booklet extracts the first H1.",
         },
         slug: {
           type: "string",
@@ -40,7 +40,7 @@ export const TOOL_DEFINITIONS = [
   {
     name: "update_page",
     description:
-      "Update the content or metadata of an existing Readable page you own. The URL stays the same — visitors who already have the link will see the new content. Use list_pages to find page IDs.",
+      "Update the content or metadata of an existing Booklet page you own. The URL stays the same — visitors who already have the link will see the new content. Use list_pages to find page IDs.",
     inputSchema: {
       type: "object",
       properties: {
@@ -84,7 +84,7 @@ export const TOOL_DEFINITIONS = [
   {
     name: "list_pages",
     description:
-      "List Readable pages owned by your account. Returns page IDs, titles, URLs, view counts, and visibility. Supports pagination via limit and offset.",
+      "List Booklet pages owned by your account. Returns page IDs, titles, URLs, view counts, and visibility. Supports pagination via limit and offset.",
     inputSchema: {
       type: "object",
       properties: {
@@ -103,7 +103,7 @@ export const TOOL_DEFINITIONS = [
   {
     name: "delete_page",
     description:
-      "Permanently delete a Readable page. This cannot be undone and the URL will stop working immediately. Visitors who already have the link will see a 404. Use list_pages to confirm the correct page ID before deleting.",
+      "Permanently delete a Booklet page. This cannot be undone and the URL will stop working immediately. Visitors who already have the link will see a 404. Use list_pages to confirm the correct page ID before deleting.",
     inputSchema: {
       type: "object",
       properties: {
@@ -261,9 +261,9 @@ function validateDeleteArgs(args: unknown): { id: string } {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Readable API client — one instance per MCP call (stateless server; apiKey
+// Booklet API client — one instance per MCP call (stateless server; apiKey
 // and apiBase both vary per incoming request, see src/index.ts). Delegates
-// the actual HTTP/auth/JSON-parsing work to readable-api-client, shared with
+// the actual HTTP/auth/JSON-parsing work to booklet-api-client, shared with
 // packages/cli, packages/github-action, and packages/vscode.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -276,11 +276,11 @@ function client(apiKey: string, apiBase: string) {
 /**
  * For 400/409/422 the REST API already returns a specific, human-readable
  * message (e.g. "Invalid slug. Use 3-60 lowercase letters..." or "Slug is
- * already taken.") — ReadableApiError.message carries that verbatim, so
+ * already taken.") — BookletApiError.message carries that verbatim, so
  * surfacing it directly keeps MCP clients (Claude, Cursor, etc.) able to act
  * on the failure instead of seeing a generic "HTTP <status>".
  */
-function mapUpstreamError(err: ReadableApiError): McpErrorShape {
+function mapUpstreamError(err: BookletApiError): McpErrorShape {
   const { status, message } = err;
   if (status === 401) return ERRORS.UNAUTHORIZED();
   if (status === 403) return ERRORS.FORBIDDEN();
@@ -336,9 +336,9 @@ export async function handlePublishPage(
     );
   } catch (e) {
     if (e instanceof McpValidationError) return errorResult(e.message);
-    if (e instanceof ReadableApiError) return errorResult(mapUpstreamError(e).message);
+    if (e instanceof BookletApiError) return errorResult(mapUpstreamError(e).message);
     if (e instanceof DOMException && e.name === "TimeoutError") {
-      return errorResult("Request to Readable API timed out. Try again.");
+      return errorResult("Request to Booklet API timed out. Try again.");
     }
     console.error("publish_page unexpected error:", e);
     return errorResult("An unexpected error occurred");
@@ -365,9 +365,9 @@ export async function handleUpdatePage(
     return successResult(lines.join("\n"));
   } catch (e) {
     if (e instanceof McpValidationError) return errorResult(e.message);
-    if (e instanceof ReadableApiError) return errorResult(mapUpstreamError(e).message);
+    if (e instanceof BookletApiError) return errorResult(mapUpstreamError(e).message);
     if (e instanceof DOMException && e.name === "TimeoutError") {
-      return errorResult("Request to Readable API timed out. Try again.");
+      return errorResult("Request to Booklet API timed out. Try again.");
     }
     console.error("update_page unexpected error:", e);
     return errorResult("An unexpected error occurred");
@@ -401,9 +401,9 @@ export async function handleGetPage(
     return successResult(sections.join("\n"));
   } catch (e) {
     if (e instanceof McpValidationError) return errorResult(e.message);
-    if (e instanceof ReadableApiError) return errorResult(mapUpstreamError(e).message);
+    if (e instanceof BookletApiError) return errorResult(mapUpstreamError(e).message);
     if (e instanceof DOMException && e.name === "TimeoutError") {
-      return errorResult("Request to Readable API timed out. Try again.");
+      return errorResult("Request to Booklet API timed out. Try again.");
     }
     console.error("get_page unexpected error:", e);
     return errorResult("An unexpected error occurred");
@@ -441,12 +441,12 @@ export async function handleListPages(
       ? `\n\n*(Showing ${offset + 1}–${shown} of ${total} total.)*`
       : "";
 
-    return successResult(`Your Readable pages (${pages.length}):\n\n${header}\n${rows}${paginationNote}`);
+    return successResult(`Your Booklet pages (${pages.length}):\n\n${header}\n${rows}${paginationNote}`);
   } catch (e) {
     if (e instanceof McpValidationError) return errorResult(e.message);
-    if (e instanceof ReadableApiError) return errorResult(mapUpstreamError(e).message);
+    if (e instanceof BookletApiError) return errorResult(mapUpstreamError(e).message);
     if (e instanceof DOMException && e.name === "TimeoutError") {
-      return errorResult("Request to Readable API timed out. Try again.");
+      return errorResult("Request to Booklet API timed out. Try again.");
     }
     console.error("list_pages unexpected error:", e);
     return errorResult("An unexpected error occurred");
@@ -465,9 +465,9 @@ export async function handleDeletePage(
     return successResult(`Page ${id} deleted. The URL is no longer accessible.`);
   } catch (e) {
     if (e instanceof McpValidationError) return errorResult(e.message);
-    if (e instanceof ReadableApiError) return errorResult(mapUpstreamError(e).message);
+    if (e instanceof BookletApiError) return errorResult(mapUpstreamError(e).message);
     if (e instanceof DOMException && e.name === "TimeoutError") {
-      return errorResult("Request to Readable API timed out. Try again.");
+      return errorResult("Request to Booklet API timed out. Try again.");
     }
     console.error("delete_page unexpected error:", e);
     return errorResult("An unexpected error occurred");
@@ -491,7 +491,7 @@ export async function handleResourcesList(
   }
 
   const resources = (result.pages ?? []).map((p) => ({
-    uri: `readable://pages/${p.id}`,
+    uri: `booklet://pages/${p.id}`,
     name: p.title ?? p.id,
     description: `${p.visibility} · ${p.view_count} views · ${p.url}`,
     mimeType: "text/markdown",
@@ -505,7 +505,7 @@ export async function handleResourcesRead(
   apiKey: string,
   apiBase: string,
 ): Promise<unknown> {
-  const match = uri.match(/^readable:\/\/pages\/(.+)$/);
+  const match = uri.match(/^booklet:\/\/pages\/(.+)$/);
   if (!match) {
     return {
       contents: [{ uri, mimeType: "text/plain", text: `Error: Invalid resource URI: ${uri}` }],

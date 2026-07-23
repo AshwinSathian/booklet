@@ -14,7 +14,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 function displayName(user: DbUser): string {
-  return user.display_name?.trim() || "Readable user";
+  return user.display_name?.trim() || "Booklet user";
 }
 
 // Deterministic hue from the user id so the same author always gets the

@@ -6,7 +6,7 @@
  * If we let it point anywhere, a crafted sign-in link sends a
  * freshly-authenticated user to an attacker-controlled origin — a
  * phishing-adjacent open redirect that trades on the trust of "I just
- * signed in to Readable".
+ * signed in to Booklet".
  *
  * Rather than trying to block every way a string can *look* like it points
  * off-site (protocol-relative `//evil.com`, backslash `/\evil.com`
@@ -23,7 +23,7 @@
  * `redirect_url` across `src/app`):
  *   - `/app`        — default post sign-in/up redirect (see src/app/sign-in/AuthForm.tsx)
  *   - `/my-pages`   — dashboard, linked post-auth in various places
- *   - `/cli-auth`   — `?port=&state=` return target for `readable login`
+ *   - `/cli-auth`   — `?port=&state=` return target for `booklet login`
  *   - `/t/join`     — `?token=` team-invite return target
  */
 const SAFE_REDIRECT_PREFIXES = ["/app", "/my-pages", "/cli-auth", "/t/join"] as const;

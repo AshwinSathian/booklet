@@ -46,7 +46,7 @@ export function AnalyticsBeacon({ pageId }: { pageId: string }) {
     }
 
     function onCtaClick(e: MouseEvent) {
-      const target = (e.target as Element).closest("[data-readable-cta]");
+      const target = (e.target as Element).closest("[data-booklet-cta]");
       if (target) {
         sendAnalytics({ pageId, event: "cta_click" });
       }

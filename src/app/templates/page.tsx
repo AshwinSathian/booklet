@@ -10,7 +10,7 @@ import Link from "next/link";
 export const metadata: Metadata = buildMetadata({
   title: "Free Document Templates",
   description:
-    "Free templates for incident reports, ADRs, runbooks, meeting notes, changelogs, and more. Open any template in the Readable editor and share a clean page in seconds.",
+    "Free templates for incident reports, ADRs, runbooks, meeting notes, changelogs, and more. Open any template in the Booklet editor and share a clean page in seconds.",
   pathname: "/templates",
 });
 
@@ -20,7 +20,7 @@ export default function TemplatesPage() {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    name: "Free Document Templates — Readable",
+    name: "Free Document Templates — Booklet",
     description:
       "Free templates for incident reports, ADRs, runbooks, meeting notes, changelogs, and more.",
     url: absoluteUrl("/templates"),

@@ -2,15 +2,15 @@ import { homedir } from "os";
 import { join } from "path";
 import { readFile, writeFile, mkdir, chmod } from "fs/promises";
 
-const CONFIG_DIR = join(homedir(), ".readable");
+const CONFIG_DIR = join(homedir(), ".booklet");
 const CONFIG_PATH = join(CONFIG_DIR, "config.json");
 
-// Deliberately NOT readable-api.ashwinsathian.com: `readable login`'s
+// Deliberately NOT booklet-api.ashwinsathian.com: `booklet login`'s
 // browser flow opens `${base}/cli-auth`, a web UI page, not an API route —
 // src/middleware.ts restricts the dedicated API hostname to /api/* only.
-// The CLI needs one base that serves both, and readable.ashwinsathian.com
+// The CLI needs one base that serves both, and booklet.ashwinsathian.com
 // already serves /api/v1/* too, so it stays the default here.
-export const DEFAULT_API_BASE = "https://readable.ashwinsathian.com";
+export const DEFAULT_API_BASE = "https://booklet.ashwinsathian.com";
 
 export type Config = {
   apiKey?: string;
@@ -39,14 +39,14 @@ export async function writeConfig(config: Config): Promise<void> {
 }
 
 export async function getApiKey(): Promise<string | null> {
-  const env = process.env.READABLE_API_KEY;
+  const env = process.env.BOOKLET_API_KEY;
   if (env) return env;
   const config = await readConfig();
   return config.apiKey ?? null;
 }
 
 export async function getApiBase(): Promise<string> {
-  const env = process.env.READABLE_API_URL;
+  const env = process.env.BOOKLET_API_URL;
   if (env) return env.replace(/\/$/, "");
   const config = await readConfig();
   return config.apiBase.replace(/\/$/, "");
