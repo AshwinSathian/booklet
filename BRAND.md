@@ -29,7 +29,7 @@ That means:
 
 - **Type is the product.** The UI exists to exemplify beautiful typography — every layout decision should make the content look better, not the chrome louder.
 - **Chrome recedes.** Surfaces carry content; they don't call attention to themselves. No gradients on structural elements, no decorative borders, no shadow theatre.
-- **Purple = action/active only.** The accent colour is reserved for CTAs, links, active states, and brand moments. Never for decoration, category colour, or background fills.
+- **Ink = action/active only.** The accent colour is reserved for CTAs, links, active states, and brand moments. Never for decoration, category colour, or background fills.
 - **Three surfaces.** The visual hierarchy uses exactly three background levels: base → elevated → glass. Don't invent a fourth.
 - **Motion has purpose.** Entrances orient. Micro-interactions confirm. Nothing moves just because it can.
 - **Dark-first.** Dark mode is the primary brand expression. Always design dark-first, then verify light. Never invert this.
@@ -54,7 +54,29 @@ Booklet is not playful. It is not corporate. It is not aspirational in a Silicon
 
 ---
 
-## Colour System
+## Colour System — "Ink & Paper" (relaunched July 2026)
+
+### Why this changed
+
+The old palette — near-black plus a single bright violet accent — is one of
+the most common looks in AI-assisted and template-driven SaaS design right
+now (alongside Vercel-style monochrome-plus-accent and warm-cream-serif
+editorial). It photographed well, but it wasn't *Booklet's*: nothing about
+it referenced what a booklet actually is, and research into 2025–2026 design
+trends turned up the same conclusion from a different angle — "when every
+SaaS company uses the same blue-or-violet-dominant palette, nobody stands
+out," while ink black paired with warm editorial tones (ochre, burgundy,
+aged paper) was repeatedly flagged as both on-trend *and* under-used in dev
+tooling specifically, versus the crowded violet/blue lane every markdown and
+docs competitor already occupies.
+
+The new palette is literally what it names: **ink** (a deep oxblood/burgundy,
+replacing the generic violet) **on paper** (the near-black base, keeping the
+premium, chrome-recedes dark mode that already worked) **and paper** (the
+warm cream introduced as the previous signature accent, now folded into the
+core palette rather than a one-off detail). It's the one part of the brand
+that's allowed to say "this is a document, bound and handed to someone,"
+everywhere else stays as disciplined as before.
 
 ### Design tokens — Dark mode (primary)
 
@@ -66,21 +88,22 @@ Booklet is not playful. It is not corporate. It is not aspirational in a Silicon
 | `--color-bg-glass` | `rgba(22, 22, 23, 0.72)` | Backdrop-blur floating surfaces |
 | `--color-text-primary` | `#f5f5f7` | Apple primary label |
 | `--color-text-secondary` | `#98989f` | Apple secondary label |
-| `--color-text-muted` | `#636366` | Apple tertiary label |
-| `--color-accent` | `#7c5cfc` | Booklet signature purple — action/active |
-| `--color-accent-hover` | `#6b48f0` | Accent on hover |
-| `--color-accent-soft` | `#a78bfa` | Focus rings, secondary tints |
-| `--color-accent-warm` | `#f59e0b` | Amber — warnings, expiry, time-sensitive |
-| `--color-accent-dim` | `rgba(124, 92, 252, 0.12)` | Icon backgrounds, subtle fills |
+| `--color-text-muted` | `#7f7f82` | Apple tertiary label |
+| `--color-accent` | `#a12f3e` | Booklet ink — action/active. White-label-on-it: 7.02:1 |
+| `--color-accent-hover` | `#8a2230` | Accent on hover. White-label-on-it: 8.93:1 |
+| `--color-accent-soft` | `#e5808a` | Focus rings, secondary tints, text/icons directly on `--color-bg`: 7.79:1 |
+| `--color-accent-warm` | `#d99a3d` | Ochre — warnings, expiry, time-sensitive |
+| `--color-accent-dim` | `rgba(161, 47, 62, 0.14)` | Icon backgrounds, subtle fills |
+| `--color-paper` | `#f4ecdc` | Aged-paper cream — the signature element only, see below |
 | `--color-border-strong` | `rgba(255, 255, 255, 0.16)` | Prominent dividers, active borders |
 | `--color-border-default` | `rgba(255, 255, 255, 0.09)` | Standard card borders, dividers |
 | `--color-border-subtle` | `rgba(255, 255, 255, 0.05)` | Background separators |
 | `--color-fill-1` | `rgba(255, 255, 255, 0.04)` | Table row alternates |
 | `--color-fill-2` | `rgba(255, 255, 255, 0.08)` | Code headers, inset panels |
 | `--color-fill-3` | `rgba(255, 255, 255, 0.13)` | Table head, button hover |
-| `--shadow-soft` | `0 4px 14px rgba(124, 92, 252, 0.35)` | Primary button glow |
+| `--shadow-soft` | `0 4px 14px rgba(161, 47, 62, 0.35)` | Primary button glow |
 | `--shadow-glass` | `0 8px 48px rgba(0, 0, 0, 0.70)` | Hero mock / modal shadow |
-| `--shadow-glow` | `0 0 80px rgba(124, 92, 252, 0.20)` | CTA section ambient glow |
+| `--shadow-glow` | `0 0 80px rgba(161, 47, 62, 0.20)` | CTA section ambient glow |
 | `--shadow-card` | `0 1px 2px rgba(0,0,0,0.60), 0 4px 24px rgba(0,0,0,0.40)` | Card depth |
 
 ### Design tokens — Light mode
@@ -93,21 +116,24 @@ Booklet is not playful. It is not corporate. It is not aspirational in a Silicon
 | `--color-bg-glass` | `rgba(255, 255, 255, 0.90)` | Frosted glass surfaces |
 | `--color-text-primary` | `#1d1d1f` | Apple label |
 | `--color-text-secondary` | `#6e6e73` | Apple secondaryLabel |
-| `--color-text-muted` | `#86868b` | Apple tertiaryLabel |
-| `--color-accent` | `#6741f0` | Booklet purple, light variant |
-| `--color-accent-hover` | `#5530de` | |
-| `--color-accent-soft` | `#8b6cf7` | |
-| `--color-accent-warm` | `#d97706` | |
-| `--color-accent-dim` | `rgba(103, 65, 240, 0.10)` | |
+| `--color-text-muted` | `#66666a` | Apple tertiaryLabel |
+| `--color-accent` | `#ab4252` | Booklet ink, light variant. On white: 5.78:1 |
+| `--color-accent-hover` | `#953649` | |
+| `--color-accent-soft` | `#c25a6b` | |
+| `--color-accent-warm` | `#b5791f` | |
+| `--color-accent-dim` | `rgba(171, 66, 82, 0.10)` | |
+| `--color-paper` | `#f4ecdc` | Same value both modes — it's a print-referencing surface tone, not a UI-mode-relative one |
 | `--color-border-strong` | `rgba(0, 0, 0, 0.14)` | |
 | `--color-border-default` | `rgba(0, 0, 0, 0.09)` | |
 | `--color-border-subtle` | `rgba(0, 0, 0, 0.05)` | |
 
 ### Colour rules
 
-- **Purple is for action and active states only.** Never use it as a category colour, background, or decorative element.
-- **Never use more than one accent colour in a single visual.** Purple and amber cannot appear in the same design unit.
+- **Ink (the burgundy accent) is for action and active states only.** Never use it as a category colour, background, or decorative element — same rule the old purple followed, carried over verbatim.
+- **Never use more than one accent colour in a single visual.** Ink and ochre (`--color-accent-warm`) cannot appear in the same design unit.
+- **`--color-paper` is reserved for the signature element only** (see below) — it is not a general-purpose third accent. Introducing it elsewhere dilutes the one place it currently means something.
 - **Dark mode is the primary brand expression.** All brand assets, screenshots, and marketing visuals default to dark.
+- **Every accent shade here was chosen against a measured WCAG contrast target, not eyeballed** — `--color-accent` and `--color-accent-soft` are deliberately different hexes in dark mode (a single burgundy can't hit both "readable as text directly on black" and "a white button label reads on it" at once); see the per-token contrast ratios above. If either shade is ever adjusted, re-verify both roles rather than assuming a "reasonable-looking" tweak still passes.
 - The `--color-outline` token (legacy alias for `--color-border-default`) is `rgba(255,255,255,0.09)` in dark mode. Do not revert to the old `#1e2840` navy value.
 
 ### Hero gradient (brand moments only)
@@ -116,12 +142,12 @@ Used on: the second line of the hero headline, key CTA moments in marketing.
 
 ```
 direction: 90deg (left → right)
-from:  #7c5cfc
-via:   #a78bfa
-to:    #7c5cfc
+from:  #a12f3e
+via:   #e5808a
+to:    #a12f3e
 ```
 
-CSS: `background: linear-gradient(90deg, #7c5cfc, #a78bfa, #7c5cfc); -webkit-background-clip: text; -webkit-text-fill-color: transparent;`
+CSS: `background: linear-gradient(90deg, #a12f3e, #e5808a, #a12f3e); -webkit-background-clip: text; -webkit-text-fill-color: transparent;`
 
 Use sparingly — one gradient element per page maximum.
 
@@ -175,22 +201,41 @@ Section H2:
 
 ## Logo & Mark
 
-### The mark (locked July 2026)
+### The mark (relaunched July 2026)
 
-The mark is Markdown's own `#` heading syntax, redrawn as a precise geometric glyph — the one piece of syntax every Booklet page starts from. It replaces the earlier generic "R-in-a-square" monogram (a pattern shared by dozens of SaaS logos) with something that can only be Booklet.
+The mark is a page with its top-right corner folded down — a page worth
+flagging and keeping, which is what "a booklet" is: pages someone chose to
+bind and hand to someone else. It replaces the previous mark (Markdown's own
+`#` heading glyph), which was a genuinely well-reasoned choice for a product
+called *Readable* but stopped being a specific enough reference once the
+product's own name became about the physical document rather than the source
+syntax. Research into publishing/document brand marks converged on the same
+point independently: the most legible, most quickly-recognized shape in this
+space is the page/document silhouette itself — the craft is in how it's
+executed, not in avoiding it.
 
 Construction, on a 24×24 grid:
-- Two vertical + two horizontal bars, each `1.9` wide, rounded ends (`rx 0.95`), forming a symmetric `#`
-- One cell — top-right — carries a small solid accent chip: the "cell that rendered." This is the mark's signature detail and must always be present
-- Corner radius of the container tile matches the container's own rounded-square convention (`rx 5.5` at 24px scale; `rx 112` at 512px app-icon scale)
+- The page: a rounded rectangle (`rx 1.5`) with the top-right corner replaced
+  by a straight diagonal cut, folded down into a small triangular flap
+- The flap — the mark's signature detail, must always be present — is filled
+  in `--color-paper` against a page otherwise filled solid white/off-white
+- Two short horizontal bars inside the page (in the tile's own accent colour,
+  at `0.85` and `0.55` opacity) suggest written lines without adding enough
+  detail to blur out at favicon scale
+- Corner radius of the container tile matches the container's own
+  rounded-square convention (`rx 5.5` at 24px scale; `rx 112` at 512px
+  app-icon scale)
+- Verified legible down to 16×16 (real favicon-tab rendering, not just a
+  scaled-down mockup) before locking — the fold and the two text bars both
+  stay distinguishable at that size
 
 Two authorised tile treatments:
-| Treatment | Background | Bars | Accent chip | Use |
+| Treatment | Background | Page | Fold + text bars | Use |
 |---|---|---|---|---|
-| Purple tile | Booklet Purple (`#7c5cfc` dark / `#6741f0` light) | White | White at 55% opacity | In-product nav, header, footer, UI chrome |
-| Black tile | Pure black `#000000` | `#f5f5f7` off-white | Booklet Purple `#7c5cfc` | Favicon, app icon, OS home-screen icon, social avatars, OG/Twitter card lockup |
+| Ink tile | Booklet Ink (`#a12f3e` dark / `#ab4252` light) | White | Paper cream fold; white text bars | In-product nav, header, footer, UI chrome |
+| Black tile | Pure black `#000000` | `#f5f5f7` off-white | Booklet Ink (`#a12f3e`) fold and text bars | Favicon, app icon, OS home-screen icon, social avatars, OG/Twitter card lockup |
 
-Source of truth: `src/components/ui/AppLogo.tsx` (purple tile, in-app) and `src/app/icon/route.ts` / `src/app/apple-icon/route.ts` (black tile, standalone icon contexts) — keep both in sync if the mark changes again.
+Source of truth: `src/components/ui/AppLogo.tsx` (ink tile, in-app) and `src/app/icon/route.ts` / `src/app/apple-icon/route.ts` (black tile, standalone icon contexts) — keep both in sync if the mark changes again. `public/icons/icon-192.png` / `icon-512.png` are static rasters of the black tile for the PWA manifest; regenerate them (a headless-browser screenshot of the SVG at each size) if the mark changes.
 
 ### The wordmark
 
@@ -207,33 +252,32 @@ Source of truth: `src/components/ui/AppLogo.tsx` (purple tile, in-app) and `src/
 ### Usage rules
 
 - Never stretch, squash, recolour, or apply drop shadows to the mark
-- Never place the mark on a coloured background other than pure black, pure white, or the exact Booklet Purple
-- Never omit the accent chip in the top-right cell — an unaccented `#` is not the Booklet mark
+- Never place the mark on a coloured background other than pure black, pure white, or the exact Booklet Ink
+- Never omit the folded corner — a plain, unfolded rectangle is not the Booklet mark
 - Minimum clear space: equal to the mark's border-radius on all four sides
-- Minimum mark size: 16px × 16px (favicon context); 24px × 24px (any visible UI context)
+- Minimum mark size: 16px × 16px (favicon context — verified legible at this exact size); 24px × 24px (any visible UI context)
 
 ---
 
-## Signature Element — the paper tab (added July 2026)
+## Signature Element — the paper fold
 
-One deliberate, bounded visual signature ties the visual system to the
-Booklet name itself, without touching the core dark/purple identity above:
+`--color-paper` appears in exactly two places, and they're the same idea
+told twice: the logo mark's folded corner, and a small warm-paper-coloured
+tab peeking above the "after" card in the before/after Markdown comparison
+(`ProblemMock` in `Landing.tsx`) — like a page you'd flag to find again in a
+bound booklet. Everywhere else in the product, `--color-paper` stays out of
+it; it's reserved for these two moments specifically, not a general-purpose
+third accent.
 
-- **What:** a small warm-paper-coloured tab (`--color-paper`, `#f4ecdc` both
-  modes), rounded top corners, slightly rotated, peeking above the "after"
-  card in the before/after Markdown comparison (`ProblemMock` in
-  `Landing.tsx`) — like a page you'd flag to find again in a bound booklet.
-- **Where:** exactly one place — the marketing page's before/after
-  comparison. Never in app chrome, never as a second UI accent, never
-  repeated elsewhere on the page.
 - **Why paper, and why there:** the name "Booklet" means a small, finished,
-  bound document. The before/after comparison is the moment that concept
-  becomes literally true — raw Markdown becomes something worth flagging and
-  keeping. Everything else on the page stays disciplined so this one detail
-  reads as intentional rather than decorative.
-- **Rule:** `--color-paper` is reserved for this single use. Do not introduce
-  it as a general-purpose accent, category colour, or background fill —
-  that would dilute the one place it currently means something.
+  bound document. The logo's fold and the marketing page's before/after
+  comparison are the two moments that concept becomes literally visible —
+  a page worth flagging, a draft worth keeping. Everything else in the
+  system stays disciplined so these two details read as intentional rather
+  than decorative.
+- **Rule:** do not introduce `--color-paper` as a general-purpose accent,
+  category colour, or background fill — that dilutes the two places it
+  currently means something.
 
 ---
 
@@ -316,7 +360,7 @@ All icons are inline SVG — **no external icon library, no emoji in UI copy**.
 - **Fill:** `fill="none"` for line icons; `fill="currentColor"` for solid icons
 - **Size:** 18px standard feature icon; 14px action icon; 12px inline text icon
 - **Colour:** `currentColor` — inherits from parent, never hardcoded
-- Icon containers use `bg-accent-dim` (purple tint) with `text-accent` for feature card icons
+- Icon containers use `bg-accent-dim` (ink tint) with `text-accent` for feature card icons
 
 ---
 
@@ -501,4 +545,4 @@ Be explicit in all positioning to avoid misleading copy:
 
 ---
 
-*Last updated: July 2026 — Readable → Booklet rename, stakeholder-translation positioning, paper-tab signature element. Contact: Ashwin Sathian — ashwinsathyan19@gmail.com*
+*Last updated: July 2026 — Readable → Booklet rename, stakeholder-translation positioning, and the "Ink & Paper" visual relaunch: a new folded-page mark and a burgundy/ochre/paper palette replacing the old violet, chosen after researching 2025–2026 design trends and verifying WCAG contrast against the old system's own bars. Contact: Ashwin Sathian — ashwinsathyan19@gmail.com*

@@ -38,10 +38,10 @@ test.describe("themes", () => {
     // Guards against the two silently drifting apart — see src/app/globals.css
     // for the source values (DARK / LIGHT root token blocks).
     expect(DEFAULT_THEME.dark["--color-bg"]).toBe("#000000");
-    expect(DEFAULT_THEME.dark["--color-accent"]).toBe("#7255e8");
+    expect(DEFAULT_THEME.dark["--color-accent"]).toBe("#a12f3e");
     expect(DEFAULT_THEME.dark["--color-text-muted"]).toBe("#7f7f82");
     expect(DEFAULT_THEME.light["--color-bg"]).toBe("#ffffff");
-    expect(DEFAULT_THEME.light["--color-accent"]).toBe("#6741f0");
+    expect(DEFAULT_THEME.light["--color-accent"]).toBe("#ab4252");
     expect(DEFAULT_THEME.light["--color-text-muted"]).toBe("#66666a");
   });
 

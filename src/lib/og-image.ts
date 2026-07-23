@@ -15,17 +15,17 @@ function wrapTitle(title: string): [string, string | null] {
 export function buildOgSvg(title?: string): string {
   const defs = `<defs>
     <linearGradient id="heroGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#7c5cfc"/>
-      <stop offset="50%" stop-color="#a78bfa"/>
-      <stop offset="100%" stop-color="#7c5cfc"/>
+      <stop offset="0%" stop-color="#a12f3e"/>
+      <stop offset="50%" stop-color="#e5808a"/>
+      <stop offset="100%" stop-color="#a12f3e"/>
     </linearGradient>
     <radialGradient id="glow1" cx="30%" cy="40%" r="50%">
-      <stop offset="0%" stop-color="#7c5cfc" stop-opacity="0.15"/>
-      <stop offset="100%" stop-color="#7c5cfc" stop-opacity="0"/>
+      <stop offset="0%" stop-color="#a12f3e" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#a12f3e" stop-opacity="0"/>
     </radialGradient>
     <radialGradient id="glow2" cx="70%" cy="60%" r="50%">
-      <stop offset="0%" stop-color="#a78bfa" stop-opacity="0.1"/>
-      <stop offset="100%" stop-color="#a78bfa" stop-opacity="0"/>
+      <stop offset="0%" stop-color="#e5808a" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#e5808a" stop-opacity="0"/>
     </radialGradient>
   </defs>`;
 
@@ -34,14 +34,13 @@ export function buildOgSvg(title?: string): string {
   <rect width="1200" height="630" fill="url(#glow1)"/>
   <rect width="1200" height="630" fill="url(#glow2)"/>`;
 
-  // Mark: the "#" glyph — Markdown's own syntax, rendered as the brand mark.
+  // Mark: a page with a folded corner — a page worth flagging and keeping.
   const logo = `
-  <rect x="80" y="80" width="72" height="72" rx="16" fill="#7c5cfc"/>
-  <rect x="106.55" y="99.05" width="5.7" height="33.9" rx="2.85" fill="white"/>
-  <rect x="119.75" y="99.05" width="5.7" height="33.9" rx="2.85" fill="white"/>
-  <rect x="99.05" y="106.55" width="33.9" height="5.7" rx="2.85" fill="white"/>
-  <rect x="99.05" y="119.75" width="33.9" height="5.7" rx="2.85" fill="white"/>
-  <rect x="126.65" y="100.1" width="5.25" height="5.1" rx="1.5" fill="white" fill-opacity="0.55"/>
+  <rect x="80" y="80" width="72" height="72" rx="16" fill="#a12f3e"/>
+  <path d="M99.50 99.50C99.50 97.01 101.51 95.00 104.00 95.00H125.60L132.50 101.90V132.50C132.50 134.99 130.49 137.00 128.00 137.00H104.00C101.51 137.00 99.50 134.99 99.50 132.50V99.50Z" fill="white"/>
+  <path d="M125.60 95.00L132.50 101.90H128.00C126.67 101.90 125.60 100.83 125.60 99.50V95.00Z" fill="#f4ecdc"/>
+  <rect x="106.10" y="108.80" width="20.70" height="4.50" rx="2.25" fill="#a12f3e" fill-opacity="0.85"/>
+  <rect x="106.10" y="117.80" width="13.80" height="4.50" rx="2.25" fill="#a12f3e" fill-opacity="0.55"/>
   <text x="172" y="130" font-family="system-ui, -apple-system, sans-serif" font-size="36" font-weight="600" fill="#f5f5f7" letter-spacing="-0.5">booklet</text>`;
 
   let content: string;
@@ -56,9 +55,9 @@ export function buildOgSvg(title?: string): string {
   <text x="80" y="490" font-family="system-ui, -apple-system, sans-serif" font-size="24" fill="#636366" letter-spacing="-0.2">Shared via Booklet</text>`;
   } else {
     content = `
-  <text x="80" y="310" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="700" fill="#f5f5f7" letter-spacing="-2">Write in Markdown.</text>
-  <text x="80" y="400" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="700" fill="url(#heroGrad)" letter-spacing="-2">Get a page worth sharing.</text>
-  <text x="80" y="470" font-family="system-ui, -apple-system, sans-serif" font-size="28" fill="#86868b" letter-spacing="-0.3">Paste markdown. Publish instantly. Share a beautiful link.</text>
+  <text x="80" y="310" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="700" fill="#f5f5f7" letter-spacing="-2">Written in Markdown.</text>
+  <text x="80" y="400" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="700" fill="url(#heroGrad)" letter-spacing="-2">Read by everyone else.</text>
+  <text x="80" y="470" font-family="system-ui, -apple-system, sans-serif" font-size="28" fill="#86868b" letter-spacing="-0.3">Incident reports, ADRs, and runbooks — as a page anyone can read.</text>
   <rect x="80" y="512" width="200" height="44" rx="22" fill="#1d1d1f"/>
   <text x="180" y="540" font-family="system-ui, -apple-system, sans-serif" font-size="18" fill="#a1a1a6" text-anchor="middle">Free · No account</text>`;
   }

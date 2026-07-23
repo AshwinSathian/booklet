@@ -63,20 +63,28 @@
      AA's 4.5:1). Now 5.3:1 on bg, 4.5:1 on bg-elevated (the harder case). */
   --color-text-muted:     #7f7f82;        /* Apple tertiary label              */
 
-  /* ── Accent (DARK) ──────────────────────────────────────────────────────── */
-  /* Deepened from #7c5cfc (4.38:1 with white button-label text — failed WCAG
-     AA's 4.5:1). Now 5.0:1, mirroring how the light-mode accent below is
-     already darker than a naive same-lightness translation and passes. */
-  --color-accent:       #7255e8;          /* Readable signature purple         */
-  --color-accent-hover: #6b48f0;
-  --color-accent-soft:  #a78bfa;          /* for focus rings, secondary tints  */
-  --color-accent-warm:  #f59e0b;          /* amber — warnings, expiry          */
-  --color-accent-dim:   rgba(124, 92, 252, 0.12); /* icon backgrounds         */
-  /* Warm paper tone — the one deliberate signature accent tied to the Booklet
-     name itself (a small bound, printed document). Used in exactly one place:
-     the "translated" side of the before/after comparison on the marketing
-     page (ProblemMock) — never in app chrome, never as a second UI accent.
-     See BRAND.md's "Signature Element" section. */
+  /* ── Accent (DARK) — "Ink & Paper" (July 2026 rebrand) ───────────────────── */
+  /* Deep oxblood/burgundy replaces the old signature purple — see BRAND.md's
+     "Colour System" for the research/rationale (an editorial ink-and-paper
+     palette tied to what "Booklet" literally means, versus the generic
+     dark-mode-plus-violet look shared by most dev-tool SaaS brands).
+     Contrast verified against the same bars the old purple held itself to:
+     --color-accent as a button bg with a white label: 7.02:1 (old: 5.02:1).
+     --color-accent-soft as text/icon color directly on --color-bg: 7.79:1
+     (old: 7.72:1) — these are deliberately two different shades, not one
+     color reused, because a single hex can't hit both roles' contrast needs
+     at once (confirmed by checking the old purple's own accent vs.
+     accent-soft split before choosing these). */
+  --color-accent:       #a12f3e;          /* Booklet ink — action/active       */
+  --color-accent-hover: #8a2230;
+  --color-accent-soft:  #e5808a;          /* for focus rings, secondary tints  */
+  --color-accent-warm:  #d99a3d;          /* ochre — warnings, expiry          */
+  --color-accent-dim:   rgba(161, 47, 62, 0.14); /* icon backgrounds          */
+  /* Warm paper tone — aged-paper cream, the other half of "Ink & Paper".
+     Used in exactly one place: the "translated" side of the before/after
+     comparison on the marketing page (ProblemMock), and the fold detail on
+     the logo mark — never as general-purpose app chrome. See BRAND.md's
+     "Signature Element" section. */
   --color-paper:        #f4ecdc;
 
   /* ── Borders — pre-computed, never composed in component classes (DARK) ── */
@@ -94,9 +102,9 @@
   --color-outline-soft: rgba(255, 255, 255, 0.05);
 
   /* ── Shadows (DARK) ─────────────────────────────────────────────────────── */
-  --shadow-soft:  0 4px 14px rgba(124, 92, 252, 0.35);  /* primary btn glow   */
+  --shadow-soft:  0 4px 14px rgba(161, 47, 62, 0.35);   /* primary btn glow   */
   --shadow-glass: 0 8px 48px rgba(0, 0, 0, 0.70);       /* hero mock shadow   */
-  --shadow-glow:  0 0 80px rgba(124, 92, 252, 0.20);    /* CTA section glow   */
+  --shadow-glow:  0 0 80px rgba(161, 47, 62, 0.20);     /* CTA section glow   */
   --shadow-card:  0 1px 2px rgba(0, 0, 0, 0.60), 0 4px 24px rgba(0, 0, 0, 0.40);
 
   /* ── Scrollbar (DARK) ───────────────────────────────────────────────────── */
@@ -122,12 +130,12 @@ html.light {
      WCAG AA's 4.5:1). Now 5.7:1 on bg, 4.7:1 on bg-elevated (the harder case). */
   --color-text-muted:     #66666a;        /* Apple tertiaryLabel               */
 
-  /* ── Accent (LIGHT) ─────────────────────────────────────────────────────── */
-  --color-accent:       #6741f0;
-  --color-accent-hover: #5530de;
-  --color-accent-soft:  #8b6cf7;
-  --color-accent-warm:  #d97706;
-  --color-accent-dim:   rgba(103, 65, 240, 0.10);
+  /* ── Accent (LIGHT) — "Ink & Paper" ─────────────────────────────────────── */
+  --color-accent:       #ab4252;
+  --color-accent-hover: #953649;
+  --color-accent-soft:  #c25a6b;
+  --color-accent-warm:  #b5791f;
+  --color-accent-dim:   rgba(171, 66, 82, 0.10);
   --color-paper:        #f4ecdc;
 
   /* ── Borders (LIGHT) ────────────────────────────────────────────────────── */
@@ -145,9 +153,9 @@ html.light {
   --color-outline-soft: rgba(0, 0, 0, 0.05);
 
   /* ── Shadows (LIGHT) ────────────────────────────────────────────────────── */
-  --shadow-soft:  0 4px 14px rgba(103, 65, 240, 0.28);
+  --shadow-soft:  0 4px 14px rgba(171, 66, 82, 0.28);
   --shadow-glass: 0 4px 24px rgba(0, 0, 0, 0.10);
-  --shadow-glow:  0 0 60px rgba(103, 65, 240, 0.14);
+  --shadow-glow:  0 0 60px rgba(171, 66, 82, 0.14);
   --shadow-card:  0 1px 2px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.06);
 
   /* ── Scrollbar (LIGHT) ──────────────────────────────────────────────────── */
@@ -289,7 +297,7 @@ button {
 }
 
 ::selection {
-  background: rgba(124, 92, 252, 0.28);
+  background: rgba(161, 47, 62, 0.28);
   color: inherit;
 }
 
