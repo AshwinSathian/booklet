@@ -83,3 +83,6 @@ MARKET_PLAN.md
 
 # vsce package output — built by CI/publish, not committed
 packages/vscode/*.vsix
+
+# Agent-created git worktrees (scratch, never committed)
+.worktrees/
