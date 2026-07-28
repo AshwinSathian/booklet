@@ -1,11 +1,11 @@
 import { SiteFooter } from "@/components/marketing/SiteFooter";
 import { SiteHeader } from "@/components/marketing/SiteHeader";
+import { TemplatePreviewCard } from "@/components/marketing/TemplatePreviewCard";
 import { Button } from "@/components/ui/Button";
 import { APP_NAME, ROUTES } from "@/lib/constants";
 import { absoluteUrl, buildMetadata } from "@/lib/seo";
-import { TEMPLATES } from "@/lib/templates";
+import { TEMPLATES, type Template } from "@/lib/templates";
 import type { Metadata } from "next";
-import Link from "next/link";
 
 export const metadata: Metadata = buildMetadata({
   title: "Free Document Templates",
@@ -15,7 +15,9 @@ export const metadata: Metadata = buildMetadata({
 });
 
 export default function TemplatesPage() {
-  const templatesWithSlug = TEMPLATES.filter((t) => t.slug);
+  const templatesWithSlug = TEMPLATES.filter(
+    (t): t is Template & { slug: string } => Boolean(t.slug)
+  );
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -42,7 +44,7 @@ export default function TemplatesPage() {
       />
       <SiteHeader ctaLabel="Start writing" ctaTrackLocation="templates_topbar" />
 
-      <main className="mx-auto w-full max-w-3xl px-4 py-12">
+      <main className="mx-auto w-full max-w-4xl px-4 py-12">
         {/* Hero */}
         <div className="mb-10 text-center">
           <h1 className="text-[clamp(24px,4vw,32px)] text-text-primary">
@@ -54,33 +56,15 @@ export default function TemplatesPage() {
         </div>
 
         {/* Template grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {templatesWithSlug.map((template) => (
-            <Link
+            <TemplatePreviewCard
               key={template.slug}
-              href={`/templates/${template.slug}`}
-              className="group flex flex-col justify-between rounded-xl border border-border-subtle p-5 hover:border-accent-soft/40 hover:bg-fill-1 transition"
-            >
-              <div>
-                {template.category && (
-                  <span className="mb-2 inline-block text-2xs font-medium uppercase tracking-wider text-text-muted">
-                    {template.category}
-                  </span>
-                )}
-                <p className="text-sm font-semibold text-text-primary group-hover:text-accent transition">
-                  {template.name}
-                </p>
-                <p className="mt-1 text-xs text-text-muted leading-relaxed">
-                  {template.description}
-                </p>
-              </div>
-              <div className="mt-4 flex items-center justify-between">
-                <span className="text-2xs text-text-muted">Free · No signup</span>
-                <span className="text-xs text-accent opacity-0 group-hover:opacity-100 transition">
-                  Use template →
-                </span>
-              </div>
-            </Link>
+              slug={template.slug}
+              name={template.name}
+              description={template.description}
+              content={template.content}
+            />
           ))}
         </div>
 
