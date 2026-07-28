@@ -42,7 +42,27 @@ export function RevealHero() {
   // one drives the animation is picked afterward.
   const revealedProgress = useMotionValue(1);
   const progress = reduce ? revealedProgress : scrollYProgress;
-  const syntaxOpacity = useTransform(progress, [0, 0.6], [1, 0]);
+  // A useTransform call given a literal *array* input/output range (like
+  // [0, 0.6] -> [1, 0]) gets hardware-accelerated by framer-motion for
+  // "opacity" specifically (see motion-dom's acceleratedValues — opacity/
+  // clipPath/filter/transform): it binds a native WAAPI Animation straight
+  // to the DOM element in motion-dom/render/VisualElement.mjs's
+  // bindToMotionValue, bypassing the normal per-frame JS update pipeline
+  // entirely. In this component that accelerated path does not reproduce
+  // useScroll's progress correctly for this sticky/scroll-linked setup —
+  // verified live: computed opacity on the four syntax spans stayed at 1
+  // through roughly the first third of the scroll range, then swept down
+  // to ~0 and immediately back up to 1 by the very end, instead of the
+  // intended monotonic 1->0 fade over progress 0->0.6 — while sibling
+  // values driven by the same `progress` (fontWeight, the color-mix
+  // template) tracked scroll correctly throughout, because font-weight/
+  // color/background-color are never eligible for this accelerated path
+  // and always go through the reliable per-frame JS route. Using the
+  // *function* overload of useTransform (same pattern `mixPct` below
+  // already uses) is categorically excluded from the accelerated path
+  // (see use-transform.mjs's `typeof inputRangeOrTransformer !== "function"`
+  // guard), which is what makes it — and this — reliable.
+  const syntaxOpacity = useTransform(progress, (p) => Math.min(1, Math.max(0, 1 - p / 0.6)));
   const fontWeight = useTransform(progress, [0, 1], [400, 500]);
 
   // framer-motion's built-in color interpolation (useTransform between two
