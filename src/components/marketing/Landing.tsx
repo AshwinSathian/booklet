@@ -764,7 +764,8 @@ export function Landing() {
               variants={reduce ? undefined : fadeUp}
               className="mt-5 max-w-4xl text-balance text-[clamp(38px,8vw,80px)] font-extrabold leading-[1.02] tracking-[-0.04em]"
             >
-              Written in Markdown.{" "}
+              Written in Markdown.
+              <br />
               <span className="bg-linear-to-r from-accent via-accent-soft to-accent bg-clip-text text-transparent">
                 Read by everyone else.
               </span>
@@ -923,17 +924,21 @@ export function Landing() {
         title="Write. Preview. Publish. Share."
         subtitle="Four steps that fit inside your existing workflow. No new tool to learn — just a cleaner way to share what you already wrote."
       >
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {steps.map((s) => (
-            <motion.div
-              key={s.n}
-              variants={reduce ? undefined : fadeUp}
-              className="flex flex-col gap-4 rounded-2xl border border-border-default bg-bg-elevated p-6 shadow-card transition hover:border-border-strong hover:bg-bg-soft"
-            >
-              <div className="font-mono text-sm font-semibold text-accent">{s.n}</div>
-              <div className="text-[15px] font-semibold tracking-tight">{s.title}</div>
-              <div className="text-[15px] leading-[1.72] text-text-secondary">{s.desc}</div>
-            </motion.div>
+        <div className="flex flex-col gap-8 sm:flex-row sm:gap-0">
+          {steps.map((step, i) => (
+            <div key={step.n} className="relative flex-1 sm:px-6 sm:first:pl-0 sm:last:pr-0">
+              {i > 0 && (
+                <div
+                  aria-hidden
+                  className="absolute top-5 left-0 hidden h-px w-6 -translate-x-full bg-border-strong sm:block"
+                />
+              )}
+              <div className="flex h-10 w-10 items-center justify-center rounded-full border border-border-strong text-sm font-semibold text-accent">
+                {i + 1}
+              </div>
+              <div className="mt-4 text-[15px] font-semibold tracking-tight">{step.title}</div>
+              <div className="mt-2 text-[15px] leading-[1.72] text-text-secondary">{step.desc}</div>
+            </div>
           ))}
         </div>
       </Section>
