@@ -1,5 +1,5 @@
 import { BlockRenderer } from "@/components/blocks/BlockRenderer";
-import { AppLogo } from "@/components/ui/AppLogo";
+import { AppLogo, BookletMark } from "@/components/ui/AppLogo";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import type { Block } from "@/lib/blocks";
 import { APP_NAME, ROUTES } from "@/lib/constants";
@@ -268,16 +268,7 @@ export default async function SharePage({
               sets it to true anymore, so this footer must not gate on it. */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden className="shrink-0">
-                <rect width="24" height="24" rx="5.5" fill="var(--color-accent)" />
-                <path
-                  d="M 6.5 5 L 6.5 19 M 6.5 5 L 13 5 Q 17 5 17 9 Q 17 13 13 13 L 6.5 13 M 11.5 13 L 17 19"
-                  stroke="white"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+              <BookletMark size={20} />
               <div>
                 <div className="text-xs font-semibold text-text-primary">{APP_NAME}</div>
                 <div className="text-2xs text-text-muted">

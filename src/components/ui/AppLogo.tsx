@@ -3,7 +3,7 @@
 import { APP_NAME, ROUTES } from "@/lib/constants";
 import Link from "next/link";
 
-function BookletMark({ size = 28 }: { size?: number }) {
+export function BookletMark({ size = 28 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
       <rect width="24" height="24" rx="5.5" fill="var(--color-accent)" />

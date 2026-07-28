@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { BookletMark } from "@/components/ui/AppLogo";
 
 // AppLoader is a pure branding moment, not a real loading indicator: the
 // real editor (AppPageContent) mounts as its sibling in AppClient, already
@@ -94,22 +95,7 @@ export function AppLoader() {
               opacity: 0.35,
             }}
           />
-          <svg
-            width="56"
-            height="56"
-            viewBox="0 0 24 24"
-            fill="none"
-            className="relative"
-          >
-            <rect width="24" height="24" rx="5.5" fill="var(--color-accent)" />
-            <path
-              d="M 6.5 5 L 6.5 19 M 6.5 5 L 13 5 Q 17 5 17 9 Q 17 13 13 13 L 6.5 13 M 11.5 13 L 17 19"
-              stroke="white"
-              strokeWidth="2.2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+          <BookletMark size={56} />
         </div>
 
         {/* Name */}
