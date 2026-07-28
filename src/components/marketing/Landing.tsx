@@ -1,5 +1,6 @@
 "use client";
 
+import { RevealHero } from "@/components/marketing/RevealHero";
 import { SiteFooter } from "@/components/marketing/SiteFooter";
 import { SiteHeader } from "@/components/marketing/SiteHeader";
 import { trackEvent } from "@/lib/analytics";
@@ -296,140 +297,6 @@ function FaqItem({
             {children}
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Hero product mock — split-pane editor showing MD → rendered page
-// ─────────────────────────────────────────────────────────────────────────────
-
-function HeroMock() {
-  return (
-    <div className="overflow-hidden rounded-2xl border border-border-default bg-bg-elevated shadow-glass">
-      {/* Window chrome */}
-      <div className="flex items-center gap-2 border-b border-border-default bg-bg-soft px-4 py-3">
-        {/* macOS traffic-light dots — intentional literal colours, not design tokens */}
-        <div className="flex gap-1.5">
-          <span className="h-3 w-3 rounded-full bg-[#ff5f57]" />
-          <span className="h-3 w-3 rounded-full bg-[#febc2e]" />
-          <span className="h-3 w-3 rounded-full bg-[#28c840]" />
-        </div>
-        <div className="flex flex-1 min-w-0 justify-center">
-          <div className="min-w-0 truncate rounded-md bg-bg-glass px-8 py-1 text-xs text-text-muted font-mono backdrop-blur">
-            booklet.ashwinsathian.com
-          </div>
-        </div>
-        {/* shrink-0: on narrow viewports the flex row was compressing this
-            below its content's width (default flex-shrink:1), clipping
-            "Publish" down to "Pub." against the parent's overflow-hidden.
-            The URL bar above absorbs the shrinkage instead — it degrades
-            gracefully via truncate, unlike a half-cut-off button label. */}
-        <div className="flex shrink-0 items-center gap-1.5 rounded-full bg-accent px-3.5 py-1 text-2xs font-semibold text-white">
-          Publish
-          <svg width="9" height="9" fill="none" viewBox="0 0 9 9" aria-hidden>
-            <path
-              d="M1.5 7.5 7.5 1.5M7.5 1.5H3M7.5 1.5V6"
-              stroke="currentColor"
-              strokeWidth="1.4"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </div>
-      </div>
-
-      {/* Editor / Preview split — stacked on mobile, side-by-side on sm+ */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 sm:divide-x divide-border-default">
-        {/* Markdown editor */}
-        <div className="p-4 sm:p-5">
-          <div className="mb-3 text-[9px] font-semibold uppercase tracking-[0.18em] text-text-muted">
-            Markdown
-          </div>
-          <pre className="overflow-hidden whitespace-pre-wrap font-mono text-[11px] leading-[1.7] text-text-secondary">
-{`# Incident Report
-
-**Severity:** P1
-**Status:** Resolved
-
-## Timeline
-
-- 14:32 Alert triggered
-- 14:45 Root cause found
-- 15:01 Fix deployed
-
-## Root Cause
-
-DB pool exhausted after
-Tuesday's deploy.
-
-\`\`\`yaml
-pool_size: 5 # was 50
-\`\`\``}
-          </pre>
-        </div>
-
-        {/* Rendered preview — divider on mobile is a border-top */}
-        <div className="bg-bg p-4 sm:p-5 border-t border-border-default sm:border-t-0">
-          <div className="mb-3 text-[9px] font-semibold uppercase tracking-[0.18em] text-text-muted">
-            Preview
-          </div>
-
-          <div className="text-[13px] font-bold tracking-tight text-text-primary">
-            Incident Report
-          </div>
-
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            <span className="inline-flex items-center gap-1 rounded-full border border-red-500/25 bg-red-500/10 px-2 py-0.5 text-[9px] font-semibold text-red-400">
-              P1
-            </span>
-            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2 py-0.5 text-[9px] font-semibold text-emerald-400">
-              Resolved
-            </span>
-          </div>
-
-          <div className="mt-3 text-[11px] font-semibold text-text-primary">
-            Timeline
-          </div>
-          <ul className="mt-1.5 space-y-1">
-            {["14:32 — Alert triggered", "14:45 — Root cause found", "15:01 — Fix deployed"].map(
-              (t) => (
-                <li key={t} className="flex items-start gap-2 text-2xs text-text-secondary">
-                  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
-                  {t}
-                </li>
-              ),
-            )}
-          </ul>
-
-          <div className="mt-3 text-[11px] font-semibold text-text-primary">
-            Root Cause
-          </div>
-          <div className="mt-1 text-2xs leading-[1.65] text-text-secondary">
-            DB pool exhausted after Tuesday&apos;s deploy.
-          </div>
-
-          <div className="mt-2.5 rounded-lg border border-border-default bg-bg-elevated px-3 py-2 font-mono text-2xs text-text-muted">
-            <span className="text-accent-soft">pool_size</span>
-            {": 5  "}
-            <span className="text-text-muted/60"># was 50</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Published URL bar */}
-      <div className="flex items-center gap-2.5 border-t border-border-default bg-bg-soft px-4 py-2.5">
-        <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-400" />
-        <span className="flex-1 truncate font-mono text-2xs text-text-muted">
-          booklet.ashwinsathian.com/p/Ab3k91QxZp
-        </span>
-        <button
-          type="button"
-          className="shrink-0 text-2xs font-semibold text-accent transition hover:text-accent-soft"
-        >
-          Copy link
-        </button>
       </div>
     </div>
   );
@@ -862,7 +729,14 @@ export function Landing() {
       {/* ──────────────────────────────────────────────────────────────────── */}
       {/* Hero                                                                  */}
       {/* ──────────────────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden py-16 sm:py-28 lg:py-40">
+      {/* No section-level overflow-hidden: it would establish this <section>
+          as the nearest ancestor "scroll container" for CSS position:sticky
+          descendants (RevealHero's sticky reveal panel below) — since this
+          section itself never scrolls, that silently breaks the sticky pin
+          entirely. The ambient glow blobs below are clipped independently by
+          their own inset-0 overflow-hidden wrapper, so nothing here relies on
+          clipping at the section level. */}
+      <section className="relative py-16 sm:py-28 lg:py-40">
         {/* Background ambient glow */}
         <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
           <div className="absolute -top-48 left-1/2 h-150 w-150 -translate-x-1/2 rounded-full bg-accent opacity-[0.07] blur-[100px]" />
@@ -962,7 +836,7 @@ export function Landing() {
             transition={{ duration: 0.9, delay: 0.28, ease }}
             className="relative mt-16 z-10"
           >
-            <HeroMock />
+            <RevealHero />
           </motion.div>
         </Container>
       </section>
