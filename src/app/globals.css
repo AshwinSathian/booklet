@@ -464,6 +464,25 @@ a, button, [role="button"], input, select, textarea {
   background: var(--scrollbar-thumb-hover);
 }
 
+/* Hides an element's native scrollbar while preserving scroll behaviour
+   (wheel/trackpad/keyboard scrolling all keep working — only the visual
+   scrollbar box disappears). Used by the editor's textarea (PasteInput.tsx):
+   a visible scrollbar reserves a gutter that shrinks the textarea's
+   clientWidth relative to SyntaxOverlay's same-padding sibling div (which
+   never has a scrollbar of its own — its scroll position is driven by a
+   synced transform, not native overflow). That width mismatch makes the
+   two elements word-wrap long lines differently once a document is tall
+   enough to scroll, compounding into visible vertical drift line by line.
+   Hiding the scrollbar keeps both elements wrapping against the identical
+   width at all times, regardless of scroll state. */
+.hide-scrollbar {
+  scrollbar-width: none;     /* Firefox */
+  -ms-overflow-style: none;  /* Legacy Edge/IE */
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;             /* Chrome/Safari/Chromium Edge */
+}
+
 /* ── Syntax highlight tokens (highlight.js, dark) ───────────────────────── */
 :root {
   --hljs-fg:       #cdd6f4;

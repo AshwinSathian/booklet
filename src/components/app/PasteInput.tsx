@@ -896,7 +896,14 @@ export function PasteInput({
             spellCheck={false}
             className={[
               "relative z-10 h-full w-full min-h-0 min-w-0",
-              "resize-none overflow-y-auto",
+              // overflow-y-auto's scrollbar would otherwise reserve a
+              // gutter that shrinks this element's content-box width
+              // relative to SyntaxOverlay's (which never scrolls natively)
+              // — wrapping the same text at two different widths once a
+              // document is tall enough to scroll. hide-scrollbar (see
+              // globals.css) keeps the two elements' wrap width identical
+              // at all times without losing scroll functionality.
+              "resize-none overflow-y-auto hide-scrollbar",
               // Native text is fully transparent — SyntaxOverlay behind this
               // element renders everything the user actually sees (both
               // prose and dimmed syntax), since a plain textarea can't
