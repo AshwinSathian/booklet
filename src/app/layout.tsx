@@ -2,7 +2,7 @@ import { Analytics } from "@/components/analytics/Analytics";
 import { APP_NAME } from "@/lib/constants";
 import { SessionProvider } from "@/components/auth/SessionProvider";
 import type { Metadata, Viewport } from "next";
-import { Inter, Source_Serif_4 } from "next/font/google";
+import { Fraunces, Inter, Source_Serif_4 } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { Suspense } from "react";
 import "./globals.css";
@@ -24,6 +24,25 @@ const sourceSerif4 = Source_Serif_4({
   weight: ["400", "500", "600", "700"],
   style: ["normal", "italic"],
   variable: "--font-source-serif-4",
+  display: "swap",
+});
+
+// Editorial display typeface — hero/section headlines and (via a lower
+// optical-size setting) published-page body copy, see --font-display in
+// globals.css and "The Reveal" in
+// docs/superpowers/specs/2026-07-28-visual-elevation-design.md. Fraunces'
+// opsz/SOFT/WONK variable axes are exposed via next/font's `axes` option.
+// NOTE: `weight` must be "variable" (not a static array) when `axes` is set —
+// next/font only exposes variable-font axes on the variable-weight build; a
+// static weight array + axes throws "Axes can only be defined for variable
+// fonts when the weight property is nonexistent or set to `variable`" at
+// build/dev time.
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  weight: "variable",
+  style: ["normal", "italic"],
+  axes: ["opsz", "SOFT", "WONK"],
+  variable: "--font-fraunces",
   display: "swap",
 });
 
@@ -107,7 +126,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: "#000000" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0c" },
     { media: "(prefers-color-scheme: light)", color: "#ffffff" },
   ],
   width: "device-width",
@@ -121,7 +140,7 @@ export default function RootLayout({
 }) {
   return (
     <SessionProvider>
-      <html lang="en" suppressHydrationWarning className={`${inter.variable} ${sourceSerif4.variable}`}>
+      <html lang="en" suppressHydrationWarning className={`${inter.variable} ${sourceSerif4.variable} ${fraunces.variable}`}>
         <body>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
             <Suspense fallback={null}>

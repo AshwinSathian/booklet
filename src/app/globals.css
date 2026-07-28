@@ -27,6 +27,7 @@
      — deliberately separate from --font-body (app/editor chrome stays Inter).
      See DocSettings.typeface in src/lib/blocks.ts for the per-document toggle. */
   --font-reading: var(--font-source-serif-4), Georgia, "Times New Roman", serif;
+  --font-display: var(--font-fraunces), Georgia, "Times New Roman", serif;
 
   /* ── Central type scale — edit here to restyle the entire app ───────────
      Weight ladder mirrors ashwin-portfolio prose system.
@@ -51,7 +52,7 @@
   --type-leading-body:   1.75;
 
   /* ── Surfaces (DARK) ────────────────────────────────────────────────────── */
-  --color-bg:           #000000;          /* base — Apple-premium pure black   */
+  --color-bg:           #0a0a0c;          /* base — warm-tinted near-black     */
   --color-bg-soft:      #0d0d0d;          /* subtle step up — nav, input bg    */
   --color-bg-elevated:  #161617;          /* cards, dialogs, panels            */
   --color-bg-glass:     rgba(22, 22, 23, 0.72); /* backdrop-blur surfaces     */
@@ -75,9 +76,9 @@
      color reused, because a single hex can't hit both roles' contrast needs
      at once (confirmed by checking the old purple's own accent vs.
      accent-soft split before choosing these). */
-  --color-accent:       #a12f3e;          /* Booklet ink — action/active       */
-  --color-accent-hover: #8a2230;
-  --color-accent-soft:  #e5808a;          /* for focus rings, secondary tints  */
+  --color-accent:       #c2334a;          /* Booklet ink — action/active       */
+  --color-accent-hover: #a82940;
+  --color-accent-soft:  #ec8a95;          /* for focus rings, secondary tints  */
   --color-accent-warm:  #d99a3d;          /* ochre — warnings, expiry          */
   --color-accent-dim:   rgba(161, 47, 62, 0.14); /* icon backgrounds          */
   /* Warm paper tone — aged-paper cream, the other half of "Ink & Paper".
@@ -86,6 +87,12 @@
      the logo mark — never as general-purpose app chrome. See BRAND.md's
      "Signature Element" section. */
   --color-paper:        #f4ecdc;
+  /* Paper surface tones — promoted from a two-place accent (old BRAND.md
+     "Signature Element" rule) to the dominant read-mode surface. See "The
+     Reveal" in docs/superpowers/specs/2026-07-28-visual-elevation-design.md. */
+  --color-paper-dim:           #e9dfc8;  /* secondary paper surface, hover states */
+  --color-paper-ink:           #1d1a14;  /* primary text ON a paper surface */
+  --color-paper-ink-secondary: #5c5546;  /* secondary text ON a paper surface */
 
   /* ── Borders — pre-computed, never composed in component classes (DARK) ── */
   --color-border-strong:  rgba(255, 255, 255, 0.16);
@@ -106,6 +113,7 @@
   --shadow-glass: 0 8px 48px rgba(0, 0, 0, 0.70);       /* hero mock shadow   */
   --shadow-glow:  0 0 80px rgba(161, 47, 62, 0.20);     /* CTA section glow   */
   --shadow-card:  0 1px 2px rgba(0, 0, 0, 0.60), 0 4px 24px rgba(0, 0, 0, 0.40);
+  --shadow-print: 0 2px 0 0 rgba(0, 0, 0, 0.9);   /* hard offset, no blur — printed-card feel */
 
   /* ── Scrollbar (DARK) ───────────────────────────────────────────────────── */
   --scrollbar-thumb:       rgba(255, 255, 255, 0.10);
@@ -131,12 +139,15 @@ html.light {
   --color-text-muted:     #66666a;        /* Apple tertiaryLabel               */
 
   /* ── Accent (LIGHT) — "Ink & Paper" ─────────────────────────────────────── */
-  --color-accent:       #ab4252;
-  --color-accent-hover: #953649;
-  --color-accent-soft:  #c25a6b;
+  --color-accent:       #c23c50;
+  --color-accent-hover: #a52f42;
+  --color-accent-soft:  #d16577;
   --color-accent-warm:  #b5791f;
   --color-accent-dim:   rgba(171, 66, 82, 0.10);
   --color-paper:        #f4ecdc;
+  --color-paper-dim:           #e9dfc8;
+  --color-paper-ink:           #1d1a14;
+  --color-paper-ink-secondary: #5c5546;
 
   /* ── Borders (LIGHT) ────────────────────────────────────────────────────── */
   --color-border-strong:  rgba(0, 0, 0, 0.14);
@@ -157,6 +168,7 @@ html.light {
   --shadow-glass: 0 4px 24px rgba(0, 0, 0, 0.10);
   --shadow-glow:  0 0 60px rgba(171, 66, 82, 0.14);
   --shadow-card:  0 1px 2px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.06);
+  --shadow-print: 0 2px 0 0 rgba(0, 0, 0, 0.12);
 
   /* ── Scrollbar (LIGHT) ──────────────────────────────────────────────────── */
   --scrollbar-thumb:       rgba(0, 0, 0, 0.14);
@@ -188,6 +200,9 @@ html.dark {
   --color-accent-warm:  var(--color-accent-warm);
   --color-accent-dim:   var(--color-accent-dim);
   --color-paper:        var(--color-paper);
+  --color-paper-dim:           var(--color-paper-dim);
+  --color-paper-ink:           var(--color-paper-ink);
+  --color-paper-ink-secondary: var(--color-paper-ink-secondary);
 
   /* Semantic borders */
   --color-border-strong:  var(--color-border-strong);
@@ -208,11 +223,13 @@ html.dark {
   --shadow-glass: var(--shadow-glass);
   --shadow-glow:  var(--shadow-glow);
   --shadow-card:  var(--shadow-card);
+  --shadow-print: var(--shadow-print);
 
   /* Fonts */
   --font-body: var(--font-body);
   --font-mono: var(--font-mono);
   --font-reading: var(--font-reading);
+  --font-display: var(--font-display);
 
   /* ── Type scale ──────────────────────────────────────────────────────────
      Dense-but-coherent small-size scale. Tailwind defaults for base/lg/xl/2xl/3xl remain.
@@ -238,6 +255,17 @@ html.dark {
   --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);   /* spring out             */
   --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);    /* layout changes         */
   --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1); /* interactive confirm  */
+}
+
+/* Fraunces optical-size helpers — see --font-display above. Hero/hero-scale
+   display type wants the highest-contrast, most characterful optical
+   master (144); body-scale reading wants the low-contrast text master
+   (20) so it doesn't feel overwrought at paragraph size. */
+.font-display-hero {
+  font-variation-settings: "opsz" 144;
+}
+.font-display-body {
+  font-variation-settings: "opsz" 20;
 }
 
 html,
