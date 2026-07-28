@@ -1,6 +1,7 @@
 "use client";
 
 import { Icon } from "@/components/ui/Icon";
+import { SyntaxOverlay } from "@/components/app/SyntaxOverlay";
 import { listDrafts, type DraftMeta } from "@/lib/drafts";
 import { getCaretCoordinates } from "@/lib/ui/caret";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -666,6 +667,11 @@ export function PasteInput({
   onInsertSample?: () => void;
 }) {
   const ref = useRef<HTMLTextAreaElement | null>(null);
+  // The syntax overlay sits behind the (now text-transparent) textarea and
+  // must scroll in lockstep with it. Synced imperatively via this ref on
+  // the textarea's onScroll rather than React state, so a fast scroll
+  // doesn't re-render the whole overlay's token tree on every tick.
+  const overlayContentRef = useRef<HTMLDivElement | null>(null);
   const [showFindReplace, setShowFindReplace] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [wikilinkTrigger, setWikilinkTrigger] = useState<WikilinkTrigger | null>(null);
@@ -790,7 +796,12 @@ export function PasteInput({
         )}
 
         {/* Textarea */}
-        <div className="flex-1 min-h-0 overflow-hidden w-full">
+        <div className="relative flex-1 min-h-0 overflow-hidden w-full">
+          {/* Presentational-only: dims Markdown syntax characters relative
+              to prose. Positioned exactly behind the textarea (identical
+              font/line-height/padding) — see SyntaxOverlay for why a
+              synced overlay div, not partial in-textarea coloring. */}
+          <SyntaxOverlay ref={overlayContentRef} value={value} />
           <textarea
             ref={ref}
             value={value}
@@ -799,6 +810,10 @@ export function PasteInput({
               updateWikilinkTrigger(e.currentTarget, e.target.value);
             }}
             onClick={(e) => updateWikilinkTrigger(e.currentTarget, e.currentTarget.value)}
+            onScroll={(e) => {
+              const content = overlayContentRef.current;
+              if (content) content.style.transform = `translateY(${-e.currentTarget.scrollTop}px)`;
+            }}
             onKeyUp={(e) => {
               const verticalKeys = ["ArrowUp", "ArrowDown"];
               // Arrow up/down are consumed below for popup navigation while
@@ -880,12 +895,16 @@ export function PasteInput({
             placeholder="Write or paste Markdown…"
             spellCheck={false}
             className={[
-              "h-full w-full min-h-0 min-w-0",
+              "relative z-10 h-full w-full min-h-0 min-w-0",
               "resize-none overflow-y-auto",
-              "bg-bg text-text-primary",
+              // Native text is fully transparent — SyntaxOverlay behind this
+              // element renders everything the user actually sees (both
+              // prose and dimmed syntax), since a plain textarea can't
+              // color part of its own text. The placeholder still needs to
+              // be visible when the textarea is empty.
+              "bg-transparent text-transparent placeholder:text-text-muted/40",
               "font-mono text-sm leading-[1.65]",
               "px-5 py-4",
-              "placeholder:text-text-muted/40",
               "focus:outline-none",
               "caret-accent",
             ].join(" ")}

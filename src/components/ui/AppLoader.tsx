@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { BookletMark } from "@/components/ui/AppLogo";
+import { prefersReducedMotion } from "@/lib/ui/motion";
 
 // AppLoader is a pure branding moment, not a real loading indicator: the
 // real editor (AppPageContent) mounts as its sibling in AppClient, already
@@ -16,11 +17,6 @@ const EXIT_MS = 450;
 const FADE_MS = 220;
 
 type Phase = "pre" | "entering" | "exiting" | "done";
-
-function prefersReducedMotion(): boolean {
-  return typeof window !== "undefined" &&
-    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
-}
 
 export function AppLoader() {
   const [phase, setPhase] = useState<Phase>("pre");

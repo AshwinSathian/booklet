@@ -15,6 +15,7 @@ import {
 import { copyTextToClipboard, markdownToHtml } from "@/lib/export";
 import { TEMPLATES, type Template } from "@/lib/templates";
 import { DEFAULT_THEME_ID, THEMES } from "@/lib/themes";
+import { prefersReducedMotion } from "@/lib/ui/motion";
 import { formatRelativeTimeFromIso, formatUpdatedAtLong } from "@/lib/ui/time";
 import { useSession } from "@/components/auth/SessionProvider";
 import { AccountMenu } from "@/components/auth/AccountMenu";
@@ -673,6 +674,58 @@ function DraftTitle({
 }
 
 // ---------------------------------------------------------------------------
+// Publish reveal — a brief dark→paper→transparent flash that plays once,
+// full-viewport, the moment a draft becomes published. Foreshadows the
+// write-to-read transformation (dark editor chrome → the warm paper surface
+// the published page reads on) instead of a plain top-bar state swap.
+// Timing follows the same FADE_MS = 220 pattern established by AppLoader.
+// ---------------------------------------------------------------------------
+
+const REVEAL_DARK_MS = 160;
+const REVEAL_PAPER_MS = 160;
+const REVEAL_FADE_MS = 220;
+
+type RevealPhase = "dark" | "paper" | "fading";
+
+function PublishReveal({ onDone }: { onDone: () => void }) {
+  const [phase, setPhase] = useState<RevealPhase>("dark");
+  // PublishArea re-renders often while this is on screen (toast state,
+  // copy-link pulse, the save indicator ticking) and passes a fresh
+  // `onDone` closure each time. Reading it via a ref — rather than putting
+  // it in the effect's dependency array — keeps this a one-shot timeline
+  // that can't be restarted mid-flight by an unrelated parent re-render.
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
+
+  useEffect(() => {
+    const toPaper = setTimeout(() => setPhase("paper"), REVEAL_DARK_MS);
+    const toFading = setTimeout(() => setPhase("fading"), REVEAL_DARK_MS + REVEAL_PAPER_MS);
+    const finish = setTimeout(
+      () => onDoneRef.current(),
+      REVEAL_DARK_MS + REVEAL_PAPER_MS + REVEAL_FADE_MS,
+    );
+    return () => {
+      clearTimeout(toPaper);
+      clearTimeout(toFading);
+      clearTimeout(finish);
+    };
+    // Run once per mount only — see comment above.
+  }, []);
+
+  return (
+    <div
+      aria-hidden
+      className="fixed inset-0 z-50 pointer-events-none"
+      style={{
+        backgroundColor: phase === "dark" ? "var(--color-bg)" : "var(--color-paper)",
+        opacity: phase === "fading" ? 0 : 1,
+        transition: `opacity ${REVEAL_FADE_MS}ms ease-out, background-color ${REVEAL_PAPER_MS}ms ease-out`,
+      }}
+    />
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Publish / post-publish button group
 // ---------------------------------------------------------------------------
 
@@ -699,11 +752,25 @@ function PublishArea({
 }) {
   const isPublishing = status === "publishing";
   const [showPublishOptions, setShowPublishOptions] = useState(false);
+  const [showReveal, setShowReveal] = useState(false);
+  const prevStatusRef = useRef<EditorStatus>(status);
+
+  // Play the reveal only on the transition INTO "published" (not on every
+  // render while published, and not on mount if a draft somehow loads
+  // already-published) — skip entirely under reduced-motion.
+  useEffect(() => {
+    const prev = prevStatusRef.current;
+    prevStatusRef.current = status;
+    if (prev !== "published" && status === "published" && !prefersReducedMotion()) {
+      setShowReveal(true);
+    }
+  }, [status]);
 
   // Post-publish state: show copy + open buttons.
   if (status === "published" && publishedUrl) {
     return (
       <div className="flex items-center gap-1">
+        {showReveal && <PublishReveal onDone={() => setShowReveal(false)} />}
         <button
           type="button"
           onClick={onCopyLink}
