@@ -89,6 +89,33 @@ for (const theme of THEMES) {
   const page = await context.newPage();
   await page.emulateMedia({ colorScheme: theme });
 
+  // Self-provisioning: always attempt sign-up first so this script works
+  // against a fresh dev DB with no pre-existing test account, not just one
+  // that happens to already have AUTH_EMAIL registered from earlier manual
+  // testing. "Account already exists" (409, from src/app/api/auth/signup/
+  // route.ts) is an expected, non-fatal outcome here — fall through to the
+  // real sign-in below either way. Posted directly to the API (matching the
+  // /api/publish call further down) rather than through the UI form, since
+  // the UI sign-in flow immediately below is what actually needs exercising
+  // for the screenshot sweep.
+  const signupRes = await page.request.post(`${BASE_URL}/api/auth/signup`, {
+    data: { email: AUTH_EMAIL, password: AUTH_PASSWORD },
+  });
+  if (!signupRes.ok() && signupRes.status() !== 409) {
+    throw new Error(
+      `/my-pages setup: sign-up for ${AUTH_EMAIL} failed unexpectedly ` +
+        `(status ${signupRes.status()}): ${await signupRes.text()}`,
+    );
+  }
+  // A successful (non-409) sign-up also creates a session (see
+  // src/app/api/auth/signup/route.ts's `createSession` call), and
+  // src/app/sign-in/page.tsx redirects an already-signed-in visitor straight
+  // to /app instead of rendering the form — so #email/#password would never
+  // appear below. Log out unconditionally so the real sign-in UI flow always
+  // gets exercised the same way regardless of whether sign-up just ran for
+  // real or was a no-op 409 against a pre-existing account.
+  await page.request.post(`${BASE_URL}/api/auth/logout`);
+
   await page.goto(`${BASE_URL}/sign-in`, { waitUntil: "networkidle" });
   await page.fill("#email", AUTH_EMAIL);
   await page.fill("#password", AUTH_PASSWORD);
@@ -96,17 +123,38 @@ for (const theme of THEMES) {
     page.waitForURL(`${BASE_URL}/app`, { timeout: 15_000 }).catch(() => {}),
     page.click('button[type="submit"]'),
   ]);
+  // waitForURL above swallows its own timeout so the click's navigation and
+  // the wait can run concurrently — but a swallowed timeout must not be
+  // allowed to pass silently. Confirm sign-in actually landed on /app (the
+  // real success destination per src/app/sign-in/AuthForm.tsx's
+  // `router.push(redirectUrl ?? "/app")` on a 2xx /api/auth/login response);
+  // anything else means auth is broken and the rest of this loop would just
+  // screenshot an unauthenticated redirect mislabeled as "my-pages-*.png".
+  if (!page.url().startsWith(`${BASE_URL}/app`)) {
+    throw new Error(
+      `/my-pages setup: sign-in for ${AUTH_EMAIL} did not land on /app ` +
+        `(landed on ${page.url()} instead) — auth flow is broken, aborting.`,
+    );
+  }
 
   // Ensure the account has at least one published page so /my-pages
   // renders a real PageCard, not just the empty state (the empty state
   // was already reviewed via the public routes above / Task 9's own pass).
   // Uses the authenticated publish path, which is exempt from the
   // anonymous-only monthly quota (see src/app/api/publish/route.ts).
-  await page.request.post(`${BASE_URL}/api/publish`, {
+  // NOTE: each script run adds one more throwaway publish to this account
+  // with no cleanup — harmless for local dev-DB QA, but if this ever runs
+  // often enough to matter, /my-pages will accumulate stale sample cards.
+  const publishRes = await page.request.post(`${BASE_URL}/api/publish`, {
     data: {
       raw: "# Visual QA sample page\n\nA short published page used only to populate `/my-pages` with a real card for this sweep.",
     },
   });
+  if (!publishRes.ok()) {
+    throw new Error(
+      `/my-pages setup: /api/publish failed (status ${publishRes.status()}): ${await publishRes.text()}`,
+    );
+  }
 
   for (const viewport of VIEWPORTS) {
     await page.setViewportSize(viewport);

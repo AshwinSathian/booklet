@@ -75,6 +75,9 @@ packages/*/dist/
 test-results/
 playwright-report/
 
+# scripts/visual-qa.mjs output — regenerated on every run, not for commit
+/qa-screenshots/
+
 # Private strategy documents
 MARKET_PLAN.md
 
