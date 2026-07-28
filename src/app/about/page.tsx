@@ -20,7 +20,7 @@ export default function AboutPage() {
       <main className="flex-1 mx-auto w-full max-w-3xl px-4 py-12 sm:py-16">
         <div className="max-w-2xl">
           <p className="text-xs font-semibold uppercase tracking-widest text-text-muted mb-4">About</p>
-          <h1 className="text-[clamp(26px,4vw,36px)] text-text-primary mb-6">
+          <h1 className="text-[clamp(26px,4vw,36px)] text-text-primary mb-6 font-display">
             {APP_NAME} — share ideas clearly
           </h1>
 

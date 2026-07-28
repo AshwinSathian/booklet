@@ -452,7 +452,7 @@ function PageCard({
   return (
     <>
       <div
-        className="group flex flex-col gap-0 rounded-xl border border-border-default bg-bg-elevated transition hover:border-accent-soft/30 hover:shadow-card cursor-grab active:cursor-grabbing animate-fade-up"
+        className="group flex flex-col gap-0 rounded-xl border border-border-default bg-bg-elevated transition hover:border-accent-soft/30 hover:shadow-print cursor-grab active:cursor-grabbing animate-fade-up"
         style={{ animationDelay: `${Math.min(index * 40, 300)}ms` }}
         draggable
         onDragStart={(e) => {

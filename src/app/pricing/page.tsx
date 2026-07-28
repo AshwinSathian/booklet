@@ -98,7 +98,7 @@ export default function PricingPage() {
             <span className="h-1.5 w-1.5 rounded-full bg-accent" />
             Free forever
           </div>
-          <h1 className="text-[clamp(32px,5vw,48px)] font-thin leading-[1.05] text-text-primary">
+          <h1 className="text-[clamp(32px,5vw,48px)] font-thin leading-[1.05] text-text-primary font-display">
             Everything included. No catch.
           </h1>
           <p className="mt-4 text-base text-text-secondary max-w-lg mx-auto leading-relaxed">
@@ -143,7 +143,7 @@ export default function PricingPage() {
 
         {/* Anonymous vs signed-in note */}
         <div className="mt-14 rounded-xl border border-border-subtle bg-bg-elevated px-6 py-7">
-          <h2 className="text-sm font-semibold text-text-primary mb-3">
+          <h2 className="text-sm font-semibold text-text-primary mb-3 font-display">
             Anonymous vs. signed-in
           </h2>
           <p className="text-sm text-text-secondary leading-relaxed mb-4">
