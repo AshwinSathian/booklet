@@ -1,4 +1,4 @@
-const BASE = "/Users/ashwinsathian/Documents/Personal/readable/readable";
+const BASE = "/Users/ashwinsathian/Documents/Personal/booklet";
 const LOGS = `${process.env.HOME}/.pm2/logs`;
 
 /** @type {import('pm2').StartOptions[]} */
@@ -6,7 +6,7 @@ module.exports = {
   apps: [
     // ─── Main Next.js application ────────────────────────────────────────────
     {
-      name: "readable-app",
+      name: "booklet-app",
       script: `${BASE}/node_modules/.bin/next`,
       args: "start -p 3100",
       cwd: BASE,
@@ -33,8 +33,8 @@ module.exports = {
       max_memory_restart: "1G",
       kill_timeout: 5000,
 
-      out_file: `${LOGS}/readable-app-out.log`,
-      error_file: `${LOGS}/readable-app-err.log`,
+      out_file: `${LOGS}/booklet-app-out.log`,
+      error_file: `${LOGS}/booklet-app-err.log`,
       merge_logs: true,
       time: true,
       log_date_format: "YYYY-MM-DD HH:mm:ss Z",
@@ -42,7 +42,7 @@ module.exports = {
 
     // ─── MCP server (Node.js bridge) ─────────────────────────────────────────
     {
-      name: "readable-mcp",
+      name: "booklet-mcp",
       // Resolve the tsx binary via npx rather than a hardcoded node_modules/.bin
       // path — under npm workspaces (see PLAN-backend-auth-migration.md), a
       // dependency shared across workspaces (tsx is also used transitively
@@ -84,8 +84,8 @@ module.exports = {
       max_memory_restart: "256M",
       kill_timeout: 3000,
 
-      out_file: `${LOGS}/readable-mcp-out.log`,
-      error_file: `${LOGS}/readable-mcp-err.log`,
+      out_file: `${LOGS}/booklet-mcp-out.log`,
+      error_file: `${LOGS}/booklet-mcp-err.log`,
       merge_logs: true,
       time: true,
       log_date_format: "YYYY-MM-DD HH:mm:ss Z",

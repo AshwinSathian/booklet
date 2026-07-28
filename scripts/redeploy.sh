@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Rebuild and restart all Readable services from current working tree.
+# Rebuild and restart all Booklet services from current working tree.
 # Does NOT git-pull — use deploy-local.sh for that.
 # Called automatically by the pre-push hook and manually when needed.
 #
@@ -14,8 +14,8 @@
 # having failed to deploy — only the live-traffic outcome changes.
 set -euo pipefail
 
-REPO="/Users/ashwinsathian/Documents/Personal/readable/readable"
-LOG_DIR="$HOME/.readable-deploy-logs"
+REPO="/Users/ashwinsathian/Documents/Personal/booklet"
+LOG_DIR="$HOME/.booklet-deploy-logs"
 mkdir -p "$LOG_DIR"
 LOG="$LOG_DIR/redeploy-$(date +%Y%m%d-%H%M%S).log"
 
@@ -36,18 +36,18 @@ run() {
 }
 
 cd "$REPO"
-log "=== Readable redeploy started ==="
+log "=== Booklet redeploy started ==="
 log "    Commit: $(git rev-parse --short HEAD) — $(git log -1 --pretty=%s)"
 log "    Log:    $LOG"
 
 echo ""
-log "── Syncing pm2-startup.sh to ~/.readable/ ────────────"
-# launchd reads from ~/.readable/ (not ~/Documents, which TCC blocks).
+log "── Syncing pm2-startup.sh to ~/.booklet/ ────────────"
+# launchd reads from ~/.booklet/ (not ~/Documents, which TCC blocks).
 # Keep the deployed copy in sync with the repo on every redeploy.
 if [[ -f "$REPO/scripts/pm2-startup.sh" ]]; then
-  cp "$REPO/scripts/pm2-startup.sh" "$HOME/.readable/pm2-startup.sh"
-  chmod +x "$HOME/.readable/pm2-startup.sh"
-  xattr -d com.apple.provenance "$HOME/.readable/pm2-startup.sh" 2>/dev/null || true
+  cp "$REPO/scripts/pm2-startup.sh" "$HOME/.booklet/pm2-startup.sh"
+  chmod +x "$HOME/.booklet/pm2-startup.sh"
+  xattr -d com.apple.provenance "$HOME/.booklet/pm2-startup.sh" 2>/dev/null || true
 fi
 
 echo ""
@@ -55,6 +55,15 @@ log "── Installing dependencies (npm workspaces — one install covers"
 log "   the root app and mcp-server/packages/*, see"
 log "   PLAN-backend-auth-migration.md) ────────────────────"
 run "npm ci --prefer-offline"
+
+echo ""
+log "── Building packages/shared (booklet-api-client) ─────"
+# mcp-server imports the *built* dist/ output of this workspace package
+# (not its TS source), so it must be built before mcp-server can start.
+# npm ci does not do this automatically — only next build (below) is wired
+# into the root "build" script. A checkout that's never had this built
+# locally will crash booklet-mcp with MODULE_NOT_FOUND on dist/index.cjs.
+run "npm run build --workspace=packages/shared"
 
 echo ""
 log "── Backing up previous build output ──────────────────"
@@ -80,18 +89,18 @@ log "── Reloading PM2 processes from ecosystem.config.js ──"
 # (picks up any env changes) and performs a zero-downtime reload for each
 # process. Start processes that aren't registered yet.
 if pm2 jlist 2>/dev/null | python3 -c \
-    "import sys,json; procs=json.load(sys.stdin); exit(0 if any(p['name']=='readable-app' for p in procs) else 1)" 2>/dev/null; then
+    "import sys,json; procs=json.load(sys.stdin); exit(0 if any(p['name']=='booklet-app' for p in procs) else 1)" 2>/dev/null; then
   run "pm2 reload ecosystem.config.js --update-env"
 else
-  log "readable-app not found in PM2 — starting from ecosystem.config.js"
+  log "booklet-app not found in PM2 — starting from ecosystem.config.js"
   run "pm2 start ecosystem.config.js"
 fi
 
-# Ensure readable-mcp is registered in PM2 (it may be missing after a fresh setup)
+# Ensure booklet-mcp is registered in PM2 (it may be missing after a fresh setup)
 if ! pm2 jlist 2>/dev/null | python3 -c \
-    "import sys,json; procs=json.load(sys.stdin); exit(0 if any(p['name']=='readable-mcp' for p in procs) else 1)" 2>/dev/null; then
-  log "readable-mcp not found in PM2 — starting it now"
-  run "pm2 start ecosystem.config.js --only readable-mcp"
+    "import sys,json; procs=json.load(sys.stdin); exit(0 if any(p['name']=='booklet-mcp' for p in procs) else 1)" 2>/dev/null; then
+  log "booklet-mcp not found in PM2 — starting it now"
+  run "pm2 start ecosystem.config.js --only booklet-mcp"
 fi
 
 run "pm2 save"

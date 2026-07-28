@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Pre-push hook: rebuilds and restarts the self-hosted Readable server
+# Pre-push hook: rebuilds and restarts the self-hosted Booklet server
 # whenever a push targets the main branch.
 #
 # Skip this hook:  git push --no-verify
@@ -25,8 +25,8 @@ if [[ "$PUSH_TO_MAIN" != "true" ]]; then
 fi
 
 # ── Guard: only deploy if PM2 is actually managing the server ─────────────────
-if ! pm2 jlist 2>/dev/null | grep -q '"readable-app"'; then
-  echo "[pre-push] PM2 does not have readable-app — skipping redeploy."
+if ! pm2 jlist 2>/dev/null | grep -q '"booklet-app"'; then
+  echo "[pre-push] PM2 does not have booklet-app — skipping redeploy."
   echo "           Run: pm2 start ecosystem.config.js  to initialise the server."
   exit 0
 fi

@@ -2,7 +2,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # setup-server.sh
 #
-# Full idempotent setup for self-hosting Readable on macOS (Apple Silicon or
+# Full idempotent setup for self-hosting Booklet on macOS (Apple Silicon or
 # Intel) with Cloudflare Tunnel for domain handling.
 #
 # Run from the repo root on a fresh machine after cloning:
@@ -13,16 +13,16 @@
 # What it sets up:
 #   • MongoDB Community (Homebrew) — started as a LaunchAgent
 #   • Node.js via nvm (or uses existing ≥18 Node)
-#   • PM2 process manager — readable-app (:3100) + readable-mcp (:8788)
+#   • PM2 process manager — booklet-app (:3100) + booklet-mcp (:8788)
 #   • PM2 LaunchAgent for auto-start on login
 #   • Cloudflare Tunnel (cloudflared via Homebrew)
 #   • Per-project cloudflared config (not the default config.yml)
-#   • User-level LaunchAgent for the Readable tunnel (no sudo required)
+#   • User-level LaunchAgent for the Booklet tunnel (no sudo required)
 #   • DNS CNAME records pointing to the tunnel (uses UUID, not name)
 #   • Removes the broken system-level cloudflared daemon if present
 #
 # Known pitfalls handled automatically:
-#   • Port 3000 may be taken — Readable uses 3100 to avoid conflicts
+#   • Port 3000 may be taken — Booklet uses 3100 to avoid conflicts
 #   • Port collision detection for 3100 and 8788
 #   • nc -z on macOS writes to stdout — redirected to /dev/null
 #   • cloudflared tunnel route dns by NAME can resolve to wrong tunnel;
@@ -57,11 +57,11 @@ MCP_PORT=8788
 
 # ── Cloudflare / tunnel IDs ───────────────────────────────────────────────────
 # These are filled in when the tunnel exists. The script will detect them.
-TUNNEL_NAME="readable-selfhost"
+TUNNEL_NAME="booklet-selfhost"
 CF_CREDENTIALS_DIR="$USER_HOME/.cloudflared"
-CF_CONFIG_FILE="$CF_CREDENTIALS_DIR/readable-config.yml"
-CF_LAUNCHAGENT="$USER_HOME/Library/LaunchAgents/com.readable.cloudflared.plist"
-CF_LOG_DIR="$USER_HOME/.readable/logs"
+CF_CONFIG_FILE="$CF_CREDENTIALS_DIR/booklet-config.yml"
+CF_LAUNCHAGENT="$USER_HOME/Library/LaunchAgents/com.booklet.cloudflared.plist"
+CF_LOG_DIR="$USER_HOME/.booklet/logs"
 
 # Domains
 APP_HOSTNAME="booklet.ashwinsathian.com"
@@ -76,7 +76,7 @@ section "Pre-flight checks"
 ok "macOS detected: $(sw_vers -productVersion)"
 
 cd "$REPO_ROOT" || die "Could not cd to repo root: $REPO_ROOT"
-[[ -f "package.json" ]] || die "Run this script from the Readable repo root."
+[[ -f "package.json" ]] || die "Run this script from the Booklet repo root."
 ok "Repo root: $REPO_ROOT"
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -132,7 +132,7 @@ nc -z 127.0.0.1 27017 1>/dev/null 2>/dev/null \
 section "MongoDB indexes"
 # ─────────────────────────────────────────────────────────────────────────────
 
-MONGO_URI_LOCAL="mongodb://127.0.0.1:27017/readable?directConnection=true"
+MONGO_URI_LOCAL="mongodb://127.0.0.1:27017/booklet?directConnection=true"
 EXISTING_INDEXES=$(mongosh "$MONGO_URI_LOCAL" --quiet --eval \
   "db.pages.getIndexes().length" 2>/dev/null || echo "0")
 
@@ -155,7 +155,7 @@ if [[ -f "$ENV_FILE" ]]; then
   ok ".env.production.local exists"
   # Verify required keys are set (non-empty, non-placeholder)
   MISSING=()
-  for key in MONGODB_URI NEXT_PUBLIC_SITE_URL NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY CLERK_SECRET_KEY INVITE_JWT_SECRET; do
+  for key in MONGODB_URI NEXT_PUBLIC_SITE_URL SESSION_TOKEN_PEPPER CLAIM_TOKEN_SECRET INVITE_JWT_SECRET UNLOCK_TOKEN_SECRET API_KEY_PEPPER; do
     val=$(grep "^${key}=" "$ENV_FILE" 2>/dev/null | cut -d= -f2- || true)
     if [[ -z "$val" || "$val" == *"REPLACE_ME"* ]]; then
       MISSING+=("$key")
@@ -171,9 +171,10 @@ else
   cp "$REPO_ROOT/.env.production.local.example" "$ENV_FILE"
   printf "\n"
   printf "  Edit %s and fill in:\n" "$ENV_FILE"
-  printf "    • CLERK_SECRET_KEY  (from Clerk dashboard)\n"
-  printf "    • INVITE_JWT_SECRET (dedicated random secret, e.g. via: openssl rand -base64 32)\n"
-  printf "    • MONGODB_URI       (use: mongodb://127.0.0.1:27017/readable?directConnection=true)\n"
+  printf "    • SESSION_TOKEN_PEPPER, CLAIM_TOKEN_SECRET, INVITE_JWT_SECRET,\n"
+  printf "      UNLOCK_TOKEN_SECRET, API_KEY_PEPPER (each a dedicated random\n"
+  printf "      secret, e.g. via: openssl rand -base64 32)\n"
+  printf "    • MONGODB_URI       (use: mongodb://127.0.0.1:27017/booklet?directConnection=true)\n"
   printf "    • Any other keys marked REPLACE_ME\n\n"
   die "Fill in .env.production.local then re-run this script."
 fi
@@ -187,6 +188,21 @@ info "app and mcp-server/packages/*, see PLAN-backend-auth-migration.md)…"
 npm ci --prefer-offline 2>&1 | tail -3
 
 ok "Dependencies installed"
+
+# ─────────────────────────────────────────────────────────────────────────────
+section "packages/shared build (booklet-api-client)"
+# ─────────────────────────────────────────────────────────────────────────────
+# mcp-server imports this workspace package's *built* dist/ output, not its
+# TS source — npm ci alone leaves dist/ missing on a fresh checkout, which
+# crashes booklet-mcp with MODULE_NOT_FOUND on dist/index.cjs.
+
+if [[ -f "$REPO_ROOT/packages/shared/dist/index.cjs" ]]; then
+  skip "packages/shared already built"
+else
+  info "Building packages/shared…"
+  npm run build --workspace=packages/shared 2>&1 | tail -10
+  ok "packages/shared built"
+fi
 
 # ─────────────────────────────────────────────────────────────────────────────
 section "Next.js production build"
@@ -222,8 +238,8 @@ check_port() {
   fi
 }
 
-check_port "$APP_PORT" "readable-app"
-check_port "$MCP_PORT" "readable-mcp"
+check_port "$APP_PORT" "booklet-app"
+check_port "$MCP_PORT" "booklet-mcp"
 
 # ─────────────────────────────────────────────────────────────────────────────
 section "PM2"
@@ -236,8 +252,8 @@ fi
 ok "PM2 $(pm2 --version 2>/dev/null)"
 
 # Start or reload processes from ecosystem config
-if pm2 jlist 2>/dev/null | grep -q '"readable-app"'; then
-  info "readable-app already in PM2 — reloading with latest config…"
+if pm2 jlist 2>/dev/null | grep -q '"booklet-app"'; then
+  info "booklet-app already in PM2 — reloading with latest config…"
   pm2 reload ecosystem.config.js --update-env 2>&1 | tail -3
 else
   info "Starting processes from ecosystem.config.js…"
@@ -248,16 +264,16 @@ sleep 4   # let processes settle
 
 # Verify both are online
 APP_STATUS=$(pm2 jlist 2>/dev/null | python3 -c \
-  "import sys,json; p=[x for x in json.load(sys.stdin) if x['name']=='readable-app']; \
+  "import sys,json; p=[x for x in json.load(sys.stdin) if x['name']=='booklet-app']; \
    print(p[0]['pm2_env']['status'] if p else 'missing')")
 MCP_STATUS=$(pm2 jlist 2>/dev/null | python3 -c \
-  "import sys,json; p=[x for x in json.load(sys.stdin) if x['name']=='readable-mcp']; \
+  "import sys,json; p=[x for x in json.load(sys.stdin) if x['name']=='booklet-mcp']; \
    print(p[0]['pm2_env']['status'] if p else 'missing')")
 
-[[ "$APP_STATUS" == "online" ]] && ok "readable-app is online" \
-  || die "readable-app failed to start (status: $APP_STATUS). Check: pm2 logs readable-app"
-[[ "$MCP_STATUS" == "online" ]] && ok "readable-mcp is online" \
-  || die "readable-mcp failed to start (status: $MCP_STATUS). Check: pm2 logs readable-mcp"
+[[ "$APP_STATUS" == "online" ]] && ok "booklet-app is online" \
+  || die "booklet-app failed to start (status: $APP_STATUS). Check: pm2 logs booklet-app"
+[[ "$MCP_STATUS" == "online" ]] && ok "booklet-mcp is online" \
+  || die "booklet-mcp failed to start (status: $MCP_STATUS). Check: pm2 logs booklet-mcp"
 
 # ─────────────────────────────────────────────────────────────────────────────
 section "PM2 startup (LaunchAgent)"
@@ -326,7 +342,7 @@ fi
 section "Cloudflare Tunnel"
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Look for an existing 'readable-selfhost' tunnel
+# Look for an existing 'booklet-selfhost' tunnel
 TUNNEL_UUID=$(cloudflared tunnel list 2>/dev/null \
   | awk -v name="$TUNNEL_NAME" '$2 == name {print $1}' | head -1)
 
@@ -353,9 +369,9 @@ if [[ -f "$CF_CONFIG_FILE" ]]; then
   # Verify the config points to the right tunnel UUID
   CONF_UUID=$(grep "^tunnel:" "$CF_CONFIG_FILE" | awk '{print $2}')
   if [[ "$CONF_UUID" == "$TUNNEL_UUID" ]]; then
-    skip "readable-config.yml already correct (tunnel: $TUNNEL_UUID)"
+    skip "booklet-config.yml already correct (tunnel: $TUNNEL_UUID)"
   else
-    warn "readable-config.yml points to wrong tunnel ($CONF_UUID ≠ $TUNNEL_UUID). Rewriting…"
+    warn "booklet-config.yml points to wrong tunnel ($CONF_UUID ≠ $TUNNEL_UUID). Rewriting…"
     REWRITE_CONFIG=true
   fi
 else
@@ -434,7 +450,7 @@ if [[ -f "$CF_LAUNCHAGENT" ]]; then
   PLIST_CONFIG=$(grep -A1 "<string>--config</string>" "$CF_LAUNCHAGENT" 2>/dev/null \
     | grep "string" | sed 's/.*<string>\(.*\)<\/string>/\1/' | head -1)
   if [[ "$PLIST_CONFIG" == "$CF_CONFIG_FILE" ]]; then
-    skip "com.readable.cloudflared LaunchAgent already correct"
+    skip "com.booklet.cloudflared LaunchAgent already correct"
   else
     warn "LaunchAgent exists but points to wrong config ($PLIST_CONFIG). Rewriting…"
     launchctl unload "$CF_LAUNCHAGENT" 2>/dev/null || true
@@ -451,7 +467,7 @@ if [[ "${REWRITE_PLIST:-false}" == "true" ]]; then
 <plist version="1.0">
 <dict>
   <key>Label</key>
-  <string>com.readable.cloudflared</string>
+  <string>com.booklet.cloudflared</string>
   <key>ProgramArguments</key>
   <array>
     <string>/opt/homebrew/bin/cloudflared</string>
@@ -478,49 +494,49 @@ EOF
 fi
 
 # Load / reload the agent
-if launchctl list 2>/dev/null | grep -q "com.readable.cloudflared"; then
-  info "Reloading com.readable.cloudflared…"
+if launchctl list 2>/dev/null | grep -q "com.booklet.cloudflared"; then
+  info "Reloading com.booklet.cloudflared…"
   launchctl unload "$CF_LAUNCHAGENT" 2>/dev/null || true
   sleep 1
 fi
 launchctl load "$CF_LAUNCHAGENT"
 sleep 3
 
-launchctl list 2>/dev/null | grep -q "com.readable.cloudflared" \
-  && ok "com.readable.cloudflared loaded and running" \
+launchctl list 2>/dev/null | grep -q "com.booklet.cloudflared" \
+  && ok "com.booklet.cloudflared loaded and running" \
   || die "LaunchAgent failed to load. Check: tail -50 $CF_LOG_DIR/cloudflared.err.log"
 
 # ─────────────────────────────────────────────────────────────────────────────
-section "Readable PM2 watchdog LaunchAgent"
+section "Booklet PM2 watchdog LaunchAgent"
 # ─────────────────────────────────────────────────────────────────────────────
 # This agent runs the pm2-startup.sh watchdog at login. It is independent of
-# the brnr PM2 watchdog — it only ensures readable-app and readable-mcp are
+# the brnr PM2 watchdog — it only ensures booklet-app and booklet-mcp are
 # present in PM2 and starts them from ecosystem.config.js if they're missing.
 
-READABLE_PM2_PLIST="$USER_HOME/Library/LaunchAgents/com.readable.pm2.plist"
-READABLE_PM2_LOG_DIR="$USER_HOME/.readable/logs"
+BOOKLET_PM2_PLIST="$USER_HOME/Library/LaunchAgents/com.booklet.pm2.plist"
+BOOKLET_PM2_LOG_DIR="$USER_HOME/.booklet/logs"
 # launchd cannot read scripts from ~/Documents (TCC restriction).
-# We copy pm2-startup.sh to ~/.readable/ on every setup so launchd can reach it.
-READABLE_STARTUP_SRC="$REPO_ROOT/scripts/pm2-startup.sh"
-READABLE_STARTUP_SCRIPT="$USER_HOME/.readable/pm2-startup.sh"
+# We copy pm2-startup.sh to ~/.booklet/ on every setup so launchd can reach it.
+BOOKLET_STARTUP_SRC="$REPO_ROOT/scripts/pm2-startup.sh"
+BOOKLET_STARTUP_SCRIPT="$USER_HOME/.booklet/pm2-startup.sh"
 
-mkdir -p "$READABLE_PM2_LOG_DIR"
+mkdir -p "$BOOKLET_PM2_LOG_DIR"
 
 # Keep the deployed copy in sync with the repo source
-cp "$READABLE_STARTUP_SRC" "$READABLE_STARTUP_SCRIPT"
-chmod +x "$READABLE_STARTUP_SCRIPT"
+cp "$BOOKLET_STARTUP_SRC" "$BOOKLET_STARTUP_SCRIPT"
+chmod +x "$BOOKLET_STARTUP_SCRIPT"
 # Remove provenance xattr so launchd can execute the file
-xattr -d com.apple.provenance "$READABLE_STARTUP_SCRIPT" 2>/dev/null || true
-ok "Copied pm2-startup.sh → $READABLE_STARTUP_SCRIPT"
+xattr -d com.apple.provenance "$BOOKLET_STARTUP_SCRIPT" 2>/dev/null || true
+ok "Copied pm2-startup.sh → $BOOKLET_STARTUP_SCRIPT"
 
-if [[ -f "$READABLE_PM2_PLIST" ]]; then
-  PLIST_SCRIPT=$(grep -A1 "<string>bash</string>" "$READABLE_PM2_PLIST" 2>/dev/null \
+if [[ -f "$BOOKLET_PM2_PLIST" ]]; then
+  PLIST_SCRIPT=$(grep -A1 "<string>bash</string>" "$BOOKLET_PM2_PLIST" 2>/dev/null \
     | grep "string" | sed 's/.*<string>\(.*\)<\/string>/\1/' | head -1)
-  if [[ "$PLIST_SCRIPT" == "$READABLE_STARTUP_SCRIPT" ]]; then
-    skip "com.readable.pm2 LaunchAgent already correct"
+  if [[ "$PLIST_SCRIPT" == "$BOOKLET_STARTUP_SCRIPT" ]]; then
+    skip "com.booklet.pm2 LaunchAgent already correct"
   else
     warn "LaunchAgent exists but points to wrong script. Rewriting…"
-    launchctl unload "$READABLE_PM2_PLIST" 2>/dev/null || true
+    launchctl unload "$BOOKLET_PM2_PLIST" 2>/dev/null || true
     REWRITE_PM2_PLIST=true
   fi
 else
@@ -528,17 +544,17 @@ else
 fi
 
 if [[ "${REWRITE_PM2_PLIST:-false}" == "true" ]]; then
-  cat > "$READABLE_PM2_PLIST" <<EOF
+  cat > "$BOOKLET_PM2_PLIST" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
   <key>Label</key>
-  <string>com.readable.pm2</string>
+  <string>com.booklet.pm2</string>
   <key>ProgramArguments</key>
   <array>
     <string>/bin/bash</string>
-    <string>${READABLE_STARTUP_SCRIPT}</string>
+    <string>${BOOKLET_STARTUP_SCRIPT}</string>
   </array>
   <key>RunAtLoad</key>
   <true/>
@@ -547,26 +563,26 @@ if [[ "${REWRITE_PM2_PLIST:-false}" == "true" ]]; then
   <key>ThrottleInterval</key>
   <integer>15</integer>
   <key>StandardOutPath</key>
-  <string>${READABLE_PM2_LOG_DIR}/pm2-startup.out.log</string>
+  <string>${BOOKLET_PM2_LOG_DIR}/pm2-startup.out.log</string>
   <key>StandardErrorPath</key>
-  <string>${READABLE_PM2_LOG_DIR}/pm2-startup.err.log</string>
+  <string>${BOOKLET_PM2_LOG_DIR}/pm2-startup.err.log</string>
 </dict>
 </plist>
 EOF
-  ok "Written $READABLE_PM2_PLIST"
+  ok "Written $BOOKLET_PM2_PLIST"
 fi
 
-if launchctl list 2>/dev/null | grep -q "com.readable.pm2"; then
-  info "Reloading com.readable.pm2…"
-  launchctl unload "$READABLE_PM2_PLIST" 2>/dev/null || true
+if launchctl list 2>/dev/null | grep -q "com.booklet.pm2"; then
+  info "Reloading com.booklet.pm2…"
+  launchctl unload "$BOOKLET_PM2_PLIST" 2>/dev/null || true
   sleep 1
 fi
-launchctl load "$READABLE_PM2_PLIST"
+launchctl load "$BOOKLET_PM2_PLIST"
 sleep 2
 
-launchctl list 2>/dev/null | grep -q "com.readable.pm2" \
-  && ok "com.readable.pm2 loaded" \
-  || warn "com.readable.pm2 failed to load — run: launchctl load $READABLE_PM2_PLIST"
+launchctl list 2>/dev/null | grep -q "com.booklet.pm2" \
+  && ok "com.booklet.pm2 loaded" \
+  || warn "com.booklet.pm2 failed to load — run: launchctl load $BOOKLET_PM2_PLIST"
 
 # ─────────────────────────────────────────────────────────────────────────────
 section "Tunnel connectivity"

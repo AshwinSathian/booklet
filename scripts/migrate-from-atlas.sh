@@ -14,7 +14,7 @@
 #
 # What it does:
 #   1. Validates prerequisites (mongodump, mongorestore, nc)
-#   2. Dumps the 'readable' database from Atlas to a timestamped temp dir
+#   2. Dumps the 'booklet' database from Atlas to a timestamped temp dir
 #   3. Restores each collection into the local MongoDB, skipping rate_limits
 #      (ephemeral) and using --drop to get an exact replica of Atlas
 #   4. Re-runs index setup to ensure all indexes are present
@@ -47,9 +47,9 @@ fi
 [[ "$ATLAS_URI" != mongodb* ]] && die "URI must start with mongodb:// or mongodb+srv://"
 
 # ── Config ────────────────────────────────────────────────────────────────────
-LOCAL_URI="mongodb://127.0.0.1:27017/readable?directConnection=true"
-DB_NAME="readable"
-DUMP_DIR="/tmp/readable-atlas-dump-$(date +%Y%m%d-%H%M%S)"
+LOCAL_URI="mongodb://127.0.0.1:27017/booklet?directConnection=true"
+DB_NAME="booklet"
+DUMP_DIR="/tmp/booklet-atlas-dump-$(date +%Y%m%d-%H%M%S)"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # Collections to skip — either ephemeral or safe to leave empty

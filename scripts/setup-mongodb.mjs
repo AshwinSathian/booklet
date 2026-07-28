@@ -24,7 +24,7 @@ const client = new MongoClient(uri);
 
 async function main() {
   await client.connect();
-  const db = client.db("readable");
+  const db = client.db("booklet");
 
   await ensureIndexes(db);
 

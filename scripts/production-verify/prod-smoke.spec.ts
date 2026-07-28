@@ -13,7 +13,7 @@ type StringIdDoc = { _id: string; [key: string]: unknown };
  * production deploy:
  *
  *   TEST_BASE_URL=https://booklet.ashwinsathian.com \
- *   MONGODB_URI="mongodb://127.0.0.1:27017/readable?directConnection=true" \
+ *   MONGODB_URI="mongodb://127.0.0.1:27017/booklet?directConnection=true" \
  *   CLAIM_TOKEN_SECRET=<same value as .env.production.local> \
  *   npx playwright test scripts/production-verify/prod-smoke.spec.ts --config=playwright.config.ts
  *
@@ -26,7 +26,7 @@ type StringIdDoc = { _id: string; [key: string]: unknown };
 
 const BASE = process.env.TEST_BASE_URL ?? "https://booklet.ashwinsathian.com";
 const API_BASE = process.env.TEST_API_BASE_URL ?? "https://booklet-api.ashwinsathian.com";
-const MONGODB_URI = process.env.MONGODB_URI ?? "mongodb://127.0.0.1:27017/readable?directConnection=true";
+const MONGODB_URI = process.env.MONGODB_URI ?? "mongodb://127.0.0.1:27017/booklet?directConnection=true";
 const RUN_ID = Date.now();
 const EMAIL = `e2e-verify-${RUN_ID}@example.test`;
 const PASSWORD = "prod-verify-correct-horse-battery";
@@ -173,7 +173,7 @@ test.describe("Production verification — migrated-user claim flow", () => {
   test("insert a migrated-style user, claim via /claim, then log in with the new password", async ({ page, request }) => {
     const client = new MongoClient(MONGODB_URI);
     await client.connect();
-    await client.db("readable").collection<StringIdDoc>("users").insertOne({
+    await client.db("booklet").collection<StringIdDoc>("users").insertOne({
       _id: CLAIM_USER_ID,
       email: CLAIM_EMAIL,
       password_hash: null,
@@ -214,7 +214,7 @@ test.describe("Production verification — migrated-user claim flow", () => {
 test.afterAll(async () => {
   const client = new MongoClient(MONGODB_URI);
   await client.connect();
-  const db = client.db("readable");
+  const db = client.db("booklet");
 
   const users = await db
     .collection<StringIdDoc>("users")

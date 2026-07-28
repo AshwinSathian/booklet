@@ -51,10 +51,10 @@ echo ""
 echo "[ Next.js App — :3100 ]"
 _check "PM2 process online"    "online"    "pm2 jlist 2>/dev/null | python3 -c \
   \"import sys,json; procs=json.load(sys.stdin); \
-    [print(p['pm2_env']['status']) for p in procs if p['name']=='readable-app']\""
-_check "PM2-managed (not orphan)" "readable-app" "pm2 jlist 2>/dev/null | python3 -c \
+    [print(p['pm2_env']['status']) for p in procs if p['name']=='booklet-app']\""
+_check "PM2-managed (not orphan)" "booklet-app" "pm2 jlist 2>/dev/null | python3 -c \
   \"import sys,json; procs=json.load(sys.stdin); \
-    [print(p['name']) for p in procs if p['name']=='readable-app']\""
+    [print(p['name']) for p in procs if p['name']=='booklet-app']\""
 _check "port 3100 open"        "ok"        "nc -z 127.0.0.1 3100 1>/dev/null 2>/dev/null && echo ok"
 _check "HTTP 200 on /"         "200"       "curl -s -o /dev/null -w '%{http_code}' http://localhost:3100"
 
@@ -63,18 +63,18 @@ echo ""
 echo "[ MCP Server — :8788 ]"
 _check "PM2 process online"    "online"    "pm2 jlist 2>/dev/null | python3 -c \
   \"import sys,json; procs=json.load(sys.stdin); \
-    [print(p['pm2_env']['status']) for p in procs if p['name']=='readable-mcp']\""
+    [print(p['pm2_env']['status']) for p in procs if p['name']=='booklet-mcp']\""
 _check "port 8788 open"        "ok"        "nc -z 127.0.0.1 8788 1>/dev/null 2>/dev/null && echo ok"
 _check "/health returns ok"    '"ok":true' "curl -s http://localhost:8788/health"
 # Startup log shows the API base the MCP server resolved at launch
 _check "API base → :3100"      "3100"      \
-  "grep -o 'localhost:[0-9]*' \"\$HOME/.pm2/logs/readable-mcp-out.log\" 2>/dev/null | tail -1"
+  "grep -o 'localhost:[0-9]*' \"\$HOME/.pm2/logs/booklet-mcp-out.log\" 2>/dev/null | tail -1"
 
 # ── cloudflared Tunnel ────────────────────────────────────────────────────────
 echo ""
 echo "[ cloudflared Tunnel ]"
-_check "LaunchAgent loaded"    "com.readable.cloudflared" \
-  "launchctl list 2>/dev/null | grep com.readable.cloudflared | awk '{print \$3}'"
+_check "LaunchAgent loaded"    "com.booklet.cloudflared" \
+  "launchctl list 2>/dev/null | grep com.booklet.cloudflared | awk '{print \$3}'"
 _check "process running"       "ok"        "pgrep -x cloudflared > /dev/null && echo ok"
 _check "4 connections"         "ok"        \
   "cloudflared tunnel info 36f0ab5f-f084-4d8e-982a-ca50bf263e80 2>/dev/null | grep -c 'CONNECTOR ID' | awk '{print (\$1>=1)?\"ok\":\"no-connections\"}'"
@@ -82,14 +82,14 @@ _check "4 connections"         "ok"        \
 # ── PM2 persistence ───────────────────────────────────────────────────────────
 echo ""
 echo "[ PM2 Persistence ]"
-_check "readable-app in dump"  "readable-app" \
+_check "booklet-app in dump"  "booklet-app" \
   "python3 -c \"import json; procs=json.load(open('$HOME/.pm2/dump.pm2')); \
-    [print(p.get('name')) for p in procs if p.get('name')=='readable-app']\" 2>/dev/null"
-_check "readable-mcp in dump"  "readable-mcp" \
+    [print(p.get('name')) for p in procs if p.get('name')=='booklet-app']\" 2>/dev/null"
+_check "booklet-mcp in dump"  "booklet-mcp" \
   "python3 -c \"import json; procs=json.load(open('$HOME/.pm2/dump.pm2')); \
-    [print(p.get('name')) for p in procs if p.get('name')=='readable-mcp']\" 2>/dev/null"
-_check "PM2 watchdog plist"    "com.readable.pm2" \
-  "launchctl list 2>/dev/null | grep com.readable.pm2 | awk '{print \$3}'"
+    [print(p.get('name')) for p in procs if p.get('name')=='booklet-mcp']\" 2>/dev/null"
+_check "PM2 watchdog plist"    "com.booklet.pm2" \
+  "launchctl list 2>/dev/null | grep com.booklet.pm2 | awk '{print \$3}'"
 
 # ── Git hooks ─────────────────────────────────────────────────────────────────
 echo ""

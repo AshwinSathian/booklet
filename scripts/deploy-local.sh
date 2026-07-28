@@ -4,7 +4,7 @@
 # For a redeploy without pulling, run scripts/redeploy.sh directly.
 set -euo pipefail
 
-REPO="/Users/ashwinsathian/Documents/Personal/readable/readable"
+REPO="/Users/ashwinsathian/Documents/Personal/booklet"
 
 cd "$REPO"
 echo "[deploy-local] Pulling latest from remote..."

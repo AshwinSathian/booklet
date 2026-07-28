@@ -35,5 +35,5 @@ function getClientPromise(): Promise<MongoClient> {
 
 export async function getDb(): Promise<Db> {
   const client = await getClientPromise();
-  return client.db("readable");
+  return client.db("booklet");
 }

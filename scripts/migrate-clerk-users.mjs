@@ -91,7 +91,7 @@ async function main() {
 
   const client = new MongoClient(MONGODB_URI);
   await client.connect();
-  const users = client.db("readable").collection("users");
+  const users = client.db("booklet").collection("users");
 
   let created = 0;
   let alreadyClaimed = 0;
