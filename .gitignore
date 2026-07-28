@@ -86,3 +86,6 @@ packages/vscode/*.vsix
 
 # Agent-created git worktrees (scratch, never committed)
 .worktrees/
+
+# Subagent-driven-development scratch workspace (never committed)
+.superpowers/
