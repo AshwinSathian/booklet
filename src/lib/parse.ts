@@ -203,6 +203,35 @@ function inlineFromNodes(nodes: MdNode[], ctx: ParseCtx, depth: number): Inline[
         }
         break;
       }
+      case "textDirective": {
+        // Booklet has no inline text-directive syntax (only :::container
+        // directives — see the "Directive containers" section below) so a
+        // `:name`/`:name[...]`/`:name{...}` fragment reaching here is
+        // always ordinary prose remark-directive misparsed (a colon
+        // immediately followed by directive-name characters, e.g. a time
+        // "10:42", a ratio "16:9", a reference "John 3:16" — anything
+        // matching /:[A-Za-z0-9_-]/  with no preceding space requirement).
+        // Degrade to literal source text instead of silently dropping it,
+        // same "unsupported syntax survives as plain text" rule already
+        // applied to wikilinks and unrecognized callout kinds in this file.
+        const directiveNode = n as unknown as {
+          name?: unknown;
+          children?: MdNode[];
+          attributes?: Record<string, string> | null;
+        };
+        const name = typeof directiveNode.name === "string" ? directiveNode.name : "";
+        const label = plainTextFromNodes(directiveNode.children ?? []);
+        let literal = `:${name}`;
+        if (label) literal += `[${label}]`;
+        if (directiveNode.attributes && Object.keys(directiveNode.attributes).length > 0) {
+          const attrs = Object.entries(directiveNode.attributes)
+            .map(([k, v]) => `${k}=${v}`)
+            .join(" ");
+          literal += `{${attrs}}`;
+        }
+        out.push({ t: "text", v: literal });
+        break;
+      }
       case "break":
         out.push({ t: "text", v: "\n" });
         break;

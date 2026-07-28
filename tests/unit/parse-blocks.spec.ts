@@ -385,3 +385,32 @@ test.describe("depth/count guards against pathological nesting", () => {
     expect(blocks.some((b) => b.t === "paragraph" && b.inl.some((i) => i.t === "text" && i.v.includes("truncated")))).toBe(false);
   });
 });
+
+test.describe("inline text-directive syntax is not silently eaten", () => {
+  test("a bare colon+digits fragment (time-of-day) survives as plain text", () => {
+    const b = firstBlock("Deploy completed at 10:42am.");
+    expect(b.t).toBe("paragraph");
+    if (b.t === "paragraph") {
+      const text = b.inl.map((i) => (i.t === "text" ? i.v : "")).join("");
+      expect(text).toBe("Deploy completed at 10:42am.");
+    }
+  });
+
+  test("a ratio like 16:9 survives as plain text", () => {
+    const b = firstBlock("The aspect ratio is 16:9 on this display.");
+    expect(b.t).toBe("paragraph");
+    if (b.t === "paragraph") {
+      const text = b.inl.map((i) => (i.t === "text" ? i.v : "")).join("");
+      expect(text).toBe("The aspect ratio is 16:9 on this display.");
+    }
+  });
+
+  test("a scripture-style reference like John 3:16 survives as plain text", () => {
+    const b = firstBlock("See John 3:16 for reference.");
+    expect(b.t).toBe("paragraph");
+    if (b.t === "paragraph") {
+      const text = b.inl.map((i) => (i.t === "text" ? i.v : "")).join("");
+      expect(text).toBe("See John 3:16 for reference.");
+    }
+  });
+});
