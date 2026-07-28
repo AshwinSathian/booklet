@@ -229,6 +229,12 @@ function renderInline(i: Inline): string {
       return `<code>${escapeHtml(i.v)}</code>`;
     case "footnoteRef":
       return `<sup><a href="#fn-${escapeAttr(i.id)}" id="fnref-${escapeAttr(i.id)}">[${i.n}]</a></sup>`;
+    case "wikilink":
+      // Private, drafting-time-only concept (src/lib/blocks.ts) — exported
+      // HTML (from the editor's live "Copy as HTML", which parses raw draft
+      // content directly, not the stripped/stored blocks) shows plain text,
+      // never bracket syntax or a broken link.
+      return escapeHtml(i.label ?? i.target);
     default:
       return "";
   }

@@ -4,6 +4,7 @@ import { BLOCKS, STORAGE } from "@/lib/constants";
 import { updatePageRecord } from "@/lib/db";
 import { snapshotPageVersion } from "@/lib/db/versions";
 import { parseToBlocks } from "@/lib/parse";
+import { stripWikilinksFromBlocks } from "@/lib/wikilinks/strip";
 import { stripFrontmatter } from "@/lib/frontmatter";
 import { validateBlocks } from "@/lib/block-schema";
 import { putDoc } from "@/lib/storage";
@@ -62,7 +63,9 @@ export async function PATCH(
     // a client-supplied tree) — deriving from `raw` here closes that gap
     // the same way as the others, rather than adding a third, different
     // partial fix.
-    const blocks = parseToBlocks(stripFrontmatter(payload.raw));
+    // See src/lib/blocks.ts's `Inline` doc comment: wikilinks are private
+    // and drafting-time-only, stripped to plain text before storage.
+    const blocks = stripWikilinksFromBlocks(parseToBlocks(stripFrontmatter(payload.raw)));
     if (!blocks.length) {
       return NextResponse.json({ error: "Nothing to publish" }, { status: 400 });
     }

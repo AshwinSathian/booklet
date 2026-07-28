@@ -1,3 +1,13 @@
+/**
+ * `wikilink` is a drafting-time-only inline (private `[[Draft Title]]`
+ * cross-references between a user's own local drafts — see
+ * src/lib/wikilinks/). It must never reach a stored/published `Block[]`:
+ * every publish/patch route runs `stripWikilinksFromBlocks` (src/lib/
+ * wikilinks/strip.ts) before `validateBlocks`, converting it to plain text.
+ * `block-schema.ts`'s InlineSchema deliberately has no "wikilink" arm, so a
+ * skipped strip step fails publish loudly instead of leaking this private
+ * concept onto a public page.
+ */
 export type Inline =
   | { t: "text"; v: string }
   | { t: "strong"; c: Inline[] }
@@ -7,7 +17,8 @@ export type Inline =
   | { t: "link"; href: string; c: Inline[] }
   | { t: "image"; src: string; alt: string }
   | { t: "math"; v: string }
-  | { t: "footnoteRef"; id: string; n: number };
+  | { t: "footnoteRef"; id: string; n: number }
+  | { t: "wikilink"; target: string; label?: string };
 
 /** A list item. `children` holds nested block content (nested lists, blockquotes, etc). */
 export type ListItem = {

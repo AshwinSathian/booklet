@@ -28,6 +28,11 @@ export function inlineToPlainText(inl: Inline[] | Inline | undefined): string {
     case "math":
     case "footnoteRef":
       return "";
+    case "wikilink":
+      // Drafting-time-only (src/lib/blocks.ts) — a stored/published Block[]
+      // never has one (stripped at publish time), so this only matters for
+      // TOC/reading-time computed against the live editor preview.
+      return inl.label ?? inl.target;
     default:
       return "";
   }

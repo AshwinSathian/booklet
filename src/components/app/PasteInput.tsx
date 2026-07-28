@@ -1,6 +1,8 @@
 "use client";
 
 import { Icon } from "@/components/ui/Icon";
+import { listDrafts, type DraftMeta } from "@/lib/drafts";
+import { getCaretCoordinates } from "@/lib/ui/caret";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 // ---------------------------------------------------------------------------
@@ -572,6 +574,81 @@ function FormatToolbar({
 }
 
 // ---------------------------------------------------------------------------
+// Wikilink autocomplete — `[[` opens a fuzzy picker over the user's own
+// local draft titles (private, per-browser; see src/lib/wikilinks/).
+// ---------------------------------------------------------------------------
+
+type WikilinkTrigger = { start: number; query: string };
+
+/** Detects "cursor is inside an open, unclosed `[[query`" — a `]` or
+ * newline anywhere in between means the bracket run already closed (or was
+ * abandoned), so the popup should not be showing. */
+function detectWikilinkTrigger(value: string, caret: number): WikilinkTrigger | null {
+  const upToCaret = value.slice(0, caret);
+  const openIdx = upToCaret.lastIndexOf("[[");
+  if (openIdx === -1) return null;
+
+  const between = upToCaret.slice(openIdx + 2);
+  if (between.includes("]") || between.includes("\n")) return null;
+
+  return { start: openIdx, query: between };
+}
+
+const WIKILINK_SUGGESTION_LIMIT = 8;
+
+/** Shared by the popup's rendering and the parent's keyboard navigation, so
+ * both always agree on what "selected index N" refers to. */
+function wikilinkMatchTitles(query: string): DraftMeta[] {
+  const q = query.trim().toLowerCase();
+  const all = listDrafts();
+  const filtered = q ? all.filter((d) => d.title.toLowerCase().includes(q)) : all;
+  return filtered.slice(0, WIKILINK_SUGGESTION_LIMIT);
+}
+
+function WikilinkAutocomplete({
+  matches,
+  top,
+  left,
+  selectedIndex,
+  onSelect,
+}: {
+  matches: DraftMeta[];
+  top: number;
+  left: number;
+  selectedIndex: number;
+  onSelect: (title: string) => void;
+}) {
+  if (matches.length === 0) return null;
+
+  return (
+    <div
+      className="fixed z-50 w-64 max-h-56 overflow-y-auto rounded-lg border border-border-subtle bg-bg-elevated py-1 shadow-xl"
+      style={{ top, left }}
+    >
+      {matches.map((d, i) => (
+        <button
+          key={d.id}
+          type="button"
+          // Selecting must not steal focus from the textarea mid-edit.
+          onMouseDown={(e) => {
+            e.preventDefault();
+            onSelect(d.title || "Untitled");
+          }}
+          className={[
+            "w-full truncate px-3 py-1.5 text-left text-xs",
+            i === selectedIndex
+              ? "bg-accent/15 text-text-primary"
+              : "text-text-secondary hover:bg-fill-2",
+          ].join(" ")}
+        >
+          {d.title || "Untitled"}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // PasteInput
 // ---------------------------------------------------------------------------
 
@@ -591,6 +668,9 @@ export function PasteInput({
   const ref = useRef<HTMLTextAreaElement | null>(null);
   const [showFindReplace, setShowFindReplace] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [wikilinkTrigger, setWikilinkTrigger] = useState<WikilinkTrigger | null>(null);
+  const [wikilinkPos, setWikilinkPos] = useState({ top: 0, left: 0 });
+  const [wikilinkSelectedIndex, setWikilinkSelectedIndex] = useState(0);
 
   useEffect(() => {
     if (onFocusShortcutRequested) {
@@ -622,6 +702,54 @@ export function PasteInput({
 
   const charCount = value.length;
   const readingMins = Math.max(1, Math.round(wordCount / 200));
+
+  const wikilinkMatches = useMemo(
+    () => (wikilinkTrigger ? wikilinkMatchTitles(wikilinkTrigger.query) : []),
+    [wikilinkTrigger],
+  );
+
+  const updateWikilinkTrigger = useCallback(
+    (ta: HTMLTextAreaElement, nextValue: string) => {
+      if (ta.selectionStart !== ta.selectionEnd) {
+        setWikilinkTrigger(null);
+        return;
+      }
+
+      const trigger = detectWikilinkTrigger(nextValue, ta.selectionStart);
+      setWikilinkTrigger(trigger);
+      setWikilinkSelectedIndex(0);
+      if (!trigger) return;
+
+      const { top, left, height } = getCaretCoordinates(ta, ta.selectionStart);
+      const rect = ta.getBoundingClientRect();
+      setWikilinkPos({
+        top: rect.top - ta.scrollTop + top + height + 4,
+        left: rect.left - ta.scrollLeft + left,
+      });
+    },
+    [],
+  );
+
+  const selectWikilinkSuggestion = useCallback(
+    (title: string) => {
+      const ta = ref.current;
+      if (!ta || !wikilinkTrigger) return;
+
+      const { start, query } = wikilinkTrigger;
+      const caret = start + 2 + query.length;
+      const insertion = `[[${title}]]`;
+      const newValue = value.slice(0, start) + insertion + value.slice(caret);
+      const newCaret = start + insertion.length;
+
+      onChange(newValue);
+      setWikilinkTrigger(null);
+      requestAnimationFrame(() => {
+        ta.focus();
+        ta.setSelectionRange(newCaret, newCaret);
+      });
+    },
+    [wikilinkTrigger, value, onChange],
+  );
 
   return (
     <>
@@ -666,8 +794,46 @@ export function PasteInput({
           <textarea
             ref={ref}
             value={value}
-            onChange={(e) => onChange(e.target.value)}
+            onChange={(e) => {
+              onChange(e.target.value);
+              updateWikilinkTrigger(e.currentTarget, e.target.value);
+            }}
+            onClick={(e) => updateWikilinkTrigger(e.currentTarget, e.currentTarget.value)}
+            onKeyUp={(e) => {
+              const verticalKeys = ["ArrowUp", "ArrowDown"];
+              // Arrow up/down are consumed below for popup navigation while
+              // it's open — recomputing here too would reset the selected
+              // suggestion back to index 0 on every press.
+              if (wikilinkTrigger && verticalKeys.includes(e.key)) return;
+              if (["ArrowLeft", "ArrowRight", "Home", "End", ...verticalKeys].includes(e.key)) {
+                updateWikilinkTrigger(e.currentTarget, e.currentTarget.value);
+              }
+            }}
             onKeyDown={(e) => {
+              if (wikilinkTrigger && wikilinkMatches.length > 0) {
+                if (e.key === "ArrowDown") {
+                  e.preventDefault();
+                  setWikilinkSelectedIndex((i) => (i + 1) % wikilinkMatches.length);
+                  return;
+                }
+                if (e.key === "ArrowUp") {
+                  e.preventDefault();
+                  setWikilinkSelectedIndex((i) => (i - 1 + wikilinkMatches.length) % wikilinkMatches.length);
+                  return;
+                }
+                if (e.key === "Enter" || e.key === "Tab") {
+                  e.preventDefault();
+                  const chosen = wikilinkMatches[wikilinkSelectedIndex];
+                  if (chosen) selectWikilinkSuggestion(chosen.title || "Untitled");
+                  return;
+                }
+                if (e.key === "Escape") {
+                  e.preventDefault();
+                  setWikilinkTrigger(null);
+                  return;
+                }
+              }
+
               if (e.key !== "Tab") return;
               e.preventDefault();
               const ta = e.currentTarget;
@@ -707,6 +873,10 @@ export function PasteInput({
                 });
               }
             }}
+            // Popup suggestions use onMouseDown+preventDefault (see
+            // WikilinkAutocomplete) so selecting one never fires this —
+            // only a genuine click elsewhere does.
+            onBlur={() => setWikilinkTrigger(null)}
             placeholder="Write or paste Markdown…"
             spellCheck={false}
             className={[
@@ -756,6 +926,16 @@ export function PasteInput({
           </div>
         </div>
       </div>
+
+      {wikilinkTrigger && (
+        <WikilinkAutocomplete
+          matches={wikilinkMatches}
+          top={wikilinkPos.top}
+          left={wikilinkPos.left}
+          selectedIndex={wikilinkSelectedIndex}
+          onSelect={selectWikilinkSuggestion}
+        />
+      )}
 
       {showShortcuts && <ShortcutsModal onClose={() => setShowShortcuts(false)} />}
     </>

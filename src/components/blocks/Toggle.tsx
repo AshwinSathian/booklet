@@ -1,5 +1,6 @@
 import type { Block, DocSettings } from "@/lib/blocks";
 import { Icon } from "@/components/ui/Icon";
+import type { WikilinkRenderCtx } from "@/lib/wikilinks/render-context";
 import { BlockRenderer } from "./BlockRenderer";
 
 export function Toggle({
@@ -8,12 +9,14 @@ export function Toggle({
   settings,
   headingAnchors,
   keyPrefix,
+  wikilinkCtx,
 }: {
   summary: string;
   blocks: Block[];
   settings: DocSettings;
   headingAnchors?: Record<string, string>;
   keyPrefix: string;
+  wikilinkCtx?: WikilinkRenderCtx;
 }) {
   return (
     <details className="group rounded-xl border border-border-default bg-bg-elevated px-4 py-3 open:pb-4">
@@ -29,6 +32,7 @@ export function Toggle({
           settings={settings}
           headingAnchors={headingAnchors}
           keyPrefix={keyPrefix}
+          wikilinkCtx={wikilinkCtx}
         />
       </div>
     </details>

@@ -77,6 +77,19 @@ test.describe("validateBlocks", () => {
     expect(validateBlocks(blocks)).not.toBeNull();
   });
 
+  // Milestone 1 of PLAN-obsidian-parity.md: `wikilink` is a private,
+  // drafting-time-only Inline (src/lib/blocks.ts) that every publish/patch
+  // route strips to plain text before calling validateBlocks (see
+  // src/lib/wikilinks/strip.ts). InlineSchema deliberately has no "wikilink"
+  // arm — this is the safety net that turns a skipped strip step into a
+  // loud publish failure instead of a silently leaked private concept.
+  test("rejects a paragraph containing an un-stripped wikilink inline", () => {
+    const blocks = [
+      { t: "paragraph", inl: [{ t: "wikilink", target: "Some Draft" }] },
+    ];
+    expect(validateBlocks(blocks)).not.toBeNull();
+  });
+
   test("rejects a callout with an unrecognized kind", () => {
     const blocks = [{ t: "callout", kind: "danger", blocks: [] }];
     expect(validateBlocks(blocks)).not.toBeNull();

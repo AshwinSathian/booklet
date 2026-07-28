@@ -6,6 +6,7 @@ import { deletePageVersions, snapshotPageVersion } from "@/lib/db/versions";
 import { recordPublishEvent } from "@/lib/db/publish-events";
 import { resolveApiKey } from "@/lib/api-key-auth";
 import { parseToBlocks } from "@/lib/parse";
+import { stripWikilinksFromBlocks } from "@/lib/wikilinks/strip";
 import { validateBlocks } from "@/lib/block-schema";
 import { collectRichBlockKinds } from "@/lib/block-usage";
 import { getDoc, putDoc, deleteDoc } from "@/lib/storage";
@@ -150,7 +151,9 @@ export async function PATCH(
     // `blocks` is always derived server-side from `raw` — see
     // src/lib/block-schema.ts's header for why a client-supplied block tree
     // is no longer accepted.
-    const blocks = parseToBlocks(payload.raw);
+    // See src/lib/blocks.ts's `Inline` doc comment: wikilinks are private
+    // and drafting-time-only, stripped to plain text before storage.
+    const blocks = stripWikilinksFromBlocks(parseToBlocks(payload.raw));
     if (!blocks.length) {
       return NextResponse.json(
         { error: "Nothing to publish — the document is empty." },

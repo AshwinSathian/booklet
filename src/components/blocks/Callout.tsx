@@ -2,6 +2,7 @@ import type { Block, CalloutKind, DocSettings } from "@/lib/blocks";
 import type { IconName } from "@/components/ui/Icon";
 import { Icon } from "@/components/ui/Icon";
 import { CALLOUT_META } from "@/lib/render-shared";
+import type { WikilinkRenderCtx } from "@/lib/wikilinks/render-context";
 import { BlockRenderer } from "./BlockRenderer";
 
 // Tailwind color classes are React/CSS-specific and have no equivalent in
@@ -24,12 +25,14 @@ export function Callout({
   settings,
   headingAnchors,
   keyPrefix,
+  wikilinkCtx,
 }: {
   kind: CalloutKind;
   blocks: Block[];
   settings: DocSettings;
   headingAnchors?: Record<string, string>;
   keyPrefix: string;
+  wikilinkCtx?: WikilinkRenderCtx;
 }) {
   const meta = CALLOUT_META[kind];
   const iconMeta = CALLOUT_ICON_CLASSES[kind];
@@ -49,6 +52,7 @@ export function Callout({
           settings={settings}
           headingAnchors={headingAnchors}
           keyPrefix={keyPrefix}
+          wikilinkCtx={wikilinkCtx}
         />
       </div>
     </div>

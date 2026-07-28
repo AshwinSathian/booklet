@@ -1,4 +1,5 @@
 import type { Block, DocSettings } from "@/lib/blocks";
+import type { WikilinkRenderCtx } from "@/lib/wikilinks/render-context";
 import { BlockRenderer } from "./BlockRenderer";
 
 // Written out as literal class strings (not built from a template literal)
@@ -15,11 +16,13 @@ export function Columns({
   settings,
   headingAnchors,
   keyPrefix,
+  wikilinkCtx,
 }: {
   columns: Block[][];
   settings: DocSettings;
   headingAnchors?: Record<string, string>;
   keyPrefix: string;
+  wikilinkCtx?: WikilinkRenderCtx;
 }) {
   const gridClass = GRID_COLS_CLASS[columns.length] ?? GRID_COLS_CLASS[2];
 
@@ -32,6 +35,7 @@ export function Columns({
             settings={settings}
             headingAnchors={headingAnchors}
             keyPrefix={`${keyPrefix}.${i}`}
+            wikilinkCtx={wikilinkCtx}
           />
         </div>
       ))}

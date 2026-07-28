@@ -4,6 +4,7 @@ import { BlockRenderer } from "@/components/blocks/BlockRenderer";
 import { Button } from "@/components/ui/Button";
 import type { Block, DocSettings } from "@/lib/blocks";
 import { SAMPLE_MARKDOWN } from "@/lib/sample";
+import type { WikilinkRenderCtx } from "@/lib/wikilinks/render-context";
 import { useState } from "react";
 
 export function PreviewPane({
@@ -12,12 +13,20 @@ export function PreviewPane({
   isEmpty,
   isBusy,
   onInsertSample,
+  wikilinkCtx,
+  backlinksCount = 0,
+  onOpenBacklinks,
+  onOpenGraph,
 }: {
   blocks: Block[];
   settings: DocSettings;
   isEmpty: boolean;
   isBusy: boolean;
   onInsertSample?: () => void;
+  wikilinkCtx?: WikilinkRenderCtx;
+  backlinksCount?: number;
+  onOpenBacklinks?: () => void;
+  onOpenGraph?: () => void;
 }) {
   const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
 
@@ -37,10 +46,32 @@ export function PreviewPane({
       {/* Pane label */}
       <div className="shrink-0 flex items-center justify-between px-3 py-2 border-b border-border-subtle bg-bg-soft/50">
         <span className="text-2xs font-medium text-text-muted/60 tracking-wide">Preview</span>
-        <span className="flex items-center gap-1 text-2xs text-text-muted/40">
-          <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500/70 animate-dot-pulse" aria-hidden />
-          Live
-        </span>
+        <div className="flex items-center gap-3">
+          {onOpenBacklinks && (
+            <button
+              type="button"
+              onClick={onOpenBacklinks}
+              title="Linked mentions — drafts that reference this one via [[wikilinks]]"
+              className="text-2xs text-text-muted/60 transition hover:text-text-primary"
+            >
+              {backlinksCount > 0 ? `${backlinksCount} linked mention${backlinksCount === 1 ? "" : "s"}` : "Backlinks"}
+            </button>
+          )}
+          {onOpenGraph && (
+            <button
+              type="button"
+              onClick={onOpenGraph}
+              title="Graph — private visualization of your linked drafts"
+              className="text-2xs text-text-muted/60 transition hover:text-text-primary"
+            >
+              Graph
+            </button>
+          )}
+          <span className="flex items-center gap-1 text-2xs text-text-muted/40">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500/70 animate-dot-pulse" aria-hidden />
+            Live
+          </span>
+        </div>
       </div>
 
       {/* Preview surface — bg-bg-soft differentiates it from the editor pane */}
@@ -56,7 +87,7 @@ export function PreviewPane({
           <EmptyState onInsertSample={onInsertSample} onCopySample={onCopySample} copyState={copyState} />
         ) : (
           <div className="h-full w-full overflow-y-auto px-4 py-5">
-            <BlockRenderer blocks={blocks} settings={settings} />
+            <BlockRenderer blocks={blocks} settings={settings} wikilinkCtx={wikilinkCtx} />
           </div>
         )}
       </div>

@@ -7,6 +7,7 @@ import { extractDocTitle } from "@/lib/doc-title";
 import { snapshotPageVersion } from "@/lib/db/versions";
 import { recordPublishEvent } from "@/lib/db/publish-events";
 import { parseToBlocks } from "@/lib/parse";
+import { stripWikilinksFromBlocks } from "@/lib/wikilinks/strip";
 import { stripFrontmatter } from "@/lib/frontmatter";
 import { putDoc } from "@/lib/storage";
 import { validateBlocks } from "@/lib/block-schema";
@@ -60,7 +61,11 @@ export async function POST(req: Request) {
     // visible for editing (see stripFrontmatter's own doc comment) — it's
     // not part of the rendered document, so it's stripped here the same way
     // the client used to strip it before computing `blocks` itself.
-    const blocks = parseToBlocks(stripFrontmatter(payload.raw));
+    // Wikilinks (`[[...]]`) are a private, drafting-time-only concept (see
+    // src/lib/blocks.ts's `Inline` doc comment) — stripped to plain text
+    // before this ever reaches validateBlocks/storage, so a published page
+    // never carries the private-linking concept.
+    const blocks = stripWikilinksFromBlocks(parseToBlocks(stripFrontmatter(payload.raw)));
     if (!blocks.length) {
       return NextResponse.json({ error: "Nothing to publish" }, { status: 400 });
     }

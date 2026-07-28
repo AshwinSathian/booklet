@@ -6,6 +6,7 @@ import remarkParse from "remark-parse";
 import { unified } from "unified";
 import { visit } from "unist-util-visit";
 import { SKIP } from "unist-util-visit-parents";
+import { splitWikilinksInInlines } from "./wikilinks/parse";
 import {
   CALLOUT_KINDS,
   COLUMNS_MAX,
@@ -210,7 +211,11 @@ function inlineFromNodes(nodes: MdNode[], ctx: ParseCtx, depth: number): Inline[
         break;
     }
   }
-  return mergeAdjacentText(out);
+  // `[[Target]]`/`[[Target|Label]]` never forms a valid CommonMark
+  // link/reference, so it survives remark-parse as literal text — detected
+  // here by regex over the merged text runs, the same style already used
+  // for the `> [!NOTE]` callout marker (tryParseCallout, below).
+  return splitWikilinksInInlines(mergeAdjacentText(out));
 }
 
 function mergeAdjacentText(inl: Inline[]): Inline[] {

@@ -1,6 +1,8 @@
 "use client";
 
 import { AppShell } from "@/components/app/AppShell";
+import { BacklinksPanel } from "@/components/app/BacklinksPanel";
+import { GraphView } from "@/components/app/GraphView";
 import { PasteInput } from "@/components/app/PasteInput";
 import { PreviewPane } from "@/components/app/PreviewPane";
 import { TopBar } from "@/components/app/TopBar";
@@ -20,9 +22,17 @@ import {
   setActiveDraftId,
   setCloudSyncUser,
   setDraftLastPublished,
+  subscribeToDraftMutations,
   updateDraft,
 } from "@/lib/drafts";
 import { parseToBlocks } from "@/lib/parse";
+import {
+  backlinksForTitle,
+  buildWikilinkIndex,
+  isTitleResolved,
+  resolvedDraftId,
+} from "@/lib/wikilinks";
+import type { WikilinkRenderCtx } from "@/lib/wikilinks/render-context";
 import { SAMPLE_MARKDOWN } from "@/lib/sample";
 import { normalizeInput } from "@/lib/sanitize";
 import { getTemplateBySlug } from "@/lib/templates";
@@ -63,6 +73,10 @@ function AppPageContent() {
   const [copyLinkPulse, setCopyLinkPulse] = useState(false);
 
   const [focusMode, setFocusMode] = useState(false);
+
+  const [wikilinkVersion, setWikilinkVersion] = useState(0);
+  const [showBacklinks, setShowBacklinks] = useState(false);
+  const [showGraph, setShowGraph] = useState(false);
 
   const toast = useToast();
   const { isLoaded: isUserLoaded, isSignedIn, userId } = useSession();
@@ -295,6 +309,28 @@ function AppPageContent() {
     });
   }, [isUserLoaded, isSignedIn, userId, activeDraftId]);
 
+  // Rebuild the private wikilink index (backlinks + title resolution) on
+  // every local draft mutation (create/rename/delete/autosave) — recomputed
+  // from scratch each time (see buildWikilinkIndex's own doc comment for why
+  // that's fine at this scale) rather than maintained incrementally.
+  useEffect(() => {
+    const unsubscribe = subscribeToDraftMutations(() => {
+      setWikilinkVersion((v) => v + 1);
+    });
+    return unsubscribe;
+  }, []);
+
+  const wikilinkIndex = useMemo(
+    () => buildWikilinkIndex(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [wikilinkVersion],
+  );
+
+  const backlinks = useMemo(
+    () => backlinksForTitle(wikilinkIndex, draftTitle),
+    [wikilinkIndex, draftTitle],
+  );
+
   const normalized = useMemo(
     // Strip frontmatter for rendering/parsing — the raw textarea preserves it for editing.
     () => normalizeInput(stripFrontmatter(raw)),
@@ -445,6 +481,22 @@ function AppPageContent() {
       }
     },
     [flushPendingAutosave, settings, setSaveStateSmoothed],
+  );
+
+  const onNavigateWikilink = useCallback(
+    (target: string) => {
+      const id = resolvedDraftId(wikilinkIndex, target);
+      if (id) onSwitchDraft(id, "unknown");
+    },
+    [wikilinkIndex, onSwitchDraft],
+  );
+
+  const wikilinkRenderCtx: WikilinkRenderCtx = useMemo(
+    () => ({
+      isResolved: (target) => isTitleResolved(wikilinkIndex, target),
+      onNavigate: onNavigateWikilink,
+    }),
+    [wikilinkIndex, onNavigateWikilink],
   );
 
   const onNew = useCallback(() => {
@@ -793,10 +845,29 @@ function AppPageContent() {
               isBusy={isBusy}
               isEmpty={isEmpty}
               onInsertSample={onInsertSample}
+              wikilinkCtx={wikilinkRenderCtx}
+              backlinksCount={backlinks.length}
+              onOpenBacklinks={() => setShowBacklinks(true)}
+              onOpenGraph={() => setShowGraph(true)}
             />
           }
         />
       </div>
+
+      <BacklinksPanel
+        visible={showBacklinks}
+        draftTitle={draftTitle}
+        backlinks={backlinks}
+        onHide={() => setShowBacklinks(false)}
+        onOpenDraft={(id) => onSwitchDraft(id, "unknown")}
+      />
+
+      <GraphView
+        visible={showGraph}
+        activeDraftId={activeDraftId}
+        onHide={() => setShowGraph(false)}
+        onOpenDraft={(id) => onSwitchDraft(id, "unknown")}
+      />
     </div>
   );
 }

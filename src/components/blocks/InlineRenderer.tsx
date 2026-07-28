@@ -1,9 +1,19 @@
 import type { Inline } from "@/lib/blocks";
 import { sanitizeImageUrl, sanitizeUrl } from "@/lib/render-shared";
+import type { WikilinkRenderCtx } from "@/lib/wikilinks/render-context";
 import React from "react";
 import { InlineMath } from "./InlineMath";
 
-export function InlineRenderer({ inl }: { inl: Inline[] }) {
+export function InlineRenderer({
+  inl,
+  wikilinkCtx,
+}: {
+  inl: Inline[];
+  /** Omitted for a published page — a stored `Block[]` never contains a
+   * `wikilink` node (see src/lib/wikilinks/strip.ts), so this only matters
+   * for the editor's live preview. */
+  wikilinkCtx?: WikilinkRenderCtx;
+}) {
   return (
     <>
       {inl.map((node, i) => {
@@ -13,19 +23,19 @@ export function InlineRenderer({ inl }: { inl: Inline[] }) {
           case "strong":
             return (
               <strong key={i} className="font-semibold text-text-primary">
-                <InlineRenderer inl={node.c} />
+                <InlineRenderer inl={node.c} wikilinkCtx={wikilinkCtx} />
               </strong>
             );
           case "em":
             return (
               <em key={i} className="italic text-text-primary">
-                <InlineRenderer inl={node.c} />
+                <InlineRenderer inl={node.c} wikilinkCtx={wikilinkCtx} />
               </em>
             );
           case "del":
             return (
               <s key={i} className="text-text-muted">
-                <InlineRenderer inl={node.c} />
+                <InlineRenderer inl={node.c} wikilinkCtx={wikilinkCtx} />
               </s>
             );
           case "code":
@@ -47,7 +57,7 @@ export function InlineRenderer({ inl }: { inl: Inline[] }) {
                 rel="noreferrer"
                 className="text-accent-soft underline decoration-accent/40 underline-offset-4 transition hover:decoration-accent-soft"
               >
-                <InlineRenderer inl={node.c} />
+                <InlineRenderer inl={node.c} wikilinkCtx={wikilinkCtx} />
               </a>
             );
           }
@@ -80,6 +90,32 @@ export function InlineRenderer({ inl }: { inl: Inline[] }) {
                 </a>
               </sup>
             );
+          case "wikilink": {
+            const label = node.label ?? node.target;
+            const resolved = wikilinkCtx?.isResolved(node.target) ?? false;
+            return (
+              <button
+                key={i}
+                type="button"
+                onClick={() => {
+                  if (resolved) wikilinkCtx?.onNavigate?.(node.target);
+                }}
+                title={
+                  resolved
+                    ? `Open "${label}"`
+                    : `No draft titled "${node.target}" yet`
+                }
+                className={[
+                  "rounded px-1 py-0.5 text-[0.95em] font-medium align-baseline",
+                  resolved
+                    ? "bg-accent/10 text-accent-soft transition hover:bg-accent/20 cursor-pointer"
+                    : "bg-fill-2 text-text-muted cursor-default",
+                ].join(" ")}
+              >
+                {label}
+              </button>
+            );
+          }
           default:
             return null;
         }

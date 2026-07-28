@@ -239,6 +239,25 @@ export function getDraft(id: string): DraftDoc | null {
   return db.drafts[id] ?? null;
 }
 
+/**
+ * Every local draft in full (not just the `DraftMeta` projection
+ * `listDrafts()` returns) — one `readDb()` call regardless of draft count.
+ * Used by the wikilink backlink index (src/lib/wikilinks/index.ts), which
+ * needs each draft's `raw` content to find its outbound `[[links]]`; calling
+ * `getDraft()` in a loop would re-parse the whole localStorage blob once per
+ * draft instead of once total.
+ */
+export function listDraftDocs(): DraftDoc[] {
+  const db = readDb();
+  const out = Object.values(db.drafts);
+
+  out.sort((a, b) =>
+    a.updatedAt < b.updatedAt ? 1 : a.updatedAt > b.updatedAt ? -1 : 0,
+  );
+
+  return out;
+}
+
 export function createDraft(initial?: DraftCreateInput): DraftDoc {
   const db = readDb();
   const id = createDraftId();

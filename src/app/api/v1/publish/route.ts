@@ -10,6 +10,7 @@ import { recordPublishEvent } from "@/lib/db/publish-events";
 import { parseFrontmatter } from "@/lib/frontmatter";
 import { deliverWebhooks } from "@/lib/webhook-delivery";
 import { parseToBlocks } from "@/lib/parse";
+import { stripWikilinksFromBlocks } from "@/lib/wikilinks/strip";
 import { validateBlocks } from "@/lib/block-schema";
 import { collectRichBlockKinds } from "@/lib/block-usage";
 import { putDoc } from "@/lib/storage";
@@ -58,7 +59,9 @@ export async function POST(req: Request) {
   // an unvalidated client-supplied tree, reachable by any API key holder,
   // was a stack-overflow DoS vector once its recursive consumers (the React
   // renderer, the HTML exporter, the TOC builder) were traced end to end.
-  const blocks = parseToBlocks(body);
+  // See src/lib/blocks.ts's `Inline` doc comment: wikilinks are private
+  // and drafting-time-only, stripped to plain text before storage.
+  const blocks = stripWikilinksFromBlocks(parseToBlocks(body));
   if (!blocks.length) {
     return NextResponse.json({ error: "Nothing to publish — the document is empty." }, { status: 400 });
   }

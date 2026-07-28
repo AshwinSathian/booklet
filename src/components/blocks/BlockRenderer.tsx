@@ -2,6 +2,7 @@
 
 import type { Block, DocSettings, TableAlign } from "@/lib/blocks";
 import { sanitizeImageUrl } from "@/lib/render-shared";
+import type { WikilinkRenderCtx } from "@/lib/wikilinks/render-context";
 import dynamic from "next/dynamic";
 import type { JSX } from "react";
 import { Callout } from "./Callout";
@@ -65,11 +66,14 @@ export function BlockRenderer({
   settings,
   headingAnchors,
   keyPrefix,
+  wikilinkCtx,
 }: {
   blocks: Block[];
   settings: DocSettings;
   headingAnchors?: Record<string, string>;
   keyPrefix?: string;
+  /** Editor live-preview only — see InlineRenderer's doc comment. */
+  wikilinkCtx?: WikilinkRenderCtx;
 }) {
   const serif = isSerifMode(settings);
   // First top-level paragraph (either the very first block, or the first
@@ -151,7 +155,7 @@ export function BlockRenderer({
                       anchor-link item. */}
                   <span className="inline-flex items-center gap-2">
                     <span>
-                      <InlineRenderer inl={b.inl} />
+                      <InlineRenderer inl={b.inl} wikilinkCtx={wikilinkCtx} />
                     </span>
                     {anchorId ? (
                       <a
@@ -194,7 +198,7 @@ export function BlockRenderer({
                     isLede ? "text-[1.15em]" : "",
                   ].join(" ")}
                 >
-                  <InlineRenderer inl={b.inl} />
+                  <InlineRenderer inl={b.inl} wikilinkCtx={wikilinkCtx} />
                 </p>
               );
             }
@@ -213,11 +217,11 @@ export function BlockRenderer({
                           className="mt-1 shrink-0 cursor-default accent-accent"
                         />
                         <span className={item.checked ? "line-through text-text-muted" : ""}>
-                          <InlineRenderer inl={item.inl} />
+                          <InlineRenderer inl={item.inl} wikilinkCtx={wikilinkCtx} />
                         </span>
                       </span>
                     ) : (
-                      <InlineRenderer inl={item.inl} />
+                      <InlineRenderer inl={item.inl} wikilinkCtx={wikilinkCtx} />
                     )}
                     {item.children?.length ? (
                       <BlockRenderer
@@ -225,6 +229,7 @@ export function BlockRenderer({
                         settings={settings}
                         headingAnchors={headingAnchors}
                         keyPrefix={`${blockKey}.${i}`}
+                        wikilinkCtx={wikilinkCtx}
                       />
                     ) : null}
                   </li>
@@ -267,6 +272,7 @@ export function BlockRenderer({
                       settings={settings}
                       headingAnchors={headingAnchors}
                       keyPrefix={blockKey}
+                      wikilinkCtx={wikilinkCtx}
                     />
                   </div>
                 </div>
@@ -281,6 +287,7 @@ export function BlockRenderer({
                   settings={settings}
                   headingAnchors={headingAnchors}
                   keyPrefix={blockKey}
+                  wikilinkCtx={wikilinkCtx}
                 />
               );
 
@@ -293,6 +300,7 @@ export function BlockRenderer({
                   settings={settings}
                   headingAnchors={headingAnchors}
                   keyPrefix={blockKey}
+                  wikilinkCtx={wikilinkCtx}
                 />
               );
 
@@ -304,6 +312,7 @@ export function BlockRenderer({
                   settings={settings}
                   headingAnchors={headingAnchors}
                   keyPrefix={blockKey}
+                  wikilinkCtx={wikilinkCtx}
                 />
               );
 
@@ -338,7 +347,7 @@ export function BlockRenderer({
                               tableAlignClass(b.align, i),
                             ].join(" ")}
                           >
-                            <InlineRenderer inl={cell} />
+                            <InlineRenderer inl={cell} wikilinkCtx={wikilinkCtx} />
                           </th>
                         ))}
                       </tr>
@@ -354,7 +363,7 @@ export function BlockRenderer({
                                 tableAlignClass(b.align, c),
                               ].join(" ")}
                             >
-                              <InlineRenderer inl={cell} />
+                              <InlineRenderer inl={cell} wikilinkCtx={wikilinkCtx} />
                             </td>
                           ))}
                         </tr>
@@ -414,6 +423,7 @@ export function BlockRenderer({
                             // toc.ts's anchorMap is keyed by that same
                             // walkBlocks path via containerChildGroups.
                             keyPrefix={b.items.length > 1 ? `${blockKey}.${i}` : blockKey}
+                            wikilinkCtx={wikilinkCtx}
                           />
                         </span>{" "}
                         <a
