@@ -69,27 +69,34 @@
      "Colour System" for the research/rationale (an editorial ink-and-paper
      palette tied to what "Booklet" literally means, versus the generic
      dark-mode-plus-violet look shared by most dev-tool SaaS brands).
-     Contrast verified against the same bars the old purple held itself to:
-     --color-accent as a button bg with a white label: 7.02:1 (old: 5.02:1).
-     --color-accent-soft as text/icon color directly on --color-bg: 7.79:1
-     (old: 7.72:1) — these are deliberately two different shades, not one
+     Contrast verified against the same bars the old purple held itself to
+     (re-verified via `node scripts/check-contrast.mjs`, current retuned
+     hexes below):
+     --color-accent as a button bg with a white label: 5.43:1 (min 4.5:1).
+     --color-accent-soft as text/icon color directly on --color-bg: 8.13:1
+     (min 4.5:1) — these are deliberately two different shades, not one
      color reused, because a single hex can't hit both roles' contrast needs
      at once (confirmed by checking the old purple's own accent vs.
-     accent-soft split before choosing these). */
+     accent-soft split before choosing these). Note: --color-accent itself,
+     used as bare *text* directly on --color-bg (not as a button fill), sits
+     at 3.64:1 — a known, disclosed pre-existing gap tracked as a
+     KNOWN-GAP row in check-contrast.mjs rather than silently ignored. */
   --color-accent:       #c2334a;          /* Booklet ink — action/active       */
   --color-accent-hover: #a82940;
   --color-accent-soft:  #ec8a95;          /* for focus rings, secondary tints  */
   --color-accent-warm:  #d99a3d;          /* ochre — warnings, expiry          */
-  --color-accent-dim:   rgba(161, 47, 62, 0.14); /* icon backgrounds          */
+  --color-accent-dim:   rgba(194, 51, 74, 0.14); /* icon backgrounds          */
   /* Warm paper tone — aged-paper cream, the other half of "Ink & Paper".
-     Used in exactly one place: the "translated" side of the before/after
-     comparison on the marketing page (ProblemMock), and the fold detail on
-     the logo mark — never as general-purpose app chrome. See BRAND.md's
-     "Signature Element" section. */
+     Promoted from a two-place accent (old BRAND.md "Signature Element"
+     rule) to the dominant read-mode surface — see "The Reveal" in
+     docs/superpowers/specs/2026-07-28-visual-elevation-design.md. Now used
+     broadly wherever a "reveal"/read-mode payoff happens: the hero's
+     scroll-transformation end state, auth screens' editorial side panel,
+     template gallery previews, the publish confirmation — not just the
+     original before/after comparison and the logo's fold detail. */
   --color-paper:        #f4ecdc;
-  /* Paper surface tones — promoted from a two-place accent (old BRAND.md
-     "Signature Element" rule) to the dominant read-mode surface. See "The
-     Reveal" in docs/superpowers/specs/2026-07-28-visual-elevation-design.md. */
+  /* Rest of the paper depth hierarchy — secondary surface plus the two
+     text-on-paper roles — alongside --color-paper above. */
   --color-paper-dim:           #e9dfc8;  /* secondary paper surface, hover states */
   --color-paper-ink:           #1d1a14;  /* primary text ON a paper surface */
   --color-paper-ink-secondary: #5c5546;  /* secondary text ON a paper surface */
@@ -109,9 +116,9 @@
   --color-outline-soft: rgba(255, 255, 255, 0.05);
 
   /* ── Shadows (DARK) ─────────────────────────────────────────────────────── */
-  --shadow-soft:  0 4px 14px rgba(161, 47, 62, 0.35);   /* primary btn glow   */
+  --shadow-soft:  0 4px 14px rgba(194, 51, 74, 0.35);   /* primary btn glow   */
   --shadow-glass: 0 8px 48px rgba(0, 0, 0, 0.70);       /* hero mock shadow   */
-  --shadow-glow:  0 0 80px rgba(161, 47, 62, 0.20);     /* CTA section glow   */
+  --shadow-glow:  0 0 80px rgba(194, 51, 74, 0.20);     /* CTA section glow   */
   --shadow-card:  0 1px 2px rgba(0, 0, 0, 0.60), 0 4px 24px rgba(0, 0, 0, 0.40);
   --shadow-print: 0 2px 0 0 rgba(0, 0, 0, 0.9);   /* hard offset, no blur — printed-card feel */
 
@@ -143,7 +150,7 @@ html.light {
   --color-accent-hover: #a52f42;
   --color-accent-soft:  #d16577;
   --color-accent-warm:  #b5791f;
-  --color-accent-dim:   rgba(171, 66, 82, 0.10);
+  --color-accent-dim:   rgba(194, 60, 80, 0.10);
   --color-paper:        #f4ecdc;
   --color-paper-dim:           #e9dfc8;
   --color-paper-ink:           #1d1a14;
@@ -164,9 +171,9 @@ html.light {
   --color-outline-soft: rgba(0, 0, 0, 0.05);
 
   /* ── Shadows (LIGHT) ────────────────────────────────────────────────────── */
-  --shadow-soft:  0 4px 14px rgba(171, 66, 82, 0.28);
+  --shadow-soft:  0 4px 14px rgba(194, 60, 80, 0.28);
   --shadow-glass: 0 4px 24px rgba(0, 0, 0, 0.10);
-  --shadow-glow:  0 0 60px rgba(171, 66, 82, 0.14);
+  --shadow-glow:  0 0 60px rgba(194, 60, 80, 0.14);
   --shadow-card:  0 1px 2px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.06);
   --shadow-print: 0 2px 0 0 rgba(0, 0, 0, 0.12);
 
@@ -464,23 +471,21 @@ a, button, [role="button"], input, select, textarea {
   background: var(--scrollbar-thumb-hover);
 }
 
-/* Hides an element's native scrollbar while preserving scroll behaviour
-   (wheel/trackpad/keyboard scrolling all keep working — only the visual
-   scrollbar box disappears). Used by the editor's textarea (PasteInput.tsx):
-   a visible scrollbar reserves a gutter that shrinks the textarea's
-   clientWidth relative to SyntaxOverlay's same-padding sibling div (which
-   never has a scrollbar of its own — its scroll position is driven by a
-   synced transform, not native overflow). That width mismatch makes the
-   two elements word-wrap long lines differently once a document is tall
-   enough to scroll, compounding into visible vertical drift line by line.
-   Hiding the scrollbar keeps both elements wrapping against the identical
-   width at all times, regardless of scroll state. */
-.hide-scrollbar {
-  scrollbar-width: none;     /* Firefox */
-  -ms-overflow-style: none;  /* Legacy Edge/IE */
-}
-.hide-scrollbar::-webkit-scrollbar {
-  display: none;             /* Chrome/Safari/Chromium Edge */
+/* Reserves a permanently-stable scrollbar gutter, applied to BOTH the
+   editor's textarea and SyntaxOverlay's outer wrapper (PasteInput.tsx /
+   SyntaxOverlay.tsx): without this, a visible scrollbar reserves a gutter
+   that shrinks the textarea's clientWidth relative to SyntaxOverlay's
+   same-padding sibling div (which never scrolls natively — its scroll
+   position is driven by a synced transform, not native overflow). That
+   width mismatch makes the two elements word-wrap long lines differently
+   once a document is tall enough to scroll, compounding into visible
+   vertical drift line by line. `scrollbar-gutter: stable` fixes this
+   without hiding the scrollbar (unlike the earlier `.hide-scrollbar`
+   approach this replaces): both elements reserve the identical gutter
+   width at all times, scrolling or not, so the user keeps their only
+   scroll-position affordance on documents that can run to 200KB. */
+.scrollbar-stable {
+  scrollbar-gutter: stable;
 }
 
 /* ── Syntax highlight tokens (highlight.js, dark) ───────────────────────── */

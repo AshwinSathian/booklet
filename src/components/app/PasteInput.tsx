@@ -4,7 +4,7 @@ import { Icon } from "@/components/ui/Icon";
 import { SyntaxOverlay } from "@/components/app/SyntaxOverlay";
 import { listDrafts, type DraftMeta } from "@/lib/drafts";
 import { getCaretCoordinates } from "@/lib/ui/caret";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 
 // ---------------------------------------------------------------------------
 // Format actions
@@ -667,6 +667,12 @@ export function PasteInput({
   onInsertSample?: () => void;
 }) {
   const ref = useRef<HTMLTextAreaElement | null>(null);
+  // Deferred so re-tokenizing/re-rendering SyntaxOverlay (a per-keystroke
+  // cost that scales with document size — measured ~150ms/keystroke at
+  // 150KB, within the app's 200KB document cap) never blocks typing
+  // latency. The overlay can lag the real value by a frame on very large
+  // docs; the textarea itself (and its value) are never deferred.
+  const deferredValue = useDeferredValue(value);
   // The syntax overlay sits behind the (now text-transparent) textarea and
   // must scroll in lockstep with it. Synced imperatively via this ref on
   // the textarea's onScroll rather than React state, so a fast scroll
@@ -801,7 +807,7 @@ export function PasteInput({
               to prose. Positioned exactly behind the textarea (identical
               font/line-height/padding) — see SyntaxOverlay for why a
               synced overlay div, not partial in-textarea coloring. */}
-          <SyntaxOverlay ref={overlayContentRef} value={value} />
+          <SyntaxOverlay ref={overlayContentRef} value={deferredValue} />
           <textarea
             ref={ref}
             value={value}
@@ -900,10 +906,11 @@ export function PasteInput({
               // gutter that shrinks this element's content-box width
               // relative to SyntaxOverlay's (which never scrolls natively)
               // — wrapping the same text at two different widths once a
-              // document is tall enough to scroll. hide-scrollbar (see
-              // globals.css) keeps the two elements' wrap width identical
-              // at all times without losing scroll functionality.
-              "resize-none overflow-y-auto hide-scrollbar",
+              // document is tall enough to scroll. scrollbar-stable (see
+              // globals.css) reserves the identical gutter on both elements
+              // at all times, keeping wrap width in sync without hiding the
+              // scrollbar (the user's only scroll-position affordance).
+              "resize-none overflow-y-auto scrollbar-stable",
               // Native text is fully transparent — SyntaxOverlay behind this
               // element renders everything the user actually sees (both
               // prose and dimmed syntax), since a plain textarea can't

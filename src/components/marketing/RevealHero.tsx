@@ -24,8 +24,9 @@ const SAMPLE: Segment[] = [
   { text: "\n\n", kind: "syntax" },
   { text: "**", kind: "syntax" },
   { text: "Severity:", kind: "prose" },
-  { text: "** P1, ", kind: "syntax" },
-  { text: "resolved in 13 minutes.", kind: "prose" },
+  { text: "**", kind: "syntax" },
+  { text: " P1,", kind: "prose" },
+  { text: " resolved in 13 minutes.", kind: "prose" },
 ];
 
 export function RevealHero() {

@@ -50,6 +50,12 @@ export const SyntaxOverlay = forwardRef<HTMLDivElement, { value: string }>(
         aria-hidden
         className={[
           "pointer-events-none absolute inset-0 overflow-hidden",
+          // Reserves the same scrollbar gutter as the textarea it sits
+          // behind (see .scrollbar-stable in globals.css) so both wrap
+          // long lines against an identical content-box width regardless
+          // of the textarea's actual scroll state — without this, the two
+          // elements can word-wrap differently and drift out of sync.
+          "scrollbar-stable",
           "whitespace-pre-wrap break-words",
           "font-mono text-sm leading-[1.65]",
           "px-5 py-4",

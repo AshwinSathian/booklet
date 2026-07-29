@@ -5,6 +5,7 @@ export type TemplatePreviewCardProps = {
   description: string;
   slug: string;
   content: string;
+  category?: string;
 };
 
 /**
@@ -56,7 +57,7 @@ function cleanLine(line: string): string {
     .trim();
 }
 
-export function TemplatePreviewCard({ name, description, slug, content }: TemplatePreviewCardProps) {
+export function TemplatePreviewCard({ name, description, slug, content, category }: TemplatePreviewCardProps) {
   const { heading, body } = extractPreview(content);
 
   return (
@@ -81,6 +82,11 @@ export function TemplatePreviewCard({ name, description, slug, content }: Templa
       {/* Info area */}
       <div className="flex flex-1 flex-col justify-between border-t border-border-default p-4">
         <div>
+          {category && (
+            <span className="mb-1 block text-2xs font-medium uppercase tracking-wider text-text-muted">
+              {category}
+            </span>
+          )}
           <p className="text-sm font-semibold text-text-primary transition group-hover:text-accent">
             {name}
           </p>

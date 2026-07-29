@@ -926,7 +926,11 @@ export function Landing() {
       >
         <div className="flex flex-col gap-8 sm:flex-row sm:gap-0">
           {steps.map((step, i) => (
-            <div key={step.n} className="relative flex-1 sm:px-6 sm:first:pl-0 sm:last:pr-0">
+            <motion.div
+              key={step.n}
+              variants={reduce ? undefined : fadeUp}
+              className="relative flex-1 sm:px-6 sm:first:pl-0 sm:last:pr-0"
+            >
               {i > 0 && (
                 <div
                   aria-hidden
@@ -938,7 +942,7 @@ export function Landing() {
               </div>
               <div className="mt-4 text-[15px] font-semibold tracking-tight">{step.title}</div>
               <div className="mt-2 text-[15px] leading-[1.72] text-text-secondary">{step.desc}</div>
-            </div>
+            </motion.div>
           ))}
         </div>
       </Section>

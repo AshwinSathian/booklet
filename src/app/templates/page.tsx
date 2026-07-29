@@ -64,6 +64,7 @@ export default function TemplatesPage() {
               name={template.name}
               description={template.description}
               content={template.content}
+              category={template.category}
             />
           ))}
         </div>

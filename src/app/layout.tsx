@@ -31,7 +31,12 @@ const sourceSerif4 = Source_Serif_4({
 // optical-size setting) published-page body copy, see --font-display in
 // globals.css and "The Reveal" in
 // docs/superpowers/specs/2026-07-28-visual-elevation-design.md. Fraunces'
-// opsz/SOFT/WONK variable axes are exposed via next/font's `axes` option.
+// opsz variable axis is exposed via next/font's `axes` option — it's the
+// only axis actually used (see .font-display-hero/.font-display-body in
+// globals.css); italic style and the SOFT/WONK axes were trimmed since
+// nothing in the app renders italic Fraunces or touches those axes, and
+// including them only grows the self-hosted font payload for no visual
+// benefit.
 // NOTE: `weight` must be "variable" (not a static array) when `axes` is set —
 // next/font only exposes variable-font axes on the variable-weight build; a
 // static weight array + axes throws "Axes can only be defined for variable
@@ -40,8 +45,8 @@ const sourceSerif4 = Source_Serif_4({
 const fraunces = Fraunces({
   subsets: ["latin"],
   weight: "variable",
-  style: ["normal", "italic"],
-  axes: ["opsz", "SOFT", "WONK"],
+  style: ["normal"],
+  axes: ["opsz"],
   variable: "--font-fraunces",
   display: "swap",
 });
