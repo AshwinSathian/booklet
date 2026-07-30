@@ -1,6 +1,6 @@
 # Security Policy
 
-Booklet issues API keys and webhook secrets, and exposes an MCP server that can publish, update, and delete pages on a user's behalf. If you find a vulnerability — auth bypass, API key or webhook secret exposure, injection, or anything that could affect another user's data — please report it privately rather than opening a public issue.
+Booklet issues API keys and webhook secrets, and exposes an MCP server that can publish, update, and delete pages on a user's behalf. If you find a vulnerability (auth bypass, API key or webhook secret exposure, injection, or anything that could affect another user's data), please report it privately rather than opening a public issue.
 
 **Report to:** ashwinsathyan19@gmail.com
 

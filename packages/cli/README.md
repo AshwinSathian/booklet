@@ -20,7 +20,7 @@ npx booklet-cli publish README.md
 booklet login
 ```
 
-This opens your browser to authorize the CLI. Sign in (or create an account) and you're done — no copy-pasting required. Your key is saved automatically to `~/.booklet/config.json`.
+This opens your browser to authorize the CLI. Sign in (or create an account) and you're done, no copy-pasting required. Your key is saved automatically to `~/.booklet/config.json`.
 
 **CI / non-interactive environments:** pass your key directly with `--key`:
 
@@ -62,7 +62,7 @@ echo "# Hello world" | booklet publish -
 booklet publish README.md --update <page-id>
 ```
 
-**Watch mode — auto-republish on every save:**
+**Watch mode:** auto-republish on every save
 
 ```bash
 booklet publish README.md --watch
@@ -155,7 +155,7 @@ Supported frontmatter fields:
 
 | Variable | Description |
 |----------|-------------|
-| `BOOKLET_API_KEY` | API key — overrides `~/.booklet/config.json` |
+| `BOOKLET_API_KEY` | API key, overrides `~/.booklet/config.json` |
 | `BOOKLET_API_URL` | Override API base URL (default: production) |
 | `NO_COLOR` | Set to any value to disable ANSI colour output |
 
@@ -185,6 +185,6 @@ See [.github/examples/publish-to-booklet.yml](https://github.com/AshwinSathian/b
 
 ## Links
 
-- [booklet.ashwinsathian.com](https://booklet.ashwinsathian.com) — Create your account
-- [npmjs.com/package/booklet-cli](https://www.npmjs.com/package/booklet-cli) — npm package
-- [GitHub](https://github.com/AshwinSathian/booklet) — Source
+- [booklet.ashwinsathian.com](https://booklet.ashwinsathian.com): create your account
+- [npmjs.com/package/booklet-cli](https://www.npmjs.com/package/booklet-cli): npm package
+- [GitHub](https://github.com/AshwinSathian/booklet): source
