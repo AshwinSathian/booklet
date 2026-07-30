@@ -2,9 +2,27 @@
 
 **Publish clean, readable pages from Markdown.**
 
+[![License: MIT](https://img.shields.io/github/license/AshwinSathian/booklet)](LICENSE)
+[![npm version](https://img.shields.io/npm/v/booklet-cli?label=booklet-cli)](https://www.npmjs.com/package/booklet-cli)
+[![CI](https://img.shields.io/github/actions/workflow/status/AshwinSathian/booklet/ci.yml?branch=main&label=CI)](https://github.com/AshwinSathian/booklet/actions/workflows/ci.yml)
+
 Paste Markdown into the editor, preview it live, and share a polished read-only URL in one click. Sign in for pages that never expire, version history, analytics, custom slugs, password protection, collections, and a full REST API.
 
-**[booklet.ashwinsathian.com](https://booklet.ashwinsathian.com)**
+What makes Booklet more than an editor is the surface around it: a **REST API**, an **npm-published CLI**, a **GitHub Action** for publishing docs in CI, and a **standalone MCP server** so AI assistants like Claude can publish and manage pages directly. Markdown-to-shareable-page tools are common; shipping the same functionality as an API, a CLI, a CI action, and an MCP server on top of it is the part that isn't.
+
+**Live:** [booklet.ashwinsathian.com](https://booklet.ashwinsathian.com) · **API docs:** [/api-docs](https://booklet.ashwinsathian.com/api-docs) · **MCP setup:** [/mcp-setup](https://booklet.ashwinsathian.com/mcp-setup)
+
+---
+
+## Quick start
+
+```bash
+npm install -g booklet-cli
+booklet login                            # opens your browser to authorize
+booklet publish README.md --open         # publish this file, open it in your browser
+```
+
+That's it — you get back a permanent, shareable URL. No account needed to try the editor itself; sign in only when you want pages that never expire, an API key, or the CLI.
 
 ---
 
@@ -24,10 +42,10 @@ Paste Markdown into the editor, preview it live, and share a polished read-only 
 - **Team Spaces** — invite collaborators, publish to shared `/t/:slug` spaces
 - **Webhooks** — HTTP callbacks on `page.published` and `page.updated` events
 - **REST API** — publish, update, list, and delete pages programmatically
-- **MCP server** — expose the API to AI assistants (Claude, etc.) via the MCP protocol
-- **CLI** — publish Markdown from your terminal (`npx readable-cli`)
-<!-- VS Code extension: built, not yet on the Marketplace — re-add once AshwinSathian.readable-vscode is published -->
+- **CLI** — publish Markdown from your terminal (`npx booklet-cli`)
 - **GitHub Action** — publish docs in CI via `packages/github-action/`
+- **MCP server** — expose the API to AI assistants (Claude, Cursor, etc.) via the Model Context Protocol
+<!-- VS Code extension: built, not yet on the Marketplace — re-add once AshwinSathian.booklet-vscode is published -->
 - **Frontmatter** — YAML frontmatter sets title, slug, visibility, tags, author, date
 
 ---
@@ -35,27 +53,28 @@ Paste Markdown into the editor, preview it live, and share a polished read-only 
 ## CLI
 
 ```bash
-npm install -g readable-cli
+npm install -g booklet-cli
 
-readable login                          # save your API key
-readable publish README.md              # publish a file
-readable publish README.md --watch      # watch + auto-republish on save
-readable publish - < NOTES.md           # from stdin
-readable pages list                     # list your pages
+booklet login                          # save your API key
+booklet publish README.md              # publish a file
+booklet publish README.md --watch      # watch + auto-republish on save
+booklet publish - < NOTES.md           # from stdin
+booklet pages list                     # list your pages
 ```
 
-See [packages/cli/README.md](packages/cli/README.md) for full docs.
+See [packages/cli/README.md](packages/cli/README.md) for full docs (all flags, CI/non-interactive auth via `--key` or `BOOKLET_API_KEY`, `pages open`, etc.).
 
 ---
 
 ## REST API
 
-All endpoints are under `/api/v1/` and authenticated with `Authorization: Bearer <rdbl_...>`.
+All endpoints are under `/api/v1/` and authenticated with `Authorization: Bearer <bklt_...>`.
 
 | Method | Path | Description |
 |--------|------|-------------|
 | `POST` | `/api/v1/publish` | Create a new page |
 | `GET` | `/api/v1/pages` | List your pages |
+| `GET` | `/api/v1/pages/:id` | Read a page's metadata and raw content |
 | `PATCH` | `/api/v1/pages/:id` | Update content, slug, or visibility |
 | `DELETE` | `/api/v1/pages/:id` | Delete a page |
 | `GET` | `/api/v1/keys` | List API keys |
@@ -66,12 +85,14 @@ All endpoints are under `/api/v1/` and authenticated with `Authorization: Bearer
 
 ```bash
 curl -X POST https://booklet-api.ashwinsathian.com/api/v1/publish \
-  -H "Authorization: Bearer rdbl_..." \
+  -H "Authorization: Bearer bklt_..." \
   -H "Content-Type: application/json" \
   -d '{"raw": "# Hello\n\nThis is my page."}'
 ```
 
 `booklet-api.ashwinsathian.com` is a dedicated hostname for the API surface (same app/process as the main site, just scoped — see `docs/OPERATIONS.md`). `booklet.ashwinsathian.com` serves `/api/v1/*` too, so either works.
+
+Full endpoint reference with request/response shapes: [booklet.ashwinsathian.com/api-docs](https://booklet.ashwinsathian.com/api-docs).
 
 ---
 
@@ -79,8 +100,14 @@ curl -X POST https://booklet-api.ashwinsathian.com/api/v1/publish \
 
 A plain Node process (`mcp-server/`) that exposes Booklet's API to AI assistants supporting the [Model Context Protocol](https://modelcontextprotocol.io), run under PM2 alongside the main app — not a Cloudflare Worker (that was the original design, changed when the rest of the app moved off Cloudflare Workers; see `docs/OPERATIONS.md`).
 
-**Endpoint:** `https://booklet-mcp.ashwinsathian.com`  
-**Tools:** `publish_page`, `update_page`, `list_pages`, `delete_page`
+**Endpoint:** `https://booklet-mcp.ashwinsathian.com/mcp`
+**Auth:** `Authorization: Bearer <bklt_...>` header (same API keys as the REST API)
+**Tools:** `publish_page`, `update_page`, `get_page`, `list_pages`, `delete_page`
+**Resources:** published pages are also exposed as browsable/readable MCP resources (`booklet://pages/:id`)
+
+Point any MCP-compatible client at the endpoint above with your API key in the `Authorization` header — [booklet.ashwinsathian.com/mcp-setup](https://booklet.ashwinsathian.com/mcp-setup) has copy-paste config for Claude Desktop, Claude.ai, Cursor, Windsurf, VS Code, and Zed.
+
+To run the server itself locally:
 
 ```bash
 cd mcp-server && npm run dev
@@ -126,7 +153,7 @@ Create `.env.local`:
 ```env
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
-MONGODB_URI=mongodb://localhost:27017/readable
+MONGODB_URI=mongodb://localhost:27017/booklet
 
 # Required — dedicated secret that signs/verifies team-invite JWT tokens.
 # Must be its own random value; there is no fallback, and invite creation
@@ -167,26 +194,30 @@ src/
     quota.ts        # Feature flags
     frontmatter.ts  # YAML frontmatter parser (js-yaml)
 packages/           # npm workspaces — one root lockfile covers all of these
-  shared/           # readable-api-client: shared /api/v1 schemas + client
-  cli/              # readable-cli npm package
+  shared/           # booklet-api-client: shared /api/v1 schemas + client
+  cli/              # booklet-cli npm package
   github-action/    # GitHub Action: publish Markdown in CI
   vscode/           # VS Code extension: publish from editor
 mcp-server/         # MCP server (plain Node process, run under PM2)
 .github/
-  workflows/        # ci.yml, publish-cli.yml, publish-shared.yml
-  examples/         # publish-to-readable.yml — use in your own repo
+  workflows/        # ci.yml, publish-cli.yml, publish-shared.yml, publish-vscode.yml
+  examples/         # publish-to-booklet.yml — use in your own repo
 ```
 
 ---
 
 ## GitHub Actions
 
-### Auto-publish CLI to npm
+### CI
 
-Push to `main` with a bumped version in `packages/cli/package.json` → automatically publishes `readable-cli` to npm.
+Every push/PR to `main` runs lint, typecheck (root app + each workspace package), a production build, a check that `packages/github-action/dist/` is up to date, and the unit test suite against a real MongoDB service container. See [.github/workflows/ci.yml](.github/workflows/ci.yml).
+
+### Auto-publish to npm
+
+Push to `main` with a bumped version in `packages/cli/package.json` or `packages/shared/package.json` → automatically publishes `booklet-cli` or `booklet-api-client` to npm.
 
 Required secret: `NPM_TOKEN` (Granular Access Token with publish + 2FA bypass).
 
 ### Publish docs to Booklet from your repo
 
-See [.github/examples/publish-to-readable.yml](.github/examples/publish-to-readable.yml).
+See [.github/examples/publish-to-booklet.yml](.github/examples/publish-to-booklet.yml) — copy it into your own repo's `.github/workflows/`, add a `BOOKLET_API_KEY` secret, and it publishes on every release.
