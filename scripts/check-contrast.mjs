@@ -1,5 +1,6 @@
-// One-off WCAG contrast verifier for docs/superpowers/specs/2026-07-28-visual-elevation-design.md's
-// retuned accent. Run manually: node scripts/check-contrast.mjs
+// One-off WCAG contrast verifier for the Precision redesign's accent palette
+// (see docs/superpowers/sdd/2026-08-01-precision-redesign). Run manually:
+// node scripts/check-contrast.mjs
 function relLuminance(hex) {
   const c = hex.replace("#", "").match(/.{2}/g).map((h) => parseInt(h, 16) / 255);
   const [r, g, b] = c.map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
@@ -9,38 +10,27 @@ function contrast(hexA, hexB) {
   const [l1, l2] = [relLuminance(hexA), relLuminance(hexB)].sort((a, b) => b - a);
   return (l1 + 0.05) / (l2 + 0.05);
 }
-const pairs = [
-  ["dark accent text on ink-bg", "#c2334a", "#0a0a0c", 4.5],
-  ["dark white-on-accent (button label)", "#ffffff", "#c2334a", 4.5],
-  ["dark accent-soft on ink-bg", "#ec8a95", "#0a0a0c", 4.5],
-  ["light accent text on white", "#c23c50", "#ffffff", 4.5],
-  ["light white-on-accent (button label)", "#ffffff", "#c23c50", 4.5],
-  ["paper-ink text on paper", "#1d1a14", "#f4ecdc", 4.5],
-  ["paper-ink-secondary text on paper", "#5c5546", "#f4ecdc", 4.5],
+const PAIRS = [
+  // [label, fg, bg, minRatio]
+  ["dark: accent text/icon on bg",        "#f5a623", "#0a0a0a", 4.5],
+  ["dark: accent-contrast on accent bg",  "#0a0a0a", "#f5a623", 4.5],
+  ["dark: accent-soft on bg",             "#f8c368", "#0a0a0a", 4.5],
+  ["light: accent text/icon on bg",       "#8a5a00", "#fafafa", 4.5],
+  ["light: accent-contrast on accent bg", "#fafafa", "#8a5a00", 4.5],
+  ["light: accent-soft on bg",            "#9e680a", "#fafafa", 4.5],
 ];
-
-// Known, already-adjudicated pre-existing gap: "dark accent text on ink-bg"
-// (--color-accent used as bare text color directly on --color-bg, dark
-// theme) lands at ~3.64:1 against the 4.5:1 AA bar. Proven mathematically
-// unfixable by hex-tuning --color-accent alone without breaking the
-// adjacent "dark white-on-accent (button label)" requirement in the same
-// theme — a single hex can't clear both bars at once (see
-// .superpowers/sdd/2026-07-28-visual-elevation/task-3-report.md for the
-// full proof). In practice --color-accent is not used as bare text on
-// --color-bg in the product (it's a button/active-state fill; text-role
-// contrast is carried by --color-accent-soft, which does pass, per the row
-// below). Documented here as a disclosed exception rather than silently
-// dropped or fudged — it still prints every run, just not as PASS/FAIL.
-const knownFailures = new Set(["dark accent text on ink-bg"]);
+// NOTE: light-mode accent-soft above (#9e680a) is tuned darker than the
+// #a8720a landed in src/app/globals.css by Task 1 — #a8720a measures
+// 3.96:1 against #fafafa and fails the 4.5:1 AA bar. globals.css needs to
+// be updated to #9e680a (4.53:1) to match; flagging for product-owner
+// awareness rather than silently diverging from the plan's stated value.
 
 let failed = false;
-for (const [label, fg, bg, min] of pairs) {
+for (const [label, fg, bg, min] of PAIRS) {
   const ratio = contrast(fg, bg);
   const pass = ratio >= min;
-  const isKnown = knownFailures.has(label);
-  if (!pass && !isKnown) failed = true;
-  const status = pass ? "PASS" : isKnown ? "KNOWN-GAP" : "FAIL";
-  const note = !pass && isKnown ? "  (disclosed exception — see comment above; not counted toward exit code)" : "";
-  console.log(`${status}  ${label}: ${ratio.toFixed(2)}:1 (min ${min}:1)${note}`);
+  if (!pass) failed = true;
+  const status = pass ? "PASS" : "FAIL";
+  console.log(`${status}  ${label}: ${ratio.toFixed(2)}:1 (min ${min}:1)`);
 }
 process.exit(failed ? 1 : 0);
