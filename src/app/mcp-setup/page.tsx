@@ -354,7 +354,7 @@ function ClaudeDesktopInstructions({ apiKey }: { apiKey: string }) {
 function ClaudeAiInstructions({ apiKey }: { apiKey: string }) {
   return (
     <div className="space-y-5">
-      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs">
+      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#D97757]/10 border border-[#D97757]/20 text-[#D97757] text-xs">
         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" aria-hidden className="shrink-0">
           <path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
@@ -728,7 +728,7 @@ export default function McpSetupPage() {
           {/* Overview */}
           <section id="overview" className="scroll-mt-20">
             <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-500 shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-[#D97757]/10 flex items-center justify-center text-[#D97757] shrink-0">
                 <ClaudeSparkIcon size={20} />
               </div>
               <div>
@@ -855,7 +855,7 @@ export default function McpSetupPage() {
                   <span className="opacity-80">{p.icon}</span>
                   {p.label}
                   {p.badge && (
-                    <span className="ml-0.5 rounded px-1 py-0.5 text-2xs bg-amber-500/15 text-amber-400 font-semibold">
+                    <span className="ml-0.5 rounded px-1 py-0.5 text-2xs bg-[#D97757]/15 text-[#D97757] font-semibold">
                       {p.badge}
                     </span>
                   )}

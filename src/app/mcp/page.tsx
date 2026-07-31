@@ -22,8 +22,8 @@ export const metadata: Metadata = {
 };
 
 const EDITORS = [
-  { name: "Claude Desktop", icon: "C", color: "bg-amber-500/15 text-amber-400" },
-  { name: "Claude.ai", icon: "C", color: "bg-amber-500/15 text-amber-400" },
+  { name: "Claude Desktop", icon: "C", color: "bg-[#D97757]/15 text-[#D97757]" },
+  { name: "Claude.ai", icon: "C", color: "bg-[#D97757]/15 text-[#D97757]" },
   { name: "Cursor", icon: "⌥", color: "bg-blue-500/15 text-blue-400" },
   { name: "Windsurf", icon: "W", color: "bg-teal-500/15 text-teal-400" },
   { name: "VS Code", icon: "⬡", color: "bg-sky-500/15 text-sky-400" },

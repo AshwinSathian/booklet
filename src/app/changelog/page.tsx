@@ -26,7 +26,7 @@ type Release = {
 const TAG_COLORS: Record<Entry["tag"], string> = {
   New: "bg-emerald-500/15 text-emerald-400",
   Improved: "bg-blue-500/15 text-blue-400",
-  Fixed: "bg-amber-500/15 text-amber-400",
+  Fixed: "bg-violet-500/15 text-violet-400",
   Removed: "bg-red-500/15 text-red-400",
 };
 

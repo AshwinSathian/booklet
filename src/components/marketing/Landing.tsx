@@ -1021,8 +1021,8 @@ export function Landing() {
           {/* Claude MCP */}
           <motion.div variants={reduce ? undefined : fadeUp}>
             <div className="flex flex-col gap-4 rounded-xl border border-border-default bg-bg-elevated p-6 shadow-card transition hover:border-border-strong hover:bg-bg-soft h-full">
-              {/* Claude brand icon — spark/radial mark in amber */}
-              <div className="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-500">
+              {/* Claude brand icon — Anthropic's actual brand orange (#D97757), distinct from Booklet's new accent */}
+              <div className="w-10 h-10 rounded-lg bg-[#D97757]/10 flex items-center justify-center text-[#D97757]">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
                   <path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.93 4.93l2.12 2.12M16.95 16.95l2.12 2.12M4.93 19.07l2.12-2.12M16.95 7.05l2.12-2.12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                 </svg>

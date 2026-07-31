@@ -349,7 +349,7 @@ jobs:
         <SectionAnchor id="mcp" />
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
           <div>
-            <IntegrationBadge label="AI editors" color="border-amber-500/30 bg-amber-500/8 text-amber-400" />
+            <IntegrationBadge label="AI editors" color="border-[#D97757]/30 bg-[#D97757]/8 text-[#D97757]" />
             <h2 className="text-2xl font-light text-text-primary mt-3 mb-3">
               MCP server
             </h2>
@@ -408,8 +408,8 @@ jobs:
               <p className="text-xs font-semibold text-text-muted uppercase tracking-widest mb-3">Works with</p>
               <div className="flex flex-wrap gap-2">
                 {[
-                  { name: "Claude Desktop", color: "bg-amber-500/10 text-amber-400" },
-                  { name: "Claude.ai", color: "bg-amber-500/10 text-amber-400" },
+                  { name: "Claude Desktop", color: "bg-[#D97757]/10 text-[#D97757]" },
+                  { name: "Claude.ai", color: "bg-[#D97757]/10 text-[#D97757]" },
                   { name: "Cursor", color: "bg-blue-500/10 text-blue-400" },
                   { name: "Windsurf", color: "bg-teal-500/10 text-teal-400" },
                   { name: "VS Code (MCP)", color: "bg-sky-500/10 text-sky-400" },
