@@ -26,6 +26,7 @@
   "dependencies": {
     "@viz-js/viz": "^3.28.0",
     "argon2": "^0.44.0",
+    "cmdk": "^1.1.1",
     "framer-motion": "^12.29.2",
     "geist": "^1.7.2",
     "highlight.js": "^11.11.1",
