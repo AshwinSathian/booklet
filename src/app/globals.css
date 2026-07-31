@@ -22,13 +22,19 @@
 :root {
   color-scheme: dark;
 
-  --font-body: var(--font-inter), "Inter", system-ui, -apple-system, sans-serif;
-  --font-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", ui-monospace, "SF Mono", monospace;
-  /* Distinct reading typeface for published-page body content (BlockRenderer)
-     — deliberately separate from --font-body (app/editor chrome stays Inter).
-     See DocSettings.typeface in src/lib/blocks.ts for the per-document toggle. */
+  --font-body:    var(--font-geist-sans), "Geist Sans", system-ui, -apple-system, sans-serif;
+  --font-mono:    var(--font-geist-mono), "Geist Mono", ui-monospace, "SF Mono", monospace;
+  /* Distinct reading typeface for published-page body content when a reader
+     explicitly picks "serif" (BlockRenderer / DocSettings.typeface in
+     src/lib/blocks.ts) — the default for NEW documents flips to "sans" in
+     Task 26, but existing published documents and the per-document toggle
+     itself are unchanged: this stays loaded. */
   --font-reading: var(--font-source-serif-4), Georgia, "Times New Roman", serif;
-  --font-display: var(--font-fraunces), Georgia, "Times New Roman", serif;
+  /* Precision has no separate display identity — Geist Sans handles both UI
+     chrome and headline/display type, so --font-display is kept only as an
+     alias (zero risk to the ~9 pages that already reference the
+     `font-display` Tailwind class) rather than touching every call site. */
+  --font-display: var(--font-geist-sans), "Geist Sans", system-ui, sans-serif;
 
   /* ── Central type scale — edit here to restyle the entire app ───────────
      Weight ladder mirrors ashwin-portfolio prose system.
