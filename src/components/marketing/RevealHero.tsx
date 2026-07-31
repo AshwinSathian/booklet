@@ -1,109 +1,122 @@
 "use client";
 
-import {
-  useReducedMotion,
-  useScroll,
-  useTransform,
-  useMotionTemplate,
-  useMotionValue,
-  motion,
-} from "framer-motion";
 import { useRef } from "react";
+import { useScroll, useTransform, motion } from "framer-motion";
+import { usePrefersReducedMotion } from "@/lib/motion";
 
-// Fixed sample — deliberately not derived from live user content: this is a
-// marketing demonstration of the transformation, not a live preview.
-// Segments alternate between literal Markdown syntax (dimmed/dissolved as
-// scroll progresses) and the prose it wraps (restyled from mono to
-// Fraunces/paper as scroll progresses). See "Core creative concept" in
-// docs/superpowers/specs/2026-07-28-visual-elevation-design.md.
-type Segment = { text: string; kind: "syntax" | "prose" };
-
-const SAMPLE: Segment[] = [
-  { text: "## ", kind: "syntax" },
-  { text: "Incident Report", kind: "prose" },
-  { text: "\n\n", kind: "syntax" },
-  { text: "**", kind: "syntax" },
-  { text: "Severity:", kind: "prose" },
-  { text: "**", kind: "syntax" },
-  { text: " P1,", kind: "prose" },
-  { text: " resolved in 13 minutes.", kind: "prose" },
-];
+/**
+ * "Precision Reveal" — a scroll-driven demonstration of Booklet's actual
+ * product mechanic (raw Markdown syntax becoming clean, readable text),
+ * told through opacity/weight/color choreography on a CONSTANT background,
+ * not a color transformation toward a "paper" surface (the old "Ink & Paper"
+ * concept this replaces). Syntax markers (`##`, `**`) dim to near-invisible
+ * as scroll progresses; the prose they wrap gains full-opacity text-primary
+ * color and, for the heading only, the brand accent — ending in a plain
+ * hairline-bordered card, not a paper-toned one.
+ *
+ * DELIBERATELY uses the app's `usePrefersReducedMotion()` (src/lib/motion.ts)
+ * here, NOT framer-motion's synchronous `useReducedMotion()`, even though
+ * Task 8 established the latter as the fix for gating a mount-time branch
+ * (framer's `initial` prop lag). That fix doesn't transfer to this component
+ * — verified live, and it makes things *worse* here. Reasoning:
+ *
+ * This component's `if (reducedMotion) return ...` branches to a
+ * structurally different tree (no `ref`, no `useScroll`) vs. Task 8's case,
+ * which only ever varies an `initial` prop value on the *same* motion.div
+ * tree shape. This page is SSR'd, and the server can never know the client's
+ * `prefers-reduced-motion` setting either way — it always renders the
+ * scroll-driven branch. With framer's *synchronous* hook, the client's very
+ * first (hydration) render already disagrees with that server-rendered
+ * markup, and because the two branches are different DOM shapes (one has
+ * the `useScroll` target ref, one doesn't), React can't patch the mismatch
+ * in place — it logs "Hydration failed ... this tree will be regenerated
+ * on the client" and discards/remounts the subtree, which in turn made
+ * framer's `useScroll` throw "Target ref is defined but not hydrated"
+ * (motion.dev/troubleshooting/use-scroll-ref) during the brief mismatched
+ * pass. None of that happens with `usePrefersReducedMotion`: it starts
+ * `false` on both the server and the client's first render (matching
+ * hydration exactly, since its real value only lands in a post-mount
+ * effect), so hydration always succeeds cleanly against the scroll-driven
+ * markup the server actually sent; the swap to the static branch then
+ * happens as a completely ordinary post-mount re-render, not a hydration
+ * correction — no console errors, no framer ref invariant. The two hooks'
+ * user-visible "flash" windows end up the same size in practice (both are
+ * bounded by the same unavoidable SSR-to-hydration gap, since neither hook
+ * can know the real preference before the client mounts) — the difference
+ * is purely in whether React gets there via a clean update or a logged
+ * hydration-mismatch recovery. Task 8's fix is correct for its same-shape
+ * case; it is the wrong tool for this component's two-different-DOM-shapes
+ * case, so it is not applied here.
+ */
+const SAMPLE = {
+  syntaxOpen: "## ",
+  heading: "Incident Report",
+  syntaxBoldOpen: "**",
+  label: "Severity:",
+  syntaxBoldClose: "** ",
+  body: "P1, resolved in 13 minutes.",
+};
 
 export function RevealHero() {
-  const reduce = useReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
+  const reducedMotion = usePrefersReducedMotion();
   const { scrollYProgress } = useScroll({
     target: ref,
-    offset: ["start start", "end start"],
+    offset: ["start end", "end start"],
   });
 
-  // Reduced-motion: skip straight to the fully-revealed (paper) end state,
-  // no scroll-driven interpolation at all. Both motion values are always
-  // created (never call hooks conditionally — see Rules of Hooks); which
-  // one drives the animation is picked afterward.
-  const revealedProgress = useMotionValue(1);
-  const progress = reduce ? revealedProgress : scrollYProgress;
-  // A useTransform call given a literal *array* input/output range (like
-  // [0, 0.6] -> [1, 0]) gets hardware-accelerated by framer-motion for
-  // "opacity" specifically (see motion-dom's acceleratedValues — opacity/
-  // clipPath/filter/transform): it binds a native WAAPI Animation straight
-  // to the DOM element in motion-dom/render/VisualElement.mjs's
-  // bindToMotionValue, bypassing the normal per-frame JS update pipeline
-  // entirely. In this component that accelerated path does not reproduce
-  // useScroll's progress correctly for this sticky/scroll-linked setup —
-  // verified live: computed opacity on the four syntax spans stayed at 1
-  // through roughly the first third of the scroll range, then swept down
-  // to ~0 and immediately back up to 1 by the very end, instead of the
-  // intended monotonic 1->0 fade over progress 0->0.6 — while sibling
-  // values driven by the same `progress` (fontWeight, the color-mix
-  // template) tracked scroll correctly throughout, because font-weight/
-  // color/background-color are never eligible for this accelerated path
-  // and always go through the reliable per-frame JS route. Using the
-  // *function* overload of useTransform (same pattern `mixPct` below
-  // already uses) is categorically excluded from the accelerated path
-  // (see use-transform.mjs's `typeof inputRangeOrTransformer !== "function"`
-  // guard), which is what makes it — and this — reliable.
-  const syntaxOpacity = useTransform(progress, (p) => Math.min(1, Math.max(0, 1 - p / 0.6)));
-  const fontWeight = useTransform(progress, [0, 1], [400, 500]);
+  const progress = useTransform(scrollYProgress, [0.2, 0.6], [0, 1]);
+  const syntaxOpacity = useTransform(progress, [0, 1], [1, 0]);
+  const proseColor = useTransform(
+    progress,
+    [0, 1],
+    ["var(--color-text-muted)", "var(--color-text-primary)"],
+  );
+  const headingColor = useTransform(
+    progress,
+    [0, 1],
+    ["var(--color-text-muted)", "var(--color-accent)"],
+  );
+  const proseWeight = useTransform(progress, [0, 1], [400, 600]);
 
-  // framer-motion's built-in color interpolation (useTransform between two
-  // color strings) needs literal color values to mix numerically — it can't
-  // blend two `var(--color-x)` references, which is what every color in
-  // this codebase's token system is. Compositing the mix via CSS
-  // `color-mix()` instead — evergreen-baseline supported (Chrome 111+,
-  // Safari 16.4+, Firefox 113+) — lets the browser do the actual blend
-  // while still reading the live theme-aware custom properties, so this
-  // works correctly in both dark and light mode with zero theme branching.
-  const mixPct = useTransform(progress, (p) => `${Math.round(p * 100)}%`);
-  const containerBg = useMotionTemplate`color-mix(in srgb, var(--color-paper) ${mixPct}, var(--color-bg))`;
-  const proseColor = useMotionTemplate`color-mix(in srgb, var(--color-paper-ink) ${mixPct}, var(--color-text-primary))`;
+  if (reducedMotion) {
+    // Render the fully-revealed end state statically — no scroll listener,
+    // no interpolation, matching every other reduced-motion fallback.
+    return (
+      <div className="rounded-none border-y border-border-subtle px-6 py-24">
+        <p className="max-w-2xl text-[clamp(20px,3.4vw,32px)] leading-normal font-semibold text-accent">
+          {SAMPLE.heading}
+        </p>
+        <p className="mt-2 max-w-2xl text-[clamp(20px,3.4vw,32px)] leading-normal font-medium text-text-primary">
+          <span className="font-semibold">{SAMPLE.label}</span> {SAMPLE.body}
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <div ref={ref} className="relative h-[130vh] sm:h-[160vh]">
-      <div className="sticky top-0 flex h-screen items-center justify-center overflow-hidden">
-        <motion.div
-          style={{ backgroundColor: containerBg }}
-          className="flex h-full w-full items-center justify-center rounded-none border-y border-border-subtle px-6"
-        >
-          <motion.p
-            style={{ color: proseColor, fontWeight }}
-            className="max-w-2xl text-[clamp(20px,3.4vw,32px)] leading-normal font-display font-display-hero"
-          >
-            {SAMPLE.map((seg, i) =>
-              seg.kind === "syntax" ? (
-                <motion.span
-                  key={i}
-                  style={{ opacity: syntaxOpacity }}
-                  className="font-mono text-[0.75em] text-text-muted"
-                >
-                  {seg.text}
-                </motion.span>
-              ) : (
-                <span key={i}>{seg.text}</span>
-              ),
-            )}
-          </motion.p>
-        </motion.div>
+    <div ref={ref} className="relative h-[160vh]">
+      <div className="sticky top-0 flex h-screen items-center overflow-hidden rounded-none border-y border-border-subtle px-6">
+        <div className="max-w-2xl">
+          <p className="text-[clamp(20px,3.4vw,32px)] leading-normal">
+            <motion.span style={{ opacity: syntaxOpacity }} className="font-mono text-[0.75em] text-text-muted">
+              {SAMPLE.syntaxOpen}
+            </motion.span>
+            <motion.span style={{ color: headingColor, fontWeight: proseWeight }}>
+              {SAMPLE.heading}
+            </motion.span>
+          </p>
+          <p className="mt-2 text-[clamp(20px,3.4vw,32px)] leading-normal">
+            <motion.span style={{ opacity: syntaxOpacity }} className="font-mono text-[0.75em] text-text-muted">
+              {SAMPLE.syntaxBoldOpen}
+            </motion.span>
+            <motion.span style={{ color: proseColor, fontWeight: proseWeight }}>{SAMPLE.label}</motion.span>
+            <motion.span style={{ opacity: syntaxOpacity }} className="font-mono text-[0.75em] text-text-muted">
+              {SAMPLE.syntaxBoldClose}
+            </motion.span>
+            <motion.span style={{ color: proseColor, fontWeight: proseWeight }}> {SAMPLE.body}</motion.span>
+          </p>
+        </div>
       </div>
     </div>
   );
