@@ -9,6 +9,8 @@ import { useSession } from "@/components/auth/SessionProvider";
 import type { Easing, Variants } from "framer-motion";
 import { motion, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/Button";
+import { CursorSpotlight } from "@/components/ui/CursorSpotlight";
+import { DURATION, EASE_PRECISION } from "@/lib/motion";
 import Link from "next/link";
 import { type ReactNode, useMemo, useState, useCallback } from "react";
 import { TEMPLATES } from "@/lib/templates";
@@ -36,6 +38,20 @@ const fadeUp: Variants = {
 const stagger: Variants = {
   hidden: {},
   show: { transition: { staggerChildren: 0.08, delayChildren: 0.05 } },
+};
+
+// Hero-only stagger: tighter and snappier than `stagger`/`fadeUp` above (which
+// remain the sitewide scroll-reveal used by every other section's `Section`
+// wrapper) — the hero is the redesign's signature above-the-fold moment, so
+// it uses the shared Precision motion primitives (DURATION/EASE_PRECISION)
+// directly instead of the pre-existing ad hoc easing/duration values.
+const heroStagger: Variants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.08 } },
+};
+const heroItem: Variants = {
+  hidden: { opacity: 0, y: 8 },
+  show: { opacity: 1, y: 0, transition: { duration: DURATION.slow, ease: EASE_PRECISION } },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -509,6 +525,16 @@ Authorization: Bearer bklt_...`}
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function Landing() {
+  // NOTE: gating the hero's stagger via lib/motion's `usePrefersReducedMotion`
+  // was tried first and reverted — that hook deliberately starts `false` and
+  // only syncs to the real media query in a post-mount effect (documented as
+  // "SSR-safe"), but framer-motion's `initial` prop is evaluated once at
+  // mount, so the correction arrives too late and the entrance animation
+  // played anyway under reduced motion (verified live in-browser). Framer's
+  // own `useReducedMotion` below resolves synchronously on first render
+  // (it lazily reads `matchMedia` before its `useState` call), so it's the
+  // one that actually gates correctly — and it's already the convention
+  // every other section in this file uses for the same purpose.
   const reduce = useReducedMotion();
   const { isSignedIn, isLoaded } = useSession();
 
@@ -737,22 +763,23 @@ export function Landing() {
           their own inset-0 overflow-hidden wrapper, so nothing here relies on
           clipping at the section level. */}
       <section className="relative py-16 sm:py-28 lg:py-40">
+        <CursorSpotlight />
+
         {/* Background ambient glow */}
         <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
           <div className="absolute -top-48 left-1/2 h-150 w-150 -translate-x-1/2 rounded-full bg-accent opacity-[0.07] blur-[100px]" />
-          <div className="absolute top-1/3 -right-32 h-100 w-100 rounded-full bg-accent-warm opacity-[0.04] blur-[80px]" />
           <div className="absolute bottom-0 -left-24 h-87.5 w-87.5 rounded-full bg-accent opacity-[0.05] blur-[80px]" />
         </div>
 
         <Container>
           <motion.div
-            variants={stagger}
-            initial="hidden"
+            variants={heroStagger}
+            initial={reduce ? "show" : "hidden"}
             animate="show"
             className="relative z-10"
           >
             {/* Eyebrow */}
-            <motion.div variants={reduce ? undefined : fadeUp}>
+            <motion.div variants={heroItem}>
               <div className="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-accent-dim px-4 py-1.5 text-xs font-semibold tracking-wide text-accent">
                 <span className="h-1.5 w-1.5 rounded-full bg-accent" />
                 Free · No account · Works with Claude
@@ -761,19 +788,19 @@ export function Landing() {
 
             {/* Headline */}
             <motion.h1
-              variants={reduce ? undefined : fadeUp}
+              variants={heroItem}
               className="mt-5 max-w-4xl text-balance text-[clamp(38px,8vw,80px)] font-extrabold leading-[1.02] tracking-[-0.04em]"
             >
               Written in Markdown.
               <br />
-              <span className="bg-linear-to-r from-accent via-accent-soft to-accent bg-clip-text text-transparent">
+              <span className="text-accent">
                 Read by everyone else.
               </span>
             </motion.h1>
 
             {/* Subtitle */}
             <motion.p
-              variants={reduce ? undefined : fadeUp}
+              variants={heroItem}
               className="mt-6 max-w-2xl text-pretty text-[18px] leading-[1.75] text-text-secondary"
             >
               Your incident reports, ADRs, and runbooks are already in Markdown. Booklet
@@ -783,7 +810,7 @@ export function Landing() {
 
             {/* CTAs */}
             <motion.div
-              variants={reduce ? undefined : fadeUp}
+              variants={heroItem}
               className="mt-10 flex flex-wrap items-center gap-3"
             >
               <PrimaryButton
@@ -815,7 +842,7 @@ export function Landing() {
 
             {/* Keyboard hint — desktop only */}
             <motion.div
-              variants={reduce ? undefined : fadeUp}
+              variants={heroItem}
               className="mt-4 hidden sm:block text-[13px] text-text-muted"
             >
               Press{" "}
