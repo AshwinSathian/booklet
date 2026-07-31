@@ -148,7 +148,7 @@ html.light {
      --color-accent-contrast (white) label it's the same ~5.96:1. */
   --color-accent:          #8a5a00;
   --color-accent-hover:    #6f4700;
-  --color-accent-soft:     #a8720a;
+  --color-accent-soft:     #9e680a;
   --color-accent-contrast: #fafafa;
   --color-accent-dim:      rgba(138, 90, 0, 0.10);
 
