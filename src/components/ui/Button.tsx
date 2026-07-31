@@ -16,8 +16,8 @@ const BASE =
   "focus-visible:ring-offset-2 focus-visible:ring-offset-bg select-none";
 
 const VARIANTS = {
-  primary: "bg-accent text-white shadow-soft hover:bg-accent-hover",
-  secondary: "border border-outline text-text-secondary hover:border-accent-soft/50 hover:text-text-primary",
+  primary: "bg-accent text-accent-contrast hover:bg-accent-hover",
+  secondary: "border border-border-default text-text-secondary hover:border-accent-soft/50 hover:text-text-primary",
   danger: "border border-red-400/40 text-red-400 hover:bg-red-400/10",
   ghost: "text-text-muted hover:text-text-primary hover:bg-fill-2",
 } as const;
