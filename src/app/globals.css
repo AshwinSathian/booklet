@@ -8,14 +8,15 @@
   - next-themes toggles html class: "light" | "dark"
   - PrimeReact theme is swapped in PrimeStyles based on html.dark
 
-  Design DNA (locked — do not drift from this):
-  - Type is the product: UI exemplifies beautiful typography
-  - Chrome recedes: surfaces exist to carry content, not call attention to themselves
-  - Purple = action / active only: not decoration, not category colour
-  - Three surfaces: base → elevated → float (bg → bg-elevated → bg-glass)
-  - Motion has purpose: entrances orient, micros confirm
-  - Dark palette: Apple-quality pure-black base with violet accent
-  - Light palette: Apple-quality white base with tinted elevated surfaces
+  Design DNA — "Precision" (2026-08-01, replaces "Ink & Paper"/"The Reveal";
+  see docs/superpowers/specs/2026-08-01-precision-redesign-design.md):
+  - Monochrome base, one accent: amber means action/active only, never
+    decoration or a category color
+  - Three surfaces: base → elevated → glass (bg → bg-elevated → bg-glass);
+    no fourth level
+  - Hairline borders are the primary depth cue, not blurred glow shadows
+  - Motion is the differentiator: cursor-aware spotlight, staggered reveal,
+    a command palette, view-transitions — restraint everywhere else
 */
 
 :root {
@@ -52,9 +53,9 @@
   --type-leading-body:   1.75;
 
   /* ── Surfaces (DARK) ────────────────────────────────────────────────────── */
-  --color-bg:           #0a0a0c;          /* base — warm-tinted near-black     */
+  --color-bg:           #0a0a0a;          /* base — pure near-black            */
   --color-bg-soft:      #0d0d0d;          /* subtle step up — nav, input bg    */
-  --color-bg-elevated:  #161617;          /* cards, dialogs, panels            */
+  --color-bg-elevated:  #161616;          /* cards, dialogs, panels            */
   --color-bg-glass:     rgba(22, 22, 23, 0.72); /* backdrop-blur surfaces     */
 
   /* ── Text (DARK) ────────────────────────────────────────────────────────── */
@@ -64,42 +65,25 @@
      AA's 4.5:1). Now 5.3:1 on bg, 4.5:1 on bg-elevated (the harder case). */
   --color-text-muted:     #7f7f82;        /* Apple tertiary label              */
 
-  /* ── Accent (DARK) — "Ink & Paper" (July 2026 rebrand) ───────────────────── */
-  /* Deep oxblood/burgundy replaces the old signature purple — see BRAND.md's
-     "Colour System" for the research/rationale (an editorial ink-and-paper
-     palette tied to what "Booklet" literally means, versus the generic
-     dark-mode-plus-violet look shared by most dev-tool SaaS brands).
-     Contrast verified against the same bars the old purple held itself to
-     (re-verified via `node scripts/check-contrast.mjs`, current retuned
-     hexes below):
-     --color-accent as a button bg with a white label: 5.43:1 (min 4.5:1).
-     --color-accent-soft as text/icon color directly on --color-bg: 8.13:1
-     (min 4.5:1) — these are deliberately two different shades, not one
-     color reused, because a single hex can't hit both roles' contrast needs
-     at once (confirmed by checking the old purple's own accent vs.
-     accent-soft split before choosing these). Note: --color-accent itself,
-     used as bare *text* directly on --color-bg (not as a button fill), sits
-     at 3.64:1 — a known, disclosed pre-existing gap tracked as a
-     KNOWN-GAP row in check-contrast.mjs rather than silently ignored. */
-  --color-accent:       #c2334a;          /* Booklet ink — action/active       */
-  --color-accent-hover: #a82940;
-  --color-accent-soft:  #ec8a95;          /* for focus rings, secondary tints  */
-  --color-accent-warm:  #d99a3d;          /* ochre — warnings, expiry          */
-  --color-accent-dim:   rgba(194, 51, 74, 0.14); /* icon backgrounds          */
-  /* Warm paper tone — aged-paper cream, the other half of "Ink & Paper".
-     Promoted from a two-place accent (old BRAND.md "Signature Element"
-     rule) to the dominant read-mode surface — see "The Reveal" in
-     docs/superpowers/specs/2026-07-28-visual-elevation-design.md. Now used
-     broadly wherever a "reveal"/read-mode payoff happens: the hero's
-     scroll-transformation end state, auth screens' editorial side panel,
-     template gallery previews, the publish confirmation — not just the
-     original before/after comparison and the logo's fold detail. */
-  --color-paper:        #f4ecdc;
-  /* Rest of the paper depth hierarchy — secondary surface plus the two
-     text-on-paper roles — alongside --color-paper above. */
-  --color-paper-dim:           #e9dfc8;  /* secondary paper surface, hover states */
-  --color-paper-ink:           #1d1a14;  /* primary text ON a paper surface */
-  --color-paper-ink-secondary: #5c5546;  /* secondary text ON a paper surface */
+  /* ── Accent (DARK) — "Precision" (2026-08-01) ────────────────────────────────── */
+  /* A single amber/gold accent replaces "Ink & Paper"'s oxblood — chosen to
+     avoid the indigo/violet that's become this product category's default
+     (Linear, most YC-era dev tools) and the burgundy the last two systems
+     already used. Two distinct hexes exist for a reason bright amber is
+     genuinely bad at: amber (#f5a623) reads at ~9.5:1 as bare text/icon
+     directly on --color-bg, but a WHITE label on that same amber button
+     background only hits ~2.1:1 (fails AA outright) — bright colors are
+     high-luminance, so white text on them is low-contrast almost by
+     definition. --color-accent-contrast is the fix: it's the text color to
+     place ON TOP of an accent-colored surface (near-black in dark mode,
+     since black-on-amber hits ~9.5:1), never white. Button.tsx's primary
+     variant uses --color-accent-contrast, not a hardcoded text-white, for
+     exactly this reason. Verified via `node scripts/check-contrast.mjs`. */
+  --color-accent:          #f5a623;   /* action/active — text/icon on dark bg: ~9.5:1 */
+  --color-accent-hover:    #e0961d;
+  --color-accent-soft:     #f8c368;   /* lighter tint — secondary tints, focus rings */
+  --color-accent-contrast: #0a0a0a;   /* text/icon ON an accent-colored surface */
+  --color-accent-dim:      rgba(245, 166, 35, 0.14); /* icon backgrounds */
 
   /* ── Borders — pre-computed, never composed in component classes (DARK) ── */
   --color-border-strong:  rgba(255, 255, 255, 0.16);
@@ -116,11 +100,16 @@
   --color-outline-soft: rgba(255, 255, 255, 0.05);
 
   /* ── Shadows (DARK) ─────────────────────────────────────────────────────── */
-  --shadow-soft:  0 4px 14px rgba(194, 51, 74, 0.35);   /* primary btn glow   */
-  --shadow-glass: 0 8px 48px rgba(0, 0, 0, 0.70);       /* hero mock shadow   */
-  --shadow-glow:  0 0 80px rgba(194, 51, 74, 0.20);     /* CTA section glow   */
+  /* Precision favors hairline borders over glow/blur shadows as the primary
+     depth cue — --shadow-soft and --shadow-glow (both accent-tinted glows)
+     are retired outright, not retuned. --shadow-card/--shadow-glass survive
+     because their values were already neutral black (never accent-tinted),
+     so they're legitimate generic elevation shadows, not brand artifacts.
+     --shadow-print is renamed --shadow-hard: identical value, but the old
+     name carried "printed card" framing this identity doesn't use. */
+  --shadow-glass: 0 8px 48px rgba(0, 0, 0, 0.70);       /* dropdowns/drawers/toasts */
   --shadow-card:  0 1px 2px rgba(0, 0, 0, 0.60), 0 4px 24px rgba(0, 0, 0, 0.40);
-  --shadow-print: 0 2px 0 0 rgba(0, 0, 0, 0.9);   /* hard offset, no blur — printed-card feel */
+  --shadow-hard:  0 2px 0 0 rgba(0, 0, 0, 0.9);          /* rare hard-offset emphasis */
 
   /* ── Scrollbar (DARK) ───────────────────────────────────────────────────── */
   --scrollbar-thumb:       rgba(255, 255, 255, 0.10);
@@ -133,9 +122,9 @@ html.light {
   color-scheme: light;
 
   /* ── Surfaces (LIGHT) ───────────────────────────────────────────────────── */
-  --color-bg:           #ffffff;          /* Apple pure white                  */
-  --color-bg-soft:      #f5f5f7;          /* Apple systemGroupedBackground     */
-  --color-bg-elevated:  #e8e8ed;          /* Apple secondarySystemBackground   */
+  --color-bg:           #fafafa;          /* near-white base                   */
+  --color-bg-soft:      #f2f2f3;          /* subtle step up — nav, input bg    */
+  --color-bg-elevated:  #e8e8ea;          /* cards, dialogs, panels            */
   --color-bg-glass:     rgba(255, 255, 255, 0.90);
 
   /* ── Text (LIGHT) ───────────────────────────────────────────────────────── */
@@ -145,16 +134,17 @@ html.light {
      WCAG AA's 4.5:1). Now 5.7:1 on bg, 4.7:1 on bg-elevated (the harder case). */
   --color-text-muted:     #66666a;        /* Apple tertiaryLabel               */
 
-  /* ── Accent (LIGHT) — "Ink & Paper" ─────────────────────────────────────── */
-  --color-accent:       #c23c50;
-  --color-accent-hover: #a52f42;
-  --color-accent-soft:  #d16577;
-  --color-accent-warm:  #b5791f;
-  --color-accent-dim:   rgba(194, 60, 80, 0.10);
-  --color-paper:        #f4ecdc;
-  --color-paper-dim:           #e9dfc8;
-  --color-paper-ink:           #1d1a14;
-  --color-paper-ink-secondary: #5c5546;
+  /* ── Accent (LIGHT) — "Precision" ───────────────────────────────────────── */
+  /* Amber itself fails as bare text or a white-text button fill on a WHITE
+     background (same luminance problem as dark mode, mirrored) — light mode
+     uses a deep ochre instead, tuned so both roles clear AA: as bare text on
+     --color-bg (#fafafa) it's ~5.96:1; as a button fill with
+     --color-accent-contrast (white) label it's the same ~5.96:1. */
+  --color-accent:          #8a5a00;
+  --color-accent-hover:    #6f4700;
+  --color-accent-soft:     #a8720a;
+  --color-accent-contrast: #fafafa;
+  --color-accent-dim:      rgba(138, 90, 0, 0.10);
 
   /* ── Borders (LIGHT) ────────────────────────────────────────────────────── */
   --color-border-strong:  rgba(0, 0, 0, 0.14);
@@ -171,11 +161,9 @@ html.light {
   --color-outline-soft: rgba(0, 0, 0, 0.05);
 
   /* ── Shadows (LIGHT) ────────────────────────────────────────────────────── */
-  --shadow-soft:  0 4px 14px rgba(194, 60, 80, 0.28);
   --shadow-glass: 0 4px 24px rgba(0, 0, 0, 0.10);
-  --shadow-glow:  0 0 60px rgba(194, 60, 80, 0.14);
   --shadow-card:  0 1px 2px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.06);
-  --shadow-print: 0 2px 0 0 rgba(0, 0, 0, 0.12);
+  --shadow-hard:  0 2px 0 0 rgba(0, 0, 0, 0.12);
 
   /* ── Scrollbar (LIGHT) ──────────────────────────────────────────────────── */
   --scrollbar-thumb:       rgba(0, 0, 0, 0.14);
@@ -201,15 +189,11 @@ html.dark {
   --color-text-muted:     var(--color-text-muted);
 
   /* Accent */
-  --color-accent:       var(--color-accent);
-  --color-accent-hover: var(--color-accent-hover);
-  --color-accent-soft:  var(--color-accent-soft);
-  --color-accent-warm:  var(--color-accent-warm);
-  --color-accent-dim:   var(--color-accent-dim);
-  --color-paper:        var(--color-paper);
-  --color-paper-dim:           var(--color-paper-dim);
-  --color-paper-ink:           var(--color-paper-ink);
-  --color-paper-ink-secondary: var(--color-paper-ink-secondary);
+  --color-accent:          var(--color-accent);
+  --color-accent-hover:    var(--color-accent-hover);
+  --color-accent-soft:     var(--color-accent-soft);
+  --color-accent-contrast: var(--color-accent-contrast);
+  --color-accent-dim:      var(--color-accent-dim);
 
   /* Semantic borders */
   --color-border-strong:  var(--color-border-strong);
@@ -226,11 +210,9 @@ html.dark {
   --color-outline-soft: var(--color-outline-soft);
 
   /* Shadows */
-  --shadow-soft:  var(--shadow-soft);
   --shadow-glass: var(--shadow-glass);
-  --shadow-glow:  var(--shadow-glow);
   --shadow-card:  var(--shadow-card);
-  --shadow-print: var(--shadow-print);
+  --shadow-hard:  var(--shadow-hard);
 
   /* Fonts */
   --font-body: var(--font-body);
@@ -262,17 +244,6 @@ html.dark {
   --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);   /* spring out             */
   --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);    /* layout changes         */
   --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1); /* interactive confirm  */
-}
-
-/* Fraunces optical-size helpers — see --font-display above. Hero/hero-scale
-   display type wants the highest-contrast, most characterful optical
-   master (144); body-scale reading wants the low-contrast text master
-   (20) so it doesn't feel overwrought at paragraph size. */
-.font-display-hero {
-  font-variation-settings: "opsz" 144;
-}
-.font-display-body {
-  font-variation-settings: "opsz" 20;
 }
 
 html,
@@ -332,7 +303,7 @@ button {
 }
 
 ::selection {
-  background: rgba(161, 47, 62, 0.28);
+  background: rgba(245, 166, 35, 0.25);
   color: inherit;
 }
 
