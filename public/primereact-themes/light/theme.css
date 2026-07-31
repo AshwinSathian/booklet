@@ -12,8 +12,8 @@
   --surface-f: #ffffff;
   --text-color: #4b5563;
   --text-color-secondary: #6b7280;
-  --primary-color: #6366f1;
-  --primary-color-text: #ffffff;
+  --primary-color: #8a5a00;
+  --primary-color-text: #fafafa;
   --surface-0: #ffffff;
   --surface-50: #f9fafb;
   --surface-100: #f3f4f6;
@@ -46,8 +46,8 @@
   --surface-hover: #f6f9fc;
   --focus-ring: 0 0 0 0.2rem #c7d2fe;
   --maskbg: rgba(0, 0, 0, 0.4);
-  --highlight-bg: #eef2ff;
-  --highlight-text-color: #4338ca;
+  --highlight-bg: #fdf1de;
+  --highlight-text-color: #6f4700;
   color-scheme: light;
 }
 
@@ -178,16 +178,16 @@
   --red-700:#b32b23;
   --red-800:#8c221c;
   --red-900:#661814;
-  --primary-50:#f7f7fe;
-  --primary-100:#dadafc;
-  --primary-200:#bcbdf9;
-  --primary-300:#9ea0f6;
-  --primary-400:#8183f4;
-  --primary-500:#6366f1;
-  --primary-600:#5457cd;
-  --primary-700:#4547a9;
-  --primary-800:#363885;
-  --primary-900:#282960;
+  --primary-50:#fdf6ec;
+  --primary-100:#f9e4c4;
+  --primary-200:#f4d29c;
+  --primary-300:#efc074;
+  --primary-400:#ecae4c;
+  --primary-500:#8a5a00;
+  --primary-600:#734b00;
+  --primary-700:#5c3c00;
+  --primary-800:#452d00;
+  --primary-900:#2e1e00;
 }
 
 .p-editor-container .p-editor-toolbar {

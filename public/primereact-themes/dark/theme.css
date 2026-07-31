@@ -12,8 +12,8 @@
   --surface-f: #1f2937;
   --text-color: rgba(255, 255, 255, 0.87);
   --text-color-secondary: rgba(255, 255, 255, 0.6);
-  --primary-color: #818cf8;
-  --primary-color-text: #030712;
+  --primary-color: #f5a623;
+  --primary-color-text: #0a0a0a;
   --surface-0: #111827;
   --surface-50: #1f2937;
   --surface-100: #374151;
@@ -46,7 +46,7 @@
   --surface-hover: rgba(255, 255, 255, 0.03);
   --focus-ring: 0 0 0 0.2rem rgba(129, 140, 248, 0.2);
   --maskbg: rgba(0, 0, 0, 0.4);
-  --highlight-bg: rgba(129, 140, 248, 0.16);
+  --highlight-bg: rgba(245, 166, 35, 0.16);
   --highlight-text-color: rgba(255, 255, 255, 0.87);
   color-scheme: dark;
 }
@@ -178,16 +178,16 @@
   --red-700:#b32b23;
   --red-800:#8c221c;
   --red-900:#661814;
-  --primary-50:#f9f9ff;
-  --primary-100:#e1e3fd;
-  --primary-200:#c9cefc;
-  --primary-300:#b1b8fb;
-  --primary-400:#99a2f9;
-  --primary-500:#818cf8;
-  --primary-600:#6e77d3;
-  --primary-700:#5a62ae;
-  --primary-800:#474d88;
-  --primary-900:#343863;
+  --primary-50:#fef6e9;
+  --primary-100:#fce7bf;
+  --primary-200:#fad894;
+  --primary-300:#f8c86a;
+  --primary-400:#f7b846;
+  --primary-500:#f5a623;
+  --primary-600:#d1891d;
+  --primary-700:#ad6f18;
+  --primary-800:#895613;
+  --primary-900:#5f3c0d;
 }
 
 .p-editor-container .p-editor-toolbar {
