@@ -380,16 +380,14 @@ pool_size: 5 # was 50
           <span className="text-[12px] font-semibold text-text-muted">Shared as a Booklet link</span>
         </div>
         <div className="relative">
-          {/* Signature page-tab — the one deliberate "this is now a booklet"
-              cue, in the warm paper tone reserved for exactly this moment
-              (see BRAND.md's Signature Element). A small folded tab, like a
-              page you'd flag in a bound booklet to find again. */}
-          <div
-            aria-hidden
-            className="absolute -top-2.5 left-6 h-5 w-9 rounded-t-md bg-paper shadow-[0_-1px_3px_rgba(0,0,0,0.15)]"
-            style={{ transform: "rotate(-2deg)" }}
-          />
-          <div className="relative overflow-hidden rounded-2xl border border-emerald-500/12 bg-bg-elevated shadow-card">
+          {/* Signature accent — the one deliberate "this is now a booklet"
+              cue: a thin amber rule along the after-card's top edge plus a
+              small amber-tinted pill label, echoing the Precision system's
+              single-accent restraint instead of a distinct paper tone. */}
+          <div className="absolute -top-2.5 left-4 rounded-full border border-accent/30 bg-accent-dim px-2.5 py-0.5 text-2xs font-medium text-accent">
+            Shared as a Booklet link
+          </div>
+          <div className="relative overflow-hidden rounded-2xl border border-t-2 border-emerald-500/12 border-t-accent bg-bg-elevated shadow-card">
           {/* Browser bar */}
           <div className="flex items-center gap-2.5 border-b border-border-default bg-bg-soft px-4 py-2.5">
             <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-400" />
@@ -1347,12 +1345,13 @@ export function Landing() {
             initial="hidden"
             whileInView="show"
             viewport={{ once: true, margin: "-80px" }}
-            className="relative overflow-hidden rounded-3xl border border-accent/15 bg-bg-elevated px-8 py-16 text-center shadow-glow sm:px-16"
+            className="relative overflow-hidden rounded-3xl border border-accent/15 bg-bg-elevated px-8 py-16 text-center shadow-card sm:px-16"
           >
+            <CursorSpotlight />
+
             {/* Glow */}
             <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
               <div className="absolute -top-24 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-accent opacity-[0.13] blur-[60px]" />
-              <div className="absolute bottom-0 right-1/4 h-48 w-48 rounded-full bg-accent-soft opacity-[0.07] blur-2xl" />
             </div>
 
             <motion.div variants={reduce ? undefined : fadeUp} className="relative z-10">
