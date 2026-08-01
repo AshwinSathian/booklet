@@ -279,7 +279,7 @@ export default async function SharePage({
             </div>
             <Link
               href={ROUTES.app}
-              className="inline-flex items-center gap-1.5 rounded-pill border border-outline px-3.5 py-1.5 text-xs font-medium text-text-secondary transition hover:border-accent-soft/50 hover:text-text-primary"
+              className="inline-flex items-center gap-1.5 rounded-pill border border-border-default px-3.5 py-1.5 text-xs font-medium text-text-secondary transition hover:border-accent-soft/50 hover:text-text-primary"
             >
               Write your own page
               <svg width="10" height="10" fill="none" viewBox="0 0 12 12" aria-hidden>

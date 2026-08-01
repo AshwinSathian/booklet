@@ -190,7 +190,7 @@ function AdminPageInner({ slug }: { slug: string }) {
               onChange={(e) => setTeamName(e.target.value)}
               maxLength={80}
               onKeyDown={(e) => { if (e.key === "Enter") void handleRename(); }}
-              className="min-w-0 flex-1 rounded-lg border border-outline bg-bg px-3 py-2 text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft"
+              className="min-w-0 flex-1 rounded-lg border border-border-default bg-bg px-3 py-2 text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft"
             />
             <Button
               variant={saveSuccess ? "ghost" : "primary"}
@@ -209,7 +209,7 @@ function AdminPageInner({ slug }: { slug: string }) {
           <h2 className="text-sm font-medium mb-3">Members</h2>
           <div className="flex flex-col gap-2 mb-4">
             {/* Owner row — always first */}
-            <div className="flex items-center justify-between rounded-xl border border-outline bg-bg-elevated px-4 py-2.5 gap-3">
+            <div className="flex items-center justify-between rounded-xl border border-border-default bg-bg-elevated px-4 py-2.5 gap-3">
               <div className="min-w-0">
                 <p className="text-sm text-text-primary truncate">
                   {email ?? userId}
@@ -218,7 +218,7 @@ function AdminPageInner({ slug }: { slug: string }) {
               </div>
             </div>
             {memberRows.map((m) => (
-              <div key={m.id} className="group flex items-center justify-between rounded-xl border border-outline bg-bg-elevated px-4 py-2.5 gap-3">
+              <div key={m.id} className="group flex items-center justify-between rounded-xl border border-border-default bg-bg-elevated px-4 py-2.5 gap-3">
                 <div className="min-w-0">
                   <p className="text-sm text-text-primary truncate">{m.email ?? m.user_id}</p>
                   <p className="text-xs text-text-muted capitalize">{m.role}</p>
@@ -246,7 +246,7 @@ function AdminPageInner({ slug }: { slug: string }) {
               placeholder="colleague@example.com"
               value={inviteEmail}
               onChange={(e) => setInviteEmail(e.target.value)}
-              className="min-w-0 flex-1 rounded-lg border border-outline bg-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft"
+              className="min-w-0 flex-1 rounded-lg border border-border-default bg-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft"
               onKeyDown={(e) => { if (e.key === "Enter") void handleInvite(); }}
             />
             <Button

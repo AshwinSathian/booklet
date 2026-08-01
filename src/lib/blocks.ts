@@ -136,7 +136,7 @@ export const DEFAULT_SETTINGS: DocSettings = {
   spacing: "comfortable",
   width: "normal",
   code: "collapse",
-  typeface: "serif",
+  typeface: "sans",
 };
 
 /**
