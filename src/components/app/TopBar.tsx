@@ -498,14 +498,14 @@ function SettingsPanel({
   return (
     <div
       ref={ref}
-      className="absolute right-0 top-full mt-1.5 z-(--z-dropdown,20) w-72 rounded-card border border-outline bg-bg-elevated shadow-glass p-4 animate-dropdown-in"
+      className="absolute right-0 top-full mt-1.5 z-(--z-dropdown,20) w-72 rounded-card border border-border-default bg-bg-elevated shadow-glass p-4 animate-dropdown-in"
     >
       <div className="flex items-center justify-between mb-4">
         <div className="text-sm font-semibold">Settings</div>
         <button
           type="button"
           onClick={onClose}
-          className="flex h-7 w-7 items-center justify-center rounded-lg text-text-muted hover:bg-outline/40 hover:text-text-primary transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+          className="flex h-7 w-7 items-center justify-center rounded-lg text-text-muted hover:bg-fill-2/40 hover:text-text-primary transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
           aria-label="Close settings"
         >
           <Icon name="close" size={13} />
@@ -596,7 +596,7 @@ function SettingsPanel({
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg-elevated",
                     isSelected
                       ? "ring-2 ring-offset-2 ring-accent ring-offset-bg-elevated"
-                      : "ring-1 ring-outline hover:ring-border-strong",
+                      : "ring-1 ring-border-default hover:ring-border-strong",
                   ].join(" ")}
                   style={{ background: t.swatch }}
                 />
@@ -661,7 +661,7 @@ function DraftTitle({
       type="button"
       onClick={begin}
       title="Click to rename"
-      className="group flex items-center gap-1.5 min-w-0 max-w-52 rounded-md px-1.5 py-0.5 transition hover:bg-outline/30"
+      className="group flex items-center gap-1.5 min-w-0 max-w-52 rounded-md px-1.5 py-0.5 transition hover:bg-fill-2/30"
     >
       <span className="truncate text-sm font-medium text-text-secondary group-hover:text-text-primary transition">
         {title || "Untitled"}
@@ -674,21 +674,23 @@ function DraftTitle({
 }
 
 // ---------------------------------------------------------------------------
-// Publish reveal — a brief dark→paper→transparent flash that plays once,
-// full-viewport, the moment a draft becomes published. Foreshadows the
-// write-to-read transformation (dark editor chrome → the warm paper surface
-// the published page reads on) instead of a plain top-bar state swap.
+// Publish reveal — a brief, terminal-native flash that plays once,
+// full-viewport, the moment a draft becomes published: a compact
+// "compiling" pulse followed by a success tint, then a fade. Precision's
+// motion identity is restraint + precision, not a color-mode transformation
+// (the "Reveal"-era dark→paper crossfade this replaces) — this keeps the
+// same trigger and timing shape, just repainted.
 // Timing follows the same FADE_MS = 220 pattern established by AppLoader.
 // ---------------------------------------------------------------------------
 
-const REVEAL_DARK_MS = 160;
-const REVEAL_PAPER_MS = 160;
+const REVEAL_COMPILE_MS = 160;
+const REVEAL_SUCCESS_MS = 160;
 const REVEAL_FADE_MS = 220;
 
-type RevealPhase = "dark" | "paper" | "fading";
+type RevealPhase = "compiling" | "success" | "fading";
 
 function PublishReveal({ onDone }: { onDone: () => void }) {
-  const [phase, setPhase] = useState<RevealPhase>("dark");
+  const [phase, setPhase] = useState<RevealPhase>("compiling");
   // PublishArea re-renders often while this is on screen (toast state,
   // copy-link pulse, the save indicator ticking) and passes a fresh
   // `onDone` closure each time. Reading it via a ref — rather than putting
@@ -698,14 +700,14 @@ function PublishReveal({ onDone }: { onDone: () => void }) {
   onDoneRef.current = onDone;
 
   useEffect(() => {
-    const toPaper = setTimeout(() => setPhase("paper"), REVEAL_DARK_MS);
-    const toFading = setTimeout(() => setPhase("fading"), REVEAL_DARK_MS + REVEAL_PAPER_MS);
+    const toSuccess = setTimeout(() => setPhase("success"), REVEAL_COMPILE_MS);
+    const toFading = setTimeout(() => setPhase("fading"), REVEAL_COMPILE_MS + REVEAL_SUCCESS_MS);
     const finish = setTimeout(
       () => onDoneRef.current(),
-      REVEAL_DARK_MS + REVEAL_PAPER_MS + REVEAL_FADE_MS,
+      REVEAL_COMPILE_MS + REVEAL_SUCCESS_MS + REVEAL_FADE_MS,
     );
     return () => {
-      clearTimeout(toPaper);
+      clearTimeout(toSuccess);
       clearTimeout(toFading);
       clearTimeout(finish);
     };
@@ -715,13 +717,19 @@ function PublishReveal({ onDone }: { onDone: () => void }) {
   return (
     <div
       aria-hidden
-      className="fixed inset-0 z-50 pointer-events-none"
+      className="fixed inset-0 z-50 pointer-events-none flex items-center justify-center"
       style={{
-        backgroundColor: phase === "dark" ? "var(--color-bg)" : "var(--color-paper)",
+        backgroundColor: phase === "compiling" ? "var(--color-bg)" : "var(--color-accent-dim)",
         opacity: phase === "fading" ? 0 : 1,
-        transition: `opacity ${REVEAL_FADE_MS}ms ease-out, background-color ${REVEAL_PAPER_MS}ms ease-out`,
+        transition: `opacity ${REVEAL_FADE_MS}ms ease-out, background-color ${REVEAL_SUCCESS_MS}ms ease-out`,
       }}
-    />
+    >
+      {phase !== "fading" && (
+        <span className="font-mono text-sm text-accent">
+          {phase === "compiling" ? "Publishing…" : "Published ✓"}
+        </span>
+      )}
+    </div>
   );
 }
 
@@ -780,7 +788,7 @@ function PublishArea({
             "active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
             publishedOwned
               ? "border border-accent/40 text-accent bg-accent-dim hover:border-accent hover:bg-accent/10"
-              : "border border-outline text-text-secondary hover:border-accent-soft/50 hover:text-text-primary",
+              : "border border-border-default text-text-secondary hover:border-accent-soft/50 hover:text-text-primary",
             copyLinkPulse ? "ring-2 ring-accent-soft ring-offset-1 ring-offset-bg" : "",
           ].join(" ")}
         >
@@ -1017,13 +1025,13 @@ function PostPublishSlugBar({
     availability !== "checking";
 
   return (
-    <div className="absolute top-full left-0 right-0 z-10 border-b border-outline/50 bg-bg-soft/95 backdrop-blur-xl px-3 py-2.5 animate-dropdown-in">
+    <div className="absolute top-full left-0 right-0 z-10 border-b border-border-default/50 bg-bg-soft/95 backdrop-blur-xl px-3 py-2.5 animate-dropdown-in">
       <div className="mx-auto w-full max-w-7xl flex flex-col sm:flex-row sm:items-center gap-2">
         <span className="text-xs text-text-secondary shrink-0">
           Set a custom URL before sharing:
         </span>
         <div className="flex items-center gap-0 min-w-0 flex-1">
-          <span className="text-xs text-text-muted/60 px-2 py-1 bg-bg border border-r-0 border-outline rounded-l-md whitespace-nowrap hidden sm:inline">
+          <span className="text-xs text-text-muted/60 px-2 py-1 bg-bg border border-r-0 border-border-default rounded-l-md whitespace-nowrap hidden sm:inline">
             {hostLabel}/p/
           </span>
           <input
@@ -1039,7 +1047,7 @@ function PostPublishSlugBar({
               "min-w-0 flex-1 sm:w-52 sm:flex-none px-2 py-1 text-xs bg-bg border rounded-md sm:rounded-l-none sm:rounded-r-md text-text-primary placeholder:text-text-muted/40",
               "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft",
               "transition-colors duration-fast",
-              availability === "taken" ? "border-red-400/60" : "border-outline",
+              availability === "taken" ? "border-red-400/60" : "border-border-default",
             ].join(" ")}
             aria-label="Custom URL slug"
           />
@@ -1251,13 +1259,13 @@ export function TopBar({
   ];
 
   return (
-    <header id="header" className="sticky top-0 z-20 border-b border-outline/70 bg-bg/85 backdrop-blur-xl">
+    <header id="header" className="sticky top-0 z-20 border-b border-border-default/70 bg-bg/85 backdrop-blur-xl">
       <div className="mx-auto flex h-12 w-full max-w-7xl items-center gap-2 px-3">
 
         {/* ── Left zone ── */}
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <AppLogo onlyIcon={true} />
-          <div className="h-4 w-px bg-outline shrink-0" />
+          <div className="h-4 w-px bg-fill-2 shrink-0" />
           <DraftTitle title={draftTitle} onRename={onRenameCurrentDraft} />
         </div>
 
@@ -1270,7 +1278,7 @@ export function TopBar({
           />
 
           {/* Divider only visible when SaveIndicator shows (sm+) */}
-          <div className="hidden sm:block mx-1 h-4 w-px bg-outline" />
+          <div className="hidden sm:block mx-1 h-4 w-px bg-fill-2" />
 
           <IconBtn
             label="More options"
@@ -1313,7 +1321,7 @@ export function TopBar({
             </Button>
           )}
 
-          <div className="mx-1 h-4 w-px bg-outline" />
+          <div className="mx-1 h-4 w-px bg-fill-2" />
 
           <PublishArea
             status={status}
