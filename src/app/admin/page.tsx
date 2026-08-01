@@ -37,7 +37,7 @@ export default async function AdminPage() {
     logError("admin", "Failed to load metrics", err);
     return (
       <div className="min-h-screen bg-bg p-12 text-text-primary">
-        <h1 className="text-xl font-bold mb-4">Admin — Error</h1>
+        <h1 className="text-xl font-bold font-display mb-4">Admin — Error</h1>
         <p className="text-sm text-red-400">Something went wrong loading metrics.</p>
       </div>
     );
@@ -46,7 +46,7 @@ export default async function AdminPage() {
   return (
     <div className="min-h-screen bg-bg p-10 text-text-primary max-w-2xl">
       <div className="mb-8 flex items-baseline gap-4">
-        <h1 className="text-xl font-bold">Booklet — Internal Metrics</h1>
+        <h1 className="text-xl font-bold font-display">Booklet — Internal Metrics</h1>
         <span className="text-xs text-text-muted">{new Date().toUTCString()}</span>
       </div>
 
