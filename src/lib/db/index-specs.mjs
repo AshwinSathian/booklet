@@ -33,6 +33,15 @@ export const INDEX_SPECS = [
   { collection: "sessions", spec: { user_id: 1 } },
   { collection: "sessions", spec: { expires_at: 1 }, options: { expireAfterSeconds: 0 } },
 
+  // --- password_reset_tokens ---
+  // Forgot-password flow (src/lib/auth/password-reset-token.ts). token_hash
+  // is the authoritative lookup for a reset link; the TTL index expires
+  // unused tokens 30 minutes after issuance, matching the email's stated
+  // expiry window.
+  { collection: "password_reset_tokens", spec: { token_hash: 1 }, options: { unique: true } },
+  { collection: "password_reset_tokens", spec: { user_id: 1 } },
+  { collection: "password_reset_tokens", spec: { expires_at: 1 }, options: { expireAfterSeconds: 0 } },
+
   // --- pages ---
   { collection: "pages", spec: { user_id: 1, created_at: -1 } },
   { collection: "pages", spec: { collection_id: 1, user_id: 1 } },

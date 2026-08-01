@@ -20,6 +20,14 @@ export type DbSession = {
   expires_at: Date;     // BSON Date — TTL index, sliding 30-day window
 };
 
+export type DbPasswordResetToken = {
+  id: string;
+  user_id: string;
+  token_hash: string;   // HMAC-SHA256(raw token, PASSWORD_RESET_TOKEN_PEPPER)
+  created_at: string;
+  expires_at: Date;     // BSON Date — TTL index, 30-minute window
+};
+
 export type DbPage = {
   id: string;           // 10-char KV key
   user_id: string;

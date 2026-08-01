@@ -5,7 +5,7 @@
 
 import { getDb } from "@/lib/mongodb";
 import { createId } from "@/lib/id";
-import type { DbSession, DbUser } from "./types";
+import type { DbPasswordResetToken, DbSession, DbUser } from "./types";
 
 type UserDoc = Omit<DbUser, "id"> & { _id: string };
 type SessionDoc = Omit<DbSession, "id"> & { _id: string };
@@ -96,4 +96,39 @@ export async function deleteSessionByHash(tokenHash: string): Promise<void> {
 export async function deleteAllUserSessions(userId: string): Promise<void> {
   const db = await getDb();
   await db.collection<SessionDoc>("sessions").deleteMany({ user_id: userId });
+}
+
+type PasswordResetTokenDoc = Omit<DbPasswordResetToken, "id"> & { _id: string };
+
+function toPasswordResetToken(doc: PasswordResetTokenDoc): DbPasswordResetToken {
+  const { _id, ...rest } = doc;
+  return { id: _id, ...rest };
+}
+
+/** Creates a reset token, first deleting any earlier still-live token for this user — only one live reset link at a time. */
+export async function createPasswordResetToken(
+  userId: string,
+  tokenHash: string,
+  expiresAt: Date,
+): Promise<void> {
+  const db = await getDb();
+  await db.collection<PasswordResetTokenDoc>("password_reset_tokens").deleteMany({ user_id: userId });
+  await db.collection<PasswordResetTokenDoc>("password_reset_tokens").insertOne({
+    _id: createId(20),
+    user_id: userId,
+    token_hash: tokenHash,
+    created_at: new Date().toISOString(),
+    expires_at: expiresAt,
+  });
+}
+
+export async function findPasswordResetTokenByHash(tokenHash: string): Promise<DbPasswordResetToken | null> {
+  const db = await getDb();
+  const doc = await db.collection<PasswordResetTokenDoc>("password_reset_tokens").findOne({ token_hash: tokenHash });
+  return doc ? toPasswordResetToken(doc) : null;
+}
+
+export async function deletePasswordResetToken(tokenHash: string): Promise<void> {
+  const db = await getDb();
+  await db.collection<PasswordResetTokenDoc>("password_reset_tokens").deleteOne({ token_hash: tokenHash });
 }
