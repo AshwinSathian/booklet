@@ -6,6 +6,8 @@ export const ROUTES = {
   publish: (id: string) => `/p/${id}`,
   signIn: "/sign-in",
   signUp: "/sign-up",
+  forgotPassword: "/forgot-password",
+  resetPassword: "/reset-password",
   myPages: "/my-pages",
   mcpSetup: "/mcp-setup",
   integrations: "/integrations",

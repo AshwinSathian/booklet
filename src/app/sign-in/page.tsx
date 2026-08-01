@@ -45,6 +45,12 @@ export default async function SignInPage({
       <AuthForm mode="sign-in" redirectUrl={redirectUrl} />
 
       <p className="text-xs text-text-muted text-center">
+        <Link href={ROUTES.forgotPassword} className="text-accent hover:text-accent-soft transition-colors">
+          Forgot your password?
+        </Link>
+      </p>
+
+      <p className="text-xs text-text-muted text-center">
         No account?{" "}
         <Link
           href={redirectUrl ? `${ROUTES.signUp}?redirect_url=${encodeURIComponent(redirectUrl)}` : ROUTES.signUp}
