@@ -32,7 +32,7 @@ function SectionAnchor({ id, title }: { id: string; title: string }) {
   return (
     <h2
       id={id}
-      className="scroll-mt-20 text-base font-semibold text-text-primary mb-4 pb-2 border-b border-outline flex items-center gap-2"
+      className="scroll-mt-20 text-base font-semibold text-text-primary mb-4 pb-2 border-b border-border-default flex items-center gap-2"
     >
       {title}
     </h2>
@@ -56,7 +56,7 @@ function CopyButton({ text, className }: { text: string; className?: string }) {
       onClick={copy}
       title={copied ? "Copied!" : "Copy"}
       className={cn(
-        "p-1.5 rounded-md transition text-text-muted hover:text-text-primary hover:bg-bg-elevated border border-transparent hover:border-outline",
+        "p-1.5 rounded-md transition text-text-muted hover:text-text-primary hover:bg-bg-elevated border border-transparent hover:border-border-default",
         className,
       )}
     >
@@ -78,14 +78,14 @@ function CodeBlock({ code, label }: { code: string; label?: string }) {
   return (
     <div className="relative group">
       {label && (
-        <div className="flex items-center justify-between px-3 py-1.5 bg-bg-soft border border-outline rounded-t-xl border-b-0">
+        <div className="flex items-center justify-between px-3 py-1.5 bg-bg-soft border border-border-default rounded-t-xl border-b-0">
           <span className="text-[11px] font-mono text-text-muted">{label}</span>
           <CopyButton text={code} />
         </div>
       )}
       <div className="relative">
         <pre className={cn(
-          "text-[12px] font-mono bg-bg-soft border border-outline p-4 text-text-secondary overflow-x-auto leading-relaxed whitespace-pre",
+          "text-[12px] font-mono bg-bg-soft border border-border-default p-4 text-text-secondary overflow-x-auto leading-relaxed whitespace-pre",
           label ? "rounded-b-xl rounded-t-none" : "rounded-xl",
         )}>
           {code}
@@ -289,7 +289,7 @@ function ClaudeDesktopInstructions({ apiKey }: { apiKey: string }) {
   return (
     <div className="space-y-5">
       {/* OS toggle */}
-      <div className="flex items-center gap-1 p-0.5 bg-bg-soft border border-outline rounded-lg w-fit">
+      <div className="flex items-center gap-1 p-0.5 bg-bg-soft border border-border-default rounded-lg w-fit">
         {(["mac", "windows"] as const).map((o) => (
           <button
             key={o}
@@ -378,7 +378,7 @@ function ClaudeAiInstructions({ apiKey }: { apiKey: string }) {
           <p className="text-sm text-text-secondary mb-2">
             Click <strong>Add integration</strong> and fill in the form:
           </p>
-          <div className="rounded-xl border border-outline bg-bg-soft p-4 space-y-3 text-sm">
+          <div className="rounded-xl border border-border-default bg-bg-soft p-4 space-y-3 text-sm">
             <Field label="Integration name" value="Booklet" />
             <Field label="MCP server URL" value={MCP_URL} copyable />
             <Field
@@ -477,7 +477,7 @@ function WindsurfInstructions({ apiKey }: { apiKey: string }) {
           <p className="text-sm text-text-secondary mb-2">
             Click <strong>+ Add Server</strong> → choose <strong>HTTP/SSE</strong> and fill in:
           </p>
-          <div className="rounded-xl border border-outline bg-bg-soft p-4 space-y-3 text-sm">
+          <div className="rounded-xl border border-border-default bg-bg-soft p-4 space-y-3 text-sm">
             <Field label="Server name" value="booklet" />
             <Field label="Server URL" value={MCP_URL} copyable />
             <Field label="Authorization" value={headerValue} copyable masked={apiKey === "rdbl_YOUR_API_KEY"} />
@@ -590,7 +590,7 @@ function Step({ n, title, children }: { n: number; title: string; children: Reac
     <div className="flex gap-3">
       <div className="flex flex-col items-center gap-1 pt-0.5">
         <StepNumber n={n} />
-        <div className="w-px flex-1 bg-outline/60 min-h-3" />
+        <div className="w-px flex-1 bg-fill-2/60 min-h-3" />
       </div>
       <div className="pb-2 min-w-0 flex-1">
         <p className="text-sm font-semibold text-text-primary mb-1.5">{title}</p>
@@ -642,7 +642,7 @@ function PromptChip({ text }: { text: string }) {
     <button
       type="button"
       onClick={copy}
-      className="group flex items-start gap-2 rounded-xl border border-outline bg-bg-elevated px-4 py-3 text-left text-sm text-text-secondary transition hover:border-accent/40 hover:bg-bg-soft hover:text-text-primary"
+      className="group flex items-start gap-2 rounded-xl border border-border-default bg-bg-elevated px-4 py-3 text-left text-sm text-text-secondary transition hover:border-accent/40 hover:bg-bg-soft hover:text-text-primary"
     >
       <svg
         width="14"
@@ -712,7 +712,7 @@ export default function McpSetupPage() {
             ))}
           </nav>
 
-          <div className="mt-8 pt-6 border-t border-outline">
+          <div className="mt-8 pt-6 border-t border-border-default">
             <p className="text-[0.65rem] font-semibold uppercase tracking-widest text-text-muted mb-2">
               MCP endpoint
             </p>
@@ -771,7 +771,7 @@ export default function McpSetupPage() {
               ].map((card) => (
                 <div
                   key={card.title}
-                  className="rounded-xl border border-outline bg-bg-elevated p-4 flex flex-col gap-2"
+                  className="rounded-xl border border-border-default bg-bg-elevated p-4 flex flex-col gap-2"
                 >
                   <div className="text-accent">{card.icon}</div>
                   <p className="text-sm font-semibold text-text-primary">{card.title}</p>
@@ -819,7 +819,7 @@ export default function McpSetupPage() {
                     }}
                     placeholder="rdbl_YOUR_API_KEY"
                     spellCheck={false}
-                    className="flex-1 rounded-lg border border-outline bg-bg-soft px-3 py-2 text-sm font-mono text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-accent/50 focus:border-accent/50 transition"
+                    className="flex-1 rounded-lg border border-border-default bg-bg-soft px-3 py-2 text-sm font-mono text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-accent/50 focus:border-accent/50 transition"
                   />
                 </div>
                 {apiKey !== "rdbl_YOUR_API_KEY" && (
@@ -849,7 +849,7 @@ export default function McpSetupPage() {
                     "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition border",
                     platform === p.id
                       ? "bg-accent/10 border-accent/40 text-accent"
-                      : "border-outline text-text-muted hover:border-accent/20 hover:text-text-secondary bg-bg-elevated",
+                      : "border-border-default text-text-muted hover:border-accent/20 hover:text-text-secondary bg-bg-elevated",
                   )}
                 >
                   <span className="opacity-80">{p.icon}</span>
@@ -864,7 +864,7 @@ export default function McpSetupPage() {
             </div>
 
             {/* Platform instructions */}
-            <div className="rounded-xl border border-outline bg-bg-elevated p-5 sm:p-6">
+            <div className="rounded-xl border border-border-default bg-bg-elevated p-5 sm:p-6">
               {platformContent[platform]}
             </div>
           </section>
@@ -898,10 +898,10 @@ export default function McpSetupPage() {
               These tools are available to any connected AI. The AI chooses which one to call based
               on your request.
             </p>
-            <div className="overflow-x-auto rounded-xl border border-outline">
+            <div className="overflow-x-auto rounded-xl border border-border-default">
               <table className="w-full text-sm border-collapse">
                 <thead>
-                  <tr className="border-b border-outline bg-bg-soft">
+                  <tr className="border-b border-border-default bg-bg-soft">
                     <th className="text-left px-4 py-2.5 text-xs font-semibold text-text-muted uppercase tracking-wide">
                       Tool
                     </th>
@@ -943,7 +943,7 @@ export default function McpSetupPage() {
                   ].map((tool, i, arr) => (
                     <tr
                       key={tool.name}
-                      className={cn("border-outline", i < arr.length - 1 ? "border-b" : "")}
+                      className={cn("border-border-default", i < arr.length - 1 ? "border-b" : "")}
                     >
                       <td className="px-4 py-3 font-mono text-[12px] text-accent-soft whitespace-nowrap">
                         {tool.name}
@@ -1001,7 +1001,7 @@ export default function McpSetupPage() {
               ].map((tmpl) => (
                 <div
                   key={tmpl.name}
-                  className="rounded-xl border border-outline bg-bg-elevated p-4 flex flex-col gap-2"
+                  className="rounded-xl border border-border-default bg-bg-elevated p-4 flex flex-col gap-2"
                 >
                   <div className="flex items-center gap-2">
                     <code className="text-[11px] font-mono text-accent-soft bg-fill-2 rounded px-1.5 py-0.5">
@@ -1044,7 +1044,7 @@ export default function McpSetupPage() {
               ].map((item) => (
                 <details
                   key={item.q}
-                  className="group rounded-xl border border-outline bg-bg-elevated overflow-hidden"
+                  className="group rounded-xl border border-border-default bg-bg-elevated overflow-hidden"
                 >
                   <summary className="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer list-none text-sm font-medium text-text-primary hover:bg-bg-soft transition">
                     <span>{item.q}</span>
@@ -1059,14 +1059,14 @@ export default function McpSetupPage() {
                       <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </summary>
-                  <div className="px-4 pb-3 text-sm text-text-secondary border-t border-outline/60 pt-3">
+                  <div className="px-4 pb-3 text-sm text-text-secondary border-t border-border-default/60 pt-3">
                     {item.a}
                   </div>
                 </details>
               ))}
             </div>
 
-            <div className="mt-6 rounded-xl border border-outline bg-bg-elevated p-4 text-sm">
+            <div className="mt-6 rounded-xl border border-border-default bg-bg-elevated p-4 text-sm">
               <p className="font-semibold text-text-primary mb-1">Security note</p>
               <p className="text-text-secondary text-xs leading-relaxed">
                 Your API key is sent directly from the MCP client to Booklet&apos;s API on each tool

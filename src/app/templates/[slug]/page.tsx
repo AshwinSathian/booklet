@@ -118,7 +118,7 @@ export default async function TemplatePage({
               {template.category}
             </span>
           )}
-          <h1 className="text-[clamp(24px,4vw,32px)] text-text-primary">
+          <h1 className="text-[clamp(24px,4vw,32px)] text-text-primary font-display">
             {template.headline ?? template.name}
           </h1>
           <p className="mt-3 text-base text-text-secondary leading-relaxed max-w-xl">

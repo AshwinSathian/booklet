@@ -48,7 +48,7 @@ function IntegrationBadge({ label, color }: { label: string; color: string }) {
 
 function CodeBlock({ children }: { children: string }) {
   return (
-    <pre className="rounded-xl bg-bg-soft border border-outline p-4 text-xs font-mono text-text-secondary overflow-x-auto leading-relaxed whitespace-pre">
+    <pre className="rounded-xl bg-bg-soft border border-border-default p-4 text-xs font-mono text-text-secondary overflow-x-auto leading-relaxed whitespace-pre">
       {children}
     </pre>
   );
@@ -103,7 +103,7 @@ export default function IntegrationsPage() {
         <div className="inline-flex items-center gap-1.5 rounded-pill border border-accent/30 bg-accent/8 px-3 py-1 text-xs font-semibold text-accent mb-6">
           Integrations
         </div>
-        <h1 className="text-[clamp(32px,6vw,54px)] font-thin leading-[1.06] text-text-primary max-w-3xl mx-auto mb-4">
+        <h1 className="text-[clamp(32px,6vw,54px)] font-thin leading-[1.06] text-text-primary max-w-3xl mx-auto mb-4 font-display">
           Publish from wherever<br />
           <span className="text-accent">you already work</span>
         </h1>

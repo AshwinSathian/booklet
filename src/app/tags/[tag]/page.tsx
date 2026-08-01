@@ -83,7 +83,7 @@ export default async function TagPage({
               #{decoded}
             </span>
           </div>
-          <h1 className="text-[clamp(20px,3vw,26px)] text-text-primary">
+          <h1 className="text-[clamp(20px,3vw,26px)] text-text-primary font-display">
             Pages tagged &ldquo;{decoded}&rdquo;
           </h1>
           <p className="mt-1.5 text-sm text-text-muted">
@@ -121,7 +121,7 @@ export default async function TagPage({
             ))}
           </div>
         ) : (
-          <div className="rounded-xl border border-dashed border-outline px-6 py-16 text-center">
+          <div className="rounded-xl border border-dashed border-border-subtle px-6 py-16 text-center">
             <p className="text-sm text-text-muted mb-4">No public pages with this tag yet.</p>
             <p className="text-xs text-text-muted/70">
               Add <code className="rounded bg-fill-2 px-1 py-0.5 font-mono">tags: [{decoded}]</code> to your page&apos;s YAML frontmatter to appear here.

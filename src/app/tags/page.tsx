@@ -37,14 +37,14 @@ export default async function TagsPage() {
 
       <main className="mx-auto w-full max-w-4xl px-4 py-10">
         <div className="mb-8">
-          <h1 className="text-[clamp(20px,3vw,26px)] text-text-primary">Browse by tag</h1>
+          <h1 className="text-[clamp(20px,3vw,26px)] text-text-primary font-display">Browse by tag</h1>
           <p className="mt-1.5 text-sm text-text-muted">
             Public pages tagged with YAML frontmatter — add <code className="rounded bg-fill-2 px-1 py-0.5 text-xs font-mono">tags: [engineering]</code> to your page to appear here.
           </p>
         </div>
 
         {tags.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-outline px-6 py-16 text-center">
+          <div className="rounded-xl border border-dashed border-border-subtle px-6 py-16 text-center">
             <p className="text-sm text-text-muted">No tags found yet. Publish a page with frontmatter tags to see them here.</p>
           </div>
         ) : (
@@ -59,7 +59,7 @@ export default async function TagsPage() {
                   href={`/tags/${encodeURIComponent(tag)}`}
                   className={[
                     sizeClass,
-                    "inline-flex items-center gap-1.5 rounded-pill border border-outline bg-bg-elevated px-3 py-1.5",
+                    "inline-flex items-center gap-1.5 rounded-pill border border-border-default bg-bg-elevated px-3 py-1.5",
                     "text-text-secondary transition hover:border-accent-soft/40 hover:bg-accent/8 hover:text-accent",
                   ].join(" ")}
                 >

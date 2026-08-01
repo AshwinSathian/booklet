@@ -14,7 +14,7 @@ export const metadata: Metadata = buildMetadata({
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="text-base text-text-primary border-b border-outline pb-2">{title}</h2>
+      <h2 className="text-base text-text-primary border-b border-border-default pb-2">{title}</h2>
       <div className="flex flex-col gap-3 text-sm text-text-secondary leading-relaxed">{children}</div>
     </section>
   );
@@ -28,7 +28,7 @@ export default function TermsPage() {
           <AppLogo onlyIcon={false} />
           <Link
             href={ROUTES.app}
-            className="hidden sm:inline-flex items-center gap-1.5 rounded-pill border border-outline px-3.5 py-1.5 text-xs font-medium text-text-secondary transition hover:border-accent-soft/50 hover:text-text-primary"
+            className="hidden sm:inline-flex items-center gap-1.5 rounded-pill border border-border-default px-3.5 py-1.5 text-xs font-medium text-text-secondary transition hover:border-accent-soft/50 hover:text-text-primary"
           >
             Open editor
           </Link>
@@ -39,7 +39,7 @@ export default function TermsPage() {
         <div className="max-w-2xl flex flex-col gap-8">
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest text-text-muted mb-3">Legal</p>
-            <h1 className="text-[clamp(22px,3.5vw,30px)] text-text-primary mb-2">Terms of Service</h1>
+            <h1 className="text-[clamp(22px,3.5vw,30px)] text-text-primary mb-2 font-display">Terms of Service</h1>
             <p className="text-sm text-text-muted">Last updated: July 2026</p>
           </div>
 

@@ -101,7 +101,7 @@ export default function McpPage() {
           Model Context Protocol
         </div>
 
-        <h1 className="text-[clamp(34px,6vw,56px)] font-thin leading-[1.04] text-text-primary max-w-2xl mx-auto mb-4">
+        <h1 className="text-[clamp(34px,6vw,56px)] font-thin leading-[1.04] text-text-primary max-w-2xl mx-auto mb-4 font-display">
           Publish pages from<br />
           <span className="text-accent">any AI editor</span>
         </h1>
@@ -197,7 +197,7 @@ export default function McpPage() {
               Paste this into your editor&apos;s MCP configuration. Replace{" "}
               <code className="rounded bg-fill-2 px-1 py-0.5 text-xs font-mono text-accent-soft">rdbl_YOUR_KEY</code> with your API key.
             </p>
-            <pre className="rounded-xl bg-bg-soft border border-outline p-4 text-xs font-mono text-text-secondary overflow-x-auto leading-relaxed whitespace-pre">{`{
+            <pre className="rounded-xl bg-bg-soft border border-border-default p-4 text-xs font-mono text-text-secondary overflow-x-auto leading-relaxed whitespace-pre">{`{
   "mcpServers": {
     "readable": {
       "url": "https://booklet-mcp.ashwinsathian.com/mcp",
@@ -228,7 +228,7 @@ export default function McpPage() {
               className="rounded-xl border border-border-subtle bg-bg-elevated p-5"
             >
               <div className="flex items-center gap-2 mb-2">
-                <span className="rounded-pill border border-outline px-2 py-0.5 text-2xs font-semibold text-text-muted">
+                <span className="rounded-pill border border-border-default px-2 py-0.5 text-2xs font-semibold text-text-muted">
                   {uc.tag}
                 </span>
               </div>

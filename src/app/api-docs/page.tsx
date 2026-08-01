@@ -49,7 +49,7 @@ function MethodBadge({ method }: { method: "GET" | "POST" | "PATCH" | "DELETE" }
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
   return (
     <section id={id} className="scroll-mt-20">
-      <h2 className="text-base text-text-primary mb-4 pb-2 border-b border-outline font-display">{title}</h2>
+      <h2 className="text-base text-text-primary mb-4 pb-2 border-b border-border-default font-display">{title}</h2>
       {children}
     </section>
   );
@@ -70,7 +70,7 @@ function Endpoint({ method, path, description, children }: { method: "GET" | "PO
 
 function Pre({ children }: { children: string }) {
   return (
-    <pre className="rounded-xl bg-bg-soft border border-outline p-4 text-xs font-mono text-text-secondary overflow-x-auto leading-relaxed whitespace-pre">
+    <pre className="rounded-xl bg-bg-soft border border-border-default p-4 text-xs font-mono text-text-secondary overflow-x-auto leading-relaxed whitespace-pre">
       {children}
     </pre>
   );
@@ -81,14 +81,14 @@ function Table({ rows }: { rows: [string, string][] }) {
     <div className="overflow-x-auto">
       <table className="w-full text-sm border-collapse">
         <thead>
-          <tr className="border-b border-outline text-left">
+          <tr className="border-b border-border-default text-left">
             <th className="pb-2 pr-8 text-xs font-semibold text-text-muted uppercase tracking-wide">Status</th>
             <th className="pb-2 text-xs font-semibold text-text-muted uppercase tracking-wide">Reason</th>
           </tr>
         </thead>
         <tbody>
           {rows.map(([status, reason]) => (
-            <tr key={status} className="border-b border-outline/50">
+            <tr key={status} className="border-b border-border-default/50">
               <td className="py-2 pr-8 font-mono text-xs text-amber-400">{status}</td>
               <td className="py-2 text-xs text-text-secondary">{reason}</td>
             </tr>
@@ -211,7 +211,7 @@ slug: incident-auth-2026-05
             <div className="overflow-x-auto">
               <table className="w-full text-sm border-collapse">
                 <thead>
-                  <tr className="border-b border-outline text-left">
+                  <tr className="border-b border-border-default text-left">
                     <th className="pb-2 pr-6 text-xs font-semibold text-text-muted uppercase tracking-wide">Field</th>
                     <th className="pb-2 pr-6 text-xs font-semibold text-text-muted uppercase tracking-wide">Type</th>
                     <th className="pb-2 text-xs font-semibold text-text-muted uppercase tracking-wide">Notes</th>
@@ -226,7 +226,7 @@ slug: incident-auth-2026-05
                     ["author", "string", "Stored as metadata, max 100 chars"],
                     ["date", "string", "Stored as metadata, any format"],
                   ].map(([field, type, notes]) => (
-                    <tr key={field} className="border-b border-outline/50">
+                    <tr key={field} className="border-b border-border-default/50">
                       <td className="py-2 pr-6 font-mono text-xs text-amber-400">{field}</td>
                       <td className="py-2 pr-6 font-mono text-xs text-text-muted">{type}</td>
                       <td className="py-2 text-xs text-text-secondary">{notes}</td>
@@ -449,7 +449,7 @@ jobs:
               publish and manage pages on your behalf — entirely through conversation.
             </p>
 
-            <div className="rounded-xl border border-outline bg-bg-elevated p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-4">
+            <div className="rounded-xl border border-border-default bg-bg-elevated p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-4">
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-text-primary mb-0.5">Full setup guide →</p>
                 <p className="text-xs text-text-secondary">
@@ -470,11 +470,11 @@ jobs:
 
             <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">Quick reference</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-              <div className="rounded-lg border border-outline p-3">
+              <div className="rounded-lg border border-border-default p-3">
                 <p className="text-xs font-semibold text-text-primary mb-1">MCP endpoint</p>
                 <Code>{mcpBase}/mcp</Code>
               </div>
-              <div className="rounded-lg border border-outline p-3">
+              <div className="rounded-lg border border-border-default p-3">
                 <p className="text-xs font-semibold text-text-primary mb-1">Auth header</p>
                 <Code>Authorization: Bearer bklt_YOUR_KEY</Code>
               </div>

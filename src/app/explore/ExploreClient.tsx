@@ -147,7 +147,7 @@ export function ExploreClient({
       {/* Controls */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4">
         {/* Tab bar */}
-        <div className="flex items-center gap-0.5 rounded-lg border border-outline bg-bg-soft p-0.5">
+        <div className="flex items-center gap-0.5 rounded-lg border border-border-default bg-bg-soft p-0.5">
           {TABS.map(({ id, label }) => (
             <button
               key={id}
@@ -182,7 +182,7 @@ export function ExploreClient({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Filter pages…"
-            className="w-full rounded-lg border border-outline bg-bg pl-8 pr-3 py-1.5 text-sm text-text-primary placeholder:text-text-muted/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft"
+            className="w-full rounded-lg border border-border-default bg-bg pl-8 pr-3 py-1.5 text-sm text-text-primary placeholder:text-text-muted/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft"
           />
         </div>
 
@@ -237,7 +237,7 @@ export function ExploreClient({
 
       {/* Grid */}
       {filtered.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-outline py-16 text-center text-sm text-text-muted">
+        <div className="rounded-xl border border-dashed border-border-subtle py-16 text-center text-sm text-text-muted">
           {query || activeTag
             ? `No pages match${activeTag ? ` #${activeTag}` : ""}${query ? ` "${query}"` : ""}`
             : "No pages yet."}
