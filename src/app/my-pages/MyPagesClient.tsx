@@ -189,7 +189,7 @@ function SlugEditor({
   return (
     <div className="mt-2 flex flex-col gap-1">
       <div className="flex items-center gap-0">
-        <span className="text-xs text-text-muted/60 px-2 py-1 bg-bg-soft border border-r-0 border-outline rounded-l-md whitespace-nowrap hidden sm:inline">
+        <span className="text-xs text-text-muted/60 px-2 py-1 bg-bg-soft border border-r-0 border-border-default rounded-l-md whitespace-nowrap hidden sm:inline">
           {hostLabel}/p/
         </span>
         <input
@@ -204,7 +204,7 @@ function SlugEditor({
           className={[
             "min-w-0 w-44 px-2 py-1 text-xs bg-bg border rounded-md sm:rounded-l-none sm:rounded-r-md text-text-primary placeholder:text-text-muted/40",
             "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft",
-            availability === "taken" ? "border-red-400/60" : "border-outline",
+            availability === "taken" ? "border-red-400/60" : "border-border-default",
           ].join(" ")}
           aria-label="Custom URL slug"
         />
@@ -452,7 +452,7 @@ function PageCard({
   return (
     <>
       <div
-        className="group flex flex-col gap-0 rounded-xl border border-border-default bg-bg-elevated transition hover:border-accent-soft/30 hover:shadow-print cursor-grab active:cursor-grabbing animate-fade-up"
+        className="group flex flex-col gap-0 rounded-xl border border-border-default bg-bg-elevated transition hover:border-accent-soft/30 hover:shadow-hard cursor-grab active:cursor-grabbing animate-fade-up"
         style={{ animationDelay: `${Math.min(index * 40, 300)}ms` }}
         draggable
         onDragStart={(e) => {
@@ -789,7 +789,7 @@ function CollectionSidebar({
             if (e.key === "Enter") { e.preventDefault(); onCreateCollection(); }
           }}
           placeholder="New collection…"
-          className="min-w-0 flex-1 rounded-lg border border-outline bg-bg px-2.5 py-1.5 text-xs text-text-primary placeholder:text-text-muted/40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft"
+          className="min-w-0 flex-1 rounded-lg border border-border-default bg-bg px-2.5 py-1.5 text-xs text-text-primary placeholder:text-text-muted/40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft"
         />
         <Button
           variant="primary"
@@ -852,7 +852,7 @@ function SearchSortBar({
           value={query}
           onChange={(e) => onQuery(e.target.value)}
           placeholder="Search pages…"
-          className="w-full rounded-lg border border-outline bg-bg pl-8 pr-3 py-1.5 text-sm text-text-primary placeholder:text-text-muted/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft"
+          className="w-full rounded-lg border border-border-default bg-bg pl-8 pr-3 py-1.5 text-sm text-text-primary placeholder:text-text-muted/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft"
         />
       </div>
 
@@ -860,7 +860,7 @@ function SearchSortBar({
         <select
           value={sort}
           onChange={(e) => onSort(e.target.value as SortKey)}
-          className="rounded-lg border border-outline bg-bg px-2.5 py-1.5 text-sm text-text-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft appearance-none pr-7 bg-no-repeat"
+          className="rounded-lg border border-border-default bg-bg px-2.5 py-1.5 text-sm text-text-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft appearance-none pr-7 bg-no-repeat"
           style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2398989f' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")", backgroundPosition: "right 8px center" }}
         >
           {SORTS.map((s) => (
@@ -1075,7 +1075,7 @@ export function MyPagesList({
             ))}
           </div>
         ) : (
-          <div className="rounded-xl border border-dashed border-outline px-4 py-12 text-center text-sm text-text-muted">
+          <div className="rounded-xl border border-dashed border-border-subtle px-4 py-12 text-center text-sm text-text-muted">
             {searchQuery ? `No pages match "${searchQuery}"` : "No pages in this collection."}
           </div>
         )}

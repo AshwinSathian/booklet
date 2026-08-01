@@ -32,7 +32,7 @@ function pctWidth(value: number, max: number): string {
 
 function Stat({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-lg border border-outline bg-bg-elevated px-4 py-3">
+    <div className="rounded-lg border border-border-default bg-bg-elevated px-4 py-3">
       <div className="text-2xl font-semibold text-text-primary">{value}</div>
       <div className="mt-1 text-xs text-text-muted">{label}</div>
     </div>
@@ -68,7 +68,7 @@ export default async function PageAnalyticsPage({
           <AppLogo onlyIcon={false} />
           <Link
             href={ROUTES.myPages}
-            className="inline-flex items-center rounded-pill border border-outline px-3.5 py-1.5 text-xs font-medium text-text-secondary transition hover:border-accent-soft/50 hover:text-text-primary"
+            className="inline-flex items-center rounded-pill border border-border-default px-3.5 py-1.5 text-xs font-medium text-text-secondary transition hover:border-accent-soft/50 hover:text-text-primary"
           >
             Back to My pages
           </Link>
@@ -88,7 +88,7 @@ export default async function PageAnalyticsPage({
           <Stat label="Read 100%" value={`${summary.read_100_pct}%`} />
         </section>
 
-        <section className="mt-6 rounded-lg border border-outline bg-bg-elevated p-4">
+        <section className="mt-6 rounded-lg border border-border-default bg-bg-elevated p-4">
           <div className="mb-4 flex items-center justify-between gap-3">
             <h2 className="text-sm font-medium">Views last 30 days</h2>
             <span className="text-xs text-text-muted">{maxDayViews.toLocaleString()} peak day</span>
@@ -97,7 +97,7 @@ export default async function PageAnalyticsPage({
         </section>
 
         <div className="mt-6 grid gap-6 md:grid-cols-2">
-          <section className="rounded-lg border border-outline bg-bg-elevated p-4">
+          <section className="rounded-lg border border-border-default bg-bg-elevated p-4">
             <h2 className="mb-4 text-sm font-semibold">Referrers</h2>
             <div className="space-y-3">
               {Object.entries(summary.referrers).map(([bucket, count]) => {
@@ -117,7 +117,7 @@ export default async function PageAnalyticsPage({
             </div>
           </section>
 
-          <section className="rounded-lg border border-outline bg-bg-elevated p-4">
+          <section className="rounded-lg border border-border-default bg-bg-elevated p-4">
             <h2 className="mb-4 text-sm font-semibold">Top countries</h2>
             {summary.top_countries.length > 0 ? (
               <div className="space-y-3">

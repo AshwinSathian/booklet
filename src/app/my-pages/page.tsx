@@ -53,7 +53,7 @@ export default async function MyPagesPage() {
           <div className="flex items-center gap-3">
             <Link
               href={ROUTES.app}
-              className="hidden sm:inline-flex items-center gap-1.5 rounded-pill border border-outline px-3.5 py-1.5 text-xs font-medium text-text-secondary transition hover:border-accent-soft/50 hover:text-text-primary"
+              className="hidden sm:inline-flex items-center gap-1.5 rounded-pill border border-border-default px-3.5 py-1.5 text-xs font-medium text-text-secondary transition hover:border-accent-soft/50 hover:text-text-primary"
             >
               Back to editor
             </Link>

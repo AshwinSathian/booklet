@@ -42,7 +42,7 @@ export default async function PageVersionsPage({
           <AppLogo onlyIcon={false} />
           <Link
             href={ROUTES.myPages}
-            className="inline-flex items-center rounded-pill border border-outline px-3.5 py-1.5 text-xs font-medium text-text-secondary transition hover:border-accent-soft/50 hover:text-text-primary"
+            className="inline-flex items-center rounded-pill border border-border-default px-3.5 py-1.5 text-xs font-medium text-text-secondary transition hover:border-accent-soft/50 hover:text-text-primary"
           >
             Back to My pages
           </Link>
