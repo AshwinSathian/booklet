@@ -42,9 +42,16 @@ export async function POST(req: Request) {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://booklet.ashwinsathian.com";
     const resetUrl = `${siteUrl}/reset-password?token=${encodeURIComponent(raw)}`;
 
-    // Best-effort — a delivery failure must not produce a different
-    // response shape/timing than the success path (user enumeration).
-    await sendPasswordResetEmail(user.email, resetUrl).catch(() => {});
+    // Fire-and-forget — do not await. This process is a long-lived
+    // Node/PM2 process (not a serverless function that freezes after the
+    // response is sent, per docs/OPERATIONS.md and the module-scope Mongo
+    // client caching in src/lib/mongodb.ts), so the send completes in the
+    // background after we respond. Awaiting here would make this branch's
+    // response latency include a real network round-trip to Resend while
+    // the "user doesn't exist" branch returns almost immediately — a
+    // timing side-channel that leaks whether the email has an account.
+    // .catch() still guards against an unhandled promise rejection.
+    sendPasswordResetEmail(user.email, resetUrl).catch(() => {});
   }
 
   return NextResponse.json(GENERIC_RESPONSE, { status: 200 });
