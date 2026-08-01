@@ -65,15 +65,16 @@ export function TemplatePreviewCard({ name, description, slug, content, category
       href={`/templates/${slug}`}
       className="group flex flex-col overflow-hidden rounded-2xl border border-border-default bg-bg-elevated shadow-card transition hover:border-border-strong hover:bg-bg-soft"
     >
-      {/* Mini paper-page preview — an honest excerpt of the template's own content */}
-      <div className="bg-paper p-4 text-paper-ink">
+      {/* Mini document preview — an honest excerpt of the template's own content,
+          on a plain hairline-bordered surface rather than the retired paper tone */}
+      <div className="border-b border-border-default bg-bg-soft p-4">
         {heading && (
-          <p className="font-display text-[15px] font-medium leading-snug line-clamp-1">
+          <p className="font-display text-[15px] font-medium leading-snug text-text-primary line-clamp-1">
             {heading}
           </p>
         )}
         {body.map((line, i) => (
-          <p key={i} className="mt-1.5 text-xs leading-relaxed text-paper-ink-secondary line-clamp-1">
+          <p key={i} className="mt-1.5 text-xs leading-relaxed text-text-secondary line-clamp-1">
             {line}
           </p>
         ))}
