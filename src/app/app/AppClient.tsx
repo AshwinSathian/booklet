@@ -2,6 +2,7 @@
 
 import { AppShell } from "@/components/app/AppShell";
 import { BacklinksPanel } from "@/components/app/BacklinksPanel";
+import { CommandPalette } from "@/components/app/CommandPalette";
 import { GraphView } from "@/components/app/GraphView";
 import { PasteInput } from "@/components/app/PasteInput";
 import { PreviewPane } from "@/components/app/PreviewPane";
@@ -77,6 +78,7 @@ function AppPageContent() {
   const [wikilinkVersion, setWikilinkVersion] = useState(0);
   const [showBacklinks, setShowBacklinks] = useState(false);
   const [showGraph, setShowGraph] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
 
   const toast = useToast();
   const { isLoaded: isUserLoaded, isSignedIn, userId } = useSession();
@@ -746,7 +748,7 @@ function AppPageContent() {
         return;
       }
 
-      if (mod && (e.key === "k" || e.key === "K")) {
+      if (mod && (e.key === "j" || e.key === "J")) {
         e.preventDefault();
         focusFnRef.current?.();
         return;
@@ -774,6 +776,18 @@ function AppPageContent() {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [activeDraftId, onNew, onPublish, persistNow]);
+
+  // Cmd/Ctrl+K toggles the command palette.
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && (e.key === "k" || e.key === "K")) {
+        e.preventDefault();
+        setPaletteOpen((open) => !open);
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   const isBusy = status === "typing" || status === "publishing";
   const isEmpty = !normalized.trim();
@@ -868,6 +882,8 @@ function AppPageContent() {
         onHide={() => setShowGraph(false)}
         onOpenDraft={(id) => onSwitchDraft(id, "unknown")}
       />
+
+      <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
     </div>
   );
 }

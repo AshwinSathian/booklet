@@ -131,7 +131,7 @@ const SHORTCUT_GROUPS = [
       { keys: ["⌘", "B"], label: "Bold" },
       { keys: ["⌘", "I"], label: "Italic" },
       { keys: ["⌘", "`"], label: "Inline code" },
-      { keys: ["⌘", "K"], label: "Focus editor" },
+      { keys: ["⌘", "J"], label: "Focus editor" },
     ],
   },
   {
@@ -946,7 +946,7 @@ export function PasteInput({
           </div>
           <div className="flex items-center gap-2">
             <span className="text-2xs text-text-muted/50 hidden sm:inline">
-              <kbd className="font-mono">⌘K</kbd> focus · <kbd className="font-mono">⌘↵</kbd> publish
+              <kbd className="font-mono">⌘J</kbd> focus · <kbd className="font-mono">⌘↵</kbd> publish
             </span>
             <button
               type="button"

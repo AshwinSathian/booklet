@@ -167,7 +167,7 @@ function EmptyState({
         <div className="mt-4 text-xs text-text-muted">
           <kbd className="rounded border border-border-default bg-fill-2 px-1 py-0.5 font-mono text-2xs">⌘</kbd>
           {" + "}
-          <kbd className="rounded border border-border-default bg-fill-2 px-1 py-0.5 font-mono text-2xs">K</kbd>
+          <kbd className="rounded border border-border-default bg-fill-2 px-1 py-0.5 font-mono text-2xs">J</kbd>
           {" "}to focus editor ·{" "}
           <kbd className="rounded border border-border-default bg-fill-2 px-1 py-0.5 font-mono text-2xs">⌘</kbd>
           {" + "}
