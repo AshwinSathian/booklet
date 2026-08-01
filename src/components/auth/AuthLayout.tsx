@@ -9,9 +9,9 @@ import type { ReactNode } from "react";
  * surface in the product).
  *
  * Left pane (`lg:` and up only — mobile keeps the original single-column
- * form-only experience): a static, non-interactive example of "The Reveal"
- * transformation (see RevealHero.tsx, the scroll-driven version of this same
- * idea on the marketing homepage) — a fully-revealed, paper-toned snippet.
+ * form-only experience): a static, non-interactive example card — a
+ * hairline-bordered neutral surface showing a short excerpt, in the same
+ * card pattern used throughout the product (see TemplatePreviewCard).
  * Deliberately not scroll-animated: a full scroll-driven reveal doesn't make
  * sense on a short, single-viewport form page.
  *
@@ -24,27 +24,18 @@ export function AuthLayout({ children }: { children: ReactNode }) {
       {/* Left: static editorial panel — hidden below lg, never carries any
           scroll/motion behavior (this is a form page, not a marketing
           scroll section). */}
-      <div className="hidden lg:flex relative flex-col items-center justify-center overflow-hidden bg-bg px-12 py-16">
-        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="absolute -top-48 left-1/2 h-150 w-150 -translate-x-1/2 rounded-full bg-accent opacity-[0.07] blur-[100px]" />
-          <div className="absolute bottom-0 -left-24 h-87.5 w-87.5 rounded-full bg-accent-warm opacity-[0.04] blur-[80px]" />
-        </div>
+      <div className="relative hidden overflow-hidden bg-bg-soft p-12 lg:flex lg:flex-col lg:justify-center">
+        <div aria-hidden className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-accent opacity-[0.07] blur-[100px]" />
 
-        <div className="relative flex max-w-md flex-col gap-8">
-          <h2 className="font-display font-display-hero text-balance text-[clamp(28px,3vw,40px)] leading-tight text-text-primary">
-            Written in Markdown. Read by everyone else.
-          </h2>
+        <h2 className="relative max-w-md text-balance text-[clamp(28px,3vw,40px)] font-semibold leading-tight text-text-primary">
+          Written in Markdown. Read by everyone else.
+        </h2>
 
-          {/* Static, fully-revealed snippet — same idea as RevealHero's
-              SAMPLE, minus the scroll-driven mono→Fraunces interpolation:
-              this is the end state only. */}
-          <div className="rounded-2xl bg-paper p-6 text-paper-ink shadow-print">
-            <p className="font-display font-display-body text-lg font-medium">Incident Report</p>
-            <p className="mt-2 text-sm leading-relaxed text-paper-ink-secondary">
-              <span className="font-semibold text-paper-ink">Severity:</span> P1, resolved in 13
-              minutes.
-            </p>
-          </div>
+        <div className="relative mt-8 max-w-sm rounded-2xl border border-border-default bg-bg-elevated p-6 shadow-card">
+          <p className="text-[15px] font-medium text-text-primary">Incident Report</p>
+          <p className="mt-2 text-sm leading-relaxed text-text-secondary">
+            <span className="font-semibold text-text-primary">Severity:</span> P1, resolved in 13 minutes.
+          </p>
         </div>
       </div>
 
