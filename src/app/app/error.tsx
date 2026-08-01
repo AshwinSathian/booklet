@@ -9,7 +9,7 @@ export default function AppError({
 }) {
   return (
     <main className="min-h-screen flex items-center justify-center px-6">
-      <div className="w-full max-w-lg rounded-2xl border border-outline bg-bg-soft p-6 text-center shadow-glass">
+      <div className="w-full max-w-lg rounded-2xl border border-border-default bg-bg-soft p-6 text-center shadow-glass">
         <div className="text-lg font-semibold uppercase tracking-wide">
           Something went wrong
         </div>

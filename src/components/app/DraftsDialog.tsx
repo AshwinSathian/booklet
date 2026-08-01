@@ -171,12 +171,12 @@ export function DraftsDialog({
         aria-label="My drafts"
         className={[
           "relative w-full max-w-lg max-h-[80vh] flex flex-col",
-          "rounded-card border border-outline bg-bg-elevated shadow-glass",
+          "rounded-card border border-border-default bg-bg-elevated shadow-glass",
           "animate-dialog-in",
         ].join(" ")}
       >
         {/* Header */}
-        <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-outline/60 shrink-0">
+        <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-border-default/60 shrink-0">
           <span className="text-sm font-semibold">My drafts</span>
           <div className="flex items-center gap-2">
             <Button variant="secondary" size="sm" onClick={() => onRequestImportMarkdown()}>
@@ -204,7 +204,7 @@ export function DraftsDialog({
         {/* Body */}
         <div className="overflow-y-auto flex-1 px-3 py-3">
           {drafts.length === 0 ? (
-            <div className="rounded-xl border border-outline/60 bg-bg-glass/40 p-5">
+            <div className="rounded-xl border border-border-default/60 bg-bg-glass/40 p-5">
               <div className="text-sm font-semibold">No drafts yet.</div>
               <div className="mt-1.5 text-sm leading-relaxed text-text-secondary">
                 Drafts autosave to your browser. Publishing creates a shareable link — your draft stays here, ready to edit.
@@ -231,7 +231,7 @@ export function DraftsDialog({
                       "flex flex-col gap-2",
                       isActive
                         ? "border-accent-soft/40 bg-accent/5"
-                        : "border-outline hover:border-outline/80",
+                        : "border-border-default hover:border-border-default/80",
                     ].join(" ")}
                   >
                     <div className="flex items-center justify-between gap-3">
