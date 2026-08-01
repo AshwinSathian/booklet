@@ -45,6 +45,7 @@
     "remark-gfm": "^4.0.1",
     "remark-math": "^6.0.0",
     "remark-parse": "^11.0.0",
+    "resend": "^6.18.1",
     "unified": "^11.0.5",
     "unist-util-visit": "^5.1.0",
     "zod": "^4.4.3"
