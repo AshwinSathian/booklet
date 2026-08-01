@@ -883,7 +883,7 @@ function AppPageContent() {
         onOpenDraft={(id) => onSwitchDraft(id, "unknown")}
       />
 
-      <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
+      <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} onNew={onNew} />
     </div>
   );
 }

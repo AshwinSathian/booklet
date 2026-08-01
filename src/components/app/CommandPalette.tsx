@@ -8,9 +8,11 @@ import { navigateWithViewTransition, usePrefersReducedMotion } from "@/lib/motio
 export function CommandPalette({
   open,
   onOpenChange,
+  onNew,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onNew: () => void;
 }) {
   const router = useRouter();
   const reducedMotion = usePrefersReducedMotion();
@@ -18,6 +20,11 @@ export function CommandPalette({
   function go(path: string) {
     onOpenChange(false);
     navigateWithViewTransition(() => router.push(path), reducedMotion);
+  }
+
+  function createNewPage() {
+    onOpenChange(false);
+    onNew();
   }
 
   return (
@@ -43,7 +50,7 @@ export function CommandPalette({
             My Pages
           </Command.Item>
           <Command.Item
-            onSelect={() => go(ROUTES.app)}
+            onSelect={createNewPage}
             className="cursor-pointer rounded-lg px-3 py-2 text-sm text-text-primary aria-selected:bg-fill-2"
           >
             New page
