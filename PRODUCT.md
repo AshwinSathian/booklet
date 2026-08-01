@@ -122,7 +122,8 @@ explicitly publish. Features:
 | Publish | `⌘↵` |
 | New draft | `⌘B` |
 | Open drafts | `⌘D` |
-| Focus editor | `⌘K` |
+| Focus editor | `⌘J` |
+| Command palette | `⌘K` |
 
 ### Import
 
