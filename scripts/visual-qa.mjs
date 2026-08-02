@@ -15,6 +15,17 @@ if (!BASE_URL) {
 // 7's share/reactions/TOC chrome, an existing published page reused here
 // specifically to avoid burning the local dev DB's anonymous publish quota)
 // round out every surface Tasks 1-10 actually touched.
+// Task 29 (Precision redesign) adds the routes below that the prior "The
+// Reveal" sweep never covered, plus surfaces this redesign introduced.
+// `/admin` will likely redirect/404 without admin access in most
+// environments — acceptable, since this still confirms the route doesn't
+// crash. `/reset-password` renders its "missing token" state since no
+// `?token=` param is supplied here — also acceptable for the same reason.
+//
+// Intentionally NOT covered by this automated sweep: `/t/[slug]`,
+// `/t/[slug]/admin`, `/t/join`, `/c/[id]`, `/u/[id]`. Each requires a real
+// team/collection/user to exist, the same reasoning `/my-pages` needs its
+// own special-cased authenticated block below rather than living here.
 const ROUTES = [
   "/",
   "/app",
@@ -25,6 +36,16 @@ const ROUTES = [
   "/changelog",
   "/api-docs",
   "/about",
+  "/admin",
+  "/explore",
+  "/tags",
+  "/forgot-password",
+  "/reset-password",
+  "/privacy",
+  "/terms",
+  "/mcp",
+  "/mcp-setup",
+  "/cli-auth",
 ];
 
 // `/p/wayfarer-textbook` has 108 headings, so a `fullPage` capture is tens
