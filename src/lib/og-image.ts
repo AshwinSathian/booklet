@@ -15,17 +15,17 @@ function wrapTitle(title: string): [string, string | null] {
 export function buildOgSvg(title?: string): string {
   const defs = `<defs>
     <linearGradient id="heroGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#a12f3e"/>
-      <stop offset="50%" stop-color="#e5808a"/>
-      <stop offset="100%" stop-color="#a12f3e"/>
+      <stop offset="0%" stop-color="#f5a623"/>
+      <stop offset="50%" stop-color="#f8c368"/>
+      <stop offset="100%" stop-color="#f5a623"/>
     </linearGradient>
     <radialGradient id="glow1" cx="30%" cy="40%" r="50%">
-      <stop offset="0%" stop-color="#a12f3e" stop-opacity="0.15"/>
-      <stop offset="100%" stop-color="#a12f3e" stop-opacity="0"/>
+      <stop offset="0%" stop-color="#f5a623" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#f5a623" stop-opacity="0"/>
     </radialGradient>
     <radialGradient id="glow2" cx="70%" cy="60%" r="50%">
-      <stop offset="0%" stop-color="#e5808a" stop-opacity="0.1"/>
-      <stop offset="100%" stop-color="#e5808a" stop-opacity="0"/>
+      <stop offset="0%" stop-color="#f8c368" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#f8c368" stop-opacity="0"/>
     </radialGradient>
   </defs>`;
 
@@ -36,11 +36,11 @@ export function buildOgSvg(title?: string): string {
 
   // Mark: a page with a folded corner — a page worth flagging and keeping.
   const logo = `
-  <rect x="80" y="80" width="72" height="72" rx="16" fill="#a12f3e"/>
+  <rect x="80" y="80" width="72" height="72" rx="16" fill="#f5a623"/>
   <path d="M99.50 99.50C99.50 97.01 101.51 95.00 104.00 95.00H125.60L132.50 101.90V132.50C132.50 134.99 130.49 137.00 128.00 137.00H104.00C101.51 137.00 99.50 134.99 99.50 132.50V99.50Z" fill="white"/>
   <path d="M125.60 95.00L132.50 101.90H128.00C126.67 101.90 125.60 100.83 125.60 99.50V95.00Z" fill="#f4ecdc"/>
-  <rect x="106.10" y="108.80" width="20.70" height="4.50" rx="2.25" fill="#a12f3e" fill-opacity="0.85"/>
-  <rect x="106.10" y="117.80" width="13.80" height="4.50" rx="2.25" fill="#a12f3e" fill-opacity="0.55"/>
+  <rect x="106.10" y="108.80" width="20.70" height="4.50" rx="2.25" fill="#f5a623" fill-opacity="0.85"/>
+  <rect x="106.10" y="117.80" width="13.80" height="4.50" rx="2.25" fill="#f5a623" fill-opacity="0.55"/>
   <text x="172" y="130" font-family="system-ui, -apple-system, sans-serif" font-size="36" font-weight="600" fill="#f5f5f7" letter-spacing="-0.5">booklet</text>`;
 
   let content: string;
