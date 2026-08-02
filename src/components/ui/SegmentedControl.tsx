@@ -30,7 +30,7 @@ export function SegmentedControl<T extends string>({
       {indicator ? (
         <span
           aria-hidden
-          className="absolute top-0.5 bottom-0.5 rounded-md bg-accent shadow-soft pointer-events-none transition-all duration-normal ease-spring"
+          className="absolute top-0.5 bottom-0.5 rounded-md bg-accent pointer-events-none transition-all duration-normal ease-spring"
           style={{ left: indicator.left, width: indicator.width }}
         />
       ) : null}
@@ -45,7 +45,7 @@ export function SegmentedControl<T extends string>({
             "transition-colors duration-fast",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-1 focus-visible:ring-offset-bg",
             value === opt.value
-              ? "text-white"
+              ? "text-accent-contrast"
               : "text-text-muted hover:text-text-primary",
           ].join(" ")}
         >

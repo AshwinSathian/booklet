@@ -828,7 +828,7 @@ function PublishArea({
             onClick={onUpdatePage}
             disabled={!canPublish || isPublishing}
             title="Update published page in place"
-            className="inline-flex items-center gap-1.5 rounded-l-pill h-8 px-3.5 text-xs font-semibold bg-accent text-white shadow-soft hover:bg-accent-hover transition active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+            className="inline-flex items-center gap-1.5 rounded-l-pill h-8 px-3.5 text-xs font-semibold bg-accent text-accent-contrast hover:bg-accent-hover transition active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
           >
             {isPublishing ? (
               <svg width="13" height="13" viewBox="0 0 13 13" fill="none" className="animate-spin" aria-hidden>
@@ -844,7 +844,7 @@ function PublishArea({
             title="More publish options"
             disabled={isPublishing}
             onClick={() => setShowPublishOptions(true)}
-            className="flex h-8 w-8 items-center justify-center rounded-r-pill bg-accent text-white border-l border-white/20 hover:bg-accent-hover transition active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+            className="flex h-8 w-8 items-center justify-center rounded-r-pill bg-accent text-accent-contrast border-l border-white/20 hover:bg-accent-hover transition active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
           >
             <Icon name="chevron-down" size={11} />
           </button>
