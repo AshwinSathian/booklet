@@ -106,7 +106,7 @@ export function Reactions({ pageId }: { pageId: string }) {
                 "disabled:opacity-60 disabled:cursor-wait",
                 active
                   ? "border-accent/40 bg-accent/10 text-accent"
-                  : "border-outline bg-bg-soft text-text-secondary hover:border-accent-soft/30 hover:bg-fill-1",
+                  : "border-border-default bg-bg-soft text-text-secondary hover:border-accent-soft/30 hover:bg-fill-1",
               ].join(" ")}
             >
               <span className="text-base leading-none">{emoji}</span>

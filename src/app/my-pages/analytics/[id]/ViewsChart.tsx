@@ -206,7 +206,7 @@ export function ViewsChart({ data }: { data: DayPoint[] }) {
 
       {hovered && (
         <div
-          className="pointer-events-none absolute top-1 z-10 whitespace-nowrap rounded-md border border-outline bg-bg-elevated px-2.5 py-1.5 text-xs shadow-card"
+          className="pointer-events-none absolute top-1 z-10 whitespace-nowrap rounded-md border border-border-default bg-bg-elevated px-2.5 py-1.5 text-xs shadow-card"
           style={{
             left: `${tooltipLeftPct}%`,
             transform:

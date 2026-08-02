@@ -43,9 +43,9 @@ export function BacklinksPanel({
         role="dialog"
         aria-modal="true"
         aria-label="Linked mentions"
-        className="relative w-full max-w-md max-h-[70vh] flex flex-col rounded-card border border-outline bg-bg-elevated shadow-glass animate-dialog-in"
+        className="relative w-full max-w-md max-h-[70vh] flex flex-col rounded-card border border-border-default bg-bg-elevated shadow-glass animate-dialog-in"
       >
-        <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-outline/60 shrink-0">
+        <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-border-default/60 shrink-0">
           <div className="min-w-0">
             <span className="text-sm font-semibold">Linked mentions</span>
             <p className="mt-0.5 truncate text-xs text-text-muted">
@@ -59,7 +59,7 @@ export function BacklinksPanel({
 
         <div className="overflow-y-auto flex-1 px-3 py-3">
           {backlinks.length === 0 ? (
-            <div className="rounded-xl border border-outline/60 bg-bg-glass/40 p-5">
+            <div className="rounded-xl border border-border-default/60 bg-bg-glass/40 p-5">
               <div className="text-sm font-semibold">No linked mentions yet.</div>
               <div className="mt-1.5 text-sm leading-relaxed text-text-secondary">
                 Reference this draft from another one with{" "}

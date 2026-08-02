@@ -74,9 +74,9 @@ export function GraphView({
         role="dialog"
         aria-modal="true"
         aria-label="Draft graph"
-        className="relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-card border border-outline bg-bg-elevated shadow-glass animate-dialog-in"
+        className="relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-card border border-border-default bg-bg-elevated shadow-glass animate-dialog-in"
       >
-        <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-outline/60 shrink-0">
+        <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-border-default/60 shrink-0">
           <div>
             <span className="text-sm font-semibold">Graph</span>
             <p className="mt-0.5 text-xs text-text-muted">

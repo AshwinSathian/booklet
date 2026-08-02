@@ -25,7 +25,7 @@ export function SegmentedControl<T extends string>({
   }, [selectedIndex, options.length]);
 
   return (
-    <div ref={containerRef} className="relative flex rounded-lg border border-outline bg-bg-soft p-0.5 gap-0.5">
+    <div ref={containerRef} className="relative flex rounded-lg border border-border-default bg-bg-soft p-0.5 gap-0.5">
       {/* Sliding background pill */}
       {indicator ? (
         <span

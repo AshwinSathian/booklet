@@ -80,14 +80,14 @@ export function VersionsClient({
         </div>
       ) : null}
 
-      <div className="overflow-hidden rounded-lg border border-outline bg-bg-elevated">
+      <div className="overflow-hidden rounded-lg border border-border-default bg-bg-elevated">
         {versions.length > 0 ? (
           versions.map((version, index) => (
             <div
               key={version.version_number}
               className={[
                 "flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between",
-                index > 0 ? "border-t border-outline" : "",
+                index > 0 ? "border-t border-border-default" : "",
               ].join(" ")}
             >
               <div>
@@ -136,8 +136,8 @@ export function VersionsClient({
 
       {preview ? (
         <div className="fixed inset-0 z-40 bg-black/45 px-4 py-8 backdrop-blur-sm" role="dialog" aria-modal="true">
-          <div className="mx-auto flex max-h-full w-full max-w-4xl flex-col overflow-hidden rounded-lg border border-outline bg-bg shadow-glass">
-            <div className="flex items-center justify-between gap-3 border-b border-outline px-4 py-3">
+          <div className="mx-auto flex max-h-full w-full max-w-4xl flex-col overflow-hidden rounded-lg border border-border-default bg-bg shadow-glass">
+            <div className="flex items-center justify-between gap-3 border-b border-border-default px-4 py-3">
               <div>
                 <div className="text-sm font-semibold">Preview v{preview.version}</div>
                 <div className="text-xs text-text-muted">This is a saved snapshot.</div>

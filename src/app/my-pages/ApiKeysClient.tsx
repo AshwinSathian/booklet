@@ -34,16 +34,16 @@ function KeyCard({ k, onRevoked }: { k: KeyRow; onRevoked: (id: string) => void 
   }, [k.id, onRevoked]);
 
   return (
-    <div className="group flex items-center gap-3 rounded-xl border border-outline bg-bg-elevated px-4 py-3 transition hover:border-accent-soft/30">
+    <div className="group flex items-center gap-3 rounded-xl border border-border-default bg-bg-elevated px-4 py-3 transition hover:border-accent-soft/30">
       <div className="min-w-0 flex-1">
         <div className="text-sm font-medium text-text-primary">
           {k.label ?? <span className="text-text-muted italic">Unlabeled key</span>}
         </div>
         <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-text-muted">
           <span className="font-mono text-text-muted/60">{k.id}</span>
-          <span className="h-3 w-px bg-outline" aria-hidden />
+          <span className="h-3 w-px bg-fill-2" aria-hidden />
           <span>Created {formatDate(k.created_at)}</span>
-          <span className="h-3 w-px bg-outline" aria-hidden />
+          <span className="h-3 w-px bg-fill-2" aria-hidden />
           <span>Last used {formatDate(k.last_used_at)}</span>
         </div>
       </div>
@@ -103,7 +103,7 @@ function NewKeyReveal({ raw, onDismiss }: { raw: string; onDismiss: () => void }
         </Button>
       </div>
       <div className="flex items-center gap-2">
-        <code className="flex-1 min-w-0 truncate rounded-lg bg-bg border border-outline px-3 py-2 text-xs font-mono text-text-primary">
+        <code className="flex-1 min-w-0 truncate rounded-lg bg-bg border border-border-default px-3 py-2 text-xs font-mono text-text-primary">
           {raw}
         </code>
         <Button
@@ -186,7 +186,7 @@ export function ApiKeysSection({ initialKeys }: { initialKeys: KeyRow[] }) {
           type="text"
           placeholder="Label (optional)"
           maxLength={80}
-          className="min-w-0 flex-1 rounded-lg border border-outline bg-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft"
+          className="min-w-0 flex-1 rounded-lg border border-border-default bg-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft"
         />
         <Button variant="primary" size="md" onClick={() => void handleCreate()} disabled={creating} className="shrink-0">
           {creating ? (

@@ -47,7 +47,7 @@ function WebhookCard({
   }, [wh.id, onDeleted]);
 
   return (
-    <div className="group flex items-start gap-3 rounded-xl border border-outline bg-bg-elevated px-4 py-3 transition hover:border-accent-soft/30">
+    <div className="group flex items-start gap-3 rounded-xl border border-border-default bg-bg-elevated px-4 py-3 transition hover:border-accent-soft/30">
       <div className="min-w-0 flex-1">
         <div className="text-sm font-medium text-text-primary truncate">{wh.url}</div>
         <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-text-muted">
@@ -55,15 +55,15 @@ function WebhookCard({
             {wh.events.map((e) => (
               <span
                 key={e}
-                className="rounded-pill bg-fill-2 border border-outline px-1.5 py-0.5 text-2xs font-mono"
+                className="rounded-pill bg-fill-2 border border-border-default px-1.5 py-0.5 text-2xs font-mono"
               >
                 {e}
               </span>
             ))}
           </div>
-          <span className="h-3 w-px bg-outline" aria-hidden />
+          <span className="h-3 w-px bg-fill-2" aria-hidden />
           <span>Created {formatDate(wh.created_at)}</span>
-          <span className="h-3 w-px bg-outline" aria-hidden />
+          <span className="h-3 w-px bg-fill-2" aria-hidden />
           <span>Last fired {formatDate(wh.last_triggered_at)}</span>
         </div>
       </div>
@@ -143,7 +143,7 @@ function SecretBanner({ reveal, onDismiss }: { reveal: SecretReveal; onDismiss: 
         </Button>
       </div>
       <div className="flex items-center gap-2">
-        <code className="flex-1 min-w-0 truncate rounded-lg bg-bg border border-outline px-3 py-2 text-xs font-mono text-text-primary">
+        <code className="flex-1 min-w-0 truncate rounded-lg bg-bg border border-border-default px-3 py-2 text-xs font-mono text-text-primary">
           {reveal.secret}
         </code>
         <Button
@@ -268,7 +268,7 @@ export function WebhooksSection({ initialWebhooks }: { initialWebhooks: WebhookR
             ref={urlRef}
             type="url"
             placeholder="https://your-server.com/webhook"
-            className="min-w-0 flex-1 rounded-lg border border-outline bg-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft"
+            className="min-w-0 flex-1 rounded-lg border border-border-default bg-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft"
           />
           <Button
             variant="primary"

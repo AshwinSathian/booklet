@@ -118,7 +118,7 @@ export default async function CollectionPage({
             ))}
           </div>
         ) : (
-          <div className="rounded-xl border border-dashed border-outline px-6 py-16 text-center">
+          <div className="rounded-xl border border-dashed border-border-subtle px-6 py-16 text-center">
             <p className="text-sm text-text-muted">No public pages in this collection yet.</p>
           </div>
         )}

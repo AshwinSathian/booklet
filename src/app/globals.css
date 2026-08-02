@@ -101,10 +101,6 @@
   --color-fill-2: rgba(255, 255, 255, 0.08);   /* code headers, inset panels  */
   --color-fill-3: rgba(255, 255, 255, 0.13);   /* table head, button hover    */
 
-  /* ── Legacy outline (app chrome compat — maps to border-default) ────────── */
-  --color-outline:      rgba(255, 255, 255, 0.09);
-  --color-outline-soft: rgba(255, 255, 255, 0.05);
-
   /* ── Shadows (DARK) ─────────────────────────────────────────────────────── */
   /* Precision favors hairline borders over glow/blur shadows as the primary
      depth cue — --shadow-soft and --shadow-glow (both accent-tinted glows)
@@ -162,10 +158,6 @@ html.light {
   --color-fill-2: rgba(0, 0, 0, 0.06);
   --color-fill-3: rgba(0, 0, 0, 0.10);
 
-  /* ── Legacy outline (LIGHT) ─────────────────────────────────────────────── */
-  --color-outline:      rgba(0, 0, 0, 0.09);
-  --color-outline-soft: rgba(0, 0, 0, 0.05);
-
   /* ── Shadows (LIGHT) ────────────────────────────────────────────────────── */
   --shadow-glass: 0 4px 24px rgba(0, 0, 0, 0.10);
   --shadow-card:  0 1px 2px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.06);
@@ -210,10 +202,6 @@ html.dark {
   --color-fill-1: var(--color-fill-1);
   --color-fill-2: var(--color-fill-2);
   --color-fill-3: var(--color-fill-3);
-
-  /* Legacy outline (app chrome) */
-  --color-outline:      var(--color-outline);
-  --color-outline-soft: var(--color-outline-soft);
 
   /* Shadows */
   --shadow-glass: var(--shadow-glass);

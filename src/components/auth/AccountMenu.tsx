@@ -63,7 +63,7 @@ export function AccountMenu() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-30 mt-2 w-48 rounded-lg border border-outline bg-bg-elevated py-1 shadow-lg">
+        <div className="absolute right-0 top-full z-30 mt-2 w-48 rounded-lg border border-border-default bg-bg-elevated py-1 shadow-lg">
           {email && (
             <div className="mb-1 truncate border-b border-border-subtle px-3 py-1.5 text-xs text-text-muted">
               {email}
