@@ -16,7 +16,7 @@ export default function ForgotPasswordPage() {
   return (
     <AuthLayout>
       <div className="text-center">
-        <p className="text-sm text-text-secondary">Enter your email and we'll send you a reset link.</p>
+        <p className="text-sm text-text-secondary">Enter your email and we&apos;ll send you a reset link.</p>
       </div>
       <ForgotPasswordForm />
       <p className="text-xs text-text-muted text-center">

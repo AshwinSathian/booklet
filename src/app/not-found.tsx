@@ -10,7 +10,7 @@ export default function NotFound() {
         <p className="font-mono text-sm text-text-muted">404</p>
         <h1 className="mt-2 font-display text-2xl font-semibold text-text-primary">Page not found</h1>
         <p className="mt-2 text-sm text-text-secondary">
-          This page doesn't exist, or it was never published.
+          This page doesn&apos;t exist, or it was never published.
         </p>
       </div>
       <div className="flex gap-3">
