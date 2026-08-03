@@ -207,6 +207,12 @@ function AppPageContent() {
       const saved = updateDraft(draftId, { raw, settings });
       setSaveStateSmoothed("saved");
       handlePersistOutcome(saved?.updatedAt ?? null);
+      // updateDraft may have auto-derived a title from content (see
+      // store.ts) — mirror it into UI state, or the TopBar keeps showing
+      // "Untitled" and the backlinks panel keeps looking up the wrong
+      // title (backlinksForTitle below reads draftTitle, not the store)
+      // even though the persisted draft now has the real one.
+      if (saved) setDraftTitle(saved.title);
       return saved;
     },
     [handlePersistOutcome, raw, settings, setSaveStateSmoothed],
@@ -377,6 +383,9 @@ function AppPageContent() {
       autosaveTimerRef.current = null;
 
       handlePersistOutcome(saved?.updatedAt ?? null);
+      // Mirror any content-derived title (see store.ts) into UI state —
+      // same reasoning as persistNow above.
+      if (saved) setDraftTitle(saved.title);
 
       // Intentionally uses the last computed blocks for a close-enough metric.
       maybeTrackAutosave(activeDraftId, blocks.length);
