@@ -56,7 +56,7 @@ export function ScrollCta({ href }: { href: string }) {
         <Link
           href={href}
           onClick={handleDismiss}
-          className="shrink-0 inline-flex items-center gap-1.5 rounded-pill bg-accent px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-accent-hover active:scale-[0.97]"
+          className="shrink-0 inline-flex items-center gap-1.5 rounded-pill bg-accent px-3.5 py-1.5 text-xs font-semibold text-accent-contrast transition hover:bg-accent-hover active:scale-[0.97]"
         >
           Write
           <svg width="9" height="9" fill="none" viewBox="0 0 11 11" aria-hidden>

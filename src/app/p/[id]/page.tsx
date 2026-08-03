@@ -398,7 +398,7 @@ function NotFoundOrExpired() {
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
               href={ROUTES.app}
-              className="inline-flex items-center gap-1.5 rounded-pill bg-accent px-4 py-2 text-sm font-semibold text-white transition hover:bg-accent-hover active:scale-[0.97]"
+              className="inline-flex items-center gap-1.5 rounded-pill bg-accent px-4 py-2 text-sm font-semibold text-accent-contrast transition hover:bg-accent-hover active:scale-[0.97]"
             >
               Create a page
               <svg width="11" height="11" fill="none" viewBox="0 0 12 12" aria-hidden>

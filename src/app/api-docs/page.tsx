@@ -459,7 +459,7 @@ jobs:
               </div>
               <Link
                 href="/mcp-setup"
-                className="shrink-0 inline-flex items-center gap-1.5 rounded-pill bg-accent px-4 py-2 text-xs font-semibold text-white hover:bg-accent-soft transition"
+                className="shrink-0 inline-flex items-center gap-1.5 rounded-pill bg-accent px-4 py-2 text-xs font-semibold text-accent-contrast hover:bg-accent-soft transition"
               >
                 Add to Claude
                 <svg width="10" height="10" fill="none" viewBox="0 0 12 12" aria-hidden>

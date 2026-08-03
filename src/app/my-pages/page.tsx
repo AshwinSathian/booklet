@@ -77,7 +77,7 @@ export default async function MyPagesPage() {
           </div>
           <Link
             href={ROUTES.app}
-            className="inline-flex items-center gap-1.5 rounded-pill bg-accent px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-accent-hover shrink-0"
+            className="inline-flex items-center gap-1.5 rounded-pill bg-accent px-4 py-1.5 text-xs font-semibold text-accent-contrast transition hover:bg-accent-hover shrink-0"
           >
             New page
           </Link>

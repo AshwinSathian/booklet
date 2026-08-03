@@ -70,7 +70,7 @@ export function PasswordGate({ pageId }: { pageId: string }) {
             <button
               type="submit"
               disabled={loading || !password.trim()}
-              className="w-full rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-accent-contrast transition hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? "Checking…" : "Unlock page"}
             </button>

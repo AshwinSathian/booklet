@@ -65,7 +65,7 @@ export default function AboutPage() {
           <div className="mt-10 flex flex-wrap items-center gap-4">
             <Link
               href={ROUTES.app}
-              className="inline-flex items-center gap-1.5 rounded-pill bg-accent px-5 py-2.5 text-sm font-semibold text-white hover:bg-accent-soft transition"
+              className="inline-flex items-center gap-1.5 rounded-pill bg-accent px-5 py-2.5 text-sm font-semibold text-accent-contrast hover:bg-accent-soft transition"
             >
               Try {APP_NAME}
               <svg width="11" height="11" fill="none" viewBox="0 0 12 12" aria-hidden>
