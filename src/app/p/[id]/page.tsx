@@ -164,7 +164,12 @@ export default async function SharePage({
   const readMins = readingTimeMinutes(doc.blocks ?? []);
 
   const pageUrl = absoluteUrl(`/p/${pageRecord?.slug ?? resolvedId}`);
-  const isPublic = pageRecord?.visibility === "public";
+  // Anonymous publishes never get a `pages` record (see api/publish/route.ts),
+  // so `pageRecord` is null for them — gating on visibility === "public"
+  // silently hid these features from every anonymous page. The only real
+  // reason to hide them is an intentionally password-locked page, which is
+  // knowable without a pages record existing at all.
+  const isNotPasswordLocked = !pageRecord?.password_hash;
   const theme = getTheme(doc.settings?.theme);
 
   return (
@@ -175,7 +180,7 @@ export default async function SharePage({
       <style dangerouslySetInnerHTML={{ __html: themeStyleTagContent(theme) }} />
       <ReadingProgress />
       <AnalyticsBeacon pageId={resolvedId} />
-      {isPublic && <ScrollCta href={ROUTES.app} />}
+      {isNotPasswordLocked && <ScrollCta href={ROUTES.app} />}
 
       {/* ── Sticky header ── */}
       <StickyHeader
@@ -248,8 +253,8 @@ export default async function SharePage({
               settings={doc.settings}
               headingAnchors={anchorMap}
             />
-            {isPublic && <Reactions pageId={resolvedId} />}
-            {isPublic && (
+            {isNotPasswordLocked && <Reactions pageId={resolvedId} />}
+            {isNotPasswordLocked && (
               <ShareButtons url={pageUrl} title={pageTitle} />
             )}
           </div>

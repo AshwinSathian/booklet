@@ -1,5 +1,6 @@
 import { getPageReactions, addReactionForSession, removeReactionForSession } from "@/lib/db/reactions";
 import { getPageRecord } from "@/lib/db";
+import { getDoc } from "@/lib/storage";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/request-ip";
 import { hashSession } from "@/lib/session-hash";
@@ -49,10 +50,20 @@ export async function POST(
     return NextResponse.json({ error: "Missing emoji" }, { status: 400 });
   }
 
-  // Verify the page exists and is public
-  const record = await getPageRecord(pageId);
-  if (!record || record.visibility !== "public") {
+  // Verify the page exists and isn't password-locked. Anonymous publishes
+  // never get a `pages` record (see api/publish/route.ts), so `record` is
+  // null for them by design — that alone must not 404 the reaction; the
+  // published doc itself (in `docs`, keyed the same as `pages`) is the
+  // source of truth for existence, same as the page.tsx share route.
+  const record = await getPageRecord(pageId).catch(() => null);
+  if (record?.password_hash) {
     return NextResponse.json({ error: "Page not found" }, { status: 404 });
+  }
+  if (!record) {
+    const doc = await getDoc(pageId).catch(() => null);
+    if (!doc) {
+      return NextResponse.json({ error: "Page not found" }, { status: 404 });
+    }
   }
 
   try {
