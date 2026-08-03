@@ -28,10 +28,3 @@ export const ERRORS = {
   // it, e.g. by trying a different slug.
   VALIDATION: (message: string) => mcpError(-32007, message),
 };
-
-export class McpValidationError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "McpValidationError";
-  }
-}
