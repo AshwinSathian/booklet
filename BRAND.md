@@ -207,9 +207,9 @@ else. What changed for Precision is the palette underneath it, and one detail
 of construction:
 
 - The page's fold — the mark's signature detail, must always be present — is
-  now filled with a **plain black tint** (`rgba(0, 0, 0, 0.18)`), not the
-  retired paper-cream fill. There is no print/paper reference left anywhere
-  in the mark.
+  now filled with a **plain black tint** (`rgba(0, 0, 0, 0.18)`) wherever the
+  tile it sits on is itself accent-coloured, not the retired paper-cream
+  fill. There is no print/paper reference left anywhere in the mark.
 - The page tile's background and the two short horizontal "text" bars now
   use `var(--color-accent)` (amber in dark mode, ochre in light mode) instead
   of the old oxblood ink.
@@ -227,13 +227,36 @@ in-app — nav, footer, UI chrome). Construction, on a 24×24 grid:
 - Container tile: `rx 5.5` at 24px scale; `rx 112` at 512px app-icon scale.
   Tile background is `var(--color-accent)`.
 
-**Known gap, not yet reconciled:** the standalone icon routes
-(`src/app/icon/route.ts`, `src/app/apple-icon/route.ts` — used for the
-browser-tab favicon, PWA/app icon, and OS home-screen icon) still hardcode
-the old oxblood values (`#a12f3e` fold/text-bars on a pure-black tile) from
-the "Ink & Paper" relaunch. These files were not touched by this redesign
-plan and are the one place the mark still shows the old palette; treat this
-as a follow-up bug, not part of the current Precision token set.
+Two authorised tile treatments — both carried over unchanged in structure
+from the pre-Precision mark, just recoloured:
+
+| Treatment | Background | Page | Fold + text bars | Use |
+|---|---|---|---|---|
+| Amber tile | `var(--color-accent)` | White | Black tint (`rgba(0, 0, 0, 0.18)`) fold; accent-colour text bars | In-product nav, header, footer, UI chrome; OG/Twitter share image |
+| Black tile | Pure black `#000000` | `#f5f5f7` off-white | Accent-colour (`#f5a623`) fold and text bars | Favicon, app icon, OS home-screen icon |
+
+The two treatments deliberately fill the fold differently, and this is not
+an inconsistency to fix: the black-tint fold is a *shadow* — it only reads
+as a fold if it darkens whatever's underneath it. On the amber tile that
+works (black tint over amber reads as a shaded corner). On the black tile
+it would not — `rgba(0, 0, 0, 0.18)` composited over `#000000` is still
+just black, i.e. an invisible fold. The black-tile treatment instead reuses
+the accent colour for the fold, exactly as the pre-Precision mark did with
+oxblood ink: same colour for fold and text bars, at full opacity for the
+fold and `0.85`/`0.55` for the bars.
+
+Source of truth for each treatment: `src/components/ui/AppLogo.tsx`
+(`BookletMark`, amber tile, in-app) and `src/app/icon/route.ts` /
+`src/app/apple-icon/route.ts` (black tile, standalone favicon/app-icon
+routes) — keep the black-tile pair in sync with each other if the mark
+changes again. `src/lib/og-image.ts` draws a third, hand-copied instance of
+the mark (amber tile, for the OG/Twitter share image) and must be kept in
+sync with `AppLogo.tsx`'s amber-tile convention, including the black-tint
+fold. As of this redesign, all three implementations agree: the standalone
+icon routes were previously flagged as a known gap (hardcoded oxblood from
+the "Ink & Paper" relaunch) but that was fixed to the new amber accent in a
+follow-up commit, and this document is now the reconciled description of
+that fix rather than an open gap.
 
 ### The wordmark
 
