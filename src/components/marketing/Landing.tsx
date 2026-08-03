@@ -384,9 +384,10 @@ pool_size: 5 # was 50
               cue: a thin amber rule along the after-card's top edge plus a
               small amber-tinted pill label, echoing the Precision system's
               single-accent restraint instead of a distinct paper tone. */}
-          <div className="absolute -top-2.5 left-4 rounded-full border border-accent/30 bg-accent-dim px-2.5 py-0.5 text-2xs font-medium text-accent">
-            Shared as a Booklet link
-          </div>
+          <div
+            aria-hidden
+            className="absolute -top-2.5 left-4 h-5 w-9 rounded-full border border-accent/30 bg-accent-dim"
+          />
           <div className="relative overflow-hidden rounded-2xl border border-t-2 border-emerald-500/12 border-t-accent bg-bg-elevated shadow-card">
           {/* Browser bar */}
           <div className="flex items-center gap-2.5 border-b border-border-default bg-bg-soft px-4 py-2.5">
