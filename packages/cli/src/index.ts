@@ -18,6 +18,18 @@ program
   .version(__CLI_VERSION__)
   .option("--no-color", "Disable colored output");
 
+program.addHelpText(
+  "after",
+  `
+Examples:
+  $ booklet login                       Authenticate via your browser
+  $ booklet publish README.md           Publish a Markdown file
+  $ echo "# Hi" | booklet publish -     Publish from stdin
+  $ booklet pages list                  List your published pages
+
+Docs & source: ${REPO_URL}`,
+);
+
 program.hook("preAction", (thisCommand) => {
   setNoColor(thisCommand.opts().color === false);
 });
