@@ -1,4 +1,8 @@
 import { DEFAULT_SETTINGS } from "@/lib/blocks";
+import { extractDocTitle } from "@/lib/doc-title";
+import { stripFrontmatter } from "@/lib/frontmatter";
+import { parseToBlocks } from "@/lib/parse";
+import { normalizeInput } from "@/lib/sanitize";
 import {
   DRAFT_DOC,
   DRAFTS_DB,
@@ -194,6 +198,21 @@ function upsertAndPersist(db: DraftsDbV2, doc: DraftDoc): boolean {
   return writeDb(db);
 }
 
+/**
+ * Derive a title from a draft's first H1/H2 heading, same as the publish
+ * routes and the app's live-preview pipeline (see src/lib/doc-title.ts).
+ * Wrapped defensively — this runs on every debounced autosave, and a
+ * malformed in-progress edit must never break saving.
+ */
+function deriveTitleFromRaw(raw: string): string | null {
+  try {
+    const blocks = parseToBlocks(normalizeInput(stripFrontmatter(raw)));
+    return extractDocTitle(blocks);
+  } catch {
+    return null;
+  }
+}
+
 function applyPatch(doc: DraftDoc, patch: DraftUpdatePatch): DraftDoc {
   const next: DraftDoc = { ...doc };
 
@@ -205,6 +224,22 @@ function applyPatch(doc: DraftDoc, patch: DraftUpdatePatch): DraftDoc {
   }
   if (patch.publishHistory !== undefined)
     next.publishHistory = patch.publishHistory;
+
+  // Auto-populate the title from typed content until the user manually
+  // renames the draft. A patch.title in the same call is an explicit
+  // rename and always wins outright; once a draft's title is anything
+  // other than the untouched default, content changes never touch it
+  // again — this is the fix for titles being permanently "Untitled" (see
+  // src/lib/doc-title.ts's header), which is also why wikilink resolution
+  // and the graph view couldn't draw edges between drafts.
+  if (
+    patch.title === undefined &&
+    patch.raw !== undefined &&
+    next.title === DRAFT_DOC.defaultTitle
+  ) {
+    const derived = deriveTitleFromRaw(next.raw);
+    if (derived) next.title = derived;
+  }
 
   return next;
 }
@@ -263,13 +298,21 @@ export function createDraft(initial?: DraftCreateInput): DraftDoc {
   const id = createDraftId();
   const ts = nowIso();
 
+  const raw = initial?.raw ?? "";
+  // Same auto-title rule as applyPatch: an explicit initial.title always
+  // wins; otherwise derive from content so a draft created from a
+  // template/import doesn't start life "Untitled" and stay that way until
+  // the user's first edit happens to trigger an autosave.
+  const title =
+    initial?.title ?? deriveTitleFromRaw(raw) ?? DRAFT_DOC.defaultTitle;
+
   const doc: DraftDoc = {
     id,
     v: DRAFT_DOC.version,
     createdAt: ts,
     updatedAt: ts,
-    title: initial?.title ?? DRAFT_DOC.defaultTitle,
-    raw: initial?.raw ?? "",
+    title,
+    raw,
     settings: initial?.settings ?? DEFAULT_SETTINGS,
   };
 
