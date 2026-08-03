@@ -80,7 +80,8 @@ export function registerPagesCommand(program: Command) {
     .command("open <id>")
     .description("Open a page in your browser (use --print to just print the URL)")
     .option("--print", "Print the URL instead of opening a browser")
-    .action(async (id: string, opts: { print?: boolean }) => {
+    .option("--json", "Output raw JSON instead of printing the URL")
+    .action(async (id: string, opts: { print?: boolean; json?: boolean }) => {
       const client = await getClient();
       if (!client) {
         error(NOT_AUTHENTICATED_ERROR);
@@ -99,6 +100,12 @@ export function registerPagesCommand(program: Command) {
         error(`Page not found: ${id}`);
         process.exit(1);
       }
+
+      if (opts.json) {
+        console.log(JSON.stringify(page, null, 2));
+        return;
+      }
+
       console.log(bold(page.url));
       if (!opts.print) {
         openUrl(page.url);
