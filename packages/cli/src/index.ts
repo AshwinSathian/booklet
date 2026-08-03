@@ -2,6 +2,7 @@ import { Command } from "commander";
 import { registerAuthCommands } from "./commands/auth.js";
 import { registerPublishCommand } from "./commands/publish.js";
 import { registerPagesCommand } from "./commands/pages.js";
+import { registerCompletionCommand } from "./commands/completion.js";
 import { BookletApiError } from "./api.js";
 import { error, setNoColor } from "./fmt.js";
 
@@ -24,6 +25,7 @@ program.hook("preAction", (thisCommand) => {
 registerAuthCommands(program);
 registerPublishCommand(program);
 registerPagesCommand(program);
+registerCompletionCommand(program);
 
 async function main() {
   try {
