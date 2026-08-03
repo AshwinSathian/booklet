@@ -1,7 +1,10 @@
+import katex from "katex";
 import type { Block, Inline, TableAlign } from "@/lib/blocks";
+import { GRAPHVIZ_LANGS } from "@/lib/blocks";
 import { parseToBlocks } from "@/lib/parse";
 import { CALLOUT_META, sanitizeImageUrl, sanitizeUrl } from "@/lib/render-shared";
 import { normalizeInput } from "@/lib/sanitize";
+import { sanitizeCompiledSvg } from "@/lib/svg-sanitize";
 
 // Inline styles (not class names) so callouts/tables render correctly both
 // in the standalone document export (blocksToHtmlDocument, which ships a
@@ -39,7 +42,7 @@ function tableAlignStyle(align: TableAlign[] | undefined, i: number): string {
  * - Generate a conservative, semantic HTML subset (email/doc friendly)
  * - Escape all user strings and defensively sanitize URLs
  */
-export function markdownToHtml(raw: string): string {
+export async function markdownToHtml(raw: string): Promise<string> {
   const normalized = normalizeInput(raw ?? "");
   // parseToBlocks never throws (see its own doc comment) — a catastrophic
   // parse failure degrades to an explanatory block, not an exception.
@@ -47,13 +50,13 @@ export function markdownToHtml(raw: string): string {
   return blocksToHtml(blocks);
 }
 
-export function blocksToHtml(blocks: Block[]): string {
-  const inner = blocks.map(renderBlock).join("");
+export async function blocksToHtml(blocks: Block[]): Promise<string> {
+  const inner = (await Promise.all(blocks.map(renderBlock))).join("");
   return `<div>${inner}</div>`;
 }
 
-export function blocksToHtmlDocument(blocks: Block[], title: string): string {
-  const body = blocks.map(renderBlock).join("\n");
+export async function blocksToHtmlDocument(blocks: Block[], title: string): Promise<string> {
+  const body = (await Promise.all(blocks.map(renderBlock))).join("\n");
   const safeTitle = escapeHtmlInner(title || "Booklet export");
   return `<!DOCTYPE html>
 <html lang="en">
@@ -100,7 +103,11 @@ function escapeHtmlInner(s: string): string {
     .replace(/'/g, "&#39;");
 }
 
-function renderBlock(b: Block): string {
+async function joinBlocks(blocks: Block[], sep = ""): Promise<string> {
+  return (await Promise.all(blocks.map(renderBlock))).join(sep);
+}
+
+async function renderBlock(b: Block): Promise<string> {
   switch (b.t) {
     case "heading": {
       const level = clampHeadingLevel(b.level);
@@ -110,40 +117,40 @@ function renderBlock(b: Block): string {
       return `<p>${renderInlines(b.inl)}</p>`;
     case "list": {
       const tag = b.ordered ? "ol" : "ul";
-      const items = b.items
-        .map((it) => {
+      const items = await Promise.all(
+        b.items.map(async (it) => {
           const checkbox =
             it.checked != null
               ? `<input type="checkbox"${it.checked ? " checked" : ""} disabled />`
               : "";
           const text = renderInlines(it.inl);
-          const nested = it.children?.length ? blocksToHtml(it.children) : "";
+          const nested = it.children?.length ? await blocksToHtml(it.children) : "";
           return `<li>${checkbox}${text}${nested}</li>`;
-        })
-        .join("");
-      return `<${tag}>${items}</${tag}>`;
+        }),
+      );
+      return `<${tag}>${items.join("")}</${tag}>`;
     }
     case "quote": {
-      const inner = b.blocks.map(renderBlock).join("");
+      const inner = await joinBlocks(b.blocks);
       return `<blockquote>${inner}</blockquote>`;
     }
     case "callout": {
       const meta = CALLOUT_META[b.kind];
-      const inner = b.blocks.map(renderBlock).join("");
+      const inner = await joinBlocks(b.blocks);
       return `<div style="border:1px solid ${meta.colorVar};background:${calloutBg(meta.colorVar)};border-radius:8px;padding:1rem;margin:0 0 1em"><p style="margin:0 0 .5em;font-weight:700;color:${meta.colorVar}">${escapeHtmlInner(meta.label)}</p>${inner}</div>`;
     }
     case "toggle": {
-      const inner = b.blocks.map(renderBlock).join("");
+      const inner = await joinBlocks(b.blocks);
       // Native <details>/<summary> — every mainstream email/doc-paste target
       // either renders these correctly or degrades to always-expanded
       // content, never to nothing, so this is safe as an export fallback too.
       return `<details style="border:1px solid #e5e7eb;border-radius:8px;padding:.75rem 1rem;margin:0 0 1em"><summary style="cursor:pointer;font-weight:700">${escapeHtmlInner(b.summary)}</summary><div style="margin-top:.75rem">${inner}</div></details>`;
     }
     case "columns": {
-      const cols = b.columns
-        .map((col) => `<div style="flex:1 1 0;min-width:0">${col.map(renderBlock).join("")}</div>`)
-        .join("");
-      return `<div style="display:flex;gap:1.25rem;flex-wrap:wrap;margin:0 0 1em">${cols}</div>`;
+      const cols = await Promise.all(
+        b.columns.map(async (col) => `<div style="flex:1 1 0;min-width:0">${await joinBlocks(col)}</div>`),
+      );
+      return `<div style="display:flex;gap:1.25rem;flex-wrap:wrap;margin:0 0 1em">${cols.join("")}</div>`;
     }
     case "code": {
       const langClass = b.lang ? ` class="language-${escapeAttr(b.lang)}"` : "";
@@ -175,25 +182,46 @@ function renderBlock(b: Block): string {
       return `<figure><img src="${escapeAttr(safeSrc)}" alt="${escapeAttr(b.alt)}" />${b.alt ? `<figcaption>${escapeHtml(b.alt)}</figcaption>` : ""}</figure>`;
     }
     case "diagram": {
+      // Graphviz/DOT diagrams compile to self-contained SVG here, same as
+      // the live preview (DiagramBlock.tsx) — this module only ever runs
+      // client-side (see ExportMenu.tsx/TopBar.tsx), so @viz-js/viz's WASM
+      // module loads exactly the same way, just ahead of time at export
+      // instead of on mount.
+      //
+      // Mermaid diagrams are NOT compiled here: Mermaid's layout engine
+      // requires real browser text-measurement APIs (getBBox etc.) that
+      // even Mermaid's own official CLI only gets by driving a full
+      // headless Chromium — there's no lightweight way to do this inline
+      // at export time. They're kept as clearly-labeled, syntax-highlighted
+      // source (see the FAQ copy, which now says this explicitly instead of
+      // implying every diagram renders).
+      if (GRAPHVIZ_LANGS.has(b.lang)) {
+        const svg = await renderGraphvizToSvg(b.code);
+        if (svg) return svg;
+      }
       const langClass = ` class="language-${escapeAttr(b.lang)}"`;
       return `<pre><code${langClass}>${escapeHtml(b.code)}</code></pre>`;
     }
     case "math": {
-      // Rendered as source, not compiled via KaTeX — a compiled render
-      // needs KaTeX's CSS (including @font-face declarations) shipped
-      // alongside it to display correctly, which conflicts with this
-      // exporter's "conservative, dependency-free HTML subset" contract
-      // (see file header). Same treatment as `diagram` for the same reason.
+      // Compiled to MathML (output: "mathml") rather than KaTeX's default
+      // HTML+CSS render — MathML needs no stylesheet or @font-face assets
+      // to display, so the result is fully self-contained and every
+      // mainstream browser renders it natively. Falls back to source text
+      // only if KaTeX can't parse the input at all.
+      const html = renderMathToMathml(b.code, true);
+      if (html) {
+        return `<div style="overflow-x:auto;padding:.5rem 0;text-align:center">${html}</div>`;
+      }
       return `<pre><code class="language-latex">${escapeHtml(b.code)}</code></pre>`;
     }
     case "footnotes": {
-      const items = b.items
-        .map((item) => {
-          const inner = item.blocks.map(renderBlock).join("");
+      const items = await Promise.all(
+        b.items.map(async (item) => {
+          const inner = await joinBlocks(item.blocks);
           return `<li id="fn-${escapeAttr(item.id)}">${inner} <a href="#fnref-${escapeAttr(item.id)}">↩</a></li>`;
-        })
-        .join("");
-      return `<hr /><section aria-label="Footnotes"><ol>${items}</ol></section>`;
+        }),
+      );
+      return `<hr /><section aria-label="Footnotes"><ol>${items.join("")}</ol></section>`;
     }
     default:
       return "";
@@ -225,8 +253,10 @@ function renderInline(i: Inline): string {
       if (!safeSrc) return "";
       return `<img src="${escapeAttr(safeSrc)}" alt="${escapeAttr(i.alt)}" />`;
     }
-    case "math":
-      return `<code>${escapeHtml(i.v)}</code>`;
+    case "math": {
+      const html = renderMathToMathml(i.v, false);
+      return html ? `<span>${html}</span>` : `<code>${escapeHtml(i.v)}</code>`;
+    }
     case "footnoteRef":
       return `<sup><a href="#fn-${escapeAttr(i.id)}" id="fnref-${escapeAttr(i.id)}">[${i.n}]</a></sup>`;
     case "wikilink":
@@ -237,6 +267,45 @@ function renderInline(i: Inline): string {
       return escapeHtml(i.label ?? i.target);
     default:
       return "";
+  }
+}
+
+/**
+ * Compile LaTeX to standalone MathML (no CSS/font dependency — see the
+ * `math` case in renderBlock for why that matters for a self-contained
+ * export). Returns null on genuinely unparseable input so callers can fall
+ * back to source text; KaTeX's own throwOnError:false already renders most
+ * errors as styled inline text rather than throwing, so the null path is a
+ * defensive fallback, not the common case.
+ */
+function renderMathToMathml(code: string, displayMode: boolean): string | null {
+  try {
+    return katex.renderToString(code, { throwOnError: false, output: "mathml", displayMode });
+  } catch {
+    return null;
+  }
+}
+
+// Cached across an export call (and across multiple exports in the same
+// page session) so a document with several Graphviz/DOT diagrams only pays
+// the WASM instantiation cost once. Dynamically imported, same as
+// DiagramBlock.tsx's live-preview path, so pages/exports with no diagrams
+// never pull in the WASM payload at all.
+let vizInstance: ReturnType<typeof import("@viz-js/viz")["instance"]> | null = null;
+
+function getViz() {
+  vizInstance ??= import("@viz-js/viz").then(({ instance }) => instance());
+  return vizInstance;
+}
+
+async function renderGraphvizToSvg(code: string): Promise<string | null> {
+  try {
+    const viz = await getViz();
+    const result = viz.render(code.trim(), { format: "svg" });
+    if (result.status !== "success") return null;
+    return sanitizeCompiledSvg(result.output) || null;
+  } catch {
+    return null;
   }
 }
 

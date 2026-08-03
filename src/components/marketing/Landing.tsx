@@ -1311,7 +1311,9 @@ export function Landing() {
           </FaqItem>
           <FaqItem question="Can I export a published page?">
             Yes — every published page has an <strong>Export</strong> menu. Download the original Markdown source,
-            a self-contained HTML file, or use Print or Save as PDF (⌘P) for a clean, chrome-free PDF.
+            a self-contained HTML file, or use Print or Save as PDF (⌘P) for a clean, chrome-free PDF. Math and
+            Graphviz/DOT diagrams are compiled into the HTML file directly; Mermaid diagrams export as their
+            source text rather than a rendered image, since rendering Mermaid needs a full browser.
           </FaqItem>
           <FaqItem question="Where are drafts stored?">
             Entirely in your browser. Nothing leaves your device until you hit Publish. Clearing browser storage removes local drafts.

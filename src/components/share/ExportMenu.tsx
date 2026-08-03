@@ -42,6 +42,7 @@ export function ExportMenu({
   title: string;
 }) {
   const [open, setOpen] = useState(false);
+  const [exportingHtml, setExportingHtml] = useState(false);
   const drawerWidth = settings.width === "wide" ? "max-w-4xl" : "max-w-3xl";
 
   const filename = sanitizeFilename(title);
@@ -53,11 +54,20 @@ export function ExportMenu({
     setOpen(false);
   };
 
-  const handleHtml = () => {
-    const html = blocksToHtmlDocument(blocks, title);
-    downloadBlob(html, `${filename}.html`, "text/html;charset=utf-8");
-    trackEvent(ANALYTICS_EVENTS.share_export_html, {});
-    setOpen(false);
+  const handleHtml = async () => {
+    // Compiling any Graphviz/DOT diagrams to SVG loads a WASM module on
+    // first use — usually fast, but real enough to guard against a
+    // double-click firing two downloads.
+    if (exportingHtml) return;
+    setExportingHtml(true);
+    try {
+      const html = await blocksToHtmlDocument(blocks, title);
+      downloadBlob(html, `${filename}.html`, "text/html;charset=utf-8");
+      trackEvent(ANALYTICS_EVENTS.share_export_html, {});
+      setOpen(false);
+    } finally {
+      setExportingHtml(false);
+    }
   };
 
   const handlePrint = () => {
@@ -97,12 +107,19 @@ export function ExportMenu({
             </button>
           ) : null}
 
-          <button type="button" className={itemCls} onClick={handleHtml}>
+          <button
+            type="button"
+            className={itemCls}
+            onClick={() => void handleHtml()}
+            disabled={exportingHtml}
+          >
             <span className="text-text-muted shrink-0">
               <Icon name="code" size={16} />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-text-primary">Download HTML</span>
+              <span className="block text-text-primary">
+                {exportingHtml ? "Exporting…" : "Download HTML"}
+              </span>
               <span className="mt-0.5 block text-xs text-text-muted">Standalone HTML document</span>
             </span>
             <span className="text-2xs text-text-muted font-mono">.html</span>

@@ -1179,7 +1179,7 @@ export function TopBar({
 
   const onCopyHtml = useCallback(async () => {
     try {
-      const html = markdownToHtml(raw ?? "");
+      const html = await markdownToHtml(raw ?? "");
       await copyTextToClipboard(html);
       toast.showCoalesced(TOAST_KEYS.copyHtml, "success", "Copied", "HTML copied.");
       trackEvent(ANALYTICS_EVENTS.export_copy_html, { raw_len: (raw ?? "").length, html_len: html.length });
