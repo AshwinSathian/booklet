@@ -939,7 +939,13 @@ export function MyPagesList({
       if (!res.ok) throw new Error();
       const body = (await res.json()) as { collection: CollectionRow };
       setCollections((prev) => [...prev, body.collection].sort((a, b) => a.name.localeCompare(b.name)));
-      setSelectedCollection(body.collection.id);
+      // Deliberately don't switch the filter to the new (necessarily empty)
+      // collection — that used to strand the user looking at an empty list,
+      // with no prompt to assign anything to it. The new collection now
+      // just appears in the sidebar while the current page list stays put,
+      // so the pages the user was already looking at are still visible to
+      // drag onto it (the existing assignPageToCollection drag-and-drop
+      // flow, wired via CollectionSidebar's onDropPage below).
       setNewCollectionName("");
     } finally {
       setCreatingCollection(false);
