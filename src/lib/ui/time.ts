@@ -21,12 +21,50 @@ export function formatTimeHHMM(d: Date): string {
 export function formatUpdatedAtLong(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleString(undefined, {
+  // Locale pinned to "en-US" (and hour12 made explicit) so the *format*
+  // (12h vs 24h, month-name style, field order) can never differ between
+  // Node's ICU default locale and the visitor's browser locale — that
+  // divergence is what caused a hydration mismatch on /my-pages/versions/[id]
+  // (see VersionsClient.tsx, the one call site of this function that's
+  // genuinely server-rendered then hydrated). timeZone is deliberately left
+  // unpinned: this still resolves to each environment's local timezone,
+  // which is correct once a caller is client-only (this codebase's other
+  // three call sites — TopBar, DraftsDialog — never render this value until
+  // after mount, so there's no second, server-side evaluation to disagree
+  // with). Callers that ARE server-rendered-then-hydrated must defer this
+  // call to a client-only render pass instead (see VersionsClient.tsx).
+  return d.toLocaleString("en-US", {
     year: "numeric",
     month: "short",
     day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
+    hour12: true,
+  });
+}
+
+/**
+ * A deterministic stand-in for formatUpdatedAtLong's output, safe to use
+ * during server rendering (and a client's very first, pre-hydration paint)
+ * because timeZone is pinned rather than left to the ambient environment.
+ * Callers that render this value from server-fetched data (e.g.
+ * VersionsClient.tsx) must show THIS during the initial render and only
+ * swap to the richer, local-timezone formatUpdatedAtLong() after mount —
+ * otherwise the server's timezone and the visitor's browser timezone can
+ * legitimately disagree, producing a React hydration mismatch even with
+ * formatUpdatedAtLong's locale/hour12 already pinned.
+ */
+export function formatUpdatedAtLongUTC(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "UTC",
   });
 }
 

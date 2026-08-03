@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/Button";
+import { useSession } from "@/components/auth/SessionProvider";
 
 const INPUT_CLASS =
   "w-full rounded-lg border border-border-default bg-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft";
@@ -15,6 +16,7 @@ export function AuthForm({
   redirectUrl?: string;
 }) {
   const router = useRouter();
+  const { refetch } = useSession();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -39,6 +41,7 @@ export function AuthForm({
         return;
       }
 
+      await refetch();
       router.push(redirectUrl ?? "/app");
       router.refresh();
     } catch {

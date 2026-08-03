@@ -20,7 +20,7 @@ function avatarHue(userId: string): number {
 // Replaces Clerk's <UserButton /> — a minimal avatar-triggered dropdown with
 // the account's email, a link to My Pages, and sign out.
 export function AccountMenu() {
-  const { userId, email } = useSession();
+  const { userId, email, refetch } = useSession();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -41,6 +41,7 @@ export function AccountMenu() {
   async function handleSignOut() {
     setOpen(false);
     await fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
+    await refetch();
     router.push("/");
     router.refresh();
   }

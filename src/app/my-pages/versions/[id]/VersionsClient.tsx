@@ -4,8 +4,8 @@ import { BlockRenderer } from "@/components/blocks/BlockRenderer";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import type { PublishedDoc } from "@/lib/blocks";
-import { formatUpdatedAtLong } from "@/lib/ui/time";
-import { useState } from "react";
+import { formatUpdatedAtLong, formatUpdatedAtLongUTC } from "@/lib/ui/time";
+import { useEffect, useState } from "react";
 
 type VersionItem = {
   version_number: number;
@@ -29,6 +29,14 @@ export function VersionsClient({
   const [loadingVersion, setLoadingVersion] = useState<number | null>(null);
   const [restoringVersion, setRestoringVersion] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // This page is server-rendered then hydrated, and `version.created_at`
+  // comes straight from a server-fetched prop — formatting it with the
+  // ambient (locale AND timezone) rules on both sides risks the server and
+  // the visitor's browser disagreeing, a React hydration mismatch. Render
+  // the timezone-pinned, deterministic form until mounted, then upgrade to
+  // the visitor's own local time — see formatUpdatedAtLongUTC's doc comment.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   async function loadVersion(version: number): Promise<PublishedDoc> {
     const res = await fetch(`/api/pages/${pageId}/versions/${version}`);
@@ -93,7 +101,8 @@ export function VersionsClient({
               <div>
                 <div className="text-sm font-semibold text-text-primary">v{version.version_number}</div>
                 <div className="mt-0.5 text-xs text-text-muted">
-                  {formatUpdatedAtLong(version.created_at)} · {formatBytes(version.size_bytes)}
+                  {mounted ? formatUpdatedAtLong(version.created_at) : formatUpdatedAtLongUTC(version.created_at)} ·{" "}
+                  {formatBytes(version.size_bytes)}
                 </div>
               </div>
 

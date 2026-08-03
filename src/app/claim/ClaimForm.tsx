@@ -3,12 +3,14 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/Button";
+import { useSession } from "@/components/auth/SessionProvider";
 
 const INPUT_CLASS =
   "w-full rounded-lg border border-border-default bg-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft";
 
 export function ClaimForm({ token }: { token: string }) {
   const router = useRouter();
+  const { refetch } = useSession();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +40,7 @@ export function ClaimForm({ token }: { token: string }) {
         return;
       }
 
+      await refetch();
       router.push("/my-pages");
       router.refresh();
     } catch {
