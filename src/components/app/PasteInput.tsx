@@ -137,6 +137,7 @@ const SHORTCUT_GROUPS = [
   {
     group: "Editor",
     shortcuts: [
+      { keys: ["⌘", "K"], label: "Command palette" },
       { keys: ["⌘", "F"], label: "Find & replace" },
       { keys: ["⌘", "↵"], label: "Publish" },
       { keys: ["Tab"], label: "Indent (2 spaces)" },
