@@ -597,6 +597,14 @@ function detectWikilinkTrigger(value: string, caret: number): WikilinkTrigger | 
 }
 
 const WIKILINK_SUGGESTION_LIMIT = 8;
+// Must match WikilinkAutocomplete's `w-64` / `max-h-56` classes below — used
+// to clamp the popup's computed position so it can never render off-screen
+// (see updateWikilinkTrigger). Since the popup's own max size is fixed by
+// those classes regardless of match count, clamping against these constants
+// is exact, not an approximation.
+const WIKILINK_POPUP_WIDTH = 256;
+const WIKILINK_POPUP_MAX_HEIGHT = 224;
+const WIKILINK_POPUP_VIEWPORT_MARGIN = 8;
 
 /** Shared by the popup's rendering and the parent's keyboard navigation, so
  * both always agree on what "selected index N" refers to. */
@@ -735,9 +743,29 @@ export function PasteInput({
 
       const { top, left, height } = getCaretCoordinates(ta, ta.selectionStart);
       const rect = ta.getBoundingClientRect();
+      const rawTop = rect.top - ta.scrollTop + top + height + 4;
+      const rawLeft = rect.left - ta.scrollLeft + left;
+
+      // Clamp into the viewport — the caret can be anywhere in the
+      // document (including near the bottom of a scrolled textarea, or
+      // near the right edge on a narrow viewport), and the popup's
+      // position was previously computed with no bound, so it could render
+      // partially or fully off-screen. See tests/e2e/wikilink-autocomplete.spec.ts.
       setWikilinkPos({
-        top: rect.top - ta.scrollTop + top + height + 4,
-        left: rect.left - ta.scrollLeft + left,
+        top: Math.min(
+          Math.max(rawTop, WIKILINK_POPUP_VIEWPORT_MARGIN),
+          Math.max(
+            WIKILINK_POPUP_VIEWPORT_MARGIN,
+            window.innerHeight - WIKILINK_POPUP_MAX_HEIGHT - WIKILINK_POPUP_VIEWPORT_MARGIN,
+          ),
+        ),
+        left: Math.min(
+          Math.max(rawLeft, WIKILINK_POPUP_VIEWPORT_MARGIN),
+          Math.max(
+            WIKILINK_POPUP_VIEWPORT_MARGIN,
+            window.innerWidth - WIKILINK_POPUP_WIDTH - WIKILINK_POPUP_VIEWPORT_MARGIN,
+          ),
+        ),
       });
     },
     [],
