@@ -107,8 +107,12 @@ export function AppShell({
       <div
         className={[
           "flex min-h-0 overflow-hidden w-full",
-          focusMode ? "hidden" : "lg:flex-1 lg:flex lg:flex-col",
-          pane === "preview" ? "flex-1 animate-fade-in" : "hidden lg:flex",
+          focusMode
+            ? "hidden"
+            : [
+                "lg:flex-1 lg:flex lg:flex-col",
+                pane === "preview" ? "flex-1 animate-fade-in" : "hidden lg:flex",
+              ].join(" "),
         ].join(" ")}
       >
         {right}
