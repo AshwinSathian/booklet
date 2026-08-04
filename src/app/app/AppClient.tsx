@@ -26,6 +26,7 @@ import {
   subscribeToDraftMutations,
   updateDraft,
 } from "@/lib/drafts";
+import type { InsertSnippet } from "@/lib/editor/insertItems";
 import { parseToBlocks } from "@/lib/parse";
 import {
   backlinksForTitle,
@@ -83,6 +84,7 @@ function AppPageContent() {
   const toast = useToast();
   const { isLoaded: isUserLoaded, isSignedIn, userId } = useSession();
   const focusFnRef = useRef<null | (() => void)>(null);
+  const insertFnRef = useRef<null | ((snippet: InsertSnippet) => void)>(null);
   const openDraftsFnRef = useRef<null | (() => void)>(null);
   const cloudPulledForUserIdRef = useRef<string | null>(null);
 
@@ -857,6 +859,7 @@ function AppPageContent() {
               onFocusShortcutRequested={(fn) => {
                 focusFnRef.current = fn;
               }}
+              onInsertRequested={(fn) => { insertFnRef.current = fn; }}
               isEmpty={isEmpty}
               onInsertSample={onInsertSample}
             />
@@ -892,7 +895,21 @@ function AppPageContent() {
         onOpenDraft={(id) => onSwitchDraft(id, "unknown")}
       />
 
-      <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} onNew={onNew} />
+      <CommandPalette
+        open={paletteOpen}
+        onOpenChange={setPaletteOpen}
+        onNew={onNew}
+        onPublish={() => void onPublish()}
+        onUpdatePage={() => void onUpdatePage()}
+        canPublish={canPublish}
+        isPublishing={status === "publishing"}
+        publishedOwned={lastPublishedOwned}
+        activeDraftId={activeDraftId}
+        onSwitchDraft={(id) => onSwitchDraft(id, "unknown")}
+        focusMode={focusMode}
+        onToggleFocusMode={() => setFocusMode((f) => !f)}
+        onInsertSnippet={(snippet) => insertFnRef.current?.(snippet)}
+      />
     </div>
   );
 }

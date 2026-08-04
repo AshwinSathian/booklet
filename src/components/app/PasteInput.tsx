@@ -732,12 +732,14 @@ export function PasteInput({
   value,
   onChange,
   onFocusShortcutRequested,
+  onInsertRequested,
   isEmpty = false,
   onInsertSample,
 }: {
   value: string;
   onChange: (v: string) => void;
   onFocusShortcutRequested?: (focusFn: () => void) => void;
+  onInsertRequested?: (insertFn: (snippet: InsertSnippet) => void) => void;
   isEmpty?: boolean;
   onInsertSample?: () => void;
 }) {
@@ -900,6 +902,12 @@ export function PasteInput({
     },
     [value, onChange],
   );
+
+  useEffect(() => {
+    if (onInsertRequested) {
+      onInsertRequested((snippet) => insertSnippet(snippet));
+    }
+  }, [onInsertRequested, insertSnippet]);
 
   const selectSlashItem = useCallback(
     (item: InsertItem) => {
