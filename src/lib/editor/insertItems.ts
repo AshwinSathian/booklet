@@ -13,7 +13,54 @@ export type InsertSnippet = {
   text: string;
   selectFrom?: number;
   selectTo?: number;
+  /**
+   * True when `text` only parses as valid Markdown if it starts on its own
+   * line, separated from surrounding content by a blank line — e.g. `---\n`
+   * spliced into the middle of a sentence produces `"Existing text.---\n"`,
+   * a single garbled line, instead of a real divider. PasteInput.tsx's
+   * insertSnippet() uses this to insert leading/trailing blank lines as
+   * needed (see normalizeBlockInsertion below), mirroring the pre-existing
+   * insertTable() toolbar behavior it was modeled on. When the caret is
+   * already at a suitable spot (start of an empty line, etc.) no extra
+   * newlines are added, so marking an item `block: true` never changes
+   * behavior for the already-correct common case — only the previously
+   * broken mid-line case.
+   *
+   * Every item below is block-level: the five callouts/toggle/columns/
+   * table/codeblock/divider are obviously so (multi-line or self-contained
+   * constructs), but h1/h2/h3/quote/bullet/ordered/task are exactly as
+   * line-start-dependent — `"Existing text.# "` is no more a heading than
+   * `"Existing text.---\n"` is a divider, since ATX headings, blockquotes,
+   * and list markers are only recognized at the start of a line. So all of
+   * them get `block: true` too, not just the "obviously block" subset.
+   */
+  block?: boolean;
 };
+
+/**
+ * Wraps a block-level snippet with leading/trailing blank lines as needed so
+ * it always lands on its own line(s), regardless of where the caret was.
+ * `before`/`after` are the document text immediately preceding/following the
+ * insertion point. Generalizes PasteInput.tsx's original insertTable() logic
+ * (now itself built on this helper) to any block-level insertion.
+ *
+ * Returns the padded insertion text plus `leadingOffset` — the number of
+ * characters prepended (0 or 2, for "\n\n") — so callers can shift any
+ * cursor-placement math (e.g. `selectFrom`) by the same amount, exactly as
+ * insertTable already shifted its `firstCellStart` by `headerOffset`.
+ */
+export function normalizeBlockInsertion(
+  before: string,
+  after: string,
+  text: string,
+): { insertion: string; leadingOffset: number } {
+  const needsLeadingNewline = before.length > 0 && !before.endsWith("\n");
+  const needsTrailingNewline = after.length > 0 && !after.startsWith("\n");
+  const leadingOffset = needsLeadingNewline ? 2 : 0;
+  const insertion =
+    (needsLeadingNewline ? "\n\n" : "") + text + (needsTrailingNewline ? "\n\n" : "");
+  return { insertion, leadingOffset };
+}
 
 /**
  * One entry in the "/" slash menu and the command palette's Insert group —
@@ -41,7 +88,7 @@ const CALLOUT_LABELS: Record<CalloutKind, string> = {
 
 function calloutSnippet(kind: CalloutKind): InsertSnippet {
   const text = `> [!${kind}]\n> `;
-  return { text, selectFrom: text.length };
+  return { text, selectFrom: text.length, block: true };
 }
 
 export const TABLE_SNIPPET_TEXT =
@@ -51,13 +98,13 @@ export const TABLE_SNIPPET_TEXT =
   "| Cell | Cell | Cell |";
 
 export const INSERT_ITEMS: InsertItem[] = [
-  { id: "h1", label: "Heading 1", keywords: ["heading", "h1", "title"], icon: "markdown", textGlyph: "H1", snippet: { text: "# " } },
-  { id: "h2", label: "Heading 2", keywords: ["heading", "h2"], icon: "markdown", textGlyph: "H2", snippet: { text: "## " } },
-  { id: "h3", label: "Heading 3", keywords: ["heading", "h3"], icon: "markdown", textGlyph: "H3", snippet: { text: "### " } },
-  { id: "bullet", label: "Bullet list", keywords: ["list", "ul", "unordered"], icon: "list", snippet: { text: "- " } },
-  { id: "ordered", label: "Ordered list", keywords: ["list", "ol", "numbered"], icon: "list-ordered", snippet: { text: "1. " } },
-  { id: "task", label: "Task list", keywords: ["todo", "checkbox", "task"], icon: "check", snippet: { text: "- [ ] " } },
-  { id: "quote", label: "Quote", keywords: ["blockquote", "quote"], icon: "quote", snippet: { text: "> " } },
+  { id: "h1", label: "Heading 1", keywords: ["heading", "h1", "title"], icon: "markdown", textGlyph: "H1", snippet: { text: "# ", block: true } },
+  { id: "h2", label: "Heading 2", keywords: ["heading", "h2"], icon: "markdown", textGlyph: "H2", snippet: { text: "## ", block: true } },
+  { id: "h3", label: "Heading 3", keywords: ["heading", "h3"], icon: "markdown", textGlyph: "H3", snippet: { text: "### ", block: true } },
+  { id: "bullet", label: "Bullet list", keywords: ["list", "ul", "unordered"], icon: "list", snippet: { text: "- ", block: true } },
+  { id: "ordered", label: "Ordered list", keywords: ["list", "ol", "numbered"], icon: "list-ordered", snippet: { text: "1. ", block: true } },
+  { id: "task", label: "Task list", keywords: ["todo", "checkbox", "task"], icon: "check", snippet: { text: "- [ ] ", block: true } },
+  { id: "quote", label: "Quote", keywords: ["blockquote", "quote"], icon: "quote", snippet: { text: "> ", block: true } },
   ...CALLOUT_KINDS.map((kind): InsertItem => ({
     id: `callout-${kind}`,
     label: CALLOUT_LABELS[kind],
@@ -74,6 +121,7 @@ export const INSERT_ITEMS: InsertItem[] = [
       text: ":::toggle Summary\n\n:::\n",
       selectFrom: ":::toggle ".length,
       selectTo: ":::toggle Summary".length,
+      block: true,
     },
   },
   {
@@ -85,6 +133,7 @@ export const INSERT_ITEMS: InsertItem[] = [
       text: ":::columns\n\n---\n\n:::\n",
       selectFrom: ":::columns\n".length,
       selectTo: ":::columns\n".length,
+      block: true,
     },
   },
   {
@@ -96,6 +145,7 @@ export const INSERT_ITEMS: InsertItem[] = [
       text: TABLE_SNIPPET_TEXT,
       selectFrom: "| ".length,
       selectTo: "| ".length + "Column 1".length,
+      block: true,
     },
   },
   {
@@ -103,14 +153,14 @@ export const INSERT_ITEMS: InsertItem[] = [
     label: "Code block",
     keywords: ["code", "snippet", "fence"],
     icon: "code-block",
-    snippet: { text: "```\n\n```", selectFrom: "```\n".length, selectTo: "```\n".length },
+    snippet: { text: "```\n\n```", selectFrom: "```\n".length, selectTo: "```\n".length, block: true },
   },
   {
     id: "divider",
     label: "Divider",
     keywords: ["divider", "hr", "rule", "separator"],
     icon: "divider",
-    snippet: { text: "---\n" },
+    snippet: { text: "---\n", block: true },
   },
 ];
 

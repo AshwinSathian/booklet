@@ -11,7 +11,13 @@ import {
   type SlashTrigger,
 } from "@/components/app/SlashMenu";
 import { listDrafts, type DraftMeta } from "@/lib/drafts";
-import { filterInsertItems, type InsertItem, type InsertSnippet } from "@/lib/editor/insertItems";
+import {
+  filterInsertItems,
+  normalizeBlockInsertion,
+  TABLE_SNIPPET_TEXT,
+  type InsertItem,
+  type InsertSnippet,
+} from "@/lib/editor/insertItems";
 import { usePrefersReducedMotion } from "@/lib/motion";
 import { getCaretCoordinates, positionPopupNearCaret } from "@/lib/ui/caret";
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
@@ -48,11 +54,6 @@ const FORMATS: Record<string, FormatSpec> = {
   bullet:     { kind: "line", prefix: "- " },
   ordered:    { kind: "line", prefix: "1. " },
 };
-
-const TABLE_TEMPLATE = `| Column 1 | Column 2 | Column 3 |
-| --- | --- | --- |
-| Cell | Cell | Cell |
-| Cell | Cell | Cell |`;
 
 function applyFormat(
   ta: HTMLTextAreaElement,
@@ -110,20 +111,13 @@ function insertTable(ta: HTMLTextAreaElement, onChange: (v: string) => void) {
   const after = value.slice(start);
 
   // Ensure table is on its own line
-  const needsLeadingNewline = before.length > 0 && !before.endsWith("\n");
-  const needsTrailingNewline = after.length > 0 && !after.startsWith("\n");
-
-  const insertion =
-    (needsLeadingNewline ? "\n\n" : "") +
-    TABLE_TEMPLATE +
-    (needsTrailingNewline ? "\n\n" : "");
+  const { insertion, leadingOffset } = normalizeBlockInsertion(before, after, TABLE_SNIPPET_TEXT);
 
   const newValue = before + insertion + after;
   onChange(newValue);
 
   // Place cursor on the first cell
-  const headerOffset = (needsLeadingNewline ? 2 : 0);
-  const firstCellStart = before.length + headerOffset + 2; // after "| "
+  const firstCellStart = before.length + leadingOffset + 2; // after "| "
   requestAnimationFrame(() => {
     ta.focus();
     ta.setSelectionRange(firstCellStart, firstCellStart + 8); // select "Column 1"
@@ -925,9 +919,21 @@ export function PasteInput({
       if (!ta) return;
       const start = range?.start ?? ta.selectionStart;
       const end = range?.end ?? ta.selectionEnd;
-      const newValue = value.slice(0, start) + snippet.text + value.slice(end);
-      const from = start + (snippet.selectFrom ?? snippet.text.length);
-      const to = start + (snippet.selectTo ?? snippet.selectFrom ?? snippet.text.length);
+      const before = value.slice(0, start);
+      const after = value.slice(end);
+
+      // Block-level snippets (dividers, callouts, tables, etc. — see
+      // InsertSnippet.block's docstring) must land on their own line(s) or
+      // they produce garbled Markdown when the caret isn't already at a
+      // suitable spot — mirrors insertTable()'s pre-existing behavior via
+      // the same shared helper.
+      const { insertion, leadingOffset } = snippet.block
+        ? normalizeBlockInsertion(before, after, snippet.text)
+        : { insertion: snippet.text, leadingOffset: 0 };
+
+      const newValue = before + insertion + after;
+      const from = start + leadingOffset + (snippet.selectFrom ?? snippet.text.length);
+      const to = start + leadingOffset + (snippet.selectTo ?? snippet.selectFrom ?? snippet.text.length);
 
       onChange(newValue);
       setSlashTrigger(null);

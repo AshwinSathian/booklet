@@ -48,6 +48,9 @@ test.describe("command palette", () => {
     await page.keyboard.type("Divider");
     await page.getByText("Divider", { exact: true }).click();
 
-    await expect(textarea).toHaveValue("Existing text.---\n");
+    // The divider is block-level Markdown (see InsertSnippet.block) — inserting
+    // it mid-line must push it onto its own line via a leading blank line,
+    // not splice "---\n" directly onto the end of "Existing text.".
+    await expect(textarea).toHaveValue("Existing text.\n\n---\n");
   });
 });
