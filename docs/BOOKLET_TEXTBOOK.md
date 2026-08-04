@@ -115,8 +115,7 @@ that's a real and useful thing for a new contributor to know about.
 > follow-on, both since superseded by the "Precision" identity (monochrome, single
 > amber accent, Geist Sans/Mono, motion-led differentiation via a cursor-aware
 > spotlight, a command palette, and view-transitions). See `BRAND.md` for the current
-> system and `docs/superpowers/specs/2026-08-01-precision-redesign-design.md` for the
-> full rationale. The history below is preserved as-written since it's an accurate
+> system. The history below is preserved as-written since it's an accurate
 > record of what happened at the time, not a stale claim about the present.
 
 Booklet's stated design north star is **Apple-quality execution**, and the personality
@@ -178,8 +177,8 @@ the code looks the way it does.
 ### 3.1 Auth: Clerk → in-house (completed 2026-07-11)
 
 Booklet originally used Clerk (`@clerk/nextjs`) for authentication — Google/GitHub/email
-sign-in, session management, the works. An RFC (`PLAN-backend-auth-migration.md`,
-status: **IMPLEMENTED**) proposed replacing it entirely with a self-hosted,
+sign-in, session management, the works. An internal RFC (status: **IMPLEMENTED**,
+its design doc since removed from the repo) proposed replacing it entirely with a self-hosted,
 dependency-free system: email + password only, `argon2id` password hashing, DB-backed
 opaque sessions.
 
@@ -252,8 +251,8 @@ a normal Node process does.
 
 **The second pass — a 2026-07-23 feasibility re-analysis.** Someone later asked
 whether Workers + MongoDB Atlas could be redone "without compromise" and with a
-permanently zero Cloudflare bill. The resulting document
-(`PLAN-cloudflare-workers-feasibility.md`) is a genuinely excellent piece of engineering
+permanently zero Cloudflare bill. The resulting feasibility document (since removed
+from the repo) was a genuinely excellent piece of engineering
 writing, and it found that the *first* rollback's own stated reasoning ("Workers
 doesn't support arbitrary outbound TCP") had actually become **outdated** by mid-2025 —
 workerd gained real `node:net`/`node:tls` support, and the standard `mongodb` driver
@@ -334,7 +333,7 @@ The newest architectural addition is worth its own short history because it's a 
 example of scoped, evidence-gated feature work — see §26 for the full case study. In
 short: a widely-discussed essay argued that AI-generated review documents increasingly
 need visual structure Markdown alone doesn't provide, and proposed raw HTML as the
-fix. Booklet's RFC (`PLAN-rich-markdown-blocks.md`) rejected raw HTML outright (it would
+fix. Booklet's RFC (design doc since removed from the repo) rejected raw HTML outright (it would
 reopen the exact XSS surface the renderer was built to avoid, on an anonymous,
 unauthenticated, rate-limit-only publish flow) and instead shipped three new
 **Markdown-native** block types — callouts, toggles, columns — plus a second diagram
@@ -1535,10 +1534,10 @@ major change lives as a structured RFC with the same shape: Goals, Background,
 Non-Goals, Architecture, Alternatives Considered (with an explicit Verdict per
 alternative), Tradeoffs, Risks (scored by likelihood × impact), Phases with concrete
 exit criteria, and Open Questions that are explicitly left open rather than
-silently assumed. Three of these RFCs live in the repo root
-(`PLAN-backend-auth-migration.md`, `PLAN-cloudflare-workers-feasibility.md`,
-`PLAN-rich-markdown-blocks.md`) and are worth reading in full, not just summarized —
-but here's what each one teaches as a *pattern*, independent of its specific subject:
+silently assumed. Three such RFCs (the auth migration, the Cloudflare Workers
+feasibility re-analysis, and the rich Markdown blocks proposal) shaped major
+decisions in this codebase; their design docs have since been removed from the
+repo, but here's what each one teaches as a *pattern*, independent of its specific subject:
 
 **From the auth migration RFC**: the single biggest lesson is that investigating
 *before* committing to scope can shrink a project dramatically. The RFC didn't start
@@ -1699,14 +1698,17 @@ A quick-reference map from "I want to understand X" to "start reading here."
 
 # Appendix B — The three RFCs, one line each
 
-- **`PLAN-backend-auth-migration.md`** — Clerk removed, replaced with in-house
-  email+password auth. Status: implemented and cut over to production. Read for the
-  session/pepper design pattern and for a model of scoping a migration by evidence.
-- **`PLAN-cloudflare-workers-feasibility.md`** — a rigorous, unimplemented feasibility
+> Their source design docs have since been removed from the repo; the summaries below
+> are the durable record of what each one decided and why.
+
+- **Backend auth migration** — Clerk removed, replaced with in-house
+  email+password auth. Status: implemented and cut over to production. A model of the
+  session/pepper design pattern, and of scoping a migration by evidence.
+- **Cloudflare Workers feasibility** — a rigorous, unimplemented feasibility
   analysis of redoing the Cloudflare Workers migration this app already rolled back
-  once. Read for a model of surfacing a real security tradeoff instead of silently
+  once. A model of surfacing a real security tradeoff instead of silently
   resolving it.
-- **`PLAN-rich-markdown-blocks.md`** — callouts, toggles, columns, and a second diagram
+- **Rich Markdown blocks** — callouts, toggles, columns, and a second diagram
   language, added as a scoped, evidence-gated response to an external argument for
   richer document structure — explicitly not raw HTML. Status: phases 1–4 implemented;
   phase 5 deliberately deferred pending adoption data.

@@ -69,8 +69,8 @@ not a reversal of the reasoning behind "Ink & Paper" (which was itself a
 reaction to an earlier generic-violet palette): the same "don't look like
 every other AI-assisted SaaS product" goal is being solved with a different,
 narrower lane — precision and restraint as the differentiator, not a colour
-metaphor. See `docs/superpowers/specs/2026-08-01-precision-redesign-design.md`
-for the full rationale.
+metaphor. The full rationale was captured in a design doc at the time of the
+decision (since removed from the repo; the summary above is the durable record).
 
 The accent is now a single amber/gold, chosen deliberately over both the
 indigo/violet that's become this product category's default (Linear itself,
@@ -572,11 +572,11 @@ Be explicit in all positioning to avoid misleading copy:
   typography, hairline-border-first geometry, and a named motion system
   (`CursorSpotlight`, command palette, the redesigned publish sequence,
   view-transitions) replacing the paper/serif/dark→paper-reveal identity.
-  Full rationale: `docs/superpowers/specs/2026-08-01-precision-redesign-design.md`.
+  (Full rationale was captured in a design doc at the time, since removed
+  from the repo.)
 - **2026-07-28 — "The Reveal"** (superseded). Motion/interaction layer added on
   top of "Ink & Paper" — the dark→paper crossfade publish moment, scroll-driven
-  hero reveal, and the `/templates` visual-gallery restyle. See
-  `docs/superpowers/specs/2026-07-28-visual-elevation-design.md`.
+  hero reveal, and the `/templates` visual-gallery restyle.
 - **2026-07-28 — "Ink & Paper"** (superseded). Replaced an earlier generic
   violet accent with an oxblood/burgundy "ink" accent and a warm cream
   "paper" surface, plus the folded-page-corner logo mark (silhouette carried

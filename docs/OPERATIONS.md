@@ -1,8 +1,9 @@
 # Operations notes
 
 Punch-list style, not a full runbook. Written 2026-07 as part of closing out
-`AUDIT_REMEDIATION_PLAN.md`'s P1 items. Updated 2026-07 with the in-house
-auth migration (see `PLAN-backend-auth-migration.md` for the full design).
+an internal audit remediation effort. Updated 2026-07 with the in-house
+auth migration (the original design RFC has since been removed from the repo;
+this document is the durable operational record).
 
 ## Auth: in-house (Clerk removed)
 
@@ -30,8 +31,7 @@ middleware is similarly non-authoritative — the real check is
 `getSession()` inside each page/route.
 
 **No email delivery.** Password reset and email verification are
-out of scope for this iteration (see PLAN-backend-auth-migration.md's
-"Follow-up Work"). Account recovery for users migrated off Clerk uses the
+out of scope for this iteration. Account recovery for users migrated off Clerk uses the
 same signed-link-shared-manually pattern as team invites — see the
 migration runbook below.
 
@@ -78,8 +78,7 @@ Clerk dashboard whenever convenient (not required — nothing depends on it).
    through whatever channel you'd already use to reach them.
 5. **Verify**: sign up a fresh test account, sign in, publish, and confirm
    `/admin` is still reachable with the existing `ADMIN_USER_IDS` value —
-   Clerk user IDs are preserved as-is as the new local user IDs (see
-   PLAN-backend-auth-migration.md's Key Decisions), so no admin
+   Clerk user IDs are preserved as-is as the new local user IDs, so no admin
    reconfiguration should be needed. `scripts/production-verify/` has a
    scoped, self-cleaning Playwright suite for exactly this — see its own
    section below.
@@ -98,8 +97,7 @@ claimed a password-based account keeps that password_hash — reverting to
 Clerk doesn't retroactively invalidate it, so treat a rollback as a
 one-way decision too, not a clean undo.
 
-**Incidents found and fixed during this cutover** (all in
-`PLAN-backend-auth-migration.md`'s commit range, all verified against live
+**Incidents found and fixed during this cutover** (all verified against live
 production afterward):
 - `ecosystem.config.js` hardcoded `mcp-server/node_modules/.bin/tsx`, which
   npm workspace hoisting had moved to the repo root — `readable-mcp` was
@@ -224,7 +222,7 @@ step wherever they actually run (a published npm package, a GitHub Actions
 runner with no install step, a VS Code Extension Host). `mcp-server`
 resolves it normally
 via `node_modules` since it runs as a regular long-lived Node process under
-PM2. See `PLAN-backend-auth-migration.md` Phase 3 for the full design.
+PM2.
 
 ## Error tracking / structured logging
 
