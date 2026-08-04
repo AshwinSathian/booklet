@@ -1,0 +1,14 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      github-actions:
+        patterns: ["*"]
+    # Wait a few days after a new action version is published before
+    # Dependabot opens a PR bumping to it — a freshly-released version is
+    # exactly the window a supply-chain compromise would show up in.
+    cooldown:
+      default-days: 7
