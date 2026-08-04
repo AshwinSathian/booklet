@@ -20,7 +20,6 @@ const eslintConfig = [
 			"packages/*/dist/**",
 			"node_modules/**",
 			"mcp-server/**",
-			"public/primereact-themes/**",
 			"scripts/stub-og.cjs",
 		],
 	},

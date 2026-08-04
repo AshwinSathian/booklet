@@ -5,7 +5,6 @@ const config: Config = {
     "./src/app/**/*.{ts,tsx,js,jsx,mdx}",
     "./src/components/**/*.{ts,tsx,js,jsx,mdx}",
     "./src/lib/**/*.{ts,tsx,js,jsx,mdx}",
-    "./node_modules/primereact/**/*.{js,ts,jsx,tsx}",
   ],
   plugins: [],
 };

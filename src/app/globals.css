@@ -6,7 +6,6 @@
   - :root is DARK (pre-hydration background is dark)
   - html.light overrides to LIGHT when user chooses light or system is light
   - next-themes toggles html class: "light" | "dark"
-  - PrimeReact theme is swapped in PrimeStyles based on html.dark
 
   Design DNA — "Precision" (2026-08-01, replaces "Ink & Paper"/"The Reveal";
   see docs/superpowers/specs/2026-08-01-precision-redesign-design.md):
