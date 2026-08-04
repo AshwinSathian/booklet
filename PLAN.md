@@ -141,7 +141,7 @@ The following are confirmed complete and do not need rework.
 | KaTeX math rendering | ✅ Done | `remark-math` + `katex`, block + inline, CSS imported |
 | Embed codes | ✅ Done | `/p/[id]/embed`, `EmbedButton`, middleware frame-ancestors |
 | VS Code extension | ✅ Done | `packages/vscode/` — publish, publishSelection, setApiKey |
-| GitHub Action | ✅ Done | `packages/github-action/` — publish/update pages in CI |
+| GitHub Action | ✅ Done | [`AshwinSathian/publish-to-booklet`](https://github.com/AshwinSathian/publish-to-booklet) — publish/update pages in CI (extracted from `packages/github-action/` for a real Marketplace listing) |
 | Postmortem template | ✅ Done | `src/lib/templates.ts` slug `postmortem` |
 | ADR alias `/templates/adr` | ✅ Done | Redirect to `architecture-decision-record` |
 | Featured explore system | ✅ Done | Per-page toggle, featured section on `/explore` |

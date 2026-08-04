@@ -1234,45 +1234,32 @@ underneath it does.
 
 ## 18. GitHub Action
 
-`packages/github-action`, published to the GitHub Marketplace as an action consuming a
-**committed** `dist/main.js` — GitHub's Node 20 action runner executes that file
-directly with no install step, so every dependency (`@actions/core`,
-`booklet-api-client`, `zod`) is bundled into it at build time, and CI explicitly guards
-against the committed build going stale relative to source (`git diff --quiet` on the
-`dist/` directory is a required check).
+[`AshwinSathian/publish-to-booklet`](https://github.com/AshwinSathian/publish-to-booklet)
+— its own standalone public repo, not a subdirectory of this monorepo. GitHub
+Marketplace only lists actions whose `action.yml` sits at a repo's root, so the action
+was extracted out of `packages/github-action/` (deleted from this repo) into a
+dedicated repo to get a real Marketplace listing, badge, and `uses:
+AshwinSathian/publish-to-booklet@v1` syntax. It depends on the published
+`booklet-api-client` npm package rather than this workspace, so it has no ongoing
+sync relationship with `booklet` — it's a normal external consumer, same as any other
+repo depending on the npm package.
+
+It consumes a **committed** `dist/main.js` — GitHub's Node 24 action runner executes
+that file directly with no install step, so every dependency (`@actions/core`,
+`booklet-api-client`, `zod`) is bundled into it at build time, and that repo's own CI
+guards against the committed build going stale relative to source (`git diff --quiet`
+on `dist/` is a required check).
 
 Inputs: `file` (required), `api-key` (required), `page-id` (optional — supplying it
 switches to update-in-place), `visibility` (default `"unlisted"` — notably different
 from the CLI's default of `"public"`), `base-url` (defaults to the dedicated API
 hostname, since a GitHub Actions runner never loads a web page). Outputs: `url`, `id`.
 
-The action's `action.yml` lives at `packages/github-action/` inside this same
-repository — research for this document did not confirm a separate, independently
-published GitHub Marketplace listing for it (worth verifying directly rather than
-assuming, if you need to depend on it from another repo). The actual, current,
-maintainer-endorsed way to publish from CI today is the plain-bash template committed
-at `.github/examples/publish-to-booklet.yml`, which doesn't invoke the action at all —
-it calls the CLI directly via `npx`:
-
-```yaml
-# .github/examples/publish-to-booklet.yml (illustrative excerpt — see the real file for the full trigger/setup)
-- name: Publish to Booklet
-  env:
-    BOOKLET_API_KEY: ${{ secrets.BOOKLET_API_KEY }}
-    PAGE_ID: ${{ vars.BOOKLET_PAGE_ID }}   # optional: update the same page/URL every run
-  run: |
-    if [ -n "$PAGE_ID" ]; then
-      npx booklet-cli publish CHANGELOG.md --update "$PAGE_ID"
-    else
-      npx booklet-cli publish CHANGELOG.md --slug release-notes --visibility public
-    fi
-```
-
-If you specifically want the `uses:`-step form (a real Action, with typed
-inputs/outputs, rather than a shell script), reference it by path within this
-repository (`AshwinSathian/booklet/packages/github-action@main` is the standard GitHub
-syntax for an action living in a subdirectory of a public repo) rather than a
-Marketplace slug, unless you've independently confirmed one exists.
+`.github/examples/publish-to-booklet.yml` in this repo demonstrates both ways to
+publish from CI: a `publish` job using the real Action (`uses:
+AshwinSathian/publish-to-booklet@v1`), and a `publish-via-cli` job (disabled by
+default, `if: false`) calling `booklet-cli` directly via `npx` for cases where you're
+already scripting other CLI steps in the same job.
 
 ## 19. VS Code extension
 

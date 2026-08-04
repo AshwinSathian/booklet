@@ -212,13 +212,17 @@ The repo is an npm workspace (`mcp-server`, `packages/*`) — one root
 `packages/*/package-lock.json`. `packages/shared` (published to npm as
 `readable-api-client`) is the single source of truth for the `/api/v1/*`
 request/response contract (zod schemas + a thin typed fetch client) —
-`mcp-server`, `packages/cli`, `packages/github-action`, and
-`packages/vscode` all depend on it instead of hand-rolling their own fetch
-calls. Three of those four (`cli`, `github-action`, `vscode`) bundle it at
-build time via `tsup` (`noExternal`) into a single self-contained output
-file, since none of them get a real `npm install` step wherever they
-actually run (a published npm package, a GitHub Actions runner with no
-install step, a VS Code Extension Host). `mcp-server` resolves it normally
+`mcp-server`, `packages/cli`, and `packages/vscode` all depend on it instead
+of hand-rolling their own fetch calls, as does the GitHub Action
+([`AshwinSathian/publish-to-booklet`](https://github.com/AshwinSathian/publish-to-booklet),
+extracted from this monorepo into its own repo so it can carry a real
+Marketplace listing — it depends on the published `booklet-api-client` npm
+package rather than the workspace). `cli`, `vscode`, and the Action all
+bundle it at build time via `tsup` (`noExternal`) into a single
+self-contained output file, since none of them get a real `npm install`
+step wherever they actually run (a published npm package, a GitHub Actions
+runner with no install step, a VS Code Extension Host). `mcp-server`
+resolves it normally
 via `node_modules` since it runs as a regular long-lived Node process under
 PM2. See `PLAN-backend-auth-migration.md` Phase 3 for the full design.
 
