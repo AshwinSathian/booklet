@@ -35,8 +35,10 @@ export function registerPagesCommand(program: Command) {
   pages
     .command("list")
     .description("List all your pages")
+    .option("--query <text>", "Only show pages whose title contains this text")
+    .option("--tag <tag>", "Only show pages with this exact frontmatter tag")
     .option("--json", "Output raw JSON")
-    .action(async (opts: { json?: boolean }) => {
+    .action(async (opts: { query?: string; tag?: string; json?: boolean }) => {
       const client = await getClient();
       if (!client) {
         error(NOT_AUTHENTICATED_ERROR);
@@ -45,7 +47,7 @@ export function registerPagesCommand(program: Command) {
 
       let items;
       try {
-        items = (await client.listPages()).pages;
+        items = (await client.listPages({ query: opts.query, tag: opts.tag })).pages;
       } catch (e) {
         error(apiErrorMessage(e));
         process.exit(1);
@@ -57,7 +59,11 @@ export function registerPagesCommand(program: Command) {
       }
 
       if (items.length === 0) {
-        info("No pages yet. Run `booklet publish <file>` to create one.");
+        info(
+          opts.query || opts.tag
+            ? "No pages matched that filter."
+            : "No pages yet. Run `booklet publish <file>` to create one.",
+        );
         return;
       }
 

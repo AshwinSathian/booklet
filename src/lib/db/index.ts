@@ -132,13 +132,32 @@ export async function getPageBySlug(slug: string): Promise<DbPage | null> {
   return doc ? toPage(doc) : null;
 }
 
+// Escapes regex metacharacters in a user-supplied query string before it's
+// used to build a MongoDB $regex filter — the query is title-search input,
+// not a pattern the caller should be able to author.
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// Titles are clamped to 64 chars at creation (see doc-title.ts's clamp()), so
+// nothing legitimate ever needs a longer search query — this is a single
+// choke-point guard against an oversized regex/filter value reaching Mongo,
+// same pattern as the other size guards in this codebase (e.g. blocks.ts's
+// MAX_BLOCK_DEPTH/MAX_BLOCK_COUNT), not a behavior-affecting limit for any
+// real title.
+const MAX_SEARCH_FILTER_LENGTH = 200;
+
 export async function getPagesByUser(
   userId: string,
-  opts: { limit?: number; offset?: number } = {},
+  opts: { limit?: number; offset?: number; query?: string; tag?: string } = {},
 ): Promise<{ pages: DbPage[]; total: number }> {
   const db = await getDb();
   const col = db.collection<PageDoc>("pages");
-  const filter = { user_id: userId };
+  const filter: Record<string, unknown> = { user_id: userId };
+  const trimmedQuery = opts.query?.trim().slice(0, MAX_SEARCH_FILTER_LENGTH);
+  if (trimmedQuery) filter.title = { $regex: escapeRegExp(trimmedQuery), $options: "i" };
+  const trimmedTag = opts.tag?.trim().slice(0, MAX_SEARCH_FILTER_LENGTH);
+  if (trimmedTag) filter["frontmatter_meta.tags"] = trimmedTag;
   const [docs, total] = await Promise.all([
     col
       .find(filter)

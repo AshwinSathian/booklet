@@ -85,11 +85,20 @@ export function createClient(options: ClientOptions) {
   }
 
   return {
-    async listPages(params?: { limit?: number; offset?: number }): Promise<ListPagesResponse> {
-      const query = new URLSearchParams();
-      if (params?.limit) query.set("limit", String(params.limit));
-      if (params?.offset) query.set("offset", String(params.offset));
-      const qs = query.toString();
+    async listPages(params?: {
+      limit?: number;
+      offset?: number;
+      /** Case-insensitive substring match against page title. */
+      query?: string;
+      /** Exact match against a page's frontmatter tags. */
+      tag?: string;
+    }): Promise<ListPagesResponse> {
+      const qp = new URLSearchParams();
+      if (params?.limit) qp.set("limit", String(params.limit));
+      if (params?.offset) qp.set("offset", String(params.offset));
+      if (params?.query) qp.set("q", params.query);
+      if (params?.tag) qp.set("tag", params.tag);
+      const qs = qp.toString();
       const body = await request(`/api/v1/pages${qs ? `?${qs}` : ""}`);
       return ListPagesResponseSchema.parse(body);
     },

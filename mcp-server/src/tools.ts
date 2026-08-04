@@ -68,6 +68,19 @@ function escapeMdCell(value: string): string {
   return value.replace(/\r?\n/g, " ").replace(/\|/g, "\\|");
 }
 
+/**
+ * Human-readable clause describing an active list_pages filter, e.g.
+ * ` matching title contains "release" and tag "ops"` — empty string when
+ * neither filter is set. Split out from handleListPages so it's testable
+ * without mocking the network client.
+ */
+export function buildFilterNote(query?: string, tag?: string): string {
+  const descriptors: string[] = [];
+  if (query) descriptors.push(`title contains "${query}"`);
+  if (tag) descriptors.push(`tag "${tag}"`);
+  return descriptors.length > 0 ? ` matching ${descriptors.join(" and ")}` : "";
+}
+
 function unexpectedError(toolName: string, e: unknown): CallToolResult {
   if (e instanceof BookletApiError) return errorResult(mapUpstreamError(e).message);
   if (e instanceof DOMException && e.name === "TimeoutError") {
@@ -203,13 +216,25 @@ export async function handleListPages(
   try {
     const limit = args.limit ?? 20;
     const offset = args.offset ?? 0;
+    const { query, tag } = args;
 
-    const result = await client(apiKey, apiBase).listPages({ limit, offset });
+    const result = await client(apiKey, apiBase).listPages({
+      limit,
+      offset,
+      ...(query !== undefined ? { query } : {}),
+      ...(tag !== undefined ? { tag } : {}),
+    });
     const pages = result.pages ?? [];
     const total = result.total ?? pages.length;
 
+    const filterNote = buildFilterNote(query, tag);
+
     if (pages.length === 0) {
-      return toolResult("No pages found. Publish your first page with publish_page.");
+      return toolResult(
+        filterNote
+          ? `No pages found${filterNote}. Try a broader query, or list_pages with no filters to see everything.`
+          : "No pages found. Publish your first page with publish_page.",
+      );
     }
 
     const header = "| Title | ID | URL | Views | Visibility |\n|---|---|---|---|---|";
@@ -231,7 +256,7 @@ export async function handleListPages(
     // a JSON array scales token cost with data size for no chaining benefit
     // — nothing in this server's tool surface consumes a list_pages result
     // programmatically.
-    return toolResult(`Your Booklet pages (${pages.length}):\n\n${header}\n${rows}${paginationNote}`);
+    return toolResult(`Your Booklet pages${filterNote} (${pages.length}):\n\n${header}\n${rows}${paginationNote}`);
   } catch (e) {
     return unexpectedError("list_pages", e);
   }

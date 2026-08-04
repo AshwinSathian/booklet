@@ -26,7 +26,12 @@ export async function GET(req: Request) {
   const limit = Number.isFinite(rawLimit) && rawLimit > 0 ? Math.min(rawLimit, MAX_LIMIT) : DEFAULT_LIMIT;
   const offset = Number.isFinite(rawOffset) && rawOffset >= 0 ? rawOffset : 0;
 
-  const { pages, total } = await getPagesByUser(userId, { limit, offset });
+  // Both optional — an empty/whitespace-only value is treated as "no
+  // filter" by getPagesByUser itself, so no extra normalization needed here.
+  const query = url.searchParams.get("q") ?? undefined;
+  const tag = url.searchParams.get("tag") ?? undefined;
+
+  const { pages, total } = await getPagesByUser(userId, { limit, offset, query, tag });
 
   const origin = getSiteOrigin(req);
 

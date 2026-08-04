@@ -68,6 +68,16 @@ export const GetPageInputSchema = z.object({
 export const ListPagesInputSchema = z.object({
   limit: z.number().int().positive().max(100).optional().describe("Max pages to return. Default 20, max 100."),
   offset: z.number().int().nonnegative().optional().describe("Pages to skip, for pagination. Default 0."),
+  query: z
+    .string()
+    .optional()
+    .describe(
+      'Filter to pages whose title contains this text (case-insensitive). Use this before publish_page to check whether a page on this topic already exists, or to find the right page id to pass to update_page instead of listing everything.',
+    ),
+  tag: z
+    .string()
+    .optional()
+    .describe("Filter to pages with this exact frontmatter tag (e.g. \"runbook\")."),
 });
 
 export const DeletePageInputSchema = z.object({
