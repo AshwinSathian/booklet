@@ -3,6 +3,11 @@
 All notable changes to `booklet-cli` are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.0.0] - 2026-08-04
+
+No functional changes from 0.2.0 — version bump to mark general availability. Publishes via
+npm Trusted Publishing (OIDC), verified working as of this release.
+
 ## [0.2.0] - 2026-08-04
 
 ### Added

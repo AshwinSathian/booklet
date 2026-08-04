@@ -1,6 +1,6 @@
 {
   "name": "booklet-api-client",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Typed request/response schemas and a thin fetch client for the Booklet /api/v1 REST surface",
   "type": "module",
   "main": "./dist/index.cjs",

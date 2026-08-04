@@ -1,6 +1,6 @@
 {
   "name": "booklet-cli",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "description": "CLI for Booklet — publish Markdown from your terminal",
   "bin": {
     "booklet": "dist/index.js"
@@ -20,7 +20,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.19.0",
-    "booklet-api-client": "^0.1.0",
+    "booklet-api-client": "^1.0.0",
     "commander": "^12.1.0",
     "tsup": "^8.5.1",
     "typescript": "^5.7.0"
