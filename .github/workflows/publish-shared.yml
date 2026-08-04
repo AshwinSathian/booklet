@@ -38,6 +38,11 @@ jobs:
           node-version: "22"
           registry-url: "https://registry.npmjs.org"
 
+      # zizmor flags this as "ad-hoc installation of packages" (installs
+      # outside the project lockfile) — accepted: self-upgrading the npm
+      # CLI itself can't go through this repo's own lockfile by
+      # definition, and the alternative (pinning an exact npm patch
+      # version here) would need manual bumps to keep working at all.
       - name: Ensure npm >= 11.5.1 (required for Trusted Publishing)
         run: npm install -g npm@^11
 
