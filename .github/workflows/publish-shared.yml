@@ -65,4 +65,6 @@ jobs:
 
       - name: Skip (already published)
         if: steps.version_check.outputs.already_published == 'true'
-        run: echo "booklet-api-client@${{ steps.version_check.outputs.version }} already on npm — bump version to publish."
+        env:
+          VERSION: ${{ steps.version_check.outputs.version }}
+        run: echo "booklet-api-client@$VERSION already on npm — bump version to publish."

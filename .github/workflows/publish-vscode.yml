@@ -15,6 +15,13 @@
 # the publisher account is a manual, one-time setup only the account owner
 # can do, so a red X here on every push touching packages/vscode would just
 # be permanent noise nobody could act on from inside a workflow run.
+#
+# FOLLOW-UP (not done in this pass): Azure DevOps retires classic
+# org-scoped PATs on 2026-12-01, which will break this VSCE_PAT flow.
+# @vscode/vsce >=3.9.2 supports an Azure-OIDC alternative
+# (`--azure-credential`), but as of this writing it's documented for Azure
+# Pipelines + managed identity, not individual publishers authenticating
+# from GitHub Actions — revisit before the retirement date.
 
 name: Publish VS Code Extension
 
@@ -26,16 +33,21 @@ on:
       - "packages/vscode/src/**"
   workflow_dispatch:
 
+permissions: {}
+
 jobs:
   publish:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
     env:
       VSCE_PAT: ${{ secrets.VSCE_PAT }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: "20"
 
@@ -78,4 +90,6 @@ jobs:
 
       - name: Skip (already published)
         if: steps.version_check.outputs.already_published == 'true'
-        run: echo "AshwinSathian.booklet-vscode@${{ steps.version_check.outputs.version }} already on the Marketplace — bump version to publish."
+        env:
+          VERSION: ${{ steps.version_check.outputs.version }}
+        run: echo "AshwinSathian.booklet-vscode@$VERSION already on the Marketplace — bump version to publish."
