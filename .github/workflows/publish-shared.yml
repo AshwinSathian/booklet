@@ -1,8 +1,11 @@
 # Publishes booklet-api-client to npm when packages/shared/package.json
-# version changes on main. Mirrors publish-cli.yml's pattern exactly.
+# version changes on main. Mirrors publish-cli.yml's pattern exactly,
+# including the npm Trusted Publishing (OIDC) migration path — see that
+# file's header comment for the NPM_TOKEN → OIDC cutover sequencing.
+#
 # Trigger: push to main that touches packages/shared/, OR manual dispatch.
 #
-# Required secret: NPM_TOKEN — same Granular Access Token used by
+# Required secret (until OIDC cutover): NPM_TOKEN — same Granular Access Token used by
 # publish-cli.yml (Read and write on "All packages").
 
 name: Publish shared client to npm
@@ -15,17 +18,26 @@ on:
       - "packages/shared/src/**"
   workflow_dispatch:
 
+permissions: {}
+
 jobs:
   publish:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write # npm Trusted Publishing (OIDC) — see publish-cli.yml
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: "20"
+          node-version: "22"
           registry-url: "https://registry.npmjs.org"
+
+      - name: Ensure npm >= 11.5.1 (required for Trusted Publishing)
+        run: npm install -g npm@^11
 
       - name: Install dependencies
         run: npm ci
