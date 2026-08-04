@@ -126,22 +126,24 @@ function insertTable(ta: HTMLTextAreaElement, onChange: (v: string) => void) {
 
 const SHORTCUT_GROUPS = [
   {
-    group: "Formatting",
-    shortcuts: [
-      { keys: ["⌘", "B"], label: "Bold" },
-      { keys: ["⌘", "I"], label: "Italic" },
-      { keys: ["⌘", "`"], label: "Inline code" },
-      { keys: ["⌘", "J"], label: "Focus editor" },
-    ],
-  },
-  {
     group: "Editor",
     shortcuts: [
+      { keys: ["⌘", "J"], label: "Focus editor" },
       { keys: ["⌘", "K"], label: "Command palette" },
       { keys: ["⌘", "F"], label: "Find & replace" },
       { keys: ["⌘", "↵"], label: "Publish" },
+      { keys: ["⌘", "B"], label: "New draft" },
+      { keys: ["⌘", "D"], label: "Open drafts" },
+      { keys: ["⌘", "."], label: "Toggle focus mode" },
       { keys: ["Tab"], label: "Indent (2 spaces)" },
       { keys: ["⇧", "Tab"], label: "Unindent" },
+    ],
+  },
+  {
+    group: "Insert",
+    shortcuts: [
+      { keys: ["/"], label: "Insert menu (at line start)" },
+      { keys: ["[", "["], label: "Link to another draft" },
     ],
   },
   {
