@@ -737,6 +737,7 @@ export function PasteInput({
   isEmpty = false,
   onInsertSample,
   focusMode,
+  paragraphDimming,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -745,6 +746,7 @@ export function PasteInput({
   isEmpty?: boolean;
   onInsertSample?: () => void;
   focusMode?: boolean;
+  paragraphDimming?: boolean;
 }) {
   const ref = useRef<HTMLTextAreaElement | null>(null);
   // Deferred so re-tokenizing/re-rendering SyntaxOverlay (a per-keystroke
@@ -766,6 +768,11 @@ export function PasteInput({
   const [slashTrigger, setSlashTrigger] = useState<SlashTrigger | null>(null);
   const [slashPos, setSlashPos] = useState({ top: 0, left: 0 });
   const [slashSelectedIndex, setSlashSelectedIndex] = useState(0);
+  // Drives SyntaxOverlay's paragraph-dimming range (Focus Mode's optional
+  // "dim inactive paragraphs" preference) — only meaningful when both
+  // focusMode and paragraphDimming are on, but tracked unconditionally since
+  // it's cheap and the two props can flip independently at runtime.
+  const [caretIndex, setCaretIndex] = useState(0);
 
   const reducedMotion = usePrefersReducedMotion();
 
@@ -1030,7 +1037,11 @@ export function PasteInput({
               to prose. Positioned exactly behind the textarea (identical
               font/line-height/padding) — see SyntaxOverlay for why a
               synced overlay div, not partial in-textarea coloring. */}
-          <SyntaxOverlay ref={overlayContentRef} value={deferredValue} />
+          <SyntaxOverlay
+            ref={overlayContentRef}
+            value={deferredValue}
+            dimOutsideParagraphAt={focusMode && paragraphDimming ? caretIndex : null}
+          />
           <textarea
             ref={ref}
             value={value}
@@ -1039,11 +1050,13 @@ export function PasteInput({
               const wikilink = updateWikilinkTrigger(e.currentTarget, e.target.value);
               updateSlashTrigger(e.currentTarget, e.target.value, wikilink);
               maybeTypewriterScroll(e.currentTarget);
+              setCaretIndex(e.currentTarget.selectionStart);
             }}
             onClick={(e) => {
               const wikilink = updateWikilinkTrigger(e.currentTarget, e.currentTarget.value);
               updateSlashTrigger(e.currentTarget, e.currentTarget.value, wikilink);
               maybeTypewriterScroll(e.currentTarget);
+              setCaretIndex(e.currentTarget.selectionStart);
             }}
             onScroll={(e) => {
               const content = overlayContentRef.current;
@@ -1060,6 +1073,7 @@ export function PasteInput({
                 const wikilink = updateWikilinkTrigger(e.currentTarget, e.currentTarget.value);
                 updateSlashTrigger(e.currentTarget, e.currentTarget.value, wikilink);
                 maybeTypewriterScroll(e.currentTarget);
+                setCaretIndex(e.currentTarget.selectionStart);
               }
             }}
             onKeyDown={(e) => {

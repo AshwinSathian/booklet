@@ -27,6 +27,7 @@ import {
   updateDraft,
 } from "@/lib/drafts";
 import type { InsertSnippet } from "@/lib/editor/insertItems";
+import { getEditorPrefs, setEditorPrefs } from "@/lib/editor/prefs";
 import { parseToBlocks } from "@/lib/parse";
 import {
   backlinksForTitle,
@@ -75,6 +76,7 @@ function AppPageContent() {
   const [copyLinkPulse, setCopyLinkPulse] = useState(false);
 
   const [focusMode, setFocusMode] = useState(false);
+  const [paragraphDimming, setParagraphDimming] = useState(false);
 
   const [wikilinkVersion, setWikilinkVersion] = useState(0);
   const [showBacklinks, setShowBacklinks] = useState(false);
@@ -99,6 +101,20 @@ function AppPageContent() {
   const autosaveLastTrackedAtByDraftRef = useRef<Map<string, number>>(
     new Map(),
   );
+
+  // Local-only editor preference (src/lib/editor/prefs.ts) — distinct from
+  // `settings`/DocSettings above, which describes the published page.
+  // AppClient is the single source of truth: loaded once from
+  // getEditorPrefs() on mount, and both TopBar's SettingsPanel toggle and
+  // PasteInput's SyntaxOverlay read the same `paragraphDimming` state.
+  useEffect(() => {
+    setParagraphDimming(getEditorPrefs().paragraphDimming);
+  }, []);
+
+  const onParagraphDimmingChange = useCallback((v: boolean) => {
+    setParagraphDimming(v);
+    setEditorPrefs({ paragraphDimming: v });
+  }, []);
 
   const maybeTrackAutosave = useCallback(
     (draftId: string, blocksCount: number) => {
@@ -834,6 +850,8 @@ function AppPageContent() {
         publishedId={lastPublishedId}
         focusMode={focusMode}
         onToggleFocusMode={() => setFocusMode((f) => !f)}
+        paragraphDimming={paragraphDimming}
+        onParagraphDimmingChange={onParagraphDimmingChange}
         onSlugSet={(newSlug) => {
           if (!lastPublishedUrl || !lastPublishedId || !activeDraftId) return;
           const newUrl = lastPublishedUrl.replace(/\/p\/[^/]+$/, `/p/${newSlug}`);
@@ -863,6 +881,7 @@ function AppPageContent() {
               isEmpty={isEmpty}
               onInsertSample={onInsertSample}
               focusMode={focusMode}
+              paragraphDimming={paragraphDimming}
             />
           }
           right={

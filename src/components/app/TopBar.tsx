@@ -297,10 +297,14 @@ function SettingsPanel({
   settings,
   onSettingsChange,
   onClose,
+  paragraphDimming,
+  onParagraphDimmingChange,
 }: {
   settings: DocSettings;
   onSettingsChange: (next: DocSettings) => void;
   onClose: () => void;
+  paragraphDimming: boolean;
+  onParagraphDimmingChange: (v: boolean) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -427,6 +431,27 @@ function SettingsPanel({
               );
             })}
           </div>
+        </div>
+
+        {/* Local-only editor preference — not part of DocSettings (the
+            published-page presentation contract above). Visually separated
+            with a top border + its own heading so it doesn't read as
+            another published-page field. */}
+        <div className="pt-1 border-t border-border-subtle">
+          <div className="mb-1.5 mt-3 text-xs font-semibold uppercase tracking-wider text-text-muted">
+            Focus mode
+          </div>
+          <div className="mb-1.5 text-xs text-text-secondary">
+            Dim inactive paragraphs
+          </div>
+          <SegmentedControl
+            value={paragraphDimming ? "on" : "off"}
+            options={[
+              { label: "Off", value: "off" },
+              { label: "On", value: "on" },
+            ]}
+            onChange={(v) => onParagraphDimmingChange(v === "on")}
+          />
         </div>
       </div>
     </div>
@@ -943,6 +968,8 @@ export function TopBar({
   onSlugSet,
   focusMode = false,
   onToggleFocusMode,
+  paragraphDimming,
+  onParagraphDimmingChange,
 }: {
   status: EditorStatus;
   canPublish: boolean;
@@ -973,6 +1000,8 @@ export function TopBar({
   onSlugSet?: (newSlug: string) => void;
   focusMode?: boolean;
   onToggleFocusMode?: () => void;
+  paragraphDimming: boolean;
+  onParagraphDimmingChange: (v: boolean) => void;
 }) {
   const [visibleSettings, setVisibleSettings] = useState(false);
   const [visibleMoreActions, setVisibleMoreActions] = useState(false);
@@ -1132,6 +1161,8 @@ export function TopBar({
                 settings={settings}
                 onSettingsChange={onSettingsChange}
                 onClose={() => setVisibleSettings(false)}
+                paragraphDimming={paragraphDimming}
+                onParagraphDimmingChange={onParagraphDimmingChange}
               />
             ) : null}
           </div>

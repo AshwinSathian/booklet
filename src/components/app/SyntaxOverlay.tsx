@@ -41,9 +41,24 @@ function tokenizeLine(line: string): Token[] {
  * can sync scroll position via a direct `translateY` on scroll events,
  * without round-tripping through React state on every scroll tick.
  */
-export const SyntaxOverlay = forwardRef<HTMLDivElement, { value: string }>(
-  function SyntaxOverlay({ value }, contentRef) {
+export const SyntaxOverlay = forwardRef<HTMLDivElement, { value: string; dimOutsideParagraphAt?: number | null }>(
+  function SyntaxOverlay({ value, dimOutsideParagraphAt }, contentRef) {
     const lines = useMemo(() => value.split("\n"), [value]);
+
+    // When set, computes the [start, end] line-index range of the paragraph
+    // containing the caret (a "paragraph" is a run of non-blank lines) —
+    // every line outside that range renders dimmed. Recomputed only when
+    // the caret's line or the text itself changes, not on every render.
+    const activeRange = useMemo(() => {
+      if (dimOutsideParagraphAt == null) return null;
+      const upTo = value.slice(0, dimOutsideParagraphAt);
+      const caretLine = upTo.split("\n").length - 1;
+      let start = caretLine;
+      while (start > 0 && lines[start - 1]?.trim() !== "") start--;
+      let end = caretLine;
+      while (end < lines.length - 1 && lines[end + 1]?.trim() !== "") end++;
+      return [start, end] as const;
+    }, [dimOutsideParagraphAt, value, lines]);
 
     return (
       <div
@@ -63,20 +78,21 @@ export const SyntaxOverlay = forwardRef<HTMLDivElement, { value: string }>(
         ].join(" ")}
       >
         <div ref={contentRef}>
-          {lines.map((line, i) => (
-            <div key={i}>
-              {tokenizeLine(line).map((tok, j) =>
-                tok.syntax ? (
-                  <span key={j} className="text-text-muted/60">
-                    {tok.text}
-                  </span>
-                ) : (
-                  <span key={j}>{tok.text}</span>
-                ),
-              )}
-              {line === "" ? " " : null}
-            </div>
-          ))}
+          {lines.map((line, i) => {
+            const dimmed = activeRange ? i < activeRange[0] || i > activeRange[1] : false;
+            return (
+              <div key={i} className={dimmed ? "opacity-40 transition-opacity duration-normal" : "transition-opacity duration-normal"}>
+                {tokenizeLine(line).map((tok, j) =>
+                  tok.syntax ? (
+                    <span key={j} className="text-text-muted/60">{tok.text}</span>
+                  ) : (
+                    <span key={j}>{tok.text}</span>
+                  ),
+                )}
+                {line === "" ? " " : null}
+              </div>
+            );
+          })}
         </div>
       </div>
     );
