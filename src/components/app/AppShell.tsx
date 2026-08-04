@@ -95,7 +95,7 @@ export function AppShell({
         className={[
           "flex min-h-0 overflow-hidden w-full",
           focusMode ? "lg:flex-1 lg:flex lg:flex-col" : "lg:max-w-[50%] lg:flex lg:flex-col",
-          pane === "edit" ? "flex-1 animate-fade-in" : "hidden lg:flex",
+          pane === "edit" ? "flex-1 animate-pane-in" : "hidden lg:flex",
         ].join(" ")}
       >
         {left}
@@ -111,7 +111,7 @@ export function AppShell({
             ? "hidden"
             : [
                 "lg:flex-1 lg:flex lg:flex-col",
-                pane === "preview" ? "flex-1 animate-fade-in" : "hidden lg:flex",
+                pane === "preview" ? "flex-1 animate-pane-in" : "hidden lg:flex",
               ].join(" "),
         ].join(" ")}
       >
