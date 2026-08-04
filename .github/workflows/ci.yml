@@ -31,13 +31,19 @@ concurrency:
 env:
   NODE_VERSION: "20"
 
+# Every job here only reads the checked-out code — nothing pushes, tags, or
+# writes issues/PRs, so a single repo-wide read-only grant covers all of it.
+permissions:
+  contents: read
+
 jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: ${{ env.NODE_VERSION }}
       - run: npm ci --prefer-offline
@@ -46,9 +52,10 @@ jobs:
   typecheck-root:
     name: Typecheck (root)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: ${{ env.NODE_VERSION }}
       - run: npm ci --prefer-offline
@@ -58,13 +65,14 @@ jobs:
   typecheck-packages:
     name: Typecheck (${{ matrix.package }})
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
         package: [mcp-server, packages/shared, packages/cli, packages/vscode]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: ${{ env.NODE_VERSION }}
       # npm workspaces (see PLAN-backend-auth-migration.md) — one root
@@ -84,9 +92,10 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: ${{ env.NODE_VERSION }}
       # NODE_ENV must NOT be set here — `npm ci` respects NODE_ENV=production
@@ -113,6 +122,7 @@ jobs:
   unit-tests:
     name: Unit tests (real MongoDB)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     services:
       mongodb:
         image: mongo:7
@@ -128,8 +138,8 @@ jobs:
       # service container instead of a locally brew-installed mongod.
       MONGODB_URI: "mongodb://localhost:27017/readable?retryWrites=true&w=majority"
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: ${{ env.NODE_VERSION }}
       - run: npm ci --prefer-offline
@@ -155,6 +165,7 @@ jobs:
     name: E2E (manual — needs Mongo + secret env vars)
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     services:
       mongodb:
         image: mongo:7
@@ -166,8 +177,8 @@ jobs:
           --health-timeout 5s
           --health-retries 6
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: ${{ env.NODE_VERSION }}
       - run: npm ci --prefer-offline
