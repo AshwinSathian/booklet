@@ -198,9 +198,9 @@ function ShortcutsModal({ onClose }: { onClose: () => void }) {
                   <div key={s.label} className="flex items-center justify-between">
                     <span className="text-sm text-text-secondary">{s.label}</span>
                     <div className="flex items-center gap-1">
-                      {s.keys.map((k) => (
+                      {s.keys.map((k, idx) => (
                         <kbd
-                          key={k}
+                          key={idx}
                           className="inline-flex h-5 min-w-5 px-1 items-center justify-center rounded border border-border-subtle bg-fill-2 text-2xs font-mono text-text-muted"
                         >
                           {k}
