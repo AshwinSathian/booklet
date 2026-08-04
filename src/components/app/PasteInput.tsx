@@ -12,7 +12,8 @@ import {
 } from "@/components/app/SlashMenu";
 import { listDrafts, type DraftMeta } from "@/lib/drafts";
 import { filterInsertItems, type InsertItem, type InsertSnippet } from "@/lib/editor/insertItems";
-import { positionPopupNearCaret } from "@/lib/ui/caret";
+import { usePrefersReducedMotion } from "@/lib/motion";
+import { getCaretCoordinates, positionPopupNearCaret } from "@/lib/ui/caret";
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 
 // ---------------------------------------------------------------------------
@@ -735,6 +736,7 @@ export function PasteInput({
   onInsertRequested,
   isEmpty = false,
   onInsertSample,
+  focusMode,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -742,6 +744,7 @@ export function PasteInput({
   onInsertRequested?: (insertFn: (snippet: InsertSnippet) => void) => void;
   isEmpty?: boolean;
   onInsertSample?: () => void;
+  focusMode?: boolean;
 }) {
   const ref = useRef<HTMLTextAreaElement | null>(null);
   // Deferred so re-tokenizing/re-rendering SyntaxOverlay (a per-keystroke
@@ -763,6 +766,32 @@ export function PasteInput({
   const [slashTrigger, setSlashTrigger] = useState<SlashTrigger | null>(null);
   const [slashPos, setSlashPos] = useState({ top: 0, left: 0 });
   const [slashSelectedIndex, setSlashSelectedIndex] = useState(0);
+
+  const reducedMotion = usePrefersReducedMotion();
+
+  // Focus Mode's "typewriter scrolling": keeps the caret's line pinned near
+  // vertical center (42% from the top reads as centered once you account for
+  // the toolbar/status bar chrome) instead of letting the textarea scroll
+  // freely. No-ops outside Focus Mode. Smooth-scrolls unless the user has
+  // asked for reduced motion, in which case it jumps instantly.
+  const maybeTypewriterScroll = useCallback(
+    (ta: HTMLTextAreaElement) => {
+      if (!focusMode) return;
+      const { top, height } = getCaretCoordinates(ta, ta.selectionStart);
+      const target = Math.max(0, Math.min(top - ta.clientHeight * 0.42 + height / 2, ta.scrollHeight - ta.clientHeight));
+      ta.scrollTo({ top: target, behavior: reducedMotion ? "auto" : "smooth" });
+    },
+    [focusMode, reducedMotion],
+  );
+
+  // Re-center once on the focusMode transition itself (entering Focus Mode
+  // should immediately center the current line); typing/clicking/arrow keys
+  // already re-center via the handlers below, so this must not re-fire on
+  // every keystroke.
+  useEffect(() => {
+    if (focusMode && ref.current) maybeTypewriterScroll(ref.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusMode]);
 
   useEffect(() => {
     if (onFocusShortcutRequested) {
@@ -1009,10 +1038,12 @@ export function PasteInput({
               onChange(e.target.value);
               const wikilink = updateWikilinkTrigger(e.currentTarget, e.target.value);
               updateSlashTrigger(e.currentTarget, e.target.value, wikilink);
+              maybeTypewriterScroll(e.currentTarget);
             }}
             onClick={(e) => {
               const wikilink = updateWikilinkTrigger(e.currentTarget, e.currentTarget.value);
               updateSlashTrigger(e.currentTarget, e.currentTarget.value, wikilink);
+              maybeTypewriterScroll(e.currentTarget);
             }}
             onScroll={(e) => {
               const content = overlayContentRef.current;
@@ -1028,6 +1059,7 @@ export function PasteInput({
               if (["ArrowLeft", "ArrowRight", "Home", "End", ...verticalKeys].includes(e.key)) {
                 const wikilink = updateWikilinkTrigger(e.currentTarget, e.currentTarget.value);
                 updateSlashTrigger(e.currentTarget, e.currentTarget.value, wikilink);
+                maybeTypewriterScroll(e.currentTarget);
               }
             }}
             onKeyDown={(e) => {

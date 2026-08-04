@@ -862,6 +862,7 @@ function AppPageContent() {
               onInsertRequested={(fn) => { insertFnRef.current = fn; }}
               isEmpty={isEmpty}
               onInsertSample={onInsertSample}
+              focusMode={focusMode}
             />
           }
           right={
