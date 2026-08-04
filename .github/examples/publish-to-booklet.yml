@@ -1,13 +1,19 @@
 # Example: Publish a Markdown file to Booklet from a GitHub Action.
 #
-# Setup:
+# Two ways to do this — pick one:
+#   1. The `AshwinSathian/publish-to-booklet` Action (below, `publish` job) —
+#      no npx/npm install needed, typed inputs/outputs.
+#   2. booklet-cli via npx (the `publish-via-cli` job further down) — useful
+#      if you're already scripting other CLI steps in the same job.
+#
+# Setup (either way):
 #   1. Create an API key at https://booklet.ashwinsathian.com → My Pages → Settings → API Keys
 #   2. Add it as a repo secret: Settings → Secrets → Actions → BOOKLET_API_KEY
 #   3. Optionally add BOOKLET_PAGE_ID as a repo variable to update the same page each run.
 #
 # Usage:
 #   - Copy this file to .github/workflows/ in your own repo.
-#   - Adjust the `file` input and trigger as needed.
+#   - Delete whichever job you don't want, and adjust the `file`/trigger as needed.
 
 name: Publish to Booklet
 
@@ -23,7 +29,24 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+
+      - name: Publish to Booklet
+        id: publish
+        uses: AshwinSathian/publish-to-booklet@v1
+        with:
+          file: CHANGELOG.md
+          api-key: ${{ secrets.BOOKLET_API_KEY }}
+          page-id: ${{ vars.BOOKLET_PAGE_ID }}
+          visibility: public
+
+      - run: echo "Published at ${{ steps.publish.outputs.url }}"
+
+  publish-via-cli:
+    if: false # example only — flip to `if: true` (or delete the `publish` job above) to use this instead
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
 
       - name: Publish to Booklet
         id: publish

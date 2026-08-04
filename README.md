@@ -43,7 +43,7 @@ That's it: you get back a permanent, shareable URL. No account needed to try the
 - **Webhooks**: HTTP callbacks on `page.published` and `page.updated` events
 - **REST API**: publish, update, list, and delete pages programmatically
 - **CLI**: publish Markdown from your terminal (`npx booklet-cli`)
-- **GitHub Action**: publish docs in CI via `packages/github-action/`
+- **GitHub Action**: publish docs in CI via [`AshwinSathian/publish-to-booklet`](https://github.com/AshwinSathian/publish-to-booklet)
 - **MCP server**: expose the API to AI assistants (Claude, Cursor, etc.) via the Model Context Protocol
 <!-- VS Code extension: built, not yet on the Marketplace; re-add once AshwinSathian.booklet-vscode is published -->
 - **Frontmatter**: YAML frontmatter sets title, slug, visibility, tags, author, date
@@ -196,7 +196,6 @@ src/
 packages/           # npm workspaces; one root lockfile covers all of these
   shared/           # booklet-api-client: shared /api/v1 schemas + client
   cli/              # booklet-cli npm package
-  github-action/    # GitHub Action: publish Markdown in CI
   vscode/           # VS Code extension: publish from editor
 mcp-server/         # MCP server (plain Node process, run under PM2)
 .github/
@@ -210,7 +209,7 @@ mcp-server/         # MCP server (plain Node process, run under PM2)
 
 ### CI
 
-Every push/PR to `main` runs lint, typecheck (root app + each workspace package), a production build, a check that `packages/github-action/dist/` is up to date, and the unit test suite against a real MongoDB service container. See [.github/workflows/ci.yml](.github/workflows/ci.yml).
+Every push/PR to `main` runs lint, typecheck (root app + each workspace package), a production build, and the unit test suite against a real MongoDB service container. See [.github/workflows/ci.yml](.github/workflows/ci.yml).
 
 ### Auto-publish to npm
 
@@ -220,4 +219,4 @@ Required secret: `NPM_TOKEN` (Granular Access Token with publish + 2FA bypass).
 
 ### Publish docs to Booklet from your repo
 
-See [.github/examples/publish-to-booklet.yml](.github/examples/publish-to-booklet.yml). Copy it into your own repo's `.github/workflows/`, add a `BOOKLET_API_KEY` secret, and it publishes on every release.
+Two ways: the [`AshwinSathian/publish-to-booklet`](https://github.com/AshwinSathian/publish-to-booklet) GitHub Action, or `booklet-cli` via `npx`. See [.github/examples/publish-to-booklet.yml](.github/examples/publish-to-booklet.yml) for both — copy it into your own repo's `.github/workflows/`, add a `BOOKLET_API_KEY` secret, and it publishes on every release.
