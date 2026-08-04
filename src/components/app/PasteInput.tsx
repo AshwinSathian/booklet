@@ -775,10 +775,31 @@ export function PasteInput({
   // the toolbar/status bar chrome) instead of letting the textarea scroll
   // freely. No-ops outside Focus Mode. Smooth-scrolls unless the user has
   // asked for reduced motion, in which case it jumps instantly.
+  //
+  // getCaretCoordinates (src/lib/ui/caret.ts) is a "mirror div" measurement:
+  // it copies the entire document up to the caret into an off-DOM element,
+  // appends it to document.body, and forces a layout reflow — work that
+  // scales with document length. This function runs from the textarea's
+  // onChange/onClick/onKeyUp handlers, i.e. on every keystroke while Focus
+  // Mode is on, so without a guard it'd redo that measurement even when the
+  // caret only moved sideways within the same line — the common case while
+  // typing. lastLineRef tracks the caret's line number (a cheap string scan,
+  // not a DOM operation) so the expensive measurement only runs when the
+  // caret actually crosses onto a different line, which is the only time
+  // the target scroll position can have changed anyway.
+  const lastLineRef = useRef<number | null>(null);
   const maybeTypewriterScroll = useCallback(
-    (ta: HTMLTextAreaElement) => {
+    (ta: HTMLTextAreaElement, force = false) => {
       if (!focusMode) return;
-      const { top, height } = getCaretCoordinates(ta, ta.selectionStart);
+      const caret = ta.selectionStart;
+      let line = 0;
+      for (let i = 0; i < caret; i++) {
+        if (ta.value.charCodeAt(i) === 10) line++;
+      }
+      if (!force && line === lastLineRef.current) return;
+      lastLineRef.current = line;
+
+      const { top, height } = getCaretCoordinates(ta, caret);
       const target = Math.max(0, Math.min(top - ta.clientHeight * 0.42 + height / 2, ta.scrollHeight - ta.clientHeight));
       ta.scrollTo({ top: target, behavior: reducedMotion ? "auto" : "smooth" });
     },
@@ -788,9 +809,12 @@ export function PasteInput({
   // Re-center once on the focusMode transition itself (entering Focus Mode
   // should immediately center the current line); typing/clicking/arrow keys
   // already re-center via the handlers below, so this must not re-fire on
-  // every keystroke.
+  // every keystroke. `force: true` because the caret's line may not have
+  // changed since the last time Focus Mode was on (e.g. toggled off and
+  // back on without moving the caret) while the scroll position still needs
+  // re-centering.
   useEffect(() => {
-    if (focusMode && ref.current) maybeTypewriterScroll(ref.current);
+    if (focusMode && ref.current) maybeTypewriterScroll(ref.current, true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusMode]);
 
