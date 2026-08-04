@@ -110,7 +110,14 @@ export function CommandPalette({
             <Command.Item
               value={publishedOwned ? "Update page" : "Publish"}
               keywords={["publish", "share", "update"]}
-              onSelect={() => { onOpenChange(false); publishedOwned ? onUpdatePage() : onPublish(); }}
+              onSelect={() => {
+                onOpenChange(false);
+                if (publishedOwned) {
+                  onUpdatePage();
+                } else {
+                  onPublish();
+                }
+              }}
               className="cursor-pointer rounded-lg px-3 py-2 text-sm text-text-primary aria-selected:bg-fill-2"
             >
               {publishedOwned ? "Update page" : "Publish"}
