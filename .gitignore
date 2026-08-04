@@ -58,15 +58,6 @@ mcp-server/node_modules/
 mcp-server/.wrangler/
 packages/*/node_modules/
 packages/*/dist/
-# Exception: packages/github-action/dist/ must be committed. Unlike the CLI
-# (built fresh on `npm publish`) or the VS Code extension (built fresh on
-# `vsce package`), a GitHub Action's runs.main path is executed directly
-# from the checked-out repo — there is no build step GitHub Actions runs on
-# your behalf. Without dist/main.js actually committed, the action fails
-# with "file not found" for every single invocation. (Discovered during a
-# verification pass: this had never been built or committed since the
-# action was first added, so it had never actually worked.)
-!packages/github-action/dist/
 
 # clerk configuration (can include secrets)
 /.clerk/
