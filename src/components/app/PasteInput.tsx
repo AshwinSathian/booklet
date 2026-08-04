@@ -2,7 +2,16 @@
 
 import { Icon } from "@/components/ui/Icon";
 import { SyntaxOverlay } from "@/components/app/SyntaxOverlay";
+import {
+  detectSlashTrigger,
+  SlashMenu,
+  SLASH_POPUP_WIDTH,
+  SLASH_POPUP_MAX_HEIGHT,
+  SLASH_POPUP_VIEWPORT_MARGIN,
+  type SlashTrigger,
+} from "@/components/app/SlashMenu";
 import { listDrafts, type DraftMeta } from "@/lib/drafts";
+import { filterInsertItems, type InsertItem, type InsertSnippet } from "@/lib/editor/insertItems";
 import { positionPopupNearCaret } from "@/lib/ui/caret";
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 
@@ -634,7 +643,7 @@ function WikilinkAutocomplete({
 
   return (
     <div
-      className="fixed z-50 w-64 max-h-56 overflow-y-auto rounded-lg border border-border-subtle bg-bg-elevated py-1 shadow-xl"
+      className="fixed z-50 w-64 max-h-56 overflow-y-auto rounded-lg border border-border-subtle bg-bg-elevated py-1 shadow-xl animate-dropdown-in"
       style={{ top, left }}
     >
       {matches.map((d, i) => (
@@ -694,6 +703,9 @@ export function PasteInput({
   const [wikilinkTrigger, setWikilinkTrigger] = useState<WikilinkTrigger | null>(null);
   const [wikilinkPos, setWikilinkPos] = useState({ top: 0, left: 0 });
   const [wikilinkSelectedIndex, setWikilinkSelectedIndex] = useState(0);
+  const [slashTrigger, setSlashTrigger] = useState<SlashTrigger | null>(null);
+  const [slashPos, setSlashPos] = useState({ top: 0, left: 0 });
+  const [slashSelectedIndex, setSlashSelectedIndex] = useState(0);
 
   useEffect(() => {
     if (onFocusShortcutRequested) {
@@ -776,6 +788,53 @@ export function PasteInput({
     [wikilinkTrigger, value, onChange],
   );
 
+  const slashItems = useMemo(
+    () => (slashTrigger ? filterInsertItems(slashTrigger.query) : []),
+    [slashTrigger],
+  );
+
+  const updateSlashTrigger = useCallback((ta: HTMLTextAreaElement, nextValue: string) => {
+    if (ta.selectionStart !== ta.selectionEnd) {
+      setSlashTrigger(null);
+      return;
+    }
+    const trigger = detectSlashTrigger(nextValue, ta.selectionStart);
+    setSlashTrigger(trigger);
+    setSlashSelectedIndex(0);
+    if (!trigger) return;
+    setSlashPos(
+      positionPopupNearCaret(ta, ta.selectionStart, SLASH_POPUP_WIDTH, SLASH_POPUP_MAX_HEIGHT, SLASH_POPUP_VIEWPORT_MARGIN),
+    );
+  }, []);
+
+  const insertSnippet = useCallback(
+    (snippet: InsertSnippet, range?: { start: number; end: number }) => {
+      const ta = ref.current;
+      if (!ta) return;
+      const start = range?.start ?? ta.selectionStart;
+      const end = range?.end ?? ta.selectionEnd;
+      const newValue = value.slice(0, start) + snippet.text + value.slice(end);
+      const from = start + (snippet.selectFrom ?? snippet.text.length);
+      const to = start + (snippet.selectTo ?? snippet.selectFrom ?? snippet.text.length);
+
+      onChange(newValue);
+      setSlashTrigger(null);
+      requestAnimationFrame(() => {
+        ta.focus();
+        ta.setSelectionRange(from, to);
+      });
+    },
+    [value, onChange],
+  );
+
+  const selectSlashItem = useCallback(
+    (item: InsertItem) => {
+      if (!slashTrigger) return;
+      insertSnippet(item.snippet, { start: slashTrigger.start, end: slashTrigger.start + 1 + slashTrigger.query.length });
+    },
+    [slashTrigger, insertSnippet],
+  );
+
   return (
     <>
       <div className="flex h-full max-h-full min-h-0 flex-col overflow-hidden w-full">
@@ -827,8 +886,12 @@ export function PasteInput({
             onChange={(e) => {
               onChange(e.target.value);
               updateWikilinkTrigger(e.currentTarget, e.target.value);
+              updateSlashTrigger(e.currentTarget, e.target.value);
             }}
-            onClick={(e) => updateWikilinkTrigger(e.currentTarget, e.currentTarget.value)}
+            onClick={(e) => {
+              updateWikilinkTrigger(e.currentTarget, e.currentTarget.value);
+              updateSlashTrigger(e.currentTarget, e.currentTarget.value);
+            }}
             onScroll={(e) => {
               const content = overlayContentRef.current;
               if (content) content.style.transform = `translateY(${-e.currentTarget.scrollTop}px)`;
@@ -839,11 +902,36 @@ export function PasteInput({
               // it's open — recomputing here too would reset the selected
               // suggestion back to index 0 on every press.
               if (wikilinkTrigger && verticalKeys.includes(e.key)) return;
+              if (slashTrigger && verticalKeys.includes(e.key)) return;
               if (["ArrowLeft", "ArrowRight", "Home", "End", ...verticalKeys].includes(e.key)) {
                 updateWikilinkTrigger(e.currentTarget, e.currentTarget.value);
+                updateSlashTrigger(e.currentTarget, e.currentTarget.value);
               }
             }}
             onKeyDown={(e) => {
+              if (slashTrigger && slashItems.length > 0) {
+                if (e.key === "ArrowDown") {
+                  e.preventDefault();
+                  setSlashSelectedIndex((i) => (i + 1) % slashItems.length);
+                  return;
+                }
+                if (e.key === "ArrowUp") {
+                  e.preventDefault();
+                  setSlashSelectedIndex((i) => (i - 1 + slashItems.length) % slashItems.length);
+                  return;
+                }
+                if (e.key === "Enter" || e.key === "Tab") {
+                  e.preventDefault();
+                  selectSlashItem(slashItems[slashSelectedIndex]);
+                  return;
+                }
+                if (e.key === "Escape") {
+                  e.preventDefault();
+                  setSlashTrigger(null);
+                  return;
+                }
+              }
+
               if (wikilinkTrigger && wikilinkMatches.length > 0) {
                 if (e.key === "ArrowDown") {
                   e.preventDefault();
@@ -910,7 +998,7 @@ export function PasteInput({
             // Popup suggestions use onMouseDown+preventDefault (see
             // WikilinkAutocomplete) so selecting one never fires this —
             // only a genuine click elsewhere does.
-            onBlur={() => setWikilinkTrigger(null)}
+            onBlur={() => { setWikilinkTrigger(null); setSlashTrigger(null); }}
             placeholder="Write or paste Markdown…"
             spellCheck={false}
             className={[
@@ -980,6 +1068,16 @@ export function PasteInput({
           left={wikilinkPos.left}
           selectedIndex={wikilinkSelectedIndex}
           onSelect={selectWikilinkSuggestion}
+        />
+      )}
+
+      {slashTrigger && (
+        <SlashMenu
+          items={slashItems}
+          top={slashPos.top}
+          left={slashPos.left}
+          selectedIndex={slashSelectedIndex}
+          onSelect={selectSlashItem}
         />
       )}
 
