@@ -2,7 +2,7 @@ import { Command } from "commander";
 import { createServer } from "node:http";
 import { randomBytes } from "node:crypto";
 import { createClient } from "booklet-api-client";
-import { readConfig, writeConfig, getApiKey, getApiBase } from "../config.js";
+import { readConfig, writeConfig, getApiKey, getApiBase, setApiKey, clearApiKey, getApiKeySource } from "../config.js";
 import { apiErrorMessage } from "../api.js";
 import { success, error, info, bold, dim, gray, openUrl } from "../fmt.js";
 
@@ -168,20 +168,35 @@ export function registerAuthCommands(program: Command) {
           error(`Invalid key or unreachable server: ${result.error}`);
           process.exit(1);
         }
-        await writeConfig({ ...existing, apiKey: opts.key, apiBase: base });
-        success("Authenticated. Key saved to ~/.booklet/config.json");
+        await writeConfig({ ...existing, apiBase: base });
+        await setApiKey(opts.key);
+        success("Authenticated.");
         info(`You have ${result.pageCount} page${result.pageCount === 1 ? "" : "s"}.`);
         return;
       }
 
       // ── Check existing credentials (skip if --force) ───────────────────────
-      if (!opts.force && existing.apiKey) {
+      // Reads through getApiKey() (env > keychain > legacy file), not the
+      // raw config file field — otherwise keychain users would never hit
+      // this check (their key isn't in existing.apiKey) and would always
+      // be sent through a full interactive re-login.
+      const currentKey = opts.force ? null : await getApiKey();
+      if (currentKey) {
         info("Checking saved credentials…");
-        const check = await validateKey(existing.apiKey, base);
+        const check = await validateKey(currentKey, base);
         if (check.ok) {
           success("Already authenticated.");
           info(`You have ${check.pageCount} page${check.pageCount === 1 ? "" : "s"}.`);
           info(dim("Run `booklet login --force` to re-authenticate."));
+          // Opportunistic migration: a key that's still only in the legacy
+          // file (logged in before keychain support, or the keychain only
+          // just became available) moves into the keychain now that it's
+          // confirmed valid — this is the only path a normal `booklet
+          // login` re-run actually takes, so it's where the migration has
+          // to happen.
+          if ((await getApiKeySource()) === "file") {
+            await setApiKey(currentKey);
+          }
           return;
         }
         info("Saved key is no longer valid — re-authenticating…");
@@ -196,9 +211,10 @@ export function registerAuthCommands(program: Command) {
         process.exit(1);
       }
 
-      await writeConfig({ ...existing, apiKey: result.key, apiBase: base });
+      await writeConfig({ ...existing, apiBase: base });
+      await setApiKey(result.key);
       console.log();
-      success("Authenticated. Key saved to ~/.booklet/config.json");
+      success("Authenticated.");
       info(`You have ${result.pageCount} page${result.pageCount === 1 ? "" : "s"}.`);
     });
 
@@ -206,25 +222,29 @@ export function registerAuthCommands(program: Command) {
     .command("logout")
     .description("Remove saved API key")
     .action(async () => {
-      const config = await readConfig();
-      if (!config.apiKey) {
-        info("No key stored.");
+      const source = await getApiKeySource();
+      if (!source || source === "env") {
+        info(source === "env" ? "Key is set via BOOKLET_API_KEY — nothing to remove." : "No key stored.");
         return;
       }
-      const { apiKey: _removed, ...rest } = config;
-      await writeConfig(rest as typeof config);
+      await clearApiKey();
       success("Logged out. API key removed.");
     });
 
   program
     .command("whoami")
     .description("Show the active API key and base URL")
-    .action(async () => {
-      const fromEnv = Boolean(process.env.READABLE_API_KEY);
+    .option("--json", "Output raw JSON")
+    .action(async (opts: { json?: boolean }) => {
       const key = await getApiKey();
       const base = await getApiBase();
+      const source = await getApiKeySource();
 
-      if (!key) {
+      if (!key || !source) {
+        if (opts.json) {
+          console.log(JSON.stringify({ authenticated: false }, null, 2));
+          return;
+        }
         info("Not authenticated. Run `booklet login` to authenticate.");
         return;
       }
@@ -234,8 +254,19 @@ export function registerAuthCommands(program: Command) {
           ? `${key.slice(0, 4)}${"•".repeat(key.length - 8)}${key.slice(-4)}`
           : "•".repeat(key.length);
 
+      const sourceLabel: Record<typeof source, string> = {
+        env: "BOOKLET_API_KEY (env)",
+        keychain: "OS keychain",
+        file: "~/.booklet/config.json",
+      };
+
+      if (opts.json) {
+        console.log(JSON.stringify({ authenticated: true, key: masked, base, source: sourceLabel[source] }, null, 2));
+        return;
+      }
+
       console.log(`${bold("Key:")}    ${masked}`);
       console.log(`${bold("Base:")}   ${gray(base)}`);
-      console.log(`${bold("Source:")} ${dim(fromEnv ? "BOOKLET_API_KEY (env)" : "~/.booklet/config.json")}`);
+      console.log(`${bold("Source:")} ${dim(sourceLabel[source])}`);
     });
 }

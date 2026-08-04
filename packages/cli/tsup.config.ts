@@ -20,8 +20,15 @@ export default defineConfig({
   minify: false,
   sourcemap: false,
   dts: false,
-  // Bundle all deps into the output — zero runtime deps, single file
+  // Bundle pure-JS deps into the output for a single-file CLI. @napi-rs/keyring
+  // is a native (napi/Rust) binding — it ships a .node file per platform and
+  // cannot be bundled into one JS file, so it stays a real npm dependency
+  // (external) and is installed normally alongside its platform-specific
+  // optionalDependencies, the same pattern esbuild/sharp use. Everything else
+  // still bundles, so this is no longer a literal zero-runtime-dependency
+  // package, but it is still a single JS entrypoint plus one native addon.
   noExternal: ["commander", "booklet-api-client", "zod"],
+  external: ["@napi-rs/keyring"],
   banner: {
     js: "#!/usr/bin/env node",
   },

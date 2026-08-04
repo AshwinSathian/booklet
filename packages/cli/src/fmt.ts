@@ -10,10 +10,21 @@ export function openUrl(url: string): void {
   exec(cmd, () => { /* fire and forget */ });
 }
 
-// ANSI colour helpers — fall back gracefully when NO_COLOR is set
-const NO_COLOR = Boolean(process.env.NO_COLOR) || !process.stdout.isTTY;
+// ANSI colour helpers — fall back gracefully when NO_COLOR is set, stdout
+// isn't a TTY, or the --no-color flag was passed (set via setNoColor()
+// from index.ts's preAction hook, since Commander only finishes parsing
+// global flags after this module is first imported).
+let forcedNoColor = false;
 
-const c = (code: number, s: string) => (NO_COLOR ? s : `\x1b[${code}m${s}\x1b[0m`);
+export function setNoColor(value: boolean): void {
+  forcedNoColor = value;
+}
+
+function colorDisabled(): boolean {
+  return forcedNoColor || Boolean(process.env.NO_COLOR) || !process.stdout.isTTY;
+}
+
+const c = (code: number, s: string) => (colorDisabled() ? s : `\x1b[${code}m${s}\x1b[0m`);
 
 export const dim = (s: string) => c(2, s);
 export const bold = (s: string) => c(1, s);

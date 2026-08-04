@@ -20,7 +20,7 @@ npx booklet-cli publish README.md
 booklet login
 ```
 
-This opens your browser to authorize the CLI. Sign in (or create an account) and you're done, no copy-pasting required. Your key is saved automatically to `~/.booklet/config.json`.
+This opens your browser to authorize the CLI. Sign in (or create an account) and you're done, no copy-pasting required. Your key is saved securely — see [Credential storage](#credential-storage) below for where.
 
 **CI / non-interactive environments:** pass your key directly with `--key`:
 
@@ -92,11 +92,13 @@ booklet pages list --json   # machine-readable output
 
 ### `booklet pages open <id>`
 
-Open a page in your browser. Pass `--print` to print the URL without opening a browser.
+Open a page in your browser. Pass `--print` to print the URL without opening a browser, or
+`--json` for the full page object.
 
 ```bash
 booklet pages open abc123             # opens browser
 booklet pages open abc123 --print     # prints URL only
+booklet pages open abc123 --json      # prints the page object as JSON
 booklet pages open my-custom-slug     # works with slugs too
 ```
 
@@ -111,11 +113,25 @@ booklet pages delete abc123 --yes   # skip confirmation prompt
 
 ### `booklet whoami`
 
-Show the active API key, base URL, and where the key was loaded from (env var or config file).
+Show the active API key, base URL, and where the key was loaded from (env var, OS keychain, or
+config file). Pass `--json` for machine-readable output.
 
 ### `booklet logout`
 
-Remove the saved API key from `~/.booklet/config.json`.
+Remove the saved API key from wherever it's stored (OS keychain and/or `~/.booklet/config.json`).
+
+### Shell completion
+
+```bash
+# bash
+booklet completion bash >> ~/.bash_completion
+
+# zsh (add to a directory in your $fpath)
+booklet completion zsh > "${fpath[1]}/_booklet"
+
+# fish
+booklet completion fish > ~/.config/fish/completions/booklet.fish
+```
 
 ---
 
@@ -157,7 +173,22 @@ Supported frontmatter fields:
 |----------|-------------|
 | `BOOKLET_API_KEY` | API key, overrides `~/.booklet/config.json` |
 | `BOOKLET_API_URL` | Override API base URL (default: production) |
-| `NO_COLOR` | Set to any value to disable ANSI colour output |
+| `NO_COLOR` | Set to any value to disable ANSI colour output (or pass `--no-color`) |
+
+---
+
+## Credential storage
+
+`booklet login` saves your API key to your OS's credential store when available — macOS
+Keychain, Windows Credential Manager, or Linux Secret Service. On macOS, the first `booklet`
+command that touches the keychain may show a one-time system prompt asking to allow access;
+choosing "Always Allow" avoids repeat prompts.
+
+If no keychain backend is available (common on headless Linux/CI), the key is stored in
+`~/.booklet/config.json` instead, with owner-only file permissions (`0600`). `booklet whoami`
+always shows exactly where your active key came from.
+
+`booklet logout` removes the key from wherever it's stored.
 
 ---
 

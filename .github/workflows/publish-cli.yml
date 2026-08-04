@@ -1,11 +1,26 @@
 # Publishes booklet-cli to npm when packages/cli/package.json version changes on main.
 # Trigger: push to main that touches packages/cli/, OR manual dispatch.
 #
-# Required secret: NPM_TOKEN — a Granular Access Token with:
-#   - Read and write on "All packages"
-#   - "Allow this token to bypass two-factor authentication" enabled
+# Uses npm Trusted Publishing (OIDC) — no NPM_TOKEN secret needed. The
+# workflow proves its identity to npm via a short-lived GitHub Actions
+# OIDC token (the `id-token: write` permission below), which npm
+# exchanges for a one-time publish credential. Two things must both be
+# true for this to work:
+#   1. npm CLI >= 11.5.1 and Node >= 22.14.0 (npm's own minimum for OIDC
+#      support) — node-version below is pinned to 22, and npm itself is
+#      explicitly upgraded, since Node 22 doesn't reliably bundle a new
+#      enough npm on its own (e.g. Node 20.19 ships npm 10.8).
+#   2. A one-time manual step: on https://www.npmjs.com/package/booklet-cli,
+#      under Settings → Trusted Publisher, add a GitHub Actions publisher
+#      pointing at this repo (AshwinSathian/booklet), workflow file
+#      (.github/workflows/publish-cli.yml), and environment (leave blank
+#      unless you add one).
+# Until both are in place, the "Publish to npm" step below will fail with
+# an authentication error — this is expected for any push before then,
+# not a bug in this workflow.
 #
-# Add it at: repo → Settings → Secrets → Actions → NPM_TOKEN
+# Provenance attestations are generated automatically under trusted
+# publishing (no --provenance flag needed).
 
 name: Publish CLI to npm
 
@@ -20,14 +35,23 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
 
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           registry-url: "https://registry.npmjs.org"
+
+      # npm's Trusted Publishing (OIDC) requires npm CLI >= 11.5.1 — not
+      # guaranteed by node-version alone (Node 22 doesn't always bundle a
+      # recent enough npm), so upgrade explicitly rather than assume it.
+      - name: Ensure npm supports Trusted Publishing
+        run: npm install -g npm@^11.5.1
 
       # npm workspaces (see PLAN-backend-auth-migration.md) — install from
       # the repo root; there's no packages/cli/package-lock.json anymore.
@@ -62,8 +86,6 @@ jobs:
       - name: Publish to npm
         if: steps.version_check.outputs.already_published == 'false'
         run: npm publish --workspace packages/cli
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Skip (already published)
         if: steps.version_check.outputs.already_published == 'true'
