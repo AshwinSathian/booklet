@@ -70,3 +70,37 @@ export function getCaretCoordinates(
 function cssPropertyName(camelCase: string): string {
   return camelCase.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`);
 }
+
+export type PopupPosition = { top: number; left: number };
+
+/**
+ * Computes a `position: fixed` popup's {top, left}, anchored just below the
+ * caret at `caretIndex` and clamped so a popup of `width`x`height` (its
+ * fixed CSS size) never renders outside the viewport regardless of scroll
+ * position or how close the caret is to an edge. Shared by every editor
+ * popup anchored at the caret (wikilink autocomplete, the "/" insert menu)
+ * so they stay pixel-identical in behavior instead of drifting apart.
+ */
+export function positionPopupNearCaret(
+  ta: HTMLTextAreaElement,
+  caretIndex: number,
+  width: number,
+  height: number,
+  margin: number,
+): PopupPosition {
+  const { top, left, height: lineHeight } = getCaretCoordinates(ta, caretIndex);
+  const rect = ta.getBoundingClientRect();
+  const rawTop = rect.top - ta.scrollTop + top + lineHeight + 4;
+  const rawLeft = rect.left - ta.scrollLeft + left;
+
+  return {
+    top: Math.min(
+      Math.max(rawTop, margin),
+      Math.max(margin, window.innerHeight - height - margin),
+    ),
+    left: Math.min(
+      Math.max(rawLeft, margin),
+      Math.max(margin, window.innerWidth - width - margin),
+    ),
+  };
+}

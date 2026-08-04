@@ -3,7 +3,7 @@
 import { Icon } from "@/components/ui/Icon";
 import { SyntaxOverlay } from "@/components/app/SyntaxOverlay";
 import { listDrafts, type DraftMeta } from "@/lib/drafts";
-import { getCaretCoordinates } from "@/lib/ui/caret";
+import { positionPopupNearCaret } from "@/lib/ui/caret";
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 
 // ---------------------------------------------------------------------------
@@ -743,32 +743,14 @@ export function PasteInput({
       setWikilinkSelectedIndex(0);
       if (!trigger) return;
 
-      const { top, left, height } = getCaretCoordinates(ta, ta.selectionStart);
-      const rect = ta.getBoundingClientRect();
-      const rawTop = rect.top - ta.scrollTop + top + height + 4;
-      const rawLeft = rect.left - ta.scrollLeft + left;
-
-      // Clamp into the viewport — the caret can be anywhere in the
-      // document (including near the bottom of a scrolled textarea, or
-      // near the right edge on a narrow viewport), and the popup's
-      // position was previously computed with no bound, so it could render
-      // partially or fully off-screen. See tests/e2e/wikilink-autocomplete.spec.ts.
-      setWikilinkPos({
-        top: Math.min(
-          Math.max(rawTop, WIKILINK_POPUP_VIEWPORT_MARGIN),
-          Math.max(
-            WIKILINK_POPUP_VIEWPORT_MARGIN,
-            window.innerHeight - WIKILINK_POPUP_MAX_HEIGHT - WIKILINK_POPUP_VIEWPORT_MARGIN,
-          ),
-        ),
-        left: Math.min(
-          Math.max(rawLeft, WIKILINK_POPUP_VIEWPORT_MARGIN),
-          Math.max(
-            WIKILINK_POPUP_VIEWPORT_MARGIN,
-            window.innerWidth - WIKILINK_POPUP_WIDTH - WIKILINK_POPUP_VIEWPORT_MARGIN,
-          ),
-        ),
-      });
+      const pos = positionPopupNearCaret(
+        ta,
+        ta.selectionStart,
+        WIKILINK_POPUP_WIDTH,
+        WIKILINK_POPUP_MAX_HEIGHT,
+        WIKILINK_POPUP_VIEWPORT_MARGIN,
+      );
+      setWikilinkPos(pos);
     },
     [],
   );
