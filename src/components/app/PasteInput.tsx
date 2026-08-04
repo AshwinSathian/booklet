@@ -494,10 +494,14 @@ function FormatToolbar({
   textareaRef,
   onChange,
   onOpenFind,
+  onOpenInsertMenu,
+  insertBtnRef,
 }: {
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
   onChange: (v: string) => void;
   onOpenFind: () => void;
+  onOpenInsertMenu: () => void;
+  insertBtnRef: React.RefObject<HTMLButtonElement | null>;
 }) {
   const handleClick = useCallback(
     (key: string) => {
@@ -568,6 +572,24 @@ function FormatToolbar({
           </button>
         );
       })}
+
+      {/* Opens the same SlashMenu used by typing "/", anchored under this
+          button instead of at the caret — for mouse-first users who'd
+          rather click than type "/". Keeping this as a single button
+          (rather than one icon per insert item) follows BRAND.md's "chrome
+          recedes" rule. */}
+      <button
+        ref={insertBtnRef}
+        type="button"
+        title="Insert block (/)"
+        onMouseDown={(e) => {
+          e.preventDefault();
+          onOpenInsertMenu();
+        }}
+        className="shrink-0 h-6 w-6 flex items-center justify-center rounded transition text-text-muted hover:text-text-primary hover:bg-fill-2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft"
+      >
+        <Icon name="plus" size={12} />
+      </button>
 
       {/* Spacer pushes right-side buttons to the far right */}
       <div className="flex-1" />
@@ -887,6 +909,44 @@ export function PasteInput({
     [slashTrigger, insertSnippet],
   );
 
+  // Button-triggered variant of the same SlashMenu, anchored under the
+  // toolbar "+" button instead of at the caret. Unlike slashTrigger above,
+  // this doesn't need to worry about the wikilink mutual-exclusivity rules
+  // in resolveSlashTrigger — it's not derived from typing "/" in the text,
+  // so there's no `[[`/`/` ambiguity to resolve.
+  const [toolbarSlashOpen, setToolbarSlashOpen] = useState(false);
+  const [toolbarSlashPos, setToolbarSlashPos] = useState({ top: 0, left: 0 });
+  const [toolbarSlashSelectedIndex, setToolbarSlashSelectedIndex] = useState(0);
+  const insertBtnRef = useRef<HTMLButtonElement | null>(null);
+
+  const openToolbarSlashMenu = useCallback(() => {
+    const btn = insertBtnRef.current;
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    setToolbarSlashPos({ top: rect.bottom + 4, left: rect.left });
+    setToolbarSlashSelectedIndex(0);
+    setToolbarSlashOpen(true);
+  }, []);
+
+  const selectToolbarSlashItem = useCallback(
+    (item: InsertItem) => {
+      setToolbarSlashOpen(false);
+      insertSnippet(item.snippet);
+    },
+    [insertSnippet],
+  );
+
+  // Escape closes the button-triggered menu without inserting, matching the
+  // outside-click backdrop below.
+  useEffect(() => {
+    if (!toolbarSlashOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setToolbarSlashOpen(false);
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [toolbarSlashOpen]);
+
   return (
     <>
       <div className="flex h-full max-h-full min-h-0 flex-col overflow-hidden w-full">
@@ -895,6 +955,8 @@ export function PasteInput({
           textareaRef={ref}
           onChange={onChange}
           onOpenFind={() => setShowFindReplace(true)}
+          onOpenInsertMenu={openToolbarSlashMenu}
+          insertBtnRef={insertBtnRef}
         />
 
         {/* Find & replace panel */}
@@ -1138,6 +1200,21 @@ export function PasteInput({
           selectedIndex={slashSelectedIndex}
           onSelect={selectSlashItem}
         />
+      )}
+
+      {toolbarSlashOpen && (
+        <>
+          {/* Invisible full-screen backdrop, below the menu's z-50 — same
+              outside-click-to-close pattern as ShortcutsModal's backdrop. */}
+          <div className="fixed inset-0 z-40" onMouseDown={() => setToolbarSlashOpen(false)} />
+          <SlashMenu
+            items={filterInsertItems("")}
+            top={toolbarSlashPos.top}
+            left={toolbarSlashPos.left}
+            selectedIndex={toolbarSlashSelectedIndex}
+            onSelect={selectToolbarSlashItem}
+          />
+        </>
       )}
 
       {showShortcuts && <ShortcutsModal onClose={() => setShowShortcuts(false)} />}
