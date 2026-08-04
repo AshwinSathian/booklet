@@ -47,7 +47,11 @@ export type IconName =
   | "callout-tip"
   | "callout-warning"
   | "callout-important"
-  | "callout-caution";
+  | "callout-caution"
+  | "table"
+  | "toggle"
+  | "columns"
+  | "divider";
 
 const PATHS: Record<IconName, string | string[]> = {
   plus:           "M8 3v10M3 8h10",
@@ -97,6 +101,10 @@ const PATHS: Record<IconName, string | string[]> = {
   "callout-warning":   ["M8 2 1 14h14L8 2z", "M8 6.5v3", "M8 12h.01"],
   "callout-important": ["M8 1 15 8 8 15 1 8 8 1z", "M8 5v4", "M8 11h.01"],
   "callout-caution":   ["M5 1h6l4 4v6l-4 4H5l-4-4V5l4-4z", "M8 5v4", "M8 11h.01"],
+  table:    ["M1.5 2.5h13v11h-13z", "M1.5 6.5h13M6.5 2.5v11"],
+  toggle:   ["M3 3h10v10H3z", "M6.5 6l3 2-3 2"],
+  columns:  ["M2 3h5v10H2z", "M9 3h5v10H9z"],
+  divider:  "M2 8h12",
 };
 
 export function Icon({
