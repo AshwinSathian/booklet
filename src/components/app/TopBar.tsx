@@ -4,19 +4,10 @@ import { trackEvent } from "@/lib/analytics";
 import { ANALYTICS_EVENTS, hashId } from "@/lib/analytics-events";
 import { DocSettings } from "@/lib/blocks";
 import { ROUTES, UI } from "@/lib/constants";
-import {
-  DRAFTS_STORAGE_KEYS,
-  deleteDraft,
-  duplicateDraft,
-  listDrafts,
-  updateDraft,
-  type DraftMeta,
-} from "@/lib/drafts";
 import { copyTextToClipboard, markdownToHtml } from "@/lib/export";
 import { TEMPLATES, type Template } from "@/lib/templates";
 import { DEFAULT_THEME_ID, THEMES } from "@/lib/themes";
 import { prefersReducedMotion } from "@/lib/ui/motion";
-import { formatRelativeTimeFromIso, formatUpdatedAtLong } from "@/lib/ui/time";
 import { useSession } from "@/components/auth/SessionProvider";
 import { AccountMenu } from "@/components/auth/AccountMenu";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -27,7 +18,9 @@ import { Icon, type IconName } from "../ui/Icon";
 import { SegmentedControl } from "../ui/SegmentedControl";
 import ThemeToggle from "../ui/ThemeToggle";
 import { useToast } from "../ui/ToastProvider";
+import { DraftRow } from "./DraftRow";
 import { DraftsDialog } from "./DraftsDialog";
+import { useDraftListActions } from "./useDraftListActions";
 
 export type SaveState = "saved" | "saving";
 type EditorStatus = "idle" | "typing" | "publishing" | "published" | "error";
@@ -35,7 +28,6 @@ type EditorStatus = "idle" | "typing" | "publishing" | "published" | "error";
 // Slug validation — mirrors server-side rule in /api/pages/[id]/route.ts
 const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,58}[a-z0-9]$|^[a-z0-9]{3,60}$/;
 function isValidSlug(s: string) { return SLUG_RE.test(s) && !s.includes("--"); }
-function isValidTitle(title: string): boolean { return title.trim().length > 0; }
 
 // ---------------------------------------------------------------------------
 // Icon button
@@ -231,84 +223,13 @@ function DrawerDraftsView({
   onOpenDraft: (id: string, origin?: "drafts_dialog") => void;
   onRequestImportMarkdown: () => void;
 }) {
-  const [drafts, setDrafts] = useState<DraftMeta[]>([]);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingTitle, setEditingTitle] = useState("");
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-
-  const refresh = useCallback(() => setDrafts(listDrafts()), []);
-
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
-
-  useEffect(() => {
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === DRAFTS_STORAGE_KEYS.db) refresh();
-    };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-  }, [refresh]);
-
-  const cancelRename = useCallback(() => {
-    setEditingId(null);
-    setEditingTitle("");
-  }, []);
-
-  const beginRename = useCallback((draft: DraftMeta) => {
-    setEditingId(draft.id);
-    setEditingTitle(draft.title);
-    setConfirmDeleteId(null);
-  }, []);
-
-  const commitRename = useCallback(() => {
-    if (!editingId) return;
-    const next = editingTitle.trim();
-    if (!isValidTitle(next)) return;
-    updateDraft(editingId, { title: next });
-    trackEvent(ANALYTICS_EVENTS.draft_renamed, { draft_hash: hashId(editingId) });
-    cancelRename();
-    refresh();
-  }, [cancelRename, editingId, editingTitle, refresh]);
-
-  const onDuplicate = useCallback((id: string) => {
-    const copy = duplicateDraft(id);
-    trackEvent(ANALYTICS_EVENTS.draft_duplicated, {
-      draft_hash: hashId(id),
-      new_draft_hash: copy ? hashId(copy.id) : "",
-    });
-    refresh();
-  }, [refresh]);
-
-  const onDelete = useCallback((id: string) => {
-    if (confirmDeleteId !== id) {
-      setConfirmDeleteId(id);
-      return;
-    }
-
-    const deletingActive = id === activeDraftId;
-    deleteDraft(id);
-    trackEvent(ANALYTICS_EVENTS.draft_deleted, {
-      draft_hash: hashId(id),
-      deleting_active: deletingActive,
-    });
-    cancelRename();
-    setConfirmDeleteId(null);
-
-    const nextDrafts = listDrafts();
-    setDrafts(nextDrafts);
-
-    if (!deletingActive) return;
-
-    const nextId = nextDrafts[0]?.id;
-    if (nextId) {
-      onOpenDraft(nextId, "drafts_dialog");
-      onClose();
-      return;
-    }
-    onCreateDraft("drafts_dialog");
-    onClose();
-  }, [activeDraftId, cancelRename, confirmDeleteId, onClose, onCreateDraft, onOpenDraft]);
+  const actions = useDraftListActions({
+    active: true,
+    activeDraftId,
+    onOpenDraft,
+    onCreateDraft,
+    onActiveDraftDeleted: onClose,
+  });
 
   return (
     <>
@@ -334,7 +255,7 @@ function DrawerDraftsView({
         </div>
       </div>
 
-      {drafts.length === 0 ? (
+      {actions.drafts.length === 0 ? (
         <div className="rounded-lg border border-border-subtle bg-bg-elevated p-5">
           <div className="text-sm font-semibold text-text-primary">No drafts yet.</div>
           <div className="mt-1.5 text-sm leading-relaxed text-text-secondary">
@@ -343,125 +264,28 @@ function DrawerDraftsView({
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
-          {drafts.map((draft) => {
-            const isActive = draft.id === activeDraftId;
-            const isEditing = editingId === draft.id;
-            const isConfirmingDelete = confirmDeleteId === draft.id;
-            const updatedLong = formatUpdatedAtLong(draft.updatedAt);
-            const updatedRel = formatRelativeTimeFromIso(draft.updatedAt);
-            const updated = updatedRel && updatedRel !== updatedLong
-              ? `${updatedRel} · ${updatedLong}`
-              : updatedLong;
-
-            return (
-              <div
-                key={draft.id}
-                className={[
-                  "rounded-lg border p-3 transition",
-                  isActive ? "border-accent-soft/40 bg-accent/5" : "border-border-subtle bg-bg-elevated",
-                ].join(" ")}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    {isEditing ? (
-                      <input
-                        value={editingTitle}
-                        onChange={(e) => setEditingTitle(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") { e.preventDefault(); commitRename(); }
-                          if (e.key === "Escape") { e.preventDefault(); cancelRename(); }
-                        }}
-                        onBlur={commitRename}
-                        autoFocus
-                        className="w-full rounded-md border border-accent-soft bg-bg px-2 py-0.5 text-sm font-medium text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft"
-                        aria-label="Draft title"
-                      />
-                    ) : (
-                      <div className="truncate text-sm font-medium text-text-primary">
-                        {draft.title?.trim() ? draft.title : "Untitled"}
-                      </div>
-                    )}
-                    {updated ? (
-                      <div className="mt-0.5 text-xs text-text-muted">{updated}</div>
-                    ) : null}
-                  </div>
-
-                  <div className="flex shrink-0 items-center gap-0.5">
-                    <DrawerDraftIconButton label={isEditing ? "Save rename" : "Open draft"} onClick={() => {
-                      if (isEditing) {
-                        commitRename();
-                        return;
-                      }
-                      trackEvent(ANALYTICS_EVENTS.draft_opened, { draft_hash: hashId(draft.id), origin: "drafts_dialog", is_active: isActive });
-                      onOpenDraft(draft.id, "drafts_dialog");
-                      onClose();
-                    }}>
-                      <Icon name={isEditing ? "check" : "external"} size={13} />
-                    </DrawerDraftIconButton>
-                    <DrawerDraftIconButton label="Rename" onClick={() => isEditing ? cancelRename() : beginRename(draft)}>
-                      <Icon name="pencil" size={13} />
-                    </DrawerDraftIconButton>
-                    <DrawerDraftIconButton label="Duplicate" onClick={() => onDuplicate(draft.id)}>
-                      <Icon name="duplicate" size={13} />
-                    </DrawerDraftIconButton>
-                    <DrawerDraftIconButton label="Delete" danger onClick={() => onDelete(draft.id)}>
-                      <Icon name="trash" size={13} />
-                    </DrawerDraftIconButton>
-                  </div>
-                </div>
-
-                {isEditing && !isValidTitle(editingTitle) ? (
-                  <div className="mt-2 text-xs text-red-400">A title is required.</div>
-                ) : null}
-
-                {isConfirmingDelete ? (
-                  <div className="mt-3 flex items-center justify-between gap-2 rounded-lg border border-red-500/20 bg-red-500/8 px-3 py-2">
-                    <span className="text-xs text-red-400">Delete this draft? You can&apos;t undo this.</span>
-                    <div className="flex gap-1.5">
-                      <Button variant="secondary" size="sm" onClick={() => setConfirmDeleteId(null)}>
-                        Cancel
-                      </Button>
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        onClick={() => onDelete(draft.id)}
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-            );
-          })}
+          {actions.drafts.map((draft) => (
+            <DraftRow
+              key={draft.id}
+              draft={draft}
+              isActive={draft.id === activeDraftId}
+              isEditing={actions.editingId === draft.id}
+              editingTitle={actions.editingTitle}
+              onEditingTitleChange={actions.setEditingTitle}
+              isConfirmingDelete={actions.confirmDeleteId === draft.id}
+              variant="drawer"
+              onOpen={() => { actions.onOpen(draft.id); onClose(); }}
+              onBeginRename={() => actions.beginRename(draft)}
+              onCancelRename={actions.cancelRename}
+              onCommitRename={actions.commitRename}
+              onDuplicate={() => actions.onDuplicate(draft.id)}
+              onDelete={() => actions.onDelete(draft.id)}
+              onCancelDeleteConfirm={actions.cancelDelete}
+            />
+          ))}
         </div>
       )}
     </>
-  );
-}
-
-function DrawerDraftIconButton({
-  label,
-  onClick,
-  children,
-  danger,
-}: {
-  label: string;
-  onClick: () => void;
-  children: React.ReactNode;
-  danger?: boolean;
-}) {
-  return (
-    <Button
-      variant={danger ? "danger" : "ghost"}
-      size="sm"
-      iconOnly
-      aria-label={label}
-      title={label}
-      onClick={onClick}
-    >
-      {children}
-    </Button>
   );
 }
 
