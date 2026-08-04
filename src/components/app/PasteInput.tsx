@@ -640,7 +640,7 @@ export function detectWikilinkTrigger(value: string, caret: number): WikilinkTri
  * `/` be preceded by whitespace/newline. Concretely, typing `[[Notes /draft`
  * makes both fire at once: detectWikilinkTrigger returns
  * `{start:0, query:"Notes /draft"}` and detectSlashTrigger returns
- * `{start:9, query:"draft"}`. The wikilink trigger — the pre-existing, more
+ * `{start:8, query:"draft"}`. The wikilink trigger — the pre-existing, more
  * specific two-character sequence — always takes precedence.
  *
  * This is the exact function PasteInput's updateSlashTrigger calls, so it's

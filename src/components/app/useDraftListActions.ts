@@ -139,7 +139,6 @@ export function useDraftListActions({
     editingTitle,
     setEditingTitle,
     confirmDeleteId,
-    refresh,
     beginRename,
     cancelRename,
     commitRename,

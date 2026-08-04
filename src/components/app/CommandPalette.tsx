@@ -41,6 +41,7 @@ export function CommandPalette({
   const router = useRouter();
   const reducedMotion = usePrefersReducedMotion();
   const [drafts, setDrafts] = useState<DraftMeta[]>([]);
+  const [search, setSearch] = useState("");
 
   // Refresh the drafts list every time the palette opens, not on every
   // keystroke — listDrafts() reads and JSON-parses the whole localStorage
@@ -50,7 +51,21 @@ export function CommandPalette({
     if (open) setDrafts(listDrafts());
   }, [open]);
 
-  const recentDrafts = useMemo(() => drafts.slice(0, 8), [drafts]);
+  useEffect(() => {
+    if (!open) setSearch("");
+  }, [open]);
+
+  // Drafts must be fuzzy-searchable by title across the *entire* list (see
+  // design spec §3.1) — cmdk filters client-side over whatever Command.Items
+  // are rendered, so capping the rendered list to 8 would make anything past
+  // the 8 most-recently-edited drafts unreachable by search, no matter what
+  // the user types. The 8-item cap is only a display convenience for the
+  // empty-query "recent drafts" view; once there's a query, render every
+  // draft and let cmdk's own filtering narrow it down.
+  const visibleDrafts = useMemo(
+    () => (search.trim() ? drafts : drafts.slice(0, 8)),
+    [drafts, search],
+  );
 
   function go(path: string) {
     onOpenChange(false);
@@ -70,6 +85,8 @@ export function CommandPalette({
       className="fixed left-1/2 top-24 z-50 w-full max-w-lg -translate-x-1/2 rounded-card border border-border-default bg-bg-elevated shadow-glass"
     >
       <Command.Input
+        value={search}
+        onValueChange={setSearch}
         placeholder="Jump to a draft, or run a command…"
         className="w-full border-b border-border-subtle bg-transparent px-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none"
       />
@@ -78,12 +95,18 @@ export function CommandPalette({
           No results.
         </Command.Empty>
 
-        {recentDrafts.length > 0 && (
+        {visibleDrafts.length > 0 && (
           <Command.Group heading="Drafts" className="text-2xs uppercase tracking-wider text-text-muted px-2 py-1">
-            {recentDrafts.map((d) => (
+            {visibleDrafts.map((d) => (
               <Command.Item
                 key={d.id}
-                value={d.title || "Untitled"}
+                // `value` drives cmdk's filtering/selection and must be
+                // unique per item — appending the id disambiguates drafts
+                // that share a title (e.g. several "Untitled" drafts, a
+                // normal state in this app). This never changes what's
+                // rendered: cmdk's `value` only feeds filtering/selection,
+                // the visible label below is always just the title.
+                value={`${d.title || "Untitled"} ${d.id}`}
                 onSelect={() => { onOpenChange(false); onSwitchDraft(d.id); }}
                 className="flex items-center gap-2 cursor-pointer rounded-lg px-3 py-2 text-sm text-text-primary aria-selected:bg-fill-2"
               >
