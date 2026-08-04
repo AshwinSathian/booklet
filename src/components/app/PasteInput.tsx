@@ -591,12 +591,15 @@ function FormatToolbar({
 // local draft titles (private, per-browser; see src/lib/wikilinks/).
 // ---------------------------------------------------------------------------
 
-type WikilinkTrigger = { start: number; query: string };
+export type WikilinkTrigger = { start: number; query: string };
 
 /** Detects "cursor is inside an open, unclosed `[[query`" — a `]` or
  * newline anywhere in between means the bracket run already closed (or was
- * abandoned), so the popup should not be showing. */
-function detectWikilinkTrigger(value: string, caret: number): WikilinkTrigger | null {
+ * abandoned), so the popup should not be showing. Note this allows spaces
+ * inside `query` (wikilink titles can contain spaces), which is why it can
+ * overlap with detectSlashTrigger (SlashMenu.tsx) — see resolveSlashTrigger
+ * below for how the two are kept mutually exclusive. */
+export function detectWikilinkTrigger(value: string, caret: number): WikilinkTrigger | null {
   const upToCaret = value.slice(0, caret);
   const openIdx = upToCaret.lastIndexOf("[[");
   if (openIdx === -1) return null;
@@ -605,6 +608,36 @@ function detectWikilinkTrigger(value: string, caret: number): WikilinkTrigger | 
   if (between.includes("]") || between.includes("\n")) return null;
 
   return { start: openIdx, query: between };
+}
+
+/**
+ * The single source of truth for whether the slash-insert menu should be
+ * open, combining detectSlashTrigger with two app-level rules that
+ * detectSlashTrigger alone can't know about: (1) a non-collapsed selection
+ * never opens either popup, and (2) an open (or would-be-open) wikilink
+ * trigger always wins.
+ *
+ * `[[` and `/` are NOT mutually exclusive by construction — detectWikilinkTrigger
+ * allows spaces inside its query (wikilink titles can contain spaces) and
+ * only closes on `]`/newline, while detectSlashTrigger only requires the
+ * `/` be preceded by whitespace/newline. Concretely, typing `[[Notes /draft`
+ * makes both fire at once: detectWikilinkTrigger returns
+ * `{start:0, query:"Notes /draft"}` and detectSlashTrigger returns
+ * `{start:9, query:"draft"}`. The wikilink trigger — the pre-existing, more
+ * specific two-character sequence — always takes precedence.
+ *
+ * This is the exact function PasteInput's updateSlashTrigger calls, so it's
+ * directly unit-testable (tests/unit/slash-trigger.spec.ts) without mounting
+ * the component.
+ */
+export function resolveSlashTrigger(
+  nextValue: string,
+  caret: number,
+  hasSelection: boolean,
+  wikilinkTriggerNow: WikilinkTrigger | null,
+): SlashTrigger | null {
+  if (hasSelection || wikilinkTriggerNow) return null;
+  return detectSlashTrigger(nextValue, caret);
 }
 
 const WIKILINK_SUGGESTION_LIMIT = 8;
@@ -743,17 +776,24 @@ export function PasteInput({
     [wikilinkTrigger],
   );
 
+  // Returns the freshly-computed trigger (not just setting state) so callers
+  // in the same event handler — namely updateSlashTrigger — can react to it
+  // immediately without waiting for React to commit the state update. `[[`
+  // and `/` are not mutually exclusive by construction (e.g. "[[Notes /draft"
+  // matches both a wikilink query containing a space and a slash trigger
+  // preceded by a space), so the wikilink trigger — the pre-existing, more
+  // specific two-character sequence — must take precedence.
   const updateWikilinkTrigger = useCallback(
-    (ta: HTMLTextAreaElement, nextValue: string) => {
+    (ta: HTMLTextAreaElement, nextValue: string): WikilinkTrigger | null => {
       if (ta.selectionStart !== ta.selectionEnd) {
         setWikilinkTrigger(null);
-        return;
+        return null;
       }
 
       const trigger = detectWikilinkTrigger(nextValue, ta.selectionStart);
       setWikilinkTrigger(trigger);
       setWikilinkSelectedIndex(0);
-      if (!trigger) return;
+      if (!trigger) return null;
 
       const pos = positionPopupNearCaret(
         ta,
@@ -763,6 +803,7 @@ export function PasteInput({
         WIKILINK_POPUP_VIEWPORT_MARGIN,
       );
       setWikilinkPos(pos);
+      return trigger;
     },
     [],
   );
@@ -793,19 +834,30 @@ export function PasteInput({
     [slashTrigger],
   );
 
-  const updateSlashTrigger = useCallback((ta: HTMLTextAreaElement, nextValue: string) => {
-    if (ta.selectionStart !== ta.selectionEnd) {
-      setSlashTrigger(null);
-      return;
-    }
-    const trigger = detectSlashTrigger(nextValue, ta.selectionStart);
-    setSlashTrigger(trigger);
-    setSlashSelectedIndex(0);
-    if (!trigger) return;
-    setSlashPos(
-      positionPopupNearCaret(ta, ta.selectionStart, SLASH_POPUP_WIDTH, SLASH_POPUP_MAX_HEIGHT, SLASH_POPUP_VIEWPORT_MARGIN),
-    );
-  }, []);
+  // `wikilinkTriggerNow` must be the just-computed result of
+  // updateWikilinkTrigger from the *same* event handler, not the
+  // `wikilinkTrigger` state value — state updates from earlier in this same
+  // handler haven't committed yet, so reading state here would still see the
+  // previous render's (stale) value. Passing the fresh result explicitly
+  // sidesteps that and guarantees the wikilink trigger always wins when both
+  // would otherwise fire (see updateWikilinkTrigger's comment for why).
+  const updateSlashTrigger = useCallback(
+    (ta: HTMLTextAreaElement, nextValue: string, wikilinkTriggerNow: WikilinkTrigger | null) => {
+      const trigger = resolveSlashTrigger(
+        nextValue,
+        ta.selectionStart,
+        ta.selectionStart !== ta.selectionEnd,
+        wikilinkTriggerNow,
+      );
+      setSlashTrigger(trigger);
+      setSlashSelectedIndex(0);
+      if (!trigger) return;
+      setSlashPos(
+        positionPopupNearCaret(ta, ta.selectionStart, SLASH_POPUP_WIDTH, SLASH_POPUP_MAX_HEIGHT, SLASH_POPUP_VIEWPORT_MARGIN),
+      );
+    },
+    [],
+  );
 
   const insertSnippet = useCallback(
     (snippet: InsertSnippet, range?: { start: number; end: number }) => {
@@ -885,12 +937,12 @@ export function PasteInput({
             value={value}
             onChange={(e) => {
               onChange(e.target.value);
-              updateWikilinkTrigger(e.currentTarget, e.target.value);
-              updateSlashTrigger(e.currentTarget, e.target.value);
+              const wikilink = updateWikilinkTrigger(e.currentTarget, e.target.value);
+              updateSlashTrigger(e.currentTarget, e.target.value, wikilink);
             }}
             onClick={(e) => {
-              updateWikilinkTrigger(e.currentTarget, e.currentTarget.value);
-              updateSlashTrigger(e.currentTarget, e.currentTarget.value);
+              const wikilink = updateWikilinkTrigger(e.currentTarget, e.currentTarget.value);
+              updateSlashTrigger(e.currentTarget, e.currentTarget.value, wikilink);
             }}
             onScroll={(e) => {
               const content = overlayContentRef.current;
@@ -904,34 +956,20 @@ export function PasteInput({
               if (wikilinkTrigger && verticalKeys.includes(e.key)) return;
               if (slashTrigger && verticalKeys.includes(e.key)) return;
               if (["ArrowLeft", "ArrowRight", "Home", "End", ...verticalKeys].includes(e.key)) {
-                updateWikilinkTrigger(e.currentTarget, e.currentTarget.value);
-                updateSlashTrigger(e.currentTarget, e.currentTarget.value);
+                const wikilink = updateWikilinkTrigger(e.currentTarget, e.currentTarget.value);
+                updateSlashTrigger(e.currentTarget, e.currentTarget.value, wikilink);
               }
             }}
             onKeyDown={(e) => {
-              if (slashTrigger && slashItems.length > 0) {
-                if (e.key === "ArrowDown") {
-                  e.preventDefault();
-                  setSlashSelectedIndex((i) => (i + 1) % slashItems.length);
-                  return;
-                }
-                if (e.key === "ArrowUp") {
-                  e.preventDefault();
-                  setSlashSelectedIndex((i) => (i - 1 + slashItems.length) % slashItems.length);
-                  return;
-                }
-                if (e.key === "Enter" || e.key === "Tab") {
-                  e.preventDefault();
-                  selectSlashItem(slashItems[slashSelectedIndex]);
-                  return;
-                }
-                if (e.key === "Escape") {
-                  e.preventDefault();
-                  setSlashTrigger(null);
-                  return;
-                }
-              }
-
+              // Mutually exclusive: the wikilink popup, when open, always
+              // wins keyboard control over the slash menu — see
+              // updateWikilinkTrigger's comment for why `[[` and `/` aren't
+              // guaranteed exclusive by construction. Fix #1 (bailing out of
+              // updateSlashTrigger whenever a wikilink trigger is open)
+              // already prevents both from being open at once in practice;
+              // this `else if` is a defensive second layer so a stale
+              // `slashTrigger` value could never hijack Enter/Arrow keys away
+              // from a visibly-open wikilink popup.
               if (wikilinkTrigger && wikilinkMatches.length > 0) {
                 if (e.key === "ArrowDown") {
                   e.preventDefault();
@@ -952,6 +990,27 @@ export function PasteInput({
                 if (e.key === "Escape") {
                   e.preventDefault();
                   setWikilinkTrigger(null);
+                  return;
+                }
+              } else if (slashTrigger && slashItems.length > 0) {
+                if (e.key === "ArrowDown") {
+                  e.preventDefault();
+                  setSlashSelectedIndex((i) => (i + 1) % slashItems.length);
+                  return;
+                }
+                if (e.key === "ArrowUp") {
+                  e.preventDefault();
+                  setSlashSelectedIndex((i) => (i - 1 + slashItems.length) % slashItems.length);
+                  return;
+                }
+                if (e.key === "Enter" || e.key === "Tab") {
+                  e.preventDefault();
+                  selectSlashItem(slashItems[slashSelectedIndex]);
+                  return;
+                }
+                if (e.key === "Escape") {
+                  e.preventDefault();
+                  setSlashTrigger(null);
                   return;
                 }
               }

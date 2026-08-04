@@ -11,8 +11,11 @@ export type SlashTrigger = { start: number; query: string };
  * reasoning (PasteInput.tsx) but for the slash-insert menu. Only fires when
  * the "/" is the first character of a line or immediately preceded by a
  * space/tab, so a mid-word "/" (e.g. "60km/h") never opens the menu. A
- * space, newline, or a second "/" inside the run closes/abandons the
- * previous trigger, matching how "]"/newline closes the wikilink trigger.
+ * space or newline inside the run closes/abandons the previous trigger,
+ * matching how "]"/newline closes the wikilink trigger. Note this only
+ * looks at the *last* "/" before the caret, so a second "/" later on the
+ * line naturally re-triggers from that position rather than being detected
+ * as "inside the run" of the first one — there's no actual run to abandon.
  */
 export function detectSlashTrigger(value: string, caret: number): SlashTrigger | null {
   const upToCaret = value.slice(0, caret);
@@ -23,11 +26,15 @@ export function detectSlashTrigger(value: string, caret: number): SlashTrigger |
   if (charBefore !== "\n" && charBefore !== " " && charBefore !== "\t") return null;
 
   const between = upToCaret.slice(lastSlash + 1);
-  if (between.includes("\n") || between.includes(" ") || between.includes("/")) return null;
+  if (between.includes("\n") || between.includes(" ")) return null;
 
   return { start: lastSlash, query: between };
 }
 
+// Must match SlashMenu's `w-60` / `max-h-72` classes below — used to clamp
+// the popup's computed position so it can never render off-screen (see
+// updateSlashTrigger in PasteInput.tsx). Mirrors the same pattern as
+// WIKILINK_POPUP_WIDTH/WIKILINK_POPUP_MAX_HEIGHT.
 export const SLASH_POPUP_WIDTH = 240;
 export const SLASH_POPUP_MAX_HEIGHT = 288;
 export const SLASH_POPUP_VIEWPORT_MARGIN = 8;
