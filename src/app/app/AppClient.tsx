@@ -865,7 +865,12 @@ function AppPageContent() {
         }}
       />
 
-      <div className="flex-1 min-h-0">
+      <main id="main" className="flex-1 min-h-0">
+        {/* Visually-hidden document heading — the editor is a single-page
+            app with no visible page title (TopBar's DraftTitle is an inline
+            rename control, not a heading), so screen reader users landed
+            here via heading navigation had nothing to find. */}
+        <h1 className="sr-only">{draftTitle ? `${draftTitle} — Booklet editor` : "Booklet editor"}</h1>
         <AppShell
           focusMode={focusMode}
           isEmpty={isEmpty}
@@ -898,7 +903,7 @@ function AppPageContent() {
             />
           }
         />
-      </div>
+      </main>
 
       <BacklinksPanel
         visible={showBacklinks}
