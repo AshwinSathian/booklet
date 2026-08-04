@@ -16,7 +16,11 @@ program
   .name("booklet")
   .description("Publish Markdown pages from your terminal")
   .version(__CLI_VERSION__)
-  .option("--no-color", "Disable colored output");
+  .option("--no-color", "Disable colored output")
+  // Without this, Commander calls process.exit() itself for its own usage
+  // errors and --help/--version — the catch block below never runs for
+  // those, they'd just exit before parseAsync's promise ever rejects.
+  .exitOverride();
 
 program.addHelpText(
   "after",
@@ -52,9 +56,20 @@ async function main() {
       error(err.message);
       process.exit(1);
     }
-    if (err && typeof err === "object" && "code" in err && typeof err.code === "string" && err.code.startsWith("commander.")) {
-      // Commander already printed its own message; just set the exit code.
-      process.exit(2);
+    if (
+      err &&
+      typeof err === "object" &&
+      "code" in err &&
+      typeof err.code === "string" &&
+      err.code.startsWith("commander.") &&
+      "exitCode" in err &&
+      typeof err.exitCode === "number"
+    ) {
+      // Commander already printed its own message (or, for --help/
+      // --version, the output the user asked for) — just exit with the
+      // code Commander itself decided on (0 for help/version, 1 for
+      // usage errors).
+      process.exit(err.exitCode);
     }
     error(err instanceof Error ? err.message : String(err));
     console.error(`\nThis looks like a bug. Please report it: ${REPO_URL}/issues`);

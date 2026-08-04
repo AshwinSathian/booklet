@@ -176,13 +176,27 @@ export function registerAuthCommands(program: Command) {
       }
 
       // ── Check existing credentials (skip if --force) ───────────────────────
-      if (!opts.force && existing.apiKey) {
+      // Reads through getApiKey() (env > keychain > legacy file), not the
+      // raw config file field — otherwise keychain users would never hit
+      // this check (their key isn't in existing.apiKey) and would always
+      // be sent through a full interactive re-login.
+      const currentKey = opts.force ? null : await getApiKey();
+      if (currentKey) {
         info("Checking saved credentials…");
-        const check = await validateKey(existing.apiKey, base);
+        const check = await validateKey(currentKey, base);
         if (check.ok) {
           success("Already authenticated.");
           info(`You have ${check.pageCount} page${check.pageCount === 1 ? "" : "s"}.`);
           info(dim("Run `booklet login --force` to re-authenticate."));
+          // Opportunistic migration: a key that's still only in the legacy
+          // file (logged in before keychain support, or the keychain only
+          // just became available) moves into the keychain now that it's
+          // confirmed valid — this is the only path a normal `booklet
+          // login` re-run actually takes, so it's where the migration has
+          // to happen.
+          if ((await getApiKeySource()) === "file") {
+            await setApiKey(currentKey);
+          }
           return;
         }
         info("Saved key is no longer valid — re-authenticating…");
