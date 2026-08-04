@@ -1,5 +1,9 @@
 # Plan: Reposition around the AI-agent/CI-publishing wedge
-> Status: PROPOSED
+> Status: IMPLEMENTED (2026-08-04) — commits 0529884, 16a8a1e, 7526692 on main. Phases 1-4
+> executed as planned, with two adjustments made during Phase 5 review: the hero secondary CTA
+> links to the on-page #api section instead of /mcp-setup (the original destination didn't cover
+> the CI half of its own claim), and getPagesByUser caps query/tag at 200 chars (not scoped in
+> the original plan, added for consistency with this codebase's other input-size guards).
 > Scale: Standard
 > Estimated effort: ~3 days equivalent
 > Created: 2026-08-04
