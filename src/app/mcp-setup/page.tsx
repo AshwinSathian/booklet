@@ -882,6 +882,7 @@ export default function McpSetupPage() {
                 "Create an incident report for a database outage that happened today and publish it to Booklet",
                 "Write an ADR for switching from REST to GraphQL and publish it",
                 "Update my page with slug 'my-page' with this new content: [paste content]",
+                "Find my page about release notes and update it with today's changes",
                 "What Booklet tools do you have access to?",
                 "Delete the page with ID [page-id]",
                 "Create a runbook for deploying our app to production and share the link",
@@ -932,8 +933,8 @@ export default function McpSetupPage() {
                     },
                     {
                       name: "list_pages",
-                      desc: "List your pages with pagination",
-                      inputs: "limit, offset",
+                      desc: "List your pages, optionally filtered by title or tag",
+                      inputs: "limit, offset, query, tag",
                     },
                     {
                       name: "delete_page",

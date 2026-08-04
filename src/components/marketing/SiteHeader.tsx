@@ -28,6 +28,7 @@ export const NAV_LINKS = [
   { href: "#features", label: "Features" },
   { href: "#how", label: "How it works" },
   { href: "#examples", label: "Examples" },
+  { href: "/mcp-setup", label: "AI Agents" },
   { href: "/integrations", label: "Integrations" },
   { href: "/api-docs", label: "API" },
   { href: "/templates", label: "Templates" },

@@ -10,9 +10,10 @@
 
 ## The One-Sentence Version
 
-Booklet is a free web tool that turns the Markdown engineers already write into a clean,
-beautifully formatted page the non-technical person on the other end (a PM, an exec, a
-customer) can actually open and read, instantly, with no account required.
+Booklet turns the Markdown engineers already write into a clean, beautifully formatted,
+permanently-linked page — published by hand from a free web editor with no account required,
+or automatically from a script, a CI pipeline, or an AI assistant like Claude via Booklet's
+REST API, CLI, GitHub Action, and first-party MCP server.
 
 ---
 
@@ -76,6 +77,33 @@ experience and make the content feel unfinished.
 
 4. You send the link. The recipient opens a clean, well-formatted reading page in their browser.
    No login. No app. No friction.
+
+---
+
+## Publishing From Anywhere — AI Assistants & CI
+
+The editor described below is one way to publish — the one that needs no setup. Booklet also
+ships a full toolchain for publishing without a human opening a browser at all:
+
+- **REST API** (`/api/v1/publish`, `/api/v1/pages/:id`): publish and update pages from any
+  script or service with an API key.
+- **CLI** (`booklet-cli` on npm): `booklet publish README.md` from any terminal, with
+  `--update <id>` to republish in place, `--watch` to auto-republish on save, and
+  `--key`/`BOOKLET_API_KEY` for non-interactive/CI auth.
+- **GitHub Action** ([`AshwinSathian/publish-to-booklet`](https://github.com/AshwinSathian/publish-to-booklet)):
+  publish or update a page on every push, tag, or release — the standard way to keep a
+  changelog or release-notes page current without a manual step.
+- **MCP server** (`/mcp-setup` has copy-paste config): a standalone Model Context Protocol
+  server exposing `publish_page`, `update_page`, `get_page`, `list_pages` (filterable by title
+  or tag), and `delete_page` to any MCP-compatible AI assistant — Claude Desktop, Claude.ai,
+  Cursor, Windsurf, VS Code, Zed. It also exposes five pre-built prompt templates (incident
+  report, ADR, release notes, RFC, runbook) so an assistant can draft a structured document and
+  publish it in one turn of conversation, e.g. "write an incident report for today's outage and
+  publish it to Booklet."
+
+All four surfaces call the same publish pipeline as the editor and produce the exact same kind
+of page — immutable, clean, shareable by link. None of this changes what a published page is;
+it only changes who (or what) is allowed to create one.
 
 ---
 

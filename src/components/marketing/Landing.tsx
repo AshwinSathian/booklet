@@ -781,7 +781,7 @@ export function Landing() {
             <motion.div variants={heroItem}>
               <div className="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-accent-dim px-4 py-1.5 text-xs font-semibold tracking-wide text-accent">
                 <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-                Free · No account · Works with Claude
+                Free · No account · Publish from Claude, Cursor, or CI
               </div>
             </motion.div>
 
@@ -805,6 +805,8 @@ export function Landing() {
               Your incident reports, ADRs, and runbooks are already in Markdown. Booklet
               turns them into a clean page the PM, exec, or customer on the other end can
               actually open and read — no account, no formatting step, no raw asterisks.
+              Publish it yourself from the editor, or let your AI assistant or CI pipeline
+              do it for you — same clean page either way.
             </motion.p>
 
             {/* CTAs */}
@@ -853,6 +855,29 @@ export function Landing() {
                 ↵
               </kbd>{" "}
               to publish from the editor
+            </motion.div>
+
+            {/* Secondary CTA — the agent/CI publishing path. Links to the
+                on-page API/CLI/MCP section (#api), which covers both AI
+                assistants and CI/CD — not /mcp-setup, which only covers the
+                AI-assistant half of this claim. */}
+            <motion.div variants={heroItem} className="mt-3 text-[13px]">
+              <a
+                href="#api"
+                onClick={() => trackEvent("integration_clicked", { integration: "claude_mcp", location: "hero" })}
+                className="inline-flex items-center gap-1.5 text-text-muted transition hover:text-accent"
+              >
+                or publish straight from Claude, Cursor, or a CI pipeline
+                <svg width="10" height="10" fill="none" viewBox="0 0 12 12" aria-hidden>
+                  <path
+                    d="M2.5 9.5 9.5 2.5M9.5 2.5H4M9.5 2.5V8"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </a>
             </motion.div>
           </motion.div>
 
@@ -1000,9 +1025,9 @@ export function Landing() {
       {/* ──────────────────────────────────────────────────────────────────── */}
       <Section
         id="api"
-        eyebrow="API"
-        title="Publish from anywhere."
-        subtitle="Booklet's REST API lets you publish pages directly from CI/CD pipelines, incident tools, and automation scripts. Sign in to generate a key."
+        eyebrow="API · CLI · MCP"
+        title="Publish from anywhere — including your AI assistant."
+        subtitle="Booklet's REST API, CLI, and first-party MCP server let you publish pages directly from CI/CD pipelines, incident tools, automation scripts, or a conversation with Claude, Cursor, or any MCP-compatible assistant. Sign in to generate a key."
       >
         <ApiBlock />
       </Section>

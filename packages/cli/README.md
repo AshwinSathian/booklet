@@ -1,6 +1,13 @@
 # booklet-cli
 
-Publish Markdown pages from your terminal using [Booklet](https://booklet.ashwinsathian.com).
+Publish Markdown from your terminal, a CI pipeline, or a script — as [Booklet](https://booklet.ashwinsathian.com) pages
+with a permanent, shareable URL.
+
+Built for automation first: `--key`/`BOOKLET_API_KEY` for non-interactive auth, `--update <id>` to
+republish in place instead of minting a new URL every run, and `--json` on every read command for
+scripting. The most common use is a CI job that keeps a changelog or release-notes page current —
+see [CI / GitHub Actions](#ci--github-actions) below. It works the same way from a terminal, of
+course; `booklet publish README.md` is still the whole command.
 
 ## Install
 
@@ -83,11 +90,14 @@ Options:
 
 ### `booklet pages list`
 
-List all your published pages.
+List all your published pages. Useful in a script to find the right page ID before calling
+`booklet publish --update <id>`, instead of hardcoding it.
 
 ```bash
 booklet pages list
-booklet pages list --json   # machine-readable output
+booklet pages list --json                 # machine-readable output
+booklet pages list --query "release"      # only pages whose title contains this text
+booklet pages list --tag runbook          # only pages with this exact frontmatter tag
 ```
 
 ### `booklet pages open <id>`

@@ -1,12 +1,12 @@
 # Booklet
 
-**Publish clean, readable pages from Markdown.**
+**Publish clean, readable pages from Markdown — by hand, by script, or by your AI assistant.**
 
 [![License: MIT](https://img.shields.io/github/license/AshwinSathian/booklet)](LICENSE)
 [![npm version](https://img.shields.io/npm/v/booklet-cli?label=booklet-cli)](https://www.npmjs.com/package/booklet-cli)
 [![CI](https://img.shields.io/github/actions/workflow/status/AshwinSathian/booklet/ci.yml?branch=main&label=CI)](https://github.com/AshwinSathian/booklet/actions/workflows/ci.yml)
 
-Paste Markdown into the editor, preview it live, and share a polished read-only URL in one click. Sign in for pages that never expire, version history, analytics, custom slugs, password protection, collections, and a full REST API.
+Paste Markdown into the editor, preview it live, and share a polished read-only URL in one click — or skip the editor and publish the same way from a CI pipeline, a script, or an AI assistant like Claude. Sign in for pages that never expire, version history, analytics, custom slugs, password protection, collections, and a full REST API.
 
 What makes Booklet more than an editor is the surface around it: a REST API, an npm-published CLI, a GitHub Action for publishing docs in CI, and a standalone MCP server so AI assistants like Claude can publish and manage pages directly. Markdown-to-shareable-page tools are common; shipping the same functionality as an API, a CLI, a CI action, and an MCP server on top of it is the part that isn't.
 

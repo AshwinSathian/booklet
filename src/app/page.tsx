@@ -17,7 +17,7 @@ const jsonLd = {
       name: APP_NAME,
       url: SITE_URL,
       description:
-        "Convert any Markdown into a clean, beautifully formatted shareable page in seconds. Perfect for incident reports, ADRs, READMEs, and technical docs.",
+        "Convert any Markdown into a clean, beautifully formatted shareable page in seconds. Perfect for incident reports, ADRs, READMEs, and technical docs. Publish from the editor, a script, CI, or your AI assistant via MCP.",
       applicationCategory: "DeveloperApplication",
       operatingSystem: "Web Browser",
       screenshot: absoluteUrl("/opengraph-image"),
@@ -38,6 +38,10 @@ const jsonLd = {
         "No account required",
         "Draft auto-save to localStorage",
         "Permanent published pages",
+        "REST API for publishing from scripts and automation",
+        "Command-line interface (booklet-cli)",
+        "GitHub Action for publishing docs in CI",
+        "MCP server for publishing from Claude, Cursor, and other AI assistants",
       ],
       creator: {
         "@type": "Person",
