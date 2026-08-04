@@ -71,7 +71,7 @@ export function CommandPalette({
     >
       <Command.Input
         placeholder="Jump to a draft, or run a command…"
-        className="w-full border-b border-border-subtle bg-transparent px-4 py-3 text-sm text-text-primary placeholder:text-text-muted/50 focus:outline-none"
+        className="w-full border-b border-border-subtle bg-transparent px-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none"
       />
       <Command.List className="max-h-96 overflow-y-auto p-2">
         <Command.Empty className="px-3 py-6 text-center text-sm text-text-muted">
