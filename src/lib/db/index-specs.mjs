@@ -99,7 +99,11 @@ export const INDEX_SPECS = [
   { collection: "page_versions", spec: { page_id: 1, version_number: 1 }, options: { unique: true } },
 
   // --- collections ---
-  { collection: "collections", spec: { user_id: 1, name: 1 }, options: { unique: true } },
+  // Uniqueness is scoped to the containing folder, not global per-user —
+  // "Drafts" can exist both at top-level and inside another folder. This
+  // replaced a plain {user_id, name} unique index; see the explicit
+  // dropIndex in ensureIndexes below for the migration off the old spec.
+  { collection: "collections", spec: { user_id: 1, parent_id: 1, name: 1 }, options: { unique: true } },
   // Team-space slugs must be unique (routes depend on /t/[slug] resolving to
   // exactly one team) — sparse because personal collections never set a
   // slug. This is the actual source of truth; src/app/api/teams/route.ts's
@@ -167,6 +171,17 @@ export const INDEX_SPECS = [
  * an equivalent index already exists.
  */
 export async function ensureIndexes(db) {
+  // One-time migration off the old {user_id, name} unique index, superseded
+  // by {user_id, parent_id, name} above — createIndex never removes a
+  // stale index on its own, so this has to be explicit. Safe to call
+  // repeatedly: dropIndex throws IndexNotFound (code 27) once the old
+  // index is gone, which is the expected steady state.
+  try {
+    await db.collection("collections").dropIndex("user_id_1_name_1");
+  } catch (err) {
+    if (err?.code !== 27) throw err;
+  }
+
   await Promise.all(
     INDEX_SPECS.map(({ collection, spec, options }) => db.collection(collection).createIndex(spec, options)),
   );
