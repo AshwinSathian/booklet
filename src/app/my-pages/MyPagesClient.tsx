@@ -8,6 +8,9 @@ import { createDraft, setActiveDraftId } from "@/lib/drafts";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CollectionTree } from "./CollectionTree";
+import { Breadcrumb } from "./Breadcrumb";
+import { FolderRow } from "./FolderRow";
+import { getChildren } from "@/lib/collections-tree";
 
 const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,58}[a-z0-9]$|^[a-z0-9]{3,60}$/;
 function isValidSlug(s: string) { return SLUG_RE.test(s) && !s.includes("--"); }
@@ -778,6 +781,7 @@ export function MyPagesList({
   const [draggingPageId, setDraggingPageId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [sort, setSort] = useState<SortKey>("newest");
+  const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null);
 
   const handleDeleted = useCallback((id: string) => {
     setPages((prev) => prev.filter((p) => p.id !== id));
@@ -821,6 +825,21 @@ export function MyPagesList({
     setPages((prev) => prev.map((p) => (p.collection_id === collectionId ? { ...p, collection_id: null } : p)));
     setSelectedCollection((prev) => (prev === collectionId ? "all" : prev));
   }, []);
+
+  const handleRenameCollection = useCallback(async (id: string, name: string) => {
+    setRenamingFolderId(null);
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    const current = collections.find((c) => c.id === id);
+    if (!current || current.name === trimmed) return;
+    const res = await fetch(`/api/collections/${id}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: trimmed }),
+    });
+    if (!res.ok) return;
+    setCollections((prev) => prev.map((c) => (c.id === id ? { ...c, name: trimmed } : c)));
+  }, [collections]);
 
   const assignPageToCollection = useCallback(async (pageId: string, collectionId: string | null) => {
     const page = pages.find((p) => p.id === pageId);
@@ -914,6 +933,8 @@ export function MyPagesList({
       />
 
       <div className="flex flex-col gap-3">
+        <Breadcrumb collections={collections} currentFolderId={selectedCollection} onNavigate={setSelectedCollection} />
+
         <SearchSortBar
           query={searchQuery}
           sort={sort}
@@ -925,6 +946,43 @@ export function MyPagesList({
           onQuery={setSearchQuery}
           onSort={setSort}
         />
+
+        {selectedCollection !== "all" && selectedCollection !== "uncollected" ? (
+          (() => {
+            const childFolders = getChildren(collections, selectedCollection).filter((f) =>
+              !searchQuery.trim() || f.name.toLowerCase().includes(searchQuery.trim().toLowerCase())
+            );
+            return childFolders.length > 0 ? (
+              <div className="flex flex-col gap-2 mb-1">
+                {childFolders.map((folder) => (
+                  <FolderRow
+                    key={folder.id}
+                    folder={folder}
+                    itemCount={pages.filter((p) => p.collection_id === folder.id).length}
+                    selected={false}
+                    onSelectClick={() => {}}
+                    onOpen={() => setSelectedCollection(folder.id)}
+                    onDelete={() => void handleDeleteCollection(folder.id)}
+                    renaming={renamingFolderId === folder.id}
+                    onCommitRename={(name) => void handleRenameCollection(folder.id, name)}
+                    onCancelRename={() => setRenamingFolderId(null)}
+                    isDropTarget={false}
+                    draggable={false}
+                    onDragStartFolder={() => {}}
+                    onDragEndFolder={() => {}}
+                    onDragOver={(e) => { if (draggingPageId) e.preventDefault(); }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      if (draggingPageId) void assignPageToCollection(draggingPageId, folder.id);
+                      setDraggingPageId(null);
+                    }}
+                    onContextMenu={() => {}}
+                  />
+                ))}
+              </div>
+            ) : null;
+          })()
+        ) : null}
 
         {filteredAndSorted.length > 0 ? (
           <div className="flex flex-col gap-2">
