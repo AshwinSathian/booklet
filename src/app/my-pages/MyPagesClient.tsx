@@ -1004,6 +1004,7 @@ export function MyPagesList({
         onCommitRename={(id, name) => void handleRenameCollection(id, name)}
         onCancelRename={() => setRenamingFolderId(null)}
         onFolderContextMenu={(id, position) => setFolderMenu({ folderId: id, position })}
+        onSelectFolder={(id) => { setSelectedIds(new Set([id])); setSelectionAnchor(id); }}
       />
 
       <div className="flex flex-col gap-3">

@@ -162,6 +162,7 @@ export function CollectionTree({
   onCommitRename,
   onCancelRename,
   onFolderContextMenu,
+  onSelectFolder,
 }: {
   collections: CollectionRow[];
   pages: PageRow[];
@@ -179,6 +180,7 @@ export function CollectionTree({
   onCommitRename: (id: string, name: string) => void;
   onCancelRename: () => void;
   onFolderContextMenu: (id: string, position: { x: number; y: number }) => void;
+  onSelectFolder: (id: string) => void;
 }) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [newFolderName, setNewFolderName] = useState("");
@@ -232,7 +234,7 @@ export function CollectionTree({
                 id={folder.id} label={folder.name} count={pageCount(pages, folder.id)} depth={0}
                 active={currentFolderId === folder.id}
                 expandable={children.length > 0} expanded={isExpanded} onToggleExpand={() => toggle(folder.id)}
-                canDelete onSelect={() => onNavigate(folder.id)} onDelete={() => onDeleteFolder(folder.id)}
+                canDelete onSelect={() => { onNavigate(folder.id); onSelectFolder(folder.id); }} onDelete={() => onDeleteFolder(folder.id)}
                 isDropTarget={
                   draggingPageIds !== null ||
                   (draggingFolderId !== null && draggingFolderId !== folder.id &&
@@ -264,7 +266,7 @@ export function CollectionTree({
                   id={child.id} label={child.name} count={pageCount(pages, child.id)} depth={1}
                   active={currentFolderId === child.id}
                   expandable={false} expanded={false} onToggleExpand={() => {}}
-                  canDelete onSelect={() => onNavigate(child.id)} onDelete={() => onDeleteFolder(child.id)}
+                  canDelete onSelect={() => { onNavigate(child.id); onSelectFolder(child.id); }} onDelete={() => onDeleteFolder(child.id)}
                   isDropTarget={draggingPageIds !== null}
                   onDragOver={(e) => { if (draggingPageIds) e.preventDefault(); }}
                   onDrop={(e) => { e.preventDefault(); if (draggingPageIds) onDropOnFolder(child.id); }}
