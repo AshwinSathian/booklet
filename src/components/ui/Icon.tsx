@@ -51,7 +51,9 @@ export type IconName =
   | "table"
   | "toggle"
   | "columns"
-  | "divider";
+  | "divider"
+  | "folder"
+  | "folder-open";
 
 const PATHS: Record<IconName, string | string[]> = {
   plus:           "M8 3v10M3 8h10",
@@ -105,6 +107,8 @@ const PATHS: Record<IconName, string | string[]> = {
   toggle:   ["M3 3h10v10H3z", "M6.5 6l3 2-3 2"],
   columns:  ["M2 3h5v10H2z", "M9 3h5v10H9z"],
   divider:  "M2 8h12",
+  folder:      "M2 4h3l1.5 1.5H13v7H2z",
+  "folder-open": ["M2 5.5h3l1.5 1.5H13", "M1 13 2.5 7h10L11 13z"],
 };
 
 export function Icon({
