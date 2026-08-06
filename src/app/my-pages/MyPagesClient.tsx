@@ -11,6 +11,8 @@ import { CollectionTree } from "./CollectionTree";
 import { Breadcrumb } from "./Breadcrumb";
 import { FolderRow } from "./FolderRow";
 import { canNestInto, getChildren } from "@/lib/collections-tree";
+import { ContextMenu, ContextMenuItem, ContextMenuSeparator, type ContextMenuPosition } from "@/components/ui/ContextMenu";
+import { useToast } from "@/components/ui/ToastProvider";
 
 const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,58}[a-z0-9]$|^[a-z0-9]{3,60}$/;
 function isValidSlug(s: string) { return SLUG_RE.test(s) && !s.includes("--"); }
@@ -328,6 +330,7 @@ function PageCard({
   index,
   selected,
   onSelectClick,
+  onContextMenu,
   onDeleted,
   onSlugSaved,
   onVisibilityChanged,
@@ -338,6 +341,7 @@ function PageCard({
   index: number;
   selected: boolean;
   onSelectClick: (e: React.MouseEvent) => void;
+  onContextMenu: (e: React.MouseEvent) => void;
   onDeleted: (id: string) => void;
   onSlugSaved: (id: string, slug: string | null) => void;
   onVisibilityChanged: (id: string, v: "public" | "unlisted") => void;
@@ -468,6 +472,7 @@ function PageCard({
         style={{ animationDelay: `${Math.min(index * 40, 300)}ms` }}
         draggable
         onClick={onSelectClick}
+        onContextMenu={onContextMenu}
         onDragStart={(e) => {
           const ids = onDragStart(page.id);
           e.dataTransfer.effectAllowed = "move";
@@ -795,6 +800,10 @@ export function MyPagesList({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectionAnchor, setSelectionAnchor] = useState<string | null>(null);
   const [bulkDeleteConfirming, setBulkDeleteConfirming] = useState(false);
+  const [confirmingDeleteFolderId, setConfirmingDeleteFolderId] = useState<string | null>(null);
+  const [folderMenu, setFolderMenu] = useState<{ folderId: string; position: ContextMenuPosition } | null>(null);
+  const [pageMenu, setPageMenu] = useState<{ pageId: string; position: ContextMenuPosition } | null>(null);
+  const toast = useToast();
 
   const handleDeleted = useCallback((id: string) => {
     setPages((prev) => prev.filter((p) => p.id !== id));
@@ -816,7 +825,11 @@ export function MyPagesList({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ name, parent_id: parentId }),
       });
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({})) as { error?: string };
+        toast.error("Couldn't create folder", body.error ?? "Try again.");
+        return;
+      }
       const body = (await res.json()) as { collection: CollectionRow };
       setCollections((prev) => [...prev, body.collection].sort((a, b) => a.name.localeCompare(b.name)));
       // Deliberately don't switch the filter to the new (necessarily empty)
@@ -829,15 +842,43 @@ export function MyPagesList({
     } finally {
       setCreatingCollection(false);
     }
-  }, []);
+  }, [toast]);
 
   const handleDeleteCollection = useCallback(async (collectionId: string) => {
+    if (confirmingDeleteFolderId !== collectionId) {
+      setConfirmingDeleteFolderId(collectionId);
+      const childCount = collections.filter((c) => c.parent_id === collectionId).length;
+      const directPageCount = pages.filter((p) => p.collection_id === collectionId).length;
+      const nestedPageCount = pages.filter((p) => {
+        const owner = collections.find((c) => c.id === p.collection_id);
+        return owner?.parent_id === collectionId;
+      }).length;
+      const totalPages = directPageCount + nestedPageCount;
+      const parts: string[] = [];
+      if (childCount > 0) parts.push(`${childCount} sub-folder${childCount === 1 ? "" : "s"}`);
+      if (totalPages > 0) parts.push(`${totalPages} page${totalPages === 1 ? "" : "s"}`);
+      toast.warn(
+        "Delete this folder?",
+        parts.length > 0
+          ? `Contains ${parts.join(" and ")}. Sub-folders will be deleted; pages become Uncollected — pages themselves are never deleted. Click delete again to confirm.`
+          : "This folder is empty. Click delete again to confirm.",
+      );
+      setTimeout(() => setConfirmingDeleteFolderId((prev) => (prev === collectionId ? null : prev)), 4000);
+      return;
+    }
+
+    setConfirmingDeleteFolderId(null);
     const res = await fetch(`/api/collections/${collectionId}`, { method: "DELETE" });
-    if (!res.ok) return;
-    setCollections((prev) => prev.filter((c) => c.id !== collectionId));
-    setPages((prev) => prev.map((p) => (p.collection_id === collectionId ? { ...p, collection_id: null } : p)));
-    setSelectedCollection((prev) => (prev === collectionId ? "all" : prev));
-  }, []);
+    if (!res.ok) {
+      toast.error("Couldn't delete folder", "Try again in a moment.");
+      return;
+    }
+    const removedIds = new Set([collectionId, ...collections.filter((c) => c.parent_id === collectionId).map((c) => c.id)]);
+    setCollections((prev) => prev.filter((c) => !removedIds.has(c.id)));
+    setPages((prev) => prev.map((p) => (p.collection_id && removedIds.has(p.collection_id) ? { ...p, collection_id: null } : p)));
+    setSelectedCollection((prev) => (removedIds.has(prev) ? "all" : prev));
+    toast.success("Folder deleted");
+  }, [confirmingDeleteFolderId, collections, pages, toast]);
 
   const handleRenameCollection = useCallback(async (id: string, name: string) => {
     setRenamingFolderId(null);
@@ -850,9 +891,13 @@ export function MyPagesList({
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ name: trimmed }),
     });
-    if (!res.ok) return;
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({})) as { error?: string };
+      toast.error("Couldn't rename folder", body.error ?? "Try again.");
+      return;
+    }
     setCollections((prev) => prev.map((c) => (c.id === id ? { ...c, name: trimmed } : c)));
-  }, [collections]);
+  }, [collections, toast]);
 
   const handleMoveFolder = useCallback(async (id: string, newParentId: string | null) => {
     const current = collections.find((c) => c.id === id);
@@ -865,9 +910,11 @@ export function MyPagesList({
       body: JSON.stringify({ parent_id: newParentId }),
     });
     if (!res.ok) {
+      const body = await res.json().catch(() => ({})) as { error?: string };
+      toast.error("Couldn't move folder", body.error ?? "Try again.");
       setCollections((prev) => prev.map((c) => (c.id === id ? { ...c, parent_id: previousParentId } : c)));
     }
-  }, [collections]);
+  }, [collections, toast]);
 
   const assignPagesToCollection = useCallback(async (pageIds: string[], collectionId: string | null) => {
     for (const pageId of pageIds) {
@@ -1008,6 +1055,7 @@ export function MyPagesList({
   }
 
   return (
+    <>
     <div className="grid gap-5 lg:grid-cols-[220px_minmax(0,1fr)]">
       <CollectionTree
         collections={collections}
@@ -1104,7 +1152,10 @@ export function MyPagesList({
                       if (draggingPageIds) void assignPagesToCollection(draggingPageIds, folder.id);
                       setDraggingPageIds(null);
                     }}
-                    onContextMenu={() => {}}
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      setFolderMenu({ folderId: folder.id, position: { x: e.clientX, y: e.clientY } });
+                    }}
                   />
                 ))}
               </div>
@@ -1121,6 +1172,10 @@ export function MyPagesList({
                 index={i}
                 selected={selectedIds.has(page.id)}
                 onSelectClick={(e) => handleSelect(page.id, e)}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  setPageMenu({ pageId: page.id, position: { x: e.clientX, y: e.clientY } });
+                }}
                 onDeleted={handleDeleted}
                 onSlugSaved={handleSlugSaved}
                 onVisibilityChanged={handleVisibilityChanged}
@@ -1142,5 +1197,67 @@ export function MyPagesList({
         )}
       </div>
     </div>
+
+    <ContextMenu position={folderMenu?.position ?? null} onClose={() => setFolderMenu(null)}>
+      {folderMenu ? (() => {
+        const folder = collections.find((c) => c.id === folderMenu.folderId);
+        if (!folder) return null;
+        const canHaveSubfolder = folder.parent_id === null;
+        return (
+          <>
+            {canHaveSubfolder ? (
+              <ContextMenuItem
+                icon="plus"
+                label="New folder inside"
+                onSelect={() => { setFolderMenu(null); void handleCreateCollection(folder.id, "Untitled folder"); }}
+              />
+            ) : null}
+            <ContextMenuItem
+              icon="pencil"
+              label="Rename"
+              onSelect={() => { setFolderMenu(null); setRenamingFolderId(folder.id); }}
+            />
+            <ContextMenuSeparator />
+            <ContextMenuItem
+              icon="trash"
+              label="Delete"
+              danger
+              onSelect={() => { setFolderMenu(null); void handleDeleteCollection(folder.id); }}
+            />
+          </>
+        );
+      })() : null}
+    </ContextMenu>
+
+    <ContextMenu position={pageMenu?.position ?? null} onClose={() => setPageMenu(null)}>
+      {pageMenu ? (() => {
+        const page = pages.find((p) => p.id === pageMenu.pageId);
+        if (!page) return null;
+        return (
+          <>
+            <ContextMenuItem
+              icon="external"
+              label="Open page"
+              onSelect={() => {
+                window.open(pageUrl(page), "_blank", "noopener,noreferrer");
+                setPageMenu(null);
+              }}
+            />
+            <ContextMenuSeparator />
+            <ContextMenuItem
+              icon="trash"
+              label="Delete"
+              danger
+              onSelect={() => {
+                const id = pageMenu.pageId;
+                setPageMenu(null);
+                void fetch(`/api/pages/${id}`, { method: "DELETE" }).then((r) => { if (r.ok) handleDeleted(id); });
+              }}
+            />
+          </>
+        );
+      })() : null}
+    </ContextMenu>
+    </>
   );
 }
