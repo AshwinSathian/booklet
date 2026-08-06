@@ -6,6 +6,24 @@ import { canNestInto, getChildren, getTeamSpaces } from "@/lib/collections-tree"
 import { useState } from "react";
 import type { CollectionRow, CollectionFilter, PageRow } from "./MyPagesClient";
 
+function RenameInput({ initialValue, onCommit, onCancel }: { initialValue: string; onCommit: (name: string) => void; onCancel: () => void }) {
+  const [draft, setDraft] = useState(initialValue);
+  return (
+    <input
+      autoFocus
+      value={draft}
+      onChange={(e) => setDraft(e.target.value)}
+      onClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") { e.preventDefault(); onCommit(draft.trim() || initialValue); }
+        if (e.key === "Escape") { e.preventDefault(); onCancel(); }
+      }}
+      onBlur={() => onCommit(draft.trim() || initialValue)}
+      className="min-w-0 flex-1 rounded-md border border-accent/40 bg-bg px-1.5 py-0.5 text-sm text-text-primary focus-visible:outline-none"
+    />
+  );
+}
+
 function pageCount(pages: PageRow[], collectionId: CollectionFilter) {
   if (collectionId === "all") return pages.length;
   if (collectionId === "uncollected") return pages.filter((p) => p.collection_id === null).length;
@@ -30,6 +48,10 @@ function Row({
   draggable,
   onDragStartRow,
   onDragEndRow,
+  onContextMenu,
+  renaming,
+  onCommitRename,
+  onCancelRename,
 }: {
   id: CollectionFilter;
   label: string;
@@ -48,6 +70,10 @@ function Row({
   draggable?: boolean;
   onDragStartRow?: (e: React.DragEvent) => void;
   onDragEndRow?: () => void;
+  onContextMenu?: (e: React.MouseEvent) => void;
+  renaming?: boolean;
+  onCommitRename?: (name: string) => void;
+  onCancelRename?: () => void;
 }) {
   return (
     <div
@@ -61,6 +87,7 @@ function Row({
       onDragEnd={onDragEndRow}
       onDragOver={onDragOver}
       onDrop={onDrop}
+      onContextMenu={onContextMenu}
     >
       {expandable ? (
         <button
@@ -74,24 +101,33 @@ function Row({
       ) : (
         <span className="w-5 shrink-0" />
       )}
-      <button
-        type="button"
-        onClick={onSelect}
-        className={[
-          "flex min-w-0 flex-1 items-center justify-between gap-2 rounded-lg px-2 py-2 text-left text-sm transition",
-          active ? "bg-accent-dim text-accent font-medium" : "text-text-secondary hover:bg-fill-2 hover:text-text-primary",
-        ].join(" ")}
-      >
-        <span className="flex items-center gap-1.5 truncate">
+      {renaming && onCommitRename && onCancelRename ? (
+        <div className="flex min-w-0 flex-1 items-center gap-1.5 px-2 py-1">
           {id !== "all" && id !== "uncollected" ? (
-            <Icon name={active ? "folder-open" : "folder"} size={13} className="shrink-0 text-accent/70" />
+            <Icon name="folder" size={13} className="shrink-0 text-accent/70" />
           ) : null}
-          <span className="truncate">{label}</span>
-        </span>
-        <span className="shrink-0 rounded-full bg-fill-2 px-1.5 py-0.5 text-2xs text-text-muted tabular-nums">
-          {count}
-        </span>
-      </button>
+          <RenameInput initialValue={label} onCommit={onCommitRename} onCancel={onCancelRename} />
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={onSelect}
+          className={[
+            "flex min-w-0 flex-1 items-center justify-between gap-2 rounded-lg px-2 py-2 text-left text-sm transition",
+            active ? "bg-accent-dim text-accent font-medium" : "text-text-secondary hover:bg-fill-2 hover:text-text-primary",
+          ].join(" ")}
+        >
+          <span className="flex items-center gap-1.5 truncate">
+            {id !== "all" && id !== "uncollected" ? (
+              <Icon name={active ? "folder-open" : "folder"} size={13} className="shrink-0 text-accent/70" />
+            ) : null}
+            <span className="truncate">{label}</span>
+          </span>
+          <span className="shrink-0 rounded-full bg-fill-2 px-1.5 py-0.5 text-2xs text-text-muted tabular-nums">
+            {count}
+          </span>
+        </button>
+      )}
       {canDelete ? (
         <Button
           variant="danger"
@@ -122,6 +158,10 @@ export function CollectionTree({
   onDragFolderStart,
   onDragFolderEnd,
   onDropOnFolder,
+  renamingFolderId,
+  onCommitRename,
+  onCancelRename,
+  onFolderContextMenu,
 }: {
   collections: CollectionRow[];
   pages: PageRow[];
@@ -135,6 +175,10 @@ export function CollectionTree({
   onDragFolderStart: (id: string) => void;
   onDragFolderEnd: () => void;
   onDropOnFolder: (targetId: string | null) => void;
+  renamingFolderId: string | null;
+  onCommitRename: (id: string, name: string) => void;
+  onCancelRename: () => void;
+  onFolderContextMenu: (id: string, position: { x: number; y: number }) => void;
 }) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [newFolderName, setNewFolderName] = useState("");
@@ -206,6 +250,13 @@ export function CollectionTree({
                   onDragFolderStart(folder.id);
                 }}
                 onDragEndRow={onDragFolderEnd}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  onFolderContextMenu(folder.id, { x: e.clientX, y: e.clientY });
+                }}
+                renaming={renamingFolderId === folder.id}
+                onCommitRename={(name) => onCommitRename(folder.id, name)}
+                onCancelRename={onCancelRename}
               />
               {isExpanded && children.map((child) => (
                 <Row
@@ -217,6 +268,13 @@ export function CollectionTree({
                   isDropTarget={draggingPageIds !== null}
                   onDragOver={(e) => { if (draggingPageIds) e.preventDefault(); }}
                   onDrop={(e) => { e.preventDefault(); if (draggingPageIds) onDropOnFolder(child.id); }}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    onFolderContextMenu(child.id, { x: e.clientX, y: e.clientY });
+                  }}
+                  renaming={renamingFolderId === child.id}
+                  onCommitRename={(name) => onCommitRename(child.id, name)}
+                  onCancelRename={onCancelRename}
                 />
               ))}
             </div>
