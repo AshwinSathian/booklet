@@ -7,11 +7,12 @@ import { ROUTES } from "@/lib/constants";
 import { createDraft, setActiveDraftId } from "@/lib/drafts";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { CollectionTree } from "./CollectionTree";
 
 const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,58}[a-z0-9]$|^[a-z0-9]{3,60}$/;
 function isValidSlug(s: string) { return SLUG_RE.test(s) && !s.includes("--"); }
 
-type PageRow = {
+export type PageRow = {
   id: string;
   slug: string | null;
   title: string | null;
@@ -26,7 +27,7 @@ type PageRow = {
   baseUrl: string;
 };
 
-type CollectionRow = {
+export type CollectionRow = {
   id: string;
   name: string;
   is_team_space: boolean;
@@ -35,7 +36,7 @@ type CollectionRow = {
   updated_at: string;
 };
 
-type CollectionFilter = "all" | "uncollected" | string;
+export type CollectionFilter = "all" | "uncollected" | string;
 type SortKey = "newest" | "oldest" | "views" | "alpha";
 
 function pageUrl(page: PageRow) {
@@ -677,142 +678,6 @@ function PageCard({
 }
 
 // ---------------------------------------------------------------------------
-// Collections sidebar
-// ---------------------------------------------------------------------------
-
-function CollectionSidebar({
-  collections,
-  pages,
-  selected,
-  newCollectionName,
-  creatingCollection,
-  draggingPageId,
-  onSelected,
-  onNewCollectionName,
-  onCreateCollection,
-  onDeleteCollection,
-  onDropPage,
-}: {
-  collections: CollectionRow[];
-  pages: PageRow[];
-  selected: CollectionFilter;
-  newCollectionName: string;
-  creatingCollection: boolean;
-  draggingPageId: string | null;
-  onSelected: (next: CollectionFilter) => void;
-  onNewCollectionName: (next: string) => void;
-  onCreateCollection: () => void;
-  onDeleteCollection: (collectionId: string) => void;
-  onDropPage: (collectionId: string | null) => void;
-}) {
-  const pageCount = (collectionId: CollectionFilter) => {
-    if (collectionId === "all") return pages.length;
-    if (collectionId === "uncollected") return pages.filter((p) => p.collection_id === null).length;
-    return pages.filter((p) => p.collection_id === collectionId).length;
-  };
-
-  const DropButton = ({
-    id,
-    label,
-    count,
-    canDelete,
-  }: {
-    id: CollectionFilter;
-    label: string;
-    count: number;
-    canDelete?: boolean;
-  }) => (
-    <div
-      className="group flex items-center gap-1"
-      onDragOver={(e) => { if (draggingPageId) e.preventDefault(); }}
-      onDrop={(e) => {
-        e.preventDefault();
-        if (id === "all") return;
-        onDropPage(id === "uncollected" ? null : id);
-      }}
-    >
-      <button
-        type="button"
-        onClick={() => onSelected(id)}
-        className={[
-          "flex min-w-0 flex-1 items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm transition",
-          selected === id
-            ? "bg-accent-dim text-accent font-medium"
-            : "text-text-secondary hover:bg-fill-2 hover:text-text-primary",
-        ].join(" ")}
-      >
-        <span className="truncate">{label}</span>
-        <span className="shrink-0 rounded-full bg-fill-2 px-1.5 py-0.5 text-2xs text-text-muted tabular-nums">
-          {count}
-        </span>
-      </button>
-      {canDelete ? (
-        <Button
-          variant="danger"
-          size="sm"
-          iconOnly
-          onClick={() => onDeleteCollection(id)}
-          aria-label={`Delete ${label}`}
-          title={`Delete ${label}`}
-          className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 shrink-0"
-        >
-          <Icon name="trash" size={12} />
-        </Button>
-      ) : null}
-    </div>
-  );
-
-  return (
-    <aside className="rounded-xl border border-border-default bg-bg-elevated p-3 lg:sticky lg:top-16 lg:self-start">
-      <div className="mb-2 px-1 text-2xs font-semibold uppercase tracking-wider text-text-muted">
-        Collections
-      </div>
-
-      <div className="flex gap-1 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible">
-        <DropButton id="all" label="All pages" count={pageCount("all")} />
-        <DropButton id="uncollected" label="Uncollected" count={pageCount("uncollected")} />
-        {collections.map((collection) => (
-          <DropButton
-            key={collection.id}
-            id={collection.id}
-            label={collection.is_team_space ? `${collection.name} · Team` : collection.name}
-            count={pageCount(collection.id)}
-            canDelete={!collection.is_team_space}
-          />
-        ))}
-      </div>
-
-      <div className="mt-3 flex gap-1.5">
-        <input
-          value={newCollectionName}
-          onChange={(e) => onNewCollectionName(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") { e.preventDefault(); onCreateCollection(); }
-          }}
-          placeholder="New collection…"
-          className="min-w-0 flex-1 rounded-lg border border-border-default bg-bg px-2.5 py-1.5 text-xs text-text-primary placeholder:text-text-muted/40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft"
-        />
-        <Button
-          variant="primary"
-          size="md"
-          iconOnly
-          onClick={onCreateCollection}
-          disabled={creatingCollection || !newCollectionName.trim()}
-          aria-label="Create collection"
-          title="Create collection"
-        >
-          <Icon
-            name={creatingCollection ? "spinner" : "plus"}
-            size={13}
-            className={creatingCollection ? "animate-spin" : undefined}
-          />
-        </Button>
-      </div>
-    </aside>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Search + Sort bar
 // ---------------------------------------------------------------------------
 
@@ -909,7 +774,6 @@ export function MyPagesList({
   );
   const [collections, setCollections] = useState<CollectionRow[]>(initialCollections);
   const [selectedCollection, setSelectedCollection] = useState<CollectionFilter>("all");
-  const [newCollectionName, setNewCollectionName] = useState("");
   const [creatingCollection, setCreatingCollection] = useState(false);
   const [draggingPageId, setDraggingPageId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -927,31 +791,28 @@ export function MyPagesList({
     setPages((prev) => prev.map((p) => (p.id === id ? { ...p, visibility } : p)));
   }, []);
 
-  const handleCreateCollection = useCallback(async () => {
-    const name = newCollectionName.trim();
-    if (!name) return;
+  const handleCreateCollection = useCallback(async (parentId: string | null, name: string) => {
     setCreatingCollection(true);
     try {
       const res = await fetch("/api/collections", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ name, parent_id: parentId }),
       });
       if (!res.ok) throw new Error();
       const body = (await res.json()) as { collection: CollectionRow };
       setCollections((prev) => [...prev, body.collection].sort((a, b) => a.name.localeCompare(b.name)));
       // Deliberately don't switch the filter to the new (necessarily empty)
-      // collection — that used to strand the user looking at an empty list,
-      // with no prompt to assign anything to it. The new collection now
-      // just appears in the sidebar while the current page list stays put,
-      // so the pages the user was already looking at are still visible to
-      // drag onto it (the existing assignPageToCollection drag-and-drop
-      // flow, wired via CollectionSidebar's onDropPage below).
-      setNewCollectionName("");
+      // folder — that used to strand the user looking at an empty list,
+      // with no prompt to assign anything to it. The new folder just
+      // appears in the sidebar while the current page list stays put, so
+      // pages the user was already looking at are still visible to drag
+      // onto it (the existing drag-and-drop flow, wired via
+      // CollectionTree's onDropOnFolder below).
     } finally {
       setCreatingCollection(false);
     }
-  }, [newCollectionName]);
+  }, []);
 
   const handleDeleteCollection = useCallback(async (collectionId: string) => {
     const res = await fetch(`/api/collections/${collectionId}`, { method: "DELETE" });
@@ -1036,18 +897,17 @@ export function MyPagesList({
 
   return (
     <div className="grid gap-5 lg:grid-cols-[220px_minmax(0,1fr)]">
-      <CollectionSidebar
+      <CollectionTree
         collections={collections}
         pages={pages}
-        selected={selectedCollection}
-        newCollectionName={newCollectionName}
-        creatingCollection={creatingCollection}
-        draggingPageId={draggingPageId}
-        onSelected={setSelectedCollection}
-        onNewCollectionName={setNewCollectionName}
-        onCreateCollection={handleCreateCollection}
-        onDeleteCollection={handleDeleteCollection}
-        onDropPage={(collectionId) => {
+        currentFolderId={selectedCollection}
+        onNavigate={setSelectedCollection}
+        onCreateFolder={(parentId, name) => void handleCreateCollection(parentId, name)}
+        creatingFolder={creatingCollection}
+        onDeleteFolder={(id) => void handleDeleteCollection(id)}
+        draggingPageIds={draggingPageId ? [draggingPageId] : null}
+        draggingFolderId={null}
+        onDropOnFolder={(collectionId) => {
           if (draggingPageId) void assignPageToCollection(draggingPageId, collectionId);
           setDraggingPageId(null);
         }}
