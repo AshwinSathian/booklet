@@ -5,12 +5,18 @@ import {
 } from "@/lib/db";
 import { createId } from "@/lib/id";
 import { getSession } from "@/lib/auth/session";
+import { resolveParent } from "@/server/collections";
+import { toErrorResponse } from "@/server/errors";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 
 function cleanName(value: unknown): string {
   return typeof value === "string" ? value.replace(/\s+/g, " ").trim() : "";
+}
+
+function cleanParentId(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
 export async function GET() {
@@ -31,9 +37,9 @@ export async function POST(req: Request) {
   const userId = (await getSession())?.userId ?? null;
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  let body: { name?: unknown; is_team_space?: unknown };
+  let body: { name?: unknown; is_team_space?: unknown; parent_id?: unknown };
   try {
-    body = (await req.json()) as { name?: unknown; is_team_space?: unknown };
+    body = (await req.json()) as { name?: unknown; is_team_space?: unknown; parent_id?: unknown };
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
@@ -44,15 +50,27 @@ export async function POST(req: Request) {
   }
 
   const isTeamSpace = body.is_team_space === true;
+  const requestedParentId = isTeamSpace ? null : cleanParentId(body.parent_id);
+
+  let parent;
+  try {
+    parent = await resolveParent(requestedParentId, userId);
+  } catch (e) {
+    return toErrorResponse(e);
+  }
+  const parentId = parent ? parent.id : null;
 
   const id = createId(10);
   const now = new Date().toISOString();
   try {
-    await createCollectionRecord(id, userId, name, isTeamSpace);
+    await createCollectionRecord(id, userId, name, isTeamSpace, parentId);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "";
     if (message.includes("E11000")) {
-      return NextResponse.json({ error: "Collection name already exists." }, { status: 409 });
+      return NextResponse.json(
+        { error: parentId ? "A folder with that name already exists here." : "Collection name already exists." },
+        { status: 409 },
+      );
     }
     throw err;
   }
@@ -63,6 +81,7 @@ export async function POST(req: Request) {
       user_id: userId,
       name,
       is_team_space: isTeamSpace,
+      parent_id: parentId,
       created_at: now,
       updated_at: now,
     },
