@@ -326,6 +326,8 @@ function DrawerItem({
 function PageCard({
   page,
   index,
+  selected,
+  onSelectClick,
   onDeleted,
   onSlugSaved,
   onVisibilityChanged,
@@ -334,10 +336,12 @@ function PageCard({
 }: {
   page: PageRow;
   index: number;
+  selected: boolean;
+  onSelectClick: (e: React.MouseEvent) => void;
   onDeleted: (id: string) => void;
   onSlugSaved: (id: string, slug: string | null) => void;
   onVisibilityChanged: (id: string, v: "public" | "unlisted") => void;
-  onDragStart: (pageId: string) => void;
+  onDragStart: (pageId: string) => string[];
   onDragEnd: () => void;
 }) {
   const router = useRouter();
@@ -457,13 +461,18 @@ function PageCard({
   return (
     <>
       <div
-        className="group flex flex-col gap-0 rounded-xl border border-border-default bg-bg-elevated transition hover:border-accent-soft/30 hover:shadow-hard cursor-grab active:cursor-grabbing animate-fade-up"
+        className={[
+          "group flex flex-col gap-0 rounded-xl border bg-bg-elevated transition hover:shadow-hard cursor-grab active:cursor-grabbing animate-fade-up",
+          selected ? "border-accent-soft/50 bg-accent-dim" : "border-border-default hover:border-accent-soft/30",
+        ].join(" ")}
         style={{ animationDelay: `${Math.min(index * 40, 300)}ms` }}
         draggable
+        onClick={onSelectClick}
         onDragStart={(e) => {
+          const ids = onDragStart(page.id);
           e.dataTransfer.effectAllowed = "move";
-          e.dataTransfer.setData("text/plain", page.id);
-          onDragStart(page.id);
+          e.dataTransfer.setData("text/plain", ids[0]);
+          if (ids.length > 1) e.dataTransfer.setData("application/x-booklet-pages", JSON.stringify(ids));
         }}
         onDragEnd={onDragEnd}
       >
@@ -778,10 +787,13 @@ export function MyPagesList({
   const [collections, setCollections] = useState<CollectionRow[]>(initialCollections);
   const [selectedCollection, setSelectedCollection] = useState<CollectionFilter>("all");
   const [creatingCollection, setCreatingCollection] = useState(false);
-  const [draggingPageId, setDraggingPageId] = useState<string | null>(null);
+  const [draggingPageIds, setDraggingPageIds] = useState<string[] | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [sort, setSort] = useState<SortKey>("newest");
   const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [selectionAnchor, setSelectionAnchor] = useState<string | null>(null);
+  const [bulkDeleteConfirming, setBulkDeleteConfirming] = useState(false);
 
   const handleDeleted = useCallback((id: string) => {
     setPages((prev) => prev.filter((p) => p.id !== id));
@@ -841,31 +853,47 @@ export function MyPagesList({
     setCollections((prev) => prev.map((c) => (c.id === id ? { ...c, name: trimmed } : c)));
   }, [collections]);
 
-  const assignPageToCollection = useCallback(async (pageId: string, collectionId: string | null) => {
-    const page = pages.find((p) => p.id === pageId);
-    if (!page || page.collection_id === collectionId) return;
-    const previousCollectionId = page.collection_id;
-    setPages((prev) => prev.map((p) => (p.id === pageId ? { ...p, collection_id: collectionId } : p)));
-    try {
-      if (collectionId) {
-        const res = await fetch(`/api/collections/${collectionId}/pages`, {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ pageId }),
-        });
-        if (!res.ok) throw new Error();
-      } else if (previousCollectionId) {
-        const res = await fetch(`/api/collections/${previousCollectionId}/pages`, {
-          method: "DELETE",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ pageId }),
-        });
-        if (!res.ok) throw new Error();
+  const assignPagesToCollection = useCallback(async (pageIds: string[], collectionId: string | null) => {
+    for (const pageId of pageIds) {
+      const page = pages.find((p) => p.id === pageId);
+      if (!page || page.collection_id === collectionId) continue;
+      const previousCollectionId = page.collection_id;
+      setPages((prev) => prev.map((p) => (p.id === pageId ? { ...p, collection_id: collectionId } : p)));
+      try {
+        if (collectionId) {
+          const res = await fetch(`/api/collections/${collectionId}/pages`, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ pageId }),
+          });
+          if (!res.ok) throw new Error();
+        } else if (previousCollectionId) {
+          const res = await fetch(`/api/collections/${previousCollectionId}/pages`, {
+            method: "DELETE",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ pageId }),
+          });
+          if (!res.ok) throw new Error();
+        }
+      } catch {
+        setPages((prev) => prev.map((p) => (p.id === pageId ? { ...p, collection_id: previousCollectionId } : p)));
       }
-    } catch {
-      setPages((prev) => prev.map((p) => (p.id === pageId ? { ...p, collection_id: previousCollectionId } : p)));
     }
   }, [pages]);
+
+  const handleBulkDelete = useCallback(async () => {
+    const pageIds = [...selectedIds].filter((id) => pages.some((p) => p.id === id));
+    const folderIds = [...selectedIds].filter((id) => collections.some((c) => c.id === id));
+    await Promise.all([
+      ...pageIds.map((id) => fetch(`/api/pages/${id}`, { method: "DELETE" })),
+      ...folderIds.map((id) => fetch(`/api/collections/${id}`, { method: "DELETE" })),
+    ]);
+    setPages((prev) => prev.filter((p) => !pageIds.includes(p.id)));
+    setCollections((prev) => prev.filter((c) => !folderIds.includes(c.id)));
+    setPages((prev) => prev.map((p) => (p.collection_id && folderIds.includes(p.collection_id) ? { ...p, collection_id: null } : p)));
+    setSelectedIds(new Set());
+    setBulkDeleteConfirming(false);
+  }, [selectedIds, pages, collections]);
 
   const filteredAndSorted = useMemo(() => {
     let result = pages.filter((page) => {
@@ -886,6 +914,55 @@ export function MyPagesList({
 
     return result;
   }, [pages, selectedCollection, searchQuery, sort]);
+
+  const currentFolderChildren = selectedCollection !== "all" && selectedCollection !== "uncollected"
+    ? getChildren(collections, selectedCollection)
+    : [];
+
+  const handleSelect = useCallback((id: string, e: React.MouseEvent) => {
+    const selectableOrder = [...currentFolderChildren.map((f) => f.id), ...filteredAndSorted.map((p) => p.id)];
+    if (e.shiftKey && selectionAnchor) {
+      const from = selectableOrder.indexOf(selectionAnchor);
+      const to = selectableOrder.indexOf(id);
+      if (from !== -1 && to !== -1) {
+        const [start, end] = from < to ? [from, to] : [to, from];
+        setSelectedIds(new Set(selectableOrder.slice(start, end + 1)));
+        return;
+      }
+    }
+    if (e.metaKey || e.ctrlKey) {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        if (next.has(id)) next.delete(id); else next.add(id);
+        return next;
+      });
+      setSelectionAnchor(id);
+      return;
+    }
+    setSelectedIds(new Set([id]));
+    setSelectionAnchor(id);
+  }, [selectionAnchor, currentFolderChildren, filteredAndSorted]);
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      const target = e.target;
+      if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) return;
+      if (e.key === "Escape") {
+        setSelectedIds(new Set());
+        setSelectionAnchor(null);
+      }
+      if ((e.key === "Delete" || e.key === "Backspace") && selectedIds.size > 0) {
+        e.preventDefault();
+        setBulkDeleteConfirming(true);
+      }
+      if (e.key === "Enter" && selectedIds.size === 1) {
+        const [only] = selectedIds;
+        if (collections.some((c) => c.id === only)) setRenamingFolderId(only);
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedIds, collections]);
 
   if (pages.length === 0) {
     return (
@@ -924,15 +1001,25 @@ export function MyPagesList({
         onCreateFolder={(parentId, name) => void handleCreateCollection(parentId, name)}
         creatingFolder={creatingCollection}
         onDeleteFolder={(id) => void handleDeleteCollection(id)}
-        draggingPageIds={draggingPageId ? [draggingPageId] : null}
+        draggingPageIds={draggingPageIds}
         draggingFolderId={null}
         onDropOnFolder={(collectionId) => {
-          if (draggingPageId) void assignPageToCollection(draggingPageId, collectionId);
-          setDraggingPageId(null);
+          if (draggingPageIds) void assignPagesToCollection(draggingPageIds, collectionId);
+          setDraggingPageIds(null);
         }}
       />
 
       <div className="flex flex-col gap-3">
+        {bulkDeleteConfirming ? (
+          <div className="flex items-center gap-3 rounded-xl border border-red-400/30 bg-red-400/8 px-4 py-3">
+            <span className="flex-1 text-sm text-text-secondary">
+              Delete {selectedIds.size} selected item{selectedIds.size === 1 ? "" : "s"}? Pages are deleted permanently; folders only unlink their pages.
+            </span>
+            <Button variant="danger" size="sm" onClick={() => void handleBulkDelete()}>Delete</Button>
+            <Button variant="secondary" size="sm" onClick={() => setBulkDeleteConfirming(false)}>Cancel</Button>
+          </div>
+        ) : null}
+
         <Breadcrumb collections={collections} currentFolderId={selectedCollection} onNavigate={setSelectedCollection} />
 
         <SearchSortBar
@@ -959,8 +1046,8 @@ export function MyPagesList({
                     key={folder.id}
                     folder={folder}
                     itemCount={pages.filter((p) => p.collection_id === folder.id).length}
-                    selected={false}
-                    onSelectClick={() => {}}
+                    selected={selectedIds.has(folder.id)}
+                    onSelectClick={(e) => handleSelect(folder.id, e)}
                     onOpen={() => setSelectedCollection(folder.id)}
                     onDelete={() => void handleDeleteCollection(folder.id)}
                     renaming={renamingFolderId === folder.id}
@@ -970,11 +1057,11 @@ export function MyPagesList({
                     draggable={false}
                     onDragStartFolder={() => {}}
                     onDragEndFolder={() => {}}
-                    onDragOver={(e) => { if (draggingPageId) e.preventDefault(); }}
+                    onDragOver={(e) => { if (draggingPageIds) e.preventDefault(); }}
                     onDrop={(e) => {
                       e.preventDefault();
-                      if (draggingPageId) void assignPageToCollection(draggingPageId, folder.id);
-                      setDraggingPageId(null);
+                      if (draggingPageIds) void assignPagesToCollection(draggingPageIds, folder.id);
+                      setDraggingPageIds(null);
                     }}
                     onContextMenu={() => {}}
                   />
@@ -991,11 +1078,19 @@ export function MyPagesList({
                 key={page.id}
                 page={page}
                 index={i}
+                selected={selectedIds.has(page.id)}
+                onSelectClick={(e) => handleSelect(page.id, e)}
                 onDeleted={handleDeleted}
                 onSlugSaved={handleSlugSaved}
                 onVisibilityChanged={handleVisibilityChanged}
-                onDragStart={setDraggingPageId}
-                onDragEnd={() => setDraggingPageId(null)}
+                onDragStart={(pageId) => {
+                  const ids = selectedIds.has(pageId) && selectedIds.size > 1
+                    ? [...selectedIds].filter((id) => pages.some((p) => p.id === id))
+                    : [pageId];
+                  setDraggingPageIds(ids);
+                  return ids;
+                }}
+                onDragEnd={() => setDraggingPageIds(null)}
               />
             ))}
           </div>
