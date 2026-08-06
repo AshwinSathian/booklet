@@ -11,7 +11,8 @@ import { prefersReducedMotion } from "@/lib/ui/motion";
 import { useSession } from "@/components/auth/SessionProvider";
 import { AccountMenu } from "@/components/auth/AccountMenu";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ActionDrawer, DrawerSection } from "../ui/ActionDrawer";
+import { Sheet, SheetSection } from "../ui/Sheet";
+import { Menu, ContextMenuItem } from "../ui/ContextMenu";
 import { AppLogo } from "../ui/AppLogo";
 import { Button } from "../ui/Button";
 import { Icon, type IconName } from "../ui/Icon";
@@ -103,7 +104,7 @@ function MoreActionsDrawer({
   const goBack = useCallback(() => setView("menu"), []);
 
   return (
-    <ActionDrawer
+    <Sheet
       open={open}
       title={view === "menu" ? "More" : view === "drafts" ? "My drafts" : "Templates"}
       description={view === "menu" ? "Draft actions, import/export tools, and navigation." : undefined}
@@ -111,7 +112,7 @@ function MoreActionsDrawer({
     >
       {view === "menu" ? (
         sections.map((section) => (
-          <DrawerSection key={section.title} title={section.title}>
+          <SheetSection key={section.title} title={section.title}>
             {section.items.map((item) => (
               <button
                 key={item.label}
@@ -144,7 +145,7 @@ function MoreActionsDrawer({
                 ) : null}
               </button>
             ))}
-          </DrawerSection>
+          </SheetSection>
         ))
       ) : null}
 
@@ -168,7 +169,7 @@ function MoreActionsDrawer({
           }}
         />
       ) : null}
-    </ActionDrawer>
+    </Sheet>
   );
 }
 
@@ -611,6 +612,7 @@ function PublishArea({
   const [showPublishOptions, setShowPublishOptions] = useState(false);
   const [showReveal, setShowReveal] = useState(false);
   const prevStatusRef = useRef<EditorStatus>(status);
+  const publishOptionsTriggerRef = useRef<HTMLButtonElement>(null);
 
   // Play the reveal only on the transition INTO "published" (not on every
   // render while published, and not on mount if a draft somehow loads
@@ -689,40 +691,33 @@ function PublishArea({
             <span className="hidden sm:inline">Update page</span>
           </button>
           <button
+            ref={publishOptionsTriggerRef}
             type="button"
             title="More publish options"
             disabled={isPublishing}
-            onClick={() => setShowPublishOptions(true)}
+            onClick={() => setShowPublishOptions((v) => !v)}
             className="flex h-8 w-8 items-center justify-center rounded-r-pill bg-accent text-accent-contrast border-l border-white/20 hover:bg-accent-hover transition active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
           >
             <Icon name="chevron-down" size={11} />
           </button>
         </div>
-        <ActionDrawer
+        <Menu
           open={showPublishOptions}
-          title="Publish options"
-          description="Choose whether this draft updates the current page or becomes a new page."
           onClose={() => setShowPublishOptions(false)}
+          anchorRef={publishOptionsTriggerRef}
+          align="end"
+          widthClass="w-64"
         >
-          <DrawerSection title="Page">
-            <button
-              type="button"
-              className="flex w-full items-center gap-3 border-b border-border-subtle px-3 py-3 text-left text-sm text-text-secondary transition last:border-b-0 hover:bg-fill-2 hover:text-text-primary"
-              onClick={() => {
-                onPublish();
-                setShowPublishOptions(false);
-              }}
-            >
-              <span className="shrink-0 text-text-muted">
-                <Icon name="plus" size={16} />
-              </span>
-              <span>
-                <span className="block text-text-primary">Publish as new page</span>
-                <span className="mt-0.5 block text-xs text-text-muted">Create a separate published URL from this draft.</span>
-              </span>
-            </button>
-          </DrawerSection>
-        </ActionDrawer>
+          <ContextMenuItem
+            icon="plus"
+            label="Publish as new page"
+            description="Create a separate published URL from this draft"
+            onSelect={() => {
+              onPublish();
+              setShowPublishOptions(false);
+            }}
+          />
+        </Menu>
       </>
     );
   }

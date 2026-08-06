@@ -69,35 +69,43 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   children?: ReactNode;
 };
 
-export function Button({
-  variant = "secondary",
-  size = "md",
-  iconOnly = false,
-  href,
-  external,
-  className,
-  children,
-  ...rest
-}: ButtonProps) {
-  const computed = cls(variant, size, iconOnly, className);
+export const Button = React.forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonProps>(
+  function Button(
+    { variant = "secondary", size = "md", iconOnly = false, href, external, className, children, ...rest },
+    ref,
+  ) {
+    const computed = cls(variant, size, iconOnly, className);
 
-  if (href && external) {
+    if (href && external) {
+      return (
+        <a
+          ref={ref as React.Ref<HTMLAnchorElement>}
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={computed}
+          {...(rest as React.AnchorHTMLAttributes<HTMLAnchorElement>)}
+        >
+          {children}
+        </a>
+      );
+    }
+    if (href) {
+      return (
+        <Link
+          ref={ref as React.Ref<HTMLAnchorElement>}
+          href={href}
+          className={computed}
+          {...(rest as React.AnchorHTMLAttributes<HTMLAnchorElement>)}
+        >
+          {children}
+        </Link>
+      );
+    }
     return (
-      <a href={href} target="_blank" rel="noopener noreferrer" className={computed} {...(rest as React.AnchorHTMLAttributes<HTMLAnchorElement>)}>
+      <button ref={ref as React.Ref<HTMLButtonElement>} className={computed} {...rest}>
         {children}
-      </a>
+      </button>
     );
-  }
-  if (href) {
-    return (
-      <Link href={href} className={computed} {...(rest as React.AnchorHTMLAttributes<HTMLAnchorElement>)}>
-        {children}
-      </Link>
-    );
-  }
-  return (
-    <button className={computed} {...rest}>
-      {children}
-    </button>
-  );
-}
+  },
+);

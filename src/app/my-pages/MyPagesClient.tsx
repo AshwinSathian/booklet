@@ -1,6 +1,5 @@
 "use client";
 
-import { ActionDrawer, DrawerSection } from "@/components/ui/ActionDrawer";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { ROUTES } from "@/lib/constants";
@@ -11,7 +10,7 @@ import { CollectionTree } from "./CollectionTree";
 import { Breadcrumb } from "./Breadcrumb";
 import { FolderRow } from "./FolderRow";
 import { canNestInto, getChildren } from "@/lib/collections-tree";
-import { ContextMenu, ContextMenuItem, ContextMenuSeparator, type ContextMenuPosition } from "@/components/ui/ContextMenu";
+import { ContextMenu, ContextMenuItem, ContextMenuSeparator, Menu, type ContextMenuPosition } from "@/components/ui/ContextMenu";
 import { useToast } from "@/components/ui/ToastProvider";
 
 const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,58}[a-z0-9]$|^[a-z0-9]{3,60}$/;
@@ -241,87 +240,6 @@ function SlugEditor({
 }
 
 // ---------------------------------------------------------------------------
-// DrawerItem — reusable row inside ActionDrawer
-// ---------------------------------------------------------------------------
-
-function DrawerItem({
-  icon,
-  label,
-  description,
-  onClick,
-  href,
-  danger,
-  disabled,
-  active,
-  activeLabel,
-  locked,
-}: {
-  icon: Parameters<typeof Icon>[0]["name"];
-  label: string;
-  description?: string;
-  onClick?: () => void;
-  href?: string;
-  danger?: boolean;
-  disabled?: boolean;
-  active?: boolean;
-  activeLabel?: string;
-  locked?: boolean;
-}) {
-  const cls = [
-    "flex w-full items-center gap-3 px-3 py-3 text-left transition",
-    "border-b border-border-subtle last:border-b-0",
-    locked
-      ? "text-text-muted opacity-60 hover:bg-fill-1"
-      : danger
-        ? "text-red-400 hover:bg-red-400/8"
-        : active
-          ? "text-accent bg-accent-dim hover:bg-accent-dim"
-          : "text-text-secondary hover:bg-fill-2 hover:text-text-primary",
-    disabled ? "opacity-40 pointer-events-none" : "",
-  ].join(" ");
-
-  const inner = (
-    <>
-      <span className={["shrink-0", locked ? "text-text-muted" : danger ? "text-red-400/70" : active ? "text-accent" : "text-text-muted"].join(" ")}>
-        <Icon name={icon} size={16} />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-sm font-medium leading-tight">{label}</span>
-        {description ? <span className="block text-xs text-text-muted mt-0.5">{description}</span> : null}
-      </span>
-      {locked ? (
-        <span className="shrink-0 rounded-pill border border-accent/40 bg-accent/10 px-2 py-0.5 text-2xs font-semibold text-accent">
-          Pro
-        </span>
-      ) : active && activeLabel ? (
-        <span className="text-xs font-medium text-accent shrink-0">{activeLabel}</span>
-      ) : null}
-    </>
-  );
-
-  if (href) {
-    // Locked items link internally to /pricing; all others open in a new tab.
-    if (locked) {
-      return (
-        <a href={href} className={cls} onClick={onClick}>
-          {inner}
-        </a>
-      );
-    }
-    return (
-      <a href={href} target="_blank" rel="noopener noreferrer" className={cls} onClick={onClick}>
-        {inner}
-      </a>
-    );
-  }
-  return (
-    <button type="button" className={cls} onClick={onClick} disabled={disabled}>
-      {inner}
-    </button>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Page card
 // ---------------------------------------------------------------------------
 
@@ -349,10 +267,11 @@ function PageCard({
   onDragEnd: () => void;
 }) {
   const router = useRouter();
+  const menuTriggerRef = useRef<HTMLButtonElement>(null);
   const [copying, setCopying] = useState(false);
   const [copyingEmbed, setCopyingEmbed] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [togglingVisibility, setTogglingVisibility] = useState(false);
@@ -442,7 +361,7 @@ function PageCard({
         raw: data.raw ?? "",
       });
       setActiveDraftId(draft.id);
-      setDrawerOpen(false);
+      setMenuOpen(false);
       router.push(ROUTES.app);
     } finally {
       setDuplicating(false);
@@ -454,7 +373,7 @@ function PageCard({
     try {
       const res = await fetch(`/api/pages/${page.id}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
-      setDrawerOpen(false);
+      setMenuOpen(false);
       onDeleted(page.id);
     } catch {
       setDeleting(false);
@@ -534,10 +453,11 @@ function PageCard({
             </Button>
 
             <Button
+              ref={menuTriggerRef}
               variant="ghost"
               size="md"
               iconOnly
-              onClick={() => { setConfirming(false); setDrawerOpen(true); }}
+              onClick={() => { setConfirming(false); setMenuOpen((v) => !v); }}
               title="Page actions"
               aria-label="More actions"
             >
@@ -547,149 +467,147 @@ function PageCard({
         </div>
       </div>
 
-      {/* ── Action drawer ── */}
-      <ActionDrawer
-        open={drawerOpen}
-        title={page.title ?? "Untitled"}
-        description={url.replace(/^https?:\/\//, "")}
-        contentWidthClass="max-w-lg"
-        onClose={() => { setDrawerOpen(false); setConfirming(false); setPasswordPrompt(false); setPasswordDraft(""); }}
+      {/* ── Page actions menu ── */}
+      <Menu
+        open={menuOpen}
+        anchorRef={menuTriggerRef}
+        align="end"
+        widthClass="w-80"
+        onClose={() => { setMenuOpen(false); setConfirming(false); setPasswordPrompt(false); setPasswordDraft(""); }}
       >
-        <DrawerSection>
-          <DrawerItem
-            icon="external"
-            label="Open page"
-            description="View the published page"
-            href={url}
-            onClick={() => setDrawerOpen(false)}
-          />
-          <DrawerItem
-            icon="chart"
-            label="Analytics"
-            description="Views, scroll depth, referrers"
-            href={`/my-pages/analytics/${page.id}`}
-            onClick={() => setDrawerOpen(false)}
-          />
-          <DrawerItem
-            icon="history"
-            label="Version history"
-            description="Browse and restore previous versions"
-            href={`/my-pages/versions/${page.id}`}
-            onClick={() => setDrawerOpen(false)}
-          />
-          <DrawerItem
-            icon="code"
-            label={copyingEmbed ? "Copied!" : "Copy embed code"}
-            description="Get an <iframe> snippet to embed this page"
-            onClick={() => void handleCopyEmbed()}
-            active={copyingEmbed}
-          />
-          <DrawerItem
-            icon="duplicate"
-            label={duplicating ? "Opening editor…" : "Duplicate in editor"}
-            description="Copy this page's content into a new draft"
-            disabled={duplicating}
-            onClick={() => void handleDuplicate()}
-          />
-        </DrawerSection>
+        <ContextMenuItem
+          icon="external"
+          label="Open page"
+          description="View the published page"
+          href={url}
+          onSelect={() => setMenuOpen(false)}
+        />
+        <ContextMenuItem
+          icon="chart"
+          label="Analytics"
+          description="Views, scroll depth, referrers"
+          href={`/my-pages/analytics/${page.id}`}
+          onSelect={() => setMenuOpen(false)}
+        />
+        <ContextMenuItem
+          icon="history"
+          label="Version history"
+          description="Browse and restore previous versions"
+          href={`/my-pages/versions/${page.id}`}
+          onSelect={() => setMenuOpen(false)}
+        />
+        <ContextMenuItem
+          icon="code"
+          label={copyingEmbed ? "Copied!" : "Copy embed code"}
+          description="Get an <iframe> snippet to embed this page"
+          onSelect={() => void handleCopyEmbed()}
+          active={copyingEmbed}
+        />
+        <ContextMenuItem
+          icon="duplicate"
+          label={duplicating ? "Opening editor…" : "Duplicate in editor"}
+          description="Copy this page's content into a new draft"
+          disabled={duplicating}
+          onSelect={() => void handleDuplicate()}
+        />
 
-        <DrawerSection>
-          <DrawerItem
-            icon={page.visibility === "public" ? "eye" : "eye-off"}
-            label={page.visibility === "public" ? "Make unlisted" : "Make public"}
-            description={
-              page.visibility === "public"
-                ? "Hide from search engines and explore"
-                : "Allow indexing and discovery"
-            }
-            active={page.visibility === "unlisted"}
-            activeLabel="Unlisted"
-            disabled={togglingVisibility}
-            onClick={async () => {
-              await handleToggleVisibility();
-              setDrawerOpen(false);
-            }}
-          />
-          {hasPassword ? (
-            <DrawerItem
-              icon="lock"
-              label="Remove password"
-              description="Page is currently password-protected"
-              active
-              activeLabel="Protected"
-              disabled={savingPassword}
-              onClick={() => void handleSetPassword(null)}
-            />
-          ) : passwordPrompt ? (
-            <div className="px-3 py-2 flex flex-col gap-2">
-              <input
-                type="password"
-                value={passwordDraft}
-                onChange={(e) => setPasswordDraft(e.target.value)}
-                placeholder="Set a password (min. 6 chars)"
-                autoFocus
-                className="w-full rounded-lg border border-border-default bg-bg px-3 py-2 text-sm outline-none focus:border-accent/50 focus:ring-2 focus:ring-accent/15 transition"
-              />
-              <div className="flex gap-2">
-                <Button
-                  variant="primary"
-                  size="sm"
-                  disabled={passwordDraft.length < 6 || savingPassword}
-                  onClick={() => void handleSetPassword(passwordDraft)}
-                >
-                  Save
-                </Button>
-                <Button variant="secondary" size="sm" onClick={() => { setPasswordPrompt(false); setPasswordDraft(""); }}>
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <DrawerItem
-              icon="lock"
-              label="Password protect"
-              description="Require a password to view this page"
-              onClick={() => setPasswordPrompt(true)}
-            />
-          )}
-          <DrawerItem
-            icon={featured ? "star-filled" : "star"}
-            label={featured ? "Remove from Explore" : "Feature on Explore"}
-            description={featured ? "Page is shown on the public Explore page" : "Show this page on the public Explore page"}
-            active={featured}
-            activeLabel="Featured"
-            disabled={togglingFeatured}
-            onClick={() => void handleToggleFeatured()}
-          />
-        </DrawerSection>
+        <ContextMenuSeparator />
 
-        <DrawerSection>
-          {confirming ? (
-            <div className="flex items-center gap-3 px-3 py-3">
-              <span className="flex-1 text-sm text-text-secondary">Delete this page permanently?</span>
-              <Button variant="danger" size="sm" onClick={() => void handleDelete()} disabled={deleting}>
-                {deleting ? (
-                  <svg width="11" height="11" viewBox="0 0 13 13" fill="none" className="animate-spin" aria-hidden>
-                    <path d="M6.5 1a5.5 5.5 0 1 0 5.5 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                  </svg>
-                ) : null}
-                Delete
+        <ContextMenuItem
+          icon={page.visibility === "public" ? "eye" : "eye-off"}
+          label={page.visibility === "public" ? "Make unlisted" : "Make public"}
+          description={
+            page.visibility === "public"
+              ? "Hide from search engines and explore"
+              : "Allow indexing and discovery"
+          }
+          active={page.visibility === "unlisted"}
+          activeLabel="Unlisted"
+          disabled={togglingVisibility}
+          onSelect={async () => {
+            await handleToggleVisibility();
+            setMenuOpen(false);
+          }}
+        />
+        {hasPassword ? (
+          <ContextMenuItem
+            icon="lock"
+            label="Remove password"
+            description="Page is currently password-protected"
+            active
+            activeLabel="Protected"
+            disabled={savingPassword}
+            onSelect={() => void handleSetPassword(null)}
+          />
+        ) : passwordPrompt ? (
+          <div className="px-3 py-2 flex flex-col gap-2">
+            <input
+              type="password"
+              value={passwordDraft}
+              onChange={(e) => setPasswordDraft(e.target.value)}
+              placeholder="Set a password (min. 6 chars)"
+              autoFocus
+              className="w-full rounded-lg border border-border-default bg-bg px-3 py-2 text-sm outline-none focus:border-accent/50 focus:ring-2 focus:ring-accent/15 transition"
+            />
+            <div className="flex gap-2">
+              <Button
+                variant="primary"
+                size="sm"
+                disabled={passwordDraft.length < 6 || savingPassword}
+                onClick={() => void handleSetPassword(passwordDraft)}
+              >
+                Save
               </Button>
-              <Button variant="secondary" size="sm" onClick={() => setConfirming(false)}>
+              <Button variant="secondary" size="sm" onClick={() => { setPasswordPrompt(false); setPasswordDraft(""); }}>
                 Cancel
               </Button>
             </div>
-          ) : (
-            <DrawerItem
-              icon="trash"
-              label="Delete page"
-              description="Permanently remove this page and its URL"
-              danger
-              onClick={() => setConfirming(true)}
-            />
-          )}
-        </DrawerSection>
-      </ActionDrawer>
+          </div>
+        ) : (
+          <ContextMenuItem
+            icon="lock"
+            label="Password protect"
+            description="Require a password to view this page"
+            onSelect={() => setPasswordPrompt(true)}
+          />
+        )}
+        <ContextMenuItem
+          icon={featured ? "star-filled" : "star"}
+          label={featured ? "Remove from Explore" : "Feature on Explore"}
+          description={featured ? "Page is shown on the public Explore page" : "Show this page on the public Explore page"}
+          active={featured}
+          activeLabel="Featured"
+          disabled={togglingFeatured}
+          onSelect={() => void handleToggleFeatured()}
+        />
+
+        <ContextMenuSeparator />
+
+        {confirming ? (
+          <div className="flex items-center gap-3 px-3 py-2">
+            <span className="flex-1 text-sm text-text-secondary">Delete permanently?</span>
+            <Button variant="danger" size="sm" onClick={() => void handleDelete()} disabled={deleting}>
+              {deleting ? (
+                <svg width="11" height="11" viewBox="0 0 13 13" fill="none" className="animate-spin" aria-hidden>
+                  <path d="M6.5 1a5.5 5.5 0 1 0 5.5 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              ) : null}
+              Delete
+            </Button>
+            <Button variant="secondary" size="sm" onClick={() => setConfirming(false)}>
+              Cancel
+            </Button>
+          </div>
+        ) : (
+          <ContextMenuItem
+            icon="trash"
+            label="Delete page"
+            description="Permanently remove this page and its URL"
+            danger
+            onSelect={() => setConfirming(true)}
+          />
+        )}
+      </Menu>
     </>
   );
 }
@@ -1082,6 +1000,10 @@ export function MyPagesList({
           if (draggingPageIds) void assignPagesToCollection(draggingPageIds, targetId);
           setDraggingPageIds(null);
         }}
+        renamingFolderId={renamingFolderId}
+        onCommitRename={(id, name) => void handleRenameCollection(id, name)}
+        onCancelRename={() => setRenamingFolderId(null)}
+        onFolderContextMenu={(id, position) => setFolderMenu({ folderId: id, position })}
       />
 
       <div className="flex flex-col gap-3">

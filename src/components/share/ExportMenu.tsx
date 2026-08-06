@@ -4,10 +4,10 @@ import { trackEvent } from "@/lib/analytics";
 import { ANALYTICS_EVENTS } from "@/lib/analytics-events";
 import type { Block, DocSettings } from "@/lib/blocks";
 import { blocksToHtmlDocument } from "@/lib/export";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
-import { ActionDrawer, DrawerSection } from "@/components/ui/ActionDrawer";
+import { Menu, ContextMenuItem, ContextMenuSeparator } from "@/components/ui/ContextMenu";
 
 function sanitizeFilename(title: string): string {
   return (title || "booklet-export")
@@ -33,7 +33,6 @@ function downloadBlob(content: string, filename: string, mimeType: string) {
 export function ExportMenu({
   blocks,
   raw,
-  settings,
   title,
 }: {
   blocks: Block[];
@@ -43,7 +42,7 @@ export function ExportMenu({
 }) {
   const [open, setOpen] = useState(false);
   const [exportingHtml, setExportingHtml] = useState(false);
-  const drawerWidth = settings.width === "wide" ? "max-w-4xl" : "max-w-3xl";
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   const filename = sanitizeFilename(title);
 
@@ -76,68 +75,37 @@ export function ExportMenu({
     window.print();
   };
 
-  const itemCls =
-    "flex w-full items-center gap-3 border-b border-border-subtle px-3 py-3 text-left text-sm text-text-secondary transition last:border-b-0 hover:bg-fill-2 hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-40";
-
   return (
     <>
-      <Button variant="secondary" size="md" onClick={() => setOpen(true)} title="Export options">
+      <Button ref={triggerRef} variant="secondary" size="md" onClick={() => setOpen((v) => !v)} title="Export options">
         <Icon name="download" size={13} />
         <span className="hidden sm:inline">Export</span>
       </Button>
 
-      <ActionDrawer
-        open={open}
-        title="Export"
-        description="Download this page or use your browser print flow for a PDF."
-        contentWidthClass={drawerWidth}
-        onClose={() => setOpen(false)}
-      >
-        <DrawerSection title="Files">
-          {raw ? (
-            <button type="button" className={itemCls} onClick={handleMarkdown}>
-              <span className="text-text-muted shrink-0">
-                <Icon name="markdown" size={16} />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-text-primary">Download Markdown</span>
-                <span className="mt-0.5 block text-xs text-text-muted">Original Markdown source as .md</span>
-              </span>
-              <span className="text-2xs text-text-muted font-mono">.md</span>
-            </button>
-          ) : null}
-
-          <button
-            type="button"
-            className={itemCls}
-            onClick={() => void handleHtml()}
-            disabled={exportingHtml}
-          >
-            <span className="text-text-muted shrink-0">
-              <Icon name="code" size={16} />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-text-primary">
-                {exportingHtml ? "Exporting…" : "Download HTML"}
-              </span>
-              <span className="mt-0.5 block text-xs text-text-muted">Standalone HTML document</span>
-            </span>
-            <span className="text-2xs text-text-muted font-mono">.html</span>
-          </button>
-        </DrawerSection>
-
-        <DrawerSection title="Print">
-          <button type="button" className={itemCls} onClick={handlePrint}>
-            <span className="text-text-muted shrink-0">
-              <Icon name="print" size={16} />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-text-primary">Print or Save as PDF</span>
-              <span className="mt-0.5 block text-xs text-text-muted">Uses Booklet&apos;s print-optimized layout</span>
-            </span>
-          </button>
-        </DrawerSection>
-      </ActionDrawer>
+      <Menu open={open} onClose={() => setOpen(false)} anchorRef={triggerRef} align="end" widthClass="w-72">
+        {raw ? (
+          <ContextMenuItem
+            icon="markdown"
+            label="Download Markdown"
+            description="Original source as .md"
+            onSelect={handleMarkdown}
+          />
+        ) : null}
+        <ContextMenuItem
+          icon="code"
+          label={exportingHtml ? "Exporting…" : "Download HTML"}
+          description="Standalone HTML document"
+          disabled={exportingHtml}
+          onSelect={() => void handleHtml()}
+        />
+        <ContextMenuSeparator />
+        <ContextMenuItem
+          icon="print"
+          label="Print or Save as PDF"
+          description="Uses Booklet's print-optimized layout"
+          onSelect={handlePrint}
+        />
+      </Menu>
     </>
   );
 }
