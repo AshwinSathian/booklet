@@ -50,7 +50,13 @@ function toApiKey(doc: ApiKeyDoc): DbApiKey {
 
 function toCollection(doc: CollectionDoc): DbCollection {
   const { _id, ...rest } = doc;
-  return { id: _id, ...rest, slug: rest.slug ?? null, is_team_space: rest.is_team_space ?? false };
+  return {
+    id: _id,
+    ...rest,
+    slug: rest.slug ?? null,
+    is_team_space: rest.is_team_space ?? false,
+    parent_id: rest.parent_id ?? null,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -328,6 +334,7 @@ export async function createCollectionRecord(
   userId: string,
   name: string,
   isTeamSpace = false,
+  parentId: string | null = null,
 ): Promise<void> {
   const db = await getDb();
   const now = new Date().toISOString();
@@ -337,9 +344,20 @@ export async function createCollectionRecord(
     name,
     // slug intentionally omitted — see CollectionDoc's comment above.
     is_team_space: isTeamSpace,
+    parent_id: parentId,
     created_at: now,
     updated_at: now,
   });
+}
+
+export async function getCollectionChildren(collectionId: string): Promise<DbCollection[]> {
+  const db = await getDb();
+  const docs = await db
+    .collection<CollectionDoc>("collections")
+    .find({ parent_id: collectionId })
+    .sort({ name: 1 })
+    .toArray();
+  return docs.map(toCollection);
 }
 
 export async function getCollectionBySlug(slug: string): Promise<DbCollection | null> {
@@ -350,7 +368,7 @@ export async function getCollectionBySlug(slug: string): Promise<DbCollection | 
 
 export async function updateCollectionRecord(
   collectionId: string,
-  patch: Partial<Pick<DbCollection, "name" | "slug" | "is_team_space" | "updated_at">>,
+  patch: Partial<Pick<DbCollection, "name" | "slug" | "is_team_space" | "parent_id" | "updated_at">>,
 ): Promise<void> {
   if (Object.keys(patch).length === 0) return;
   const db = await getDb();
@@ -373,6 +391,13 @@ export async function updateCollectionRecord(
 
 export async function deleteCollectionRecord(collectionId: string, userId: string): Promise<void> {
   const db = await getDb();
+  const children = await getCollectionChildren(collectionId);
+  for (const child of children) {
+    await db
+      .collection<PageDoc>("pages")
+      .updateMany({ user_id: userId, collection_id: child.id }, { $set: { collection_id: null } });
+    await db.collection<CollectionDoc>("collections").deleteOne({ _id: child.id, user_id: userId });
+  }
   await db
     .collection<PageDoc>("pages")
     .updateMany({ user_id: userId, collection_id: collectionId }, { $set: { collection_id: null } });

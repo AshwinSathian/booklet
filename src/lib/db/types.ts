@@ -51,6 +51,7 @@ export type DbCollection = {
   name: string;
   slug: string | null;   // only set for team spaces; used for /t/[slug] routing
   is_team_space: boolean;
+  parent_id: string | null;   // null = top-level folder; else id of a top-level collection (2-level cap)
   created_at: string;
   updated_at: string;
 };
