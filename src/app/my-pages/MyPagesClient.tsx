@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import { CollectionTree } from "./CollectionTree";
 import { Breadcrumb } from "./Breadcrumb";
 import { FolderRow } from "./FolderRow";
-import { getChildren } from "@/lib/collections-tree";
+import { canNestInto, getChildren } from "@/lib/collections-tree";
 
 const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,58}[a-z0-9]$|^[a-z0-9]{3,60}$/;
 function isValidSlug(s: string) { return SLUG_RE.test(s) && !s.includes("--"); }
@@ -788,6 +788,7 @@ export function MyPagesList({
   const [selectedCollection, setSelectedCollection] = useState<CollectionFilter>("all");
   const [creatingCollection, setCreatingCollection] = useState(false);
   const [draggingPageIds, setDraggingPageIds] = useState<string[] | null>(null);
+  const [draggingFolderId, setDraggingFolderId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [sort, setSort] = useState<SortKey>("newest");
   const [renamingFolderId, setRenamingFolderId] = useState<string | null>(null);
@@ -851,6 +852,21 @@ export function MyPagesList({
     });
     if (!res.ok) return;
     setCollections((prev) => prev.map((c) => (c.id === id ? { ...c, name: trimmed } : c)));
+  }, [collections]);
+
+  const handleMoveFolder = useCallback(async (id: string, newParentId: string | null) => {
+    const current = collections.find((c) => c.id === id);
+    if (!current || current.parent_id === newParentId) return;
+    const previousParentId = current.parent_id;
+    setCollections((prev) => prev.map((c) => (c.id === id ? { ...c, parent_id: newParentId } : c)));
+    const res = await fetch(`/api/collections/${id}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ parent_id: newParentId }),
+    });
+    if (!res.ok) {
+      setCollections((prev) => prev.map((c) => (c.id === id ? { ...c, parent_id: previousParentId } : c)));
+    }
   }, [collections]);
 
   const assignPagesToCollection = useCallback(async (pageIds: string[], collectionId: string | null) => {
@@ -1002,9 +1018,20 @@ export function MyPagesList({
         creatingFolder={creatingCollection}
         onDeleteFolder={(id) => void handleDeleteCollection(id)}
         draggingPageIds={draggingPageIds}
-        draggingFolderId={null}
-        onDropOnFolder={(collectionId) => {
-          if (draggingPageIds) void assignPagesToCollection(draggingPageIds, collectionId);
+        draggingFolderId={draggingFolderId}
+        onDragFolderStart={setDraggingFolderId}
+        onDragFolderEnd={() => setDraggingFolderId(null)}
+        onDropOnFolder={(targetId) => {
+          if (draggingFolderId) {
+            const dragged = collections.find((c) => c.id === draggingFolderId);
+            const target = targetId ? collections.find((c) => c.id === targetId) : null;
+            if (dragged && (target ? canNestInto(collections, dragged, target) : dragged.parent_id !== null)) {
+              void handleMoveFolder(draggingFolderId, targetId);
+            }
+            setDraggingFolderId(null);
+            return;
+          }
+          if (draggingPageIds) void assignPagesToCollection(draggingPageIds, targetId);
           setDraggingPageIds(null);
         }}
       />
@@ -1053,13 +1080,27 @@ export function MyPagesList({
                     renaming={renamingFolderId === folder.id}
                     onCommitRename={(name) => void handleRenameCollection(folder.id, name)}
                     onCancelRename={() => setRenamingFolderId(null)}
-                    isDropTarget={false}
-                    draggable={false}
-                    onDragStartFolder={() => {}}
-                    onDragEndFolder={() => {}}
-                    onDragOver={(e) => { if (draggingPageIds) e.preventDefault(); }}
+                    isDropTarget={
+                      draggingPageIds !== null ||
+                      (draggingFolderId !== null && draggingFolderId !== folder.id &&
+                        canNestInto(collections, collections.find((c) => c.id === draggingFolderId)!, folder))
+                    }
+                    draggable={folder.parent_id === null}
+                    onDragStartFolder={(e) => {
+                      e.dataTransfer.effectAllowed = "move";
+                      e.dataTransfer.setData("application/x-booklet-folder", folder.id);
+                      setDraggingFolderId(folder.id);
+                    }}
+                    onDragEndFolder={() => setDraggingFolderId(null)}
+                    onDragOver={(e) => { if (draggingPageIds || draggingFolderId) e.preventDefault(); }}
                     onDrop={(e) => {
                       e.preventDefault();
+                      if (draggingFolderId) {
+                        const dragged = collections.find((c) => c.id === draggingFolderId);
+                        if (dragged && canNestInto(collections, dragged, folder)) void handleMoveFolder(draggingFolderId, folder.id);
+                        setDraggingFolderId(null);
+                        return;
+                      }
                       if (draggingPageIds) void assignPagesToCollection(draggingPageIds, folder.id);
                       setDraggingPageIds(null);
                     }}

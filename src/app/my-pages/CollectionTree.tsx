@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
-import { getChildren, getTeamSpaces } from "@/lib/collections-tree";
+import { canNestInto, getChildren, getTeamSpaces } from "@/lib/collections-tree";
 import { useState } from "react";
 import type { CollectionRow, CollectionFilter, PageRow } from "./MyPagesClient";
 
@@ -27,6 +27,9 @@ function Row({
   isDropTarget,
   onDragOver,
   onDrop,
+  draggable,
+  onDragStartRow,
+  onDragEndRow,
 }: {
   id: CollectionFilter;
   label: string;
@@ -42,6 +45,9 @@ function Row({
   isDropTarget: boolean;
   onDragOver: (e: React.DragEvent) => void;
   onDrop: (e: React.DragEvent) => void;
+  draggable?: boolean;
+  onDragStartRow?: (e: React.DragEvent) => void;
+  onDragEndRow?: () => void;
 }) {
   return (
     <div
@@ -50,6 +56,9 @@ function Row({
         isDropTarget ? "bg-accent-dim ring-1 ring-accent/40" : "",
       ].join(" ")}
       style={{ paddingLeft: depth * 14 }}
+      draggable={draggable}
+      onDragStart={onDragStartRow}
+      onDragEnd={onDragEndRow}
       onDragOver={onDragOver}
       onDrop={onDrop}
     >
@@ -110,6 +119,8 @@ export function CollectionTree({
   onDeleteFolder,
   draggingPageIds,
   draggingFolderId,
+  onDragFolderStart,
+  onDragFolderEnd,
   onDropOnFolder,
 }: {
   collections: CollectionRow[];
@@ -121,6 +132,8 @@ export function CollectionTree({
   onDeleteFolder: (id: string) => void;
   draggingPageIds: string[] | null;
   draggingFolderId: string | null;
+  onDragFolderStart: (id: string) => void;
+  onDragFolderEnd: () => void;
   onDropOnFolder: (targetId: string | null) => void;
 }) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -153,8 +166,8 @@ export function CollectionTree({
           id="all" label="All pages" count={pageCount(pages, "all")} depth={0}
           active={currentFolderId === "all"} expandable={false} expanded={false} onToggleExpand={() => {}}
           canDelete={false} onSelect={() => onNavigate("all")} onDelete={() => {}}
-          isDropTarget={canAcceptDrop && draggingFolderId !== null}
-          onDragOver={(e) => { if (canAcceptDrop) e.preventDefault(); }}
+          isDropTarget={draggingFolderId !== null}
+          onDragOver={(e) => { if (draggingFolderId) e.preventDefault(); }}
           onDrop={(e) => { e.preventDefault(); if (draggingFolderId) onDropOnFolder(null); }}
         />
         <Row
@@ -176,12 +189,23 @@ export function CollectionTree({
                 active={currentFolderId === folder.id}
                 expandable={children.length > 0} expanded={isExpanded} onToggleExpand={() => toggle(folder.id)}
                 canDelete onSelect={() => onNavigate(folder.id)} onDelete={() => onDeleteFolder(folder.id)}
-                isDropTarget={canAcceptDrop}
+                isDropTarget={
+                  draggingPageIds !== null ||
+                  (draggingFolderId !== null && draggingFolderId !== folder.id &&
+                    canNestInto(collections, collections.find((c) => c.id === draggingFolderId)!, folder))
+                }
                 onDragOver={(e) => { if (canAcceptDrop) e.preventDefault(); }}
                 onDrop={(e) => {
                   e.preventDefault();
                   if (draggingPageIds || draggingFolderId) onDropOnFolder(folder.id);
                 }}
+                draggable
+                onDragStartRow={(e) => {
+                  e.dataTransfer.effectAllowed = "move";
+                  e.dataTransfer.setData("application/x-booklet-folder", folder.id);
+                  onDragFolderStart(folder.id);
+                }}
+                onDragEndRow={onDragFolderEnd}
               />
               {isExpanded && children.map((child) => (
                 <Row
