@@ -30,6 +30,7 @@ type CollectionRow = {
   id: string;
   name: string;
   is_team_space: boolean;
+  parent_id: string | null;
   created_at: string;
   updated_at: string;
 };

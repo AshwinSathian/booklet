@@ -1,5 +1,6 @@
 import { AppLogo } from "@/components/ui/AppLogo";
 import { AccountMenu } from "@/components/auth/AccountMenu";
+import { ToastProvider } from "@/components/ui/ToastProvider";
 import { ROUTES } from "@/lib/constants";
 import { getApiKeysByUser, getCollectionsByUser, getPagesByUser, getTeamSpacesByMembership, getWebhooksByUser } from "@/lib/db";
 import { getSession } from "@/lib/auth/session";
@@ -48,7 +49,7 @@ export default async function MyPagesPage() {
     <div className="min-h-screen bg-bg text-text-primary flex flex-col">
       {/* ── Header ── */}
       <header className="sticky top-0 z-20 border-b border-border-subtle bg-bg/85 backdrop-blur-xl">
-        <div className="mx-auto w-full max-w-3xl px-4 h-12 flex items-center justify-between gap-4">
+        <div className="mx-auto w-full max-w-6xl px-4 h-12 flex items-center justify-between gap-4">
           <AppLogo onlyIcon={false} />
           <div className="flex items-center gap-3">
             <Link
@@ -63,7 +64,7 @@ export default async function MyPagesPage() {
       </header>
 
       {/* ── Content ── */}
-      <main className="flex-1 mx-auto w-full max-w-3xl px-4 py-10">
+      <main className="flex-1 mx-auto w-full max-w-6xl px-4 py-10">
         <div className="mb-6 flex items-baseline justify-between gap-4">
           <div>
             <h1 className="text-xl font-medium">My pages</h1>
@@ -83,29 +84,32 @@ export default async function MyPagesPage() {
           </Link>
         </div>
 
-        <MyPagesList
-          initialPages={pages.map((p) => ({
-            id: p.id,
-            slug: p.slug,
-            title: p.title,
-            visibility: p.visibility,
-            collection_id: p.collection_id,
-            view_count: p.view_count,
-            has_password: Boolean(p.password_hash),
-            featured: p.featured,
-            remove_attribution_badge: p.remove_attribution_badge,
-            created_at: p.created_at,
-            updated_at: p.updated_at,
-          }))}
-          initialCollections={collections.map((c) => ({
-            id: c.id,
-            name: c.name,
-            is_team_space: c.is_team_space ?? false,
-            created_at: c.created_at,
-            updated_at: c.updated_at,
-          }))}
-          baseUrl={baseUrl}
-        />
+        <ToastProvider>
+          <MyPagesList
+            initialPages={pages.map((p) => ({
+              id: p.id,
+              slug: p.slug,
+              title: p.title,
+              visibility: p.visibility,
+              collection_id: p.collection_id,
+              view_count: p.view_count,
+              has_password: Boolean(p.password_hash),
+              featured: p.featured,
+              remove_attribution_badge: p.remove_attribution_badge,
+              created_at: p.created_at,
+              updated_at: p.updated_at,
+            }))}
+            initialCollections={collections.map((c) => ({
+              id: c.id,
+              name: c.name,
+              is_team_space: c.is_team_space ?? false,
+              parent_id: c.parent_id ?? null,
+              created_at: c.created_at,
+              updated_at: c.updated_at,
+            }))}
+            baseUrl={baseUrl}
+          />
+        </ToastProvider>
 
         <ApiKeysSection
           initialKeys={apiKeys.map((k) => ({
