@@ -78,9 +78,8 @@ export const DEFAULT_THEME_ID = "default";
  * coherent, tasteful variation on the existing token system:
  *  - default: the current Booklet palette, unchanged (also the safe fallback).
  *  - verdant / ember: distinct colour-accent variations (cool green, warm
- *    terracotta) that keep the accent role strictly action/link-only, per
- *    BRAND.md's "purple = action only" principle generalized to "accent =
- *    action only" — no theme repurposes its accent as a decorative wash.
+ *    terracotta) that keep the accent role strictly action/link-only — no
+ *    theme repurposes its accent as a decorative wash.
  *  - contrast: an accessibility-forward option — pure black/white extremes,
  *    heavier borders, an accent hue chosen for strong contrast against both
  *    the page background and the hardcoded white button label.

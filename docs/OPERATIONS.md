@@ -234,7 +234,7 @@ emitting JSON lines to stdout/stderr instead of free-form
 yet.
 
 **Why not further:** an external error tracker (Sentry, Axiom, Better Stack,
-etc.) needs a real account/DSN. None is available in this environment.
+etc.) needs a real account/DSN, and none is set up yet.
 
 **What a future integration needs:**
 1. Pick a provider, create an account, get a DSN/API key.
@@ -301,9 +301,9 @@ already there" task):
    still applies — it was written specifically for this OpenNext/Workers
    path and may need to be re-derived if OpenNext's bundling behavior has
    changed since May 2026.
-5. This needs an actual Cloudflare account with Workers access, which is not
-   available in this environment — descoped here to documentation only, per
-   product decision.
+5. This needs an actual Cloudflare account with Workers access. Documented
+   here as a reference for if/when that migration is revisited, not scheduled
+   work.
 
 **Lower-lift fallback, achievable with zero new infrastructure:** run 2+ PM2
 instances in `cluster` mode on the *same* machine (`instances: 2` or more,

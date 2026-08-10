@@ -570,9 +570,8 @@ function FormatToolbar({
 
       {/* Opens the same SlashMenu used by typing "/", anchored under this
           button instead of at the caret — for mouse-first users who'd
-          rather click than type "/". Keeping this as a single button
-          (rather than one icon per insert item) follows BRAND.md's "chrome
-          recedes" rule. */}
+          rather click than type "/". Keeping this as a single button,
+          rather than one icon per insert item, keeps the chrome minimal. */}
       <button
         ref={insertBtnRef}
         type="button"
