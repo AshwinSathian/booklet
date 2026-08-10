@@ -78,7 +78,7 @@ const RELEASES: Release[] = [
     entries: [
       { date: "2026-04-29", tag: "New", text: "MCP server — publish Booklet pages from Claude, Cursor, Windsurf, and VS Code" },
       { date: "2026-04-29", tag: "New", text: "Complete visual redesign: new design system, typography, color tokens, and brand identity" },
-      { date: "2026-04-29", tag: "New", text: "Comprehensive SEO: JSON-LD structured data, llms.txt, sitemap, and Open Graph images" },
+      { date: "2026-04-29", tag: "New", text: "SEO: JSON-LD structured data, llms.txt, sitemap, and Open Graph images" },
       { date: "2026-04-29", tag: "New", text: "Mobile reading experience overhaul: sticky header, floating controls, scroll-aware TOC" },
       { date: "2026-04-29", tag: "New", text: "Mobile editor shell redesign: tab-based write/preview panes" },
       { date: "2026-04-29", tag: "Improved", text: "Reader progress bar and reading time estimate" },

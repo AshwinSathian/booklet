@@ -17,7 +17,7 @@ const jsonLd = {
       name: APP_NAME,
       url: SITE_URL,
       description:
-        "Convert any Markdown into a clean, beautifully formatted shareable page in seconds. Perfect for incident reports, ADRs, READMEs, and technical docs. Publish from the editor, a script, CI, or your AI assistant via MCP.",
+        "Turn any Markdown file into a clean, shareable page in seconds — incident reports, ADRs, READMEs, technical docs. Publish from the editor, a script, CI, or an AI assistant over MCP.",
       applicationCategory: "DeveloperApplication",
       operatingSystem: "Web Browser",
       screenshot: absoluteUrl("/opengraph-image"),
@@ -32,7 +32,7 @@ const jsonLd = {
         "Live preview",
         "One-click publishing",
         "Shareable URL",
-        "Beautiful typography",
+        "Clean typography",
         "Code block rendering",
         "Table rendering",
         "No account required",
@@ -54,7 +54,7 @@ const jsonLd = {
       url: SITE_URL,
       name: APP_NAME,
       description:
-        "Share beautiful Markdown pages instantly — free, no account required.",
+        "Turn Markdown into a shareable page in seconds. Free, no account required.",
       inLanguage: "en-US",
       potentialAction: {
         "@type": "SearchAction",
@@ -69,11 +69,11 @@ const jsonLd = {
       "@type": "WebPage",
       "@id": `${SITE_URL}/#webpage`,
       url: SITE_URL,
-      name: `${APP_NAME} — Share Beautiful Markdown Pages Instantly`,
+      name: `${APP_NAME} — Written in Markdown, Read by Everyone Else`,
       isPartOf: { "@id": `${SITE_URL}/#website` },
       about: { "@id": `${SITE_URL}/#app` },
       description:
-        "Convert any Markdown into a clean, beautifully formatted shareable page in seconds.",
+        "Turn any Markdown file into a clean, shareable page in seconds.",
       inLanguage: "en-US",
     },
   ],

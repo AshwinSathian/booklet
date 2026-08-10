@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   ...buildMetadata({
     title: `${APP_NAME} Integrations — CLI, GitHub Actions, MCP & API`,
     description:
-      "Publish Markdown pages from your terminal, GitHub Actions, Claude AI, or any script. Booklet integrates into your existing workflow — no context switching.",
+      "Publish Markdown pages from your terminal, GitHub Actions, Claude AI, or any script — without opening a separate app.",
     pathname: "/integrations",
   }),
   openGraph: {
@@ -108,7 +108,7 @@ export default function IntegrationsPage() {
           <span className="text-accent">you already work</span>
         </h1>
         <p className="text-lg text-text-muted max-w-xl mx-auto leading-relaxed mb-10">
-          {APP_NAME} plugs into your terminal, your editor, your CI pipeline, and your AI assistant. One command, one tool call, one push — and your page is live.
+          {APP_NAME} plugs into your terminal, your editor, your CI pipeline, and your AI assistant. Run a command, call a tool, or push to your repo — your page goes live either way.
         </p>
 
         {/* Quick-jump nav */}

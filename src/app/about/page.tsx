@@ -8,7 +8,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = buildMetadata({
   title: "About",
   description:
-    `${APP_NAME} is a tool for sharing ideas clearly — paste Markdown, get a beautiful shareable page instantly. Built for engineers and writers who care about signal over noise.`,
+    `${APP_NAME} is a tool for sharing ideas clearly — paste Markdown, get a shareable page in seconds. Built for engineers and writers who care about signal over noise.`,
   pathname: "/about",
 });
 
@@ -32,7 +32,7 @@ export default function AboutPage() {
             </p>
 
             <p>
-              {APP_NAME} is that middle path. Paste Markdown, get a beautifully formatted page with a shareable
+              {APP_NAME} is that middle path. Paste Markdown, get a formatted page with a shareable
               URL in seconds. No account required to start. No clutter. No ads. Just your content, rendered clearly.
             </p>
 

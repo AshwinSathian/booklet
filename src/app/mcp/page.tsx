@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   ...buildMetadata({
     title: `${APP_NAME} MCP — Publish Pages from Claude, Cursor & Windsurf`,
     description:
-      "The Booklet MCP server lets Claude, Cursor, Windsurf, VS Code, and Zed publish and manage Booklet pages directly through conversation. Zero context-switching.",
+      "The Booklet MCP server lets Claude, Cursor, Windsurf, VS Code, and Zed publish and manage Booklet pages directly through conversation, without leaving the editor.",
     pathname: "/mcp",
   }),
   openGraph: {
@@ -106,7 +106,7 @@ export default function McpPage() {
           <span className="text-accent">any AI editor</span>
         </h1>
         <p className="text-lg text-text-muted max-w-xl mx-auto leading-relaxed mb-8">
-          The {APP_NAME} MCP server gives Claude, Cursor, Windsurf, and other AI tools a direct line to publish and manage your pages — with a single tool call, no context-switching.
+          The {APP_NAME} MCP server gives Claude, Cursor, Windsurf, and other AI tools a direct line to publish and manage your pages, without leaving the conversation.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">

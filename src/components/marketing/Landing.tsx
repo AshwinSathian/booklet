@@ -636,7 +636,7 @@ export function Landing() {
           </svg>
         ),
         title: "Beautiful by default",
-        desc: "Typography, code blocks, tables, headings — all rendered with care. Zero configuration, zero CSS, zero effort.",
+        desc: "Typography, code blocks, tables, and headings are styled automatically. No CSS to write, no theme to configure.",
       },
       {
         icon: (
@@ -670,7 +670,7 @@ export function Landing() {
           </svg>
         ),
         title: "Mermaid diagrams",
-        desc: "Flowcharts, sequence diagrams, architecture diagrams — all rendered inline from fenced Mermaid code blocks.",
+        desc: "Write a fenced Mermaid code block and get a flowchart, sequence diagram, or architecture diagram rendered inline.",
       },
       {
         icon: (
@@ -712,7 +712,7 @@ export function Landing() {
       {
         tag: "Incident",
         title: "Incident summaries",
-        desc: "Timeline, severity, root cause, next steps — structured enough to forward to leadership the moment the incident closes.",
+        desc: "Lay out the timeline, severity, and root cause once. Forward the link to leadership the moment the incident closes.",
         href: "https://booklet.ashwinsathian.com/p/example-incident-report",
       },
       {
@@ -735,7 +735,7 @@ export function Landing() {
       {
         tag: "Onboarding",
         title: "Onboarding guides",
-        desc: "New hire guides, team wikis, service runbooks. Drop the Booklet link in a welcome Slack message — zero setup for the reader.",
+        desc: "New hire guides, team wikis, service runbooks. Drop the Booklet link in a welcome Slack message and the reader doesn't set anything up.",
       },
       {
         tag: "Proposal",
@@ -937,7 +937,7 @@ export function Landing() {
                 <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               <span className="text-[14px] text-text-secondary">
-                <span className="font-semibold text-text-primary">Booklet</span> — write, publish, share a link. No account, no access to grant, no formatting step.
+                <span className="font-semibold text-text-primary">Booklet</span> — write, publish, share a link. No account, no access to grant.
               </span>
             </div>
           </div>

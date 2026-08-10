@@ -1,7 +1,7 @@
 {
-  "name": "Booklet — Share Beautiful Markdown Pages Instantly",
+  "name": "Booklet — Written in Markdown, Read by Everyone Else",
   "short_name": "Booklet",
-  "description": "Write Markdown, get a beautifully formatted page with one shareable link. No setup, no noise.",
+  "description": "Write Markdown, get a formatted page with one shareable link. No setup, no noise.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#000000",
