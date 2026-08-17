@@ -4,6 +4,7 @@
 
 [![License: MIT](https://img.shields.io/github/license/AshwinSathian/booklet)](LICENSE)
 [![npm version](https://img.shields.io/npm/v/booklet-cli?label=booklet-cli)](https://www.npmjs.com/package/booklet-cli)
+[![npm downloads](https://img.shields.io/npm/dw/booklet-cli)](https://www.npmjs.com/package/booklet-cli)
 [![CI](https://img.shields.io/github/actions/workflow/status/AshwinSathian/booklet/ci.yml?branch=main&label=CI)](https://github.com/AshwinSathian/booklet/actions/workflows/ci.yml)
 
 Paste Markdown into the editor, preview it live, and share a polished read-only URL in one click — or skip the editor and publish the same way from a CI pipeline, a script, or an AI assistant like Claude. Sign in for pages that never expire, version history, analytics, custom slugs, password protection, collections, and a full REST API.
@@ -104,6 +105,7 @@ A plain Node process (`mcp-server/`) that exposes Booklet's API to AI assistants
 **Auth:** `Authorization: Bearer <bklt_...>` header (same API keys as the REST API)
 **Tools:** `publish_page`, `update_page`, `get_page`, `list_pages`, `delete_page`
 **Resources:** published pages are also exposed as browsable/readable MCP resources (`booklet://pages/:id`)
+**Prompts:** five pre-built document templates the assistant can fill in and publish directly — `incident_report`, `adr` (Architecture Decision Record), `release_notes`, `rfc`, and `runbook`
 
 Point any MCP-compatible client at the endpoint above with your API key in the `Authorization` header. [booklet.ashwinsathian.com/mcp-setup](https://booklet.ashwinsathian.com/mcp-setup) has copy-paste config for Claude Desktop, Claude.ai, Cursor, Windsurf, VS Code, and Zed.
 

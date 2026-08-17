@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Questions and discussion
+    url: https://github.com/AshwinSathian/booklet/discussions
+    about: Usage questions, ideas that aren't fully-formed yet, or general feedback
+  - name: Security vulnerability
+    url: https://github.com/AshwinSathian/booklet/security/policy
+    about: Auth bypass, key/secret exposure, or anything touching another user's data — report privately, not as a public issue

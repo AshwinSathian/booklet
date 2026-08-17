@@ -1,0 +1,38 @@
+name: Feature request
+description: Suggest something Booklet doesn't do yet
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Booklet's surface is already wide (editor, REST API, CLI, GitHub Action, MCP server), so it helps to say which of those this is about before diving into code — open a [Discussion](https://github.com/AshwinSathian/booklet/discussions) first if the shape of the feature isn't settled yet.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: The actual task or workflow this is blocking, not just the feature you have in mind.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would solve it?
+      description: Your proposed approach, if you have one. Rough is fine.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Which surface?
+      options:
+        - Web editor / share page
+        - REST API
+        - CLI (booklet-cli)
+        - MCP server
+        - GitHub Action (publish-to-booklet)
+        - Not sure / new surface
+    validations:
+      required: true
