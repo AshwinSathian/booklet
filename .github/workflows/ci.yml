@@ -63,6 +63,14 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
       - run: npm ci --prefer-offline
+      # tests/unit/*.spec.ts import mcp-server/src/*.ts by relative path, which
+      # imports booklet-api-client (packages/shared) — tsconfig.json excludes
+      # mcp-server/packages from its own glob, but that exclude doesn't stop
+      # TS from typechecking them once a non-excluded file (a test spec) pulls
+      # them in by reference. packages/shared's package.json points at dist/,
+      # which only exists after its own build runs. Same root cause as the
+      # comment on typecheck-packages' build step below.
+      - run: npm run build --workspace packages/shared
       # "npm run test" is tsc --noEmit — see package.json
       - run: npm run test
 
@@ -112,6 +120,11 @@ jobs:
       # job on every push once NODE_ENV was set job-wide instead of scoped to
       # just the build step below.
       - run: npm ci --prefer-offline
+      # next build's own typecheck pass reaches mcp-server/src/*.ts the same
+      # way typecheck-root does (via tests/unit/*.spec.ts's relative imports —
+      # see that job's comment) and needs packages/shared built first for the
+      # same reason.
+      - run: npm run build --workspace packages/shared
       - run: npm run build
         env:
           NODE_ENV: production
@@ -153,6 +166,9 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
       - run: npm ci --prefer-offline
+      # tests/unit/*.spec.ts import mcp-server/src/*.ts directly, which needs
+      # packages/shared built first — see typecheck-root's comment above.
+      - run: npm run build --workspace packages/shared
       # tests/unit/** run via @playwright/test as a plain Node test runner —
       # no browser is launched, so no `playwright install` step is needed.
       - run: npm run test:unit
