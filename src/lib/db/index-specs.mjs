@@ -174,12 +174,16 @@ export async function ensureIndexes(db) {
   // One-time migration off the old {user_id, name} unique index, superseded
   // by {user_id, parent_id, name} above — createIndex never removes a
   // stale index on its own, so this has to be explicit. Safe to call
-  // repeatedly: dropIndex throws IndexNotFound (code 27) once the old
-  // index is gone, which is the expected steady state.
+  // repeatedly: dropIndex throws IndexNotFound (code 27) once the old index
+  // is gone (the expected steady state on a long-lived database), or
+  // NamespaceNotFound (code 26) if the `collections` collection doesn't
+  // exist at all yet (a genuinely fresh database, e.g. a CI service
+  // container — found live: this exact case, uncaught, was crashing
+  // ensureIndexes and failing every unit test in the same run).
   try {
     await db.collection("collections").dropIndex("user_id_1_name_1");
   } catch (err) {
-    if (err?.code !== 27) throw err;
+    if (err?.code !== 27 && err?.code !== 26) throw err;
   }
 
   await Promise.all(
