@@ -1,54 +1,57 @@
-# Readable
+# Booklet
 
-> Write in Markdown. Get a page worth sharing.
+> Publish clean, readable pages from Markdown — by hand, by script, or by your AI assistant.
 
-Readable is a free tool that converts Markdown into beautifully formatted, shareable pages. Write or paste Markdown in the editor, see a live preview, hit Publish, and get a clean URL — no setup, no account required.
+Booklet turns Markdown into a shareable page with one link. Paste or write Markdown, watch it render live, hit Publish, get a URL back. No account required to try it.
 
-## What Readable does
+## What Booklet does
 
-- Turns plain Markdown into a formatted, readable web page
-- Provides a permanent public URL (shareable link) for every published page
-- Renders GitHub-Flavored Markdown: headings, code blocks, tables, lists, task lists, blockquotes, Mermaid diagrams, and KaTeX math
-- Auto-generates a Table of Contents for documents with 3+ headings
-- Supports YAML frontmatter (title, author, date, tags, description, password)
-- Live preview in the editor as you type
-- Multiple named drafts, auto-saved to browser localStorage
-- 9 built-in templates (incident report, ADR, postmortem, runbook, release notes, etc.)
-- Export to Markdown, HTML, or PDF from the published page
-- Per-page analytics: views, read depth, referrers
-- Version history: restore any of the last 10 publishes
-- Password-protected pages
-- Custom URL slugs for signed-in users
-- Permanent pages (no expiry) for signed-in users; anonymous pages expire after 30 days
+- Converts Markdown into a formatted, readable web page with a permanent public URL
+- Renders GitHub-Flavored Markdown — headings, code blocks, tables, lists, task lists, blockquotes — plus KaTeX math, Mermaid and Graphviz diagrams, callouts (`> [!NOTE]`, `[!TIP]`, `[!WARNING]`, `[!IMPORTANT]`, `[!CAUTION]`), collapsible toggle sections, and multi-column layouts
+- Auto-generates a table of contents once a document has enough headings
+- Reads YAML frontmatter: `title`, `slug`, `visibility`, `description`, `author`, `date`, `tags`
+- Live preview in the browser editor as you type
+- Multiple named drafts, autosaved locally in the browser
+- 21 built-in templates (incident report, ADR, runbook, release notes, postmortem, and more — full list below)
+- Export a published page to Markdown, HTML, or PDF
+- Per-page analytics: views, read depth, referrers (signed-in only)
+- Version history: restore any of the last 50 versions of a page (signed-in only)
+- Password-protected pages (signed-in only)
+- Custom URL slugs (signed-in only)
+- Team spaces: a shared collection of pages under one URL, with invited members
 
 ## REST API
 
-Readable has a REST API for programmatic publishing:
+All endpoints are under `/api/v1/`, authenticated with `Authorization: Bearer <bklt_...>`:
 
 - `POST /api/v1/publish` — create a new page, returns `{ id, url }`
 - `PATCH /api/v1/pages/{id}` — update an existing page in place (same URL)
-- `GET /api/v1/pages` — list all pages owned by the authenticated account
+- `GET /api/v1/pages` — list pages owned by the authenticated account, with `q`/`tag` filters
+- `GET /api/v1/pages/{id}` — read a page's metadata and raw Markdown
 - `DELETE /api/v1/pages/{id}` — delete a page permanently
 
 API keys are generated from the My Pages dashboard after signing in (free).
 
-Full reference: https://readable.ashwinsathian.com/api-docs
+Full reference: https://booklet.ashwinsathian.com/api-docs
 
 ## MCP (Model Context Protocol)
 
-Readable has a native MCP server that lets Claude and other MCP-compatible AI assistants publish pages directly in natural language.
+Booklet runs a native MCP server so Claude and other MCP-compatible AI assistants can publish and manage pages directly, in the same conversation.
 
-MCP endpoint: `https://readable-mcp.ashwinsathian.com/mcp`
+MCP endpoint: `https://booklet-mcp.ashwinsathian.com/mcp` (remote, Streamable HTTP — nothing to install)
+Auth: `Authorization: Bearer <bklt_...>` header, same API key as the REST API
 
-Setup instructions: https://readable.ashwinsathian.com/mcp-setup
+**Tools:** `publish_page`, `update_page`, `get_page`, `list_pages`, `delete_page`
+**Resources:** published pages, browsable and readable as `booklet://pages/:id`
+**Prompts:** five pre-built document templates the assistant can fill in and publish directly — `incident_report`, `adr`, `release_notes`, `rfc`, `runbook`
 
-To add Readable to Claude Desktop or Claude.ai, add this to your MCP configuration:
+Setup instructions (Claude Desktop, Claude.ai, Cursor, Windsurf, VS Code, Zed): https://booklet.ashwinsathian.com/mcp-setup
 
 ```json
 {
   "mcpServers": {
-    "readable": {
-      "url": "https://readable-mcp.ashwinsathian.com/mcp"
+    "booklet": {
+      "url": "https://booklet-mcp.ashwinsathian.com/mcp"
     }
   }
 }
@@ -57,44 +60,49 @@ To add Readable to Claude Desktop or Claude.ai, add this to your MCP configurati
 ## CLI
 
 ```
-npx readable-cli publish README.md
+npx booklet-cli publish README.md
 ```
 
-npm: https://www.npmjs.com/package/readable-cli
+Or install it globally: `npm install -g booklet-cli`. Supports non-interactive auth (`--key` / `BOOKLET_API_KEY`) for CI, `--update <id>` to republish a page in place, `--watch` for auto-republish on save, and shell completion.
+
+npm: https://www.npmjs.com/package/booklet-cli
+
+## GitHub Action
+
+`AshwinSathian/publish-to-booklet` publishes a Markdown file to Booklet from a CI workflow and returns the URL as a step output:
+
+```yaml
+- uses: AshwinSathian/publish-to-booklet@v1
+  with:
+    file: CHANGELOG.md
+    api-key: ${{ secrets.BOOKLET_API_KEY }}
+```
+
+Repository: https://github.com/AshwinSathian/publish-to-booklet
 
 ## Key URLs
 
-- Editor: https://readable.ashwinsathian.com/app
-- Templates: https://readable.ashwinsathian.com/templates
-- API docs: https://readable.ashwinsathian.com/api-docs
-- MCP setup: https://readable.ashwinsathian.com/mcp-setup
-- Explore public pages: https://readable.ashwinsathian.com/explore
+- Editor: https://booklet.ashwinsathian.com/app
+- Templates: https://booklet.ashwinsathian.com/templates
+- API docs: https://booklet.ashwinsathian.com/api-docs
+- MCP setup: https://booklet.ashwinsathian.com/mcp-setup
+- Explore public pages: https://booklet.ashwinsathian.com/explore
 
 ## Pricing
 
-Free. No paid plans. No credit card. Every feature is included with a free account.
-Anonymous publishing (no account) works immediately with a 30-day page expiry.
-Signing in (free) upgrades pages to permanent and unlocks the full feature set.
+Free, permanently — there is no paid tier. Anonymous publishing needs no account and is capped at 10 pages per month per IP address, with no expiry on the pages themselves. Signing in is also free and removes that cap entirely, while unlocking custom slugs, analytics, version history, password protection, API access, and webhooks. Every published page carries a small "Published via Booklet" attribution that stays on regardless of plan — there's no option to remove it.
 
 ## Technical details
 
-- Built with Next.js (App Router), TypeScript, Tailwind CSS
-- Published pages stored on Cloudflare KV via Cloudflare Workers
-- No user content is indexed for training or resold
-- XSS-safe: all content is rendered through a custom AST renderer (no dangerouslySetInnerHTML on user input)
+- Next.js 16 (App Router), TypeScript, Tailwind CSS
+- Self-hosted MongoDB; the app runs as a single process behind a Cloudflare Tunnel
+- No user content is used for training or resold
+- XSS-safe: content renders through a custom block-based AST renderer, never as raw injected HTML
 
 ## Templates available
 
-- Incident Report
-- Post-Mortem
-- Architecture Decision Record (ADR)
-- Runbook
-- Release Notes
-- Engineering Proposal
-- Meeting Notes
-- Onboarding Guide
-- Weekly Status Update
+Incident Report, Architecture Decision Record (ADR), Release Notes, README, Meeting Notes, Onboarding Guide, Runbook, Postmortem, Weekly Update, Product Spec, Design Review, API Changelog, Technical Investigation, Sprint Retrospective, Job Description, Interview Debrief, Project Kickoff, Launch Checklist, Data Dictionary, Proposal, User Research Report
 
 ## Contact
 
-Built by Ashwin Sathian. For questions or feedback: https://github.com/anthropics/claude-code/issues (for Claude integration) or open an issue on the project repository.
+Built by Ashwin Sathian. Bug reports and feature requests: https://github.com/AshwinSathian/booklet/issues — usage questions and discussion: https://github.com/AshwinSathian/booklet/discussions
