@@ -14,6 +14,19 @@
 # having failed to deploy — only the live-traffic outcome changes.
 set -euo pipefail
 
+# Make sure `pm2` is resolvable regardless of the caller's active Node
+# version — nvm only puts a version's bin/ on PATH once something has
+# `nvm use`'d it, which a manual invocation's shell (or the pre-push hook's)
+# will not generally match. Same gap pm2-startup.sh already guards against.
+if ! command -v pm2 &>/dev/null; then
+  for bin in "$HOME"/.nvm/versions/node/*/bin; do
+    if [[ -x "$bin/pm2" ]]; then
+      export PATH="$bin:$PATH"
+      break
+    fi
+  done
+fi
+
 REPO="/Users/ashwinsathian/Documents/Personal/booklet"
 LOG_DIR="$HOME/.booklet-deploy-logs"
 mkdir -p "$LOG_DIR"
