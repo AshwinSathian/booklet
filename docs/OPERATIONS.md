@@ -266,21 +266,34 @@ assessment, and it transitively fixed the `sharp`/`postcss` entries too
 19.2.8 (an official minor; checked `useId()`'s output-format change
 specifically since it's the one documented behavioral difference — the
 codebase's one `useId()` call is an SVG gradient id referenced by the same
-render, format-agnostic, so unaffected). `jsdom`/`@types/jsdom` (dev/test-
-only) went to their 30.x majors. Left one low-severity `esbuild` advisory
-open — Windows-dev-server-only arbitrary file read, and this codebase only
-ever runs esbuild as tsup's bundler on macOS, never its dev server; an
-`overrides` entry to force a patched version didn't actually take for this
-deeply-nested transitive path, and forcing it further isn't worth the
-effort for a non-exploitable low.
+render, format-agnostic, so unaffected). Left one low-severity `esbuild`
+advisory open — Windows-dev-server-only arbitrary file read, and this
+codebase only ever runs esbuild as tsup's bundler on macOS, never its dev
+server; an `overrides` entry to force a patched version didn't actually
+take for this deeply-nested transitive path, and forcing it further isn't
+worth the effort for a non-exploitable low.
 
-**Reverted after breaking CI**: bumped `eslint-config-next` 15.4.6 → 16.3.4
-to match the `next` major already in use — this crashed `eslint` outright
-(`TypeError: Converting circular structure to JSON` inside
-`@eslint/eslintrc`'s config validator, incompatible with the current
-`eslint.config.mjs`'s `FlatCompat` shim). Reverted to 15.4.6, confirmed
-`eslint` passes clean again. Worth revisiting alongside a real
-`eslint.config.mjs` migration, not as a drive-by version bump.
+**Two bumps reverted after breaking things — both caught by testing under
+the actual target Node version, not assumed safe:**
+- `eslint-config-next` 15.4.6 → 16.3.4 (to match the `next` major already
+  in use) crashed `eslint` outright (`TypeError: Converting circular
+  structure to JSON` inside `@eslint/eslintrc`'s config validator,
+  incompatible with the current `eslint.config.mjs`'s `FlatCompat` shim).
+- `jsdom`/`@types/jsdom` 29/28 → 30 (dev/test-only) installed and typechecked
+  fine, and even *passed the full unit suite* — but only because that first
+  verification pass ran under this machine's default shell Node (v24). A
+  follow-up push's CI run (Node 20, matching `NODE_VERSION` in `ci.yml` and
+  what production actually runs under) failed outright: jsdom 30 bundles an
+  `undici` that calls `webidl.util.markAsUncloneable`, which doesn't exist
+  on Node 20 — `require('jsdom')` throws immediately, before any test even
+  runs. jsdom 30's own `engines` field says `^22.22.2 || ^24.15.0 ||
+  >=26.0.0`; `npm install`/`npm ci` only *warn* (`EBADENGINE`) on an
+  unsatisfied engines range rather than failing, so this shipped past local
+  verification undetected. Reverted to 29/28. **Lesson applied**: every
+  verification step for this dependency pass was re-run explicitly under
+  `$HOME/.nvm/versions/node/v20.19.5/bin` (the actual CI/production
+  version) before calling any of it confirmed, not just under whatever
+  Node happens to be active in the current shell.
 
 **Deliberately left on their current major** — no CVE driving any of these,
 and each carries real regression risk for a cosmetic "newer version exists"

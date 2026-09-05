@@ -59,7 +59,7 @@
     "@playwright/test": "^1.60.0",
     "@tailwindcss/postcss": "^4.1.18",
     "@types/js-yaml": "^4.0.9",
-    "@types/jsdom": "^30.0.0",
+    "@types/jsdom": "^28.0.3",
     "@types/katex": "^0.16.8",
     "@types/node": "^20.19.30",
     "@types/react": "^19.1.5",
@@ -67,7 +67,7 @@
     "autoprefixer": "^10.4.24",
     "eslint": "^9",
     "eslint-config-next": "15.4.6",
-    "jsdom": "^30.0.1",
+    "jsdom": "^29.1.1",
     "playwright": "^1.60.0",
     "tailwindcss": "^4",
     "typescript": "5.9.3"
