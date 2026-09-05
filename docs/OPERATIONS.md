@@ -233,6 +233,77 @@ auto-`eval` of `pm2 startup`'s output are standard one-time local-admin
 setup patterns; `health-check.sh`/`redeploy.sh`'s `eval "$*"` is only ever
 called with hardcoded strings today (a latent foot-gun, not a live path).
 
+**Deploy pipeline bug found while pushing the above** (2026-09-05): the
+pre-push hook's `pm2 jlist` guard silently reported "PM2 does not have
+booklet-app — skipping redeploy" on a real push to `main`, even though PM2
+was demonstrably running `booklet-app`/`booklet-mcp` at the time — `pm2`
+lives under a specific nvm Node version (`v20.19.5`) that isn't on PATH for
+whatever shell git happens to invoke the hook with, and the hook conflated
+"can't find the pm2 binary" with "this isn't the production host." Both
+`.githooks/pre-push` and `scripts/redeploy.sh` now fall back to scanning
+installed nvm Node versions for a `pm2` binary (same approach
+`pm2-startup.sh` already used for the launchd watchdog) before deciding.
+Verified by reproducing the exact failure and confirming the hook then
+finds `pm2` and proceeds. The fixes from this review sat undeployed on
+`main` for a few minutes before this was caught and `redeploy.sh` was run
+manually — worth knowing this class of "push succeeded, hook silently
+no-op'd" failure could recur for a different missing-binary reason.
+
+## Dependency audit (2026-09-05)
+
+`npm audit` found 13 vulnerabilities (1 low, 3 moderate, 9 high) after the
+security review above; several were on real attack surface, not just build
+tooling — `js-yaml` (frontmatter parsing takes untrusted YAML: quadratic
+CPU DoS via `!!omap`, CVE-2026-59870, fixed at 4.3.1+), `mermaid`/`dompurify`
+(prototype pollution + CSS injection in the diagram renderer), `next` itself
+(middleware/proxy bypass, Server Actions DoS + SSRF), and `mongodb`.
+
+`npm update` (safe, in-range for every caret-ranged dependency) closed 10 of
+the 13 outright. The remaining `next` (exact-pinned, no caret) was bumped
+16.2.10 → 16.3.4 — a minor version per npm's own `isSemVerMajor: false`
+assessment, and it transitively fixed the `sharp`/`postcss` entries too
+(both bundled by Next). `react`/`react-dom` (exact-pinned) went 19.1.5 →
+19.2.8 (an official minor; checked `useId()`'s output-format change
+specifically since it's the one documented behavioral difference — the
+codebase's one `useId()` call is an SVG gradient id referenced by the same
+render, format-agnostic, so unaffected). `jsdom`/`@types/jsdom` (dev/test-
+only) went to their 30.x majors. Left one low-severity `esbuild` advisory
+open — Windows-dev-server-only arbitrary file read, and this codebase only
+ever runs esbuild as tsup's bundler on macOS, never its dev server; an
+`overrides` entry to force a patched version didn't actually take for this
+deeply-nested transitive path, and forcing it further isn't worth the
+effort for a non-exploitable low.
+
+**Reverted after breaking CI**: bumped `eslint-config-next` 15.4.6 → 16.3.4
+to match the `next` major already in use — this crashed `eslint` outright
+(`TypeError: Converting circular structure to JSON` inside
+`@eslint/eslintrc`'s config validator, incompatible with the current
+`eslint.config.mjs`'s `FlatCompat` shim). Reverted to 15.4.6, confirmed
+`eslint` passes clean again. Worth revisiting alongside a real
+`eslint.config.mjs` migration, not as a drive-by version bump.
+
+**Deliberately left on their current major** — no CVE driving any of these,
+and each carries real regression risk for a cosmetic "newer version exists"
+result: `typescript` (5.9 → 7.0, skips 6.x entirely, used across every
+workspace), `commander` (12 → 15, `packages/cli`'s argument parser — a
+published tool real external users run), `@napi-rs/keyring` (1 → 2,
+`packages/cli`'s OS-keychain wrapper for the stored API key), `argon2`
+(0.44 → 0.45, account password hashing — no advisory, and a botched bump
+here risks locking out real users). `@types/node` was *not* bumped to its
+`latest` (26.x) despite `npm outdated` suggesting it — this project's
+actual runtime is Node 20.x (CI pins `NODE_VERSION: "20"`, production runs
+under nvm's `v20.19.5`), so 26.x types would describe API surface that
+doesn't exist on the machine actually running this code; already at the
+newest 20.x-compatible version.
+
+Verified with `tsc`/`eslint`/the full unit suite across every workspace,
+a production build, and a live browser pass (KaTeX display + inline math,
+Mermaid, and the WASM Graphviz renderer all re-tested end to end on both
+the editor preview and a real published page) — zero console errors.
+`packages/cli` and `packages/shared`/`booklet-api-client` don't depend on
+any of the packages this fixed, so neither needed a version bump or
+republish this round.
+
 ## booklet-api.ashwinsathian.com
 
 Dedicated hostname for external API consumers (CLI, GitHub Action, VS Code
