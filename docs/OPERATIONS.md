@@ -142,6 +142,97 @@ production afterward):
   moving `redirect()` outside the `try` block. Verified against production
   with `scripts/production-verify/cli-mcp-verify.mjs` — see below.
 
+## Adversarial security review (2026-09-05)
+
+Full-surface adversarial review (web app, `/api/v1` + webhooks, the Mongo
+data-access layer, the CLI, the MCP server, app UI, and infra scripts) —
+seven scoped passes, each hunting a different surface for auth bypass,
+injection, IDOR, and SSRF. Verified with `tsc`, `eslint`, the full unit
+suite, a production build, and live browser testing (including publishing
+pages with Mermaid/KaTeX/Graphviz content) before and after each change.
+Confirmed clean: token/session handling, page/collection/team ownership
+checks, and the Markdown→HTML rendering pipeline (dedicated XSS/prototype-
+pollution/YAML-injection hunt came back with nothing exploitable — the
+block-tree-based renderer already closes the classic "sanitize source, get
+bypassed by re-parse" bug class).
+
+**Fixed:**
+- `packages/cli/src/fmt.ts`'s `openUrl()` built a shell command string from
+  a server-returned URL and ran it via `exec` — a malicious/compromised API
+  server could achieve RCE on `booklet publish --open` / `pages open`.
+  Switched to `execFile` with an argv array (no shell spawned at all) plus
+  an http(s)-only scheme check. Published as `booklet-cli@1.0.2`.
+- `src/app/cli-auth/page.tsx` minted a live API key and redirected to
+  `http://127.0.0.1:<port>/callback?key=...` on a bare GET — a hidden
+  `<img>`/cross-site navigation to that URL, with no user interaction, was
+  enough to exfiltrate a fresh key to an attacker-chosen local port for any
+  signed-in visitor. Rewritten as an explicit confirmation screen; the key
+  is now only minted by a same-origin POST from a real button click
+  (`POST /api/auth/cli-authorize`, new file).
+- `src/app/api/auth/claim/route.ts` was the one session-minting endpoint
+  missing the `isSameOriginRequest` check every other one
+  (login/signup/reset-password) already has — a login-CSRF gap.
+- `src/lib/webhook-delivery.ts`'s DNS-rebinding defense re-checked the
+  hostname immediately before delivery but then handed the URL to `fetch`,
+  which re-resolves DNS independently — two separate lookups a few ms
+  apart, exploitable by an attacker's own authoritative DNS answering each
+  one differently. Rewritten to resolve once (`resolveHostForDelivery` in
+  `src/lib/ssrf-guard.ts`) and pin the actual TCP connection to that
+  address via `node:http(s)`'s `lookup` option.
+- NoSQL operator injection: `analytics/view`, `collections/[id]/members`,
+  and `teams/[id]/members` typed JSON body fields via `as` casts with no
+  runtime check, so `{"$ne": null}` could land as a query operator instead
+  of a string. Added runtime type guards at the route layer and in
+  `removeCollectionMember` (`src/lib/db/index.ts`).
+- Webhook/API-key creation limits (`MAX_WEBHOOKS`, `MAX_KEYS_PER_USER`) used
+  a non-atomic count-then-insert, so concurrent requests could exceed the
+  cap. Added a re-count-and-compensate step after insert in all three
+  creation paths (`api/webhooks`, `api/v1/keys`, `api/auth/cli-authorize`).
+- `src/middleware.ts`'s CSP allowed `'unsafe-eval'` in production for no
+  reason (nothing in the codebase calls `eval`/`new Function`) and had no
+  `Strict-Transport-Security` header at all. Dropped `unsafe-eval` (kept
+  `wasm-unsafe-eval` for `@viz-js/viz`'s WASM Graphviz renderer) and added
+  HSTS. `'unsafe-inline'` on `script-src` deliberately stays — closing that
+  needs a per-request nonce, which per Next's own CSP guide forces dynamic
+  rendering on every page that reads it, a real caching cost for the public
+  `/p/[id]` share pages this app's value prop depends on. Flagged, not
+  changed unilaterally.
+- Raw DB/driver error messages (`e.message`) were forwarded straight to API
+  clients on several unhappy paths (`api/publish`, `api/v1/publish`,
+  `api/pages/[id]`, `api/v1/pages/[id]`) and in the shared `toErrorResponse`
+  helper (`src/server/errors.ts`, used by 14 routes) — could leak internal
+  driver detail on a genuine DB failure. All now log server-side and return
+  a fixed generic message.
+- Page deletion left `analytics_events`/`reactions`/`reaction_state`/
+  `publish_events` rows orphaned (never a real authz issue given
+  `createId()`'s keyspace, but real data hygiene debt). Added
+  `deletePageAssociatedRecords` (`src/lib/db/index.ts`), wired into both
+  delete routes.
+- A team could claim the slug `join`, permanently shadowing it behind the
+  static `/t/join` invite-acceptance route. Added a reserved-slug check
+  (`src/app/api/teams/route.ts`).
+- `src/lib/svg-sanitize.ts` didn't strip SMIL elements (`<set>`/`<animate>`
+  etc.) — a known sanitizer-bypass class, not currently reachable through
+  Graphviz's DOT grammar (the only producer of this SVG) but shouldn't rely
+  on that. Added to the denylist.
+- Page-unlock password hashing (`src/lib/password.ts`) was fixed at 100k
+  PBKDF2 iterations, below current OWASP guidance. Bumped to 600k with the
+  iteration count now encoded in the stored hash (`iterations:salt:hash`)
+  so existing page passwords keep verifying at whatever count they were
+  created with, instead of breaking on the bump.
+- `scripts/migrate-from-atlas.sh`'s dump directory (a plaintext copy of the
+  full production DB) was created with default permissions; now `chmod
+  700`. Also warns when the Atlas URI is passed via argv, visible to other
+  local users via `ps`/`/proc` for the process's lifetime.
+
+**Noted, not changed** — architectural/acceptable trade-offs, not bugs: the
+CSP nonce overhaul above; the MCP server's mutating tools have no human-in-
+the-loop confirmation against prompt injection from page content read back
+into the same session; `setup-server.sh`'s Homebrew `curl | bash` and
+auto-`eval` of `pm2 startup`'s output are standard one-time local-admin
+setup patterns; `health-check.sh`/`redeploy.sh`'s `eval "$*"` is only ever
+called with hardcoded strings today (a latent foot-gun, not a live path).
+
 ## booklet-api.ashwinsathian.com
 
 Dedicated hostname for external API consumers (CLI, GitHub Action, VS Code

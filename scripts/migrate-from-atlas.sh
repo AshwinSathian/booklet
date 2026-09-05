@@ -35,6 +35,11 @@ die()     { printf "${RED}[error]${RESET} %s\n" "$*" >&2; exit 1; }
 section() { printf "\n${BOLD}── %s ──${RESET}\n" "$*"; }
 
 # ── Resolve Atlas URI ─────────────────────────────────────────────────────────
+if [[ -n "${1:-}" ]]; then
+  warn "Atlas URI passed as a command-line argument — on a shared machine this is" \
+       "visible to other local users via 'ps'/'/proc' for the life of this process." \
+       "Prefer the ATLAS_URI env var or the interactive prompt instead."
+fi
 ATLAS_URI="${1:-${ATLAS_URI:-}}"
 
 if [[ -z "$ATLAS_URI" ]]; then
@@ -83,7 +88,9 @@ ok "Connected. Collections found: $ATLAS_COLLECTIONS"
 # ── Dump from Atlas ───────────────────────────────────────────────────────────
 section "Dumping from Atlas"
 info "Dump directory: $DUMP_DIR"
-mkdir -p "$DUMP_DIR"
+# 0700: this dump contains the full production DB (users, api_keys, sessions)
+# in plaintext BSON — must not be world/group-readable on a shared machine.
+mkdir -m 700 -p "$DUMP_DIR"
 
 # Build the --excludeCollection flags for skipped collections
 EXCLUDE_FLAGS=()
@@ -177,8 +184,9 @@ fi
 
 # ── Cleanup ───────────────────────────────────────────────────────────────────
 section "Cleanup"
-info "Dump files kept at: $DUMP_DIR"
-info "Remove when confirmed: rm -rf $DUMP_DIR"
+warn "Dump files kept at: $DUMP_DIR (mode 700, but still a plaintext copy of the" \
+     "full production DB — including users, api_keys, and sessions)."
+info "Remove once confirmed: rm -rf $DUMP_DIR"
 
 echo ""
 printf "${GREEN}${BOLD}Migration complete.${RESET}\n"
