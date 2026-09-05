@@ -102,8 +102,8 @@ export async function PATCH(
         logError("patch-publish", "Version snapshot failed", err);
       });
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Update failed";
-      return NextResponse.json({ error: msg }, { status: 500 });
+      logError("patch-publish", "Update failed", e);
+      return NextResponse.json({ error: "Update failed" }, { status: 500 });
     }
 
     const updatedAt = new Date().toISOString();
@@ -118,7 +118,6 @@ export async function PATCH(
     return NextResponse.json({ id, url: publishedUrl, updated_at: updatedAt });
   } catch (e: unknown) {
     logError("patch-publish", "Unhandled error", e);
-    const msg = e instanceof Error ? e.message : "An unexpected error occurred";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json({ error: "An unexpected error occurred" }, { status: 500 });
   }
 }

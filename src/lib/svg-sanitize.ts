@@ -14,7 +14,22 @@
 // XSS" bugs; letting the browser's own parser build the tree and walking it
 // is far more reliable.
 
-const DISALLOWED_TAGS = new Set(["script", "foreignobject", "iframe", "embed", "object"]);
+const DISALLOWED_TAGS = new Set([
+  "script",
+  "foreignobject",
+  "iframe",
+  "embed",
+  "object",
+  // SMIL animation elements: a well-known SVG-sanitizer bypass class — e.g.
+  // <set attributeName="xlink:href" to="javascript:..."> can re-bind an
+  // href/on* attribute after the static checks below have already run.
+  // Not currently reachable through Graphviz's DOT/HTML-label grammar (the
+  // only producer of this SVG), but this sanitizer shouldn't rely on that.
+  "set",
+  "animate",
+  "animatetransform",
+  "animatemotion",
+]);
 const HREF_ATTRS = new Set(["href", "xlink:href"]);
 
 function isSafeHref(value: string): boolean {

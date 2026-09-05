@@ -46,7 +46,9 @@ export async function DELETE(
   }
 
   const targetUserId = body.userId;
-  if (!targetUserId) return NextResponse.json({ error: "userId required" }, { status: 422 });
+  if (typeof targetUserId !== "string" || !targetUserId) {
+    return NextResponse.json({ error: "userId required" }, { status: 422 });
+  }
   if (targetUserId === userId) return NextResponse.json({ error: "Cannot remove yourself" }, { status: 422 });
 
   await removeCollectionMember(id, targetUserId);

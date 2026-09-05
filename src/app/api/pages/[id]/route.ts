@@ -1,4 +1,4 @@
-import { updatePageRecord, deletePageRecord } from "@/lib/db";
+import { updatePageRecord, deletePageRecord, deletePageAssociatedRecords } from "@/lib/db";
 import { deletePageVersions } from "@/lib/db/versions";
 import { deleteDoc, getDoc } from "@/lib/storage";
 import { hashPassword } from "@/lib/password";
@@ -120,8 +120,16 @@ export async function PATCH(
   try {
     await updatePageRecord(id, patch);
   } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : "Failed to update";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    // The slug availability check above isn't atomic with this write — a
+    // concurrent request can still claim the slug in between, which surfaces
+    // here as the unique index rejecting the write (E11000). Recognize that
+    // case for a clean message; anything else is an unexpected DB failure
+    // whose raw driver message shouldn't go to the client.
+    if (typeof e === "object" && e !== null && "code" in e && e.code === 11000) {
+      return NextResponse.json({ error: "This slug is already taken." }, { status: 409 });
+    }
+    logError("update-page", "Failed to update", e);
+    return NextResponse.json({ error: "Failed to update" }, { status: 500 });
   }
 
   return NextResponse.json({ id, ...patch });
@@ -150,13 +158,14 @@ export async function DELETE(
   try {
     await deleteDoc(id);
   } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : "Delete failed";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    logError("delete-page", "Delete failed", e);
+    return NextResponse.json({ error: "Delete failed" }, { status: 500 });
   }
 
   try {
     await deletePageRecord(id);
     await deletePageVersions(id);
+    await deletePageAssociatedRecords(id);
   } catch (dbErr) {
     logError("delete-page", "DB delete failed", dbErr);
   }

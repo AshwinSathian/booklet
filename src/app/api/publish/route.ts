@@ -118,8 +118,8 @@ export async function POST(req: Request) {
     try {
       await putDoc(id, doc);
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Publish failed";
-      return NextResponse.json({ error: msg }, { status: 500 });
+      logError("publish", "Publish failed", e);
+      return NextResponse.json({ error: "Publish failed" }, { status: 500 });
     }
 
     void recordPublishEvent({
@@ -158,7 +158,6 @@ export async function POST(req: Request) {
     });
   } catch (e: unknown) {
     logError("publish", "Unhandled error", e);
-    const msg = e instanceof Error ? e.message : "An unexpected error occurred";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return NextResponse.json({ error: "An unexpected error occurred" }, { status: 500 });
   }
 }

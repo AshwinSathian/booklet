@@ -1,6 +1,7 @@
 import { addCollectionMember, createCollectionRecord, deleteCollectionRecord, getCollectionBySlug, getCollectionsByUser, getTeamSpacesByMembership, updateCollectionRecord } from "@/lib/db";
 import { createId } from "@/lib/id";
 import { getSession } from "@/lib/auth/session";
+import { logError } from "@/lib/logger";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -12,6 +13,11 @@ function slugify(name: string): string {
     .replace(/^-|-$/g, "")
     .slice(0, 60);
 }
+
+// Static segments under /t/ — a team claiming one of these would be
+// permanently unreachable at /t/<slug>, since Next.js resolves the static
+// route (e.g. src/app/t/join/page.tsx) before the dynamic src/app/t/[slug].
+const RESERVED_TEAM_SLUGS = new Set(["join"]);
 
 export async function GET() {
   const userId = (await getSession())?.userId ?? null;
@@ -46,6 +52,9 @@ export async function POST(req: Request) {
 
   const slug = body.slug?.trim() ? slugify(body.slug.trim()) : slugify(name);
   if (!slug) return NextResponse.json({ error: "Could not derive a valid slug from the name." }, { status: 422 });
+  if (RESERVED_TEAM_SLUGS.has(slug)) {
+    return NextResponse.json({ error: "That team URL is reserved." }, { status: 409 });
+  }
 
   // Fast, friendly rejection for the common case. This is a check-then-act
   // race in the worst case (two simultaneous requests for the same slug),
@@ -75,8 +84,8 @@ export async function POST(req: Request) {
     // Add creator as first member so getCollectionMembers returns a non-empty list
     await addCollectionMember(createId(10), id, userId, null, "editor", userId);
   } catch (e) {
-    const msg = e instanceof Error ? e.message : "Failed to create team";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    logError("teams", "Failed to create team", e);
+    return NextResponse.json({ error: "Failed to create team" }, { status: 500 });
   }
 
   return NextResponse.json({ id, name, slug }, { status: 201 });

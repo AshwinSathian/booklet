@@ -438,6 +438,15 @@ export async function addCollectionMember(
 }
 
 export async function removeCollectionMember(collectionId: string, userId: string): Promise<void> {
+  // Callers parse `userId`/`collectionId` out of a JSON body via an `as`
+  // cast, which only lies to the type checker — at runtime a value like
+  // `{"$ne": null}` would sail through as an object and turn this filter
+  // into a query operator (NoSQL injection) instead of an equality match.
+  // Guard here too, not just at the route boundary, so this stays safe even
+  // if a future caller forgets the check.
+  if (typeof collectionId !== "string" || typeof userId !== "string") {
+    throw new Error("removeCollectionMember: collectionId and userId must be strings");
+  }
   const db = await getDb();
   await db.collection<CollectionMemberDoc>("collection_members").deleteOne({ collection_id: collectionId, user_id: userId });
 }
@@ -507,6 +516,24 @@ export async function incrementViewCount(pageId: string, sessionHash: string): P
 export async function deletePageRecord(pageId: string): Promise<void> {
   const db = await getDb();
   await db.collection<PageDoc>("pages").deleteOne({ _id: pageId });
+}
+
+/**
+ * Deletes every record keyed by page_id outside of the page/doc/version
+ * collections themselves (analytics, reactions, reaction state, publish
+ * events) — call this alongside deletePageRecord/deletePageVersions so a
+ * deleted page doesn't leave orphaned rows behind. Best-effort: callers
+ * already treat page deletion as complete once the doc/record/versions are
+ * gone, so a failure here is logged by the caller, not fatal to the delete.
+ */
+export async function deletePageAssociatedRecords(pageId: string): Promise<void> {
+  const db = await getDb();
+  await Promise.all([
+    db.collection("analytics_events").deleteMany({ page_id: pageId }),
+    db.collection("reactions").deleteMany({ page_id: pageId }),
+    db.collection("reaction_state").deleteMany({ page_id: pageId }),
+    db.collection("publish_events").deleteMany({ page_id: pageId }),
+  ]);
 }
 
 // ---------------------------------------------------------------------------

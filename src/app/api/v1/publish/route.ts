@@ -108,8 +108,8 @@ export async function POST(req: Request) {
   try {
     await putDoc(id, doc);
   } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : "Publish failed";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    logError("v1/publish", "Publish failed", e);
+    return NextResponse.json({ error: "Publish failed" }, { status: 500 });
   }
 
   void recordPublishEvent({
@@ -121,18 +121,30 @@ export async function POST(req: Request) {
     source: resolveApiClientSource(req),
   }).catch((err) => logError("v1/publish", "Event record failed", err));
 
+  let slugConflict = false;
   try {
     const title = fm.title ?? extractDocTitle(blocks);
     const fmRecord = Object.keys(fm).length > 0 ? (fm as Record<string, unknown>) : null;
     await createPageRecord(id, userId, title, null, fmRecord);
 
     // Apply frontmatter-derived settings (visibility, slug) — slug was
-    // already validated + collision-checked above, before putDoc.
+    // already validated + collision-checked above, before putDoc. That
+    // check-then-write isn't atomic though: a concurrent publish can claim
+    // the same slug in between, so the write can still legitimately lose to
+    // the unique index (E11000). The page always publishes successfully
+    // either way (it's reachable at /p/:id regardless) — this only decides
+    // whether we tell the caller their requested slug didn't take, instead
+    // of silently dropping it.
     const postPatch: Parameters<typeof updatePageRecord>[1] = {};
     if (fm.visibility) postPatch.visibility = fm.visibility;
     if (normalizedSlug) postPatch.slug = normalizedSlug;
     if (Object.keys(postPatch).length > 0) {
-      await updatePageRecord(id, postPatch).catch((e) => logError("v1/publish", "Patch failed", e));
+      await updatePageRecord(id, postPatch).catch((e) => {
+        logError("v1/publish", "Patch failed", e);
+        if (normalizedSlug && typeof e === "object" && e !== null && "code" in e && e.code === 11000) {
+          slugConflict = true;
+        }
+      });
     }
 
     void snapshotPageVersion(id, doc).catch((err) => {
@@ -150,5 +162,16 @@ export async function POST(req: Request) {
 
   const url = `${getSiteOrigin(req)}${ROUTES.publish(id)}`;
 
-  return NextResponse.json({ id, url }, { status: 201 });
+  return NextResponse.json(
+    {
+      id,
+      url,
+      ...(slugConflict
+        ? {
+            warning: `The slug "${normalizedSlug}" was claimed by another page between validation and publish; this page published at its default URL instead.`,
+          }
+        : {}),
+    },
+    { status: 201 },
+  );
 }

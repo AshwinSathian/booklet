@@ -1,7 +1,7 @@
 import type { PublishedDoc } from "@/lib/blocks";
 import { DEFAULT_SETTINGS } from "@/lib/blocks";
 import { BLOCKS, STORAGE } from "@/lib/constants";
-import { updatePageRecord, deletePageRecord } from "@/lib/db";
+import { updatePageRecord, deletePageRecord, deletePageAssociatedRecords } from "@/lib/db";
 import { deletePageVersions, snapshotPageVersion } from "@/lib/db/versions";
 import { recordPublishEvent } from "@/lib/db/publish-events";
 import { resolveApiKey } from "@/lib/api-key-auth";
@@ -190,8 +190,11 @@ export async function PATCH(
         logError("v1/pages", "Version snapshot failed", err);
       });
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Update failed";
-      return NextResponse.json({ error: msg }, { status: 500 });
+      // Don't forward e.message to the client — size is already validated
+      // above, so anything reaching here is an unexpected DB/driver
+      // failure that could carry internal details (hosts, connection info).
+      logError("v1/pages", "Update failed", e);
+      return NextResponse.json({ error: "Update failed" }, { status: 500 });
     }
 
     void recordPublishEvent({
@@ -252,13 +255,14 @@ export async function DELETE(
   try {
     await deleteDoc(id);
   } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : "Delete failed";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    logError("v1/pages", "Delete failed", e);
+    return NextResponse.json({ error: "Delete failed" }, { status: 500 });
   }
 
   try {
     await deletePageRecord(id);
     await deletePageVersions(id);
+    await deletePageAssociatedRecords(id);
   } catch (dbErr) {
     logError("v1/pages", "DB delete failed", dbErr);
   }

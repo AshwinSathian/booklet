@@ -6,6 +6,7 @@ import { verifyClaimToken } from "@/lib/auth/claim-token";
 import { ClaimSchema } from "@/lib/auth/schemas";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/request-ip";
+import { isSameOriginRequest } from "@/lib/auth/origin-check";
 
 export const runtime = "nodejs";
 
@@ -14,6 +15,13 @@ export const runtime = "nodejs";
 // the same token can never be replayed to overwrite it — password resets
 // are explicitly out of scope for this flow (see PLAN-backend-auth-migration.md).
 export async function POST(req: Request) {
+  // This mints a session (Set-Cookie) on success, same as login/signup — a
+  // cross-site POST with the attacker's own claim token would otherwise log
+  // the victim into the attacker's account (login CSRF).
+  if (!isSameOriginRequest(req)) {
+    return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
+  }
+
   const ip = getClientIp(req.headers);
   const rl = await checkRateLimit(`claim__ip__${ip}`, 10);
   if (rl) return rl;

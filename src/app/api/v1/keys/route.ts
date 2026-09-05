@@ -1,4 +1,4 @@
-import { createApiKey, getApiKeysByUser } from "@/lib/db";
+import { createApiKey, deleteApiKey, getApiKeysByUser } from "@/lib/db";
 import { generateRawKey, hashApiKey } from "@/lib/api-key";
 import { createId } from "@/lib/id";
 import { getSession } from "@/lib/auth/session";
@@ -52,6 +52,19 @@ export async function POST(req: Request) {
   const id = createId(16);
 
   await createApiKey(id, userId, keyHash, label);
+
+  // The count-then-insert above isn't atomic: concurrent requests can each
+  // pass the check before either one's insert lands. Re-count after
+  // inserting and compensate by deleting this row (and never handing back
+  // its raw key) if it pushed the user over the limit.
+  const after = await getApiKeysByUser(userId);
+  if (after.length > MAX_KEYS_PER_USER) {
+    await deleteApiKey(id, userId);
+    return NextResponse.json(
+      { error: `Maximum of ${MAX_KEYS_PER_USER} API keys per account.` },
+      { status: 422 },
+    );
+  }
 
   return NextResponse.json({ id, label, key: raw }, { status: 201 });
 }

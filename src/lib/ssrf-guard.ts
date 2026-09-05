@@ -156,36 +156,67 @@ export type HostCheckResult = { safe: true } | { safe: false; reason: string };
 /**
  * Resolves `hostname` and checks every returned address against the
  * denylist. Rejects if *any* resolved address (not just the first) falls in
- * a blocked range. Call this both at registration time and again
- * immediately before delivery (DNS answers can change between the two).
+ * a blocked range.
+ *
+ * This alone is NOT sufficient DNS-rebinding protection for delivery: it
+ * only tells you the hostname resolved safely *at the moment of this call*.
+ * If the caller then does its own separate lookup to connect (e.g. a plain
+ * `fetch(url)`), an attacker controlling the hostname's DNS can answer this
+ * check with a public IP and the connection's lookup — moments later, with
+ * a near-zero TTL — with an internal one. Use `resolveHostForDelivery`
+ * instead when you're about to make the outbound request, so the same
+ * validated address is what the connection actually uses.
  */
 export async function resolveHostSafely(hostname: string): Promise<HostCheckResult> {
+  const result = await resolveHostForDelivery(hostname);
+  return result.safe ? { safe: true } : result;
+}
+
+export type HostResolveResult =
+  | { safe: true; addresses: { address: string; family: 4 | 6 }[] }
+  | { safe: false; reason: string };
+
+/**
+ * Resolves `hostname`, validates every returned address against the
+ * denylist, and returns the validated addresses themselves. Callers making
+ * an outbound request MUST connect directly to one of these addresses
+ * (e.g. via a pinned `lookup`) rather than letting the HTTP client re-resolve
+ * the hostname — otherwise the check-time and connect-time resolutions are
+ * two separate DNS answers, which a DNS-rebinding attacker can exploit by
+ * returning a safe address for the check and an internal one for the
+ * connection.
+ */
+export async function resolveHostForDelivery(hostname: string): Promise<HostResolveResult> {
   const lower = hostname.toLowerCase();
   if (lower === "localhost" || lower.endsWith(".localhost")) {
     return { safe: false, reason: "localhost is not allowed" };
   }
 
   if (net.isIP(hostname)) {
-    return isBlockedIp(hostname)
-      ? { safe: false, reason: "URL resolves to a blocked internal address" }
-      : { safe: true };
+    if (isBlockedIp(hostname)) {
+      return { safe: false, reason: "URL resolves to a blocked internal address" };
+    }
+    const family = net.isIP(hostname) as 4 | 6;
+    return { safe: true, addresses: [{ address: hostname, family }] };
   }
 
-  let addresses: string[];
+  let records: { address: string; family: number }[];
   try {
-    const records = await dns.lookup(hostname, { all: true, verbatim: true });
-    addresses = records.map((r) => r.address);
+    records = await dns.lookup(hostname, { all: true, verbatim: true });
   } catch {
     return { safe: false, reason: "Could not resolve hostname" };
   }
 
-  if (addresses.length === 0) {
+  if (records.length === 0) {
     return { safe: false, reason: "Could not resolve hostname" };
   }
-  if (addresses.some((addr) => isBlockedIp(addr))) {
+  if (records.some((r) => isBlockedIp(r.address))) {
     return { safe: false, reason: "URL resolves to a blocked internal address" };
   }
-  return { safe: true };
+  return {
+    safe: true,
+    addresses: records.map((r) => ({ address: r.address, family: r.family === 6 ? 6 : 4 })),
+  };
 }
 
 export type UrlCheckResult = { safe: true; url: URL } | { safe: false; reason: string };

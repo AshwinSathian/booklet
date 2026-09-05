@@ -2,14 +2,37 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getClientIp } from "@/lib/request-ip";
 import { SESSION_COOKIE_NAME } from "@/lib/auth/constants";
 
+// 'unsafe-eval' is dropped in production: nothing in this codebase calls
+// eval()/new Function() (verified — grepped clean), and Next's dev server
+// needs it only for Fast Refresh. The diagram renderer (@viz-js/viz) is
+// WASM-based, which needs the separate, narrower 'wasm-unsafe-eval' keyword
+// instead — that one stays in every environment.
+//
+// 'unsafe-inline' on script-src remains for now: removing it requires a
+// per-request nonce plumbed through the root layout, which per Next.js's
+// own CSP guide requires forcing dynamic rendering on every page (nonces
+// change per request, so pages that read one can't be statically
+// generated/ISR'd) — a real perf/caching trade-off for the public share
+// pages this app's value prop depends on, not a drop-in hardening change.
+// Flagged as a follow-up decision rather than made unilaterally here.
+const SCRIPT_SRC =
+  process.env.NODE_ENV === "development"
+    ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' https://www.googletagmanager.com"
+    : "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://www.googletagmanager.com";
+
 const SECURITY_HEADERS: Record<string, string> = {
   "X-Frame-Options": "DENY",
   "X-Content-Type-Options": "nosniff",
   "Referrer-Policy": "strict-origin-when-cross-origin",
   "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+  // TLS is terminated in front of this app (Cloudflare Tunnel) — HSTS is
+  // still correct to set here since it's a response header the browser
+  // reads regardless of where TLS ends, and this app has no non-TLS
+  // production hostname for it to break.
+  "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
   "Content-Security-Policy": [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com",
+    SCRIPT_SRC,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",

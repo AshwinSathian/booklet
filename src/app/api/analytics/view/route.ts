@@ -33,7 +33,17 @@ export async function POST(req: Request) {
     return new Response(null, { status: 204 });
   }
 
-  if (!body.pageId || !body.event || !ALLOWED_EVENTS.has(body.event)) {
+  if (
+    typeof body.pageId !== "string" ||
+    !body.pageId ||
+    typeof body.event !== "string" ||
+    !ALLOWED_EVENTS.has(body.event) ||
+    (body.referrer !== undefined && typeof body.referrer !== "string")
+  ) {
+    // Reject anything that isn't a plain string here — pageId/event flow
+    // straight into a Mongo filter below, and an object like
+    // `{"$ne": null}` would otherwise become a query operator instead of an
+    // equality match (NoSQL injection).
     return new Response(null, { status: 204 });
   }
 

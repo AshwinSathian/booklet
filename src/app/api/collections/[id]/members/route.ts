@@ -94,7 +94,9 @@ export async function DELETE(
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  if (!body.user_id) return NextResponse.json({ error: "user_id required" }, { status: 400 });
+  if (typeof body.user_id !== "string" || !body.user_id) {
+    return NextResponse.json({ error: "user_id required" }, { status: 400 });
+  }
 
   await removeCollectionMember(id, body.user_id);
   return new NextResponse(null, { status: 204 });

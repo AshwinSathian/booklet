@@ -1,4 +1,4 @@
-import { createWebhook, getWebhooksByUser } from "@/lib/db";
+import { createWebhook, deleteWebhook, getWebhooksByUser } from "@/lib/db";
 import { createId } from "@/lib/id";
 import { isUrlSafe } from "@/lib/ssrf-guard";
 import { getSession } from "@/lib/auth/session";
@@ -58,6 +58,17 @@ export async function POST(req: Request) {
   const secret = createId(32); // random signing secret
 
   await createWebhook(id, userId, url, secret, events);
+
+  // The count-then-insert above isn't atomic: concurrent requests can each
+  // pass the check before either one's insert lands, letting a user exceed
+  // MAX_WEBHOOKS. Re-count after inserting and compensate by deleting this
+  // row if it pushed the user over the limit — bounded overrun (at most the
+  // number of truly concurrent requests) instead of unbounded.
+  const after = await getWebhooksByUser(userId);
+  if (after.length > MAX_WEBHOOKS) {
+    await deleteWebhook(id, userId);
+    return NextResponse.json({ error: `Maximum ${MAX_WEBHOOKS} webhooks allowed.` }, { status: 422 });
+  }
 
   return NextResponse.json({ id, url, events, secret }, { status: 201 });
 }
