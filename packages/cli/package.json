@@ -1,6 +1,6 @@
 {
   "name": "booklet-cli",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Publish Markdown to a shareable URL from your terminal or CI pipeline",
   "bin": {
     "booklet": "dist/index.js"

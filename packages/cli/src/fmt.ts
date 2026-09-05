@@ -1,13 +1,30 @@
-import { exec } from "node:child_process";
+import { execFile } from "node:child_process";
 
 export function openUrl(url: string): void {
+  // The URL comes from API responses, which may point at a self-hosted or
+  // compromised server — never let it reach a shell. Restrict to http(s)
+  // and pass it as an argv element (execFile, no shell) so nothing in the
+  // string can be interpreted as a shell metacharacter.
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return;
+  }
+  if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+    return;
+  }
+  const safeUrl = parsed.toString();
+
   // On Windows, `start` treats the first quoted arg as the window title,
   // so an empty title string must precede the URL.
-  const cmd =
-    process.platform === "darwin" ? `open "${url}"`
-    : process.platform === "win32" ? `start "" "${url}"`
-    : `xdg-open "${url}"`;
-  exec(cmd, () => { /* fire and forget */ });
+  if (process.platform === "darwin") {
+    execFile("open", [safeUrl], () => { /* fire and forget */ });
+  } else if (process.platform === "win32") {
+    execFile("cmd", ["/c", "start", "", safeUrl], () => { /* fire and forget */ });
+  } else {
+    execFile("xdg-open", [safeUrl], () => { /* fire and forget */ });
+  }
 }
 
 // ANSI colour helpers — fall back gracefully when NO_COLOR is set, stdout
