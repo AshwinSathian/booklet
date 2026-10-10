@@ -167,7 +167,7 @@ export async function ensureIndexes(db) {
   // exist at all yet (a genuinely fresh database, e.g. a CI service
   // container — found live: this exact case, uncaught, was crashing
   // ensureIndexes and failing every unit test in the same run).
-  // The second entry backed getFeaturedPages, removed with the Featured
+  // The second entry backed the Featured-pages query, removed with the Featured
   // toggle in 2026-10.
   for (const [collection, index] of [
     ["collections", "user_id_1_name_1"],
