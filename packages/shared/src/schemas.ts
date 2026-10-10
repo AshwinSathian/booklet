@@ -59,12 +59,11 @@ export const ListPagesResponseSchema = z
     pages: z.array(PageListItemSchema),
     total: z.number(),
     limit: z.number(),
-    offset: z.number(),
-    /** Pass as `cursor` to get the next page; null on the last page. Absent on servers before 2.0. */
-    next_cursor: z.string().nullable().optional(),
+    /** Pass as `cursor` to get the next page; null on the last page. */
+    next_cursor: z.string().nullable(),
   })
   .meta({
-    examples: [{ pages: [EXAMPLE_PAGE], total: 57, limit: 20, offset: 0, next_cursor: "WyIyMDI2LTA0LTI5VDEwOjAwOjAwLjAwMFoiLCJBYjNrOTFReFpwIl0" }],
+    examples: [{ pages: [EXAMPLE_PAGE], total: 57, limit: 20, next_cursor: "WyIyMDI2LTA0LTI5VDEwOjAwOjAwLjAwMFoiLCJBYjNrOTFReFpwIl0" }],
   });
 export type ListPagesResponse = z.infer<typeof ListPagesResponseSchema>;
 
@@ -126,18 +125,15 @@ export const DeletePageResponseSchema = z.object({ ok: z.literal(true) }).meta({
 export type DeletePageResponse = z.infer<typeof DeletePageResponseSchema>;
 
 /**
- * Error body: RFC 9457 problem details (`application/problem+json`). `error`
- * repeats `detail` and is the only member servers before 2.0 sent, so it is
- * the only required one. Extension members (`code`, `limit`, `max`,
- * `actual`) pass through.
+ * Error body: RFC 9457 problem details (`application/problem+json`).
+ * Extension members (`code`, `limit`, `max`, `actual`) pass through.
  */
 export const ApiErrorSchema = z
   .looseObject({
-    error: z.string(),
-    type: z.string().optional(),
-    title: z.string().optional(),
-    status: z.number().optional(),
-    detail: z.string().optional(),
+    type: z.string(),
+    title: z.string(),
+    status: z.number(),
+    detail: z.string(),
     code: z.string().optional(),
   })
   .meta({
@@ -147,7 +143,6 @@ export const ApiErrorSchema = z
         title: "Content Too Large",
         status: 413,
         detail: "Document is too large. The limit is 200,000 characters; this one has 200,001.",
-        error: "Document is too large. The limit is 200,000 characters; this one has 200,001.",
         code: "DOCUMENT_TOO_LARGE",
         limit: "characters",
         max: 200000,

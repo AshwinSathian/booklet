@@ -1,6 +1,6 @@
 {
   "name": "booklet",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "description": "Write Markdown, get a beautifully formatted page with one shareable link.",
   "private": true,
   "license": "AGPL-3.0-only",

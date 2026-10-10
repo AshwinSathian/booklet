@@ -289,7 +289,7 @@ slug: incident-auth-2026-05
                 slug of a team space you belong to: the list is then every page in that space, not only yours). To
                 read every page, pass each response&apos;s{" "}
                 <Code>next_cursor</Code> as <Code>cursor</Code> until it is <Code>null</Code>. Pages published or
-                deleted while you walk the list are never repeated or skipped. <Code>offset</Code> still works.
+                deleted while you walk the list are never repeated or skipped.
               </p>
               <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">Response 200</p>
               <Pre>{ex("ListPagesResponse")}</Pre>

@@ -7,6 +7,10 @@ import { problem, toErrorResponse } from "./errors";
  * authentication, the scope check for OAuth tokens, the per-user rate limit,
  * `RateLimit` headers on every response, and problem-details bodies for
  * anything the handler throws.
+ *
+ * `problem()` also carries an `error` member, which the web app's own session
+ * routes need: the UI reads it. /api/v1 is RFC 9457 only, so it is dropped
+ * here, the one place every v1 response passes through.
  */
 export function v1<C>(
   bucket: string,
@@ -14,8 +18,7 @@ export function v1<C>(
   scope: Scope,
   handler: (req: Request, userId: string, ctx: C) => Promise<Response>,
 ) {
-  // `ctx` is optional so routes without params can be called with one argument.
-  return async (req: Request, ctx?: C): Promise<Response> => {
+  const run = async (req: Request, ctx?: C): Promise<Response> => {
     const auth = await resolveBearer(req);
     if (!auth) return problem(401, "Unauthorized", undefined, { "WWW-Authenticate": "Bearer" });
     if (auth.scopes && !auth.scopes.includes(scope)) {
@@ -37,5 +40,13 @@ export function v1<C>(
     }
     for (const [k, v] of Object.entries(rateLimitHeaders(state))) res.headers.set(k, v);
     return res;
+  };
+
+  // `ctx` is optional so routes without params can be called with one argument.
+  return async (req: Request, ctx?: C): Promise<Response> => {
+    const res = await run(req, ctx);
+    if (!res.headers.get("content-type")?.startsWith("application/problem+json")) return res;
+    const { error: _error, ...body } = (await res.json()) as Record<string, unknown>;
+    return Response.json(body, { status: res.status, headers: res.headers });
   };
 }

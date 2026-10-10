@@ -1,6 +1,7 @@
 import { deleteApiKey } from "@/lib/db";
 import { getSession } from "@/lib/auth/session";
 import { NextResponse } from "next/server";
+import { problem } from "@/server/errors";
 
 export const runtime = "nodejs";
 
@@ -10,12 +11,12 @@ export async function DELETE(
 ) {
   const userId = (await getSession())?.userId ?? null;
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return problem(401, "Unauthorized");
   }
 
   const { id } = await params;
   if (!id?.trim()) {
-    return NextResponse.json({ error: "Missing key id" }, { status: 400 });
+    return problem(400, "Missing key id");
   }
 
   // deleteApiKey already scopes to the user — safe against cross-user deletion.

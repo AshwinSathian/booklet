@@ -943,7 +943,7 @@ export default function McpSetupPage() {
                     {
                       name: "list_pages",
                       desc: "List your pages, optionally filtered by title or tag",
-                      inputs: "limit, offset, query, tag",
+                      inputs: "limit, cursor, query, tag",
                     },
                     {
                       name: "delete_page",

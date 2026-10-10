@@ -47,7 +47,7 @@ async function expectProblem(res: Response, status: number) {
   expect(typeof body.title).toBe("string");
   expect(body.status).toBe(status);
   expect(typeof body.detail).toBe("string");
-  expect(body.error).toBe(body.detail); // the pre-RFC member every client reads
+  expect(body).not.toHaveProperty("error"); // /api/v1 is RFC 9457 only
   return body;
 }
 

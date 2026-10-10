@@ -7,7 +7,7 @@ import { resolveParent, assertCanNest } from "@/server/collections";
 import { ServiceError } from "@/server/errors";
 
 test.beforeAll(async () => {
-  process.env.MONGODB_URI ??= "mongodb://localhost:27017/readable?retryWrites=true&w=majority";
+  process.env.MONGODB_URI ??= "mongodb://localhost:27017/booklet?retryWrites=true&w=majority";
   const db = await getDb();
   await ensureIndexes(db);
 });

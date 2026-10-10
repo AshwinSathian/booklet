@@ -70,26 +70,6 @@ export async function getUser(id: string): Promise<DbUser | null> {
   return doc ? toUser(doc) : null;
 }
 
-export async function upsertUser(
-  id: string,
-  email: string | null,
-): Promise<void> {
-  const db = await getDb();
-  await db.collection<UserDoc>("users").updateOne(
-    { _id: id },
-    {
-      $set: { email },
-      $setOnInsert: {
-        _id: id,
-        plan: "free" as const,
-        created_at: new Date().toISOString(),
-      },
-    },
-    { upsert: true },
-  );
-}
-
-
 export async function getUserByEmail(email: string): Promise<DbUser | null> {
   const db = await getDb();
   const doc = await db.collection<UserDoc>("users").findOne({ email: email.toLowerCase() });
@@ -162,7 +142,6 @@ export async function getPagesByUser(
   userId: string,
   opts: {
     limit?: number;
-    offset?: number;
     query?: string;
     tag?: string;
     type?: string;
@@ -199,7 +178,6 @@ export async function getPagesByUser(
     col
       .find(pageFilter)
       .sort({ created_at: -1, _id: -1 })
-      .skip(opts.offset ?? 0)
       .limit(opts.limit ?? 0)
       .toArray(),
     col.countDocuments(filter),

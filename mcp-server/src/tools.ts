@@ -227,12 +227,11 @@ export async function handleListPages(
 ): Promise<CallToolResult> {
   try {
     const limit = args.limit ?? 20;
-    const offset = args.offset ?? 0;
-    const { query, tag } = args;
+    const { query, tag, cursor } = args;
 
     const result = await client(apiKey, apiBase).listPages({
       limit,
-      offset,
+      ...(cursor !== undefined ? { cursor } : {}),
       ...(query !== undefined ? { query } : {}),
       ...(tag !== undefined ? { tag } : {}),
     });
@@ -257,11 +256,8 @@ export async function handleListPages(
       )
       .join("\n");
 
-    const shown = offset + pages.length;
-    const paginationNote = total > shown
-      ? `\n\n*(Showing ${offset + 1}–${shown} of ${total} total. Use \`offset: ${shown}\` to fetch the next page.)*`
-      : total > pages.length
-      ? `\n\n*(Showing ${offset + 1}–${shown} of ${total} total.)*`
+    const paginationNote = result.next_cursor
+      ? `\n\n*(${pages.length} of ${total} total. Use \`cursor: "${result.next_cursor}"\` to fetch the next page.)*`
       : "";
 
     // No structuredContent here, deliberately: an N-row table duplicated as
@@ -360,7 +356,7 @@ export async function handleDeletePage(
 export async function handleResourcesList(apiKey: string, apiBase: string): Promise<unknown> {
   let result: { pages: PageListItem[] };
   try {
-    result = await client(apiKey, apiBase).listPages({ limit: 100, offset: 0 });
+    result = await client(apiKey, apiBase).listPages({ limit: 100 });
   } catch {
     return { resources: [] };
   }

@@ -30,7 +30,7 @@ import { PROMPT_DEFINITIONS, renderPrompt } from "./prompts.js";
 
 // Must match mcp-server/package.json and mcp-server/server.json (the MCP
 // registry entry); tests/unit/mcp-version.spec.ts checks all three.
-export const SERVER_VERSION = "3.1.0";
+export const SERVER_VERSION = "4.0.0";
 
 // Tools are registered, and so listed, in this order. Keep it fixed: a
 // client caches tools/list, and a reordered list is a changed list.
@@ -110,7 +110,7 @@ export function createMcpServer(apiBase: string, apiKey: string): McpServer {
     "list_pages",
     {
       title: "List Pages",
-      description: "List Booklet pages owned by your account, with pagination via limit/offset.",
+      description: "List Booklet pages owned by your account, newest first. Pass the cursor from a result to get the next page.",
       inputSchema: ListPagesInputSchema,
       annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     },

@@ -50,7 +50,7 @@ export async function passkeyRegistrationOptions(user: DbUser, origin: string) {
   const options = await generateRegistrationOptions({
     rpName: "Booklet",
     rpID: rpId(origin),
-    userName: user.email ?? user.id,
+    userName: user.email,
     userID: new TextEncoder().encode(user.id),
     attestationType: "none",
     // Stops the same authenticator being registered twice.

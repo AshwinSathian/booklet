@@ -25,7 +25,7 @@ const PAGE = {
   updated_at: "2026-04-29T12:00:00.000Z",
 };
 
-const problem = (status: number, detail: string) => ({ type: "about:blank", title: "x", status, detail, error: detail });
+const problem = (status: number, detail: string) => ({ type: "about:blank", title: "x", status, detail });
 
 let server: Server;
 let base: string;
@@ -62,7 +62,6 @@ test.beforeAll(async () => {
           pages: [second ? { ...PAGE, id: "SecondPage", slug: null } : PAGE],
           total: 2,
           limit: 100,
-          offset: 0,
           next_cursor: second ? null : "c2",
         });
       }

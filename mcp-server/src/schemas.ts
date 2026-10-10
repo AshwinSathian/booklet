@@ -105,7 +105,7 @@ export const GetPageInputSchema = z.object({
 
 export const ListPagesInputSchema = z.object({
   limit: z.number().int().positive().max(100).optional().describe("Max pages to return. Default 20, max 100."),
-  offset: z.number().int().nonnegative().optional().describe("Pages to skip, for pagination. Default 0."),
+  cursor: z.string().optional().describe("The cursor a previous list_pages result gave for the next page."),
   query: z
     .string()
     .optional()

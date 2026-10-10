@@ -16,11 +16,6 @@ export const LoginSchema = z.object({
   password: z.string().min(1).max(256),
 });
 
-export const ClaimSchema = z.object({
-  token: z.string().min(1),
-  password: PasswordSchema,
-});
-
 export const ForgotPasswordSchema = z.object({
   email: EmailSchema,
 });

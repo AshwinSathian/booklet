@@ -47,13 +47,12 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: ${{ env.NODE_VERSION }}
-      # Pre-rename names (the product was "Readable") must not come back in
-      # user-facing pages: they tell people to create secrets and config
-      # keys the CLI and Action no longer read.
-      - name: No Readable-era names in app pages
+      # Names from before the product was called Booklet must not come
+      # back anywhere in the code.
+      - name: No pre-Booklet names
         run: |
-          if git grep -nE 'rdbl_|READABLE_|"readable"' -- src/app; then
-            echo "::error::Stale Readable-era name found in src/app (see matches above)."
+          if git grep -nE 'rdbl_|READABLE_|"readable"|readable-(api|mcp)|27017/readable' -- src mcp-server packages scripts tests; then
+            echo "::error::Stale pre-Booklet name found (see matches above)."
             exit 1
           fi
       - run: npm ci --prefer-offline
@@ -110,7 +109,7 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: ${{ env.NODE_VERSION }}
-      # npm workspaces (see PLAN-backend-auth-migration.md) — one root
+      # npm workspaces — one root
       # lockfile/install covers every package; no more per-package
       # package-lock.json to `npm ci --prefix` against.
       - run: npm ci --prefer-offline
@@ -153,7 +152,7 @@ jobs:
           # inlined into the client bundle). Every non-NEXT_PUBLIC_ var in
           # .env.example (MONGODB_URI, INVITE_JWT_SECRET, UNLOCK_TOKEN_SECRET,
           # SESSION_TOKEN_PEPPER, ADMIN_IPS,
-          # ADMIN_USER_IDS, API_KEY_PEPPER, READABLE_WEBHOOK_SECRET) is read
+          # ADMIN_USER_IDS, API_KEY_PEPPER) is read
           # lazily inside function bodies at request time (src/lib/mongodb.ts,
           # src/lib/unlock-token.ts, src/lib/invite-token.ts,
           # src/lib/auth/session-token.ts, src/middleware.ts,
@@ -178,7 +177,7 @@ jobs:
     env:
       # Same URI shape as .env.example / src/lib/mongodb.ts, pointed at the
       # service container instead of a locally brew-installed mongod.
-      MONGODB_URI: "mongodb://localhost:27017/readable?retryWrites=true&w=majority"
+      MONGODB_URI: "mongodb://localhost:27017/booklet?retryWrites=true&w=majority"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

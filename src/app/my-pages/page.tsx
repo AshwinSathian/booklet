@@ -24,7 +24,7 @@ function getBaseUrl(req: Headers): string {
 export default async function MyPagesPage() {
   const session = await getSession();
   // Middleware only does a cheap cookie-presence redirect; this is the
-  // authoritative check (see PLAN-backend-auth-migration.md).
+  // authoritative check.
   if (!session) {
     return null;
   }

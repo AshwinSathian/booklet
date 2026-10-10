@@ -32,12 +32,12 @@ test.beforeAll(() => {
     if (url.pathname === "/api/oauth/tokeninfo") return tokeninfo();
     if (url.pathname === "/api/v1/publish") {
       const detail = "This token does not have the pages:write scope.";
-      return Response.json({ type: "about:blank", title: "Forbidden", status: 403, detail, error: detail }, { status: 403 });
+      return Response.json({ type: "about:blank", title: "Forbidden", status: 403, detail }, { status: 403 });
     }
     if (url.pathname === "/api/v1/pages") {
-      return Response.json({ pages: [], total: 0, limit: 20, offset: 0, next_cursor: null });
+      return Response.json({ pages: [], total: 0, limit: 20, next_cursor: null });
     }
-    return Response.json({ type: "about:blank", title: "Not Found", status: 404, detail: "Page not found", error: "Page not found" }, { status: 404 });
+    return Response.json({ type: "about:blank", title: "Not Found", status: 404, detail: "Page not found" }, { status: 404 });
   }) as typeof fetch;
 });
 test.afterAll(() => {
@@ -62,13 +62,12 @@ async function connect(token: string, versionNegotiation?: ConstructorParameters
   return client;
 }
 
-for (const [era, options] of [
-  ["2026-07-28", { versionNegotiation: { mode: { pin: "2026-07-28" } } }],
-  ["2025-11-25", undefined],
-] as const) {
-  test(`a ${era} client lists 7 tools, 5 prompts and the resource template`, async () => {
-    const client = await connect(API_KEY, options as never);
-    expect(client.getNegotiatedProtocolVersion()).toBe(era);
+const PINNED = { versionNegotiation: { mode: { pin: "2026-07-28" } } } as never;
+
+{
+  test("a 2026-07-28 client lists 7 tools, 5 prompts and the resource template", async () => {
+    const client = await connect(API_KEY, PINNED);
+    expect(client.getNegotiatedProtocolVersion()).toBe("2026-07-28");
 
     const { tools } = await client.listTools();
     expect(tools.map((t) => t.name)).toEqual([...TOOL_NAMES]); // fixed order
@@ -90,6 +89,23 @@ for (const [era, options] of [
     await client.close();
   });
 }
+
+test("a 2025-era request (initialize) is refused: only 2026-07-28 is served", async () => {
+  const res = await serve(MCP_URL, {
+    method: "POST",
+    headers: { authorization: `Bearer ${API_KEY}`, "content-type": "application/json", accept: "application/json, text/event-stream" },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "initialize",
+      params: { protocolVersion: "2025-11-25", capabilities: {}, clientInfo: { name: "old", version: "1" } },
+    }),
+  });
+  const text = await res.text();
+  expect(res.ok && !text.includes('"error"')).toBe(false);
+  expect(text).toContain("2026-07-28");
+  expect(apiCalls).toEqual([]);
+});
 
 test("2026-07-28 list results carry ttlMs and cacheScope: private", async () => {
   // Read off the wire: the client object hides these fields.
@@ -143,7 +159,7 @@ test.describe("authorization", () => {
 
   test("an OAuth token issued for this server is accepted and forwarded to the API", async () => {
     tokeninfo = () => Response.json({ active: true, client_id: "c1", scope: "pages:read pages:write", exp: exp(), resource: ENV.MCP_PUBLIC_URL });
-    const client = await connect(OAUTH_TOKEN);
+    const client = await connect(OAUTH_TOKEN, PINNED);
     await client.callTool({ name: "list_pages", arguments: {} });
     expect(apiCalls).toContain(`GET /api/v1/pages Bearer ${OAUTH_TOKEN}`);
     await client.close();
@@ -151,7 +167,7 @@ test.describe("authorization", () => {
 
   test("a tool the token's scopes do not cover says so, not 'you do not own this page'", async () => {
     tokeninfo = () => Response.json({ active: true, client_id: "c1", scope: "pages:read", exp: exp(), resource: ENV.MCP_PUBLIC_URL });
-    const client = await connect(OAUTH_TOKEN);
+    const client = await connect(OAUTH_TOKEN, PINNED);
     const result = await client.callTool({ name: "publish_page", arguments: { raw: "# Hi" } });
     expect(result.isError).toBe(true);
     expect(JSON.stringify(result.content)).toContain("pages:write scope");

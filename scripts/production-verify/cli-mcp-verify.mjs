@@ -19,7 +19,7 @@
 // run created.
 //
 // Usage:
-//   MONGODB_URI="mongodb://127.0.0.1:27017/readable?directConnection=true" \
+//   MONGODB_URI="mongodb://127.0.0.1:27017/booklet?directConnection=true" \
 //   node scripts/production-verify/cli-mcp-verify.mjs
 
 import { spawn } from "node:child_process";
@@ -31,7 +31,7 @@ import { MongoClient } from "mongodb";
 
 const BASE = process.env.TEST_BASE_URL ?? "https://booklet.ashwinsathian.com";
 const MCP_BASE = process.env.TEST_MCP_BASE_URL ?? "https://booklet-mcp.ashwinsathian.com";
-const MONGODB_URI = process.env.MONGODB_URI ?? "mongodb://127.0.0.1:27017/readable?directConnection=true";
+const MONGODB_URI = process.env.MONGODB_URI ?? "mongodb://127.0.0.1:27017/booklet?directConnection=true";
 const CLI_ENTRY = new URL("../../packages/cli/dist/index.js", import.meta.url).pathname;
 
 const RUN_ID = Date.now();

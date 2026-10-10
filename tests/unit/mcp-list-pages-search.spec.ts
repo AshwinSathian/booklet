@@ -7,13 +7,13 @@ import { buildFilterNote } from "../../mcp-server/src/tools.js";
 // (e.g. "my release notes") instead of only ever listing everything.
 
 test.describe("ListPagesInputSchema — query/tag", () => {
-  test("accepts query and tag together with limit/offset", () => {
+  test("accepts query and tag together with limit/cursor", () => {
     expect(
-      ListPagesInputSchema.safeParse({ limit: 10, offset: 0, query: "release", tag: "ops" }).success,
+      ListPagesInputSchema.safeParse({ limit: 10, cursor: "abc", query: "release", tag: "ops" }).success,
     ).toBe(true);
   });
 
-  test("still accepts no arguments at all (fully optional, backward compatible)", () => {
+  test("accepts no arguments at all", () => {
     expect(ListPagesInputSchema.safeParse({}).success).toBe(true);
   });
 

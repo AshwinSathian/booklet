@@ -1,18 +1,12 @@
 /**
  * API key utilities: generation and hashing.
- * New keys are prefixed `bklt_` + 40 random chars.
+ * Keys are `bklt_` + 40 random chars.
  * Only the HMAC-SHA256 hash is stored in the DB; the raw key is shown once.
  */
 
 import { createId } from "./id";
 
 const PREFIX = "bklt_";
-
-// Keys issued before the Readable -> Booklet rename used this prefix.
-// Already-issued `rdbl_` keys must keep validating — there's no migration
-// path that reissues live keys out from under existing integrations — so
-// isApiKeyFormat accepts both; only generateRawKey moves to the new one.
-const LEGACY_PREFIXES = ["rdbl_"] as const;
 
 export function generateRawKey(): string {
   return PREFIX + createId(40);
@@ -53,6 +47,5 @@ export async function hashApiKey(raw: string): Promise<string> {
 }
 
 export function isApiKeyFormat(raw: string): boolean {
-  if (raw.startsWith(PREFIX) && raw.length === PREFIX.length + 40) return true;
-  return LEGACY_PREFIXES.some((p) => raw.startsWith(p) && raw.length === p.length + 40);
+  return raw.startsWith(PREFIX) && raw.length === PREFIX.length + 40;
 }

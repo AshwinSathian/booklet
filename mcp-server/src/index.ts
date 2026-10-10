@@ -62,9 +62,11 @@ function wire(env: Env) {
       resourceMetadataUrl: getOAuthProtectedResourceMetadataUrl(resource),
       expectedResource: resource,
     }),
-    // One factory serves protocol 2026-07-28 and, through the default
-    // stateless fallback, 2025-era clients that still send `initialize`.
-    handler: createMcpHandler((ctx) => createMcpServer(env.BOOKLET_API_BASE, ctx.authInfo?.token ?? "")),
+    // Protocol 2026-07-28 only. A 2025-era request (one that opens with
+    // `initialize`) gets the unsupported-protocol-version error.
+    handler: createMcpHandler((ctx) => createMcpServer(env.BOOKLET_API_BASE, ctx.authInfo?.token ?? ""), {
+      legacy: "reject",
+    }),
   };
 }
 

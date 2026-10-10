@@ -20,10 +20,7 @@
 export const INDEX_SPECS = [
   // --- users ---
   { collection: "users", spec: { _id: 1 } }, // already primary; explicit for clarity
-  // Sparse: only enforced once email is populated for every doc (older docs
-  // predate the in-house auth, see PLAN-backend-auth-migration.md) — sparse avoids a
-  // duplicate-null collision across legacy docs missing the field.
-  { collection: "users", spec: { email: 1 }, options: { unique: true, sparse: true } },
+  { collection: "users", spec: { email: 1 }, options: { unique: true } },
 
   // --- sessions ---
   // In-house auth (src/lib/auth/session.ts). token_hash is the authoritative
@@ -61,9 +58,7 @@ export const INDEX_SPECS = [
 
   // --- pages ---
   // _id is the tie-breaker of the listing sort (getPagesByUser) and of its
-  // keyset cursor, so it is part of the index. The index this replaced,
-  // { user_id: 1, created_at: -1 }, may still exist in an older database;
-  // it is harmless and can be dropped.
+  // keyset cursor, so it is part of the index.
   { collection: "pages", spec: { user_id: 1, created_at: -1, _id: -1 } },
   { collection: "pages", spec: { collection_id: 1, user_id: 1 } },
   {
@@ -152,9 +147,7 @@ export const INDEX_SPECS = [
 
   // --- collections ---
   // Uniqueness is scoped to the containing folder, not global per-user —
-  // "Drafts" can exist both at top-level and inside another folder. This
-  // replaced a plain {user_id, name} unique index; see the explicit
-  // dropIndex in ensureIndexes below for the migration off the old spec.
+  // "Drafts" can exist both at top-level and inside another folder.
   { collection: "collections", spec: { user_id: 1, parent_id: 1, name: 1 }, options: { unique: true } },
   // Team-space slugs must be unique (routes depend on /t/[slug] resolving to
   // exactly one team) — sparse because personal collections never set a
@@ -216,28 +209,6 @@ export const INDEX_SPECS = [
  * an equivalent index already exists.
  */
 export async function ensureIndexes(db) {
-  // One-time migration off the old {user_id, name} unique index, superseded
-  // by {user_id, parent_id, name} above — createIndex never removes a
-  // stale index on its own, so this has to be explicit. Safe to call
-  // repeatedly: dropIndex throws IndexNotFound (code 27) once the old index
-  // is gone (the expected steady state on a long-lived database), or
-  // NamespaceNotFound (code 26) if the `collections` collection doesn't
-  // exist at all yet (a genuinely fresh database, e.g. a CI service
-  // container — found live: this exact case, uncaught, was crashing
-  // ensureIndexes and failing every unit test in the same run).
-  // The second entry backed the Featured-pages query, removed with the Featured
-  // toggle in 2026-10.
-  for (const [collection, index] of [
-    ["collections", "user_id_1_name_1"],
-    ["pages", "featured_1_visibility_1_password_hash_1_created_at_-1"],
-  ]) {
-    try {
-      await db.collection(collection).dropIndex(index);
-    } catch (err) {
-      if (err?.code !== 27 && err?.code !== 26) throw err;
-    }
-  }
-
   await Promise.all(
     INDEX_SPECS.map(({ collection, spec, options }) => db.collection(collection).createIndex(spec, options)),
   );

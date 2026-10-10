@@ -55,7 +55,7 @@ export function hashVerificationToken(raw: string): Promise<string> {
  * in repeatedly does not send repeated mail.
  */
 export async function sendVerification(user: DbUser, origin: string, opts?: { onlyIfNoneLive?: boolean }): Promise<void> {
-  if (!emailVerificationRequired() || !user.email || user.email_verified_at) return;
+  if (!emailVerificationRequired() || user.email_verified_at) return;
   if (opts?.onlyIfNoneLive && (await hasLiveEmailVerificationToken(user.id))) return;
 
   const raw = generatePasswordResetToken();

@@ -85,8 +85,7 @@ fi
 
 echo ""
 log "── Installing dependencies (npm workspaces — one install covers"
-log "   the root app and mcp-server/packages/*, see"
-log "   PLAN-backend-auth-migration.md) ────────────────────"
+log "   the root app and mcp-server/packages/*) ───────────"
 run "npm ci --prefer-offline"
 
 echo ""

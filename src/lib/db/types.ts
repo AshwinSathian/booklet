@@ -4,9 +4,8 @@ export type UserPlan = "free";
 
 export type DbUser = {
   id: string;                     // app-owned
-  // Nullable: user rows created before the in-house auth have no email.
-  email: string | null;
-  password_hash: string | null;   // argon2id hash (src/lib/auth/password.ts); null = user row created before the in-house auth
+  email: string;
+  password_hash: string | null;   // argon2id hash (src/lib/auth/password.ts); null = no password set (signs in with a provider or passkey)
   display_name: string | null;
   plan: UserPlan;
   created_at: string;
