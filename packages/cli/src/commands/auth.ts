@@ -3,8 +3,8 @@ import { createServer } from "node:http";
 import { randomBytes } from "node:crypto";
 import { createClient } from "booklet-api-client";
 import { readConfig, writeConfig, getApiKey, getApiBase, setApiKey, clearApiKey, getApiKeySource } from "../config.js";
-import { apiErrorMessage } from "../api.js";
-import { success, error, info, bold, dim, gray, openUrl } from "../fmt.js";
+import { CliError, EXIT, toCliError } from "../errors.js";
+import { success, info, bold, dim, gray, openUrl, print, emit } from "../fmt.js";
 
 const BROWSER_AUTH_TIMEOUT_MS = 5 * 60_000; // 5 minutes
 
@@ -40,13 +40,13 @@ const CALLBACK_SUCCESS_HTML = `<!DOCTYPE html>
 async function validateKey(
   key: string,
   base: string,
-): Promise<{ ok: true; pageCount: number } | { ok: false; error: string }> {
+): Promise<{ ok: true; pageCount: number } | { ok: false; error: CliError }> {
   try {
     const client = createClient({ baseUrl: base, apiKey: key, source: "cli" });
-    const { pages } = await client.listPages();
-    return { ok: true, pageCount: pages.length };
+    const { total } = await client.listPages({ limit: 1 });
+    return { ok: true, pageCount: total };
   } catch (e) {
-    return { ok: false, error: apiErrorMessage(e) };
+    return { ok: false, error: toCliError(e) };
   }
 }
 
@@ -74,7 +74,7 @@ function waitForCallback(port: number, expectedState: string): Promise<string> {
     const timer = setTimeout(() => {
       server.close();
       reject(
-        new Error("Login timed out after 5 minutes. Run `booklet login` to try again."),
+        new CliError("Login timed out after 5 minutes. Run `booklet login` to try again."),
       );
     }, BROWSER_AUTH_TIMEOUT_MS);
 
@@ -99,7 +99,7 @@ function waitForCallback(port: number, expectedState: string): Promise<string> {
         server.close();
 
         if (returnedState !== expectedState) {
-          reject(new Error("State mismatch — possible CSRF. Aborting."));
+          reject(new CliError("State mismatch — possible CSRF. Aborting."));
           return;
         }
         if (!key) {
@@ -129,12 +129,13 @@ async function loginWithBrowser(base: string): Promise<{ key: string; pageCount:
   const state = randomBytes(20).toString("hex"); // 40-char hex, used as CSRF token
   const authUrl = `${base}/cli-auth?port=${port}&state=${state}`;
 
-  console.log();
+  print();
   openUrl(authUrl);
   info(`Opening ${bold(new URL(base).hostname)} in your browser…`);
-  console.log(dim(`  Didn't open? Visit: ${authUrl}`));
-  console.log(dim(`  In a non-interactive environment? Use: booklet login --key <key>`));
-  console.log();
+  // stderr, so the URL is still shown under --json.
+  console.error(dim(`  Didn't open? Visit: ${authUrl}`));
+  console.error(dim(`  In a non-interactive environment? Use: booklet login --key <key>`));
+  print();
   info("Waiting for authorization… (Ctrl+C to cancel)");
 
   const key = await waitForCallback(port, state);
@@ -142,7 +143,7 @@ async function loginWithBrowser(base: string): Promise<{ key: string; pageCount:
   // Validate the received key against the live API
   const validation = await validateKey(key, base);
   if (!validation.ok) {
-    throw new Error(`Key validation failed after auth: ${validation.error}`);
+    throw new CliError(`Key validation failed after auth: ${validation.error.message}`, validation.error.exitCode, validation.error.status);
   }
 
   return { key, pageCount: validation.pageCount };
@@ -165,13 +166,13 @@ export function registerAuthCommands(program: Command) {
       if (opts.key) {
         const result = await validateKey(opts.key, base);
         if (!result.ok) {
-          error(`Invalid key or unreachable server: ${result.error}`);
-          process.exit(1);
+          throw new CliError(`Invalid key or unreachable server: ${result.error.message}`, result.error.exitCode, result.error.status);
         }
         await writeConfig({ ...existing, apiBase: base });
         await setApiKey(opts.key);
         success("Authenticated.");
         info(`You have ${result.pageCount} page${result.pageCount === 1 ? "" : "s"}.`);
+        emit({ authenticated: true, base, pages: result.pageCount });
         return;
       }
 
@@ -197,25 +198,23 @@ export function registerAuthCommands(program: Command) {
           if ((await getApiKeySource()) === "file") {
             await setApiKey(currentKey);
           }
+          emit({ authenticated: true, base, pages: check.pageCount });
           return;
         }
         info("Saved key is no longer valid — re-authenticating…");
       }
 
       // ── Interactive: open browser ──────────────────────────────────────────
-      let result: { key: string; pageCount: number };
-      try {
-        result = await loginWithBrowser(base);
-      } catch (err) {
-        error(err instanceof Error ? err.message : String(err));
-        process.exit(1);
-      }
+      const result = await loginWithBrowser(base).catch((err) => {
+        throw toCliError(err);
+      });
 
       await writeConfig({ ...existing, apiBase: base });
       await setApiKey(result.key);
-      console.log();
+      print();
       success("Authenticated.");
       info(`You have ${result.pageCount} page${result.pageCount === 1 ? "" : "s"}.`);
+      emit({ authenticated: true, base, pages: result.pageCount });
     });
 
   program
@@ -225,26 +224,24 @@ export function registerAuthCommands(program: Command) {
       const source = await getApiKeySource();
       if (!source || source === "env") {
         info(source === "env" ? "Key is set via BOOKLET_API_KEY — nothing to remove." : "No key stored.");
+        emit({ logged_out: false });
         return;
       }
       await clearApiKey();
       success("Logged out. API key removed.");
+      emit({ logged_out: true });
     });
 
   program
     .command("whoami")
     .description("Show the active API key and base URL")
-    .option("--json", "Output raw JSON")
-    .action(async (opts: { json?: boolean }) => {
+    .action(async () => {
       const key = await getApiKey();
       const base = await getApiBase();
       const source = await getApiKeySource();
 
       if (!key || !source) {
-        if (opts.json) {
-          console.log(JSON.stringify({ authenticated: false }, null, 2));
-          return;
-        }
+        emit({ authenticated: false });
         info("Not authenticated. Run `booklet login` to authenticate.");
         return;
       }
@@ -260,13 +257,9 @@ export function registerAuthCommands(program: Command) {
         file: "~/.booklet/config.json",
       };
 
-      if (opts.json) {
-        console.log(JSON.stringify({ authenticated: true, key: masked, base, source: sourceLabel[source] }, null, 2));
-        return;
-      }
-
-      console.log(`${bold("Key:")}    ${masked}`);
-      console.log(`${bold("Base:")}   ${gray(base)}`);
-      console.log(`${bold("Source:")} ${dim(sourceLabel[source])}`);
+      emit({ authenticated: true, key: masked, base, source: sourceLabel[source] });
+      print(`${bold("Key:")}    ${masked}`);
+      print(`${bold("Base:")}   ${gray(base)}`);
+      print(`${bold("Source:")} ${dim(sourceLabel[source])}`);
     });
 }

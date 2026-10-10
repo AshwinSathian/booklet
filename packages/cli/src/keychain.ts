@@ -25,8 +25,13 @@ export type KeychainBackend = {
  * responsible for falling back to the file-based store when get()/set()
  * report unavailability.
  */
+// BOOKLET_NO_KEYCHAIN=1 skips the OS keychain, so the key is kept in
+// ~/.booklet/config.json (mode 0600). For containers, CI and tests.
+const disabled = () => Boolean(process.env.BOOKLET_NO_KEYCHAIN);
+
 export const osKeychain: KeychainBackend = {
   async get() {
+    if (disabled()) return null;
     try {
       const entry = new AsyncEntry(SERVICE, ACCOUNT);
       const value = await entry.getPassword(AbortSignal.timeout(READ_TIMEOUT_MS));
@@ -37,6 +42,7 @@ export const osKeychain: KeychainBackend = {
   },
 
   async set(key: string) {
+    if (disabled()) return false;
     try {
       const entry = new AsyncEntry(SERVICE, ACCOUNT);
       await entry.setPassword(key);
@@ -47,6 +53,7 @@ export const osKeychain: KeychainBackend = {
   },
 
   async clear() {
+    if (disabled()) return;
     try {
       const entry = new AsyncEntry(SERVICE, ACCOUNT);
       await entry.deleteCredential();

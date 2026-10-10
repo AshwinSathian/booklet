@@ -1,7 +1,8 @@
 import { Command } from "commander";
 import { readFile, watch } from "fs/promises";
-import { getClient, apiErrorMessage, NOT_AUTHENTICATED_ERROR } from "../api.js";
-import { success, error, info, warn, bold, dim, openUrl } from "../fmt.js";
+import { requireClient } from "../api.js";
+import { CliError, EXIT, toCliError } from "../errors.js";
+import { success, info, warn, bold, dim, print, emit, openUrl } from "../fmt.js";
 
 async function readInput(filePath: string): Promise<string> {
   if (filePath === "-") {
@@ -14,84 +15,50 @@ async function readInput(filePath: string): Promise<string> {
   return readFile(filePath, "utf8");
 }
 
+type Visibility = "public" | "unlisted";
+type PublishResult = { id: string; url: string; updated: boolean; warning?: string };
+
+/** Publishes or updates, and returns what happened. Throws CliError on failure. */
 async function doPublish(
   raw: string,
-  opts: {
-    update?: string;
-    slug?: string;
-    visibility?: string;
-    open?: boolean;
-  },
-  isWatch = false,
-): Promise<{ id: string; url: string } | null> {
-  const client = await getClient();
-  if (!client) {
-    error(NOT_AUTHENTICATED_ERROR);
-    return null;
-  }
+  opts: { update?: string; slug?: string; visibility?: Visibility },
+): Promise<PublishResult> {
+  const client = await requireClient();
 
   if (opts.update) {
     // PATCH existing page — content + optional metadata in one call
-    const patch: { raw: string; slug?: string; visibility?: "public" | "unlisted" } = { raw };
-    if (opts.slug) patch.slug = opts.slug;
-    if (opts.visibility === "public" || opts.visibility === "unlisted") patch.visibility = opts.visibility;
+    const result = await client
+      .updatePage(opts.update, {
+        raw,
+        ...(opts.slug ? { slug: opts.slug } : {}),
+        ...(opts.visibility ? { visibility: opts.visibility } : {}),
+      })
+      .catch((e) => {
+        throw toCliError(e, "Update failed");
+      });
+    return { id: result.id, url: result.url, updated: true };
+  }
 
-    let result;
+  // POST new page. Visibility goes in the same request; frontmatter in the
+  // document is applied server-side.
+  const { id, url } = await client
+    .publishPage(raw, opts.visibility ? { visibility: opts.visibility } : undefined)
+    .catch((e) => {
+      throw toCliError(e, "Publish failed");
+    });
+
+  // A slug from the command line needs a second request. If it fails the
+  // page is still published, so that is a warning and not a failure.
+  if (opts.slug) {
     try {
-      result = await client.updatePage(opts.update, patch);
+      const patched = await client.updatePage(id, { slug: opts.slug });
+      return { id, url: patched.url, updated: false };
     } catch (e) {
-      error(`Update failed: ${apiErrorMessage(e)}`);
-      return null;
-    }
-
-    if (isWatch) {
-      info(`Updated → ${bold(result.url)}`);
-    } else {
-      success(`Updated: ${bold(result.url)}`);
-    }
-    if (opts.open && !isWatch) openUrl(result.url);
-    return result;
-  }
-
-  // POST new page — only send raw content. The server applies frontmatter and
-  // DEFAULT_SETTINGS. Sending settings here would corrupt DocSettings with
-  // non-layout fields (visibility is not a DocSettings key).
-  let id: string, url: string;
-  try {
-    ({ id, url } = await client.publishPage(raw));
-  } catch (e) {
-    error(`Publish failed: ${apiErrorMessage(e)}`);
-    return null;
-  }
-
-  // Apply CLI-specified metadata (slug / visibility) via a separate PATCH.
-  // Frontmatter in the document is handled server-side during the POST.
-  // Sent whenever --visibility is given: new pages are unlisted by default,
-  // so `--visibility public` needs the PATCH as much as `unlisted` once did.
-  if (opts.slug || opts.visibility) {
-    const metaPatch: { slug?: string; visibility?: "public" | "unlisted" } = {};
-    if (opts.slug) metaPatch.slug = opts.slug;
-    if (opts.visibility === "public" || opts.visibility === "unlisted") metaPatch.visibility = opts.visibility;
-
-    try {
-      const patched = await client.updatePage(id, metaPatch);
-      success(`Published: ${bold(patched.url)}`);
-      console.log(dim(`  ID: ${id}`));
-      if (opts.open) openUrl(patched.url);
-      return { id, url: patched.url };
-    } catch (e) {
-      warn(`Published but metadata patch failed: ${apiErrorMessage(e)}`);
-      success(`Published: ${bold(url)}`);
-      console.log(dim(`  ID: ${id}`));
-      if (opts.open) openUrl(url);
-      return { id, url };
+      return { id, url, updated: false, warning: `Published, but the slug was not set: ${toCliError(e).message}` };
     }
   }
 
-  success(`Published: ${bold(url)}`);
-  console.log(dim(`  ID: ${id}`));
-  if (opts.open) openUrl(url);
-  return { id, url };
+  return { id, url, updated: false };
 }
 
 export function registerPublishCommand(program: Command) {
@@ -113,26 +80,32 @@ export function registerPublishCommand(program: Command) {
       const filePath = file ?? "-";
 
       if (opts.watch && filePath === "-") {
-        error("--watch cannot be used with stdin.");
-        process.exit(1);
+        throw new CliError("--watch cannot be used with stdin.", EXIT.USAGE);
       }
+      if (opts.visibility !== undefined && opts.visibility !== "public" && opts.visibility !== "unlisted") {
+        throw new CliError(`--visibility must be "public" or "unlisted", not "${opts.visibility}".`, EXIT.USAGE);
+      }
+      const publishOpts = { update: opts.update, slug: opts.slug, visibility: opts.visibility as Visibility | undefined };
 
       let raw: string;
       try {
         raw = await readInput(filePath);
       } catch (e) {
-        error(`Cannot read "${filePath}": ${e instanceof Error ? e.message : String(e)}`);
-        process.exit(1);
+        throw new CliError(`Cannot read "${filePath}": ${e instanceof Error ? e.message : String(e)}`);
       }
 
-      const result = await doPublish(raw, opts);
-      if (!result) process.exit(1);
+      const result = await doPublish(raw, publishOpts);
+      if (result.warning) warn(result.warning);
+      success(`${result.updated ? "Updated" : "Published"}: ${bold(result.url)}`);
+      if (!result.updated) print(dim(`  ID: ${result.id}`));
+      emit(result);
+      if (opts.open) openUrl(result.url);
 
       if (!opts.watch) return;
 
       const pageId = opts.update ?? result.id;
       info(`Watching ${bold(filePath)} for changes… (Ctrl+C to stop)`);
-      console.log();
+      print();
 
       try {
         const watcher = watch(filePath);
@@ -142,14 +115,15 @@ export function registerPublishCommand(program: Command) {
           await new Promise((r) => setTimeout(r, 80));
           try {
             const updated = await readFile(filePath, "utf8");
-            await doPublish(updated, { ...opts, update: pageId }, true);
-          } catch (readErr) {
-            warn(`Read error: ${readErr instanceof Error ? readErr.message : String(readErr)}`);
+            const again = await doPublish(updated, { ...publishOpts, update: pageId });
+            info(`Updated → ${bold(again.url)}`);
+          } catch (e) {
+            // One failed save must not end the watch.
+            warn(toCliError(e).message);
           }
         }
       } catch (e) {
-        error(`Watch failed: ${e instanceof Error ? e.message : String(e)}`);
-        process.exit(1);
+        throw new CliError(`Watch failed: ${e instanceof Error ? e.message : String(e)}`);
       }
     });
 }

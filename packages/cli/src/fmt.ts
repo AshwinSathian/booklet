@@ -51,12 +51,35 @@ export const yellow = (s: string) => c(33, s);
 export const cyan = (s: string) => c(36, s);
 export const gray = (s: string) => c(90, s);
 
+// --json: the command prints one JSON value on stdout (emit) and nothing
+// else there; human-readable lines are dropped. Warnings and errors still
+// go to stderr.
+let jsonMode = false;
+
+export function setJson(value: boolean): void {
+  jsonMode = value;
+}
+
+export function isJson(): boolean {
+  return jsonMode;
+}
+
+/** The command's result, printed only under --json. */
+export function emit(data: unknown): void {
+  if (jsonMode) console.log(JSON.stringify(data, null, 2));
+}
+
+/** A plain human-readable line, dropped under --json. */
+export function print(msg = ""): void {
+  if (!jsonMode) console.log(msg);
+}
+
 export function success(msg: string) {
-  console.log(`${green("✓")} ${msg}`);
+  print(`${green("✓")} ${msg}`);
 }
 
 export function info(msg: string) {
-  console.log(`${cyan("→")} ${msg}`);
+  print(`${cyan("→")} ${msg}`);
 }
 
 export function warn(msg: string) {
@@ -71,7 +94,7 @@ type Row = (string | number | null | undefined)[];
 
 export function table(headers: string[], rows: Row[]) {
   if (rows.length === 0) {
-    console.log(dim("(no results)"));
+    print(dim("(no results)"));
     return;
   }
 
@@ -90,9 +113,9 @@ export function table(headers: string[], rows: Row[]) {
     widths.map((w, i) => ` ${pad(String(row[i] ?? ""), w)} `).join("│"),
   );
 
-  console.log(headerRow);
-  console.log(dim(divider));
+  print(headerRow);
+  print(dim(divider));
   for (const row of dataRows) {
-    console.log(row);
+    print(row);
   }
 }

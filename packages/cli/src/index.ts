@@ -3,8 +3,11 @@ import { registerAuthCommands } from "./commands/auth.js";
 import { registerPublishCommand } from "./commands/publish.js";
 import { registerPagesCommand } from "./commands/pages.js";
 import { registerCompletionCommand } from "./commands/completion.js";
+import { registerPullCommand } from "./commands/pull.js";
+import { registerNewCommand } from "./commands/new.js";
+import { CliError, EXIT, EXIT_CODES_HELP, toCliError } from "./errors.js";
 import { BookletApiError } from "./api.js";
-import { error, setNoColor } from "./fmt.js";
+import { error, isJson, setJson, setNoColor } from "./fmt.js";
 
 declare const __CLI_VERSION__: string;
 
@@ -17,6 +20,7 @@ program
   .description("Publish Markdown pages from your terminal")
   .version(__CLI_VERSION__)
   .option("--no-color", "Disable colored output")
+  .option("--json", "Print the result as JSON on stdout, and errors as JSON on stderr")
   // Without this, Commander calls process.exit() itself for its own usage
   // errors and --help/--version — the catch block below never runs for
   // those, they'd just exit before parseAsync's promise ever rejects.
@@ -30,31 +34,42 @@ Examples:
   $ booklet publish README.md           Publish a Markdown file
   $ echo "# Hi" | booklet publish -     Publish from stdin
   $ booklet pages list                  List your published pages
+  $ booklet pull <id> -o page.md        Download a page's Markdown
+  $ booklet new adr                     Start from a template
+
+${EXIT_CODES_HELP}
 
 Docs & source: ${REPO_URL}`,
 );
 
 program.hook("preAction", (thisCommand) => {
   setNoColor(thisCommand.opts().color === false);
+  setJson(thisCommand.opts().json === true);
 });
 
 registerAuthCommands(program);
 registerPublishCommand(program);
+registerPullCommand(program);
+registerNewCommand(program);
 registerPagesCommand(program);
 registerCompletionCommand(program);
+
+/** Reports a failure and exits with its code. Under --json the report is one JSON object on stderr. */
+function exitWith(err: CliError): never {
+  if (isJson()) {
+    console.error(JSON.stringify({ error: err.message, exit_code: err.exitCode, ...(err.status ? { status: err.status } : {}) }));
+  } else {
+    error(err.message);
+  }
+  process.exit(err.exitCode);
+}
 
 async function main() {
   try {
     await program.parseAsync(process.argv);
   } catch (err) {
-    // Commander's own usage errors (unknown command/option, missing
-    // argument) already print their own message and throw — nothing
-    // further to add for those. Anything else here is either an expected
-    // BookletApiError that slipped past a command's own try/catch, or a
-    // genuine bug.
-    if (err instanceof BookletApiError) {
-      error(err.message);
-      process.exit(1);
+    if (err instanceof CliError || err instanceof BookletApiError) {
+      exitWith(toCliError(err));
     }
     if (
       err &&
@@ -66,14 +81,13 @@ async function main() {
       typeof err.exitCode === "number"
     ) {
       // Commander already printed its own message (or, for --help/
-      // --version, the output the user asked for) — just exit with the
-      // code Commander itself decided on (0 for help/version, 1 for
-      // usage errors).
-      process.exit(err.exitCode);
+      // --version, the output the user asked for). It exits 0 for those
+      // and non-zero for a usage error, which is exit code 2 here.
+      process.exit(err.exitCode === 0 ? EXIT.OK : EXIT.USAGE);
     }
     error(err instanceof Error ? err.message : String(err));
     console.error(`\nThis looks like a bug. Please report it: ${REPO_URL}/issues`);
-    process.exit(1);
+    process.exit(EXIT.FAILURE);
   }
 }
 
