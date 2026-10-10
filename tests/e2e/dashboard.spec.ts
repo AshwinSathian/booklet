@@ -16,8 +16,20 @@ const ip = () => ({
 
 type Person = { context: BrowserContext; request: APIRequestContext; userId: string };
 
-async function person(browser: Browser, tag: string): Promise<Person> {
+// Every context a test opens is closed when it ends. Left open, their pages
+// stay alive in the browser for the rest of the run and slow later tests.
+const opened: BrowserContext[] = [];
+async function newContext(browser: Browser): Promise<BrowserContext> {
   const context = await browser.newContext({ extraHTTPHeaders: ip() });
+  opened.push(context);
+  return context;
+}
+test.afterEach(async () => {
+  for (const context of opened.splice(0)) await context.close();
+});
+
+async function person(browser: Browser, tag: string): Promise<Person> {
+  const context = await newContext(browser);
   const res = await context.request.post("/api/auth/signup", { data: { email: uniqueEmail(tag), password: PASSWORD } });
   expect(res.status()).toBe(201);
   const { userId } = (await (await context.request.get("/api/auth/me")).json()) as { userId: string };
@@ -165,7 +177,7 @@ test("version history shows a line diff, and restoring v1 of 3 adds v4 with v1's
 });
 
 test("Import from URL opens the fetched file as a new draft", async ({ browser }) => {
-  const context = await browser.newContext({ extraHTTPHeaders: ip() });
+  const context = await newContext(browser);
   const page = await context.newPage();
   // The outbound fetch is covered by tests/unit/dashboard.spec.ts; here the
   // answer is canned so the test does not depend on GitHub.
@@ -189,7 +201,7 @@ test("Import from URL opens the fetched file as a new draft", async ({ browser }
 });
 
 test("Import from URL refuses a private address, and says why", async ({ browser }) => {
-  const context = await browser.newContext({ extraHTTPHeaders: ip() });
+  const context = await newContext(browser);
   const page = await context.newPage();
   await page.goto("/app");
   await page.waitForSelector("textarea");
