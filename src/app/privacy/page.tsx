@@ -74,7 +74,7 @@ export default function PrivacyPage() {
 
           <Section title="How we use your data">
             <p>We use collected data solely to operate the service: storing and serving your pages, associating
-              pages with your account, and delivering analytics you asked for. The only email we send is a password-reset link
+              pages with your account, and delivering analytics you asked for. The only email we send you is a password-reset link
               when you ask for one. We send no marketing email.</p>
             <p>We do not serve ads, sell your data to third parties, or use your content to train AI models.</p>
           </Section>
@@ -109,7 +109,7 @@ export default function PrivacyPage() {
               on infrastructure we run ourselves, with no third-party identity or data processor in the loop.</p>
             <ul className="list-disc list-inside flex flex-col gap-1.5">
               <li><strong className="text-text-primary">Cloudflare</strong> — edge network and tunnel in front of our servers</li>
-              <li><strong className="text-text-primary">Resend</strong> — delivers password-reset email; it receives your email address when you request a reset</li>
+              <li><strong className="text-text-primary">Resend</strong> — delivers our email. It receives your email address when you request a password reset, and the text of an abuse report (with your email address, if you gave one) when you report a page</li>
               <li><strong className="text-text-primary">MongoDB</strong> — self-hosted primary database for all page and account records, including anonymous pages</li>
             </ul>
           </Section>

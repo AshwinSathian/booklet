@@ -90,6 +90,26 @@ Node 20 reached end of life on 2026-04-30.
   four rules that are switched off in `eslint.config.mjs` because the
   existing code has not been reviewed against them.
 - `PORT` must stay set for `booklet-app` (see "How the 410 is produced").
+- `pm2 reload` does not re-read `script` for a process PM2 already knows; it
+  keeps the path it resolved at first start. After any change to `script` in
+  `ecosystem.config.js` (the Node 24 change was one), run this once after
+  the deploy. It drops both apps for a few seconds:
+
+  ```bash
+  pm2 delete booklet-app booklet-mcp && pm2 start ecosystem.config.js && pm2 save
+  ```
+
+**Data dropped with the 2026-10 cleanup.** The code stopped reading these in
+v1.1.0. They were removed from production by hand, after a `mongodump`:
+
+```js
+db.pages.updateMany({}, { $unset: { featured: "", remove_attribution_badge: "" } })
+db.reactions.drop()
+db.reaction_state.drop()
+```
+
+A database restored from a backup taken before that date has them again;
+they are harmless, and the same three commands remove them.
 
 ## Abuse reports and takedown
 
@@ -394,8 +414,8 @@ the actual target Node version, not assumed safe:**
   unsatisfied engines range rather than failing, so this shipped past local
   verification undetected. Reverted to 29/28. **Lesson applied**: every
   verification step for this dependency pass was re-run explicitly under
-  `$HOME/.nvm/versions/node/v20.19.5/bin` (the actual CI/production
-  version) before calling any of it confirmed, not just under whatever
+  `$HOME/.nvm/versions/node/v20.19.5/bin` (the CI/production
+  version at the time; it is Node 24 now) before calling any of it confirmed, not just under whatever
   Node happens to be active in the current shell.
 
 **Deliberately left on their current major** — no CVE driving any of these,

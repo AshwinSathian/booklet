@@ -18,7 +18,11 @@ set -euo pipefail
 # npm, the build and anything PM2 spawns all use it, whatever Node the
 # calling shell has active.
 NODE_BIN="$HOME/.nvm/versions/node/v24.19.0/bin"
-[[ -x "$NODE_BIN/node" ]] && export PATH="$NODE_BIN:$PATH"
+if [[ ! -x "$NODE_BIN/node" ]]; then
+  echo "Node 24 not found at $NODE_BIN. Install it (nvm install 24.19.0) or update NODE_BIN here, in scripts/redeploy.sh, scripts/pm2-startup.sh, .githooks/pre-push and ecosystem.config.js." >&2
+  exit 1
+fi
+export PATH="$NODE_BIN:$PATH"
 
 # Make sure `pm2` is resolvable regardless of the caller's active Node
 # version — nvm only puts a version's bin/ on PATH once something has

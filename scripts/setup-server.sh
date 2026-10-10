@@ -12,7 +12,7 @@
 #
 # What it sets up:
 #   • MongoDB Community (Homebrew) — started as a LaunchAgent
-#   • Node.js via nvm (or uses existing ≥18 Node)
+#   • Node.js via nvm (needs Node 24)
 #   • PM2 process manager — booklet-app (:3100) + booklet-mcp (:8788)
 #   • PM2 LaunchAgent for auto-start on login
 #   • Cloudflare Tunnel (cloudflared via Homebrew)
@@ -97,13 +97,13 @@ section "Node.js"
 if command -v node &>/dev/null; then
   NODE_VER=$(node --version | sed 's/v//')
   NODE_MAJOR=$(echo "$NODE_VER" | cut -d. -f1)
-  if [[ "$NODE_MAJOR" -ge 18 ]]; then
+  if [[ "$NODE_MAJOR" -ge 24 ]]; then
     ok "Node.js v$NODE_VER"
   else
-    die "Node.js v$NODE_VER is too old. Need ≥18. Install via nvm: https://github.com/nvm-sh/nvm"
+    die "Node.js v$NODE_VER is too old. Need 24. Install via nvm: https://github.com/nvm-sh/nvm"
   fi
 else
-  die "Node.js not found. Install via nvm or brew install node@20"
+  die "Node.js not found. Install Node 24 via nvm (nvm install 24.19.0 — the path ecosystem.config.js names)"
 fi
 
 # ─────────────────────────────────────────────────────────────────────────────

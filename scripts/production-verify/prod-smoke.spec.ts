@@ -194,7 +194,7 @@ test.afterAll(async () => {
   await db.collection("users").deleteMany({ email: EMAIL });
 
   console.log(
-    `[prod-smoke cleanup] removed ${userIds.length + 1} test user(s), ${allPageIds.length} test page(s)`,
+    `[prod-smoke cleanup] removed ${userIds.length} test user(s), ${allPageIds.length} test page(s)`,
   );
   await client.close();
 });

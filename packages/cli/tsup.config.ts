@@ -11,7 +11,7 @@ export default defineConfig({
   // CJS packages like commander. ESM + noExternal breaks because bundled CJS code
   // calls require("events") which throws in ESM context without a real require shim.
   format: ["cjs"],
-  target: "node18",
+  target: "node22",
   platform: "node",
   outDir: "dist",
   clean: true,

@@ -1,6 +1,6 @@
 /**
  * Thin typed fetch client for /api/v1/*. Deliberately no dependencies beyond
- * global fetch (Node 18+) and zod — every consumer (CLI, GitHub Action,
+ * global fetch (Node 22+) and zod — every consumer (CLI, GitHub Action,
  * MCP server) already runs on a fetch-capable runtime.
  *
  * Throws BookletApiError on any non-2xx response, carrying both the

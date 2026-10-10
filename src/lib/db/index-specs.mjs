@@ -167,10 +167,17 @@ export async function ensureIndexes(db) {
   // exist at all yet (a genuinely fresh database, e.g. a CI service
   // container — found live: this exact case, uncaught, was crashing
   // ensureIndexes and failing every unit test in the same run).
-  try {
-    await db.collection("collections").dropIndex("user_id_1_name_1");
-  } catch (err) {
-    if (err?.code !== 27 && err?.code !== 26) throw err;
+  // The second entry backed getFeaturedPages, removed with the Featured
+  // toggle in 2026-10.
+  for (const [collection, index] of [
+    ["collections", "user_id_1_name_1"],
+    ["pages", "featured_1_visibility_1_password_hash_1_created_at_-1"],
+  ]) {
+    try {
+      await db.collection(collection).dropIndex(index);
+    } catch (err) {
+      if (err?.code !== 27 && err?.code !== 26) throw err;
+    }
   }
 
   await Promise.all(
