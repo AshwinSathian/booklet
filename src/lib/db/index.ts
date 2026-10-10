@@ -1,5 +1,5 @@
 import { getDb } from "@/lib/mongodb";
-import type { DbApiKey, DbCollection, DbCollectionMember, DbPage, DbPageLink, DbUser, DbWebhook, DbWebhookDelivery, CollectionMemberRole, PublishEvent } from "./types";
+import type { DbApiKey, DbCollection, DbCollectionMember, DbPage, DbPageLink, DbUser, DbWebhook, DbWebhookDelivery, CollectionMemberRole } from "./types";
 
 // ---------------------------------------------------------------------------
 // Internal document shapes (MongoDB _id = our string id)
@@ -69,26 +69,6 @@ export async function getUser(id: string): Promise<DbUser | null> {
   const doc = await db.collection<UserDoc>("users").findOne({ _id: id });
   return doc ? toUser(doc) : null;
 }
-
-export async function upsertUser(
-  id: string,
-  email: string | null,
-): Promise<void> {
-  const db = await getDb();
-  await db.collection<UserDoc>("users").updateOne(
-    { _id: id },
-    {
-      $set: { email },
-      $setOnInsert: {
-        _id: id,
-        plan: "free" as const,
-        created_at: new Date().toISOString(),
-      },
-    },
-    { upsert: true },
-  );
-}
-
 
 export async function getUserByEmail(email: string): Promise<DbUser | null> {
   const db = await getDb();
@@ -162,7 +142,6 @@ export async function getPagesByUser(
   userId: string,
   opts: {
     limit?: number;
-    offset?: number;
     query?: string;
     tag?: string;
     type?: string;
@@ -199,7 +178,6 @@ export async function getPagesByUser(
     col
       .find(pageFilter)
       .sort({ created_at: -1, _id: -1 })
-      .skip(opts.offset ?? 0)
       .limit(opts.limit ?? 0)
       .toArray(),
     col.countDocuments(filter),
@@ -827,27 +805,6 @@ export async function getWebhookDelivery(id: string, webhookId: string, userId: 
   if (!doc) return null;
   const { _id, ...rest } = doc;
   return { id: _id, ...rest };
-}
-
-/**
- * How each of a user's pages was last published or updated (web, API, CLI,
- * MCP, Action). Owner-only: it is keyed by the events' own `user_id`.
- *
- * ponytail: reads all of the user's publish events (indexed by user_id) on
- * each My pages load. Keep a `last_source` on the page record instead if an
- * account's event count makes this slow.
- */
-export async function getLastPublishSources(userId: string): Promise<Map<string, PublishEvent["source"]>> {
-  const db = await getDb();
-  const rows = await db
-    .collection<PublishEvent>("publish_events")
-    .aggregate<{ _id: string; source: PublishEvent["source"] }>([
-      { $match: { user_id: userId } },
-      { $sort: { created_at: 1 } },
-      { $group: { _id: "$page_id", source: { $last: "$source" } } },
-    ])
-    .toArray();
-  return new Map(rows.map((r) => [r._id, r.source]));
 }
 
 export async function touchWebhookTriggered(id: string): Promise<void> {

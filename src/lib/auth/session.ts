@@ -1,8 +1,8 @@
 /**
  * Session management for in-house auth. Sessions are opaque, DB-backed,
  * HMAC-hashed tokens (src/lib/auth/session-token.ts) delivered via an
- * httpOnly/Secure/SameSite=Lax cookie — see PLAN-backend-auth-migration.md
- * for why this is DB-backed rather than a stateless JWT (instant revocation).
+ * httpOnly/Secure/SameSite=Lax cookie. DB-backed rather than a stateless
+ * JWT so a session can be revoked at once.
  *
  * `createSession`/`destroySession` mutate cookies and may only be called
  * from a Route Handler or Server Action (Next.js forbids cookie writes from

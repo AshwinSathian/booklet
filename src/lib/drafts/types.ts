@@ -55,22 +55,8 @@ export type DraftUpdatePatch = Partial<
   >
 >;
 
-/**
- * Drafts DB V1 persisted shape (Epic 2A initial draft) — supported for migration.
- * Stored as JSON in localStorage.
- */
-export type DraftsDbV1 = {
-  schemaVersion: 1;
-  drafts: Record<string, unknown>;
-};
-
-/**
- * Drafts DB V2 persisted shape.
- * Stored as JSON in localStorage.
- */
-export type DraftsDbV2 = {
+/** Drafts DB persisted shape. Stored as JSON in localStorage. */
+export type DraftsDb = {
   schemaVersion: 2;
   drafts: Record<string, DraftDoc>;
 };
-
-export type DraftsDb = DraftsDbV2;

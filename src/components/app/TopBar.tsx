@@ -809,7 +809,7 @@ function SaveIndicator({
 }) {
   if (showSaveWarning) {
     return (
-      <span className="hidden sm:inline text-xs font-medium text-amber-400">
+      <span className="hidden sm:inline text-xs font-medium text-warning">
         Not saved
       </span>
     );
@@ -947,7 +947,7 @@ function PostPublishSlugBar({
               "min-w-0 flex-1 sm:w-52 sm:flex-none px-2 py-1 text-xs bg-bg border rounded-md sm:rounded-l-none sm:rounded-r-md text-text-primary placeholder:text-text-muted",
               "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft",
               "transition-colors duration-fast",
-              availability === "taken" ? "border-red-400/60" : "border-border-default",
+              availability === "taken" ? "border-danger/60" : "border-border-default",
             ].join(" ")}
             aria-label="Custom URL slug"
           />
@@ -958,12 +958,12 @@ function PostPublishSlugBar({
             <span key="checking" className="text-xs text-text-muted animate-fade-in">Checking…</span>
           )}
           {availability === "available" && !error && (
-            <span key="available" className="text-xs text-green-400 animate-fade-in">✓ Available</span>
+            <span key="available" className="text-xs text-success animate-fade-in">✓ Available</span>
           )}
           {availability === "taken" && !error && (
-            <span key="taken" className="text-xs text-red-400 animate-fade-in">✗ Taken</span>
+            <span key="taken" className="text-xs text-danger animate-fade-in">✗ Taken</span>
           )}
-          {error && <span key="error" className="text-xs text-red-400 animate-fade-in">{error}</span>}
+          {error && <span key="error" className="text-xs text-danger animate-fade-in">{error}</span>}
           <Button variant="primary" size="sm" onClick={() => void save()} disabled={!canSave}>
             {saving ? (
               <svg width="11" height="11" viewBox="0 0 13 13" fill="none" className="animate-spin" aria-hidden>
@@ -1314,14 +1314,14 @@ export function TopBar({
       {showSaveWarning ? (
         <div className="absolute top-full left-0 right-0 px-3 py-2 bg-bg/95 backdrop-blur-xl">
           <div className="mx-auto w-full max-w-7xl">
-            <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-400/30 bg-amber-400/8 px-3 py-2">
-              <span className="text-xs text-amber-400">
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-warning/30 bg-warning/8 px-3 py-2">
+              <span className="text-xs text-warning">
                 Couldn&apos;t save — browser storage may be full.
               </span>
               <button
                 type="button"
                 onClick={() => void onCopyMarkdown()}
-                className="text-xs font-semibold text-amber-400 underline underline-offset-2 transition hover:text-amber-300"
+                className="text-xs font-semibold text-warning underline underline-offset-2 transition hover:text-warning"
               >
                 Copy as Markdown
               </button>

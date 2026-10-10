@@ -6,8 +6,7 @@
  * pages/[id]/versions/[versionNumber]/route.ts (9 occurrences of the same
  * "load page, 404 if missing, 403 if not owned" check; 4 occurrences of the
  * same slug-format + collision check). Content-patch/publish logic is
- * deliberately NOT unified here — see PLAN-backend-auth-migration.md
- * Phase 2 notes: the web PATCH /api/pages/[id] (metadata-only),
+ * deliberately NOT unified here: the web PATCH /api/pages/[id] (metadata-only),
  * /api/publish/[id] (content-only), and the v1 API's combined PATCH have
  * genuinely different contracts (e.g. only pages/[id] supports setting a
  * page password), and forcing them through one function risks silently

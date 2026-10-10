@@ -124,7 +124,7 @@ export function buildOpenApi(version: string) {
       version,
       summary: "Publish and manage Booklet pages.",
       description:
-        "All requests and responses are JSON. Timestamps are ISO 8601 UTC. Errors are RFC 9457 problem details that also carry an `error` string.",
+        "All requests and responses are JSON. Timestamps are ISO 8601 UTC. Errors are RFC 9457 problem details.",
       license: { name: "AGPL-3.0-only", identifier: "AGPL-3.0-only" },
     },
     servers: [{ url: "https://booklet-api.ashwinsathian.com", description: "Production" }],
@@ -169,7 +169,6 @@ export function buildOpenApi(version: string) {
               description: "`next_cursor` from the previous response. Pages added or deleted during the walk do not shift it.",
               schema: { type: "string" },
             },
-            { name: "offset", in: "query", required: false, description: "Number of pages to skip. Prefer `cursor`.", schema: { type: "integer", minimum: 0, default: 0 } },
             { name: "q", in: "query", required: false, description: "Case-insensitive match on the title.", schema: { type: "string" } },
             { name: "tag", in: "query", required: false, description: "Exact match on a frontmatter tag.", schema: { type: "string" } },
             { name: "type", in: "query", required: false, description: "Only pages of this document type (frontmatter `type`).", schema: { type: "string", enum: [...DOC_TYPES] } },

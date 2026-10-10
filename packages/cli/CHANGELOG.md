@@ -3,6 +3,18 @@
 All notable changes to `booklet-cli` are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [3.0.0] - 2026-10-11
+
+Needs a Booklet server at 2.0.0 or later. Commands, flags and exit codes are unchanged.
+
+### Changed
+- **Breaking:** built on `booklet-api-client` 3.0.0. The server's error body no longer has an
+  `error` member and page lists are walked by cursor only, so this version does not work against
+  a self-hosted Booklet older than 2.0.0. CLI 2.x cannot list pages against a 2.0.0 server, and
+  prints `HTTP <status>` in place of its error messages.
+- **Breaking:** API keys that start with `rdbl_` are no longer accepted by the server. Run
+  `booklet login --force` to get a new key.
+
 ## [2.1.0] - 2026-10-10
 
 ### Added

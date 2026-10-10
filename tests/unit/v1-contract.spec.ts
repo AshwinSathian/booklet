@@ -47,7 +47,7 @@ async function expectProblem(res: Response, status: number) {
   expect(typeof body.title).toBe("string");
   expect(body.status).toBe(status);
   expect(typeof body.detail).toBe("string");
-  expect(body.error).toBe(body.detail); // the pre-RFC member every client reads
+  expect(body).not.toHaveProperty("error"); // /api/v1 is RFC 9457 only
   return body;
 }
 
@@ -210,6 +210,12 @@ test.describe("conditional requests", () => {
     expect(del.status).toBe(200);
     expect(await getPageRecord(id)).toBeNull();
   });
+});
+
+test("offset on the page list is refused, not ignored", async () => {
+  const { rawKey } = await newUser();
+  const body = await expectProblem(await listPages(call(rawKey, "/pages?limit=10&offset=10")), 400);
+  expect(body.detail).toContain("next_cursor");
 });
 
 test("cursor pagination returns each of 250 pages exactly once while pages are inserted", async () => {

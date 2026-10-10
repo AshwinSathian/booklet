@@ -26,10 +26,10 @@ const SITE_URL =
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
 
-  title: `${APP_NAME} — Written in Markdown, Read by Everyone Else`,
+  title: `${APP_NAME} — Engineering Documents, Published as Pages`,
 
   description:
-    "Turn incident reports, ADRs, and runbooks into a clean page anyone can open and read — no account, no formatting step. Free, in seconds.",
+    "Publish Markdown incident reports, ADRs, RFCs and runbooks as web pages, with team spaces. Free, and you can try it without an account.",
 
   applicationName: APP_NAME,
 
@@ -68,31 +68,31 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: APP_NAME,
-    title: `${APP_NAME} — Written in Markdown, Read by Everyone Else`,
+    title: `${APP_NAME} — Engineering Documents, Published as Pages`,
     description:
-      "Turn incident reports, ADRs, and runbooks into a clean page anyone can open and read — no account, no formatting step.",
+      "Publish Markdown incident reports, ADRs, RFCs and runbooks as web pages, with team spaces.",
     url: SITE_URL,
     images: [
       {
         url: "/opengraph-image",
         width: 1200,
         height: 630,
-        alt: `${APP_NAME} — Written in Markdown. Read by everyone else.`,
+        alt: `${APP_NAME} — Engineering documents, published as pages.`,
       },
     ],
   },
 
   twitter: {
     card: "summary_large_image",
-    title: `${APP_NAME} — Written in Markdown, Read by Everyone Else`,
+    title: `${APP_NAME} — Engineering Documents, Published as Pages`,
     description:
-      "Turn incident reports, ADRs, and runbooks into a clean page anyone can open and read — no account, no formatting step.",
+      "Publish Markdown incident reports, ADRs, RFCs and runbooks as web pages, with team spaces.",
     images: [
       {
         url: "/twitter-image",
         width: 1200,
         height: 630,
-        alt: `${APP_NAME} — Written in Markdown. Read by everyone else.`,
+        alt: `${APP_NAME} — Engineering documents, published as pages.`,
       },
     ],
   },

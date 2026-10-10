@@ -179,7 +179,7 @@ function AdminPageInner({ slug }: { slug: string }) {
       <main className="mx-auto w-full max-w-2xl px-4 py-10">
         <h1 className="text-xl font-medium mb-8">Team settings</h1>
 
-        {error && <p className="text-sm text-red-400 mb-4">{error}</p>}
+        {error && <p className="text-sm text-danger mb-4">{error}</p>}
 
         {/* Rename */}
         <section className="mb-8">
@@ -229,7 +229,7 @@ function AdminPageInner({ slug }: { slug: string }) {
                   size="md"
                   onClick={() => void handleRemoveMember(m.user_id)}
                   disabled={removingId === m.user_id}
-                  className="shrink-0 text-xs sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 hover:text-red-400 hover:bg-red-400/8"
+                  className="shrink-0 text-xs sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 hover:text-danger hover:bg-danger/8"
                 >
                   {removingId === m.user_id ? "…" : "Remove"}
                 </Button>
@@ -261,15 +261,15 @@ function AdminPageInner({ slug }: { slug: string }) {
             </Button>
           </div>
           {inviteResult && (
-            <p className={`mt-1.5 text-xs ${inviteResult.ok ? "text-text-secondary" : "text-red-400"}`}>
+            <p className={`mt-1.5 text-xs ${inviteResult.ok ? "text-text-secondary" : "text-danger"}`}>
               {inviteResult.message}
             </p>
           )}
         </section>
 
         {/* Danger zone */}
-        <section className="rounded-xl border border-red-500/20 p-5">
-          <h2 className="text-sm font-medium text-red-400 mb-1">Danger zone</h2>
+        <section className="rounded-xl border border-danger/20 p-5">
+          <h2 className="text-sm font-medium text-danger mb-1">Danger zone</h2>
           <p className="text-xs text-text-muted mb-4">
             Deleting a team is permanent. Pages are kept but removed from this team.
           </p>
@@ -287,7 +287,7 @@ function AdminPageInner({ slug }: { slug: string }) {
               variant="ghost"
               size="md"
               onClick={() => setConfirmDelete(true)}
-              className="text-red-400 hover:bg-red-400/8 hover:text-red-300"
+              className="text-danger hover:bg-danger/8 hover:text-danger"
             >
               Delete team
             </Button>

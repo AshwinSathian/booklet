@@ -1,7 +1,7 @@
 {
-  "name": "Booklet — Written in Markdown, Read by Everyone Else",
+  "name": "Booklet — Engineering Documents, Published as Pages",
   "short_name": "Booklet",
-  "description": "Write Markdown, get a formatted page with one shareable link. No setup, no noise.",
+  "description": "Publish Markdown incident reports, ADRs, RFCs and runbooks as web pages, with team spaces.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#000000",

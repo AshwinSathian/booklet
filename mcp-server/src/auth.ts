@@ -1,11 +1,9 @@
 import { OAuthError, OAuthErrorCode, type AuthInfo, type OAuthTokenVerifier } from "@modelcontextprotocol/server";
 import { ACCESS_TOKEN_PATTERN, OAUTH_SCOPES } from "booklet-api-client";
 
-// Matches Booklet's key generation: "bklt_" prefix + exactly 40 alphanumeric
-// chars, plus the legacy "rdbl_" prefix issued before the Readable -> Booklet
-// rename (already-issued keys must keep working — see src/lib/api-key.ts in
-// the main app, which mirrors this same dual-prefix acceptance).
-const KEY_PATTERN = /^(?:bklt_|rdbl_)[0-9A-Za-z]{40}$/;
+// Matches Booklet's key generation (src/lib/api-key.ts in the main app):
+// "bklt_" + exactly 40 alphanumeric chars.
+const KEY_PATTERN = /^bklt_[0-9A-Za-z]{40}$/;
 
 const invalid = (message: string) => new OAuthError(OAuthErrorCode.InvalidToken, message);
 

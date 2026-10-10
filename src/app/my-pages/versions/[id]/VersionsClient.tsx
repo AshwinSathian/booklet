@@ -111,7 +111,7 @@ export function VersionsClient({
   return (
     <>
       {error ? (
-        <div className="mb-4 rounded-lg border border-red-400/30 bg-red-400/10 px-3 py-2 text-sm text-red-300">
+        <div className="mb-4 rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">
           {error}
         </div>
       ) : null}
@@ -251,8 +251,8 @@ export function VersionsClient({
 
 const DIFF_STYLE: Record<DiffLine["op"], { sign: string; cls: string }> = {
   same: { sign: " ", cls: "text-text-secondary" },
-  add: { sign: "+", cls: "bg-green-500/15 text-text-primary" },
-  del: { sign: "-", cls: "bg-red-500/15 text-text-primary" },
+  add: { sign: "+", cls: "bg-success/15 text-text-primary" },
+  del: { sign: "-", cls: "bg-danger/15 text-text-primary" },
 };
 
 function DiffView({ from, to, lines }: { from: number; to: number; lines: DiffLine[] }) {

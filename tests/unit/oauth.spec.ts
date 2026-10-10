@@ -5,10 +5,9 @@ import { sessionCookieFor, withRequestScope } from "./helpers/request-scope";
 import { getDb } from "@/lib/mongodb";
 import { ensureIndexes } from "@/lib/db/index-specs.mjs";
 import { hashApiKey } from "@/lib/api-key";
-import { clearClientCache, getClient, isAllowedRedirectUri, metadataFetcher, redirectUriMatches } from "@/lib/oauth/clients";
+import { clearClientCache, getClient, isAllowedRedirectUri, metadataFetcher, redirectUriMatches, type OAuthClient } from "@/lib/oauth/clients";
 import { oauthResource, validateAuthorizeRequest } from "@/lib/oauth/server";
 import { GET as metadata } from "@/app/.well-known/oauth-authorization-server/route";
-import { POST as register } from "@/app/api/oauth/register/route";
 import { POST as authorize } from "@/app/api/oauth/authorize/route";
 import { POST as token } from "@/app/api/oauth/token/route";
 import { POST as revoke } from "@/app/api/oauth/revoke/route";
@@ -22,7 +21,6 @@ import { POST as publish } from "@/app/api/v1/publish/route";
 const ORIGIN = "http://localhost";
 const CLAUDE_CALLBACK = "https://claude.ai/api/mcp/auth_callback";
 const userIds: string[] = [];
-const clientIds: string[] = [];
 /** A fresh address per request, so the per-IP rate limits never interfere, even across reruns in the same minute. */
 const ip = () => ({ "cf-connecting-ip": `2001:db8::${crypto.randomUUID().slice(0, 4)}:${crypto.randomUUID().slice(0, 4)}` });
 
@@ -37,13 +35,15 @@ async function newUser() {
   return { userId, cookie: await sessionCookieFor(userId) };
 }
 
+// Clients are metadata documents. These stand in for the documents' hosts:
+// the fetch is replaced (in beforeAll) by a lookup in this map.
+const documents = new Map<string, OAuthClient>();
+const realMetadataFetch = metadataFetcher.fetch;
+
 async function newClient(redirect_uris = [CLAUDE_CALLBACK], client_name = "Claude") {
-  const res = await register(
-    new Request(`${ORIGIN}/api/oauth/register`, { method: "POST", headers: ip(), body: JSON.stringify({ redirect_uris, client_name }) }),
-  );
-  const body = await res.json();
-  if (body.client_id) clientIds.push(body.client_id);
-  return { res, body };
+  const client_id = `https://client-${crypto.randomUUID()}.example/oauth/client.json`;
+  documents.set(client_id, { client_id, client_name, redirect_uris });
+  return { body: { client_id } };
 }
 
 type Params = Record<string, string | undefined>;
@@ -100,13 +100,14 @@ const api = (accessToken: string) => ({ headers: { Authorization: `Bearer ${acce
 test.beforeAll(async () => {
   useTestEnv();
   await ensureIndexes(await getDb());
+  metadataFetcher.fetch = async (url) => documents.get(url.href) ?? null;
 });
 
 test.afterAll(async () => {
   const db = await getDb();
   await db.collection("oauth_tokens").deleteMany({ user_id: { $in: userIds } });
   await db.collection("oauth_codes").deleteMany({ user_id: { $in: userIds } });
-  await db.collection("oauth_clients").deleteMany({ _id: { $in: clientIds } } as never);
+  metadataFetcher.fetch = realMetadataFetch;
   await db.collection("sessions").deleteMany({ user_id: { $in: userIds } });
   await db.collection("pages").deleteMany({ user_id: { $in: userIds } });
 });
@@ -179,8 +180,9 @@ test("scopes are enforced: a pages:read token cannot publish", async () => {
   expect(res.status).toBe(403);
   expect(res.headers.get("www-authenticate")).toContain("insufficient_scope");
   // And a refresh cannot widen it.
-  const narrow = await (await redeem(await getCode({ scope: "pages:read" }))).json();
-  const widened = await tokenRequest({ grant_type: "refresh_token", refresh_token: narrow.refresh_token, client_id: clientIds[clientIds.length - 1], scope: "pages:read pages:write" });
+  const narrowGrant = await getCode({ scope: "pages:read" });
+  const narrow = await (await redeem(narrowGrant)).json();
+  const widened = await tokenRequest({ grant_type: "refresh_token", refresh_token: narrow.refresh_token, client_id: narrowGrant.clientId, scope: "pages:read pages:write" });
   expect((await widened.json()).error).toBe("invalid_scope");
 });
 
@@ -370,15 +372,10 @@ test.describe("consent cannot be forged", () => {
 });
 
 test.describe("clients", () => {
-  test("registration accepts Claude's callback and refuses dangerous redirect URIs", async () => {
-    const ok = await newClient();
-    expect(ok.res.status).toBe(201);
-    expect(ok.body).toMatchObject({ redirect_uris: [CLAUDE_CALLBACK], token_endpoint_auth_method: "none" });
-    expect(ok.body.client_secret).toBeUndefined();
-
-    for (const bad of [["javascript:alert(1)"], ["data:text/html,x"], ["http://evil.example/cb"], ["https://a.example/cb#frag"], [], ["not a url"]]) {
-      expect((await newClient(bad)).res.status, JSON.stringify(bad)).toBe(400);
-    }
+  test("there is no client registration: no endpoint in the metadata, and a made-up client_id is no client", async () => {
+    const doc = await metadata(new Request(`${ORIGIN}/.well-known/oauth-authorization-server`)).json();
+    expect(doc.registration_endpoint).toBeUndefined();
+    for (const id of ["bkc_" + "a".repeat(24), "claude", ""]) expect(await getClient(id), id).toBeNull();
   });
 
   test("redirect URI rules", () => {
@@ -387,6 +384,9 @@ test.describe("clients", () => {
     expect(isAllowedRedirectUri("cursor://anysphere.cursor-mcp/oauth/callback")).toBe(true);
     expect(isAllowedRedirectUri("http://192.168.1.5/callback")).toBe(false);
     expect(isAllowedRedirectUri("https://user:pw@a.example/cb")).toBe(false);
+    for (const bad of ["javascript:alert(1)", "data:text/html,x", "http://evil.example/cb", "https://a.example/cb#frag", "not a url"]) {
+      expect(isAllowedRedirectUri(bad), bad).toBe(false);
+    }
 
     // Loopback matches on any port (RFC 8252); nothing else is fuzzy.
     expect(redirectUriMatches(["http://127.0.0.1/callback"], "http://127.0.0.1:51234/callback")).toBe(true);
@@ -401,13 +401,13 @@ test.describe("clients", () => {
     metadataFetcher.fetch = async (url) => {
       fetched.push(url.href);
       return url.href === "https://client.example/oauth/metadata.json"
-        ? { client_id: url.href, client_name: "Example", redirect_uris: [CLAUDE_CALLBACK], source: "metadata" }
+        ? { client_id: url.href, client_name: "Example", redirect_uris: [CLAUDE_CALLBACK] }
         : null;
     };
     try {
       clearClientCache();
       const id = "https://client.example/oauth/metadata.json";
-      expect(await getClient(id)).toMatchObject({ client_name: "Example", source: "metadata" });
+      expect(await getClient(id)).toMatchObject({ client_id: id, client_name: "Example" });
       await getClient(id);
       expect(fetched).toEqual([id]); // cached
 
@@ -428,9 +428,16 @@ test.describe("clients", () => {
   });
 
   test("the real metadata fetch refuses internal addresses", async () => {
+    const stub = metadataFetcher.fetch;
+    metadataFetcher.fetch = realMetadataFetch;
     clearClientCache();
-    for (const internal of ["https://127.0.0.1/client.json", "https://localhost/client.json", "https://169.254.169.254/latest/meta-data", "https://10.0.0.1/client.json"]) {
-      expect(await getClient(internal), internal).toBeNull();
+    try {
+      for (const internal of ["https://127.0.0.1/client.json", "https://localhost/client.json", "https://169.254.169.254/latest/meta-data", "https://10.0.0.1/client.json"]) {
+        expect(await getClient(internal), internal).toBeNull();
+      }
+    } finally {
+      metadataFetcher.fetch = stub;
+      clearClientCache();
     }
   });
 });

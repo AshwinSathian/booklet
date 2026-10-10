@@ -51,8 +51,8 @@ next-env.d.ts
 !.dev.vars.example
 
 # mcp-server and packages/* are npm workspaces of the root (single root
-# lockfile/node_modules, hoisted + symlinked per workspace) — see
-# PLAN-backend-auth-migration.md. Per-workspace node_modules can still exist
+# lockfile/node_modules, hoisted + symlinked per workspace).
+# Per-workspace node_modules can still exist
 # for version-conflicting nested deps, so still ignored.
 mcp-server/node_modules/
 mcp-server/.wrangler/

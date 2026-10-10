@@ -4,7 +4,7 @@
  * over the request's own origin — req.url's origin is wrong whenever the
  * request arrived over an internal hop rather than directly from a
  * browser/external client, e.g. the MCP server calling /api/v1/* via
- * http://localhost:3100 (see ecosystem.config.js's READABLE_API_BASE and
+ * http://localhost:3100 (see ecosystem.config.js's BOOKLET_API_BASE and
  * docs/OPERATIONS.md). Without this, a page published through the MCP
  * server gets back a `url` field like "http://localhost:3100/p/abc" —
  * technically correct from the API's own vantage point, useless to whoever

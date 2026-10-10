@@ -1,12 +1,6 @@
 import { DEFAULT_SETTINGS } from "@/lib/blocks";
 import { DRAFTS_DB, DRAFT_DOC, PUBLISH_LINKAGE } from "./constants";
-import type {
-  DraftDoc,
-  DraftsDb,
-  DraftsDbV1,
-  DraftsDbV2,
-  PublishedSnapshotRef,
-} from "./types";
+import type { DraftDoc, DraftsDb, PublishedSnapshotRef } from "./types";
 
 function isPlainObject(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
@@ -70,11 +64,11 @@ function coerceSettings(v: unknown): DraftDoc["settings"] {
   };
 }
 
-function emptyDb(): DraftsDbV2 {
+function emptyDb(): DraftsDb {
   return { schemaVersion: DRAFTS_DB.schemaVersion, drafts: {} };
 }
 
-function isDraftDocV2(v: unknown): v is DraftDoc {
+function isDraftDoc(v: unknown): v is DraftDoc {
   if (!isPlainObject(v)) return false;
   if (!isString(v.id)) return false;
   if (!isNumber(v.v)) return false;
@@ -88,12 +82,12 @@ function isDraftDocV2(v: unknown): v is DraftDoc {
 /**
  * Coerce an arbitrary unknown value (e.g. server JSON response, or a
  * localStorage-persisted draft) into a well-formed DraftDoc, or null if it
- * doesn't look like one at all. Shared by the localStorage DB migration
- * below and by cloud-sync.ts, which must not trust a server response's
+ * doesn't look like one at all. Shared by the localStorage read below and
+ * by cloud-sync.ts, which must not trust a server response's
  * shape any more than localStorage's.
  */
 export function coerceDraftDoc(v: unknown): DraftDoc | null {
-  if (!isDraftDocV2(v)) return null;
+  if (!isDraftDoc(v)) return null;
 
   return {
     ...v,
@@ -106,9 +100,14 @@ export function coerceDraftDoc(v: unknown): DraftDoc | null {
   };
 }
 
-function coerceDbV2(raw: unknown): DraftsDbV2 {
+/**
+ * Reads parsed localStorage JSON as the drafts DB. Anything that is not the
+ * current schema, including a DB written by an earlier schema version, is an
+ * empty DB. Never throws.
+ */
+export function coerceDraftsDb(raw: unknown): DraftsDb {
   if (!isPlainObject(raw)) return emptyDb();
-  if (raw.schemaVersion !== 2) return emptyDb();
+  if (raw.schemaVersion !== DRAFTS_DB.schemaVersion) return emptyDb();
   const draftsRaw = raw.drafts;
   if (!isPlainObject(draftsRaw)) return emptyDb();
 
@@ -120,70 +119,5 @@ function coerceDbV2(raw: unknown): DraftsDbV2 {
     drafts[id] = coerced;
   }
 
-  return { schemaVersion: 2, drafts };
-}
-
-function coerceDbV1(raw: unknown): DraftsDbV1 | null {
-  if (!isPlainObject(raw)) return null;
-  if (raw.schemaVersion !== 1) return null;
-  if (!isPlainObject(raw.drafts)) return null;
-  return raw as DraftsDbV1;
-}
-
-function migrateV1ToV2(v1: DraftsDbV1): DraftsDbV2 {
-  // Epic 2A stored unknown drafts shape; best-effort coercion.
-  // If a draft has title/settings and (optionally) raw, keep them.
-  const drafts: Record<string, DraftDoc> = {};
-  for (const [id, unknownDoc] of Object.entries(v1.drafts)) {
-    if (!isPlainObject(unknownDoc)) continue;
-
-    const createdAt = isString(unknownDoc.createdAt)
-      ? unknownDoc.createdAt
-      : new Date(0).toISOString();
-    const updatedAt = isString(unknownDoc.updatedAt)
-      ? unknownDoc.updatedAt
-      : createdAt;
-    const title = isString(unknownDoc.title)
-      ? unknownDoc.title
-      : DRAFT_DOC.defaultTitle;
-    const raw = isString((unknownDoc as { raw?: unknown }).raw)
-      ? ((unknownDoc as { raw?: string }).raw ?? "")
-      : "";
-
-    const settings = coerceSettings(unknownDoc.settings);
-
-    drafts[id] = {
-      id,
-      v: DRAFT_DOC.version,
-      createdAt,
-      updatedAt,
-      title,
-      raw,
-      settings,
-    };
-  }
-
-  return { schemaVersion: 2, drafts };
-}
-
-/**
- * Migrate any parsed Drafts DB JSON into the latest persisted shape.
- * This never throws; callers should treat it as safe.
- */
-export function migrateDraftsDb(parsed: unknown): DraftsDb {
-  if (!isPlainObject(parsed)) return emptyDb();
-
-  const schemaVersion = parsed.schemaVersion;
-  if (!isNumber(schemaVersion)) return emptyDb();
-
-  if (schemaVersion === 2) return coerceDbV2(parsed);
-
-  if (schemaVersion === 1) {
-    const v1 = coerceDbV1(parsed);
-    if (!v1) return emptyDb();
-    return migrateV1ToV2(v1);
-  }
-
-  // Future versions: implement incremental migrations here.
-  return emptyDb();
+  return { schemaVersion: DRAFTS_DB.schemaVersion, drafts };
 }

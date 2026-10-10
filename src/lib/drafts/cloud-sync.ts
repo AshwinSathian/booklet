@@ -35,7 +35,7 @@
  * later.
  */
 
-import { coerceDraftDoc } from "./migrate";
+import { coerceDraftDoc } from "./coerce";
 import {
   getDraft,
   listDrafts,

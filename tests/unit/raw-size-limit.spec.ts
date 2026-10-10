@@ -34,7 +34,7 @@ let cookie: string;
 const created: string[] = [];
 
 test.beforeAll(async () => {
-  process.env.MONGODB_URI ??= "mongodb://localhost:27017/readable?retryWrites=true&w=majority";
+  process.env.MONGODB_URI ??= "mongodb://localhost:27017/booklet?retryWrites=true&w=majority";
   process.env.API_KEY_PEPPER ??= "test-only-pepper-do-not-use-in-prod";
   const db = await getDb();
   await ensureIndexes(db);

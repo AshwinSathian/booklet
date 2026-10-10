@@ -19,8 +19,8 @@ function configPath(): string {
 export const DEFAULT_API_BASE = "https://booklet.ashwinsathian.com";
 
 export type Config = {
-  /** Legacy plaintext fallback — see getApiKey()/setApiKey(). Not written
-   * to when the OS keychain is available. */
+  /** Plaintext fallback, see getApiKey()/setApiKey(). Not written to when
+   * the OS keychain is available. */
   apiKey?: string;
   apiBase: string;
 };
@@ -39,7 +39,7 @@ export async function writeConfig(config: Config): Promise<void> {
   // Config stores a plaintext API key (when the keychain isn't available)
   // — owner-only permissions. `mode` on mkdir/writeFile only applies at
   // creation time, so re-chmod on every write to also tighten a dir/file
-  // left world-readable by an older CLI version.
+  // that something else left world-readable.
   await mkdir(configDir(), { recursive: true, mode: 0o700 });
   await chmod(configDir(), 0o700);
   await writeFile(configPath(), JSON.stringify(config, null, 2) + "\n", { encoding: "utf8", mode: 0o600 });
@@ -50,9 +50,8 @@ export type ApiKeySource = "env" | "keychain" | "file";
 
 /**
  * Looks up the active API key: BOOKLET_API_KEY env var, then the OS
- * keychain, then the legacy plaintext config-file field (used when the
- * keychain is unavailable, or for anyone who logged in before this CLI
- * version added keychain support).
+ * keychain, then the plaintext config-file field (used when the keychain
+ * is unavailable).
  */
 export async function getApiKey(backend: KeychainBackend = osKeychain): Promise<string | null> {
   const env = process.env.BOOKLET_API_KEY;
@@ -76,25 +75,23 @@ export async function getApiKeySource(backend: KeychainBackend = osKeychain): Pr
 /**
  * Saves the API key. Prefers the OS keychain; if that's unavailable (no
  * backend on headless Linux, unsupported OS, `--omit=optional` install),
- * falls back to the existing 0600 config file. Either way, any legacy
- * plaintext key from a prior version — or a prior run on this same
- * machine before the keychain became available — is cleaned up once a
- * keychain write succeeds, so the key never ends up duplicated in both
- * places.
+ * falls back to the 0600 config file. A plaintext key left by a run on
+ * this machine before the keychain became available is removed once a
+ * keychain write succeeds, so the key never ends up in both places.
  */
 export async function setApiKey(key: string, backend: KeychainBackend = osKeychain): Promise<void> {
   const existing = await readConfig();
   const savedToKeychain = await backend.set(key);
 
   if (savedToKeychain) {
-    const { apiKey: _legacy, ...rest } = existing;
+    const { apiKey: _plaintext, ...rest } = existing;
     await writeConfig(rest as Config);
   } else {
     await writeConfig({ ...existing, apiKey: key });
   }
 }
 
-/** Removes the API key from wherever it's stored — keychain and/or the legacy file field. */
+/** Removes the API key from wherever it's stored — keychain and/or the config file. */
 export async function clearApiKey(backend: KeychainBackend = osKeychain): Promise<void> {
   await backend.clear();
   const existing = await readConfig();

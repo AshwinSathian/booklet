@@ -50,11 +50,11 @@ export function buildOgSvg(title?: string): string {
   <text x="80" y="490" font-family="system-ui, -apple-system, sans-serif" font-size="24" fill="#636366" letter-spacing="-0.2">Shared via Booklet</text>`;
   } else {
     content = `
-  <text x="80" y="310" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="700" fill="#f5f5f7" letter-spacing="-2">Written in Markdown.</text>
-  <text x="80" y="400" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="700" fill="#f5a623" letter-spacing="-2">Read by everyone else.</text>
-  <text x="80" y="470" font-family="system-ui, -apple-system, sans-serif" font-size="28" fill="#86868b" letter-spacing="-0.3">Incident reports, ADRs, and runbooks — as a page anyone can read.</text>
+  <text x="80" y="310" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="700" fill="#f5f5f7" letter-spacing="-2">Engineering documents,</text>
+  <text x="80" y="400" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="700" fill="#f5a623" letter-spacing="-2">published as pages.</text>
+  <text x="80" y="470" font-family="system-ui, -apple-system, sans-serif" font-size="28" fill="#86868b" letter-spacing="-0.3">Incident reports, ADRs, RFCs and runbooks, with team spaces.</text>
   <rect x="80" y="512" width="200" height="44" rx="22" fill="#1d1d1f"/>
-  <text x="180" y="540" font-family="system-ui, -apple-system, sans-serif" font-size="18" fill="#a1a1a6" text-anchor="middle">Free · No account</text>`;
+  <text x="180" y="540" font-family="system-ui, -apple-system, sans-serif" font-size="18" fill="#a1a1a6" text-anchor="middle">Free · Open source</text>`;
   }
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">

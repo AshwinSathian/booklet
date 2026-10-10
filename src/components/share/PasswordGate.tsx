@@ -65,14 +65,14 @@ export function PasswordGate({ pageId }: { pageId: string }) {
               className="w-full rounded-xl border border-border-default bg-bg-elevated px-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted outline-none focus:border-accent/50 focus:ring-2 focus:ring-accent/15 transition"
             />
             {error && (
-              <p className="text-xs text-red-400">{error}</p>
+              <p className="text-xs text-danger">{error}</p>
             )}
             <button
               type="submit"
               disabled={loading || !password.trim()}
               className="w-full rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-accent-contrast transition hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? "Checking…" : "Unlock page"}
+              {loading ? "Checking…" : "Open page"}
             </button>
           </form>
         </div>

@@ -3,7 +3,6 @@ import { sessionCookieFor, withRequestScope } from "./helpers/request-scope";
 import { cleanupPages, seedDoc, throughMiddleware, useTestEnv } from "./helpers/pages";
 import { getDb } from "@/lib/mongodb";
 import { ensureIndexes } from "@/lib/db/index-specs.mjs";
-import { backfillAnonymousExpiry } from "@/lib/db/expiry.mjs";
 import { purgeExpiredAnonymousDocs } from "@/lib/db/purge";
 import { createPageRecord, getPageRecord } from "@/lib/db";
 import { getDoc, getDocState } from "@/lib/storage";
@@ -236,35 +235,5 @@ test.describe("daily purge", () => {
     expect(await getDoc(inGrace)).not.toBeNull();
     expect(await getDoc(claimedLate)).not.toBeNull();
     expect(await getDoc(owned)).not.toBeNull();
-  });
-});
-
-test.describe("one-time backfill for pages published before expiry existed", () => {
-  test("stamps only old ownerless documents, and is idempotent", async () => {
-    const { userId } = await newUser();
-    const db = await getDb();
-    const legacyAnon = await seedDoc("# legacy anonymous");
-    const legacyOwned = await seedDoc("# legacy owned");
-    const fresh = await seedDoc("# published a moment ago");
-    ids.push(legacyAnon, legacyOwned, fresh);
-    await createPageRecord(legacyOwned, userId, "owned");
-    const old = new Date(Date.now() - 2 * DAY).toISOString();
-    await db
-      .collection("docs")
-      .updateMany({ _id: { $in: [legacyAnon, legacyOwned] } } as never, { $set: { "doc.createdAt": old } });
-
-    const before = Date.now();
-    await backfillAnonymousExpiry(db);
-
-    const stamped = (await getDocState(legacyAnon))!.expiresAt!;
-    expect(stamped.getTime() - before).toBeGreaterThanOrEqual(90 * DAY);
-    expect(stamped.getTime() - before).toBeLessThan(90 * DAY + 60_000);
-    expect((await getDocState(legacyOwned))?.expiresAt).toBeNull();
-    // A signed-in publish writes the doc before its pages record; a doc that
-    // new must not be mistaken for an anonymous one.
-    expect((await getDocState(fresh))?.expiresAt).toBeNull();
-
-    await backfillAnonymousExpiry(db);
-    expect((await getDocState(legacyAnon))!.expiresAt!.getTime()).toBe(stamped.getTime());
   });
 });

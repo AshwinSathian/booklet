@@ -69,7 +69,7 @@ function KeyCard({ k, onRevoked }: { k: KeyRow; onRevoked: (id: string) => void 
           iconOnly
           onClick={() => setConfirming(true)}
           title="Revoke key"
-          className="sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 shrink-0 hover:text-red-400 hover:bg-red-400/8"
+          className="sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 shrink-0 hover:text-danger hover:bg-danger/8"
         >
           <Icon name="trash" size={14} />
         </Button>
@@ -141,9 +141,9 @@ export function ApiKeysSection({ initialKeys }: { initialKeys: KeyRow[] }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ label }),
       });
-      const data = (await res.json().catch(() => ({}))) as { id: string; label: string | null; key: string; error?: string };
+      const data = (await res.json().catch(() => ({}))) as { id: string; label: string | null; key: string; detail?: string };
       // 403 here is an unconfirmed email address; the message says what to do.
-      setError(res.ok ? null : (data.error ?? "Could not create the key."));
+      setError(res.ok ? null : (data.detail ?? "Could not create the key."));
       if (!res.ok) return;
       const newKey: KeyRow = {
         id: data.id,
@@ -203,7 +203,7 @@ export function ApiKeysSection({ initialKeys }: { initialKeys: KeyRow[] }) {
           Create key
         </Button>
       </div>
-      {error && <p role="alert" className="mt-2 text-xs text-red-400">{error}</p>}
+      {error && <p role="alert" className="mt-2 text-xs text-danger">{error}</p>}
     </div>
   );
 }

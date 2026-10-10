@@ -10,12 +10,12 @@ import {
   DRAFTS_STORAGE_KEYS,
   PUBLISH_LINKAGE,
 } from "./constants";
-import { migrateDraftsDb } from "./migrate";
+import { coerceDraftsDb } from "./coerce";
 import type {
   DraftCreateInput,
   DraftDoc,
   DraftMeta,
-  DraftsDbV2,
+  DraftsDb,
   DraftUpdatePatch,
   PublishedSnapshotRef,
 } from "./types";
@@ -134,22 +134,17 @@ function createDraftId(): string {
   return `${ts}-${rnd}`;
 }
 
-function emptyDb(): DraftsDbV2 {
+function emptyDb(): DraftsDb {
   return { schemaVersion: DRAFTS_DB.schemaVersion, drafts: {} };
 }
 
-function readDb(): DraftsDbV2 {
+function readDb(): DraftsDb {
   if (!hasLocalStorage()) return emptyDb();
 
   const raw = window.localStorage.getItem(DRAFTS_STORAGE_KEYS.db);
   if (!raw) return emptyDb();
 
-  const parsed = safeJsonParse(raw);
-  const migrated = migrateDraftsDb(parsed);
-
-  const db = migrated as DraftsDbV2;
-  if (db.schemaVersion !== DRAFTS_DB.schemaVersion) return emptyDb();
-  return db;
+  return coerceDraftsDb(safeJsonParse(raw));
 }
 
 function isQuotaExceededError(e: unknown): boolean {
@@ -179,7 +174,7 @@ function classifyPersistError(e: unknown): DraftsPersistErrorCode {
   return DRAFTS_PERSIST.errorCode.unknown;
 }
 
-function writeDb(db: DraftsDbV2): boolean {
+function writeDb(db: DraftsDb): boolean {
   if (!hasLocalStorage()) return true;
 
   try {
@@ -193,7 +188,7 @@ function writeDb(db: DraftsDbV2): boolean {
   }
 }
 
-function upsertAndPersist(db: DraftsDbV2, doc: DraftDoc): boolean {
+function upsertAndPersist(db: DraftsDb, doc: DraftDoc): boolean {
   db.drafts[doc.id] = doc;
   return writeDb(db);
 }

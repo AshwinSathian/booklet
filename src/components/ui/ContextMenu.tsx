@@ -208,14 +208,14 @@ export function ContextMenuItem({
     disabled
       ? "text-text-muted opacity-40 pointer-events-none"
       : danger
-        ? "text-red-400 hover:bg-red-400/8 focus-visible:bg-red-400/8"
+        ? "text-danger hover:bg-danger/8 focus-visible:bg-danger/8"
         : active
           ? "text-accent bg-accent-dim hover:bg-accent-dim"
           : "text-text-secondary hover:bg-fill-2 hover:text-text-primary focus-visible:bg-fill-2 focus-visible:text-text-primary",
     "focus-visible:outline-none",
   ].join(" ");
 
-  const iconCls = danger ? "text-red-400/70" : active ? "text-accent" : "text-text-muted";
+  const iconCls = danger ? "text-danger/70" : active ? "text-accent" : "text-text-muted";
 
   const inner = (
     <>

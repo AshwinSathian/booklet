@@ -41,6 +41,7 @@ export function SiteFooter({ className }: SiteFooterProps) {
               <Link href="/api-docs" className="transition hover:text-text-primary">API docs</Link>
               <Link href="/changelog" className="transition hover:text-text-primary">Changelog</Link>
               <Link href="/about" className="transition hover:text-text-primary">About</Link>
+              <Link href="/trust" className="transition hover:text-text-primary">Trust</Link>
               <Link href="/privacy" className="transition hover:text-text-primary">Privacy</Link>
               <Link href="/terms" className="transition hover:text-text-primary">Terms</Link>
               {/* AGPL-3.0 section 13: users of the hosted app are offered its source. */}

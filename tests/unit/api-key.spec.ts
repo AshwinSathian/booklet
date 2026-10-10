@@ -18,9 +18,9 @@ test.describe("api-key hashing", () => {
     expect(isApiKeyFormat(raw)).toBe(true);
   });
 
-  test("a legacy rdbl_-prefixed key (issued before the Readable -> Booklet rename) still passes isApiKeyFormat", () => {
-    expect(isApiKeyFormat("rdbl_" + "a".repeat(40))).toBe(true);
-    expect(isApiKeyFormat("rdbl_tooshort")).toBe(false);
+  test("a key with any other prefix or length is refused", () => {
+    expect(isApiKeyFormat("abcd_" + "a".repeat(40))).toBe(false);
+    expect(isApiKeyFormat("bklt_tooshort")).toBe(false);
   });
 
   test("hashApiKey is deterministic for the same key + pepper", async () => {
@@ -46,6 +46,6 @@ test.describe("api-key hashing", () => {
 
   test("throws (fails closed) when API_KEY_PEPPER is unset", async () => {
     delete process.env.API_KEY_PEPPER;
-    await expect(hashApiKey("rdbl_whatever")).rejects.toThrow(/API_KEY_PEPPER/);
+    await expect(hashApiKey("bklt_whatever")).rejects.toThrow(/API_KEY_PEPPER/);
   });
 });

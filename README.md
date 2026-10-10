@@ -1,15 +1,17 @@
 # Booklet
 
-**Publish clean, readable pages from Markdown — by hand, by script, or by your AI assistant.**
+**Publish Markdown incident reports, ADRs, RFCs and runbooks as web pages, with team spaces.**
 
 [![License: AGPL-3.0](https://img.shields.io/github/license/AshwinSathian/booklet)](LICENSE)
 [![npm version](https://img.shields.io/npm/v/booklet-cli?label=booklet-cli)](https://www.npmjs.com/package/booklet-cli)
 [![npm downloads](https://img.shields.io/npm/dw/booklet-cli)](https://www.npmjs.com/package/booklet-cli)
 [![CI](https://img.shields.io/github/actions/workflow/status/AshwinSathian/booklet/ci.yml?branch=main&label=CI)](https://github.com/AshwinSathian/booklet/actions/workflows/ci.yml)
 
-Paste Markdown into the editor, preview it live, and share a polished read-only URL in one click — or skip the editor and publish the same way from a CI pipeline, a script, or an AI assistant like Claude. Sign in for pages that never expire, version history, analytics, custom slugs, password protection, collections, and a full REST API.
+You write Markdown, and Booklet gives you a page with a link. The page is typeset, has a table of contents when it's long enough to need one, and opens for anyone you send it to.
 
-What makes Booklet more than an editor is the surface around it: a REST API, an npm-published CLI, a GitHub Action for publishing docs in CI, and a standalone MCP server so AI assistants like Claude can publish and manage pages directly. Markdown-to-shareable-page tools are common; shipping the same functionality as an API, a CLI, a CI action, and an MCP server on top of it is the part that isn't.
+It's built for the documents engineering teams pass around. Put `type: incident` (or `adr`, `rfc`, `runbook`, `postmortem`, `release-notes`) in the frontmatter and the page shows status, severity, date and owners in a strip under the title. `[[ADR-012 Queue retries]]` in an incident report links to that ADR, and the ADR lists the incident under "Referenced by". A team space keeps a team's documents together, grouped by type, and a page in one can be restricted to its members.
+
+There are five ways to publish, and all of them produce the same page: the web editor, the REST API, the `booklet-cli` npm package, a GitHub Action, and an MCP server for Claude and other MCP clients.
 
 **Live:** [booklet.ashwinsathian.com](https://booklet.ashwinsathian.com) · **API docs:** [/api-docs](https://booklet.ashwinsathian.com/api-docs) · **MCP setup:** [/mcp-setup](https://booklet.ashwinsathian.com/mcp-setup)
 
@@ -23,31 +25,29 @@ booklet login                            # opens your browser to authorize
 booklet publish README.md --open         # publish this file, open it in your browser
 ```
 
-That's it: you get back a permanent, shareable URL. No account needed to try the editor itself; sign in only when you want pages that never expire, an API key, or the CLI.
+You get back the page's URL. The editor works without an account, up to 10 pages a month, each kept for 90 days. An account (free, and there is no paid plan) removes both limits, and you need one for an API key and so for the CLI.
 
 ---
 
 ## Features
 
-- **Editor**: live preview (120 ms debounce), unlimited local drafts with autosave, import/export
-- **Share pages**: clean read-only URLs, table of contents, reading time, dark/light mode
-- **Embeds**: `<iframe>` embed codes for any page via `/p/:id/embed`
-- **Export**: PDF, Markdown, HTML fragment
-- **LaTeX / KaTeX**: inline `$...$` and display `$$...$$` math blocks
-- **Mermaid diagrams**: fenced code blocks with `mermaid` language tag
-- **Version history**: every publish is snapshotted; browse and restore past versions
-- **Analytics**: per-page view counts, scroll depth, referrers
-- **Collections**: group pages into a named collection with a shared URL
-- **Password protection**: require a password to view any page
-- **Custom slugs**: set a human-readable URL like `/p/my-release-notes`
-- **Team Spaces**: invite collaborators, publish to shared `/t/:slug` spaces
-- **Webhooks**: HTTP callbacks on `page.published` and `page.updated` events
-- **REST API**: publish, update, list, and delete pages programmatically
-- **CLI**: publish Markdown from your terminal (`npx booklet-cli`)
-- **GitHub Action**: publish docs in CI via [`AshwinSathian/publish-to-booklet`](https://github.com/AshwinSathian/publish-to-booklet)
-- **MCP server**: expose the API to AI assistants (Claude, Cursor, etc.) via the Model Context Protocol
-- **Frontmatter**: YAML frontmatter sets title, slug, visibility, tags, author, date, and a document type (incident, postmortem, ADR, RFC, runbook, release notes) with status, severity and owners
-- **Team spaces**: `/t/<slug>` groups a team's pages by type; a page can be visible to the team only; `[[Title]]` links published pages to each other
+- **Editor**: live preview, drafts saved in the browser and synced to your account, import from a file or a GitHub URL
+- **Document types**: frontmatter `type`, `status`, `severity`, `date`, `owners` and `supersedes`, shown in a header strip
+- **Links between pages**: `[[Title]]` resolves to a published page in the same team space, or among your own pages
+- **Team spaces**: `/t/<slug>` lists a team's pages by type, with an ADR log and an Atom feed of its public pages
+- **Visibility**: unlisted (the default, not indexed), public, or team; a password on top if you want one
+- **Share pages**: table of contents, reading time, dark and light themes, five document themes, `<iframe>` embeds at `/p/:id/embed`
+- **Math and diagrams**: KaTeX (`$...$`, `$$...$$`), Mermaid and Graphviz in fenced code blocks
+- **Export**: Markdown, self-contained HTML with diagrams and math drawn in, and Print to PDF
+- **Version history**: 50 snapshots per page, a line diff between any two, restore as a new version
+- **Analytics**: per-page views, how many readers reached 50% and 100%, referrers
+- **Custom slugs**: a URL such as `/p/my-release-notes`
+- **Webhooks**: `page.published` and `page.updated`, signed, with a log of the last 50 deliveries
+- **REST API**: publish, update, list and delete pages; OpenAPI 3.1 at `/api/v1/openapi.json`
+- **CLI**: `booklet-cli` on npm, with `--json` output and exit codes for scripts
+- **GitHub Action**: [`AshwinSathian/publish-to-booklet`](https://github.com/AshwinSathian/publish-to-booklet)
+- **MCP server**: seven tools and five prompts, with OAuth sign-in or an API key
+- **Accounts**: email and password, passkeys, and GitHub or Google sign-in where the host has configured them
 
 ---
 
@@ -99,15 +99,15 @@ Full endpoint reference with request/response shapes: [booklet.ashwinsathian.com
 
 ## MCP Server
 
-A plain Node process (`mcp-server/`) that exposes Booklet's API to AI assistants supporting the [Model Context Protocol](https://modelcontextprotocol.io), run under PM2 alongside the main app, not a Cloudflare Worker (that was the original design, changed when the rest of the app moved off Cloudflare Workers; see `docs/OPERATIONS.md`).
+A Node process (`mcp-server/`) that gives [Model Context Protocol](https://modelcontextprotocol.io) clients Booklet's API. It runs under PM2 beside the main app and speaks protocol 2026-07-28 over Streamable HTTP.
 
 **Endpoint:** `https://booklet-mcp.ashwinsathian.com/mcp`
-**Auth:** `Authorization: Bearer <bklt_...>` header (same API keys as the REST API)
+**Auth:** OAuth sign-in with your Booklet account, or an `Authorization: Bearer <bklt_...>` header (the same API keys as the REST API)
 **Tools:** `publish_page`, `update_page`, `get_page`, `list_pages`, `delete_page`, `create_document`, `search_pages`
-**Resources:** published pages are also exposed as browsable/readable MCP resources (`booklet://pages/:id`)
-**Prompts:** five pre-built document templates the assistant can fill in and publish directly — `incident_report`, `adr` (Architecture Decision Record), `release_notes`, `rfc`, and `runbook`
+**Resources:** your published pages, as `booklet://pages/:id`
+**Prompts:** five document templates the assistant can fill in and publish: `incident_report`, `adr`, `release_notes`, `rfc` and `runbook`
 
-Point any MCP-compatible client at the endpoint above. Clients that support OAuth (Claude.ai custom connectors) sign in with your Booklet account; the rest send your API key in the `Authorization` header. [booklet.ashwinsathian.com/mcp-setup](https://booklet.ashwinsathian.com/mcp-setup) has copy-paste config for Claude Desktop, Claude.ai, Cursor, Windsurf, VS Code, and Zed.
+Point an MCP client at the endpoint above. A client that supports OAuth (a Claude.ai custom connector, for one) signs in with your Booklet account; the rest send your API key in the `Authorization` header. [booklet.ashwinsathian.com/mcp-setup](https://booklet.ashwinsathian.com/mcp-setup) has copy-paste config for Claude Desktop, Claude.ai, Cursor, Windsurf, VS Code, and Zed.
 
 To run the server itself locally:
 
@@ -124,13 +124,13 @@ cd mcp-server && npm run dev
 | Framework | Next.js 16 (App Router) |
 | Language | TypeScript 5 (strict) |
 | Styling | Tailwind CSS v4 |
-| Auth | In-house (email + password, argon2id, DB-backed sessions) |
+| Auth | In-house (email + password with argon2id, passkeys, optional GitHub and Google sign-in, DB-backed sessions) |
 | Database | Self-hosted MongoDB (pages, users, API keys, webhooks, rendered documents) |
-| Deployment | PM2 process on a Mac behind a Cloudflare Tunnel (Cloudflare Workers/OpenNext was built, shipped, then deliberately rolled back 2026-05-25; see `docs/OPERATIONS.md`) |
+| Deployment | PM2 on one Mac behind a Cloudflare Tunnel (why: `docs/adr/0001-hosting-platform.md`) |
 | Markdown | unified + remark-parse + remark-gfm + remark-math |
 | Math | KaTeX |
-| Diagrams | Mermaid |
-| Analytics | First-party page-view counts (MongoDB) |
+| Diagrams | Mermaid, Graphviz (`@viz-js/viz`) |
+| Analytics | Page views and read depth, counted by the app itself (MongoDB) |
 
 ---
 
@@ -162,7 +162,7 @@ MONGODB_URI=mongodb://localhost:27017/booklet
 INVITE_JWT_SECRET=<random-secret>
 ```
 
-See `.env.example` for the full list of required secrets (session auth, API keys, page-unlock tokens, etc.). Each documents its own generation command and fail-closed behavior.
+See `.env.example` for the full list of required secrets (session auth, API keys, page-password tokens, etc.). Each documents its own generation command and fail-closed behavior.
 
 ### Deploy
 

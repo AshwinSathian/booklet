@@ -7,7 +7,7 @@ test.describe("GET /api/health", () => {
   });
 
   test("is 200 { ok: true } when the database answers a ping", async () => {
-    process.env.MONGODB_URI ??= "mongodb://localhost:27017/readable?retryWrites=true&w=majority";
+    process.env.MONGODB_URI ??= "mongodb://localhost:27017/booklet?retryWrites=true&w=majority";
     const res = await GET();
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ ok: true });

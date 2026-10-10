@@ -65,7 +65,9 @@
 
   /* ── Text (DARK) ────────────────────────────────────────────────────────── */
   --color-text-primary:   #f5f5f7;        /* Apple primary label               */
-  --color-text-secondary: #9c9ca3;        /* Apple secondary label             */
+  /* Secondary is body copy and sits a clear step above muted, which is
+     for captions and metadata: 11.6:1 against 7.3:1 on --color-bg. */
+  --color-text-secondary: #c6c6cc;
   /* Lifted from #636366 (was 3.5:1 on bg, 3.0:1 on bg-elevated — failed WCAG
      AA's 4.5:1). Now 5.3:1 on bg, 4.5:1 on bg-elevated (the harder case). */
   --color-text-muted:     #9e9ea0;        /* Apple tertiary label              */
@@ -89,6 +91,18 @@
   --color-accent-soft:     #f8c368;   /* lighter tint — secondary tints, focus rings */
   --color-accent-contrast: #0a0a0a;   /* text/icon ON an accent-colored surface */
   --color-accent-dim:      rgba(245, 166, 35, 0.14); /* icon backgrounds */
+
+  /* ── Status (DARK) ──────────────────────────────────────────────────────── */
+  /* Five named roles, used as text and, at 8-15% opacity, as the tint behind
+     that text: errors and destructive actions, success, warnings, neutral
+     information, and "special" (the IMPORTANT callout, PATCH badges). Use
+     text-danger / bg-success/10 and so on, never a raw Tailwind hue.
+     Checked by scripts/check-contrast.mjs on every surface and tint. */
+  --color-danger:  #f87171;
+  --color-success: #34d399;
+  --color-warning: #fbbf24;
+  --color-info:    #60a5fa;
+  --color-special: #a78bfa;
 
   /* ── Borders — pre-computed, never composed in component classes (DARK) ── */
   --color-border-strong:  rgba(255, 255, 255, 0.16);
@@ -130,7 +144,8 @@ html.light {
 
   /* ── Text (LIGHT) ───────────────────────────────────────────────────────── */
   --color-text-primary:   #1d1d1f;        /* Apple label                       */
-  --color-text-secondary: #5a5a5e;        /* Apple secondaryLabel              */
+  /* The same step as in the dark theme: secondary 9.7:1, muted 6.6:1 on --color-bg. */
+  --color-text-secondary: #424247;
   /* Darkened from #86868b (was 3.6:1 on bg, 3.0:1 on bg-elevated — failed
      WCAG AA's 4.5:1). Now 5.7:1 on bg, 4.7:1 on bg-elevated (the harder case). */
   --color-text-muted:     #5a5a5d;        /* Apple tertiaryLabel               */
@@ -146,6 +161,13 @@ html.light {
   --color-accent-soft:     #7b5108;
   --color-accent-contrast: #fafafa;
   --color-accent-dim:      rgba(124, 81, 0, 0.1);
+
+  /* ── Status (LIGHT) ─────────────────────────────────────────────────────── */
+  --color-danger:  #7f1d1d;
+  --color-success: #064e3b;
+  --color-warning: #78350f;
+  --color-info:    #1e3a8a;
+  --color-special: #4c1d95;
 
   /* ── Borders (LIGHT) ────────────────────────────────────────────────────── */
   --color-border-strong:  rgba(0, 0, 0, 0.14);
@@ -163,19 +185,6 @@ html.light {
   --shadow-hard:  0 2px 0 0 rgba(0, 0, 0, 0.12);
 
   /* ── Scrollbar (LIGHT) ──────────────────────────────────────────────────── */
-  /* Status colours (LIGHT). Tailwind's 300 and 400 shades are used across
-     the app as status text (errors, method badges, callout labels). They
-     are tuned for a dark surface and sit near 2:1 on a light one, so the
-     light theme points them at the 800 shade: at least 4.5:1 on every
-     light surface and on the 8-15% tints these labels are drawn over. */
-  --color-red-300: #991b1b;     --color-red-400: #991b1b;
-  --color-rose-400: #9f1239;
-  --color-amber-300: #92400e;   --color-amber-400: #92400e;
-  --color-green-400: #166534;   --color-emerald-400: #065f46;
-  --color-teal-400: #115e59;    --color-sky-400: #075985;
-  --color-blue-400: #1e40af;    --color-violet-400: #5b21b6;
-  --color-purple-400: #6b21a8;
-
   --scrollbar-thumb:       rgba(0, 0, 0, 0.14);
   --scrollbar-thumb-hover: rgba(0, 0, 0, 0.28);
 
@@ -204,6 +213,13 @@ html.dark {
   --color-accent-soft:     var(--color-accent-soft);
   --color-accent-contrast: var(--color-accent-contrast);
   --color-accent-dim:      var(--color-accent-dim);
+
+  /* Status */
+  --color-danger:  var(--color-danger);
+  --color-success: var(--color-success);
+  --color-warning: var(--color-warning);
+  --color-info:    var(--color-info);
+  --color-special: var(--color-special);
 
   /* Semantic borders */
   --color-border-strong:  var(--color-border-strong);

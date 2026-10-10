@@ -50,7 +50,7 @@ export function CreateSpaceForm() {
           className="h-9 w-full rounded-lg border border-border-default bg-bg-soft px-3 text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft"
         />
         {error && (
-          <p id="space-error" role="alert" className="mt-2 text-xs text-red-400">
+          <p id="space-error" role="alert" className="mt-2 text-xs text-danger">
             {error}
           </p>
         )}

@@ -35,7 +35,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
       <p className="mt-0.5 text-sm text-text-secondary">{user.email}</p>
 
       <AccountClient
-        email={user.email ?? ""}
+        email={user.email}
         // Shown as unverified only where verification is enforced.
         needsVerification={emailVerificationRequired() && !user.email_verified_at}
         hasPassword={Boolean(user.password_hash)}

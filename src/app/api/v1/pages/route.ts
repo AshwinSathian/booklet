@@ -32,11 +32,14 @@ function decodeCursor(cursor: string): { created_at: string; id: string } | null
 
 export const GET = v1("pages_list", 60, "pages:read", async (req: Request, userId: string) => {
   const url = new URL(req.url);
+  // Removed in 2.0.0. Ignoring it would hand a caller that still pages by
+  // offset the first page on every request.
+  if (url.searchParams.has("offset")) {
+    return problem(400, "`offset` is not supported. Pass each response's `next_cursor` as `cursor`.");
+  }
   const rawLimit = parseInt(url.searchParams.get("limit") ?? String(DEFAULT_LIMIT), 10);
-  const rawOffset = parseInt(url.searchParams.get("offset") ?? "0", 10);
 
   const limit = Number.isFinite(rawLimit) && rawLimit > 0 ? Math.min(rawLimit, MAX_LIMIT) : DEFAULT_LIMIT;
-  const offset = Number.isFinite(rawOffset) && rawOffset >= 0 ? rawOffset : 0;
 
   // Both optional — an empty/whitespace-only value is treated as "no
   // filter" by getPagesByUser itself, so no extra normalization needed here.
@@ -52,13 +55,12 @@ export const GET = v1("pages_list", 60, "pages:read", async (req: Request, userI
   const space = spaceSlug === null ? null : await getSpaceForMember(spaceSlug, userId);
 
   // `cursor` walks the list by position in the sort order, so pages created
-  // or deleted during the walk never shift it. `offset` still works; when
-  // both are sent the offset counts from the cursor.
+  // or deleted during the walk never shift it.
   const cursor = url.searchParams.get("cursor");
   const after = cursor ? decodeCursor(cursor) : undefined;
   if (after === null) return problem(400, "Invalid cursor");
 
-  const { pages, total } = await getPagesByUser(userId, { limit, offset, query, tag, type, spaceId: space?.id, after });
+  const { pages, total } = await getPagesByUser(userId, { limit, query, tag, type, spaceId: space?.id, after });
   const slugs = await spaceSlugs(pages);
 
   const origin = getSiteOrigin(req);
@@ -84,7 +86,6 @@ export const GET = v1("pages_list", 60, "pages:read", async (req: Request, userI
       pages: items,
       total,
       limit,
-      offset,
       next_cursor: pages.length === limit ? encodeCursor(pages[pages.length - 1]) : null,
     },
     { status: 200 },

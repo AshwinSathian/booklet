@@ -30,4 +30,8 @@ export async function recordPublishEvent(opts: {
     created_at: new Date().toISOString(),
     ...(opts.richBlockKinds?.length ? { rich_block_kinds: opts.richBlockKinds } : {}),
   });
+  // My pages shows this per row. After the insert, so a failure here never
+  // costs the log its event. An anonymous publish has no page record, and
+  // the update then matches nothing.
+  await db.collection<{ _id: string }>("pages").updateOne({ _id: opts.pageId }, { $set: { last_source: opts.source } });
 }

@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 export const metadata: Metadata = buildMetadata({
   title: "Add Booklet to Claude — MCP Setup",
   description:
-    "Connect Booklet to Claude Desktop, Claude.ai, or any MCP-compatible AI assistant. Publish and manage Markdown pages directly from your AI assistant in plain language.",
+    "Connect Booklet's MCP server to Claude Desktop, Claude.ai, Cursor, Windsurf, VS Code or Zed, then publish and manage pages from a conversation.",
   pathname: "/mcp-setup",
 });
 
@@ -14,7 +14,7 @@ const jsonLd = {
   "@type": "WebPage",
   name: "Add Booklet to Claude — MCP Setup",
   description:
-    "Connect Booklet to Claude Desktop, Claude.ai, or any MCP-compatible AI assistant. Publish and manage Markdown pages directly from your AI assistant.",
+    "Connect Booklet's MCP server to Claude Desktop, Claude.ai, Cursor, Windsurf, VS Code or Zed, then publish and manage pages from a conversation.",
   url: absoluteUrl("/mcp-setup"),
   breadcrumb: {
     "@type": "BreadcrumbList",

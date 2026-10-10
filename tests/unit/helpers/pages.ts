@@ -12,7 +12,7 @@ import { GET as goneStatus } from "@/app/api/pages/[id]/gone/route";
 /** Shared fixtures for specs that publish, take down, expire or claim pages. */
 
 export function useTestEnv() {
-  process.env.MONGODB_URI ??= "mongodb://localhost:27017/readable?retryWrites=true&w=majority";
+  process.env.MONGODB_URI ??= "mongodb://localhost:27017/booklet?retryWrites=true&w=majority";
   process.env.API_KEY_PEPPER ??= "test-only-pepper-do-not-use-in-prod";
 }
 

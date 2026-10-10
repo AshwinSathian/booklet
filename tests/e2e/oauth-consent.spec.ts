@@ -11,15 +11,18 @@ import { createHash, randomBytes } from "node:crypto";
 test.use({ extraHTTPHeaders: { "cf-connecting-ip": `2001:db8::${Math.random().toString(16).slice(2, 6)}` } });
 
 const CALLBACK = "https://claude.ai/api/mcp/auth_callback";
+// Claude's own Client ID Metadata Document. The app under test fetches it,
+// as it does when a real connector signs in, so this spec needs the network.
+const CLIENT_ID = "https://claude.ai/oauth/mcp-oauth-client-metadata";
 const PASSWORD = "oauth-e2e-correct-horse";
 
 async function setup(request: import("@playwright/test").APIRequestContext) {
-  const reg = await request.post("/api/oauth/register", { data: { client_name: "Claude", redirect_uris: [CALLBACK] } });
-  expect(reg.status()).toBe(201);
+  // Dynamic registration is gone; a client is its metadata document.
+  expect((await request.post("/api/oauth/register", { data: { redirect_uris: [CALLBACK] } })).status()).toBe(404);
   const verifier = randomBytes(48).toString("base64url");
   const params = new URLSearchParams({
     response_type: "code",
-    client_id: (await reg.json()).client_id,
+    client_id: CLIENT_ID,
     redirect_uri: CALLBACK,
     code_challenge: createHash("sha256").update(verifier).digest("base64url"),
     code_challenge_method: "S256",
@@ -41,12 +44,12 @@ test("signed in: consent names the app and destination, and Allow returns a work
   const signup = await page.request.post("/api/auth/signup", { data: { email, password: PASSWORD } });
   expect(signup.status()).toBe(201);
 
-  // Stand in for claude.ai, so the test never leaves this machine.
+  // Stand in for claude.ai, so the browser never leaves this machine.
   await page.route("https://claude.ai/**", (route) => route.fulfill({ status: 200, contentType: "text/plain", body: "callback" }));
 
   await page.goto(`/oauth/authorize?${params}`);
   await expect(page.getByRole("heading", { name: "Connect Claude to Booklet?" })).toBeVisible();
-  await expect(page.getByText("claude.ai", { exact: true })).toBeVisible();
+  await expect(page.getByText("claude.ai", { exact: true }).first()).toBeVisible();
   await expect(page.getByText("Publish, update and delete pages")).toBeVisible();
   // Still on Booklet: loading the page redirected nowhere and granted nothing.
   expect(new URL(page.url()).pathname).toBe("/oauth/authorize");

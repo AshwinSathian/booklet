@@ -61,14 +61,14 @@ function DeliveryLog({ webhookId, initial }: { webhookId: string; initial: Deliv
       <summary className="cursor-pointer select-none py-1 text-text-secondary hover:text-text-primary">
         Deliveries ({rows.length})
       </summary>
-      {error && <p role="alert" className="mt-1 text-red-400">{error}</p>}
+      {error && <p role="alert" className="mt-1 text-danger">{error}</p>}
       {rows.length === 0 ? (
         <p className="mt-1 text-text-secondary">Nothing sent yet. A delivery appears here when a page is published or updated.</p>
       ) : (
         <ul className="mt-1 divide-y divide-border-subtle" data-testid="webhook-deliveries">
           {rows.map((d) => (
             <li key={d.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-1.5">
-              <span className={`font-mono font-semibold ${d.ok ? "text-green-400" : "text-red-400"}`}>
+              <span className={`font-mono font-semibold ${d.ok ? "text-success" : "text-danger"}`}>
                 {d.status_code ?? "No response"}
               </span>
               <span className="text-text-secondary">{d.ok ? "Delivered" : (d.error ?? "Failed")}</span>
@@ -191,7 +191,7 @@ function WebhookCard({
           iconOnly
           onClick={() => setConfirming(true)}
           title="Delete webhook"
-          className="sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 shrink-0 hover:text-red-400 hover:bg-red-400/8"
+          className="sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 shrink-0 hover:text-danger hover:bg-danger/8"
         >
           <Icon name="trash" size={14} />
         </Button>
@@ -402,7 +402,7 @@ export function WebhooksSection({ initialWebhooks }: { initialWebhooks: WebhookR
             </label>
           ))}
         </div>
-        {error && <p className="text-xs text-red-400">{error}</p>}
+        {error && <p className="text-xs text-danger">{error}</p>}
       </div>
     </div>
   );

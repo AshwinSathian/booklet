@@ -4,6 +4,7 @@ import { createId } from "@/lib/id";
 import { isUrlSafe } from "@/lib/ssrf-guard";
 import { getSession } from "@/lib/auth/session";
 import { NextResponse } from "next/server";
+import { problem } from "@/server/errors";
 import type { DbWebhook } from "@/lib/db/types";
 
 export const runtime = "nodejs";
@@ -13,7 +14,7 @@ const MAX_WEBHOOKS = 5;
 
 export async function GET() {
   const userId = (await getSession())?.userId ?? null;
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!userId) return problem(401, "Unauthorized");
 
   const webhooks = await getWebhooksByUser(userId);
   // Never return the secret in list responses
@@ -24,7 +25,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   const userId = (await getSession())?.userId ?? null;
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!userId) return problem(401, "Unauthorized");
 
   const unverified = await unverifiedResponse(userId);
   if (unverified) return unverified;
@@ -33,16 +34,16 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as { url?: string; events?: unknown[] };
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return problem(400, "Invalid JSON");
   }
 
   const url = body.url?.trim();
   if (!url) {
-    return NextResponse.json({ error: "Valid HTTPS URL required" }, { status: 422 });
+    return problem(422, "Valid HTTPS URL required");
   }
   const urlCheck = await isUrlSafe(url);
   if (!urlCheck.safe) {
-    return NextResponse.json({ error: urlCheck.reason }, { status: 422 });
+    return problem(422, urlCheck.reason);
   }
 
   const rawEvents = Array.isArray(body.events) ? body.events : ["page.published"];
@@ -50,12 +51,12 @@ export async function POST(req: Request) {
     typeof e === "string" && ALLOWED_EVENTS.has(e as DbWebhook["events"][number])
   );
   if (events.length === 0) {
-    return NextResponse.json({ error: "At least one valid event required: page.published, page.updated" }, { status: 422 });
+    return problem(422, "At least one valid event required: page.published, page.updated");
   }
 
   const existing = await getWebhooksByUser(userId);
   if (existing.length >= MAX_WEBHOOKS) {
-    return NextResponse.json({ error: `Maximum ${MAX_WEBHOOKS} webhooks allowed.` }, { status: 422 });
+    return problem(422, `Maximum ${MAX_WEBHOOKS} webhooks allowed.`);
   }
 
   const id = createId(10);
@@ -71,7 +72,7 @@ export async function POST(req: Request) {
   const after = await getWebhooksByUser(userId);
   if (after.length > MAX_WEBHOOKS) {
     await deleteWebhook(id, userId);
-    return NextResponse.json({ error: `Maximum ${MAX_WEBHOOKS} webhooks allowed.` }, { status: 422 });
+    return problem(422, `Maximum ${MAX_WEBHOOKS} webhooks allowed.`);
   }
 
   return NextResponse.json({ id, url, events, secret }, { status: 201 });

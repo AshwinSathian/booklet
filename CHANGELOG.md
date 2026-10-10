@@ -9,8 +9,117 @@ Notable changes to the Booklet app and MCP server. The format follows
 
 ## [Unreleased]
 
-Dashboard and editor (roadmap Phase 5c). No API change, so the CLI, API
-client and MCP server keep their versions.
+## [2.0.0] - 2026-10-11
+
+Booklet 2.0.0 is the engineering-documents release: document types, links
+between pages, team spaces with team-only pages, accounts with email
+verification and passkeys, OAuth for MCP clients, and an API brought up to
+current conventions. It also drops every older version of a flow that was
+still being carried. `booklet-cli` and `booklet-api-client` are 3.0.0 and
+the MCP server is 4.0.0.
+
+### Breaking
+
+Everything that can break a caller or a self-hosted install, from every
+round of work since 1.0. The sections below this one describe each round.
+
+API keys
+
+- A key that starts with `rdbl_` is refused. Create a new one under
+  Settings, API keys, or run `booklet login --force`.
+
+`/api/v1`
+
+- Error bodies are RFC 9457 problem details and no longer carry an `error`
+  member. Read `detail`.
+- `GET /api/v1/pages` answers 400 to `offset` and its response has no
+  `offset` field. Pass each response's `next_cursor` as `cursor`.
+- A page created without a visibility is unlisted. Pass
+  `visibility: "public"` for the old behaviour.
+- A document over 200,000 characters is refused with 413. It used to be
+  stored with its Markdown cut off.
+- `raw` in a page response includes the frontmatter the page was published
+  with, and updating a page's content also updates its title, type and
+  frontmatter fields.
+- A publish whose ownership record cannot be written fails with 500.
+- An account with an unconfirmed email address gets 403 when it publishes,
+  updates, creates an API key, authorizes the CLI or approves an app, where
+  the host has email configured.
+
+MCP server 4.0.0
+
+- Protocol 2026-07-28 only. A 2025-era client, one that opens with
+  `initialize`, gets the unsupported-protocol-version error.
+- `list_pages` takes `cursor` and no longer takes `offset`.
+- OAuth dynamic client registration is gone: `POST /api/oauth/register`
+  answers 404 and the metadata has no `registration_endpoint`. A client is
+  identified by a Client ID Metadata Document, as Claude.ai's connector is.
+  A client that can only register itself uses an API key instead.
+- A request without a credential gets 401 with a `WWW-Authenticate`
+  challenge, and reading an unknown resource is error `-32602`.
+
+CLI and API client
+
+- `booklet-cli` 3.0.0 and `booklet-api-client` 3.0.0 are the versions that
+  work with this server. 2.x cannot list pages against it and prints
+  `HTTP <status>` in place of an error message.
+- Both need Node.js 22 or later.
+- `booklet-cli` exit codes say why a command failed (2 usage, 3 not
+  authenticated, 4 not found, 5 rate limited), and `pages delete` without
+  `--yes` outside a terminal exits 2.
+
+Pages
+
+- `/p/<id>` for a page that does not exist answers 404, and a taken-down
+  page answers 410.
+- A page published without an account is served for 90 days.
+- A page password set before 2026-09-05 no longer opens its page. The
+  owner sets the password again from My pages.
+
+Editor
+
+- Drafts saved in a browser by the earliest editor (drafts schema 1) are
+  not read. They are replaced the next time a draft is saved.
+
+Self-hosting
+
+- `users.email` is required and its index is unique without `sparse`. The
+  app rebuilds the index at its first start. A database that still holds a
+  user with no email, or two with the same one, has to be cleaned first.
+- The app no longer drops superseded indexes at startup, and the one-time
+  scripts `backfill-anonymous-expiry.mjs` and `restore-frontmatter-raw.mjs`
+  are gone. `docs/OPERATIONS.md` lists what to remove by hand.
+
+### Added
+
+- **Trust page** at `/trust`: who runs Booklet, where it is hosted, how it
+  is backed up, who pays for it, and how to export or delete an account.
+- The landing page has a section on team spaces and document types.
+- The MCP server has an icon: it serves the app's at `/favicon.ico` and
+  `/favicon.svg` on its own host and names it in its server information. A
+  client listing its connectors used to show the parent domain's icon.
+- `node scripts/build-icons.mjs` rebuilds the static icons from the mark
+  the app serves at `/icon`.
+
+### Changed
+
+- Site copy rewritten around engineering documents: landing, pricing,
+  about, the setup guides and the README. Claims that could not be checked
+  against the code were removed.
+- The MCP setup guide starts with choosing a tool, Claude.ai first, and
+  shows the API key step for the tools that need a key. It used to open
+  with "Get your API key" for everyone, Claude.ai included.
+- The browser tab icon, the PWA icons and `/icon` are the same mark. The
+  static files were two brand revisions behind.
+- Sign-in, sign-up, password reset, email verification, the CLI and OAuth
+  consent screens and the team invite page show one centred card with the
+  Booklet logo under it. The left-hand branding pane is gone.
+- My pages reads each page's publish source from the page record. It used
+  to scan the account's whole publish log on every load.
+- The SVG sanitizer removes `@import` and external `url()` from a diagram's
+  `<style>`.
+
+Dashboard and editor (roadmap Phase 5c).
 
 ### Added
 
@@ -67,7 +176,7 @@ client and MCP server keep their versions.
   moving to Cloudflare Workers, and Booklet stays self-hosted (see
   [ADR 0001](docs/adr/0001-hosting-platform.md)).
 
-Documents (roadmap Phase 5b). MCP server 3.1.0.
+Documents (roadmap Phase 5b).
 
 ### Added
 
@@ -152,22 +261,17 @@ Accounts (roadmap Phase 5a).
 - Custom domains for team spaces (roadmap task 5.13). Booklet stays
   self-hosted; see `docs/adr/0001-hosting-platform.md`.
 
-Earlier in this unreleased cycle:
-
-Programmatic surfaces brought up to current conventions. `booklet-cli` and
-`booklet-api-client` are both 2.0.0 (see their own changelogs); the MCP
-server is 3.0.0.
+Programmatic surfaces brought up to current conventions (roadmap Phase 4).
 
 ### Added
 
 - **OAuth sign-in for MCP clients.** A Claude.ai custom connector pointed at
   `https://booklet-mcp.ashwinsathian.com/mcp` signs in with a Booklet
   account; no API key is pasted anywhere. Authorization code with PKCE
-  (S256 only), clients identified by a Client ID Metadata Document or by
-  dynamic registration, scopes `pages:read` and `pages:write`, one-hour
+  (S256 only), clients identified by a Client ID Metadata Document, scopes `pages:read` and `pages:write`, one-hour
   access tokens and rotating 30-day refresh tokens. API keys keep working.
 - **Problem details.** `/api/v1` errors are RFC 9457 bodies
-  (`application/problem+json`) and keep the `error` string. A 413 says which
+  (`application/problem+json`). A 413 says which
   limit was hit: `characters` (200,000) or `stored_bytes` (600,000).
 - **Rate-limit headers.** Every `/api/v1` response carries `RateLimit` and
   `RateLimit-Policy`; a 429 adds `Retry-After`.
@@ -176,7 +280,7 @@ server is 3.0.0.
 - **Conditional requests.** `GET /api/v1/pages/:id` returns an `ETag`;
   `PATCH` and `DELETE` honor `If-Match` and answer 412 when it is stale.
 - **Cursor pagination.** `GET /api/v1/pages` returns `next_cursor` and
-  accepts `cursor`. `offset` still works.
+  accepts `cursor`.
 - **OpenAPI.** `/api/v1/openapi.json` is an OpenAPI 3.1 document generated
   from the same schemas the clients validate with. The examples on
   `/api-docs` are rendered from it.
@@ -186,8 +290,8 @@ server is 3.0.0.
 
 ### Changed
 
-- **MCP server 3.0.0** runs on `@modelcontextprotocol/server` 2.x and speaks
-  protocol 2026-07-28, while still answering 2025-11-25 clients. A request
+- **The MCP server** runs on `@modelcontextprotocol/server` 2.x and speaks
+  protocol 2026-07-28. A request
   without a credential now gets `401` with a `WWW-Authenticate` challenge
   (it used to be a JSON-RPC error body). Reading an unknown resource is
   error `-32602`.
@@ -269,3 +373,4 @@ code.
   scripts.
 
 [1.1.0]: https://github.com/AshwinSathian/booklet/releases/tag/v1.1.0
+[2.0.0]: https://github.com/AshwinSathian/booklet/releases/tag/v2.0.0

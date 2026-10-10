@@ -1,14 +1,14 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.AshwinSathian/booklet",
-  "description": "Publish, search, update and delete Markdown pages on Booklet from your AI assistant. OAuth sign-in.",
+  "description": "Publish Markdown incident reports, ADRs, RFCs and runbooks as web pages, with team spaces.",
   "repository": {
     "url": "https://github.com/AshwinSathian/booklet",
     "source": "github",
     "id": "1146975942",
     "subfolder": "mcp-server"
   },
-  "version": "3.1.0",
+  "version": "4.0.0",
   "websiteUrl": "https://booklet.ashwinsathian.com/mcp-setup",
   "remotes": [
     {

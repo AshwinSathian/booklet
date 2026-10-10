@@ -13,6 +13,7 @@ import { generateRawKey, hashApiKey } from "@/lib/api-key";
 import { hashUserPassword } from "@/lib/auth/password";
 import { hashSessionToken } from "@/lib/auth/session-token";
 import { createId } from "@/lib/id";
+import { metadataFetcher } from "@/lib/oauth/clients";
 import { DEFAULT_SETTINGS } from "@/lib/blocks";
 import { parseToBlocks } from "@/lib/parse";
 import { getDoc, putDoc } from "@/lib/storage";
@@ -531,14 +532,15 @@ test.describe("account page actions", () => {
 
   test("a connected app is listed, and stops working when disconnected", async () => {
     const { user } = await newUser({ verified: true });
-    const clientId = `bkc_${createId(24)}`;
-    await (await getDb())
-      .collection("oauth_clients")
-      .insertOne({ _id: clientId, client_name: "Test Assistant", redirect_uris: ["https://app.example/cb"], created_at: new Date().toISOString() } as never);
+    // The app is a metadata-document client; its document's host is stood in for.
+    const clientId = `https://app-${crypto.randomUUID()}.example/client.json`;
+    const client = { client_id: clientId, client_name: "Test Assistant", redirect_uris: ["https://app.example/cb"] };
+    const realFetch = metadataFetcher.fetch;
+    metadataFetcher.fetch = async (url) => (url.href === clientId ? client : null);
     const verifier = `verifier-${crypto.randomUUID()}-${crypto.randomUUID()}`.slice(0, 64);
     const code = await issueAuthorizationCode(
       {
-        client: { client_id: clientId, client_name: "Test Assistant", redirect_uris: ["https://app.example/cb"], source: "registered" },
+        client,
         redirectUri: "https://app.example/cb",
         scope: ["pages:read"],
         resource: oauthResource(),
@@ -556,6 +558,6 @@ test.describe("account page actions", () => {
 
     expect(await listConnectedApps(user.id)).toEqual([]);
     expect(await verifyAccessToken(tokens.access_token)).toBeNull();
-    await (await getDb()).collection("oauth_clients").deleteOne({ _id: clientId } as never);
+    metadataFetcher.fetch = realFetch;
   });
 });

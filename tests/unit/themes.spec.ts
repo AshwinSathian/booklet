@@ -38,7 +38,7 @@ test.describe("themes", () => {
     // Guards against the two silently drifting apart — see src/app/globals.css
     // for the source values (DARK / LIGHT root token blocks).
     expect(DEFAULT_THEME.dark["--color-bg"]).toBe("#000000");
-    expect(DEFAULT_THEME.dark["--color-accent"]).toBe("#ca8b93");
+    expect(DEFAULT_THEME.dark["--color-accent"]).toBe("#ea8590");
     expect(DEFAULT_THEME.dark["--color-text-muted"]).toBe("#9e9ea0");
     expect(DEFAULT_THEME.light["--color-bg"]).toBe("#ffffff");
     expect(DEFAULT_THEME.light["--color-accent"]).toBe("#963a48");

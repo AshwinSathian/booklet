@@ -3,6 +3,20 @@
 All notable changes to `booklet-api-client` are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [3.0.0] - 2026-10-11
+
+Needs a Booklet server at 2.0.0 or later.
+
+### Removed
+- **Breaking:** `offset` on `listPages`, and `offset` in `ListPagesResponse`. The server answers
+  400 to it. Walk a list with `cursor` and `next_cursor`, or call `listAllPages`.
+- **Breaking:** the `error` member of `ApiErrorSchema`. The server sends RFC 9457 problem details
+  only: read `detail`. `BookletApiError.message` is now taken from `detail`.
+
+### Changed
+- **Breaking:** `type`, `title`, `status` and `detail` are required in `ApiErrorSchema`, and
+  `next_cursor` is required in `ListPagesResponse` (null on the last page).
+
 ## [2.1.0] - 2026-10-10
 
 ### Added

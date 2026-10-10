@@ -63,10 +63,6 @@ const SECURITY_HEADERS: Record<string, string> = {
 // /api/* only, everything else 404s. The main hostname keeps serving both
 // the UI and /api/* as before (the web app's own client-side code calls
 // same-origin /api/* routes — those must keep working there too).
-//
-// The old readable-api.ashwinsathian.com hostname (pre-rename) was
-// decommissioned at the Cloudflare Tunnel level 2026-07-23 — it 404s before
-// ever reaching this app now, so it's intentionally not listed here.
 const API_HOSTNAME = "booklet-api.ashwinsathian.com";
 
 const SHARE_PATH = /^\/p\/([^/]+)(\/embed)?\/?$/;

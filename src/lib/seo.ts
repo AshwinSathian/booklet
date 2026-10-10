@@ -26,9 +26,9 @@ type BuildMetaArgs = {
   origin?: string;
 };
 
-const DEFAULT_TITLE = `${APP_NAME} — Written in Markdown, Read by Everyone Else`;
+const DEFAULT_TITLE = `${APP_NAME} — Engineering Documents, Published as Pages`;
 const DEFAULT_DESC =
-  "Turn incident reports, ADRs, and runbooks into a clean page anyone can open and read — no account, no formatting step. Free, in seconds.";
+  "Publish Markdown incident reports, ADRs, RFCs and runbooks as web pages, with team spaces.";
 
 export function buildMetadata({
   title,
@@ -77,7 +77,7 @@ export function buildMetadata({
           url: ogImage,
           width: 1200,
           height: 630,
-          alt: `${APP_NAME} — Written in Markdown, Read by Everyone Else`,
+          alt: `${APP_NAME} — Engineering Documents, Published as Pages`,
         },
       ],
     },
@@ -91,7 +91,7 @@ export function buildMetadata({
           url: twitterImage,
           width: 1200,
           height: 630,
-          alt: `${APP_NAME} — Written in Markdown, Read by Everyone Else`,
+          alt: `${APP_NAME} — Engineering Documents, Published as Pages`,
         },
       ],
     },

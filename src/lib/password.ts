@@ -1,11 +1,7 @@
 // OWASP currently recommends >=600,000 PBKDF2-SHA256 iterations. The
-// iteration count is encoded in the stored hash (`iterations:salt:hash`)
-// rather than hardcoded at verify time — bumping this constant must not
-// invalidate every password already set on an existing protected page, so
-// old hashes keep verifying at whatever count they were created with while
-// every new hashPassword() call uses the current, higher one.
+// iteration count is encoded in the stored hash (`iterations:salt:hash`),
+// so raising this constant leaves passwords already set verifiable.
 const ITERATIONS = 600_000;
-const LEGACY_ITERATIONS = 100_000; // pre-migration hashes with no count encoded
 const KEY_LENGTH = 32;
 const ALGO = "SHA-256";
 
@@ -48,18 +44,8 @@ export async function hashPassword(password: string): Promise<string> {
 
 export async function verifyPassword(password: string, stored: string): Promise<boolean> {
   const parts = stored.split(":");
-  let iterations: number;
-  let saltHex: string;
-  let hashHex: string;
-  if (parts.length === 3) {
-    [iterations, saltHex, hashHex] = [Number(parts[0]), parts[1], parts[2]];
-  } else if (parts.length === 2) {
-    // Pre-migration format: no iteration count encoded, always LEGACY_ITERATIONS.
-    iterations = LEGACY_ITERATIONS;
-    [saltHex, hashHex] = parts;
-  } else {
-    return false;
-  }
+  if (parts.length !== 3) return false;
+  const [iterations, saltHex, hashHex] = [Number(parts[0]), parts[1], parts[2]];
   if (!Number.isInteger(iterations) || iterations <= 0 || !saltHex || !hashHex) return false;
 
   const salt = new Uint8Array(hexToBuf(saltHex));

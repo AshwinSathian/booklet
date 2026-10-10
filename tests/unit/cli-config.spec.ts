@@ -84,18 +84,18 @@ test.describe("config.ts credential precedence", () => {
     expect(config.apiKey).toBe("bklt_secret");
   });
 
-  test("setApiKey migrates a legacy plaintext key into the keychain once it becomes available", async () => {
-    // Simulate a pre-upgrade config file with a plaintext key already in it.
+  test("setApiKey moves a plaintext key into the keychain once it becomes available", async () => {
+    // A config file with a plaintext key already in it.
     const unavailable = unavailableBackend();
-    await setApiKey("bklt_legacy", unavailable);
-    expect((await readConfig()).apiKey).toBe("bklt_legacy");
+    await setApiKey("bklt_plain", unavailable);
+    expect((await readConfig()).apiKey).toBe("bklt_plain");
 
     // Now the keychain is available (e.g. re-run after installing the
     // optional platform package) — the next setApiKey call should move
     // the key into it and strip the file.
     const nowAvailable = fakeBackend();
-    await setApiKey("bklt_legacy", nowAvailable);
-    expect(nowAvailable.stored).toBe("bklt_legacy");
+    await setApiKey("bklt_plain", nowAvailable);
+    expect(nowAvailable.stored).toBe("bklt_plain");
     expect((await readConfig()).apiKey).toBeUndefined();
   });
 
@@ -108,7 +108,7 @@ test.describe("config.ts credential precedence", () => {
     expect(await getApiKeySource(backend)).toBeNull();
   });
 
-  test("clearApiKey also strips a legacy plaintext key even if the keychain has nothing", async () => {
+  test("clearApiKey also strips a plaintext key even if the keychain has nothing", async () => {
     const unavailable = unavailableBackend();
     await setApiKey("bklt_secret", unavailable);
     await clearApiKey(unavailable);

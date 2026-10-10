@@ -68,7 +68,7 @@ export function PreviewPane({
             </button>
           )}
           <span className="flex items-center gap-1 text-2xs text-text-muted">
-            <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500/70 animate-dot-pulse" aria-hidden />
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-success/70 animate-dot-pulse" aria-hidden />
             Live
           </span>
         </div>
@@ -147,7 +147,7 @@ function EmptyState({
                 title="Copy sample"
                 className={
                   copyState === "copied" ? "bg-accent-dim text-accent border-accent/40 hover:bg-accent-dim hover:border-accent/40 hover:text-accent shadow-none" :
-                  copyState === "failed" ? "border-red-400/40 text-red-400" : ""
+                  copyState === "failed" ? "border-danger/40 text-danger" : ""
                 }
               >
                 {copyState === "copied" ? "Copied!" : copyState === "failed" ? "Failed" : "Copy"}

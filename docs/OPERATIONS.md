@@ -184,6 +184,40 @@ db.reaction_state.drop()
 A database restored from a backup taken before that date has them again;
 they are harmless, and the same three commands remove them.
 
+**Data dropped with 2.0.0 (2026-10-11).** Version 2.0.0 keeps one version
+of each flow and reads nothing older. These were removed from production by
+hand, after a `mongodump` (`~/.booklet/backups/booklet-pre-phase6-*.archive.gz`):
+
+```js
+// API keys issued with the rdbl_ prefix: the three labelled "readable-cli", created 2026-07-22.
+db.api_keys.deleteMany({ label: "readable-cli", created_at: { $lt: "2026-07-23" } })
+// The one page password in the 100,000-iteration format ("salt:hash", no count).
+// The page stays locked; its owner sets a new password from My pages.
+db.pages.updateOne({ _id: "vqInYRN7Gh" }, { $set: { password_hash: "reset:2026-10-11:set-a-new-password" } })
+// Indexes the app used to drop at startup, and the superseded pages index.
+db.collections.dropIndex("user_id_1_name_1")                                   // already gone in production
+db.pages.dropIndex("featured_1_visibility_1_password_hash_1_created_at_-1")    // already gone in production
+db.pages.dropIndex("user_id_1_created_at_-1")
+// Read by nothing since My pages stopped scanning the publish log.
+db.publish_events.dropIndex("user_id_1_created_at_1")
+// Dynamic client registration is gone; the collection held two test clients.
+db.oauth_clients.drop()
+// My pages reads pages.last_source. Fill it once from the publish log.
+db.publish_events.aggregate([{ $sort: { created_at: 1 } }, { $group: { _id: "$page_id", source: { $last: "$source" } } }])
+  .forEach((r) => db.pages.updateOne({ _id: r._id }, { $set: { last_source: r.source } }))
+```
+
+`users.email` went from unique and sparse to unique. Nothing is run by hand
+for that: `ensureIndexes` rebuilds an index whose options have changed, at
+the first start of the new build.
+
+Production had no user without an email and no draft in the schema-1
+format on the server (that format only ever lived in browsers). A database
+restored from an older backup needs the same commands run again. Removed
+with the same release: `scripts/backfill-anonymous-expiry.mjs`,
+`scripts/restore-frontmatter-raw.mjs`, the `dropIndex` list in
+`src/lib/db/index-specs.mjs`, and `upsertUser`.
+
 ## Abuse reports and takedown
 
 Every share page and embed links to `/report?page=<id>`. A report is stored
@@ -265,62 +299,6 @@ again. Deleting a page removes its rows.
 before 2026-10-10 from the editor have neither until they are published
 again; they sit under "Other pages" in a space.
 
-**Data changed with the 2026-10 documents release.** Pages published through
-the API before it had their frontmatter kept on the page record and left out
-of the stored Markdown. Since an update now takes those fields from the
-Markdown, the frontmatter was written back once, after a `mongodump`:
-
-```bash
-MONGODB_URI="mongodb://127.0.0.1:27017/booklet?directConnection=true" node scripts/restore-frontmatter-raw.mjs --dry-run
-MONGODB_URI="mongodb://127.0.0.1:27017/booklet?directConnection=true" node scripts/restore-frontmatter-raw.mjs
-```
-
-A second run changes nothing. A database restored from an older backup
-needs it run again.
-
-## Dashboard: settings pages, webhook deliveries, import from URL
-
-**Where things are.** `/my-pages` lists pages and folders. API keys are at
-`/settings/api-keys` and webhooks at `/settings/webhooks`. Both keep the
-email-verification gate (`unverifiedResponse`) on anything that creates a
-credential or sends a request.
-
-**Publish source.** The label on a My pages row ("Web", "API", "CLI", "MCP",
-"Action") is the `source` of the page's newest `publish_events` row. The
-API clients name themselves in `X-Booklet-Source`; anything else through
-the API is "API". A page with no event (published before the log began on
-2026-05-18) shows no label.
-
-**Webhook deliveries.** Every attempt is a `webhook_deliveries` row: the
-body that was sent, the status code, or the reason there was no answer. The
-newest 50 per webhook are kept. "Resend"
-(`POST /api/webhooks/:id/deliveries/:deliveryId/resend`) sends the stored
-body with a fresh signature and logs a new row; it is limited to the
-webhook's owner and to 20 a minute. A delivery to a URL that resolves to a
-private address is refused and logged as "The URL does not resolve to a
-public address". Rows go with their webhook, their page and their account.
-
-To read one webhook's log by hand:
-
-```js
-db.webhook_deliveries.find({ webhook_id: "<id>" }, { body: 0 }).sort({ created_at: -1 })
-```
-
-**Import from URL.** `POST /api/import` is the one place the server fetches
-a URL a visitor typed. It only ever requests `raw.githubusercontent.com`
-over https (a `github.com/.../blob/...` link is rewritten, not fetched),
-through the SSRF guard with the connection pinned to the checked address.
-It follows a redirect only to the same host, stops reading at 800,000
-bytes, and refuses a file over 200,000 characters. It returns text for a
-local draft and stores nothing. Signed-out visitors can use it, 10 times a
-minute per address. If GitHub is unreachable from this Mac the dialog says
-"GitHub did not answer"; nothing else depends on it.
-
-**Colours.** `node scripts/check-contrast.mjs` reads the palettes in
-`src/app/globals.css` and `src/lib/themes.ts` and fails if any text colour
-is under 4.5:1 on a surface it is used on. Run it after changing a colour
-token; CI does.
-
 ## Anonymous page expiry
 
 A page published without an account gets `docs.expires_at` = publish time +
@@ -332,9 +310,9 @@ The publisher's browser holds a `booklet_claim_<id>` cookie. With it, the
 share page shows the expiry date, and after sign-in a "Keep this page"
 button that creates the page record and removes `expires_at`.
 
-Anonymous pages published before 2026-10-10 were stamped once, at that
-deploy, with `node scripts/backfill-anonymous-expiry.mjs`. They have no
-claim cookie, so nobody can claim them from the site. To keep one, give it
+Anonymous pages published before 2026-10-10 were given an `expires_at` of
+2027-01-08 at that deploy. They have no claim cookie, so nobody can claim
+them from the site. To keep one, give it
 an owner by hand before it expires:
 
 ```js
@@ -585,9 +563,8 @@ bypassed by re-parse" bug class).
   on that. Added to the denylist.
 - Page-unlock password hashing (`src/lib/password.ts`) was fixed at 100k
   PBKDF2 iterations, below current OWASP guidance. Bumped to 600k with the
-  iteration count now encoded in the stored hash (`iterations:salt:hash`)
-  so existing page passwords keep verifying at whatever count they were
-  created with, instead of breaking on the bump.
+  iteration count now encoded in the stored hash (`iterations:salt:hash`).
+  The older two-part format stopped verifying in 2.0.0.
 - `scripts/migrate-from-atlas.sh` (deleted 2026-10)'s dump directory (a plaintext copy of the
   full production DB) was created with default permissions; now `chmod
   700`. Also warns when the Atlas URI is passed via argv, visible to other
@@ -733,7 +710,7 @@ process with an isolated `$HOME` (so it never touches your real
 calls the CLI's loopback callback server with the returned URL — this is
 the flow that would have caught the `redirect()`-inside-`try` bug above
 before a real user hit it. (Updated 2026-10-10: the script still expected
-the pre-September `GET /cli-auth` redirect, the `rdbl_` key prefix and a
+the pre-September `GET /cli-auth` redirect, the pre-rename key prefix and a
 plain-JSON MCP response, so it had been failing since 2026-09-05 without
 anyone running it.)
 Same self-cleaning discipline: everything is tagged
@@ -872,8 +849,9 @@ The flow, by URL:
 2. That document names the app as the authorization server. The app's own
    metadata is at `/.well-known/oauth-authorization-server`.
 3. The client identifies itself with a Client ID Metadata Document (its
-   `client_id` is an https URL the app fetches through the SSRF guard) or
-   registers at `POST /api/oauth/register`.
+   `client_id` is an https URL the app fetches through the SSRF guard).
+   There is no client registration: 2.0.0 removed it, after a Claude.ai
+   connector was seen signing in with its metadata document alone.
 4. The browser opens `/oauth/authorize`. That page only shows a consent
    screen. The code is issued by `POST /api/oauth/authorize`, which needs
    the session cookie and a same-origin `Origin` header.
@@ -885,7 +863,7 @@ The flow, by URL:
 
 Code: `src/lib/oauth/server.ts` (codes, tokens, PKCE), `src/lib/oauth/clients.ts`
 (client lookup, redirect URI rules), `mcp-server/src/auth.ts` (the resource
-server's check). Collections: `oauth_clients`, `oauth_codes`, `oauth_tokens`.
+server's check). Collections: `oauth_codes`, `oauth_tokens`.
 Codes and tokens are stored as HMACs under `API_KEY_PEPPER`, so rotating
 that pepper signs every connected app out, as it invalidates every API key.
 
@@ -904,8 +882,8 @@ db.oauth_tokens.deleteMany({ user_id: "<user id>" })   // one user
 db.oauth_tokens.deleteMany({ client_id: "<client id>" }) // one app, everyone
 ```
 
-**What is deliberately simple.** Registered clients are never pruned. The
-Client ID Metadata Document cache is per process (10 minutes). An access
+**What is deliberately simple.** The Client ID Metadata Document cache is
+per process (10 minutes). An access
 token issued for the MCP server is also accepted by `/api/v1` directly,
 because the MCP server forwards it; both are Booklet and the scopes are the
 same.

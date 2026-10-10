@@ -3,7 +3,7 @@
 import { RevealHero } from "@/components/marketing/RevealHero";
 import { SiteFooter } from "@/components/marketing/SiteFooter";
 import { SiteHeader } from "@/components/marketing/SiteHeader";
-import { APP_NAME, ROUTES } from "@/lib/constants";
+import { ROUTES } from "@/lib/constants";
 import { useSession } from "@/components/auth/SessionProvider";
 import type { Easing, Variants } from "framer-motion";
 import { motion, useReducedMotion } from "framer-motion";
@@ -326,14 +326,14 @@ function ProblemMock() {
       {/* Before: raw Markdown in a chat/message context */}
       <div>
         <div className="mb-3 flex items-center gap-2">
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500/15 text-red-400">
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-danger/15 text-danger">
             <svg width="9" height="9" fill="none" viewBox="0 0 12 12" aria-hidden>
               <path d="M6 1v5M6 9v.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
             </svg>
           </span>
           <span className="text-[12px] font-semibold text-text-muted">Pasted into chat or email</span>
         </div>
-        <div className="overflow-hidden rounded-2xl border border-red-500/12 bg-bg-elevated shadow-card">
+        <div className="overflow-hidden rounded-2xl border border-danger/12 bg-bg-elevated shadow-card">
           <div className="flex items-center gap-2.5 border-b border-border-default bg-bg-soft px-4 py-2.5">
             <div className="h-6 w-6 rounded-full bg-fill-3 shrink-0" />
             <div>
@@ -370,7 +370,7 @@ pool_size: 5 # was 50
       {/* After: clean Booklet published page */}
       <div>
         <div className="mb-3 flex items-center gap-2">
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400">
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-success/15 text-success">
             <svg width="9" height="9" fill="none" viewBox="0 0 12 12" aria-hidden>
               <path d="M2 6.5 4.5 9 10 3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
@@ -386,10 +386,10 @@ pool_size: 5 # was 50
             aria-hidden
             className="absolute -top-2.5 left-4 h-5 w-9 rounded-full border border-accent/30 bg-accent-dim"
           />
-          <div className="relative overflow-hidden rounded-2xl border border-t-2 border-emerald-500/12 border-t-accent bg-bg-elevated shadow-card">
+          <div className="relative overflow-hidden rounded-2xl border border-t-2 border-success/12 border-t-accent bg-bg-elevated shadow-card">
           {/* Browser bar */}
           <div className="flex items-center gap-2.5 border-b border-border-default bg-bg-soft px-4 py-2.5">
-            <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-400" />
+            <span className="h-2 w-2 shrink-0 rounded-full bg-success" />
             <span className="font-mono text-2xs text-text-muted truncate">
               booklet.ashwinsathian.com/p/Ab3k91QxZp
             </span>
@@ -400,10 +400,10 @@ pool_size: 5 # was 50
               Incident Report
             </div>
             <div className="mt-2.5 flex flex-wrap gap-1.5">
-              <span className="inline-flex rounded-full border border-red-500/25 bg-red-500/10 px-2 py-0.5 text-[9px] font-semibold text-red-400">
+              <span className="inline-flex rounded-full border border-danger/25 bg-danger/10 px-2 py-0.5 text-[9px] font-semibold text-danger">
                 P1 Severity
               </span>
-              <span className="inline-flex rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2 py-0.5 text-[9px] font-semibold text-emerald-400">
+              <span className="inline-flex rounded-full border border-success/25 bg-success/10 px-2 py-0.5 text-[9px] font-semibold text-success">
                 Resolved
               </span>
             </div>
@@ -445,16 +445,16 @@ function ApiBlock() {
         <div className="flex flex-col gap-4">
           {[
             {
-              title: "Auto-publish release notes",
-              desc: "Trigger a publish from your GitHub Action after every tagged release. The link is always ready before your team announcement.",
+              title: "Release notes from CI",
+              desc: "A GitHub Action publishes the notes when a release is tagged, and the job output has the link.",
             },
             {
-              title: "Incident tooling integration",
-              desc: "Wire the REST API into your incident workflow — publish a post-mortem page straight from your on-call automation, no copy-paste, no formatting step.",
+              title: "Postmortems from your incident tooling",
+              desc: "One POST with the Markdown publishes the page. Send an Idempotency-Key and a retried request does not publish it twice.",
             },
             {
               title: "Update pages in place",
-              desc: "PATCH an existing page with new content. The URL stays the same — bookmark it once, always current.",
+              desc: "PATCH a page with new Markdown and the URL stays the same. Each update is kept as a version you can diff and restore.",
             },
           ].map((item) => (
             <div key={item.title} className="flex gap-4">
@@ -498,7 +498,7 @@ POST /api/v1/publish
 Authorization: Bearer bklt_...
 
 {
-  "blocks": [ ... ]
+  "raw": "# Release notes\n\n..."
 }
 
 # Response
@@ -540,22 +540,22 @@ export function Landing() {
       {
         n: "01",
         title: "Write your Markdown",
-        desc: "Type, paste, or import — notes, READMEs, incident updates, proposals, anything Markdown-shaped.",
+        desc: "Type it, paste it, import a file, or start from a template for an incident report, ADR, RFC or runbook.",
       },
       {
         n: "02",
-        title: "See it rendered instantly",
-        desc: "Booklet formats headings, code, lists, and tables live as you type.",
+        title: "Check the preview",
+        desc: "The preview beside the editor is the page your reader will get: headings, code, tables, diagrams and math.",
       },
       {
         n: "03",
-        title: "Publish with one click",
-        desc: "Hit publish and get a clean, read-only URL. No account, no configuration.",
+        title: "Publish",
+        desc: "You get a link. A new page is unlisted, so it stays out of search engines until you make it public.",
       },
       {
         n: "04",
-        title: "Share without friction",
-        desc: "Send in Slack, email, or a ticket. Your reader just reads.",
+        title: "Send the link",
+        desc: "Slack, email, a ticket. The reader needs a browser and nothing else.",
       },
     ],
     [],
@@ -597,7 +597,7 @@ export function Landing() {
           </svg>
         ),
         title: "Live preview as you type",
-        desc: "Your rendered page updates in real time. What you see is exactly what your readers get — no surprises.",
+        desc: "The rendered page updates beside the editor while you write, and it is the same page your reader gets.",
       },
       {
         icon: (
@@ -618,8 +618,8 @@ export function Landing() {
             />
           </svg>
         ),
-        title: "One link. Instantly shareable.",
-        desc: "Hit publish and get a clean URL in seconds. Drop it into Slack, email, a PR, or a ticket — it just works.",
+        title: "One link per document",
+        desc: "Publish and you have a URL for Slack, email, a pull request or a ticket. With an account you can give it a slug of your own.",
       },
       {
         icon: (
@@ -633,8 +633,8 @@ export function Landing() {
             />
           </svg>
         ),
-        title: "Beautiful by default",
-        desc: "Typography, code blocks, tables, and headings are styled automatically. No CSS to write, no theme to configure.",
+        title: "Formatted for you",
+        desc: "Headings, code blocks, tables and callouts are typeset without any CSS from you. Five document themes if you want a different look.",
       },
       {
         icon: (
@@ -649,8 +649,8 @@ export function Landing() {
             />
           </svg>
         ),
-        title: "Private until you publish",
-        desc: "Every draft stays in your browser. Nothing leaves your device until you deliberately hit publish.",
+        title: "Drafts stay yours",
+        desc: "A draft is saved in your browser. Signed in, it also syncs to your account. Nobody else can see it until you publish.",
       },
       {
         icon: (
@@ -667,8 +667,8 @@ export function Landing() {
             />
           </svg>
         ),
-        title: "Mermaid diagrams",
-        desc: "Write a fenced Mermaid code block and get a flowchart, sequence diagram, or architecture diagram rendered inline.",
+        title: "Diagrams and math",
+        desc: "A fenced Mermaid or Graphviz block is drawn as a diagram, and KaTeX math is typeset, in the page and in the HTML export.",
       },
       {
         icon: (
@@ -678,7 +678,7 @@ export function Landing() {
           </svg>
         ),
         title: "Version history",
-        desc: "Every publish creates a snapshot. Restore any of the last 50 versions of your page with one click from My Pages.",
+        desc: "Every publish keeps a snapshot, up to 50 per page. Compare any two line by line, and restore one as a new version.",
       },
       {
         icon: (
@@ -689,7 +689,7 @@ export function Landing() {
           </svg>
         ),
         title: "Password-protected pages",
-        desc: "Restrict sensitive pages with a password. Readers enter it once and the page unlocks — the link stays shareable.",
+        desc: "Put a password on a page and readers are asked for it once. The link itself does not change.",
       },
       {
         icon: (
@@ -698,8 +698,8 @@ export function Landing() {
             <polyline points="8 6 2 12 8 18" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         ),
-        title: "REST API + MCP",
-        desc: "Publish pages from CI/CD pipelines, scripts, or directly from Claude. Full API key management included.",
+        title: "API, CLI and MCP",
+        desc: "Publish from a script, a CI job or an MCP client such as Claude. Keys are made and revoked in Settings.",
       },
     ],
     [],
@@ -710,35 +710,35 @@ export function Landing() {
       {
         tag: "Incident",
         title: "Incident summaries",
-        desc: "Lay out the timeline, severity, and root cause once. Forward the link to leadership the moment the incident closes.",
+        desc: "Timeline, severity and root cause on one page. Send the link when the incident closes.",
         href: "https://booklet.ashwinsathian.com/p/example-incident-report",
       },
       {
         tag: "ADR",
         title: "Design decisions",
-        desc: "Architecture decisions and tradeoffs that make sense even to someone outside the codebase. No repo navigation required.",
+        desc: "The decision, its status and what it supersedes, readable by someone who has never opened the repository.",
         href: "https://booklet.ashwinsathian.com/p/example-adr",
       },
       {
         tag: "Docs",
         title: "README-style docs",
-        desc: "Documentation you can share without sending someone to GitHub first. Clean URL, proper headings, code blocks intact.",
+        desc: "A README as a page of its own, for the reader who has no reason to visit GitHub.",
         href: "https://booklet.ashwinsathian.com/p/example-readme",
       },
       {
         tag: "Release",
         title: "Release notes",
-        desc: "Ship a clean changelog your non-technical stakeholders can actually read. Publish directly from the CHANGELOG, no reformatting.",
+        desc: "Publish the changelog entry as it is. The GitHub Action does it on every tagged release.",
       },
       {
-        tag: "Onboarding",
-        title: "Onboarding guides",
-        desc: "New hire guides, team wikis, service runbooks. Drop the Booklet link in a welcome Slack message and the reader doesn't set anything up.",
+        tag: "Runbook",
+        title: "Runbooks",
+        desc: "Steps the person on call can follow at 3am, on a page that loads on a phone.",
       },
       {
-        tag: "Proposal",
-        title: "Proposals & briefs",
-        desc: "Write in Markdown, skip the Google Docs formatting step. Send a clean, professional link that opens in any browser.",
+        tag: "RFC",
+        title: "RFCs",
+        desc: "The proposal, its status and its owners. Link it from the ADR that came out of it.",
       },
     ],
     [],
@@ -779,7 +779,7 @@ export function Landing() {
             <motion.div variants={heroItem}>
               <div className="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-accent-dim px-4 py-1.5 text-xs font-semibold tracking-wide text-accent">
                 <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-                Free · No account · Publish from Claude, Cursor, or CI
+                Free · Incident reports, ADRs, RFCs, runbooks
               </div>
             </motion.div>
 
@@ -788,10 +788,10 @@ export function Landing() {
               variants={heroItem}
               className="mt-5 max-w-4xl text-balance text-[clamp(38px,8vw,80px)] font-extrabold leading-[1.02] tracking-[-0.04em]"
             >
-              Written in Markdown.
+              Engineering documents,
               <br />
               <span className="text-accent">
-                Read by everyone else.
+                published as pages.
               </span>
             </motion.h1>
 
@@ -800,11 +800,10 @@ export function Landing() {
               variants={heroItem}
               className="mt-6 max-w-2xl text-pretty text-[18px] leading-[1.75] text-text-secondary"
             >
-              Your incident reports, ADRs, and runbooks are already in Markdown. Booklet
-              turns them into a clean page the PM, exec, or customer on the other end can
-              actually open and read — no account, no formatting step, no raw asterisks.
-              Publish it yourself from the editor, or let your AI assistant or CI pipeline
-              do it for you — same clean page either way.
+              Write an incident report, ADR, RFC or runbook in Markdown and publish it as a
+              page anyone can open. Keep them together in a team space, where an incident
+              links to the ADR behind it and some pages are for members alone. You don&apos;t
+              need an account to try it.
             </motion.p>
 
             {/* CTAs */}
@@ -834,7 +833,7 @@ export function Landing() {
                     ?.scrollIntoView({ behavior: "smooth", block: "start" });
                 }}
               >
-                See live examples
+                See example pages
               </GhostButton>
             </motion.div>
 
@@ -863,7 +862,7 @@ export function Landing() {
                 href="#api"
                 className="inline-flex items-center gap-1.5 text-text-muted transition hover:text-accent"
               >
-                or publish straight from Claude, Cursor, or a CI pipeline
+                or publish from the CLI, the API, a GitHub Action or an MCP client
                 <svg width="10" height="10" fill="none" viewBox="0 0 12 12" aria-hidden>
                   <path
                     d="M2.5 9.5 9.5 2.5M9.5 2.5H4M9.5 2.5V8"
@@ -898,46 +897,73 @@ export function Landing() {
         id="problem"
         eyebrow="The problem"
         title="Raw Markdown doesn't travel well."
-        subtitle="When engineers share Markdown outside their team — in Slack, email, a ticket — the recipient sees syntax noise, not a document. Structure is lost. The message is harder to act on."
+        subtitle="Paste Markdown into Slack, email or a ticket and the reader gets pound signs and asterisks. The table you wrote arrives as rows of pipes."
       >
         <ProblemMock />
+      </Section>
 
-        {/* Alternatives callout */}
-        <motion.div variants={reduce ? undefined : fadeUp} className="mt-10">
-          <div className="rounded-2xl border border-border-default bg-bg-elevated p-6 sm:p-8">
-            <div className="text-[13px] font-semibold uppercase tracking-[0.18em] text-text-muted mb-5">
-              The usual alternatives
-            </div>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {[
-                { tool: "Google Docs", why: "Requires a Google account" },
-                { tool: "Notion", why: "Requires workspace access" },
-                { tool: "Confluence", why: "Requires corporate SSO" },
-                { tool: "GitHub Gist", why: "Poor rendering, GitHub account" },
-                { tool: "HackMD / StackEdit", why: "Collaborative overkill" },
-                { tool: "Paste into Slack", why: "Destroys all formatting" },
-              ].map(({ tool, why }) => (
-                <div key={tool} className="flex items-start gap-3">
-                  <svg className="mt-0.5 shrink-0 text-red-400/60" width="14" height="14" fill="none" viewBox="0 0 14 14" aria-hidden>
-                    <path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                  </svg>
-                  <div>
-                    <span className="text-[13px] font-medium text-text-primary">{tool}</span>
-                    <span className="text-[13px] text-text-muted"> — {why}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="mt-6 flex items-center gap-3 rounded-xl border border-accent/20 bg-accent-dim px-4 py-3">
-              <svg className="shrink-0 text-accent" width="16" height="16" fill="none" viewBox="0 0 24 24" aria-hidden>
-                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              <span className="text-[14px] text-text-secondary">
-                <span className="font-semibold text-text-primary">Booklet</span> — write, publish, share a link. No account, no access to grant.
-              </span>
-            </div>
+      <Container><Divider /></Container>
+
+      {/* ──────────────────────────────────────────────────────────────────── */}
+      {/* Engineering documents and team spaces                                 */}
+      {/* ──────────────────────────────────────────────────────────────────── */}
+      <Section
+        id="teams"
+        eyebrow="For engineering teams"
+        title="Incident reports, ADRs, RFCs and runbooks, in one space."
+        subtitle="A team space is a shared place for a team's documents. You create one, invite people by email, and publish into it from the editor, the CLI, the API or an MCP client."
+      >
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <motion.div variants={reduce ? undefined : fadeUp} className="h-full">
+            <FeatureCard
+              icon={
+                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" aria-hidden>
+                  <path d="M4 5h16M4 5v14h16V5M4 10h16" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              }
+              title="Document types"
+              desc="Put type: incident, postmortem, adr, rfc, runbook or release-notes in the frontmatter. The page shows status, severity, date and owners in a strip under the title."
+            />
+          </motion.div>
+          <motion.div variants={reduce ? undefined : fadeUp} className="h-full">
+            <FeatureCard
+              icon={
+                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" aria-hidden>
+                  <path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              }
+              title="Links between documents"
+              desc="Write [[ADR-012 Queue retries]] in an incident report and it links to that ADR when you publish. The ADR lists the incident under Referenced by."
+            />
+          </motion.div>
+          <motion.div variants={reduce ? undefined : fadeUp} className="h-full">
+            <FeatureCard
+              icon={
+                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" aria-hidden>
+                  <path d="M16 11V8a4 4 0 0 0-8 0v3M6 11h12v9H6z" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              }
+              title="Pages for the team"
+              desc="Set a page in a team space to Team and its members can open it. Anyone else gets a 404, and the page is never indexed."
+            />
+          </motion.div>
+          <motion.div variants={reduce ? undefined : fadeUp} className="h-full">
+            <FeatureCard
+              icon={
+                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" aria-hidden>
+                  <path d="M4 6h7v5H4zM13 6h7v5h-7zM4 13h7v5H4zM13 13h7v5h-7z" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              }
+              title="A home for the space"
+              desc="The space lists its pages by type: a decision log in ADR-number order, incidents by date. Public pages get an Atom feed."
+            />
+          </motion.div>
+        </div>
+        {isLoaded && isSignedIn ? (
+          <div className="mt-8">
+            <GhostButton href={ROUTES.spaces}>Open your spaces</GhostButton>
           </div>
-        </motion.div>
+        ) : null}
       </Section>
 
       <Container><Divider /></Container>
@@ -948,8 +974,8 @@ export function Landing() {
       <Section
         id="features"
         eyebrow="Features"
-        title="Everything it needs to land well."
-        subtitle="Every formatting detail handled. Your content arrives exactly as you wrote it — for anyone on the receiving end."
+        title="What every page gets."
+        subtitle="These work for any Markdown you publish, typed or not."
       >
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {features.map((f) => (
@@ -969,7 +995,7 @@ export function Landing() {
         id="how"
         eyebrow="How it works"
         title="Write. Preview. Publish. Share."
-        subtitle="Four steps that fit inside your existing workflow. No new tool to learn — just a cleaner way to share what you already wrote."
+        subtitle="From the editor it takes four steps."
       >
         <div className="flex flex-col gap-8 sm:flex-row sm:gap-0">
           {steps.map((step, i) => (
@@ -1002,8 +1028,8 @@ export function Landing() {
       <Section
         id="examples"
         eyebrow="Examples"
-        title="Real pages, real use cases."
-        subtitle="If it ends up in Slack, email, or a ticket — it belongs in Booklet."
+        title="Example pages."
+        subtitle="Three of these link to live pages. Open one to see what a reader gets."
       >
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {useCases.map((c) => (
@@ -1022,8 +1048,8 @@ export function Landing() {
       <Section
         id="api"
         eyebrow="API · CLI · MCP"
-        title="Publish from anywhere — including your AI assistant."
-        subtitle="Booklet's REST API, CLI, and first-party MCP server let you publish pages directly from CI/CD pipelines, incident tools, automation scripts, or a conversation with Claude, Cursor, or any MCP-compatible assistant. Sign in to generate a key."
+        title="Five ways to publish."
+        subtitle="The editor, the REST API, the CLI, a GitHub Action and an MCP server all produce the same page. The API, CLI and Action use an API key from Settings. An MCP client signs in with OAuth or uses a key."
       >
         <ApiBlock />
       </Section>
@@ -1036,8 +1062,8 @@ export function Landing() {
       <Section
         id="integrations"
         eyebrow="CONNECT"
-        title="Works where you already are."
-        subtitle="Booklet connects to the tools in your workflow — publish directly from your AI assistant, your terminal, or your CI pipeline."
+        title="Claude, the terminal, GitHub Actions."
+        subtitle="Setup for each of the three takes a few minutes."
       >
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {/* Claude MCP */}
@@ -1054,7 +1080,7 @@ export function Landing() {
                 <div className="text-[12px] text-text-muted mt-0.5">via MCP</div>
               </div>
               <div className="text-[15px] leading-[1.72] text-text-secondary">
-                Add Booklet to Claude Desktop or Claude.ai. Then ask Claude to publish, update, or list your pages — all in plain language.
+                In Claude.ai, add Booklet as a custom connector and sign in. Claude Desktop and other MCP clients take the config below with an API key. Then ask for a page to be published, updated or found.
               </div>
               {/* Config snippet with copy button */}
               <div className="relative group">
@@ -1108,7 +1134,7 @@ export function Landing() {
               </div>
               <div className="text-[15px] font-semibold tracking-tight">Terminal</div>
               <div className="text-[15px] leading-[1.72] text-text-secondary">
-                <code className="text-[13px] font-mono">booklet-cli</code> publishes Markdown files from any terminal in one command. Works in CI too.
+                <code className="text-[13px] font-mono">booklet-cli</code> publishes a Markdown file with one command, pulls a page back as Markdown, and has JSON output and exit codes for scripts.
               </div>
               <code className="text-[12px] font-mono bg-bg-soft border border-border-default rounded-lg px-3 py-2 text-text-muted break-all">
                 npx booklet-cli publish README.md
@@ -1140,7 +1166,7 @@ export function Landing() {
               </div>
               <div className="text-[15px] font-semibold tracking-tight">GitHub Actions</div>
               <div className="text-[15px] leading-[1.72] text-text-secondary">
-                Publish release notes, changelogs, or runbooks automatically on every push.
+                Publish release notes, changelogs or runbooks from a workflow. A re-run of the same job updates nothing twice.
               </div>
               <a
                 href="/api-docs#github-actions"
@@ -1164,8 +1190,8 @@ export function Landing() {
       <Section
         id="templates"
         eyebrow="Templates"
-        title="Start with structure."
-        subtitle="21 templates for the documents engineers and teams reach for most. Click one — the editor opens pre-loaded."
+        title="Start from a template."
+        subtitle="21 templates. Pick one and the editor opens with it loaded, frontmatter included."
       >
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {TEMPLATES.filter((t) => t.slug).map((t) => (
@@ -1216,8 +1242,8 @@ export function Landing() {
       <Section
         id="all-features"
         eyebrow="Everything included"
-        title="No feature is locked. No upgrade required."
-        subtitle="Create a free account and every capability below is available — version history, analytics, password protection, the API, webhooks, MCP. All of it."
+        title="Everything is in the free account."
+        subtitle="There is no paid plan and nothing to upgrade to. An account gets all of this."
         center
       >
         <div className="mx-auto max-w-3xl">
@@ -1226,31 +1252,31 @@ export function Landing() {
               group: "Writing & publishing",
               items: [
                 "Live Markdown preview as you type",
-                "Full GitHub-Flavored Markdown support",
+                "GitHub-Flavored Markdown, KaTeX math, Graphviz",
                 "Mermaid diagram rendering",
                 "Formatting toolbar",
-                "YAML frontmatter (title, author, date, tags)",
+                "YAML frontmatter (type, status, owners, tags and more)",
                 "21 ready-to-use templates",
-                "Unlimited local drafts, auto-saved to browser",
+                "Drafts saved in the browser, synced to your account when signed in",
               ],
             },
             {
               group: "Pages & sharing",
               items: [
-                "Unlimited pages (anonymous is capped at 10/month)",
+                "Pages without a monthly cap (10 a month with no account)",
                 "Custom URL slugs",
-                "Unlisted pages",
+                "Unlisted pages (the default), public pages, pages for a team",
                 "Password-protected pages",
-                "Per-page analytics with read-depth",
-                "Version history — restore any snapshot",
+                "Per-page views, and how many readers reached 50% and 100%",
+                "Version history with line diff and restore",
                 "Auto Table of Contents on long documents",
               ],
             },
             {
               group: "Export & organisation",
               items: [
-                "Export to Markdown, HTML, or PDF",
-                "Collections — group and organise pages",
+                "Export to Markdown or self-contained HTML, and Print to PDF",
+                "Folders, and team spaces grouped by document type",
                 "My Pages dashboard",
                 "Reading time on every share page",
                 "OG image for rich link previews",
@@ -1262,9 +1288,9 @@ export function Landing() {
                 "REST API v1 — publish, update, list, delete",
                 "API key management",
                 "Publish webhooks (page.published, page.updated)",
-                "Claude MCP server",
-                "GitHub Actions integration",
-                "Anonymous publishing — no account needed",
+                "MCP server, with OAuth sign-in or an API key",
+                "GitHub Action and the booklet-cli npm package",
+                "Import a Markdown file from a GitHub URL",
               ],
             },
           ].map(({ group, items }) => (
@@ -1308,11 +1334,9 @@ export function Landing() {
       <Section id="faq" eyebrow="FAQ" title="Quick answers." center>
         <div className="mx-auto max-w-2xl rounded-2xl border border-border-default bg-bg-elevated px-7 shadow-card">
           <FaqItem question="Do I need an account?">
-            No. {APP_NAME} works immediately — no signup, no email, no password. Just
-            write and publish (up to 10 pages a month). Creating an account (free) removes
-            that monthly cap and unlocks custom slugs, analytics, version history, the API,
-            and My Pages. Pages under an account don&apos;t expire; pages published without one
-            are kept for 90 days. Everything is free — there is no paid plan.
+            No. You can write and publish up to 10 pages a month without one, and those pages
+            are kept for 90 days. A free account removes both limits and adds editing in place,
+            custom slugs, analytics, version history, team spaces and API keys. There is no paid plan.
           </FaqItem>
           <FaqItem question="Are published pages public?">
             Anyone with the link can read a page, so assume it can be forwarded. New pages
@@ -1325,28 +1349,29 @@ export function Landing() {
             published it from, sign in, and choose &ldquo;Keep this page&rdquo;.
           </FaqItem>
           <FaqItem question="Can I edit after publishing?">
-            Anonymous pages can&apos;t be edited after publishing — update your draft and republish for a new link.
-            Signed-in users can update pages in place, keeping the same URL.
+            With an account, yes: update the page and the URL stays the same. A page published
+            without an account can&apos;t be changed; publish the draft again and you get a new link.
           </FaqItem>
           <FaqItem question="Can I export a published page?">
-            Yes — every published page has an <strong>Export</strong> menu. Download the original Markdown source,
-            a self-contained HTML file, or use Print to PDF (⌘P) for a clean, chrome-free PDF. Math and
-            diagrams are drawn into the HTML file itself, so it opens anywhere with nothing to load.
+            Yes. The <strong>Export</strong> menu on a published page gives you the Markdown source or a
+            self-contained HTML file, and Print to PDF uses your browser&apos;s print dialog. Math and
+            diagrams are drawn into the HTML file, so it opens offline.
           </FaqItem>
           <FaqItem question="Where are drafts stored?">
-            Entirely in your browser. Nothing leaves your device until you hit Publish. Clearing browser storage removes local drafts.
+            In your browser. If you are signed in they also sync to your account, so they follow
+            you to another device. Without an account, clearing browser storage removes them.
           </FaqItem>
           <FaqItem question="Is there an API?">
-            Yes. Publish pages directly from CI/CD pipelines, scripts, or automation — using a simple REST API.
-            Sign in to generate a key under Settings, then see the full{" "}
+            Yes, a REST API for publishing, updating, listing and deleting pages. Create a key
+            under Settings, API keys, then see the{" "}
             <a href="/api-docs" className="text-accent underline underline-offset-2">API reference</a>.
           </FaqItem>
           <FaqItem question="What Markdown is supported?">
-            Booklet supports GitHub-Flavored Markdown (GFM): H1–H4 headings, bold, italic,
+            GitHub-Flavored Markdown: headings, bold, italic,
             strikethrough, code (inline and fenced), tables, ordered/unordered/nested lists,
-            task lists, blockquotes, links, images (external URLs), Mermaid diagrams, and
+            task lists, blockquotes, links, images (external URLs), Mermaid and Graphviz diagrams, and
             KaTeX math — inline <strong>$...$</strong> and display <strong>$$...$$</strong>.
-            HTML in Markdown is not rendered for security reasons.
+            Raw HTML in Markdown is not rendered.
           </FaqItem>
           <FaqItem question="Is there a size limit?">
             Up to 200,000 characters in the editor. Published pages are capped at 600 KB.
@@ -1380,10 +1405,10 @@ export function Landing() {
                 Get started
               </div>
               <h2 className="mt-4 text-balance text-[clamp(28px,4.5vw,40px)] font-bold leading-[1.12] tracking-[-0.025em]">
-                Write once. Share a page people actually read.
+                Publish the next incident report as a page.
               </h2>
               <p className="mx-auto mt-5 max-w-md text-[17px] leading-[1.72] text-text-secondary">
-                Free. No account. Under 30 seconds.
+                Free, and you can try it without an account.
               </p>
               <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
                 <PrimaryButton

@@ -1,6 +1,5 @@
 /**
  * In-house auth data access: users (password-based) and sessions.
- * See PLAN-backend-auth-migration.md for the full design.
  */
 
 import { getDb } from "@/lib/mongodb";

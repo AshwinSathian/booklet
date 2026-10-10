@@ -1,7 +1,7 @@
 {
   "name": "booklet-cli",
-  "version": "2.1.0",
-  "description": "Publish Markdown to a shareable URL from your terminal or CI pipeline",
+  "version": "3.0.0",
+  "description": "Publish Markdown incident reports, ADRs, RFCs and runbooks as web pages, with team spaces.",
   "bin": {
     "booklet": "dist/index.js"
   },
@@ -20,7 +20,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.19.0",
-    "booklet-api-client": "^2.0.0",
+    "booklet-api-client": "^3.0.0",
     "commander": "^12.1.0",
     "tsup": "^8.5.1",
     "typescript": "^5.7.0"

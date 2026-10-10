@@ -137,15 +137,6 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Publish failed" }, { status: 500 });
     }
 
-    void recordPublishEvent({
-      userId: userId ?? null,
-      pageId: id,
-      isUpdate: false,
-      contentLength: payload.raw.length,
-      richBlockKinds: collectRichBlockKinds(blocks),
-      source: "browser",
-    }).catch((err) => logError("publish", "Event record failed", err));
-
     if (isAuthenticated && userId) {
       // The record is what makes the page owned and what a team-only page's
       // access check reads; without it the document would be an ownerless
@@ -171,6 +162,16 @@ export async function POST(req: Request) {
         published_at: doc.createdAt,
       }).catch(() => {});
     }
+
+    // After the page record: the event also writes the record's `last_source`.
+    void recordPublishEvent({
+      userId: userId ?? null,
+      pageId: id,
+      isUpdate: false,
+      contentLength: payload.raw.length,
+      richBlockKinds: collectRichBlockKinds(blocks),
+      source: "browser",
+    }).catch((err) => logError("publish", "Event record failed", err));
 
     const publishedUrl = `${origin}${ROUTES.publish(id)}`;
 

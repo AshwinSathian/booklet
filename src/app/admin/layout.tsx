@@ -4,8 +4,7 @@ import { isAdminRequest } from "@/server/admin";
 // Authoritative admin gate. middleware.ts only checks the IP allowlist
 // (cheap, Edge-safe); this layout performs the real, Mongo-backed session
 // check + ADMIN_USER_IDS allowlist, since that needs Node.js runtime driver
-// access. Both checks must pass — see PLAN-backend-auth-migration.md,
-// "Admin authorization moves from middleware into admin/layout.tsx".
+// access. Both checks must pass (docs/OPERATIONS.md, "Auth: in-house").
 //
 // This layout alone is NOT enough: each page under /admin repeats the
 // check, because a layout and its page render in parallel (see the comment

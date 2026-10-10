@@ -128,7 +128,7 @@ export default async function EmbedPage({
               rel="noopener noreferrer"
               className="text-xs text-accent hover:text-accent-soft transition underline"
             >
-              Open to unlock →
+              Open to enter the password →
             </Link>
           </div>
         </div>

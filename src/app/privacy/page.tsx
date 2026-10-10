@@ -86,8 +86,8 @@ export default function PrivacyPage() {
 
           <Section title="How we use your data">
             <p>We use collected data solely to operate the service: storing and serving your pages, associating
-              pages with your account, and delivering analytics you asked for. The only email we send you is a password-reset link
-              when you ask for one. We send no marketing email.</p>
+              pages with your account, and delivering analytics you asked for. The email we send you is the link that confirms your
+              address, a password-reset link when you ask for one, and nothing else. We send no marketing email.</p>
             <p>We do not serve ads, sell your data to third parties, or use your content to train AI models.</p>
           </Section>
 

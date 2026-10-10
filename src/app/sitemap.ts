@@ -59,6 +59,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.5,
     },
     {
+      url: absoluteUrl("/trust"),
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.5,
+    },
+    {
       url: absoluteUrl("/privacy"),
       lastModified: now,
       changeFrequency: "monthly",

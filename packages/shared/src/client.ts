@@ -50,7 +50,7 @@ export class BookletApiError extends Error {
   constructor(
     message: string,
     public readonly status: number,
-    /** The response body, when it was a JSON object (RFC 9457 problem details since API 2.0). */
+    /** The response body, when it was a JSON object (RFC 9457 problem details). */
     public readonly problem?: ApiError,
     /** Seconds from the Retry-After header of a 429. */
     public readonly retryAfter?: number,
@@ -96,7 +96,7 @@ export function createClient(options: ClientOptions) {
         return request(path, init, false);
       }
       const problem = body && typeof body === "object" ? (body as ApiError) : undefined;
-      const message = typeof problem?.error === "string" ? problem.error : `HTTP ${res.status}`;
+      const message = typeof problem?.detail === "string" ? problem.detail : `HTTP ${res.status}`;
       throw new BookletApiError(message, res.status, problem, hasRetryAfter ? retryAfter : undefined);
     }
 
@@ -106,7 +106,6 @@ export function createClient(options: ClientOptions) {
   return {
     async listPages(params?: {
       limit?: number;
-      offset?: number;
       /** `next_cursor` from the previous response. */
       cursor?: string;
       /** Case-insensitive substring match against page title. */
@@ -120,7 +119,6 @@ export function createClient(options: ClientOptions) {
     }): Promise<ListPagesResponse> {
       const qp = new URLSearchParams();
       if (params?.limit) qp.set("limit", String(params.limit));
-      if (params?.offset) qp.set("offset", String(params.offset));
       if (params?.cursor) qp.set("cursor", params.cursor);
       if (params?.query) qp.set("q", params.query);
       if (params?.tag) qp.set("tag", params.tag);
@@ -175,7 +173,7 @@ export function createClient(options: ClientOptions) {
       return PatchPageResponseSchema.parse(body);
     },
 
-    /** `id` may be a page ID or a custom slug. `etag` is null on servers before 2.0. */
+    /** `id` may be a page ID or a custom slug. */
     async getPage(id: string): Promise<PageDetailResponse & { etag: string | null }> {
       const { body, headers } = await request(`/api/v1/pages/${encodeURIComponent(id)}`);
       return { ...PageDetailResponseSchema.parse(body), etag: headers.get("etag") };

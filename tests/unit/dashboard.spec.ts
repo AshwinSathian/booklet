@@ -10,7 +10,7 @@ import {
   createWebhook,
   deleteWebhook,
   deletePageAssociatedRecords,
-  getLastPublishSources,
+  getPagesByUser,
   getPageRecord,
   getWebhook,
   getWebhookDeliveries,
@@ -250,17 +250,14 @@ test.describe("publish source", () => {
     };
     const [cli, mcp, action, api] = [await publish("cli"), await publish("mcp"), await publish("github-action"), await publish()];
 
-    await expect
-      .poll(async () => Object.fromEntries(await getLastPublishSources(owner.userId)))
-      .toEqual({ [cli]: "cli", [mcp]: "mcp", [action]: "github-action", [api]: "api" });
+    const sources = async () =>
+      Object.fromEntries((await getPagesByUser(owner.userId)).pages.map((p) => [p.id, p.last_source]));
+    await expect.poll(sources).toEqual({ [cli]: "cli", [mcp]: "mcp", [action]: "github-action", [api]: "api" });
 
     // Edited in the browser afterwards: the row follows the latest publish.
     const edit = withSession(owner.cookie, `/api/publish/${cli}`, { method: "PATCH", body: { raw: "# Edited on the web\n\nBody." } });
     expect((await withRequestScope(edit, () => webUpdate(edit, { params: Promise.resolve({ id: cli }) }))).status).toBe(200);
-    await expect.poll(async () => (await getLastPublishSources(owner.userId)).get(cli)).toBe("browser");
-
-    // Keyed by the events' owner: another account sees none of these pages.
-    expect((await getLastPublishSources((await newUser()).userId)).size).toBe(0);
+    await expect.poll(async () => (await sources())[cli]).toBe("browser");
   });
 });
 

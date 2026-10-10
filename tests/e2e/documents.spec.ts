@@ -14,6 +14,12 @@ const ip = () => ({
 
 type Person = { context: BrowserContext; request: APIRequestContext; email: string };
 
+// Every test here opens its own contexts. Left open, they pile up across the
+// run and a later spec's editor hangs on its loading overlay in CI.
+test.afterEach(async ({ browser }) => {
+  await Promise.all(browser.contexts().map((c) => c.close()));
+});
+
 async function person(browser: Browser, tag: string): Promise<Person> {
   const context = await browser.newContext({ extraHTTPHeaders: ip() });
   const email = uniqueEmail(tag);

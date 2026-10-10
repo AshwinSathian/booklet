@@ -4,15 +4,17 @@ import { generateRawKey, hashApiKey } from "@/lib/api-key";
 import { createId } from "@/lib/id";
 import { getSession } from "@/lib/auth/session";
 import { NextResponse } from "next/server";
+import { problem } from "@/server/errors";
+import { rfc9457Only } from "@/server/v1";
 
 export const runtime = "nodejs";
 
 const MAX_KEYS_PER_USER = 10;
 
-export async function GET() {
+export const GET = rfc9457Only(async () => {
   const userId = (await getSession())?.userId ?? null;
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return problem(401, "Unauthorized");
   }
 
   const keys = await getApiKeysByUser(userId);
@@ -24,12 +26,12 @@ export async function GET() {
       last_used_at: k.last_used_at,
     })),
   });
-}
+});
 
-export async function POST(req: Request) {
+export const POST = rfc9457Only(async (req: Request) => {
   const userId = (await getSession())?.userId ?? null;
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return problem(401, "Unauthorized");
   }
 
   const unverified = await unverifiedResponse(userId);
@@ -45,10 +47,7 @@ export async function POST(req: Request) {
 
   const existing = await getApiKeysByUser(userId);
   if (existing.length >= MAX_KEYS_PER_USER) {
-    return NextResponse.json(
-      { error: `Maximum of ${MAX_KEYS_PER_USER} API keys per account.` },
-      { status: 422 },
-    );
+    return problem(422, `Maximum of ${MAX_KEYS_PER_USER} API keys per account.`);
   }
 
   const raw = generateRawKey();
@@ -64,11 +63,8 @@ export async function POST(req: Request) {
   const after = await getApiKeysByUser(userId);
   if (after.length > MAX_KEYS_PER_USER) {
     await deleteApiKey(id, userId);
-    return NextResponse.json(
-      { error: `Maximum of ${MAX_KEYS_PER_USER} API keys per account.` },
-      { status: 422 },
-    );
+    return problem(422, `Maximum of ${MAX_KEYS_PER_USER} API keys per account.`);
   }
 
   return NextResponse.json({ id, label, key: raw }, { status: 201 });
-}
+});

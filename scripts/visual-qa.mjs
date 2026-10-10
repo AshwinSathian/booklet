@@ -1,7 +1,9 @@
 // Cross-surface visual QA sweep for the "Booklet Visual Elevation" plan.
 // Requires a running dev server — start with `npm run dev` first and pass
 // its actual URL (Next.js may pick a non-3000 port if 3000 is occupied).
-// Usage: node scripts/visual-qa.mjs http://localhost:3000
+// Usage: node scripts/visual-qa.mjs <base-url> [output-dir] [published-page-route]
+// QA_PUBLIC_ONLY=1 skips the signed-in /my-pages shots, which create an
+// account: set it when pointing this at production.
 import { chromium } from "playwright";
 import { mkdirSync } from "node:fs";
 
@@ -44,6 +46,8 @@ const ROUTES = [
   "/privacy",
   "/terms",
   "/mcp-setup",
+  "/integrations",
+  "/trust",
   "/cli-auth",
 ];
 
@@ -53,9 +57,11 @@ const ROUTES = [
 // (sticky header + TOC) and the very bottom (ShareButtons sits
 // after all content, right before the footer) — so two viewport-height
 // shots, top and scrolled-to-bottom, cover the actually-changed chrome.
-const PUBLISHED_PAGE_ROUTE = "/p/wayfarer-textbook";
+const PUBLISHED_PAGE_ROUTE = process.argv[4] ?? "/p/wayfarer-textbook";
+const OUT = process.argv[3] ?? "qa-screenshots";
 const VIEWPORTS = [
   { name: "desktop", width: 1440, height: 900 },
+  { name: "tablet", width: 768, height: 1024 },
   { name: "mobile", width: 390, height: 844 },
 ];
 const THEMES = ["dark", "light"];
@@ -68,19 +74,23 @@ const THEMES = ["dark", "light"];
 const AUTH_EMAIL = "task11-qa@test.local";
 const AUTH_PASSWORD = "Task11QaPass!";
 
-mkdirSync("qa-screenshots", { recursive: true });
+mkdirSync(OUT, { recursive: true });
 
 const browser = await chromium.launch();
 
 for (const theme of THEMES) {
   for (const viewport of VIEWPORTS) {
     const page = await browser.newPage({ viewport });
-    await page.emulateMedia({ colorScheme: theme });
+    // Reduced motion: sections that fade in on scroll are otherwise still
+    // invisible in a full-page capture, which never scrolls.
+    await page.emulateMedia({ colorScheme: theme, reducedMotion: "reduce" });
     for (const route of ROUTES) {
       await page.goto(`${BASE_URL}${route}`, { waitUntil: "networkidle" });
       const safeName = route === "/" ? "home" : route.replace(/\//g, "_");
+      // What a visitor sees first, then the whole page.
+      await page.screenshot({ path: `${OUT}/${theme}-${viewport.name}-${safeName}.top.png` });
       await page.screenshot({
-        path: `qa-screenshots/${theme}-${viewport.name}-${safeName}.png`,
+        path: `${OUT}/${theme}-${viewport.name}-${safeName}.png`,
         fullPage: true,
       });
     }
@@ -89,16 +99,21 @@ for (const theme of THEMES) {
     // (ShareButtons/footer) viewport shots — see comment above.
     await page.goto(`${BASE_URL}${PUBLISHED_PAGE_ROUTE}`, { waitUntil: "networkidle" });
     await page.screenshot({
-      path: `qa-screenshots/${theme}-${viewport.name}-published-top.png`,
+      path: `${OUT}/${theme}-${viewport.name}-published-top.png`,
     });
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
     await page.waitForTimeout(200);
     await page.screenshot({
-      path: `qa-screenshots/${theme}-${viewport.name}-published-bottom.png`,
+      path: `${OUT}/${theme}-${viewport.name}-published-bottom.png`,
     });
 
     await page.close();
   }
+}
+
+if (process.env.QA_PUBLIC_ONLY) {
+  await browser.close();
+  process.exit(0);
 }
 
 // `/my-pages`: sign in once per theme via the UI, then reuse that
@@ -180,7 +195,7 @@ for (const theme of THEMES) {
     await page.setViewportSize(viewport);
     await page.goto(`${BASE_URL}/my-pages`, { waitUntil: "networkidle" });
     await page.screenshot({
-      path: `qa-screenshots/${theme}-${viewport.name}-my-pages.png`,
+      path: `${OUT}/${theme}-${viewport.name}-my-pages.png`,
       fullPage: true,
     });
   }
@@ -189,4 +204,4 @@ for (const theme of THEMES) {
 }
 
 await browser.close();
-console.log("Screenshots written to ./qa-screenshots/");
+console.log(`Screenshots written to ${OUT}/`);

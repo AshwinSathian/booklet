@@ -19,9 +19,12 @@ import type { Env } from "./types.js";
 const SERVER_MANIFEST = {
   name: "booklet",
   version: SERVER_VERSION,
+  icon: "/favicon.svg",
   description:
-    "Publish, update, read, list, and delete Booklet pages from your AI conversation. Includes pre-built templates for incident reports, ADRs, release notes, RFCs, and runbooks.",
+    "Publish Markdown incident reports, ADRs, RFCs and runbooks as web pages, with team spaces.",
 };
+
+const ICON_PATHS = new Set(["/favicon.ico", "/favicon.svg"]);
 
 function corsHeaders(origin: string | null): Record<string, string> {
   return {
@@ -62,9 +65,11 @@ function wire(env: Env) {
       resourceMetadataUrl: getOAuthProtectedResourceMetadataUrl(resource),
       expectedResource: resource,
     }),
-    // One factory serves protocol 2026-07-28 and, through the default
-    // stateless fallback, 2025-era clients that still send `initialize`.
-    handler: createMcpHandler((ctx) => createMcpServer(env.BOOKLET_API_BASE, ctx.authInfo?.token ?? "")),
+    // Protocol 2026-07-28 only. A 2025-era request (one that opens with
+    // `initialize`) gets the unsupported-protocol-version error.
+    handler: createMcpHandler((ctx) => createMcpServer(env.BOOKLET_API_BASE, ctx.authInfo?.token ?? "", issuer), {
+      legacy: "reject",
+    }),
   };
 }
 
@@ -108,6 +113,21 @@ export default {
 
       if (method === "GET" && url.pathname === "/health") {
         return jsonResponse({ ok: true, service: "booklet-mcp", version: SERVER_VERSION }, 200, origin);
+      }
+
+      // This host has no pages of its own, so anything that looks up a site
+      // icon for it (a client listing its connectors, say) found none and
+      // used the parent domain's. Serve the app's.
+      if (method === "GET" && ICON_PATHS.has(url.pathname)) {
+        const icon = await fetch(`${env.BOOKLET_API_BASE}${url.pathname}`, { signal: AbortSignal.timeout(5000) });
+        return new Response(icon.body, {
+          status: icon.status,
+          headers: {
+            ...corsHeaders(origin),
+            "Content-Type": icon.headers.get("content-type") ?? "image/x-icon",
+            "Cache-Control": "public, max-age=86400",
+          },
+        });
       }
 
       if (method === "GET" && url.pathname === "/") {

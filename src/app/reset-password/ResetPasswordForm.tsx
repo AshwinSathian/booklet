@@ -39,7 +39,7 @@ export function ResetPasswordForm() {
   }
 
   if (!token) {
-    return <p className="text-sm text-red-400 text-center">This reset link is missing its token.</p>;
+    return <p className="text-sm text-danger text-center">This reset link is missing its token.</p>;
   }
 
   return (
@@ -59,7 +59,7 @@ export function ResetPasswordForm() {
           className={INPUT_CLASS}
         />
       </div>
-      {error && <p role="alert" className="text-xs text-red-400">{error}</p>}
+      {error && <p role="alert" className="text-xs text-danger">{error}</p>}
       <Button type="submit" variant="primary" size="md" disabled={submitting} className="w-full justify-center">
         {submitting ? "Please wait…" : "Reset password"}
       </Button>

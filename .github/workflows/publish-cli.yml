@@ -58,7 +58,7 @@ jobs:
       - name: Ensure npm supports Trusted Publishing
         run: npm install -g npm@^11.5.1
 
-      # npm workspaces (see PLAN-backend-auth-migration.md) — install from
+      # npm workspaces — install from
       # the repo root; there's no packages/cli/package-lock.json anymore.
       - name: Install dependencies
         run: npm ci

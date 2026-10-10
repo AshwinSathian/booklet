@@ -40,6 +40,48 @@ function isSafeHref(value: string): boolean {
   return v.startsWith("http://") || v.startsWith("https://") || v.startsWith("mailto:");
 }
 
+/** CSS as the browser will read it: comments gone, escapes decoded (`\75rl(` is `url(`). */
+function decodeCss(css: string): string {
+  return css
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/\\([0-9a-f]{1,6})\s?/gi, (_, hex: string) => {
+      const cp = parseInt(hex, 16);
+      return String.fromCodePoint(cp === 0 || cp > 0x10ffff ? 0xfffd : cp);
+    })
+    .replace(/\\([^\n])/g, "$1");
+}
+
+/**
+ * CSS that loads nothing: no `@import`, no `image-set()`, and no `url()`
+ * other than a same-document reference (`url(#grad)`, quoted or not) or
+ * inline `data:`. An unterminated `url(` counts, since CSS closes it at the
+ * end of the text.
+ *
+ * Text filtering, unlike the DOM walk around it, because the SVG parser
+ * hands a stylesheet over as one string. Escapes and comments are resolved
+ * first so that what is matched is what the browser will see.
+ *
+ * Run until nothing changes: one pass can leave behind exactly what it was
+ * looking for (`\5c\5c 75rl(` decodes to `\75rl(`, and removing the inner
+ * `@import;` of `@im@import;port` joins the outer one). Every pass that
+ * changes the text shortens it or settles a `url()`, so the loop ends.
+ */
+export function inertCss(css: string): string {
+  let out = css;
+  let before: string;
+  do {
+    before = out;
+    out = (out.includes("\\") || out.includes("/*") ? decodeCss(out) : out)
+      .replace(/@import[^;]*;?/gi, "")
+      .replace(/(?:-webkit-)?image-set\([^)]*(?:\)|$)/gi, "none")
+      .replace(/url\(([^)]*)(?:\)|$)/gi, (whole, arg: string) => {
+        const target = arg.trim().replace(/^['"]|['"]$/g, "").trim().toLowerCase();
+        return target.startsWith("#") || target.startsWith("data:") ? whole : "none";
+      });
+  } while (out !== before);
+  return out;
+}
+
 /** Returns sanitized SVG markup, or "" if the input isn't parseable SVG. */
 export function sanitizeCompiledSvg(svg: string): string {
   const doc = new DOMParser().parseFromString(svg, "image/svg+xml");
@@ -56,12 +98,16 @@ export function sanitizeCompiledSvg(svg: string): string {
       el.remove();
       continue;
     }
+    // Mermaid ships its own <style>. Nothing in it needs to load anything.
+    if (tag === "style") el.textContent = inertCss(el.textContent ?? "");
     for (const attr of Array.from(el.attributes)) {
       const name = attr.name.toLowerCase();
       if (name.startsWith("on")) {
         el.removeAttribute(attr.name);
       } else if (HREF_ATTRS.has(name) && !isSafeHref(attr.value)) {
         el.removeAttribute(attr.name);
+      } else if (name === "style") {
+        el.setAttribute(attr.name, inertCss(attr.value));
       }
     }
   }

@@ -10,14 +10,14 @@ export const metadata: Metadata = {
   ...buildMetadata({
     title: `${APP_NAME} Integrations — CLI, GitHub Actions, MCP & API`,
     description:
-      "Publish Markdown pages from your terminal, GitHub Actions, Claude AI, or any script — without opening a separate app.",
+      "Publish Markdown pages from a terminal, a GitHub Actions workflow, an MCP client such as Claude, or a script calling the REST API.",
     pathname: "/integrations",
   }),
   openGraph: {
     type: "website",
     title: `${APP_NAME} Integrations`,
     description:
-      "Publish Markdown pages from your terminal, GitHub Actions, Claude AI, or any script.",
+      "Publish Markdown pages from a terminal, a GitHub Actions workflow, an MCP client such as Claude, or a script.",
     url: absoluteUrl("/integrations"),
   },
 };
@@ -101,7 +101,7 @@ export default function IntegrationsPage() {
           <span className="text-accent">you already work</span>
         </h1>
         <p className="text-lg text-text-muted max-w-xl mx-auto leading-relaxed mb-10">
-          {APP_NAME} plugs into your terminal, your editor, your CI pipeline, and your AI assistant. Run a command, call a tool, or push to your repo — your page goes live either way.
+          A CLI, a GitHub Action, an MCP server, a REST API and webhooks. Each one publishes the same page the editor does.
         </p>
 
         {/* Quick-jump nav */}
@@ -123,7 +123,7 @@ export default function IntegrationsPage() {
         <SectionAnchor id="cli" />
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
           <div>
-            <IntegrationBadge label="Terminal" color="border-emerald-500/30 bg-emerald-500/8 text-emerald-400" />
+            <IntegrationBadge label="Terminal" color="border-success/30 bg-success/8 text-success" />
             <h2 className="text-2xl font-light text-text-primary mt-3 mb-3">
               booklet-cli
             </h2>
@@ -199,7 +199,7 @@ cat README.md | npx booklet-cli publish -`}</CodeBlock>
         <SectionAnchor id="github-actions" />
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
           <div>
-            <IntegrationBadge label="CI/CD" color="border-violet-500/30 bg-violet-500/8 text-violet-400" />
+            <IntegrationBadge label="CI/CD" color="border-special/30 bg-special/8 text-special" />
             <h2 className="text-2xl font-light text-text-primary mt-3 mb-3">
               GitHub Actions
             </h2>
@@ -338,10 +338,10 @@ jobs:
                 {[
                   { name: "Claude Desktop", color: "bg-[#D97757]/10 text-[#D97757] [.light_&]:text-[#8f4017]" },
                   { name: "Claude.ai", color: "bg-[#D97757]/10 text-[#D97757] [.light_&]:text-[#8f4017]" },
-                  { name: "Cursor", color: "bg-blue-500/10 text-blue-400" },
-                  { name: "Windsurf", color: "bg-teal-500/10 text-teal-400" },
-                  { name: "VS Code (MCP)", color: "bg-sky-500/10 text-sky-400" },
-                  { name: "Zed", color: "bg-purple-500/10 text-purple-400" },
+                  { name: "Cursor", color: "bg-info/10 text-info" },
+                  { name: "Windsurf", color: "bg-success/10 text-success" },
+                  { name: "VS Code (MCP)", color: "bg-info/10 text-info" },
+                  { name: "Zed", color: "bg-special/10 text-special" },
                 ].map((e) => (
                   <span
                     key={e.name}
@@ -361,7 +361,7 @@ jobs:
         <SectionAnchor id="rest-api" />
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
           <div>
-            <IntegrationBadge label="REST API" color="border-blue-500/30 bg-blue-500/8 text-blue-400" />
+            <IntegrationBadge label="REST API" color="border-info/30 bg-info/8 text-info" />
             <h2 className="text-2xl font-light text-text-primary mt-3 mb-3">
               REST API
             </h2>
@@ -383,10 +383,10 @@ jobs:
                 <div key={`${ep.method} ${ep.path}`} className="flex items-start gap-3 rounded-lg border border-border-subtle bg-bg-elevated px-3.5 py-3">
                   <span className={[
                     "shrink-0 inline-flex items-center rounded px-1.5 py-0.5 text-[0.65rem] font-bold font-mono uppercase tracking-wide",
-                    ep.method === "GET" ? "bg-emerald-500/15 text-emerald-400" :
-                    ep.method === "POST" ? "bg-blue-500/15 text-blue-400" :
-                    ep.method === "PATCH" ? "bg-amber-500/15 text-amber-400" :
-                    "bg-red-500/15 text-red-400",
+                    ep.method === "GET" ? "bg-success/15 text-success" :
+                    ep.method === "POST" ? "bg-info/15 text-info" :
+                    ep.method === "PATCH" ? "bg-warning/15 text-warning" :
+                    "bg-danger/15 text-danger",
                   ].join(" ")}>
                     {ep.method}
                   </span>
@@ -441,7 +441,7 @@ curl -X PATCH https://booklet-api.ashwinsathian.com/api/v1/pages/k3Xv9pQ2mT \\
         <SectionAnchor id="webhooks" />
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
           <div>
-            <IntegrationBadge label="Webhooks" color="border-rose-500/30 bg-rose-500/8 text-rose-400" />
+            <IntegrationBadge label="Webhooks" color="border-danger/30 bg-danger/8 text-danger" />
             <h2 className="text-2xl font-light text-text-primary mt-3 mb-3">
               Webhooks
             </h2>

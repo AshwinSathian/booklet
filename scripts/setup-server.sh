@@ -184,7 +184,7 @@ section "npm dependencies"
 # ─────────────────────────────────────────────────────────────────────────────
 
 info "Installing dependencies (npm workspaces — one install covers the root"
-info "app and mcp-server/packages/*, see PLAN-backend-auth-migration.md)…"
+info "app and mcp-server/packages/*)…"
 npm ci --prefer-offline 2>&1 | tail -3
 
 ok "Dependencies installed"
@@ -614,22 +614,16 @@ section "Manual Cloudflare dashboard steps required"
 
 printf "\n${BOLD}Everything on this machine is running. Complete these steps in the CF dashboard:${RESET}\n\n"
 
-printf "  ${CYAN}1. Remove Worker routes${RESET}\n"
-printf "     Workers & Pages → 'readable' → Settings → Triggers → Routes\n"
-printf "     Delete route: %s/*\n\n" "$APP_HOSTNAME"
-printf "     Workers & Pages → 'readable-mcp' → Settings → Triggers → Routes\n"
-printf "     Delete route: %s/*\n\n" "$MCP_HOSTNAME"
-
-printf "  ${CYAN}2. Set SSL/TLS mode to Full (not Strict)${RESET}\n"
+printf "  ${CYAN}1. Set SSL/TLS mode to Full (not Strict)${RESET}\n"
 printf "     SSL/TLS → Overview → Full\n\n"
 
-printf "  ${CYAN}3. Enable Always Online${RESET}\n"
+printf "  ${CYAN}2. Enable Always Online${RESET}\n"
 printf "     Speed → Optimization → Always Online → On\n\n"
 
-printf "  ${CYAN}4. Add custom error pages for 521, 522, 524${RESET}\n"
+printf "  ${CYAN}3. Add custom error pages for 521, 522, 524${RESET}\n"
 printf "     Custom Pages → upload a branded HTML page for each error code\n\n"
 
-printf "  ${CYAN}5. Add cache rules${RESET}\n"
+printf "  ${CYAN}4. Add cache rules${RESET}\n"
 printf "     Caching → Cache Rules:\n"
 printf "     • /_next/static/* → Edge TTL 30d, serve stale on origin error\n"
 printf "     • /p/*            → Edge TTL 5m, serve stale up to 1h\n\n"

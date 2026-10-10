@@ -12,11 +12,11 @@ import { BlockRenderer } from "./BlockRenderer";
 // between what a reader sees and what an export produces, so it's sourced
 // from the one shared table (src/lib/render-shared.ts) both places read.
 const CALLOUT_ICON_CLASSES: Record<CalloutKind, { icon: IconName; classes: string }> = {
-  note: { icon: "callout-note", classes: "border-sky-500/30 bg-sky-500/10 text-sky-400" },
-  tip: { icon: "callout-tip", classes: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400" },
-  warning: { icon: "callout-warning", classes: "border-amber-500/30 bg-amber-500/10 text-amber-400" },
+  note: { icon: "callout-note", classes: "border-info/30 bg-info/10 text-info" },
+  tip: { icon: "callout-tip", classes: "border-success/30 bg-success/10 text-success" },
+  warning: { icon: "callout-warning", classes: "border-warning/30 bg-warning/10 text-warning" },
   important: { icon: "callout-important", classes: "border-accent/30 bg-accent/10 text-accent-soft" },
-  caution: { icon: "callout-caution", classes: "border-red-500/30 bg-red-500/10 text-red-400" },
+  caution: { icon: "callout-caution", classes: "border-danger/30 bg-danger/10 text-danger" },
 };
 
 export function Callout({

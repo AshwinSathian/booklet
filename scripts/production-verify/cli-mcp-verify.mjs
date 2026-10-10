@@ -19,7 +19,7 @@
 // run created.
 //
 // Usage:
-//   MONGODB_URI="mongodb://127.0.0.1:27017/readable?directConnection=true" \
+//   MONGODB_URI="mongodb://127.0.0.1:27017/booklet?directConnection=true" \
 //   node scripts/production-verify/cli-mcp-verify.mjs
 
 import { spawn } from "node:child_process";
@@ -28,10 +28,11 @@ import { mkdtemp, rm, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { MongoClient } from "mongodb";
+import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
 
 const BASE = process.env.TEST_BASE_URL ?? "https://booklet.ashwinsathian.com";
 const MCP_BASE = process.env.TEST_MCP_BASE_URL ?? "https://booklet-mcp.ashwinsathian.com";
-const MONGODB_URI = process.env.MONGODB_URI ?? "mongodb://127.0.0.1:27017/readable?directConnection=true";
+const MONGODB_URI = process.env.MONGODB_URI ?? "mongodb://127.0.0.1:27017/booklet?directConnection=true";
 const CLI_ENTRY = new URL("../../packages/cli/dist/index.js", import.meta.url).pathname;
 
 const RUN_ID = Date.now();
@@ -84,7 +85,6 @@ async function main() {
 
   let sessionCookie;
   let userId;
-  let oauthClientId;
 
   try {
     // ── 1. Real signup against the live API ──────────────────────────────
@@ -285,41 +285,55 @@ async function main() {
 
     // ── 11. MCP server — JSON-RPC over the public hostname ───────────────
     section("MCP server");
-    async function mcpCall(method, params, token = apiKey) {
-      const res = await fetch(`${MCP_BASE}/mcp`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          // Streamable HTTP: the spec requires a client to accept both, and
-          // the server may answer either way.
-          Accept: "application/json, text/event-stream",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
-      });
-      const text = await res.text();
-      // A JSON-RPC response arrives as plain JSON or as one SSE `data:` line.
-      const payload = (res.headers.get("content-type") ?? "").includes("text/event-stream")
-        ? (text.split("\n").find((l) => l.startsWith("data:")) ?? "").slice(5)
-        : text;
-      let body = null;
-      try {
-        body = JSON.parse(payload);
-      } catch {
-        /* leave null: callers report the status */
+    // The SDK's own client, pinned to the one protocol version the server
+    // speaks. One connection per credential.
+    const mcpClients = new Map();
+    async function mcpClient(token) {
+      if (!mcpClients.has(token)) {
+        const client = new Client(
+          { name: "booklet-production-verify", version: "1.0.0" },
+          { versionNegotiation: { mode: { pin: "2026-07-28" } } },
+        );
+        await client.connect(
+          new StreamableHTTPClientTransport(new URL(`${MCP_BASE}/mcp`), {
+            requestInit: { headers: { Authorization: `Bearer ${token}` } },
+          }),
+        );
+        mcpClients.set(token, client);
       }
-      return { status: res.status, body };
+      return mcpClients.get(token);
+    }
+    /** Same shape the checks below read: `{ status, body: { result } }`. */
+    async function mcpCall(method, params, token = apiKey) {
+      try {
+        const client = await mcpClient(token);
+        const result = method === "tools/list" ? await client.listTools() : await client.callTool(params);
+        return { status: 200, body: { result } };
+      } catch (e) {
+        // A refused credential surfaces as an error from the transport.
+        const text = `${e?.name ?? ""} ${e?.code ?? ""} ${e?.status ?? ""} ${e?.message ?? e}`;
+        return { status: /401|unauthori|invalid_token/i.test(text) ? 401 : 0, body: { error: text } };
+      }
     }
 
     const health = await fetch(`${MCP_BASE}/health`);
     ok("MCP /health returns ok", health.status === 200);
 
-    const init = await mcpCall("initialize", {
-      protocolVersion: "2025-11-25",
-      capabilities: {},
-      clientInfo: { name: "booklet-production-verify", version: "1.0.0" },
+    const negotiated = await mcpClient(apiKey).then((c) => c.getNegotiatedProtocolVersion()).catch((e) => String(e));
+    ok("MCP speaks protocol 2026-07-28", negotiated === "2026-07-28", String(negotiated));
+
+    const oldInit = await fetch(`${MCP_BASE}/mcp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json, text/event-stream", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "initialize",
+        params: { protocolVersion: "2025-11-25", capabilities: {}, clientInfo: { name: "old-client", version: "1.0.0" } },
+      }),
     });
-    ok("MCP initialize succeeds", init.status === 200 && init.body?.result?.protocolVersion);
+    const oldInitText = await oldInit.text();
+    ok("a 2025-era initialize is refused", !(oldInit.ok && !oldInitText.includes('"error"')), oldInitText.slice(0, 200));
 
     const toolsList = await mcpCall("tools/list", {});
     const toolNames = (toolsList.body?.result?.tools ?? []).map((t) => t.name);
@@ -425,14 +439,10 @@ async function main() {
     );
 
     const redirectUri = "https://claude.ai/api/mcp/auth_callback";
-    const reg = await fetch(asMeta.registration_endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ client_name: `e2e-cli-verify-${RUN_ID}`, redirect_uris: [redirectUri] }),
-    });
-    const client = await reg.json().catch(() => null);
-    oauthClientId = client?.client_id;
-    ok("client registration accepts Claude's callback URL", reg.status === 201 && Boolean(oauthClientId), `got ${reg.status}`);
+    // The client is Claude's own metadata document, the one a Claude.ai
+    // connector presents. Nothing is registered: the app fetches the document.
+    const oauthClientId = "https://claude.ai/oauth/mcp-oauth-client-metadata";
+    ok("there is no dynamic client registration", asMeta.registration_endpoint === undefined && asMeta.client_id_metadata_document_supported === true);
 
     const verifier = randomBytes(48).toString("base64url");
     const authParams = {
@@ -527,7 +537,6 @@ async function main() {
           `${sessionsDeleted.deletedCount} session(s), ${userDeleted.deletedCount} user`,
       );
     }
-    if (oauthClientId) await db.collection("oauth_clients").deleteOne({ _id: oauthClientId });
     await mongo.close();
   }
 

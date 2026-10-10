@@ -18,7 +18,7 @@ const BASE =
 const VARIANTS = {
   primary: "bg-accent text-accent-contrast hover:bg-accent-hover",
   secondary: "border border-border-default text-text-secondary hover:border-accent-soft/50 hover:text-text-primary",
-  danger: "border border-red-400/40 text-red-400 hover:bg-red-400/10",
+  danger: "border border-danger/40 text-danger hover:bg-danger/10",
   ghost: "text-text-muted hover:text-text-primary hover:bg-fill-2",
 } as const;
 

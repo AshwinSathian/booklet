@@ -57,7 +57,7 @@ export default async function AdminReportsPage() {
                   <input type="hidden" name="reportId" value={r.id} />
                   <button
                     type="submit"
-                    className="rounded-pill bg-red-500/15 px-3.5 py-1.5 text-xs font-semibold text-red-400 transition hover:bg-red-500/25"
+                    className="rounded-pill bg-danger/15 px-3.5 py-1.5 text-xs font-semibold text-danger transition hover:bg-danger/25"
                   >
                     Take down
                   </button>

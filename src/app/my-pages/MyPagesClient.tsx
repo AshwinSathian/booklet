@@ -24,7 +24,7 @@ export type PageRow = {
   collection_id: string | null;
   view_count: number;
   has_password: boolean;
-  /** How the page was last published or updated; null for pages older than the event log. */
+  /** How the page was last published or updated; null until the page is next published. */
   source: PublishSource | null;
   created_at: string;
   updated_at: string;
@@ -192,7 +192,7 @@ function SlugEditor({
             }}
             disabled={saving}
             title="Remove custom URL"
-            className="flex items-center justify-center h-5 w-5 rounded text-text-muted transition hover:text-red-400 hover:bg-red-400/8 disabled:opacity-40"
+            className="flex items-center justify-center h-5 w-5 rounded text-text-muted transition hover:text-danger hover:bg-danger/8 disabled:opacity-40"
           >
             <Icon name="close" size={9} />
           </button>
@@ -219,7 +219,7 @@ function SlugEditor({
           className={[
             "min-w-0 w-44 px-2 py-1 text-xs bg-bg border rounded-md sm:rounded-l-none sm:rounded-r-md text-text-primary placeholder:text-text-muted",
             "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft",
-            availability === "taken" ? "border-red-400/60" : "border-border-default",
+            availability === "taken" ? "border-danger/60" : "border-border-default",
           ].join(" ")}
           aria-label="Custom URL slug"
         />
@@ -241,9 +241,9 @@ function SlugEditor({
         </Button>
       </div>
       {!error && availability === "checking" && <p className="text-xs text-text-muted">Checking…</p>}
-      {!error && availability === "available" && <p className="text-xs text-green-400">✓ Available</p>}
-      {!error && availability === "taken" && <p className="text-xs text-red-400">✗ Already taken</p>}
-      {error && <p className="text-xs text-red-400">{error}</p>}
+      {!error && availability === "available" && <p className="text-xs text-success">✓ Available</p>}
+      {!error && availability === "taken" && <p className="text-xs text-danger">✗ Already taken</p>}
+      {error && <p className="text-xs text-danger">{error}</p>}
     </div>
   );
 }
@@ -431,7 +431,7 @@ function PageCard({
               {page.visibility !== "public" && (
                 <>
                   <span className="opacity-30" aria-hidden>·</span>
-                  <span className="text-amber-400/80 font-medium">
+                  <span className="text-warning/80 font-medium">
                     {page.visibility === "team" ? "Team only" : "Unlisted"}
                   </span>
                 </>
@@ -1023,7 +1023,7 @@ export function MyPagesList({
 
       <div className="flex flex-col gap-3">
         {bulkDeleteConfirming ? (
-          <div className="flex items-center gap-3 rounded-xl border border-red-400/30 bg-red-400/8 px-4 py-3">
+          <div className="flex items-center gap-3 rounded-xl border border-danger/30 bg-danger/8 px-4 py-3">
             <span className="flex-1 text-sm text-text-secondary">
               Delete {selectedIds.size} selected item{selectedIds.size === 1 ? "" : "s"}? Pages are deleted permanently; folders only unlink their pages.
             </span>

@@ -95,6 +95,19 @@ export function pairs(v) {
   };
   const text = ["--color-text-secondary", "--color-text-muted", "--color-accent", "--color-accent-soft"];
   const out = text.flatMap((token) => Object.entries(surfaces).map(([label, colour]) => [token, label, colour]));
+  // Status text: on the plain surfaces and on its own 15% tint over them
+  // (callouts, badges, error boxes).
+  for (const token of ["--color-danger", "--color-success", "--color-warning", "--color-info", "--color-special"]) {
+    const [r, g, b] = parseColor(v[token]);
+    const tint = `rgba(${r}, ${g}, ${b}, 0.15)`;
+    out.push(
+      [token, "bg", bg],
+      [token, "bg-soft", v["--color-bg-soft"]],
+      [token, "bg-elevated", elevated],
+      [token, "own 15% tint on bg", over(tint, bg)],
+      [token, "own 15% tint on bg-elevated", over(tint, elevated)],
+    );
+  }
   // A label on an accent-filled button.
   out.push(["--color-accent-contrast", "accent", v["--color-accent"]]);
   // Highlighted code is drawn on bg-elevated (CodeBlock).

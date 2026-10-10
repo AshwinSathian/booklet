@@ -4,7 +4,7 @@ import {
   getDraftRecord,
   upsertDraftRecord,
 } from "@/lib/db/drafts";
-import { coerceDraftDoc } from "@/lib/drafts/migrate";
+import { coerceDraftDoc } from "@/lib/drafts/coerce";
 import { logError } from "@/lib/logger";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getSession } from "@/lib/auth/session";
