@@ -3,8 +3,7 @@
  * user agent — the same dedupe key analytics_events has used since it
  * introduced its `{ session_hash, page_id, event }` unique index (see
  * src/lib/db/index-specs.mjs). Extracted here so every feature that needs
- * "same visitor, same day" dedupe (analytics events, view-count increments,
- * reaction toggle state) derives it identically instead of re-implementing
+ * "same visitor, same day" dedupe (analytics events, view-count increments) derives it identically instead of re-implementing
  * (and risking drift from) the hash formula.
  *
  * Not a persistent identity: it rotates daily by design (the date is baked

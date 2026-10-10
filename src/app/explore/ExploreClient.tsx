@@ -4,8 +4,6 @@ import { useMemo, useState } from "react";
 import type { ExploreItem } from "@/lib/db";
 import Link from "next/link";
 
-type Tab = "trending" | "recent" | "featured";
-
 function pageHref(item: { id: string; slug: string | null }) {
   return `/p/${item.slug ?? item.id}`;
 }
@@ -19,7 +17,7 @@ function timeAgo(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 }
 
-function PageCard({ page, featured: isFeatured }: { page: ExploreItem; featured?: boolean }) {
+function PageCard({ page }: { page: ExploreItem }) {
   const hasTags = page.tags && page.tags.length > 0;
 
   return (
@@ -27,24 +25,12 @@ function PageCard({ page, featured: isFeatured }: { page: ExploreItem; featured?
       href={pageHref(page)}
       target="_blank"
       rel="noopener noreferrer"
-      className={[
-        "group flex flex-col rounded-xl border p-4 transition",
-        isFeatured
-          ? "border-accent-soft/30 bg-accent-dim/20 hover:border-accent-soft/60 hover:bg-accent-dim/40"
-          : "border-border-subtle bg-bg-elevated hover:border-accent-soft/30 hover:bg-fill-1",
-      ].join(" ")}
+      className="group flex flex-col rounded-xl border p-4 transition border-border-subtle bg-bg-elevated hover:border-accent-soft/30 hover:bg-fill-1"
     >
       <div className="min-w-0 flex-1">
-        <div className="flex items-start justify-between gap-2 mb-1">
-          <p className="text-sm font-medium text-text-primary group-hover:text-accent transition line-clamp-2 leading-snug">
-            {page.title ?? "Untitled"}
-          </p>
-          {isFeatured && (
-            <span className="shrink-0 rounded-pill bg-accent/10 text-accent text-2xs font-semibold px-2 py-0.5 border border-accent/20">
-              Featured
-            </span>
-          )}
-        </div>
+        <p className="text-sm font-medium text-text-primary group-hover:text-accent transition line-clamp-2 leading-snug mb-1">
+          {page.title ?? "Untitled"}
+        </p>
         <p className="text-2xs text-text-muted/60 font-mono truncate mb-2">
           {page.slug ? `/p/${page.slug}` : `/p/${page.id}`}
         </p>
@@ -77,30 +63,15 @@ function PageCard({ page, featured: isFeatured }: { page: ExploreItem; featured?
   );
 }
 
-export function ExploreClient({
-  featured,
-  recent,
-}: {
-  featured: ExploreItem[];
-  recent: ExploreItem[];
-}) {
-  const [tab, setTab] = useState<Tab>("recent");
+/** `pages` arrives newest first (see getRecentPublicPages). */
+export function ExploreClient({ pages }: { pages: ExploreItem[] }) {
   const [query, setQuery] = useState("");
   const [activeTag, setActiveTag] = useState<string | null>(null);
-
-  const all = useMemo(() => {
-    const seen = new Set<string>();
-    const merged: ExploreItem[] = [];
-    for (const p of [...featured, ...recent]) {
-      if (!seen.has(p.id)) { seen.add(p.id); merged.push(p); }
-    }
-    return merged;
-  }, [featured, recent]);
 
   // Top tags derived from the page data, sorted by frequency
   const popularTags = useMemo(() => {
     const freq = new Map<string, number>();
-    for (const p of all) {
+    for (const p of pages) {
       if (!p.tags) continue;
       for (const t of p.tags) {
         freq.set(t, (freq.get(t) ?? 0) + 1);
@@ -110,19 +81,11 @@ export function ExploreClient({
       .sort((a, b) => b[1] - a[1])
       .slice(0, 12)
       .map(([tag]) => tag);
-  }, [all]);
+  }, [pages]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    let pool: ExploreItem[];
-
-    if (tab === "featured") {
-      pool = featured;
-    } else if (tab === "trending") {
-      pool = [...all].sort((a, b) => b.view_count - a.view_count);
-    } else {
-      pool = [...all].sort((a, b) => b.created_at.localeCompare(a.created_at));
-    }
+    let pool = pages;
 
     if (activeTag) {
       pool = pool.filter((p) => p.tags?.includes(activeTag));
@@ -134,40 +97,12 @@ export function ExploreClient({
       (p.slug ?? "").toLowerCase().includes(q) ||
       (p.tags ?? []).some((t) => t.toLowerCase().includes(q)),
     );
-  }, [tab, query, activeTag, all, featured]);
-
-  const TABS: { id: Tab; label: string }[] = [
-    { id: "recent", label: "Recent" },
-    { id: "trending", label: "Trending" },
-    { id: "featured", label: "Featured" },
-  ];
+  }, [query, activeTag, pages]);
 
   return (
     <div>
       {/* Controls */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4">
-        {/* Tab bar */}
-        <div className="flex items-center gap-0.5 rounded-lg border border-border-default bg-bg-soft p-0.5">
-          {TABS.map(({ id, label }) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => setTab(id)}
-              className={[
-                "px-3 py-1.5 text-xs font-medium rounded-md transition",
-                tab === id
-                  ? "bg-bg text-text-primary shadow-sm"
-                  : "text-text-muted hover:text-text-secondary",
-              ].join(" ")}
-            >
-              {label}
-              {id === "featured" && featured.length > 0 && (
-                <span className="ml-1.5 text-2xs text-accent">{featured.length}</span>
-              )}
-            </button>
-          ))}
-        </div>
-
         {/* Search */}
         <div className="relative flex-1 w-full sm:max-w-xs">
           <svg
@@ -245,7 +180,7 @@ export function ExploreClient({
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {filtered.map((page) => (
-            <PageCard key={page.id} page={page} featured={featured.some((f) => f.id === page.id)} />
+            <PageCard key={page.id} page={page} />
           ))}
         </div>
       )}

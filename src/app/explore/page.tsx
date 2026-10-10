@@ -2,7 +2,7 @@ import { SiteFooter } from "@/components/marketing/SiteFooter";
 import { SiteHeader } from "@/components/marketing/SiteHeader";
 import { Button } from "@/components/ui/Button";
 import { APP_NAME, ROUTES } from "@/lib/constants";
-import { getFeaturedPages, getRecentPublicPages } from "@/lib/db";
+import { getRecentPublicPages } from "@/lib/db";
 import { buildMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
 import { ExploreClient } from "./ExploreClient";
@@ -18,10 +18,7 @@ export const metadata: Metadata = buildMetadata({
 });
 
 export default async function ExplorePage() {
-  const [featured, recent] = await Promise.all([
-    getFeaturedPages(50),
-    getRecentPublicPages(96),
-  ]);
+  const pages = await getRecentPublicPages(96);
 
   return (
     <div className="min-h-screen bg-bg text-text-primary flex flex-col">
@@ -35,7 +32,7 @@ export default async function ExplorePage() {
           </p>
         </div>
 
-        <ExploreClient featured={featured} recent={recent} />
+        <ExploreClient pages={pages} />
 
         <div className="mt-16 rounded-2xl border border-border-subtle bg-bg-elevated px-6 py-10 text-center">
           <p className="text-base font-semibold text-text-primary mb-1.5">

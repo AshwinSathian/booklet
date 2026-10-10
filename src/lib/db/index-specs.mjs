@@ -52,8 +52,6 @@ export const INDEX_SPECS = [
   },
   // Explore / recent-public-pages queries (getRecentPublicPages, getPublicPagesByUser)
   { collection: "pages", spec: { visibility: 1, password_hash: 1, created_at: -1 } },
-  // Featured-pages query (getFeaturedPages)
-  { collection: "pages", spec: { featured: 1, visibility: 1, password_hash: 1, created_at: -1 } },
   // Tag-filtered explore query (getPagesByTag)
   {
     collection: "pages",
@@ -131,27 +129,6 @@ export const INDEX_SPECS = [
   // --- webhooks ---
   // getWebhooksByUser lists a user's webhooks sorted by recency.
   { collection: "webhooks", spec: { user_id: 1, created_at: -1 } },
-
-  // --- reactions ---
-  // getPageReactions queries `{ page_id: pageId }` (an equality match, not
-  // the old `{ _id: { $regex: `^${pageId}:` } }` prefix scan it used to do
-  // — that was a $regex-injection issue: an unvalidated pageId route param
-  // built directly into a regex could over-match other pages' reaction
-  // docs, or cause ReDoS via a pathological pattern). This index serves
-  // that equality match.
-  { collection: "reactions", spec: { page_id: 1 } },
-
-  // --- reaction_state ---
-  // Per-session toggle state for reactions (addReactionForSession /
-  // removeReactionForSession in src/lib/db/reactions.ts) — "has this
-  // session already reacted with this emoji on this page." Authoritative
-  // guard so a session can only contribute +1 to a given (page, emoji)
-  // count at a time, no matter how many times it clicks/replays.
-  {
-    collection: "reaction_state",
-    spec: { session_hash: 1, page_id: 1, emoji: 1 },
-    options: { unique: true },
-  },
 
   // --- view_dedupe ---
   // View-count dedupe (incrementViewCount in src/lib/db/index.ts) — one

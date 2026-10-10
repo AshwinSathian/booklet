@@ -330,18 +330,18 @@ test.describe("Security — client IP trust & /admin gating", () => {
     // request collapses onto the same "unknown" bucket — so spoofing a
     // different X-Forwarded-For on every request must NOT let all of them
     // through once the shared bucket is exhausted.
-    const attempts = 40;
+    const attempts = 10;
     const statuses: number[] = [];
     for (let i = 0; i < attempts; i++) {
-      const res = await request.post(`${BASE}/api/reactions/${sharedPublishedId}`, {
+      const res = await request.post(`${BASE}/api/pages/${sharedPublishedId}/unlock`, {
         headers: { "X-Forwarded-For": `10.0.0.${i}` },
-        data: {},
+        data: { password: "wrong" },
       });
       statuses.push(res.status());
     }
-    // The reaction endpoint rate-limits at 30/min per (spoofable-in-theory)
-    // IP bucket; sending 40 rapid requests with a distinct fake
-    // X-Forwarded-For each time must still trip the limit at least once —
+    // The unlock endpoint rate-limits at 5/min per page and
+    // (spoofable-in-theory) IP bucket; sending 10 rapid requests with a
+    // distinct fake X-Forwarded-For each time must still trip the limit —
     // proving the header rotation isn't creating fresh buckets.
     expect(statuses).toContain(429);
   });

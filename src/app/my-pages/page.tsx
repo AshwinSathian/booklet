@@ -94,8 +94,6 @@ export default async function MyPagesPage() {
               collection_id: p.collection_id,
               view_count: p.view_count,
               has_password: Boolean(p.password_hash),
-              featured: p.featured,
-              remove_attribution_badge: p.remove_attribution_badge,
               created_at: p.created_at,
               updated_at: p.updated_at,
             }))}

@@ -12,7 +12,7 @@ if (!BASE_URL) {
 }
 
 // `/my-pages` (Task 9's shadow-token swap) and `/p/wayfarer-textbook` (Task
-// 7's share/reactions/TOC chrome, an existing published page reused here
+// 7's share/TOC chrome, an existing published page reused here
 // specifically to avoid burning the local dev DB's anonymous publish quota)
 // round out every surface Tasks 1-10 actually touched.
 // Task 29 (Precision redesign) adds the routes below that the prior "The
@@ -49,8 +49,8 @@ const ROUTES = [
 
 // `/p/wayfarer-textbook` has 108 headings, so a `fullPage` capture is tens
 // of thousands of pixels tall and unreviewable as a single image. Task 7's
-// changes there (ShareButtons/Reactions/TocClient) live at the very top
-// (sticky header + TOC) and the very bottom (Reactions + ShareButtons sit
+// changes there (ShareButtons/TocClient) live at the very top
+// (sticky header + TOC) and the very bottom (ShareButtons sits
 // after all content, right before the footer) — so two viewport-height
 // shots, top and scrolled-to-bottom, cover the actually-changed chrome.
 const PUBLISHED_PAGE_ROUTE = "/p/wayfarer-textbook";
@@ -86,7 +86,7 @@ for (const theme of THEMES) {
     }
 
     // Published page: top (header/TOC) and scrolled-to-bottom
-    // (Reactions/ShareButtons/footer) viewport shots — see comment above.
+    // (ShareButtons/footer) viewport shots — see comment above.
     await page.goto(`${BASE_URL}${PUBLISHED_PAGE_ROUTE}`, { waitUntil: "networkidle" });
     await page.screenshot({
       path: `qa-screenshots/${theme}-${viewport.name}-published-top.png`,

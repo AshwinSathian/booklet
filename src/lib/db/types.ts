@@ -35,9 +35,7 @@ export type DbPage = {
   collection_id: string | null;
   team_id: string | null;         // null = personal page
   view_count: number;
-  remove_attribution_badge: boolean;
   password_hash: string | null;   // PBKDF2-SHA256 hash (see src/lib/password.ts); null = no password
-  featured: boolean;              // opt-in: appear on /explore featured section
   frontmatter_meta: Record<string, unknown> | null;  // parsed YAML frontmatter fields
   taken_down_at: string | null;   // ISO timestamp of an admin takedown; mirrors docs.taken_down_at
   created_at: string;
@@ -137,8 +135,3 @@ export type PublishEvent = {
   rich_block_kinds?: string[];
 };
 
-export type DbReaction = {
-  page_id: string;
-  emoji: string;
-  count: number;
-};

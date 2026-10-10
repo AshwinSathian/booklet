@@ -64,7 +64,6 @@ export async function PATCH(
     slug?: string | null;
     visibility?: string;
     password?: string | null;
-    featured?: boolean;
   } = {};
   try {
     body = (await req.json()) as typeof body;
@@ -82,10 +81,6 @@ export async function PATCH(
     } else {
       return NextResponse.json({ error: "Password must be at least 6 characters." }, { status: 422 });
     }
-  }
-
-  if (body.featured !== undefined) {
-    patch.featured = Boolean(body.featured);
   }
 
   if (body.slug !== undefined) {

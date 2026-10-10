@@ -18,7 +18,7 @@ import type { DraftDoc } from "@/lib/drafts/types";
 //
 // The db/drafts.ts tests require a real MongoDB connection (getDb() talks
 // to a real server — no mocked/in-memory Mongo in this repo). Same local
-// `mongod` + ensureIndexes bootstrap pattern as tests/unit/reactions.spec.ts
+// `mongod` + ensureIndexes bootstrap pattern as the other DB-backed specs
 // and tests/unit/versions-concurrency.spec.ts.
 
 test.beforeAll(async () => {

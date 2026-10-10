@@ -24,9 +24,7 @@ import { ReadingProgress } from "@/components/share/ReadingProgress";
 import { PasswordGate } from "@/components/share/PasswordGate";
 import { EmbedButton } from "@/components/share/EmbedButton";
 import { StickyHeader } from "@/components/share/StickyHeader";
-import { Reactions } from "@/components/share/Reactions";
 import { ShareButtons } from "@/components/share/ShareButtons";
-import { ScrollCta } from "@/components/share/ScrollCta";
 import { GoneNotice } from "@/components/share/GoneNotice";
 import { KeepPageNotice } from "@/components/share/KeepPageNotice";
 import { PURGE_GRACE_DAYS, claimCookieName, claimTokenMatches } from "@/lib/anonymous-claim";
@@ -239,7 +237,6 @@ export default async function SharePage({
         />
       ) : null}
       <AnalyticsBeacon pageId={resolvedId} />
-      {isNotPasswordLocked && <ScrollCta href={ROUTES.app} />}
 
       {/* ── Sticky header ── */}
       <StickyHeader
@@ -312,7 +309,6 @@ export default async function SharePage({
               settings={doc.settings}
               headingAnchors={anchorMap}
             />
-            {isNotPasswordLocked && <Reactions pageId={resolvedId} />}
             {isNotPasswordLocked && (
               <ShareButtons url={pageUrl} title={pageTitle} />
             )}
@@ -325,11 +321,7 @@ export default async function SharePage({
       {/* ── Footer colophon ── */}
       <footer className="mt-12 border-t border-border-subtle print:hidden">
         <div className={`mx-auto w-full px-4 py-8 ${maxW}`}>
-          {/* Colophon row — always shown, for all pages. remove_attribution_badge
-              still exists on DbPage but the toggle to change it was deliberately
-              removed (changelog 2026-05-25: "Attribution badge toggle removed —
-              the badge is always on, for all pages, always"); no UI or API path
-              sets it to true anymore, so this footer must not gate on it. */}
+          {/* Colophon row — always shown, for all pages. */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <BookletMark size={20} />
