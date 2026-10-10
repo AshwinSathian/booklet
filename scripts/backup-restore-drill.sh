@@ -2,13 +2,15 @@
 # =============================================================================
 # backup-restore-drill.sh — prove the newest backup can actually be restored.
 #
-# Downloads the newest archive from R2, decrypts it with the age PRIVATE key,
-# restores it into a scratch database (never the live one), and prints the
+# Takes the newest archive from BACKUP_REMOTE (default: ~/.booklet/backups),
+# decrypts it with the age PRIVATE key if it is encrypted, restores it into
+# a scratch database (never the live one), and prints the
 # pages / docs / users counts for the restored copy next to production's.
 # Matching counts are the pass condition. The scratch database is dropped at
 # the end.
 #
-#   bash scripts/backup-restore-drill.sh /path/to/age-private-key.txt
+#   bash scripts/backup-restore-drill.sh -                              (local, unencrypted)
+#   bash scripts/backup-restore-drill.sh /path/to/age-private-key.txt   (encrypted)
 #
 # Counts differ legitimately if anything was published between the backup
 # and the drill — run it right after `bash scripts/backup-mongo.sh` for a
@@ -51,8 +53,12 @@ PY
 SCRATCH_URI="$(with_db "$SCRATCH_DB")"
 SERVER_URI="$(with_db "")"
 
-ARCHIVE="${2:-$(rclone lsf --files-only --include "booklet-*.archive.gz*" "$BACKUP_REMOTE" | sort | tail -1)}"
+ARCHIVE="${2:-$(rclone lsf --files-only --include "booklet-*.archive.gz" --include "booklet-*.archive.gz.age" "$BACKUP_REMOTE" | sort | tail -1)}"
 [[ -n "$ARCHIVE" ]] || { echo "No archives found in $BACKUP_REMOTE" >&2; exit 1; }
+if [[ "$ARCHIVE" == *.age && ! -r "$IDENTITY" ]]; then
+  echo "Cannot read age identity file: $IDENTITY" >&2
+  exit 1
+fi
 echo "Restoring $BACKUP_REMOTE/$ARCHIVE into scratch database \"$SCRATCH_DB\""
 
 cleanup() { mongosh "$SCRATCH_URI" --quiet --eval 'db.dropDatabase()' >/dev/null 2>&1 || true; }
@@ -61,7 +67,6 @@ cleanup
 
 decrypt() {
   if [[ "$ARCHIVE" == *.age ]]; then
-    [[ -r "$IDENTITY" ]] || { echo "Cannot read age identity file: $IDENTITY" >&2; exit 1; }
     age --decrypt --identity "$IDENTITY"
   else
     cat

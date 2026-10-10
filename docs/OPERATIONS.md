@@ -117,13 +117,19 @@ the Mac at its keyboard. Three ways to live with that:
 
 **MongoDB.** Its launch agent has `KeepAlive` off, so launchd does not
 restart `mongod` after a crash. The PM2 watchdog (`scripts/pm2-startup.sh`,
-every 15 seconds) starts the 8.0 agent when no `mongod` is running.
+every 15 seconds) starts the 8.0 agent when nothing listens on 27017, at
+most once a minute. Before stopping `mongod` on purpose (a repair, a
+file-level restore), `touch ~/.booklet/mongod-maintenance`, and remove the
+file afterwards.
 
 **Noticing an outage.** `.github/workflows/uptime.yml` probes the three
 health URLs from a GitHub-hosted runner every 10 minutes and fails the run
 when one is down twice a minute apart. GitHub emails the person who last
 edited the schedule. It has no status page and can start late; a real
-monitor (see "Monitoring") is still the better answer.
+monitor (see "Monitoring") is still the better answer. GitHub switches a
+scheduled workflow off after 60 days with no commits to a public
+repository, and sends an email when it does: re-enable it from the Actions
+tab, or the probes stop.
 
 **Logs.** PM2 does not rotate its logs. `pm2 install pm2-logrotate` does it
 for every app on this Mac's PM2 daemon, not only Booklet's.

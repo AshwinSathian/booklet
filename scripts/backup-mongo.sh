@@ -36,6 +36,12 @@ set -euo pipefail
 export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 
 ENV_FILE="${BOOKLET_BACKUP_ENV:-$HOME/.booklet/backup.env}"
+# A config file that was asked for by name and is missing is an error, not a
+# reason to fall back to local-only backups.
+if [[ -n "${BOOKLET_BACKUP_ENV:-}" && ! -f "$ENV_FILE" ]]; then
+  echo "BOOKLET_BACKUP_ENV points at $ENV_FILE, which does not exist." >&2
+  exit 1
+fi
 if [[ -f "$ENV_FILE" ]]; then
   set -a
   # shellcheck disable=SC1090
@@ -93,6 +99,7 @@ STEP="checking configuration"
 if [[ "$BACKUP_REMOTE" == /* ]]; then
   mkdir -p "$BACKUP_REMOTE"
   chmod 700 "$BACKUP_REMOTE"
+  log "LOCAL ONLY: archives stay on this Mac ($BACKUP_REMOTE). No off-site copy is made."
 elif [[ -z "${BACKUP_AGE_RECIPIENT:-}" ]]; then
   log "BACKUP_AGE_RECIPIENT is not set: refusing to send an unencrypted archive to $BACKUP_REMOTE."
   exit 1
@@ -100,6 +107,17 @@ fi
 for bin in mongodump rclone ${BACKUP_AGE_RECIPIENT:+age}; do
   command -v "$bin" >/dev/null || { log "$bin is not installed (brew install $bin)"; exit 1; }
 done
+
+# Before the dump and never fatal: a broken backup must not also stop log
+# rotation, which is when the log would grow fastest.
+# mongod never rotates its own log; it had reached 339 MB by 2026-10.
+# logRotate renames the current file with a timestamp and starts a new one.
+MONGO_LOG_DIR="${MONGO_LOG_DIR:-/opt/homebrew/var/log/mongodb}"
+if command -v mongosh >/dev/null && mongosh "$MONGODB_URI" --quiet --eval 'db.adminCommand({ logRotate: 1 })' >/dev/null; then
+  find "$MONGO_LOG_DIR" -name 'mongo.log.*' -mtime +14 -delete 2>/dev/null || true
+else
+  log "Could not rotate the MongoDB log (the backup goes ahead)."
+fi
 
 STEP="mongodump | age"
 log "Dumping → $NAME"
@@ -137,22 +155,12 @@ STEP="pruning old archives"
 # prune run after the next success would delete every older archive.
 # Names sort chronologically (UTC timestamp), so "all but the last N" is
 # "all but the newest N".
-rclone lsf --files-only --include "booklet-*.archive.gz*" "$BACKUP_REMOTE" | sort \
+rclone lsf --files-only --include "booklet-*.archive.gz" --include "booklet-*.archive.gz.age" "$BACKUP_REMOTE" | sort \
   | awk -v keep="$BACKUP_KEEP" '{ a[NR] = $0 } END { for (i = 1; i <= NR - keep; i++) print a[i] }' \
   | while IFS= read -r old; do
       log "Pruning $old"
       rclone deletefile "$BACKUP_REMOTE/$old"
     done
-
-STEP="rotating the MongoDB log"
-# mongod never rotates its own log; it had reached 339 MB by 2026-10.
-# logRotate renames the current file with a timestamp and starts a new one.
-MONGO_LOG_DIR="${MONGO_LOG_DIR:-/opt/homebrew/var/log/mongodb}"
-if command -v mongosh >/dev/null && mongosh "$MONGODB_URI" --quiet --eval 'db.adminCommand({ logRotate: 1 })' >/dev/null; then
-  find "$MONGO_LOG_DIR" -name 'mongo.log.*' -mtime +14 -delete 2>/dev/null || true
-else
-  log "Could not rotate the MongoDB log (the backup itself is fine)."
-fi
 
 STEP="done"
 log "Backup complete: $BACKUP_REMOTE/$NAME"
