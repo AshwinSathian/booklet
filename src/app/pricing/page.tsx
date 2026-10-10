@@ -164,7 +164,7 @@ export default function PricingPage() {
         <div className="mt-10 text-center">
           <p className="text-xs text-text-muted">
             Built for developers, writers, and teams who need to share things clearly.{" "}
-            <Link href="/explore" className="text-accent hover:text-accent-soft transition">
+            <Link href="/explore" className="text-accent underline underline-offset-2 hover:text-accent-soft transition">
               Browse pages people are sharing →
             </Link>
           </p>

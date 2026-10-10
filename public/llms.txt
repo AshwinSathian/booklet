@@ -33,7 +33,7 @@ All endpoints are under `/api/v1/`, authenticated with `Authorization: Bearer <b
 - `GET /api/v1/pages/{id}` — read a page's metadata and raw Markdown
 - `DELETE /api/v1/pages/{id}` — delete a page permanently
 
-API keys are generated from the My Pages dashboard after signing in (free).
+API keys are generated at /settings/api-keys after signing in (free).
 
 Full reference: https://booklet.ashwinsathian.com/api-docs
 

@@ -214,6 +214,7 @@ export function BlockRenderer({
                           type="checkbox"
                           checked={Boolean(item.checked)}
                           readOnly
+                          aria-label={item.checked ? "Done" : "Not done"}
                           className="mt-1 shrink-0 cursor-default accent-accent"
                         />
                         <span className={item.checked ? "line-through text-text-muted" : ""}>

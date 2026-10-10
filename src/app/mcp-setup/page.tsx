@@ -84,7 +84,7 @@ function CodeBlock({ code, label }: { code: string; label?: string }) {
         </div>
       )}
       <div className="relative">
-        <pre className={cn(
+        <pre tabIndex={0} className={cn(
           "text-[12px] font-mono bg-bg-soft border border-border-default p-4 text-text-secondary overflow-x-auto leading-relaxed whitespace-pre",
           label ? "rounded-b-xl rounded-t-none" : "rounded-xl",
         )}>
@@ -354,7 +354,7 @@ function ClaudeDesktopInstructions({ apiKey }: { apiKey: string }) {
 function ClaudeAiInstructions() {
   return (
     <div className="space-y-5">
-      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#D97757]/10 border border-[#D97757]/20 text-[#D97757] text-xs">
+      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#D97757]/10 border border-[#D97757]/20 text-[#D97757] [.light_&]:text-[#8f4017] text-xs">
         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" aria-hidden className="shrink-0">
           <path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
@@ -366,7 +366,7 @@ function ClaudeAiInstructions() {
         <Step n={1} title="Add the connector">
           <p className="text-sm text-text-secondary mb-2">
             Go to{" "}
-            <a href="https://claude.ai" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
+            <a href="https://claude.ai" target="_blank" rel="noopener noreferrer" className="text-accent underline underline-offset-2">
               claude.ai
             </a>{" "}
             → <strong>Settings</strong> → <strong>Connectors</strong> → <strong>Add custom connector</strong>, and
@@ -703,7 +703,7 @@ export default function McpSetupPage() {
               <a
                 key={href}
                 href={href}
-                className="text-text-muted hover:text-text-primary transition py-0.5"
+                className="text-text-muted hover:text-text-primary transition py-1"
               >
                 {label}
               </a>
@@ -726,7 +726,7 @@ export default function McpSetupPage() {
           {/* Overview */}
           <section id="overview" className="scroll-mt-20">
             <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-xl bg-[#D97757]/10 flex items-center justify-center text-[#D97757] shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-[#D97757]/10 flex items-center justify-center text-[#D97757] [.light_&]:text-[#8f4017] shrink-0">
                 <ClaudeSparkIcon size={20} />
               </div>
               <div>
@@ -800,12 +800,12 @@ export default function McpSetupPage() {
             </p>
 
             <div className="space-y-4">
-              <Step n={1} title="Go to My Pages → API Keys">
+              <Step n={1} title="Go to Settings → API keys">
                 <p className="text-sm text-text-secondary">
-                  <Link href={ROUTES.myPages} className="text-accent hover:underline">
-                    Open My Pages
+                  <Link href={ROUTES.apiKeys} className="text-accent underline underline-offset-2">
+                    Open API keys
                   </Link>{" "}
-                  → scroll to the <strong>API Keys</strong> section.
+                  from the account menu.
                 </p>
               </Step>
 
@@ -864,7 +864,7 @@ export default function McpSetupPage() {
                   <span className="opacity-80">{p.icon}</span>
                   {p.label}
                   {p.badge && (
-                    <span className="ml-0.5 rounded px-1 py-0.5 text-2xs bg-[#D97757]/15 text-[#D97757] font-semibold">
+                    <span className="ml-0.5 rounded px-1 py-0.5 text-2xs bg-[#D97757]/15 text-[#D97757] [.light_&]:text-[#8f4017] font-semibold">
                       {p.badge}
                     </span>
                   )}
@@ -1043,7 +1043,7 @@ export default function McpSetupPage() {
               {[
                 {
                   q: "The server shows as connected but tools aren't working",
-                  a: "Check your API key — it must start with bklt_ and not have been revoked. Go to My Pages → API Keys to verify.",
+                  a: "Check your API key — it must start with bklt_ and not have been revoked. Go to Settings → API keys to verify.",
                 },
                 {
                   q: "Claude Desktop doesn't show the Booklet server",
@@ -1051,7 +1051,7 @@ export default function McpSetupPage() {
                 },
                 {
                   q: "Getting \"Unauthorized\" errors",
-                  a: "The API key in your config doesn't match what Booklet expects. Re-generate a key from My Pages → API Keys and update the Authorization header value.",
+                  a: "The API key in your config doesn't match what Booklet expects. Re-generate a key from Settings → API keys and update the Authorization header value.",
                 },
                 {
                   q: "Claude says it doesn't have any Booklet tools",
@@ -1092,8 +1092,8 @@ export default function McpSetupPage() {
                 Your API key is sent directly from the MCP client to Booklet&apos;s API on each tool
                 call. The MCP server acts as a stateless proxy and never writes your key to
                 persistent storage. To revoke MCP access at any time, delete the key from{" "}
-                <Link href={ROUTES.myPages} className="text-accent hover:underline">
-                  My Pages → API Keys
+                <Link href={ROUTES.apiKeys} className="text-accent underline underline-offset-2">
+                  Settings → API keys
                 </Link>
                 . This takes effect immediately across all connected clients. A client that signed in
                 instead (Claude.ai) holds a token that expires after an hour and is renewed while the

@@ -46,7 +46,7 @@ export default async function SignInPage({
       <AuthForm mode="sign-in" redirectUrl={redirectUrl} providers={enabledSsoProviders()} errorCode={error} />
 
       <p className="text-xs text-text-muted text-center">
-        <Link href={ROUTES.forgotPassword} className="text-accent hover:text-accent-soft transition-colors">
+        <Link href={ROUTES.forgotPassword} className="text-accent underline underline-offset-2 hover:text-accent-soft transition-colors">
           Forgot your password?
         </Link>
       </p>
@@ -55,12 +55,12 @@ export default async function SignInPage({
         No account?{" "}
         <Link
           href={redirectUrl ? `${ROUTES.signUp}?redirect_url=${encodeURIComponent(redirectUrl)}` : ROUTES.signUp}
-          className="text-accent hover:text-accent-soft transition-colors"
+          className="text-accent underline underline-offset-2 hover:text-accent-soft transition-colors"
         >
           Create one
         </Link>{" "}
         or{" "}
-        <Link href={ROUTES.app} className="text-accent hover:text-accent-soft transition-colors">
+        <Link href={ROUTES.app} className="text-accent underline underline-offset-2 hover:text-accent-soft transition-colors">
           just write and publish — no sign-in needed
         </Link>.
       </p>

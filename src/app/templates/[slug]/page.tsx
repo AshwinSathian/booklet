@@ -157,7 +157,7 @@ export default async function TemplatePage({
               Open in editor →
             </Button>
           </div>
-          <div className="max-h-128 overflow-y-auto px-5 py-6 sm:px-8">
+          <div tabIndex={0} role="region" aria-label="Template preview" className="max-h-128 overflow-y-auto px-5 py-6 sm:px-8">
             <BlockRenderer blocks={previewBlocks} settings={DEFAULT_SETTINGS} />
           </div>
         </div>

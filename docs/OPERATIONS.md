@@ -278,6 +278,49 @@ MONGODB_URI="mongodb://127.0.0.1:27017/booklet?directConnection=true" node scrip
 A second run changes nothing. A database restored from an older backup
 needs it run again.
 
+## Dashboard: settings pages, webhook deliveries, import from URL
+
+**Where things are.** `/my-pages` lists pages and folders. API keys are at
+`/settings/api-keys` and webhooks at `/settings/webhooks`. Both keep the
+email-verification gate (`unverifiedResponse`) on anything that creates a
+credential or sends a request.
+
+**Publish source.** The label on a My pages row ("Web", "API", "CLI", "MCP",
+"Action") is the `source` of the page's newest `publish_events` row. The
+API clients name themselves in `X-Booklet-Source`; anything else through
+the API is "API". A page with no event (published before the log began on
+2026-05-18) shows no label.
+
+**Webhook deliveries.** Every attempt is a `webhook_deliveries` row: the
+body that was sent, the status code, or the reason there was no answer. The
+newest 50 per webhook are kept. "Resend"
+(`POST /api/webhooks/:id/deliveries/:deliveryId/resend`) sends the stored
+body with a fresh signature and logs a new row; it is limited to the
+webhook's owner and to 20 a minute. A delivery to a URL that resolves to a
+private address is refused and logged as "The URL does not resolve to a
+public address". Rows go with their webhook, their page and their account.
+
+To read one webhook's log by hand:
+
+```js
+db.webhook_deliveries.find({ webhook_id: "<id>" }, { body: 0 }).sort({ created_at: -1 })
+```
+
+**Import from URL.** `POST /api/import` is the one place the server fetches
+a URL a visitor typed. It only ever requests `raw.githubusercontent.com`
+over https (a `github.com/.../blob/...` link is rewritten, not fetched),
+through the SSRF guard with the connection pinned to the checked address.
+It follows a redirect only to the same host, stops reading at 800,000
+bytes, and refuses a file over 200,000 characters. It returns text for a
+local draft and stores nothing. Signed-out visitors can use it, 10 times a
+minute per address. If GitHub is unreachable from this Mac the dialog says
+"GitHub did not answer"; nothing else depends on it.
+
+**Colours.** `node scripts/check-contrast.mjs` reads the palettes in
+`src/app/globals.css` and `src/lib/themes.ts` and fails if any text colour
+is under 4.5:1 on a surface it is used on. Run it after changing a colour
+token; CI does.
+
 ## Anonymous page expiry
 
 A page published without an account gets `docs.expires_at` = publish time +

@@ -74,7 +74,7 @@ export async function deleteAccount(userId: string): Promise<void> {
   const removeAll = (collections: string[]) => Promise.all(collections.map((c) => db.collection(c).deleteMany(mine)));
 
   await revokeAllForUser(userId);
-  await removeAll(["api_keys", "webhooks", "idempotency_keys"]);
+  await removeAll(["api_keys", "webhooks", "webhook_deliveries", "idempotency_keys"]);
 
   for (const page of await ownedPages(userId)) {
     if (page.taken_down_at) continue;

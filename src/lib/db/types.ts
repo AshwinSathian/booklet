@@ -160,6 +160,23 @@ export type DbWebhook = {
   last_triggered_at: string | null;
 };
 
+/** One attempt to deliver a webhook. The newest 50 per webhook are kept. */
+export type DbWebhookDelivery = {
+  id: string;
+  webhook_id: string;
+  user_id: string;
+  page_id: string;
+  event: DbWebhook["events"][number];
+  /** The JSON body that was sent, kept so "Resend" sends the same one. */
+  body: string;
+  /** HTTP status the receiver answered with; null when there was no answer. */
+  status_code: number | null;
+  ok: boolean;
+  /** Why there was no answer (blocked address, timeout, connection error). */
+  error: string | null;
+  created_at: string;
+};
+
 export type PublishEvent = {
   id: string;
   user_id: string | null;       // null = anonymous

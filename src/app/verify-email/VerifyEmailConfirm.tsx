@@ -57,7 +57,7 @@ export function VerifyEmailConfirm({ token }: { token: string }) {
         </Link>
         <p className="text-xs text-text-muted">
           If you did not create this account, do not sign in to it. Use{" "}
-          <Link href={ROUTES.forgotPassword} className="text-accent hover:text-accent-soft">Forgot your password</Link> to take the address back.
+          <Link href={ROUTES.forgotPassword} className="text-accent underline underline-offset-2 hover:text-accent-soft">Forgot your password</Link> to take the address back.
         </p>
       </div>
     );

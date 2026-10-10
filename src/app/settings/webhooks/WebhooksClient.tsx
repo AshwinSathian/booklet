@@ -2,7 +2,18 @@
 
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
-import { useCallback, useRef, useState } from "react";
+import { formatUpdatedAtLong, formatUpdatedAtLongUTC } from "@/lib/ui/time";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+type DeliveryRow = {
+  id: string;
+  event: string;
+  page_id: string;
+  status_code: number | null;
+  ok: boolean;
+  error: string | null;
+  created_at: string;
+};
 
 type WebhookRow = {
   id: string;
@@ -10,7 +21,80 @@ type WebhookRow = {
   events: string[];
   created_at: string;
   last_triggered_at: string | null;
+  deliveries: DeliveryRow[];
 };
+
+const MAX_DELIVERIES = 50;
+
+/**
+ * The last 50 attempts for one webhook, newest first. "Resend" sends the
+ * logged body again; the new attempt is added as its own row.
+ */
+function DeliveryLog({ webhookId, initial }: { webhookId: string; initial: DeliveryRow[] }) {
+  const [rows, setRows] = useState(initial);
+  const [resending, setResending] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  // Server and browser may format a time differently: see formatUpdatedAtLongUTC.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  const resend = async (deliveryId: string) => {
+    setResending(deliveryId);
+    setError(null);
+    try {
+      const res = await fetch(`/api/webhooks/${webhookId}/deliveries/${deliveryId}/resend`, { method: "POST" });
+      const data = (await res.json().catch(() => ({}))) as { delivery?: DeliveryRow; error?: string };
+      if (!res.ok || !data.delivery) {
+        setError(data.error ?? "Could not resend.");
+        return;
+      }
+      setRows((prev) => [data.delivery!, ...prev].slice(0, MAX_DELIVERIES));
+    } catch {
+      setError("Could not resend.");
+    } finally {
+      setResending(null);
+    }
+  };
+
+  return (
+    <details className="mt-2 text-xs">
+      <summary className="cursor-pointer select-none py-1 text-text-secondary hover:text-text-primary">
+        Deliveries ({rows.length})
+      </summary>
+      {error && <p role="alert" className="mt-1 text-red-400">{error}</p>}
+      {rows.length === 0 ? (
+        <p className="mt-1 text-text-secondary">Nothing sent yet. A delivery appears here when a page is published or updated.</p>
+      ) : (
+        <ul className="mt-1 divide-y divide-border-subtle" data-testid="webhook-deliveries">
+          {rows.map((d) => (
+            <li key={d.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-1.5">
+              <span className={`font-mono font-semibold ${d.ok ? "text-green-400" : "text-red-400"}`}>
+                {d.status_code ?? "No response"}
+              </span>
+              <span className="text-text-secondary">{d.ok ? "Delivered" : (d.error ?? "Failed")}</span>
+              <code className="font-mono text-2xs text-text-secondary">{d.event}</code>
+              <a href={`/p/${d.page_id}`} className="font-mono text-2xs text-text-secondary underline hover:text-text-primary">
+                {d.page_id}
+              </a>
+              <time dateTime={d.created_at} className="text-text-secondary">
+                {mounted ? formatUpdatedAtLong(d.created_at) : formatUpdatedAtLongUTC(d.created_at)}
+              </time>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="ml-auto"
+                disabled={resending !== null}
+                onClick={() => void resend(d.id)}
+              >
+                {resending === d.id ? "Sending…" : "Resend"}
+              </Button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </details>
+  );
+}
 
 type SecretReveal = { id: string; secret: string };
 
@@ -66,6 +150,7 @@ function WebhookCard({
           <span className="h-3 w-px bg-fill-2" aria-hidden />
           <span>Last fired {formatDate(wh.last_triggered_at)}</span>
         </div>
+        <DeliveryLog webhookId={wh.id} initial={wh.deliveries} />
       </div>
 
       {confirming ? (
@@ -228,6 +313,7 @@ export function WebhooksSection({ initialWebhooks }: { initialWebhooks: WebhookR
         events: data.events!,
         created_at: new Date().toISOString(),
         last_triggered_at: null,
+        deliveries: [],
       };
       setWebhooks((prev) => [newWh, ...prev]);
       setSecretReveal({ id: newWh.id, secret: data.secret! });
@@ -239,10 +325,10 @@ export function WebhooksSection({ initialWebhooks }: { initialWebhooks: WebhookR
   };
 
   return (
-    <div className="mt-12">
+    <div>
       <div className="mb-4 flex items-baseline justify-between gap-4">
         <div>
-          <h2 className="text-base">Webhooks</h2>
+          <h1 className="text-xl font-medium">Webhooks</h1>
           <p className="mt-0.5 text-sm text-text-secondary">
             Get notified when pages are published or updated.
           </p>
@@ -268,7 +354,8 @@ export function WebhooksSection({ initialWebhooks }: { initialWebhooks: WebhookR
             ref={urlRef}
             type="url"
             placeholder="https://your-server.com/webhook"
-            className="min-w-0 flex-1 rounded-lg border border-border-default bg-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft"
+            aria-label="Webhook URL"
+            className="min-w-0 flex-1 rounded-lg border border-border-default bg-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft"
           />
           <Button
             variant="primary"

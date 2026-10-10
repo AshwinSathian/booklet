@@ -45,14 +45,14 @@ export function PreviewPane({
     <div className="flex h-full max-h-full min-h-0 flex-col w-full overflow-hidden">
       {/* Pane label */}
       <div className="shrink-0 flex items-center justify-between px-3 py-2 border-b border-border-subtle bg-bg-soft/50">
-        <span className="text-2xs font-medium text-text-muted/60 tracking-wide">Preview</span>
+        <span className="text-2xs font-medium text-text-muted tracking-wide">Preview</span>
         <div className="flex items-center gap-3">
           {onOpenBacklinks && (
             <button
               type="button"
               onClick={onOpenBacklinks}
               title="Linked mentions — drafts that reference this one via [[wikilinks]]"
-              className="text-2xs text-text-muted/60 transition hover:text-text-primary"
+              className="text-2xs text-text-muted transition hover:text-text-primary"
             >
               {backlinksCount > 0 ? `${backlinksCount} linked mention${backlinksCount === 1 ? "" : "s"}` : "Backlinks"}
             </button>
@@ -62,12 +62,12 @@ export function PreviewPane({
               type="button"
               onClick={onOpenGraph}
               title="Graph — private visualization of your linked drafts"
-              className="text-2xs text-text-muted/60 transition hover:text-text-primary"
+              className="text-2xs text-text-muted transition hover:text-text-primary"
             >
               Graph
             </button>
           )}
-          <span className="flex items-center gap-1 text-2xs text-text-muted/40">
+          <span className="flex items-center gap-1 text-2xs text-text-muted">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500/70 animate-dot-pulse" aria-hidden />
             Live
           </span>

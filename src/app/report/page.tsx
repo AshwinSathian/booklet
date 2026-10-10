@@ -34,7 +34,7 @@ export default async function ReportPage({
               <p className="text-sm text-text-secondary leading-relaxed">
                 You are reporting <span className="font-mono text-text-primary">/p/{pageId}</span>. Reports go to
                 the person who runs Booklet. What is and is not allowed is in the{" "}
-                <Link href="/terms" className="text-accent hover:underline">
+                <Link href="/terms" className="text-accent underline underline-offset-2">
                   terms
                 </Link>
                 .

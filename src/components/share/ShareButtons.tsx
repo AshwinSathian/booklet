@@ -33,7 +33,7 @@ export function ShareButtons({ url, title }: ShareButtonsProps) {
 
   return (
     <div className="flex items-center gap-2 mt-6 pt-5 border-t border-border-subtle print:hidden">
-      <span className="text-2xs font-medium uppercase tracking-widest text-text-muted/60 mr-1">Share</span>
+      <span className="text-2xs font-medium uppercase tracking-widest text-text-muted mr-1">Share</span>
 
       {/* Copy link */}
       <button

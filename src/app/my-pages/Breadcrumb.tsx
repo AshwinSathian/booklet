@@ -31,7 +31,7 @@ export function Breadcrumb({
       </button>
       {path.map((folder, i) => (
         <span key={folder.id} className="flex items-center gap-1.5">
-          <span className="text-text-muted/40" aria-hidden>/</span>
+          <span className="text-text-muted" aria-hidden>/</span>
           {i === path.length - 1 ? (
             <span className="font-medium text-text-primary">{folder.name}</span>
           ) : (

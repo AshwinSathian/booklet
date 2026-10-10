@@ -18,7 +18,7 @@ function avatarHue(userId: string): number {
 }
 
 // A minimal avatar-triggered dropdown with
-// the account's email, links to My Pages, Spaces and Account settings, and sign out.
+// the account's email, links to My Pages, Spaces, Account, API keys and Webhooks, and sign out.
 export function AccountMenu() {
   const { userId, email, refetch } = useSession();
   const [open, setOpen] = useState(false);
@@ -57,7 +57,8 @@ export function AccountMenu() {
         style={{
           backgroundColor: `hsl(${hue} 70% 92%)`,
           borderColor: `hsl(${hue} 70% 80%)`,
-          color: `hsl(${hue} 60% 40%)`,
+          // 25% lightness: at 40% the yellow and green hues fall under 4.5:1 on the 92% tint.
+          color: `hsl(${hue} 60% 25%)`,
         }}
       >
         {initials}
@@ -90,6 +91,20 @@ export function AccountMenu() {
             className="block px-3 py-1.5 text-sm text-text-secondary transition hover:bg-fill-1 hover:text-text-primary"
           >
             Account
+          </Link>
+          <Link
+            href={ROUTES.apiKeys}
+            onClick={() => setOpen(false)}
+            className="block px-3 py-1.5 text-sm text-text-secondary transition hover:bg-fill-1 hover:text-text-primary"
+          >
+            API keys
+          </Link>
+          <Link
+            href={ROUTES.webhooks}
+            onClick={() => setOpen(false)}
+            className="block px-3 py-1.5 text-sm text-text-secondary transition hover:bg-fill-1 hover:text-text-primary"
+          >
+            Webhooks
           </Link>
           <button
             type="button"

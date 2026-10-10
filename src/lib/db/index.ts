@@ -1,5 +1,5 @@
 import { getDb } from "@/lib/mongodb";
-import type { DbApiKey, DbCollection, DbCollectionMember, DbPage, DbPageLink, DbUser, DbWebhook, CollectionMemberRole } from "./types";
+import type { DbApiKey, DbCollection, DbCollectionMember, DbPage, DbPageLink, DbUser, DbWebhook, DbWebhookDelivery, CollectionMemberRole, PublishEvent } from "./types";
 
 // ---------------------------------------------------------------------------
 // Internal document shapes (MongoDB _id = our string id)
@@ -677,6 +677,8 @@ export async function deletePageAssociatedRecords(pageId: string): Promise<void>
     db.collection("analytics_events").deleteMany({ page_id: pageId }),
     db.collection("publish_events").deleteMany({ page_id: pageId }),
     db.collection("page_links").deleteMany({ $or: [{ source_id: pageId }, { target_id: pageId }] }),
+    // A delivery's stored body carries the page's title and URL.
+    db.collection("webhook_deliveries").deleteMany({ page_id: pageId }),
   ]);
 }
 
@@ -775,7 +777,77 @@ export async function createWebhook(
 
 export async function deleteWebhook(id: string, userId: string): Promise<void> {
   const db = await getDb();
-  await db.collection<WebhookDoc>("webhooks").deleteOne({ _id: id, user_id: userId });
+  const { deletedCount } = await db.collection<WebhookDoc>("webhooks").deleteOne({ _id: id, user_id: userId });
+  if (deletedCount) await db.collection("webhook_deliveries").deleteMany({ webhook_id: id });
+}
+
+/** The webhook, if this user owns it. */
+export async function getWebhook(id: string, userId: string): Promise<DbWebhook | null> {
+  const db = await getDb();
+  const doc = await db.collection<WebhookDoc>("webhooks").findOne({ _id: id, user_id: userId });
+  return doc ? toWebhook(doc) : null;
+}
+
+export const MAX_DELIVERIES_PER_WEBHOOK = 50;
+
+type WebhookDeliveryDoc = Omit<DbWebhookDelivery, "id"> & { _id: string };
+
+/** Stores a delivery attempt and drops all but the newest 50 for its webhook. */
+export async function recordWebhookDelivery(delivery: DbWebhookDelivery): Promise<void> {
+  const db = await getDb();
+  const coll = db.collection<WebhookDeliveryDoc>("webhook_deliveries");
+  const { id, ...rest } = delivery;
+  await coll.insertOne({ _id: id, ...rest });
+  const stale = await coll
+    .find({ webhook_id: delivery.webhook_id })
+    .sort({ created_at: -1, _id: -1 })
+    .skip(MAX_DELIVERIES_PER_WEBHOOK)
+    .project<{ _id: string }>({ _id: 1 })
+    .toArray();
+  if (stale.length) await coll.deleteMany({ _id: { $in: stale.map((d) => d._id) } });
+}
+
+/** Newest first. Scoped to the owner as well as the webhook, so a caller cannot read another account's log by id. */
+export async function getWebhookDeliveries(webhookId: string, userId: string): Promise<DbWebhookDelivery[]> {
+  const db = await getDb();
+  const docs = await db
+    .collection<WebhookDeliveryDoc>("webhook_deliveries")
+    .find({ webhook_id: webhookId, user_id: userId })
+    .sort({ created_at: -1, _id: -1 })
+    .limit(MAX_DELIVERIES_PER_WEBHOOK)
+    .toArray();
+  return docs.map(({ _id, ...rest }) => ({ id: _id, ...rest }));
+}
+
+export async function getWebhookDelivery(id: string, webhookId: string, userId: string): Promise<DbWebhookDelivery | null> {
+  const db = await getDb();
+  const doc = await db
+    .collection<WebhookDeliveryDoc>("webhook_deliveries")
+    .findOne({ _id: id, webhook_id: webhookId, user_id: userId });
+  if (!doc) return null;
+  const { _id, ...rest } = doc;
+  return { id: _id, ...rest };
+}
+
+/**
+ * How each of a user's pages was last published or updated (web, API, CLI,
+ * MCP, Action). Owner-only: it is keyed by the events' own `user_id`.
+ *
+ * ponytail: reads all of the user's publish events (indexed by user_id) on
+ * each My pages load. Keep a `last_source` on the page record instead if an
+ * account's event count makes this slow.
+ */
+export async function getLastPublishSources(userId: string): Promise<Map<string, PublishEvent["source"]>> {
+  const db = await getDb();
+  const rows = await db
+    .collection<PublishEvent>("publish_events")
+    .aggregate<{ _id: string; source: PublishEvent["source"] }>([
+      { $match: { user_id: userId } },
+      { $sort: { created_at: 1 } },
+      { $group: { _id: "$page_id", source: { $last: "$source" } } },
+    ])
+    .toArray();
+  return new Map(rows.map((r) => [r._id, r.source]));
 }
 
 export async function touchWebhookTriggered(id: string): Promise<void> {

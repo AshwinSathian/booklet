@@ -31,7 +31,7 @@ function PageCard({ page }: { page: ExploreItem }) {
         <p className="text-sm font-medium text-text-primary group-hover:text-accent transition line-clamp-2 leading-snug mb-1">
           {page.title ?? "Untitled"}
         </p>
-        <p className="text-2xs text-text-muted/60 font-mono truncate mb-2">
+        <p className="text-2xs text-text-muted font-mono truncate mb-2">
           {page.slug ? `/p/${page.slug}` : `/p/${page.id}`}
         </p>
 
@@ -106,7 +106,7 @@ export function ExploreClient({ pages }: { pages: ExploreItem[] }) {
         {/* Search */}
         <div className="relative flex-1 w-full sm:max-w-xs">
           <svg
-            className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted/50"
+            className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted"
             width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden
           >
             <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.5" />
@@ -117,7 +117,7 @@ export function ExploreClient({ pages }: { pages: ExploreItem[] }) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Filter pages…"
-            className="w-full rounded-lg border border-border-default bg-bg pl-8 pr-3 py-1.5 text-sm text-text-primary placeholder:text-text-muted/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft"
+            className="w-full rounded-lg border border-border-default bg-bg pl-8 pr-3 py-1.5 text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft"
           />
         </div>
 

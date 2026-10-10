@@ -64,7 +64,7 @@ export default async function TagsPage() {
                   ].join(" ")}
                 >
                   <span>{tag}</span>
-                  <span className="text-2xs text-text-muted/60 tabular-nums">{count}</span>
+                  <span className="text-2xs text-text-muted tabular-nums">{count}</span>
                 </Link>
               );
             })}

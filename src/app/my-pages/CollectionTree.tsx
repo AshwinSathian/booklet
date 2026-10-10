@@ -94,7 +94,7 @@ function Row({
           type="button"
           onClick={onToggleExpand}
           aria-label={expanded ? "Collapse" : "Expand"}
-          className="flex h-5 w-5 shrink-0 items-center justify-center text-text-muted/60 hover:text-text-primary"
+          className="flex h-5 w-5 shrink-0 items-center justify-center text-text-muted hover:text-text-primary"
         >
           <Icon name={expanded ? "chevron-down" : "chevron-right"} size={11} />
         </button>
@@ -104,7 +104,7 @@ function Row({
       {renaming && onCommitRename && onCancelRename ? (
         <div className="flex min-w-0 flex-1 items-center gap-1.5 px-2 py-1">
           {id !== "all" && id !== "uncollected" ? (
-            <Icon name="folder" size={13} className="shrink-0 text-accent/70" />
+            <Icon name="folder" size={13} className="shrink-0 text-accent" />
           ) : null}
           <RenameInput initialValue={label} onCommit={onCommitRename} onCancel={onCancelRename} />
         </div>
@@ -119,7 +119,7 @@ function Row({
         >
           <span className="flex items-center gap-1.5 truncate">
             {id !== "all" && id !== "uncollected" ? (
-              <Icon name={active ? "folder-open" : "folder"} size={13} className="shrink-0 text-accent/70" />
+              <Icon name={active ? "folder-open" : "folder"} size={13} className="shrink-0 text-accent" />
             ) : null}
             <span className="truncate">{label}</span>
           </span>
@@ -315,7 +315,7 @@ export function CollectionTree({
             }
           }}
           placeholder="New folder…"
-          className="min-w-0 flex-1 rounded-lg border border-border-default bg-bg px-2.5 py-1.5 text-xs text-text-primary placeholder:text-text-muted/40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft"
+          className="min-w-0 flex-1 rounded-lg border border-border-default bg-bg px-2.5 py-1.5 text-xs text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft"
         />
         <Button
           variant="primary" size="md" iconOnly

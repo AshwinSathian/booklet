@@ -23,7 +23,7 @@ export default async function AdminReportsPage() {
       <div className="mb-8 flex items-baseline gap-4">
         <h1 className="text-xl font-bold font-display">Abuse reports</h1>
         <span className="text-xs text-text-muted">{reports.length} open</span>
-        <Link href="/admin" className="ml-auto text-xs text-accent hover:underline">
+        <Link href="/admin" className="ml-auto text-xs text-accent underline underline-offset-2">
           Metrics
         </Link>
       </div>
@@ -40,7 +40,7 @@ export default async function AdminReportsPage() {
                   href={`/p/${r.page_id}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-mono text-xs text-accent hover:underline"
+                  className="font-mono text-xs text-accent underline underline-offset-2"
                 >
                   /p/{r.page_id}
                 </a>

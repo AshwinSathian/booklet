@@ -2,6 +2,7 @@
 
 import type { Block, DocSettings } from "@/lib/blocks";
 import { blocksToHtmlDocument } from "@/lib/export";
+import { renderDiagramsForExport } from "@/lib/export/diagrams";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
@@ -57,7 +58,7 @@ export function ExportMenu({
     if (exportingHtml) return;
     setExportingHtml(true);
     try {
-      const html = await blocksToHtmlDocument(blocks, title);
+      const html = await blocksToHtmlDocument(blocks, title, await renderDiagramsForExport(blocks));
       downloadBlob(html, `${filename}.html`, "text/html;charset=utf-8");
       setOpen(false);
     } finally {
@@ -89,15 +90,15 @@ export function ExportMenu({
         <ContextMenuItem
           icon="code"
           label={exportingHtml ? "Exporting…" : "Download HTML"}
-          description="Standalone HTML document"
+          description="One self-contained file, diagrams included"
           disabled={exportingHtml}
           onSelect={() => void handleHtml()}
         />
         <ContextMenuSeparator />
         <ContextMenuItem
           icon="print"
-          label="Print or Save as PDF"
-          description="Uses Booklet's print-optimized layout"
+          label="Print to PDF"
+          description="Opens your browser's print dialog; choose Save as PDF"
           onSelect={handlePrint}
         />
       </Menu>

@@ -45,7 +45,7 @@ You can also set it via environment variable, which takes precedence over the co
 export BOOKLET_API_KEY=bklt_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
-Generate keys manually at [booklet.ashwinsathian.com](https://booklet.ashwinsathian.com) → My Pages → Settings → API Keys.
+Generate keys manually at [booklet.ashwinsathian.com](https://booklet.ashwinsathian.com) → account menu → API keys (`/settings/api-keys`).
 
 ## Commands
 

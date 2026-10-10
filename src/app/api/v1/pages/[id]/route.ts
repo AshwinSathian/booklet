@@ -6,6 +6,7 @@ import { updatePageRecord, deletePageRecord, deletePageAssociatedRecords, setPag
 import { assertVisibilityAllowed } from "@/server/access";
 import { deletePageVersions, snapshotPageVersion } from "@/lib/db/versions";
 import { recordPublishEvent } from "@/lib/db/publish-events";
+import { deliverWebhooks } from "@/lib/webhook-delivery";
 import { collectRichBlockKinds } from "@/lib/block-usage";
 import { getDoc, putDoc, deleteDoc } from "@/lib/storage";
 import { ROUTES } from "@/lib/constants";
@@ -175,6 +176,12 @@ export const PATCH = v1("patch", 60, "pages:write", async (req: Request, userId:
       richBlockKinds: collectRichBlockKinds(blocks),
       source: resolveApiClientSource(req),
     }).catch((err) => logError("v1/pages", "Event record failed", err));
+    void deliverWebhooks(userId, "page.updated", {
+      page_id: id,
+      page_url: `${getSiteOrigin(req)}/p/${id}`,
+      title: built.record.title,
+      published_at: new Date().toISOString(),
+    }).catch(() => {});
 
     // The title, type and frontmatter fields follow the document.
     Object.assign(metaPatch, built.record, { updated_at: new Date().toISOString() });

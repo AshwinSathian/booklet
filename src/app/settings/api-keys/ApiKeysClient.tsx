@@ -40,7 +40,7 @@ function KeyCard({ k, onRevoked }: { k: KeyRow; onRevoked: (id: string) => void 
           {k.label ?? <span className="text-text-muted italic">Unlabeled key</span>}
         </div>
         <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-text-muted">
-          <span className="font-mono text-text-muted/60">{k.id}</span>
+          <span className="font-mono text-text-muted">{k.id}</span>
           <span className="h-3 w-px bg-fill-2" aria-hidden />
           <span>Created {formatDate(k.created_at)}</span>
           <span className="h-3 w-px bg-fill-2" aria-hidden />
@@ -125,6 +125,7 @@ export function ApiKeysSection({ initialKeys }: { initialKeys: KeyRow[] }) {
   const [keys, setKeys] = useState<KeyRow[]>(initialKeys);
   const [creating, setCreating] = useState(false);
   const [newRaw, setNewRaw] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const labelRef = useRef<HTMLInputElement>(null);
 
   const handleRevoked = useCallback((id: string) => {
@@ -140,8 +141,10 @@ export function ApiKeysSection({ initialKeys }: { initialKeys: KeyRow[] }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ label }),
       });
+      const data = (await res.json().catch(() => ({}))) as { id: string; label: string | null; key: string; error?: string };
+      // 403 here is an unconfirmed email address; the message says what to do.
+      setError(res.ok ? null : (data.error ?? "Could not create the key."));
       if (!res.ok) return;
-      const data = (await res.json()) as { id: string; label: string | null; key: string; created_at?: string };
       const newKey: KeyRow = {
         id: data.id,
         label: data.label,
@@ -157,10 +160,10 @@ export function ApiKeysSection({ initialKeys }: { initialKeys: KeyRow[] }) {
   };
 
   return (
-    <div className="mt-12">
+    <div>
       <div className="mb-4 flex items-baseline justify-between gap-4">
         <div>
-          <h2 className="text-base">API keys</h2>
+          <h1 className="text-xl font-medium">API keys</h1>
           <p className="mt-0.5 text-sm text-text-secondary">
             Use these keys with the Booklet API to publish programmatically.
           </p>
@@ -185,8 +188,9 @@ export function ApiKeysSection({ initialKeys }: { initialKeys: KeyRow[] }) {
           ref={labelRef}
           type="text"
           placeholder="Label (optional)"
+          aria-label="Label for the new key (optional)"
           maxLength={80}
-          className="min-w-0 flex-1 rounded-lg border border-border-default bg-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft"
+          className="min-w-0 flex-1 rounded-lg border border-border-default bg-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft"
         />
         <Button variant="primary" size="md" onClick={() => void handleCreate()} disabled={creating} className="shrink-0">
           {creating ? (
@@ -199,6 +203,7 @@ export function ApiKeysSection({ initialKeys }: { initialKeys: KeyRow[] }) {
           Create key
         </Button>
       </div>
+      {error && <p role="alert" className="mt-2 text-xs text-red-400">{error}</p>}
     </div>
   );
 }

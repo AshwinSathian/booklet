@@ -367,7 +367,7 @@ function FindReplaceBar({
             onKeyDown={handleKeyDown}
             placeholder="Find…"
             spellCheck={false}
-            className="w-full h-6 rounded border border-border-subtle bg-bg px-2 py-0 text-xs font-mono text-text-primary placeholder:text-text-muted/40 focus:outline-none focus:ring-1 focus:ring-accent-soft pr-14"
+            className="w-full h-6 rounded border border-border-subtle bg-bg px-2 py-0 text-xs font-mono text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-accent-soft pr-14"
           />
           {findText && (
             <span className="absolute right-2 top-1/2 -translate-y-1/2 text-2xs tabular-nums text-text-muted pointer-events-none">
@@ -440,7 +440,7 @@ function FindReplaceBar({
           onKeyDown={handleKeyDown}
           placeholder="Replace with…"
           spellCheck={false}
-          className="flex-1 h-6 rounded border border-border-subtle bg-bg px-2 py-0 text-xs font-mono text-text-primary placeholder:text-text-muted/40 focus:outline-none focus:ring-1 focus:ring-accent-soft"
+          className="flex-1 h-6 rounded border border-border-subtle bg-bg px-2 py-0 text-xs font-mono text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-accent-soft"
         />
         <button
           type="button"
@@ -564,7 +564,7 @@ function FormatToolbar({
               "text-text-muted hover:text-text-primary hover:bg-fill-2",
               "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft",
               hasTextLabel
-                ? "h-6 min-w-5 px-1 font-mono text-2xs font-semibold"
+                ? "h-6 min-w-6 px-1 font-mono text-2xs font-semibold"
                 : "h-6 w-6",
               item.key === "bold"   ? "font-bold"   : "",
               item.key === "italic" ? "italic"       : "",
@@ -1235,7 +1235,7 @@ export function PasteInput({
               // prose and dimmed syntax), since a plain textarea can't
               // color part of its own text. The placeholder still needs to
               // be visible when the textarea is empty.
-              "bg-transparent text-transparent placeholder:text-text-muted/40",
+              "bg-transparent text-transparent placeholder:text-text-muted",
               "font-mono text-sm leading-[1.65]",
               "px-5 py-4",
               "focus:outline-none",
@@ -1250,7 +1250,7 @@ export function PasteInput({
             <span className="text-2xs text-text-muted tabular-nums">
               {wordCount.toLocaleString()} {wordCount === 1 ? "word" : "words"}
             </span>
-            <span className="text-2xs text-text-muted/30" aria-hidden>·</span>
+            <span className="text-2xs text-text-muted" aria-hidden>·</span>
             {charCount > CHAR_COUNTER_THRESHOLD ? (
               // Near the publish limit the plain count becomes "used / limit"
               // so a 413 from the publish routes is never a surprise.
@@ -1268,7 +1268,7 @@ export function PasteInput({
             )}
             {wordCount > 50 && (
               <>
-                <span className="text-2xs text-text-muted/30" aria-hidden>·</span>
+                <span className="text-2xs text-text-muted" aria-hidden>·</span>
                 <span className="text-2xs text-text-muted tabular-nums">
                   {readingMins} min read
                 </span>
@@ -1276,14 +1276,14 @@ export function PasteInput({
             )}
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-2xs text-text-muted/50 hidden sm:inline">
+            <span className="text-2xs text-text-muted hidden sm:inline">
               <kbd className="font-mono">⌘J</kbd> focus · <kbd className="font-mono">⌘↵</kbd> publish
             </span>
             <button
               type="button"
               title="Keyboard shortcuts"
               onClick={() => setShowShortcuts(true)}
-              className="h-5 w-5 flex items-center justify-center rounded border border-border-subtle text-2xs font-mono text-text-muted/50 transition hover:text-text-muted hover:border-border-default hover:bg-fill-2"
+              className="h-5 w-5 flex items-center justify-center rounded border border-border-subtle text-2xs font-mono text-text-muted transition hover:text-text-muted hover:border-border-default hover:bg-fill-2"
             >
               ?
             </button>

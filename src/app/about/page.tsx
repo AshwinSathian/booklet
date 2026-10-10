@@ -55,7 +55,7 @@ export default function AboutPage() {
                 href="https://ashwinsathian.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-accent hover:underline"
+                className="text-accent underline underline-offset-2"
               >
                 Ashwin Sathian
               </a>
