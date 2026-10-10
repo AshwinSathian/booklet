@@ -1,3 +1,6 @@
+import { sendVerification } from "@/server/verification";
+import { getSiteOrigin } from "@/lib/site-url";
+import { logError } from "@/lib/logger";
 import { NextResponse } from "next/server";
 import { getUserByEmail } from "@/lib/db/auth";
 import { createSession } from "@/lib/auth/session";
@@ -43,6 +46,11 @@ export async function POST(req: Request) {
   }
 
   await createSession(user.id);
+  // Accounts that predate verification get their link the first time they
+  // sign in after it shipped.
+  await sendVerification(user, getSiteOrigin(req), { onlyIfNoneLive: true }).catch((err) =>
+    logError("login", "Could not send verification email", err),
+  );
 
   return NextResponse.json({ ok: true, email: user.email }, { status: 200 });
 }

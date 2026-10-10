@@ -34,6 +34,28 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string): Prom
   });
 }
 
+export async function sendVerificationEmail(to: string, verifyUrl: string): Promise<void> {
+  const { error } = await getResendClient().emails.send({
+    from: FROM_ADDRESS,
+    to,
+    subject: "Confirm your email for Booklet",
+    html: `
+      <div style="font-family: -apple-system, system-ui, sans-serif; max-width: 480px; margin: 0 auto; color: #1a1a1a;">
+        <p>Confirm this address to publish pages from your Booklet account.</p>
+        <p>
+          <a href="${verifyUrl}" style="display:inline-block;background:#f5a623;color:#0a0a0a;padding:10px 20px;border-radius:9999px;text-decoration:none;font-weight:600;">
+            Confirm email
+          </a>
+        </p>
+        <p style="color:#666;font-size:13px;">
+          This link works for 24 hours. If you did not create a Booklet account, ignore this email and do not open the link.
+        </p>
+      </div>
+    `,
+  });
+  if (error) throw new Error(`Resend rejected the verification email: ${error.message}`);
+}
+
 /**
  * Notifies the abuse inbox of a new report. Plain text on purpose: every
  * field below except the URL is written by an anonymous reporter, and a

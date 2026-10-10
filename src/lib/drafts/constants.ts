@@ -18,6 +18,8 @@ export const DRAFTS_STORAGE_KEYS = {
    * account that previously used this browser). See cloud-sync.ts.
    */
   cloudOwners: "booklet:draftCloudOwners",
+  /** The userId that last answered the "move local drafts into your account" offer in this browser. */
+  adoptionAnswered: "booklet:draftAdoptionAnswered",
 } as const;
 
 export const DRAFT_DOC = {

@@ -1,3 +1,4 @@
+import { TURNSTILE_FAILED, verifyTurnstile } from "@/lib/turnstile";
 import { z } from "zod";
 import { NextResponse } from "next/server";
 import { isSameOriginRequest } from "@/lib/auth/origin-check";
@@ -38,6 +39,10 @@ export async function POST(req: Request) {
       json = await req.json();
     } catch {
       return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
+
+    if (!(await verifyTurnstile(req, (json as { turnstile_token?: unknown } | null)?.turnstile_token))) {
+      return NextResponse.json({ error: TURNSTILE_FAILED }, { status: 403 });
     }
 
     const parsed = ReportSchema.safeParse(json);

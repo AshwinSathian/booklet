@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { findPasswordResetTokenByHash, deletePasswordResetToken, setUserPassword } from "@/lib/db/auth";
+import { findPasswordResetTokenByHash, deletePasswordResetToken, markEmailVerified, setUserPassword } from "@/lib/db/auth";
 import { hashPasswordResetToken } from "@/lib/auth/password-reset-token";
 import { hashUserPassword } from "@/lib/auth/password";
 import { destroyAllSessions } from "@/lib/auth/session";
@@ -37,6 +37,9 @@ export async function POST(req: Request) {
   const passwordHash = await hashUserPassword(password);
   await setUserPassword(resetToken.user_id, passwordHash);
   await deletePasswordResetToken(tokenHash);
+  // The reset link went to the account's address, so completing a reset
+  // proves the same thing a verification link does.
+  await markEmailVerified(resetToken.user_id);
   // A password reset is a strong signal of compromise recovery — kill every
   // existing session so a stolen cookie doesn't outlive the password it was
   // issued under.

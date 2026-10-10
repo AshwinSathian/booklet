@@ -1,3 +1,4 @@
+import { unverifiedResponse } from "@/server/verification";
 import { createApiKey, deleteApiKey, getApiKeysByUser } from "@/lib/db";
 import { generateRawKey, hashApiKey } from "@/lib/api-key";
 import { createId } from "@/lib/id";
@@ -30,6 +31,9 @@ export async function POST(req: Request) {
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const unverified = await unverifiedResponse(userId);
+  if (unverified) return unverified;
 
   let label: string | null = null;
   try {

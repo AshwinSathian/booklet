@@ -1,3 +1,4 @@
+import { unverifiedResponse } from "@/server/verification";
 import type { PublishedDoc } from "@/lib/blocks";
 import { DEFAULT_SETTINGS } from "@/lib/blocks";
 import { BLOCKS, STORAGE } from "@/lib/constants";
@@ -31,6 +32,9 @@ export async function PATCH(
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const unverified = await unverifiedResponse(userId);
+    if (unverified) return unverified;
 
     const { id } = await params;
     if (!id?.trim()) {

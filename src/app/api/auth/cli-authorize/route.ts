@@ -1,3 +1,4 @@
+import { unverifiedResponse } from "@/server/verification";
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
 import { createApiKey, deleteApiKey, getApiKeysByUser } from "@/lib/db";
@@ -53,6 +54,8 @@ export async function POST(req: Request) {
   }
 
   const { userId } = session;
+  const unverified = await unverifiedResponse(userId);
+  if (unverified) return unverified;
   const existing = await getApiKeysByUser(userId);
   if (existing.length >= MAX_KEYS_PER_USER) {
     return NextResponse.json(

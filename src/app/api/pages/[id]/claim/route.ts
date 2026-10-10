@@ -1,3 +1,4 @@
+import { unverifiedResponse } from "@/server/verification";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { claimCookieName, claimTokenMatches } from "@/lib/anonymous-claim";
@@ -33,6 +34,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     const rl = await checkRateLimit(`claim__${userId}`, 20);
     if (rl) return rl;
+
+    const unverified = await unverifiedResponse(userId);
+    if (unverified) return unverified;
 
     const { id } = await params;
     const state = await getDocState(id);

@@ -1,3 +1,4 @@
+import { unverifiedResponse } from "@/server/verification";
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
 import { checkRateLimit } from "@/lib/rate-limit";
@@ -66,6 +67,10 @@ export async function POST(req: Request) {
     });
     return NextResponse.json({ redirect }, { headers: NO_STORE });
   }
+
+  // Checked only on approval: declining must always work.
+  const unverified = await unverifiedResponse(session.userId);
+  if (unverified) return unverified;
 
   const code = await issueAuthorizationCode(request, session.userId);
   return NextResponse.json(

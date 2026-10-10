@@ -33,7 +33,7 @@ jobs:
 
       - name: Publish to Booklet
         id: publish
-        uses: AshwinSathian/publish-to-booklet@v1
+        uses: AshwinSathian/publish-to-booklet@v2
         with:
           file: CHANGELOG.md
           api-key: ${{ secrets.BOOKLET_API_KEY }}

@@ -1,0 +1,76 @@
+import type { NextResponse } from "next/server";
+import { createEmailVerificationToken, getUserById, hasLiveEmailVerificationToken } from "@/lib/db/auth";
+import type { DbUser } from "@/lib/db/types";
+import { generatePasswordResetToken, hashPasswordResetToken } from "@/lib/auth/password-reset-token";
+import { sendVerificationEmail } from "@/lib/email";
+import { logError } from "@/lib/logger";
+import { ServiceError, toErrorResponse } from "./errors";
+
+const VERIFY_TTL_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Verification is enforced only where a verification email can be sent.
+ * Without RESEND_API_KEY (a self-hosted install with no mail, CI, local
+ * development) accounts publish as before, because nobody could ever
+ * receive the link.
+ */
+export function emailVerificationRequired(): boolean {
+  return Boolean(process.env.RESEND_API_KEY);
+}
+
+export function isVerified(user: Pick<DbUser, "email_verified_at"> | null): boolean {
+  return !emailVerificationRequired() || Boolean(user?.email_verified_at);
+}
+
+export const UNVERIFIED_MESSAGE =
+  "Confirm your email address first. Sign in to Booklet on the web and choose \"Email me the link\" in Account settings.";
+
+/**
+ * An account with an unconfirmed address can write drafts and cannot
+ * publish, update a published page, or create credentials (API keys, CLI
+ * and app sign-ins, passkeys, webhooks). It applies to every way in:
+ * browser session, API key and OAuth token.
+ *
+ * The credential rule is what protects an address's real owner from
+ * whoever registered it first. That person holds a password and sessions
+ * and nothing else. A password reset removes both. Confirming by link
+ * requires that password's session (see the verify-email route), so the
+ * owner cannot be led into confirming an account someone else can enter.
+ */
+export async function assertVerified(userId: string): Promise<void> {
+  if (!emailVerificationRequired()) return;
+  if (!(await getUserById(userId))?.email_verified_at) {
+    throw new ServiceError("EMAIL_UNVERIFIED", UNVERIFIED_MESSAGE, 403);
+  }
+}
+
+/** Token hash for a verification link. Shares the reset-token pepper under its own prefix, so one can never pass for the other. */
+export function hashVerificationToken(raw: string): Promise<string> {
+  return hashPasswordResetToken(`verify:${raw}`);
+}
+
+/**
+ * Mails a fresh verification link, in the background. With `onlyIfNoneLive`
+ * (sign-in) nothing is sent while an earlier link still works, so signing
+ * in repeatedly does not send repeated mail.
+ */
+export async function sendVerification(user: DbUser, origin: string, opts?: { onlyIfNoneLive?: boolean }): Promise<void> {
+  if (!emailVerificationRequired() || !user.email || user.email_verified_at) return;
+  if (opts?.onlyIfNoneLive && (await hasLiveEmailVerificationToken(user.id))) return;
+
+  const raw = generatePasswordResetToken();
+  await createEmailVerificationToken(user.id, user.email, await hashVerificationToken(raw), new Date(Date.now() + VERIFY_TTL_MS));
+  sendVerificationEmail(user.email, `${origin}/verify-email?token=${encodeURIComponent(raw)}`).catch((err) =>
+    logError("verify-email", "Verification email failed", err),
+  );
+}
+
+/** For routes that do not go through v1(): the 403 response, or null when the user may proceed. */
+export async function unverifiedResponse(userId: string): Promise<NextResponse | null> {
+  try {
+    await assertVerified(userId);
+    return null;
+  } catch (e) {
+    return toErrorResponse(e);
+  }
+}

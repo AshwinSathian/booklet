@@ -238,6 +238,14 @@ jobs:
       ADMIN_IPS: 127.0.0.1
       NEXT_PUBLIC_SITE_URL: http://localhost:3100
       TEST_BASE_URL: http://localhost:3100
+      # tests/e2e/accounts.spec.ts runs a stub GitHub and Google on port
+      # 3199; these point the app's provider sign-in at it.
+      GITHUB_CLIENT_ID: ci-stub
+      GITHUB_CLIENT_SECRET: ci-stub
+      SSO_GITHUB_BASE_URL: http://127.0.0.1:3199/github
+      GOOGLE_CLIENT_ID: ci-stub
+      GOOGLE_CLIENT_SECRET: ci-stub
+      SSO_GOOGLE_BASE_URL: http://127.0.0.1:3199/google
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
 import { getUserById } from "@/lib/db/auth";
+import { isVerified } from "@/server/verification";
 
 export const runtime = "nodejs";
 
@@ -10,9 +11,10 @@ export const runtime = "nodejs";
 export async function GET() {
   const session = await getSession();
   if (!session) {
-    return NextResponse.json({ userId: null, email: null });
+    return NextResponse.json({ userId: null, email: null, emailVerified: false });
   }
 
   const user = await getUserById(session.userId);
-  return NextResponse.json({ userId: session.userId, email: user?.email ?? null });
+  // `emailVerified` is true wherever verification is not enforced.
+  return NextResponse.json({ userId: session.userId, email: user?.email ?? null, emailVerified: isVerified(user) });
 }

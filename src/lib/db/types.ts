@@ -8,6 +8,33 @@ export type DbUser = {
   display_name: string | null;
   plan: UserPlan;
   created_at: string;
+  /** ISO time the address in `email` was proven to reach this person. Absent or null = not verified. */
+  email_verified_at?: string | null;
+};
+
+export const SSO_PROVIDERS = ["github", "google"] as const;
+export type SsoProvider = (typeof SSO_PROVIDERS)[number];
+
+/** A sign-in identity at an outside provider, linked to one user. */
+export type DbUserIdentity = {
+  id: string;
+  user_id: string;
+  provider: SsoProvider;
+  provider_user_id: string;
+  /** The verified address the provider reported when the identity was linked. */
+  email: string;
+  created_at: string;
+};
+
+export type DbPasskey = {
+  id: string;                 // credential ID, base64url
+  user_id: string;
+  public_key: string;         // COSE public key, base64url
+  counter: number;
+  transports: string[] | null;
+  name: string;
+  created_at: string;
+  last_used_at: string | null;
 };
 
 export type DbSession = {

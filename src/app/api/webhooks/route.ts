@@ -1,3 +1,4 @@
+import { unverifiedResponse } from "@/server/verification";
 import { createWebhook, deleteWebhook, getWebhooksByUser } from "@/lib/db";
 import { createId } from "@/lib/id";
 import { isUrlSafe } from "@/lib/ssrf-guard";
@@ -24,6 +25,9 @@ export async function GET() {
 export async function POST(req: Request) {
   const userId = (await getSession())?.userId ?? null;
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const unverified = await unverifiedResponse(userId);
+  if (unverified) return unverified;
 
   let body: { url?: string; events?: unknown[] };
   try {

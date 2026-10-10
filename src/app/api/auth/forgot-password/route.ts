@@ -34,7 +34,9 @@ export async function POST(req: Request) {
   if (emailLimit) return emailLimit;
 
   const user = await getUserByEmail(email);
-  if (user && user.password_hash && user.email) {
+  // Accounts without a password (provider or passkey sign-in) get the link
+  // too: it is how they recover when that provider is no longer available.
+  if (user && user.email) {
     const raw = generatePasswordResetToken();
     const tokenHash = await hashPasswordResetToken(raw);
     await createPasswordResetToken(user.id, tokenHash, new Date(Date.now() + RESET_TTL_MS));

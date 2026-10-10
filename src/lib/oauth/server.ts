@@ -328,6 +328,47 @@ export async function revokeAllForUser(userId: string): Promise<void> {
   await (await codes()).deleteMany({ user_id: userId });
 }
 
+// ── Connected apps (Account settings) ───────────────────────────────────────
+
+export type ConnectedApp = { clientId: string; name: string; scope: OAuthScope[] };
+
+/**
+ * The apps that can currently act for a user: clients holding a refresh
+ * token that is neither spent, withdrawn nor expired.
+ */
+export async function listConnectedApps(userId: string): Promise<ConnectedApp[]> {
+  const live = await (await tokens())
+    .find({ user_id: userId, kind: "refresh", rotated_at: null, revoked_at: { $exists: false }, expires_at: { $gt: new Date() } })
+    .toArray();
+  const byClient = new Map<string, Set<OAuthScope>>();
+  for (const t of live) {
+    const scopes = byClient.get(t.client_id) ?? new Set<OAuthScope>();
+    t.scope.forEach((s) => scopes.add(s));
+    byClient.set(t.client_id, scopes);
+  }
+  return Promise.all(
+    [...byClient].map(async ([clientId, scopes]) => {
+      // The name is the client's own claim. A metadata client that cannot be
+      // fetched right now is shown by its host.
+      const client = await getClient(clientId).catch(() => null);
+      let fallback = "Unnamed app";
+      try {
+        fallback = new URL(clientId).host;
+      } catch {
+        /* a registered client: its ID is not a URL */
+      }
+      return { clientId, name: client?.client_name || fallback, scope: OAUTH_SCOPES.filter((s) => scopes.has(s)) };
+    }),
+  );
+}
+
+/** Withdraws every grant the user gave one app. Marked, not deleted, for the reason given at revokeGrant. */
+export async function disconnectApp(userId: string, clientId: string): Promise<void> {
+  const revoked_at = new Date();
+  await (await codes()).updateMany({ user_id: userId, client_id: clientId }, { $set: { revoked_at } });
+  await (await tokens()).updateMany({ user_id: userId, client_id: clientId }, { $set: { revoked_at } });
+}
+
 // ── Token use ───────────────────────────────────────────────────────────────
 
 export type AccessTokenInfo = { userId: string; clientId: string; scope: OAuthScope[]; resource: string; expiresAt: Date };

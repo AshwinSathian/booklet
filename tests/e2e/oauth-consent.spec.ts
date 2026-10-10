@@ -5,6 +5,11 @@ import { createHash, randomBytes } from "node:crypto";
 // Claude.ai connector asks to sign in, and that nothing is granted before
 // they click Allow.
 
+// Its own address for the per-IP signup limit (5 a minute). Without one,
+// this spec shares the "unknown" bucket with every spec that ran in the
+// same minute, and whether it passed depended on where the minute fell.
+test.use({ extraHTTPHeaders: { "cf-connecting-ip": `2001:db8::${Math.random().toString(16).slice(2, 6)}` } });
+
 const CALLBACK = "https://claude.ai/api/mcp/auth_callback";
 const PASSWORD = "oauth-e2e-correct-horse";
 
