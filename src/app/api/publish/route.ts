@@ -28,6 +28,8 @@ export const runtime = "nodejs";
 type PublishPayload = {
   raw: string;
   settings?: PublishedDoc["settings"];
+  /** Signed-in publishes only. Anything other than "public" means unlisted. */
+  visibility?: unknown;
 };
 
 export async function POST(req: Request) {
@@ -142,7 +144,14 @@ export async function POST(req: Request) {
     if (isAuthenticated && userId) {
       try {
         const title = extractDocTitle(blocks);
-        await createPageRecord(id, userId, title);
+        await createPageRecord(
+          id,
+          userId,
+          title,
+          null,
+          null,
+          payload.visibility === "public" ? "public" : "unlisted",
+        );
         void snapshotPageVersion(id, doc).catch((err) => {
           logError("publish", "Version snapshot failed", err);
         });

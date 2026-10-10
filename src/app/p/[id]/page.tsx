@@ -86,7 +86,10 @@ export async function generateMetadata({
     return buildLockedPageMetadata(`/p/${idOrSlug}`);
   }
 
-  const isUnlisted = pageRecord?.visibility === "unlisted";
+  // Indexable only when the author opted in. Anonymous publishes have no
+  // `pages` record at all, so "not public" (rather than "is unlisted") is
+  // what keeps them out of search engines too.
+  const isPublic = pageRecord?.visibility === "public";
   const title = extractTitle(doc.blocks) ?? "Shared page";
   const fmMeta = pageRecord?.frontmatter_meta as Record<string, unknown> | null | undefined;
   const fmDescription = typeof fmMeta?.description === "string" ? fmMeta.description : null;
@@ -101,7 +104,7 @@ export async function generateMetadata({
       title,
       description,
       pathname: `/p/${idOrSlug}`,
-      noIndex: isUnlisted,
+      noIndex: !isPublic,
     }),
     openGraph: {
       type: "article",

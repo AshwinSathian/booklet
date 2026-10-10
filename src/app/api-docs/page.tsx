@@ -175,8 +175,14 @@ export default function ApiDocsPage() {
               </p>
               <Pre>{`{
   "raw": "# Release Notes\\n\\nWhat changed...",
-  "settings": { "width": "normal" }
+  "settings": { "width": "normal" },
+  "visibility": "unlisted"
 }`}</Pre>
+              <p className="mt-3 text-sm text-text-secondary">
+                <Code>visibility</Code> is optional. A new page is <Code>unlisted</Code> unless you set{" "}
+                <Code>public</Code> here or in frontmatter: anyone with the link can read it, and it stays out of
+                Explore, the sitemap and search engines. <Code>raw</Code> can be up to 200,000 characters.
+              </p>
               <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mt-4 mb-2">Response 201</p>
               <Pre>{`{
   "id": "Ab3k91QxZp",
@@ -186,7 +192,7 @@ export default function ApiDocsPage() {
                 <Table rows={[
                   ["400", "Invalid JSON, empty document, or missing raw"],
                   ["401", "Missing or invalid API key"],
-                  ["413", "Document too large (>600 KB)"],
+                  ["413", "Document too large (over 200,000 characters)"],
                   ["429", "Rate limit exceeded (60 req/min)"],
                   ["500", "Internal storage error"],
                 ]} />
@@ -220,7 +226,7 @@ slug: incident-auth-2026-05
                 <tbody>
                   {[
                     ["title", "string", "Overrides the extracted H1 title (max 200 chars)"],
-                    ["visibility", '"public" | "unlisted"', "Defaults to public"],
+                    ["visibility", '"public" | "unlisted"', "Defaults to unlisted (link only, not listed or indexed)"],
                     ["slug", "string", "Custom URL slug — available to all signed-in accounts (max 60 chars)"],
                     ["description", "string", "Used for SEO meta description (max 300 chars)"],
                     ["author", "string", "Stored as metadata, max 100 chars"],

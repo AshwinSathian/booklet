@@ -6,7 +6,7 @@ import { CommandPalette } from "@/components/app/CommandPalette";
 import { GraphView } from "@/components/app/GraphView";
 import { PasteInput } from "@/components/app/PasteInput";
 import { PreviewPane } from "@/components/app/PreviewPane";
-import { TopBar } from "@/components/app/TopBar";
+import { TopBar, type PublishVisibility } from "@/components/app/TopBar";
 import { ToastProvider, useToast } from "@/components/ui/ToastProvider";
 import { trackEvent } from "@/lib/analytics";
 import { ANALYTICS_EVENTS, hashId } from "@/lib/analytics-events";
@@ -610,6 +610,10 @@ function AppPageContent() {
     [flushPendingAutosave, setSaveStateSmoothed],
   );
 
+  // Per publish, not per draft: every new page starts unlisted and the
+  // author opts in to Explore each time.
+  const [publishVisibility, setPublishVisibility] = useState<PublishVisibility>("unlisted");
+
   const onPublish = useCallback(async () => {
     if (!canPublish) {
       toast.info("Nothing to publish", "Write or paste something first.");
@@ -625,7 +629,7 @@ function AppPageContent() {
         // `blocks` is no longer sent — the server always derives it from
         // `raw` (see src/lib/block-schema.ts's header for why a
         // client-computed block tree is no longer trusted directly).
-        body: JSON.stringify({ settings, raw }),
+        body: JSON.stringify({ settings, raw, visibility: publishVisibility }),
       });
 
       if (!res.ok) {
@@ -680,7 +684,7 @@ function AppPageContent() {
         stage: "api",
       });
     }
-  }, [activeDraftId, blocks, settings, toast, canPublish, raw]);
+  }, [activeDraftId, blocks, settings, toast, canPublish, raw, publishVisibility]);
 
   const onUpdatePage = useCallback(async () => {
     if (!canPublish) {
@@ -832,6 +836,8 @@ function AppPageContent() {
         onCreateDraft={(origin) => onCreateDraft(origin ?? "unknown")}
         onSwitchDraft={(id, origin) => onSwitchDraft(id, origin ?? "unknown")}
         onPublish={onPublish}
+        publishVisibility={publishVisibility}
+        onPublishVisibilityChange={setPublishVisibility}
         onUpdatePage={onUpdatePage}
         onCopyLink={onCopyLink}
         onOpenPublished={onOpenPublished}

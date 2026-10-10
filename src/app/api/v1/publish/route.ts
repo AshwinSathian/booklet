@@ -27,6 +27,8 @@ export const runtime = "nodejs";
 type PublishPayload = {
   raw?: string;
   settings?: PublishedDoc["settings"];
+  /** Overrides frontmatter `visibility`. Unknown values are ignored. */
+  visibility?: unknown;
 };
 
 export async function POST(req: Request) {
@@ -142,7 +144,9 @@ export async function POST(req: Request) {
     // whether we tell the caller their requested slug didn't take, instead
     // of silently dropping it.
     const postPatch: Parameters<typeof updatePageRecord>[1] = {};
-    if (fm.visibility) postPatch.visibility = fm.visibility;
+    const visibility =
+      payload.visibility === "public" || payload.visibility === "unlisted" ? payload.visibility : fm.visibility;
+    if (visibility) postPatch.visibility = visibility;
     if (normalizedSlug) postPatch.slug = normalizedSlug;
     if (Object.keys(postPatch).length > 0) {
       await updatePageRecord(id, postPatch).catch((e) => {

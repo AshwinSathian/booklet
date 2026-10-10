@@ -66,7 +66,9 @@ async function doPublish(
 
   // Apply CLI-specified metadata (slug / visibility) via a separate PATCH.
   // Frontmatter in the document is handled server-side during the POST.
-  if (opts.slug || (opts.visibility && opts.visibility !== "public")) {
+  // Sent whenever --visibility is given: new pages are unlisted by default,
+  // so `--visibility public` needs the PATCH as much as `unlisted` once did.
+  if (opts.slug || opts.visibility) {
     const metaPatch: { slug?: string; visibility?: "public" | "unlisted" } = {};
     if (opts.slug) metaPatch.slug = opts.slug;
     if (opts.visibility === "public" || opts.visibility === "unlisted") metaPatch.visibility = opts.visibility;
@@ -97,7 +99,7 @@ export function registerPublishCommand(program: Command) {
     .command("publish [file]")
     .description("Publish a Markdown file (use - for stdin)")
     .option("--slug <slug>", "Set a custom URL slug")
-    .option("--visibility <v>", "public or unlisted (default: public)")
+    .option("--visibility <v>", "unlisted (link only, not indexed) or public (listed on Explore). Default: unlisted")
     .option("--update <id>", "Update an existing page by ID instead of creating new")
     .option("--watch", "Watch file for changes and re-publish automatically")
     .option("--open", "Open the published page in your browser after success")

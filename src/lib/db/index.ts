@@ -105,6 +105,9 @@ export async function createPageRecord(
   title: string | null = null,
   teamId: string | null = null,
   frontmatterMeta: Record<string, unknown> | null = null,
+  // Unlisted unless the author opts in: reachable by link, absent from
+  // /explore, tag pages, the sitemap and search engines.
+  visibility: DbPage["visibility"] = "unlisted",
 ): Promise<void> {
   const db = await getDb();
   const now = new Date().toISOString();
@@ -113,7 +116,7 @@ export async function createPageRecord(
     user_id: userId,
     // slug intentionally omitted — see PageDoc's comment above.
     title,
-    visibility: "public",
+    visibility,
     collection_id: null,
     team_id: teamId,
     view_count: 0,

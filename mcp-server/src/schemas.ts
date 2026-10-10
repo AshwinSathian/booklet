@@ -40,7 +40,7 @@ export const PublishPageInputSchema = z.object({
   title: z.string().optional().describe("Overrides the page title. Defaults to the first H1 in `raw`."),
   slug: slugSchema.optional(),
   visibility: VisibilitySchema.optional().describe(
-    '"public" (default, listed) or "unlisted" (hidden from listings, still reachable by URL).',
+    '"unlisted" (default: reachable by URL, hidden from listings and search engines) or "public" (listed on Explore and indexable).',
   ),
 });
 
