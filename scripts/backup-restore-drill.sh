@@ -20,8 +20,9 @@
 set -euo pipefail
 export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 
-IDENTITY="${1:?usage: backup-restore-drill.sh <age-private-key-file> [archive-name]}"
-[[ -r "$IDENTITY" ]] || { echo "Cannot read age identity file: $IDENTITY" >&2; exit 1; }
+# The identity file is only needed for an encrypted (.age) archive. For the
+# local unencrypted form pass "-" in its place.
+IDENTITY="${1:?usage: backup-restore-drill.sh <age-private-key-file | -> [archive-name]}"
 
 ENV_FILE="${BOOKLET_BACKUP_ENV:-$HOME/.booklet/backup.env}"
 if [[ -f "$ENV_FILE" ]]; then
@@ -30,7 +31,7 @@ if [[ -f "$ENV_FILE" ]]; then
   source "$ENV_FILE"
   set +a
 fi
-: "${BACKUP_REMOTE:?BACKUP_REMOTE is not set (see $ENV_FILE)}"
+BACKUP_REMOTE="${BACKUP_REMOTE:-$HOME/.booklet/backups}"
 
 MONGODB_URI="${MONGODB_URI:-mongodb://127.0.0.1:27017/booklet?directConnection=true}"
 SCRATCH_DB="booklet_restore_drill"
@@ -50,7 +51,7 @@ PY
 SCRATCH_URI="$(with_db "$SCRATCH_DB")"
 SERVER_URI="$(with_db "")"
 
-ARCHIVE="${2:-$(rclone lsf --files-only --include "booklet-*.archive.gz.age" "$BACKUP_REMOTE" | sort | tail -1)}"
+ARCHIVE="${2:-$(rclone lsf --files-only --include "booklet-*.archive.gz*" "$BACKUP_REMOTE" | sort | tail -1)}"
 [[ -n "$ARCHIVE" ]] || { echo "No archives found in $BACKUP_REMOTE" >&2; exit 1; }
 echo "Restoring $BACKUP_REMOTE/$ARCHIVE into scratch database \"$SCRATCH_DB\""
 
@@ -58,8 +59,17 @@ cleanup() { mongosh "$SCRATCH_URI" --quiet --eval 'db.dropDatabase()' >/dev/null
 trap cleanup EXIT
 cleanup
 
+decrypt() {
+  if [[ "$ARCHIVE" == *.age ]]; then
+    [[ -r "$IDENTITY" ]] || { echo "Cannot read age identity file: $IDENTITY" >&2; exit 1; }
+    age --decrypt --identity "$IDENTITY"
+  else
+    cat
+  fi
+}
+
 rclone cat "$BACKUP_REMOTE/$ARCHIVE" \
-  | age --decrypt --identity "$IDENTITY" \
+  | decrypt \
   | mongorestore --uri="$SERVER_URI" --archive --gzip --quiet \
       --nsFrom='booklet.*' --nsTo="${SCRATCH_DB}.*"
 

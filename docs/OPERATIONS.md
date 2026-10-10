@@ -7,24 +7,36 @@ this document is the durable operational record).
 
 ## Backups and restore
 
-Added 2026-10-10. `scripts/backup-mongo.sh` runs nightly at 03:30 from
-launchd (`scripts/com.booklet.backup.plist`). It pipes `mongodump --archive
---gzip` through `age` and uploads the result to the R2 bucket with `rclone`,
-then deletes all but the newest 30 archives. Log:
-`~/.booklet-deploy-logs/backup.log`.
+`scripts/backup-mongo.sh` runs nightly at 03:30 from launchd
+(`scripts/com.booklet.backup.plist`). Log: `~/.booklet-deploy-logs/backup.log`.
+The same run rotates the MongoDB log and deletes rotated logs older than 14
+days.
 
-The archive is encrypted with an age public key before it leaves the Mac.
-The private key is not needed for backups and should not be stored next to
-the R2 credentials: with it kept elsewhere, a leaked R2 token exposes
-ciphertext only. Losing the private key makes every archive unreadable, so
-keep a second copy of it somewhere that is not this Mac.
+It has two forms.
 
-Configuration is in `~/.booklet/backup.env` (mode 600). The variables are
-listed at the top of `scripts/backup-mongo.sh`. A failed run emails
-`BACKUP_ALERT_EMAIL` through Resend and exits non-zero.
+**Local (the default, no configuration).** A gzip `mongodump` archive goes to
+`~/.booklet/backups`, and all but the newest 30 are deleted. This protects
+against a bad migration or an accidental delete. It is on the same disk as
+the database, so it does not protect against losing the disk.
 
-**Restore.** These three commands restore the newest archive over the live
-database. `--drop` replaces each collection that exists in the archive.
+**Off-site.** With `BACKUP_REMOTE` and `BACKUP_AGE_RECIPIENT` set in
+`~/.booklet/backup.env` (mode 600), the archive is encrypted with `age` and
+uploaded with `rclone`, to R2 or any other rclone remote. The script refuses
+to send an unencrypted archive off this Mac. The private key is not needed
+for backups and should not be stored next to the remote's credentials: with
+it kept elsewhere, a leaked token exposes ciphertext only. Losing the
+private key makes every archive unreadable, so keep a second copy of it
+somewhere that is not this Mac. A failed run emails `BACKUP_ALERT_EMAIL`
+through Resend and exits non-zero.
+
+Restore the newest local archive over the live database:
+
+```bash
+LATEST=$(ls ~/.booklet/backups/booklet-*.archive.gz | sort | tail -1)
+mongorestore --uri="mongodb://127.0.0.1:27017/?directConnection=true" --archive="$LATEST" --gzip --drop
+```
+
+These three commands do the same from the off-site archive. `--drop` replaces each collection that exists in the archive.
 
 ```bash
 source ~/.booklet/backup.env
@@ -38,8 +50,9 @@ The `mongorestore` URI must not name a database. Given one, it restores
 only namespaces already in that database and reports success having
 restored nothing.
 
-**Restore drill.** `bash scripts/backup-restore-drill.sh
-/path/to/age-private-key.txt` restores the newest archive into a scratch
+**Restore drill.** `bash scripts/backup-restore-drill.sh -` (local archive)
+or `bash scripts/backup-restore-drill.sh /path/to/age-private-key.txt`
+(encrypted archive) restores the newest archive into a scratch
 database (`booklet_restore_drill`), prints the `pages`, `docs` and `users`
 counts beside production's, and drops the scratch database. Run it right
 after a backup; anything published in between makes the counts differ.
@@ -70,6 +83,60 @@ launch agent, `~/Library/LaunchAgents/homebrew.mxcl.mongodb-community@8.0.plist`
 `brew services start mongodb-community@8.0` does not work (the formula has
 no service definition), and the 7.0 formula should stay stopped or be
 uninstalled.
+
+## Keeping this Mac serving
+
+Production is this one Mac (decision and reasons: `docs/adr/0001-hosting-platform.md`).
+`bash scripts/health-check.sh` reports each item below under "Staying Up".
+
+**Sleep.** A sleeping Mac drops the tunnel and every page returns 530.
+`scripts/com.booklet.awake.plist` runs `caffeinate -ims` as a launch agent,
+which needs no admin rights. The system-wide setting is better, because it
+holds before login and without the agent:
+
+```bash
+sudo pmset -a sleep 0 disksleep 0 powernap 0
+```
+
+**Power cuts.** `sudo pmset -a autorestart 1` makes the Mac start again when
+power returns. It then stops at the FileVault unlock screen (next item).
+
+**Restarts need a person.** The disk is encrypted with FileVault and there is
+no automatic login. MongoDB, PM2 and `cloudflared` are launch agents of the
+logged-in user, so after any restart nothing serves until someone unlocks
+the Mac at its keyboard. Three ways to live with that:
+
+- Stop macOS installing updates and restarting by itself, and restart on
+  purpose: System Settings, General, Software Update, Automatic Updates,
+  "Install macOS updates" off. Then for a planned restart
+  `sudo fdesetup authrestart` unlocks the disk once across that one reboot.
+- Accept it. The uptime probe below tells you within about 20 minutes.
+- Turn FileVault off and automatic login on. The site then survives a power
+  cut unattended, and the disk, with the database and every secret in
+  `.env.production.local`, is readable by anyone who takes the Mac.
+
+**MongoDB.** Its launch agent has `KeepAlive` off, so launchd does not
+restart `mongod` after a crash. The PM2 watchdog (`scripts/pm2-startup.sh`,
+every 15 seconds) starts the 8.0 agent when no `mongod` is running.
+
+**Noticing an outage.** `.github/workflows/uptime.yml` probes the three
+health URLs from a GitHub-hosted runner every 10 minutes and fails the run
+when one is down twice a minute apart. GitHub emails the person who last
+edited the schedule. It has no status page and can start late; a real
+monitor (see "Monitoring") is still the better answer.
+
+**Logs.** PM2 does not rotate its logs. `pm2 install pm2-logrotate` does it
+for every app on this Mac's PM2 daemon, not only Booklet's.
+
+**After a restart**, once logged in:
+
+```bash
+bash scripts/health-check.sh
+```
+
+Everything should start by itself within a minute. If MongoDB did not, use
+`launchctl start homebrew.mxcl.mongodb-community@8.0` and nothing else (see
+"MongoDB version" below).
 
 ## Node.js runtime
 

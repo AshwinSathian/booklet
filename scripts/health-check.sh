@@ -81,6 +81,21 @@ _check "process running"       "ok"        "pgrep -x cloudflared > /dev/null && 
 _check "4 connections"         "ok"        \
   "cloudflared tunnel info 36f0ab5f-f084-4d8e-982a-ca50bf263e80 2>/dev/null | grep -c 'CONNECTOR ID' | awk '{print (\$1>=1)?\"ok\":\"no-connections\"}'"
 
+# ── Staying up ────────────────────────────────────────────────────────────────
+# Warnings, not failures: none of these takes the site down today, each one
+# is how it goes down later. See docs/OPERATIONS.md, "Keeping this Mac serving".
+echo ""
+echo "[ Staying Up ]"
+_warn  "idle sleep is blocked"   "ok" \
+  "{ pmset -g | grep -qE '^ sleep +0( |\$)' || pgrep -x caffeinate >/dev/null; } && echo ok || echo 'sleep enabled and no caffeinate agent'"
+_warn  "restarts after power loss" "1" "pmset -g | awk '\$1==\"autorestart\" {print \$2}'"
+_warn  "macOS updates do not auto-install" "0" \
+  "defaults read /Library/Preferences/com.apple.SoftwareUpdate AutomaticallyInstallMacOSUpdates 2>/dev/null || echo 0"
+_warn  "backup newer than 26 hours" "^fresh$" \
+  "find \"\${BACKUP_DIR:-\$HOME/.booklet/backups}\" -name 'booklet-*.archive.gz*' -mmin -1560 2>/dev/null | grep -q . && echo fresh || echo 'no recent archive in ~/.booklet/backups (off-site only? set BACKUP_DIR)'"
+_warn  "backup agent loaded"     "com.booklet.backup" \
+  "launchctl list 2>/dev/null | grep com.booklet.backup | awk '{print \$3}'"
+
 # ── PM2 persistence ───────────────────────────────────────────────────────────
 echo ""
 echo "[ PM2 Persistence ]"

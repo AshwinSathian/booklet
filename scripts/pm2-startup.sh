@@ -44,7 +44,19 @@ process_online() {
     2>/dev/null
 }
 
+# The MongoDB launch agent has KeepAlive off, so launchd does not bring
+# mongod back after a crash. This does. Only ever the 8.0 agent: the data
+# files are at featureCompatibilityVersion 8.0 and the 7.0 formula cannot
+# open them (outage of 2026-10-09, docs/OPERATIONS.md).
+MONGO_AGENT="homebrew.mxcl.mongodb-community@8.0"
+ensure_mongod() {
+  if pgrep -x mongod >/dev/null; then return; fi
+  log "mongod is not running — starting launch agent $MONGO_AGENT"
+  launchctl start "$MONGO_AGENT" || log "WARN: launchctl start $MONGO_AGENT failed"
+}
+
 ensure_booklet() {
+  ensure_mongod
   if ! ping_pm2; then
     log "PM2 daemon not responding — skipping (brnr watchdog will resurrect it)"
     return
