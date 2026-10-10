@@ -149,6 +149,19 @@ export default async function middleware(req: NextRequest) {
     } catch {
       /* malformed escape: look it up as-is, it will not match anything */
     }
+    // Markdown for agents: `/p/:id.md`, or `/p/:id` asked for as
+    // text/markdown and not as HTML. IDs and slugs never contain a dot, so
+    // the suffix is unambiguous. The route decides what may be served.
+    const accept = req.headers.get("accept") ?? "";
+    const wantsMarkdown = id.endsWith(".md") || (/text\/markdown/i.test(accept) && !/text\/html/i.test(accept));
+    if (wantsMarkdown && !share[2]) {
+      const pageId = id.replace(/\.md$/, "");
+      return withSecurityHeaders(
+        NextResponse.rewrite(new URL(`/api/pages/${encodeURIComponent(pageId)}/markdown`, req.url)),
+        false,
+      );
+    }
+
     const reason = await fetchGoneReason(id);
     // An expired page stays reachable from the browser that published it
     // until the purge deletes it, so its author can still claim it. Only
@@ -170,7 +183,12 @@ export default async function middleware(req: NextRequest) {
     }
   }
 
-  return withSecurityHeaders(NextResponse.next(), isEmbedRoute);
+  const res = NextResponse.next();
+  if (share && !share[2]) {
+    res.headers.set("Link", `</p/${share[1]}.md>; rel="alternate"; type="text/markdown"`);
+    res.headers.set("Vary", "Accept");
+  }
+  return withSecurityHeaders(res, isEmbedRoute);
 }
 
 export const config = {
