@@ -4,8 +4,7 @@ import { getUserById } from "@/lib/db/auth";
 
 export const runtime = "nodejs";
 
-// Lightweight "who am I" check for client components (mirrors Clerk's
-// client-side useUser() sync) — the session cookie itself is httpOnly and
+// Lightweight "who am I" check for client components — the session cookie itself is httpOnly and
 // deliberately unreadable from client JS, so this is the only way client
 // components learn sign-in state. Never returns password_hash.
 export async function GET() {

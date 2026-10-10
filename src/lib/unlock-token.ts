@@ -10,7 +10,7 @@ function bufToHex(buf: ArrayBuffer): string {
  * Reads the dedicated unlock-token signing secret. Deliberately has no
  * fallback — if UNLOCK_TOKEN_SECRET is unset, unlock tokens must not be
  * signed or verified with any other value (a hardcoded constant would be
- * readable from source; borrowing CLERK_SECRET_KEY or INVITE_JWT_SECRET
+ * readable from source; borrowing INVITE_JWT_SECRET
  * would needlessly couple unrelated systems). Throws so misconfiguration
  * fails loudly instead of silently trusting a guessable secret — mirrors
  * getJwtSecret() in src/lib/invite-token.ts.

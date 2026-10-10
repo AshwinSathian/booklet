@@ -155,7 +155,7 @@ if [[ -f "$ENV_FILE" ]]; then
   ok ".env.production.local exists"
   # Verify required keys are set (non-empty, non-placeholder)
   MISSING=()
-  for key in MONGODB_URI NEXT_PUBLIC_SITE_URL SESSION_TOKEN_PEPPER CLAIM_TOKEN_SECRET INVITE_JWT_SECRET UNLOCK_TOKEN_SECRET API_KEY_PEPPER; do
+  for key in MONGODB_URI NEXT_PUBLIC_SITE_URL SESSION_TOKEN_PEPPER INVITE_JWT_SECRET UNLOCK_TOKEN_SECRET API_KEY_PEPPER; do
     val=$(grep "^${key}=" "$ENV_FILE" 2>/dev/null | cut -d= -f2- || true)
     if [[ -z "$val" || "$val" == *"REPLACE_ME"* ]]; then
       MISSING+=("$key")
@@ -171,7 +171,7 @@ else
   cp "$REPO_ROOT/.env.production.local.example" "$ENV_FILE"
   printf "\n"
   printf "  Edit %s and fill in:\n" "$ENV_FILE"
-  printf "    • SESSION_TOKEN_PEPPER, CLAIM_TOKEN_SECRET, INVITE_JWT_SECRET,\n"
+  printf "    • SESSION_TOKEN_PEPPER, INVITE_JWT_SECRET,\n"
   printf "      UNLOCK_TOKEN_SECRET, API_KEY_PEPPER (each a dedicated random\n"
   printf "      secret, e.g. via: openssl rand -base64 32)\n"
   printf "    • MONGODB_URI       (use: mongodb://127.0.0.1:27017/booklet?directConnection=true)\n"

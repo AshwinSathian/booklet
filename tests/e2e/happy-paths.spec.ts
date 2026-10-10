@@ -410,10 +410,7 @@ test.describe("Security: MathDisplay XSS regression", () => {
 // ---------------------------------------------------------------------------
 // Suite 10: In-house auth — signup, session-gated access, logout, login
 //
-// Unlike the Clerk-based auth this replaced (see PLAN-backend-auth-migration.md),
-// this flow is entirely first-party, so it can actually be driven end-to-end
-// here — the previous suite could only assert the sign-in/sign-up pages
-// rendered, never a real credentialed round trip.
+// This flow is entirely first-party, so it is driven end-to-end here.
 //
 // The session cookie's Secure flag is derived from the x-forwarded-proto
 // header (see src/lib/auth/session.ts's isSecureRequest), not NODE_ENV —

@@ -20,8 +20,8 @@
 export const INDEX_SPECS = [
   // --- users ---
   { collection: "users", spec: { _id: 1 } }, // already primary; explicit for clarity
-  // Sparse: only enforced once email is populated for every doc (post-Clerk-
-  // migration, see PLAN-backend-auth-migration.md) — sparse avoids a
+  // Sparse: only enforced once email is populated for every doc (older docs
+  // predate the in-house auth, see PLAN-backend-auth-migration.md) — sparse avoids a
   // duplicate-null collision across legacy docs missing the field.
   { collection: "users", spec: { email: 1 }, options: { unique: true, sparse: true } },
 

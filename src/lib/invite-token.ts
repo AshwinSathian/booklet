@@ -12,7 +12,7 @@ export interface InvitePayload {
  * Reads the dedicated invite-signing secret. Deliberately has no fallback —
  * if INVITE_JWT_SECRET is unset, invite tokens must not be signed or verified
  * with any other value (a hardcoded constant would be readable from source;
- * borrowing CLERK_SECRET_KEY would needlessly couple two unrelated systems).
+ * borrowing another secret would needlessly couple two unrelated systems).
  * Throws so misconfiguration fails loudly instead of silently trusting a
  * guessable secret.
  */

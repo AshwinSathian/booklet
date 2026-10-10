@@ -52,7 +52,7 @@ export async function getUserByEmail(email: string): Promise<DbUser | null> {
   return doc ? toUser(doc) : null;
 }
 
-/** Sets a user's password (initial /claim, or a future reset flow). */
+/** Sets a user's password (password reset). */
 export async function setUserPassword(userId: string, passwordHash: string): Promise<void> {
   const db = await getDb();
   await db.collection<UserDoc>("users").updateOne({ _id: userId }, { $set: { password_hash: passwordHash } });

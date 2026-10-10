@@ -1,12 +1,10 @@
 export type UserPlan = "free";
 
 export type DbUser = {
-  id: string;                     // app-owned; preserved as-is for users migrated off Clerk
-  // Nullable for the remainder of the Clerk-removal migration (Phase 1 tightens
-  // this to `string` once every signup/login path guarantees it) — see
-  // PLAN-backend-auth-migration.md.
+  id: string;                     // app-owned
+  // Nullable: user rows created before the in-house auth have no email.
   email: string | null;
-  password_hash: string | null;   // argon2id hash (src/lib/auth/password.ts); null = pre-Phase-1 user or migrated user pending /claim
+  password_hash: string | null;   // argon2id hash (src/lib/auth/password.ts); null = user row created before the in-house auth
   display_name: string | null;
   plan: UserPlan;
   created_at: string;

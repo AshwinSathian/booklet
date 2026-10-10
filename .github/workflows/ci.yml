@@ -139,7 +139,7 @@ jobs:
           # Next.js only needs NEXT_PUBLIC_* vars at build time (they get
           # inlined into the client bundle). Every non-NEXT_PUBLIC_ var in
           # .env.example (MONGODB_URI, INVITE_JWT_SECRET, UNLOCK_TOKEN_SECRET,
-          # SESSION_TOKEN_PEPPER, CLAIM_TOKEN_SECRET, ADMIN_IPS,
+          # SESSION_TOKEN_PEPPER, ADMIN_IPS,
           # ADMIN_USER_IDS, API_KEY_PEPPER, READABLE_WEBHOOK_SECRET) is read
           # lazily inside function bodies at request time (src/lib/mongodb.ts,
           # src/lib/unlock-token.ts, src/lib/invite-token.ts,
@@ -216,7 +216,6 @@ jobs:
       API_KEY_PEPPER: ci-only-api-key-pepper-not-used-anywhere-real
       SESSION_TOKEN_PEPPER: ci-only-session-pepper-not-used-anywhere-real
       PASSWORD_RESET_TOKEN_PEPPER: ci-only-reset-pepper-not-used-anywhere-real
-      CLAIM_TOKEN_SECRET: ci-only-claim-secret-not-used-anywhere-real
       # tests/e2e/moderation-expiry.spec.ts seeds a user with this id and
       # sends cf-connecting-ip: 127.0.0.1 — see that file's header.
       ADMIN_USER_IDS: e2e-admin
