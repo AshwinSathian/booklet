@@ -3,6 +3,7 @@ import type { PublishedDoc } from "@/lib/blocks";
 import { DEFAULT_SETTINGS } from "@/lib/blocks";
 import { BLOCKS } from "@/lib/constants";
 import { setPageLinks, updatePageRecord } from "@/lib/db";
+import { collectRichBlockKinds } from "@/lib/block-usage";
 import { recordPublishEvent } from "@/lib/db/publish-events";
 import { snapshotPageVersion } from "@/lib/db/versions";
 import { deliverWebhooks } from "@/lib/webhook-delivery";
@@ -105,8 +106,10 @@ export async function PATCH(
       pageId: id,
       isUpdate: true,
       contentLength: payload.raw.length,
+      richBlockKinds: collectRichBlockKinds(blocks),
       source: "browser",
     }).catch((err) => logError("patch-publish", "Event record failed", err));
+    // The id URL, as in page.published: it outlives a change of slug.
     void deliverWebhooks(userId, "page.updated", {
       page_id: id,
       page_url: `${getSiteOrigin(req)}/p/${id}`,

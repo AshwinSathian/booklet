@@ -169,7 +169,11 @@ export async function importMarkdownFromUrl(
     if (raw.length > STORAGE.maxInputChars) throw TOO_LARGE();
     if (!raw.trim()) throw refuse("That file is empty.");
 
-    const file = decodeURIComponent(url.pathname.split("/").pop() ?? "");
+    // decodeURIComponent throws on a name that is not percent-encoded UTF-8; such a name is kept as it is.
+    let file = url.pathname.split("/").pop() ?? "";
+    try {
+      file = decodeURIComponent(file);
+    } catch {}
     return { raw, title: file.replace(MARKDOWN_PATH, "") || "Imported document", source_url: url.toString() };
   }
   throw refuse("That link redirects too many times.");

@@ -36,9 +36,10 @@ client and MCP server keep their versions.
 
 ### Changed
 
-- **HTML export includes Mermaid diagrams**, as the SVG the page has
-  already drawn. They used to export as source text. Mermaid labels are now
-  SVG text, so some long labels wrap differently than before.
+- **HTML export includes Mermaid diagrams**, drawn in the browser when you
+  export, in the light theme. They used to export as source text. Labels in
+  the exported diagram are plain SVG text, so icons and math inside a label
+  do not carry over.
 - The export menu's PDF option is called "Print to PDF".
 - **Accessibility.** Every page passes axe's WCAG 2.2 AA rules in the light
   and the dark theme, and a test fails when a new page is not covered.

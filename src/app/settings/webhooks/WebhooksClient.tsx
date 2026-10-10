@@ -2,7 +2,8 @@
 
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
-import { useCallback, useRef, useState } from "react";
+import { formatUpdatedAtLong, formatUpdatedAtLongUTC } from "@/lib/ui/time";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type DeliveryRow = {
   id: string;
@@ -33,6 +34,9 @@ function DeliveryLog({ webhookId, initial }: { webhookId: string; initial: Deliv
   const [rows, setRows] = useState(initial);
   const [resending, setResending] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Server and browser may format a time differently: see formatUpdatedAtLongUTC.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const resend = async (deliveryId: string) => {
     setResending(deliveryId);
@@ -72,8 +76,8 @@ function DeliveryLog({ webhookId, initial }: { webhookId: string; initial: Deliv
               <a href={`/p/${d.page_id}`} className="font-mono text-2xs text-text-secondary underline hover:text-text-primary">
                 {d.page_id}
               </a>
-              <time dateTime={d.created_at} className="text-text-secondary" suppressHydrationWarning>
-                {new Date(d.created_at).toLocaleString()}
+              <time dateTime={d.created_at} className="text-text-secondary">
+                {mounted ? formatUpdatedAtLong(d.created_at) : formatUpdatedAtLongUTC(d.created_at)}
               </time>
               <Button
                 variant="secondary"

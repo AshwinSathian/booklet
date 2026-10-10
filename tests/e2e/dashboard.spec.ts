@@ -206,8 +206,10 @@ test("the HTML export carries the rendered Mermaid diagram as inline SVG, with n
   const owner = await person(browser, "export");
   const id = await publish(owner, "# Flow\n\n```mermaid\ngraph TD\n  Alpha[Receive job] --> Beta[Retry queue]\n```\n\nAfter.");
   const page = await owner.context.newPage();
+  // Exported in the dark theme: the file's diagram is light either way, and
+  // does not depend on what the page itself has drawn.
+  await page.addInitScript(() => localStorage.setItem("theme", "dark"));
   await page.goto(`/p/${id}`);
-  await expect(page.locator("[data-mermaid-source] svg")).toBeVisible();
 
   await page.getByRole("button", { name: "Export" }).first().click();
   await expect(page.getByText("Print to PDF")).toBeVisible();
@@ -221,4 +223,5 @@ test("the HTML export carries the rendered Mermaid diagram as inline SVG, with n
   expect(html).not.toContain("language-mermaid");
   expect(html).not.toContain("graph TD");
   expect(html).not.toMatch(/foreignObject|<script|\son[a-z]+=/i);
+  expect(html).toContain("fill:#333");
 });

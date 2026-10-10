@@ -1,7 +1,6 @@
 // Sanitizes SVG markup produced by a diagram compiler (Graphviz via
 // @viz-js/viz) before it's assigned via innerHTML in DiagramBlock, and the
-// rendered Mermaid SVG the HTML export copies off the page
-// (src/lib/export/diagrams.ts). Diagram
+// Mermaid SVG drawn for the HTML export (src/lib/export/diagrams.ts). Diagram
 // source is user-controlled text (a fenced code block's contents) — DOT
 // supports HTML-like labels and per-node/edge `URL`/`href` attributes, both
 // of which can carry a script or a `javascript:`/`data:` URI through to the

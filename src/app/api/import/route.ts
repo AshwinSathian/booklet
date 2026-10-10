@@ -10,8 +10,9 @@ export const runtime = "nodejs";
 /**
  * The editor's "Import from URL". Returns the file's Markdown for a new
  * local draft; it stores and publishes nothing. Open to signed-out visitors
- * like the rest of the editor, so the limit is per address, and only the
- * site's own pages may call it.
+ * like the rest of the editor, so the limit is per address. A page on
+ * another site cannot call it from a visitor's browser (the Origin check);
+ * a script can, and gets what raw.githubusercontent.com serves anyone.
  */
 export async function POST(req: Request) {
   if (!isSameOriginRequest(req)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });

@@ -21,6 +21,7 @@ export function ImportUrlDialog({
   const [url, setUrl] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const request = useRef<AbortController | null>(null);
 
   // A native modal <dialog>: focus trap, Escape and the backdrop come with it.
   useEffect(() => {
@@ -28,14 +29,22 @@ export function ImportUrlDialog({
     if (!dialog) return;
     if (open && !dialog.open) dialog.showModal();
     if (!open && dialog.open) dialog.close();
+    if (!open) {
+      // Closed while a fetch was out: its answer must not open a draft later.
+      request.current?.abort();
+      setError(null);
+    }
   }, [open]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setError(null);
+    const controller = new AbortController();
+    request.current = controller;
     try {
       const res = await fetch("/api/import", {
+        signal: controller.signal,
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ url }),
@@ -49,7 +58,7 @@ export function ImportUrlDialog({
       setUrl("");
       onClose();
     } catch {
-      setError("Could not reach Booklet. Check your connection and try again.");
+      if (!controller.signal.aborted) setError("Could not reach Booklet. Check your connection and try again.");
     } finally {
       setBusy(false);
     }

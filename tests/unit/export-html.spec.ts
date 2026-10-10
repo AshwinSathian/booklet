@@ -175,7 +175,7 @@ test.describe("blocksToHtml — diagram export", () => {
     expect(html).toContain("language-dot");
   });
 
-  test("a Mermaid diagram uses the SVG already rendered on the page, and no source block", async () => {
+  test("a Mermaid diagram uses the SVG drawn for the export, and no source block", async () => {
     const code = "graph TD; A-->B;";
     const html = await blocksToHtmlDocument(
       [{ t: "diagram", lang: "mermaid", code }],
@@ -187,7 +187,7 @@ test.describe("blocksToHtml — diagram export", () => {
     expect(html).not.toContain("A--&gt;B");
   });
 
-  test("a Mermaid diagram that was not rendered on the page falls back to its source", async () => {
+  test("a Mermaid diagram that could not be drawn falls back to its source", async () => {
     const html = await blocksToHtml([
       { t: "diagram", lang: "mermaid", code: "graph TD; A-->B;" },
     ]);

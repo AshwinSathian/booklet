@@ -832,6 +832,10 @@ export async function getWebhookDelivery(id: string, webhookId: string, userId: 
 /**
  * How each of a user's pages was last published or updated (web, API, CLI,
  * MCP, Action). Owner-only: it is keyed by the events' own `user_id`.
+ *
+ * ponytail: reads all of the user's publish events (indexed by user_id) on
+ * each My pages load. Keep a `last_source` on the page record instead if an
+ * account's event count makes this slow.
  */
 export async function getLastPublishSources(userId: string): Promise<Map<string, PublishEvent["source"]>> {
   const db = await getDb();

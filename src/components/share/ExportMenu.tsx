@@ -2,7 +2,7 @@
 
 import type { Block, DocSettings } from "@/lib/blocks";
 import { blocksToHtmlDocument } from "@/lib/export";
-import { collectRenderedDiagrams } from "@/lib/export/diagrams";
+import { renderDiagramsForExport } from "@/lib/export/diagrams";
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
@@ -58,7 +58,7 @@ export function ExportMenu({
     if (exportingHtml) return;
     setExportingHtml(true);
     try {
-      const html = await blocksToHtmlDocument(blocks, title, collectRenderedDiagrams());
+      const html = await blocksToHtmlDocument(blocks, title, await renderDiagramsForExport(blocks));
       downloadBlob(html, `${filename}.html`, "text/html;charset=utf-8");
       setOpen(false);
     } finally {

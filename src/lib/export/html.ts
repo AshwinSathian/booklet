@@ -51,10 +51,10 @@ export async function markdownToHtml(raw: string): Promise<string> {
 }
 
 /**
- * Mermaid diagrams already drawn on the page, keyed by their source. Mermaid
- * needs a browser's text measurement to lay a diagram out, so the export
- * does not compile it: the caller copies the SVG the page rendered (see
- * collectRenderedDiagrams in ./diagrams.ts) and passes it here.
+ * Mermaid diagrams as sanitized SVG, keyed by their source. Mermaid needs a
+ * browser's text measurement to lay a diagram out, so this module does not
+ * compile it: the caller draws them (renderDiagramsForExport in
+ * ./diagrams.ts) and passes them here.
  */
 export type RenderedDiagrams = ReadonlyMap<string, string>;
 const NO_DIAGRAMS: RenderedDiagrams = new Map();
@@ -201,10 +201,8 @@ async function renderBlock(b: Block, diagrams: RenderedDiagrams): Promise<string
       // module loads exactly the same way, just ahead of time at export
       // instead of on mount.
       //
-      // Mermaid is not compiled here: its layout engine needs a browser's
-      // text measurement (getBBox), so the export reuses the SVG the page
-      // has already drawn, sanitized by the caller. A diagram that was not
-      // on screen (or failed to render) falls back to its source.
+      // Mermaid is not compiled here (see RenderedDiagrams). One the caller
+      // could not draw falls back to its source.
       if (GRAPHVIZ_LANGS.has(b.lang)) {
         const svg = await renderGraphvizToSvg(b.code);
         if (svg) return svg;
