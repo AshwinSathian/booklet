@@ -5,6 +5,7 @@ import type { Block } from "@/lib/blocks";
 import { APP_NAME, ROUTES } from "@/lib/constants";
 import { getBacklinkPages, getPageBySlug, getPageRecord, incrementViewCount } from "@/lib/db";
 import { canListPage, canViewPage } from "@/server/access";
+import { parseFrontmatter } from "@/lib/frontmatter";
 import { DocHeaderStrip } from "@/components/share/DocHeaderStrip";
 import { absoluteUrl, buildMetadata } from "@/lib/seo";
 import { buildLockedPageMetadata } from "@/lib/locked-page-metadata";
@@ -316,7 +317,9 @@ export default async function SharePage({
         <div className="flex flex-col lg:flex-row gap-12">
           <div className="min-w-0 flex-1">
             <DocHeaderStrip
-              meta={pageRecord?.frontmatter_meta ?? null}
+              // A page published without an account has no record to hold
+              // its frontmatter; it is still in the stored Markdown.
+              meta={pageRecord ? pageRecord.frontmatter_meta : doc.raw ? parseFrontmatter(doc.raw).meta : null}
               userId={pageRecord?.user_id ?? null}
               teamOnly={pageRecord?.visibility === "team"}
             />

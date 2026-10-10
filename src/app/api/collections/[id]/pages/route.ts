@@ -62,7 +62,9 @@ export async function DELETE(
   const { id } = await params;
   let page;
   try {
-    await getAssignableCollection(id, userId);
+    // Owning the page is enough to take it out. Someone removed from a
+    // team space, or made a viewer, must still be able to leave with what
+    // is theirs.
     const pageId = await readPageId(req);
     if (!pageId) return NextResponse.json({ error: "Missing pageId" }, { status: 400 });
     page = await getOwnedPage(pageId, userId);

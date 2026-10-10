@@ -246,19 +246,37 @@ db.collection_members.find({ collection_id: p.collection_id }, { user_id: 1, ema
 **Invites.** `POST /api/teams/:id/invite` returns a link signed with
 `INVITE_JWT_SECRET`, valid for 72 hours. `/t/join` accepts it only from an
 account whose email is the invited address, and, where email is configured,
-only once that address is confirmed. Removing a member sets
-`collections.invites_valid_after`, which cancels every link issued before
-it; people invited and not yet joined need a new link.
+only once that address is confirmed. Removing a member adds their address
+to `collections.invite_revocations`, which cancels the links sent to that
+address before the removal. Other people's unused links keep working. An
+address the owner listed before it had a confirmed account is a
+`collection_members` row with `user_id: "pending:<email>"`; it grants
+nothing, and its role is applied when that person joins by invite.
 
 **Links between pages.** `page_links` holds one row per `[[Title]]` that
-resolved when the source page was published (`src/server/links.ts`). The
-link is not recomputed when a title or a visibility changes later; it is
-when the source is published again. Deleting a page removes its rows.
+resolved when the source page was published (`src/server/links.ts`). Links
+are resolved again when the source page's visibility changes, because a
+public page may only link to public pages. They are not when a target's
+title or visibility changes; that waits for the source to be published
+again. Deleting a page removes its rows.
 
 **Document types.** Frontmatter `type` is stored as `pages.doc_type`
 (indexed) and the other fields in `pages.frontmatter_meta`. Pages published
 before 2026-10-10 from the editor have neither until they are published
-again; they show no header strip and sit under "Other pages" in a space.
+again; they sit under "Other pages" in a space.
+
+**Data changed with the 2026-10 documents release.** Pages published through
+the API before it had their frontmatter kept on the page record and left out
+of the stored Markdown. Since an update now takes those fields from the
+Markdown, the frontmatter was written back once, after a `mongodump`:
+
+```bash
+MONGODB_URI="mongodb://127.0.0.1:27017/booklet?directConnection=true" node scripts/restore-frontmatter-raw.mjs --dry-run
+MONGODB_URI="mongodb://127.0.0.1:27017/booklet?directConnection=true" node scripts/restore-frontmatter-raw.mjs
+```
+
+A second run changes nothing. A database restored from an older backup
+needs it run again.
 
 ## Anonymous page expiry
 

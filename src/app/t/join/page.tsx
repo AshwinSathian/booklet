@@ -1,4 +1,4 @@
-import { addCollectionMember, getCollectionMember, getCollectionRecord } from "@/lib/db";
+import { addCollectionMember, claimPendingMember, getCollectionMember, getCollectionRecord } from "@/lib/db";
 import { getUserById } from "@/lib/db/auth";
 import { createId } from "@/lib/id";
 import { verifyInviteToken } from "@/lib/invite-token";
@@ -60,9 +60,10 @@ export default async function TeamJoinPage({
   if (!team?.is_team_space) {
     return <ErrorPage message="This team no longer exists." />;
   }
-  // Removing a member cancels the invites sent before it, or the person
-  // removed could walk back in with the link they joined by.
-  if (team.invites_valid_after && (payload.iat ?? 0) * 1000 < Date.parse(team.invites_valid_after)) {
+  // Removing a member cancels the invites sent to them before it, or they
+  // could walk back in with the link they joined by.
+  const issuedAt = (payload.iat ?? 0) * 1000;
+  if (team.invite_revocations?.some((r) => r.email === userEmail && issuedAt < Date.parse(r.at))) {
     return <ErrorPage message="This invite link has expired or is invalid." />;
   }
 
@@ -72,14 +73,10 @@ export default async function TeamJoinPage({
     redirect(`/t/${team.slug ?? payload.teamId}`);
   }
 
-  await addCollectionMember(
-    createId(10),
-    payload.teamId,
-    userId,
-    userEmail,
-    "editor",
-    payload.invitedBy,
-  );
+  // If the owner already listed this address with a role, before it had a
+  // confirmed account, that role stands. Otherwise an invite makes an editor.
+  const role = (await claimPendingMember(payload.teamId, payload.invitedEmail.toLowerCase())) ?? "editor";
+  await addCollectionMember(createId(10), payload.teamId, userId, userEmail, role, payload.invitedBy);
 
   redirect(`/t/${team.slug ?? payload.teamId}`);
 }

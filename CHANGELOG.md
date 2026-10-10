@@ -44,8 +44,15 @@ Documents (roadmap Phase 5b). MCP server 3.1.0.
 - **Breaking:** a publish whose ownership record cannot be written fails
   with 500. It used to return 201 for a page nobody owned.
 - A team invite link is accepted only by an account whose confirmed email is
-  the invited address. Removing a member cancels the invite links sent
-  before the removal.
+  the invited address. Removing a member cancels the invite links sent to
+  them before the removal. Opening an invite again does not change the role
+  of someone already in the space.
+- Changing a page's visibility resolves its `[[Title]]` links again: a page
+  made public loses its links to pages that are not public.
+- The owner of a page can always take it out of a team space, including
+  after being removed from the space.
+- The MCP `publish_page` tool adds `title` and `slug` to a document's
+  existing frontmatter instead of putting a second block in front of it.
 - Members with the editor role can add their own pages to a team space.
   Before, only the space's owner could.
 

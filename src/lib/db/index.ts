@@ -238,9 +238,15 @@ export async function updatePageRecord(
  * unlisted would widen who can read it if the takedown were ever reversed.
  */
 export async function markPageTakenDown(pageId: string, at: string): Promise<void> {
-  const pages = (await getDb()).collection<PageDoc>("pages");
-  await pages.updateOne({ _id: pageId }, { $set: { taken_down_at: at } });
-  await pages.updateOne({ _id: pageId, visibility: "public" }, { $set: { visibility: "unlisted" } });
+  // One update, so a page can never be left taken down and still public.
+  await (await getDb()).collection<PageDoc>("pages").updateOne({ _id: pageId }, [
+    {
+      $set: {
+        taken_down_at: at,
+        visibility: { $cond: [{ $eq: ["$visibility", "public"] }, "unlisted", "$visibility"] },
+      },
+    },
+  ]);
 }
 
 export async function getPublicPagesByUser(userId: string, limit = 100): Promise<ExploreItem[]> {
@@ -474,7 +480,7 @@ export async function getCollectionBySlug(slug: string): Promise<DbCollection | 
 
 export async function updateCollectionRecord(
   collectionId: string,
-  patch: Partial<Pick<DbCollection, "name" | "slug" | "is_team_space" | "parent_id" | "invites_valid_after" | "updated_at">>,
+  patch: Partial<Pick<DbCollection, "name" | "slug" | "is_team_space" | "parent_id" | "updated_at">>,
 ): Promise<void> {
   if (Object.keys(patch).length === 0) return;
   const db = await getDb();
@@ -554,17 +560,34 @@ export async function removeCollectionMember(collectionId: string, userId: strin
     throw new Error("removeCollectionMember: collectionId and userId must be strings");
   }
   const db = await getDb();
-  await db.collection<CollectionMemberDoc>("collection_members").deleteOne({ collection_id: collectionId, user_id: userId });
+  const removed = await db
+    .collection<CollectionMemberDoc>("collection_members")
+    .findOneAndDelete({ collection_id: collectionId, user_id: userId });
   // An invite link works for 72 hours and more than once, so the one this
-  // member joined by would let them straight back in. Removing a member
-  // cancels every invite issued so far. Whole seconds, plus one: a token's
-  // issue time has no finer grain.
+  // member joined by would let them straight back in. Invites are for one
+  // address each, so only theirs are cancelled: other people's unused
+  // links keep working. Whole seconds, plus one: a token's issue time has
+  // no finer grain.
+  const email = (removed?.email ?? (await db.collection<UserDoc>("users").findOne({ _id: userId }))?.email)?.toLowerCase();
+  if (!email) return;
   await db
     .collection<CollectionDoc>("collections")
     .updateOne(
       { _id: collectionId },
-      { $set: { invites_valid_after: new Date((Math.floor(Date.now() / 1000) + 1) * 1000).toISOString() } },
+      { $push: { invite_revocations: { email, at: new Date((Math.floor(Date.now() / 1000) + 1) * 1000).toISOString() } } },
     );
+}
+
+/**
+ * The role an owner gave an address before its owner had a confirmed
+ * account (a `pending:<email>` row), removing that row. Null if there is none.
+ */
+export async function claimPendingMember(collectionId: string, email: string): Promise<CollectionMemberRole | null> {
+  const db = await getDb();
+  const pending = await db
+    .collection<CollectionMemberDoc>("collection_members")
+    .findOneAndDelete({ collection_id: collectionId, user_id: `pending:${email}` });
+  return pending?.role ?? null;
 }
 
 export async function getCollectionMember(collectionId: string, userId: string): Promise<DbCollectionMember | null> {

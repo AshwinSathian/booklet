@@ -29,9 +29,12 @@ const MAX_TARGETS = 200;
  * page links to public pages only, and only a team-only page links to
  * team-only pages.
  *
- * ponytail: decided when the source is published. Changing either page's
- * visibility later leaves the link as it was until the source is published
- * again.
+ * Decided when the source is published, and again when the source's
+ * visibility changes (relinkPage in ./pages.ts).
+ *
+ * ponytail: a target that later becomes less visible keeps the links that
+ * already point at it until each source is published again. Relink the
+ * sources from page_links if that turns out to matter.
  */
 function mayLink(source: DbPage["visibility"], target: DbPage["visibility"]): boolean {
   if (target === "public") return true;

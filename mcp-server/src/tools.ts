@@ -101,6 +101,22 @@ function unexpectedError(toolName: string, e: unknown): CallToolResult {
 // schemas in schemas.ts before any of these run.
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * `raw` with `fields` set in its frontmatter. A document that already opens
+ * with a frontmatter block (the prompts in prompts.ts all do) keeps it: the
+ * fields replace lines of the same name and are otherwise added to it. A
+ * second block in front of the first would leave the first as page content.
+ */
+export function withFrontmatter(raw: string, fields: { title?: string | undefined; slug?: string | undefined }): string {
+  const set = Object.entries(fields).filter((e): e is [string, string] => e[1] !== undefined);
+  if (set.length === 0) return raw;
+  const lines = set.map(([k, v]) => `${k}: ${JSON.stringify(v)}`);
+  const existing = /^---[ \t]*\n([\s\S]*?)\n---[ \t]*(?:\n|$)/.exec(raw);
+  if (!existing) return `---\n${lines.join("\n")}\n---\n${raw}`;
+  const kept = (existing[1] ?? "").split("\n").filter((line) => !set.some(([k]) => line.startsWith(`${k}:`)));
+  return `---\n${[...kept, ...lines].join("\n")}\n---\n${raw.slice(existing[0].length)}`;
+}
+
 export async function handlePublishPage(
   args: z.infer<typeof PublishPageInputSchema>,
   apiKey: string,
@@ -109,18 +125,8 @@ export async function handlePublishPage(
   try {
     const { raw, title, slug, visibility } = args;
 
-    // The v1/publish endpoint reads slug/visibility from YAML frontmatter.
-    let finalRaw = raw;
-    if (slug !== undefined || visibility !== undefined || title !== undefined) {
-      const fmLines = ["---"];
-      if (title !== undefined) fmLines.push(`title: "${title.replace(/"/g, '\\"')}"`);
-      if (slug !== undefined) fmLines.push(`slug: ${slug}`);
-      if (visibility !== undefined) fmLines.push(`visibility: ${visibility}`);
-      fmLines.push("---");
-      finalRaw = fmLines.join("\n") + "\n" + raw;
-    }
-
-    const r = await client(apiKey, apiBase).publishPage(finalRaw);
+    // The v1/publish endpoint reads title and slug from YAML frontmatter.
+    const r = await client(apiKey, apiBase).publishPage(withFrontmatter(raw, { title, slug }), { visibility });
     return toolResult(
       `Page published.\n\nURL: ${r.url}\nID: ${r.id}\n\nShare this link. The page is live and permanent.`,
       { link: resourceLink(r.id, title ?? r.id), structuredContent: { id: r.id, url: r.url } },

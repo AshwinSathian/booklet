@@ -45,7 +45,9 @@ import { GET as markdown } from "@/app/api/pages/[id]/markdown/route";
 import { GET as spaceFeed } from "@/app/t/[slug]/feed.xml/route";
 import SharePage, { generateMetadata } from "@/app/p/[id]/page";
 import { generateMetadata as embedMetadata } from "@/app/p/[id]/embed/page";
-import { handleCreateDocument, handleGetPage, handleSearchPages } from "../../mcp-server/src/tools.js";
+import { POST as claimPage } from "@/app/api/pages/[id]/claim/route";
+import { POST as addMember } from "@/app/api/collections/[id]/members/route";
+import { handleCreateDocument, handleGetPage, handlePublishPage, handleSearchPages } from "../../mcp-server/src/tools.js";
 import { PROMPT_NAMES } from "../../mcp-server/src/mcp-server.js";
 import { renderPrompt } from "../../mcp-server/src/prompts.js";
 import { TEMPLATES as CLI_TEMPLATES } from "../../packages/cli/src/templates.js";
@@ -788,5 +790,122 @@ test.describe("MCP workflow tools", () => {
       handleCreateDocument({ type: "adr", title: "ADR-071", body: "x", visibility: "team" }, outsider.rawKey, ORIGIN),
     );
     expect((noSpace.content[0] as { text: string }).text).toContain("only for a page in a team space");
+  });
+});
+
+// ─── Found in review ─────────────────────────────────────────────────────────
+
+test.describe("review findings", () => {
+  test("publish_page merges its options into a document that already has frontmatter", async () => {
+    const a = await account();
+    const raw = renderPrompt("incident_report", { title: "Checkout", date: "2026-10-10" }) ?? "";
+    const result = await withApi(() => handlePublishPage({ raw, title: "Custom title", visibility: "public" }, a.rawKey, ORIGIN));
+    expect(result.isError).toBeFalsy();
+    const { id } = result.structuredContent as { id: string };
+    pageIds.push(id);
+    expect(await getPageRecord(id)).toMatchObject({ doc_type: "incident", visibility: "public", title: "Custom title" });
+    expect(text((await getDoc(id))!.blocks)).not.toContain("type:");
+
+    // A title the document already sets is replaced, not declared twice.
+    const twice = await withApi(() => handlePublishPage({ raw: '---\ntitle: "Old"\ntype: adr\n---\n# Body', title: "New" }, a.rawKey, ORIGIN));
+    const second = (twice.structuredContent as { id: string }).id;
+    pageIds.push(second);
+    expect(await getPageRecord(second)).toMatchObject({ doc_type: "adr", title: "New" });
+  });
+
+  test("a page published without an account still shows its header strip, and keeps its type when claimed", async () => {
+    const req = web(null, "/api/publish", { body: { raw: "---\ntype: incident\nstatus: Resolved\nseverity: P1\n---\n# Anonymous incident" } });
+    const res = await withRequestScope(req, () => webPublish(req));
+    const { id } = (await res.json()) as { id: string };
+    pageIds.push(id);
+    const page = await as(null, async () => html(await SharePage({ params: Promise.resolve({ id }) })));
+    expect(page).toContain('data-doc-type="incident"');
+    expect(page).toContain('data-status="Resolved"');
+
+    const claimCookie = (res.headers.get("set-cookie") ?? "").split(";")[0];
+    const a = await account();
+    const claimReq = web(`${a.cookie}; ${claimCookie}`, `/api/pages/${id}/claim`);
+    expect((await withRequestScope(claimReq, () => claimPage(claimReq, ctx(id)))).status).toBe(200);
+    expect(await getPageRecord(id)).toMatchObject({ doc_type: "incident", user_id: a.userId });
+    expect((await getPageRecord(id))?.frontmatter_meta).toMatchObject({ status: "Resolved", severity: "P1" });
+  });
+
+  test("making a page public drops its links to pages that are not, and making it unlisted restores them", async () => {
+    const a = await account();
+    const target = await published(a, { raw: "# Link-only notes" });
+    const source = await published(a, { raw: "# Source\n\n[[Link-only notes]]" });
+    expect(links((await getDoc(source))!.blocks)).toEqual([`${ORIGIN}/p/${target}`]);
+    await expect.poll(async () => (await getBacklinkPages(target)).length).toBe(1);
+
+    const viaApi = await v1Patch(api(a, `/pages/${source}`, { method: "PATCH", body: { visibility: "public" } }), ctx(source));
+    expect(viaApi.status).toBe(200);
+    expect(links((await getDoc(source))!.blocks)).toEqual([]);
+    expect(text((await getDoc(source))!.blocks)).toContain("Link-only notes");
+    await expect.poll(async () => (await getBacklinkPages(target)).length).toBe(0);
+
+    const back = web(a.cookie, `/api/pages/${source}`, { method: "PATCH", body: { visibility: "unlisted" } });
+    expect((await withRequestScope(back, () => webPatchMeta(back, ctx(source)))).status).toBe(200);
+    expect(links((await getDoc(source))!.blocks)).toEqual([`${ORIGIN}/p/${target}`]);
+
+    const viaWeb = web(a.cookie, `/api/pages/${source}`, { method: "PATCH", body: { visibility: "public" } });
+    expect((await withRequestScope(viaWeb, () => webPatchMeta(viaWeb, ctx(source)))).status).toBe(200);
+    expect(links((await getDoc(source))!.blocks)).toEqual([]);
+  });
+
+  test("someone added as a viewer before they had an account joins as a viewer", async () => {
+    process.env.INVITE_JWT_SECRET ??= "test-only-invite-secret-do-not-use-in-prod";
+    const owner = await account();
+    const invitee = await account();
+    const address = `pending-${crypto.randomUUID()}@example.com`;
+    const s = await space(owner);
+    const add = web(owner.cookie, `/api/collections/${s.id}/members`, { body: { email: address, role: "viewer" } });
+    expect((await withRequestScope(add, () => addMember(add, ctx(s.id)))).status).toBe(201);
+    expect((await getCollectionMember(s.id, `pending:${address}`))?.role).toBe("viewer");
+
+    await createUser(invitee.userId, address, null);
+    const token = await signInviteToken({ teamId: s.id, invitedEmail: address, invitedBy: owner.userId });
+    await as(invitee.cookie, () => JoinPage({ searchParams: Promise.resolve({ token }) })).catch(() => {});
+    expect((await getCollectionMember(s.id, invitee.userId))?.role).toBe("viewer");
+    expect(await getCollectionMember(s.id, `pending:${address}`)).toBeNull();
+    await (await getDb()).collection("users").deleteOne({ _id: invitee.userId } as never);
+  });
+
+  test("removing one member leaves other people's invites working", async () => {
+    process.env.INVITE_JWT_SECRET ??= "test-only-invite-secret-do-not-use-in-prod";
+    const owner = await account();
+    const leaving = await account();
+    const invitee = await account();
+    const address = `invitee-${crypto.randomUUID()}@example.com`;
+    await createUser(invitee.userId, address, null);
+    const s = await space(owner, [[leaving, "editor"]]);
+    const token = await signInviteToken({ teamId: s.id, invitedEmail: address, invitedBy: owner.userId });
+
+    await removeCollectionMember(s.id, leaving.userId);
+    await as(invitee.cookie, () => JoinPage({ searchParams: Promise.resolve({ token }) })).catch(() => {});
+    expect(await getCollectionMember(s.id, invitee.userId)).not.toBeNull();
+    await (await getDb()).collection("users").deleteOne({ _id: invitee.userId } as never);
+  });
+
+  test("an oversized document is a 413 before anything else is looked at", async () => {
+    const a = await account();
+    const res = await publish(a, { raw: `---\nspace: no-such-space\n---\n${"x".repeat(200_001)}` });
+    expect(res.status).toBe(413);
+  });
+
+  test("a removed member can take their own page out of the space", async () => {
+    const owner = await account();
+    const removed = await account();
+    const s = await space(owner, [[removed, "editor"]]);
+    const mine = await published(removed, { raw: "# Taking this with me", space: s.slug });
+    await removeCollectionMember(s.id, removed.userId);
+
+    const out = web(removed.cookie, `/api/collections/${s.id}/pages`, { method: "DELETE", body: { pageId: mine } });
+    expect((await withRequestScope(out, () => removeFromCollection(out, ctx(s.id)))).status).toBe(200);
+    expect((await getPageRecord(mine))?.collection_id).toBeNull();
+
+    // Someone else's page is still not theirs to remove.
+    const theirs = await published(owner, { raw: "# Owner's", space: s.slug });
+    const nope = web(removed.cookie, `/api/collections/${s.id}/pages`, { method: "DELETE", body: { pageId: theirs } });
+    expect((await withRequestScope(nope, () => removeFromCollection(nope, ctx(s.id)))).status).toBe(403);
   });
 });

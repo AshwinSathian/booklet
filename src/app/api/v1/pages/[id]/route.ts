@@ -16,6 +16,7 @@ import {
   assertNotTakenDown,
   assertSlugAvailable,
   buildDocument,
+  relinkPage,
   spaceSlugs,
   assertIfMatch,
   ifNoneMatchHits,
@@ -177,6 +178,10 @@ export const PATCH = v1("patch", 60, "pages:write", async (req: Request, userId:
 
     // The title, type and frontmatter fields follow the document.
     Object.assign(metaPatch, built.record, { updated_at: new Date().toISOString() });
+  } else if (metaPatch.visibility && metaPatch.visibility !== record.visibility) {
+    // Before the record changes, so the page is never public while it
+    // still carries links only a less visible page may have.
+    await relinkPage(record, metaPatch.visibility, getSiteOrigin(req));
   }
 
   if (Object.keys(metaPatch).length > 0) {

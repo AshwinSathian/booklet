@@ -10,7 +10,7 @@ import { deliverWebhooks } from "@/lib/webhook-delivery";
 import { collectRichBlockKinds } from "@/lib/block-usage";
 import { deleteDoc, putDoc } from "@/lib/storage";
 import { assertVisibilityAllowed, getWritableSpace } from "@/server/access";
-import { assertSlugAvailable, buildDocument } from "@/server/pages";
+import { assertRawWithinLimit, assertSlugAvailable, buildDocument } from "@/server/pages";
 import { parseFrontmatter } from "@/lib/frontmatter";
 import { problem } from "@/server/errors";
 import { idempotent } from "@/server/idempotency";
@@ -49,7 +49,11 @@ async function publish(req: Request, userId: string, bodyText: string): Promise<
     return problem(400, "Nothing to publish — provide `raw` markdown.");
   }
 
-  // Where the page goes and who may read it are settled first: they decide
+  // First, as before: nothing parses or looks anything up for a document
+  // that is too large to store.
+  assertRawWithinLimit(payload.raw);
+
+  // Where the page goes and who may read it are settled next: they decide
   // which pages its `[[Title]]` links may point at.
   const declared = parseFrontmatter(payload.raw).meta;
   const spaceSlug = payload.space ?? declared.space;

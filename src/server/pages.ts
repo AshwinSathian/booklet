@@ -17,7 +17,8 @@
 import { createHash } from "node:crypto";
 import type { Block } from "@/lib/blocks";
 import { validateBlocks } from "@/lib/block-schema";
-import { getCollectionRecord, getPageBySlug, getPageRecord } from "@/lib/db";
+import { getCollectionRecord, getPageBySlug, getPageRecord, setPageLinks } from "@/lib/db";
+import { getDoc, putDoc } from "@/lib/storage";
 import type { DbPage } from "@/lib/db/types";
 import { docTypeOf } from "@/lib/doc-types";
 import { extractDocTitle } from "@/lib/doc-title";
@@ -134,16 +135,35 @@ export async function buildDocument(raw: string, source: LinkSource, origin: str
     throw new ServiceError("PARSE_FAILED", "Failed to parse document. Please report this.", 500);
   }
   assertStoredWithinLimit(blocks, raw);
+  return { fm, blocks, linkTargetIds: targetIds, record: recordFields(fm, blocks) };
+}
+
+/** What a `pages` record takes from a document's frontmatter and blocks. */
+export function recordFields(fm: FrontmatterMeta, blocks: Block[]): BuiltDocument["record"] {
   return {
-    fm,
-    blocks,
-    linkTargetIds: targetIds,
-    record: {
-      title: fm.title ?? extractDocTitle(blocks),
-      doc_type: docTypeOf(fm),
-      frontmatter_meta: Object.keys(fm).length > 0 ? (fm as Record<string, unknown>) : null,
-    },
+    title: fm.title ?? extractDocTitle(blocks),
+    doc_type: docTypeOf(fm),
+    frontmatter_meta: Object.keys(fm).length > 0 ? (fm as Record<string, unknown>) : null,
   };
+}
+
+/**
+ * Resolves a page's `[[Title]]` links again from its stored Markdown, as if
+ * it were being published with `visibility`. Which links a page may carry
+ * depends on its visibility (see mayLink in ./links.ts), so a page that
+ * becomes public must lose its links to pages that are not. Does nothing
+ * for a page stored without its Markdown.
+ */
+export async function relinkPage(page: DbPage, visibility: DbPage["visibility"], origin: string): Promise<void> {
+  const doc = await getDoc(page.id);
+  if (!doc?.raw) return;
+  const built = await buildDocument(
+    doc.raw,
+    { id: page.id, userId: page.user_id, collectionId: page.collection_id, visibility },
+    origin,
+  );
+  await putDoc(page.id, { ...doc, blocks: built.blocks });
+  await setPageLinks(page.id, built.linkTargetIds);
 }
 
 /**
