@@ -32,6 +32,16 @@ const TAG_COLORS: Record<Entry["tag"], string> = {
 
 const RELEASES: Release[] = [
   {
+    version: "v2.0.1",
+    date: "2026-10-11",
+    summary: "Mermaid diagrams are sanitized before they are shown, and the editor's visibility control is a proper menu.",
+    entries: [
+      { date: "2026-10-11", tag: "Fixed", text: "A Mermaid diagram could carry CSS that loaded an image from another host when the page was read. Diagrams are now checked as a parsed tree before they are mounted" },
+      { date: "2026-10-11", tag: "Improved", text: "The visibility control beside Publish is a menu that says, under each choice, who can find the page" },
+      { date: "2026-10-11", tag: "Improved", text: "The example incident report and ADR show the header strip, and the incident links to the ADR" },
+    ],
+  },
+  {
     version: "v2.0.0",
     date: "2026-10-11",
     summary: "Document types, links between pages and team spaces for engineering documents; accounts with verification and passkeys; OAuth for MCP clients. Older versions of several flows were removed, so this release breaks some API, CLI and MCP callers.",

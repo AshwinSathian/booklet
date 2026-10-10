@@ -9,6 +9,36 @@ Notable changes to the Booklet app and MCP server. The format follows
 
 ## [Unreleased]
 
+## [2.0.1] - 2026-10-11
+
+### Security
+
+- **Mermaid diagrams on a page are sanitized before they are mounted.** They
+  used to rely on Mermaid's own pass alone, which lets CSS through: a
+  `themeCSS` in a diagram's init directive could load an image from another
+  host when the page was read. The diagram is now checked as a parsed tree
+  (styles, event handlers, script links, form controls inside labels) and
+  that tree is what is mounted. Graphviz diagrams and the HTML export
+  already went through the sanitizer.
+
+### Changed
+
+- **Visibility in the editor** is a menu in the app's own style, with a line
+  under each choice saying who can find the page. It was a native select.
+- **`npm run deploy` covers the whole deploy.** It builds every workspace
+  that has a build (the CLI was left at whatever was last built by hand),
+  backs up and restores every build output on a failed health check, records
+  the commit of each healthy deploy, and ends by running both
+  production-verify suites against the live site. `SKIP_VERIFY=1` skips
+  them. It exits 2 when the build is live and a verify suite failed.
+- `scripts/health-check.sh` finds `pm2` under whichever nvm Node version
+  has it. It used to report three failures for running processes.
+- CI checks that every shell script parses.
+- The example incident report and ADR linked from the landing page carry
+  typed frontmatter, so they show the header strip, and the incident links
+  to the ADR.
+
+
 ## [2.0.0] - 2026-10-11
 
 Booklet 2.0.0 is the engineering-documents release: document types, links
@@ -373,4 +403,5 @@ code.
   scripts.
 
 [1.1.0]: https://github.com/AshwinSathian/booklet/releases/tag/v1.1.0
+[2.0.1]: https://github.com/AshwinSathian/booklet/releases/tag/v2.0.1
 [2.0.0]: https://github.com/AshwinSathian/booklet/releases/tag/v2.0.0

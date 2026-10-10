@@ -185,12 +185,15 @@ test("the publish control offers Unlisted, selected, to a signed-in author", asy
   await signUp(page.request);
   await page.goto("/app");
   const visibility = page.getByLabel("Who can find this page");
-  await expect(visibility).toHaveValue("unlisted");
-  await expect(visibility.locator("option:checked")).toHaveText("Unlisted (anyone with the link)");
+  await expect(visibility).toHaveAttribute("data-value", "unlisted");
+  await expect(visibility).toHaveText("Unlisted");
 
   // Choosing Public is sent with the publish and stored.
   await page.locator("textarea").first().fill("# Listed page\n\nBody.");
-  await visibility.selectOption("public");
+  await visibility.click();
+  await expect(page.getByRole("menuitemradio", { name: /^Unlisted/ })).toHaveAttribute("aria-checked", "true");
+  await page.getByRole("menuitemradio", { name: /^Public/ }).click();
+  await expect(visibility).toHaveText("Public");
   const publish = page.waitForResponse((r) => r.url().endsWith("/api/publish") && r.request().method() === "POST");
   await page.getByRole("button", { name: "Publish", exact: true }).click();
   const res = await publish;

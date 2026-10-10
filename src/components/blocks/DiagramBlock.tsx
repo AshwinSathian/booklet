@@ -2,9 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { GRAPHVIZ_LANGS } from "@/lib/blocks";
-import { sanitizeCompiledSvg } from "@/lib/svg-sanitize";
+import { sanitizeCompiledSvg, sanitizeRenderedSvg } from "@/lib/svg-sanitize";
 
-async function renderMermaid(code: string): Promise<string> {
+async function renderMermaid(code: string): Promise<Element> {
   const mermaid = (await import("mermaid")).default;
   const isDark = !document.documentElement.classList.contains("light");
 
@@ -16,7 +16,9 @@ async function renderMermaid(code: string): Promise<string> {
 
   const uid = `diagram-${Math.random().toString(36).slice(2)}`;
   const { svg } = await mermaid.render(uid, code.trim());
-  return svg;
+  const clean = sanitizeRenderedSvg(svg);
+  if (!clean) throw new Error("Failed to render diagram");
+  return clean;
 }
 
 async function renderGraphviz(code: string): Promise<string> {
@@ -66,7 +68,11 @@ export function DiagramBlock({ lang, code }: { lang: string; code: string }) {
           : await renderMermaid(code);
 
         if (!stale && containerRef.current) {
-          containerRef.current.innerHTML = svg;
+          // Mermaid's is an element that was sanitized as a tree; mounting
+          // that tree, and not markup made from it, keeps it the thing
+          // that was checked.
+          if (typeof svg === "string") containerRef.current.innerHTML = svg;
+          else containerRef.current.replaceChildren(document.importNode(svg, true));
           setReady(true);
         }
       } catch (e) {

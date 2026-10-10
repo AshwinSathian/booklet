@@ -588,6 +588,80 @@ function PublishReveal({ onDone }: { onDone: () => void }) {
 /** `team:<space id>` publishes into that team space, readable by its members only. */
 export type PublishVisibility = "unlisted" | "public" | `team:${string}`;
 
+/**
+ * Who can find the page about to be published: a pill showing the current
+ * choice, opening the app's own menu with one line of explanation per
+ * choice. (It was a native <select>, which could show neither.)
+ */
+function VisibilityPicker({
+  value,
+  onChange,
+  spaces,
+  disabled,
+}: {
+  value: PublishVisibility;
+  onChange: (value: PublishVisibility) => void;
+  spaces: { id: string; name: string }[];
+  disabled: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const close = useCallback(() => setOpen(false), []);
+
+  const options: { value: PublishVisibility; icon: IconName; short: string; label: string; description: string }[] = [
+    { value: "unlisted", icon: "link", short: "Unlisted", label: "Unlisted", description: "Anyone with the link. Not on Explore, not in search engines." },
+    { value: "public", icon: "eye", short: "Public", label: "Public", description: "Listed on Explore and open to search engines." },
+    ...spaces.map((space) => ({
+      value: `team:${space.id}` as PublishVisibility,
+      icon: "lock" as IconName,
+      short: space.name,
+      label: `Team only (${space.name})`,
+      description: "Members of this space, signed in. Everyone else gets a 404.",
+    })),
+  ];
+  const current = options.find((o) => o.value === value) ?? options[0];
+
+  return (
+    <>
+      <button
+        ref={triggerRef}
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={`Who can find this page: ${current.label}`}
+        title="Who can find this page"
+        data-value={current.value}
+        disabled={disabled}
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex h-8 max-w-[7.5rem] sm:max-w-[13rem] items-center gap-1.5 rounded-pill border border-border-default bg-bg px-3 text-xs font-medium text-text-secondary transition hover:border-border-strong hover:text-text-primary disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+      >
+        <span className="shrink-0 text-text-muted">
+          <Icon name={current.icon} size={12} />
+        </span>
+        <span className="truncate">{current.short}</span>
+        <span className={`shrink-0 text-text-muted transition-transform ${open ? "rotate-180" : ""}`}>
+          <Icon name="chevron-down" size={10} />
+        </span>
+      </button>
+      <Menu open={open} onClose={close} anchorRef={triggerRef} align="end" widthClass="w-72">
+        {options.map((o) => (
+          <ContextMenuItem
+            key={o.value}
+            icon={o.icon}
+            label={o.label}
+            description={o.description}
+            checked={o.value === value}
+            onSelect={() => {
+              onChange(o.value);
+              setOpen(false);
+            }}
+          />
+        ))}
+      </Menu>
+    </>
+  );
+}
+
 type Space = { id: string; name: string; slug: string | null; role: "owner" | "editor" | "viewer" };
 
 /** The signed-in user's team spaces, or null until the one request for them returns. */
@@ -761,24 +835,12 @@ function PublishArea({
   return (
     <>
       {publishVisibility ? (
-        <select
-          aria-label="Who can find this page"
-          title="Who can find this page"
+        <VisibilityPicker
           value={publishVisibility}
-          onChange={(e) => onPublishVisibilityChange(e.target.value as PublishVisibility)}
+          onChange={onPublishVisibilityChange}
+          spaces={(spaces ?? []).filter((space) => space.role !== "viewer")}
           disabled={isPublishing}
-          className="h-8 max-w-[7.5rem] sm:max-w-[13rem] rounded-pill border border-border-default bg-bg px-3 text-xs text-text-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft"
-        >
-          <option value="unlisted">Unlisted (anyone with the link)</option>
-          <option value="public">Public (listed on Explore)</option>
-          {(spaces ?? [])
-            .filter((space) => space.role !== "viewer")
-            .map((space) => (
-              <option key={space.id} value={`team:${space.id}`}>
-                Team only ({space.name})
-              </option>
-            ))}
-        </select>
+        />
       ) : null}
       <Button variant="primary" size="md" onClick={onPublish} disabled={!canPublish || isPublishing}>
         {isPublishing ? (

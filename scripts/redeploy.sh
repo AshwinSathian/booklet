@@ -3,15 +3,32 @@
 # Does NOT git-pull — use deploy-local.sh for that.
 # Called automatically by the pre-push hook and manually when needed.
 #
-# Rollback: before building, the current build output ($BUILD_DIR) is copied
-# aside to $BUILD_DIR_BACKUP. We copy rather than move so the PM2 process
-# still serving the old build never sees $BUILD_DIR disappear mid-request
-# during the build. If the post-reload health check fails, we restore that
-# backup over the broken build, reload PM2 again so the last-known-good build
-# serves traffic, and re-run health checks once more to confirm the rollback
-# itself is healthy. The script still exits non-zero on a failed deploy (even
-# after a successful rollback) so the pre-push hook reports the push as
-# having failed to deploy — only the live-traffic outcome changes.
+# What it covers, in order:
+#   1. npm ci for the root app and every workspace.
+#   2. A copy of every build output, for rollback.
+#   3. A build of every workspace that has one (booklet-api-client, which the
+#      MCP server loads from dist/, and booklet-cli, which the verify suite
+#      runs), then the Next.js app.
+#   4. PM2 reload of booklet-app and booklet-mcp.
+#   5. scripts/health-check.sh. A failure here rolls the builds back.
+#   6. Both production-verify suites against the live site. A failure here
+#      does not roll back (see below) and exits 2. SKIP_VERIFY=1 skips them.
+#
+# Rollback: before building, each build output is copied aside. We copy
+# rather than move so the PM2 process still serving the old build never sees
+# it disappear mid-request. If the post-reload health check fails, the copies
+# are restored, PM2 is reloaded so the last-known-good build serves traffic,
+# and the health check runs once more to confirm the rollback is healthy. The
+# script still exits non-zero on a failed deploy (even after a successful
+# rollback) so the pre-push hook reports the push as having failed to deploy.
+#
+# What a rollback cannot cover: the MCP server runs from mcp-server/src, not
+# from a build, and the working tree stays at the new commit. The log names
+# the commit that was live before, to check out by hand if the MCP server is
+# what broke. And data: a migration run by the new build is not undone.
+#
+# A failed verify suite does not roll back for the second reason, and because
+# the suites can fail on things a rollback would not fix (the tunnel, npm).
 set -euo pipefail
 
 # Production runs on Node 24 (see .nvmrc). Put that install first on PATH so
@@ -42,10 +59,11 @@ LOG_DIR="$HOME/.booklet-deploy-logs"
 mkdir -p "$LOG_DIR"
 LOG="$LOG_DIR/redeploy-$(date +%Y%m%d-%H%M%S).log"
 
-# Next.js build output dir — next.config.ts has no custom `distDir`, so this
-# is the framework default. Update this if that ever changes.
-BUILD_DIR=".next"
-BUILD_DIR_BACKUP=".next.previous"
+# Every build output a deploy replaces. `.next` is Next.js's default
+# (next.config.ts sets no `distDir`); the two dist/ folders come from tsup.
+BUILD_OUTPUTS=(".next" "packages/shared/dist" "packages/cli/dist")
+# The commit of the last deploy that passed its health check.
+DEPLOYED_COMMIT_FILE="$HOME/.booklet/deployed-commit"
 
 # Dual-sink: timestamps to log file, clean output to terminal
 log() {
@@ -89,6 +107,21 @@ log "   the root app and mcp-server/packages/*) ──────────�
 run "npm ci --prefer-offline"
 
 echo ""
+log "── Backing up previous build outputs ─────────────────"
+# Before anything is built, so the copies are what is live right now.
+HAVE_PREVIOUS_BUILD=false
+for out in "${BUILD_OUTPUTS[@]}"; do
+  # Clear any stale backup left over from a previous failed rollback attempt.
+  rm -rf "$out.previous"
+  if [[ -d "$out" ]]; then
+    run "cp -a '$out' '$out.previous'"
+    [[ "$out" == ".next" ]] && HAVE_PREVIOUS_BUILD=true
+  else
+    log "    No existing $out — nothing to back up"
+  fi
+done
+
+echo ""
 log "── Building packages/shared (booklet-api-client) ─────"
 # mcp-server imports the *built* dist/ output of this workspace package
 # (not its TS source), so it must be built before mcp-server can start.
@@ -98,16 +131,12 @@ log "── Building packages/shared (booklet-api-client) ─────"
 run "npm run build --workspace=packages/shared"
 
 echo ""
-log "── Backing up previous build output ──────────────────"
-# Clear any stale backup left over from a previous failed rollback attempt.
-rm -rf "$BUILD_DIR_BACKUP"
-if [[ -d "$BUILD_DIR" ]]; then
-  run "cp -a '$BUILD_DIR' '$BUILD_DIR_BACKUP'"
-  HAVE_PREVIOUS_BUILD=true
-else
-  log "    No existing $BUILD_DIR — nothing to back up (first deploy?)"
-  HAVE_PREVIOUS_BUILD=false
-fi
+log "── Building every other workspace that has a build ───"
+# booklet-cli today. `--if-present` skips workspaces with no build script
+# (mcp-server runs from source), and a workspace added later is built
+# without this script being edited. The verify suite at the end runs the
+# CLI from packages/cli/dist, so a stale build there fails it.
+run "npm run build --workspaces --if-present"
 
 echo ""
 log "── Building Next.js (production) ────────────────────"
@@ -153,13 +182,43 @@ fi
 
 if [[ "$HEALTH_OK" == "true" ]]; then
   echo ""
-  log "── Cleaning up build backup ──────────────────────────"
-  rm -rf "$BUILD_DIR_BACKUP"
+  log "── Cleaning up build backups ─────────────────────────"
+  for out in "${BUILD_OUTPUTS[@]}"; do rm -rf "$out.previous"; done
+  git rev-parse HEAD > "$DEPLOYED_COMMIT_FILE"
+
+  if [[ "${SKIP_VERIFY:-}" == "1" ]]; then
+    echo ""
+    log "=== Redeploy complete (verify suites skipped: SKIP_VERIFY=1) ==="
+    log "    Full log: $LOG"
+    exit 0
+  fi
 
   echo ""
-  log "=== Redeploy complete ==="
+  log "── Verifying the live site (both production-verify suites) ──"
+  # Against the public hostnames, through the tunnel, as a visitor would.
+  # Each suite creates its own account and pages and removes them.
+  VERIFY_OK=true
+  export MONGODB_URI="mongodb://127.0.0.1:27017/booklet?directConnection=true"
+  if ! TEST_BASE_URL=https://booklet.ashwinsathian.com TEST_API_BASE_URL=https://booklet-api.ashwinsathian.com \
+      npx playwright test --config=scripts/production-verify/playwright.config.ts 2>&1 | tee -a "$LOG"; then
+    VERIFY_OK=false
+  fi
+  if ! node scripts/production-verify/cli-mcp-verify.mjs 2>&1 | tee -a "$LOG"; then
+    VERIFY_OK=false
+  fi
+
+  echo ""
+  if [[ "$VERIFY_OK" == "true" ]]; then
+    log "=== Redeploy complete, verified ==="
+    log "    Full log: $LOG"
+    exit 0
+  fi
+  log "=============================================================="
+  log "  The new build is LIVE and healthy, and a verify suite FAILED."
+  log "  Nothing was rolled back. Read the failures above."
+  log "=============================================================="
   log "    Full log: $LOG"
-  exit 0
+  exit 2
 fi
 
 # ── Health check failed — roll back to the last-known-good build ───────────
@@ -174,8 +233,17 @@ if [[ "$HAVE_PREVIOUS_BUILD" != "true" ]]; then
   exit 1
 fi
 
-run "rm -rf '$BUILD_DIR'"
-run "mv '$BUILD_DIR_BACKUP' '$BUILD_DIR'"
+for out in "${BUILD_OUTPUTS[@]}"; do
+  if [[ -d "$out.previous" ]]; then
+    run "rm -rf '$out'"
+    run "mv '$out.previous' '$out'"
+  fi
+done
+if [[ -f "$DEPLOYED_COMMIT_FILE" ]]; then
+  log "    Builds restored. The source tree is still at $(git rev-parse --short HEAD);"
+  log "    the last healthy deploy was $(cut -c1-7 "$DEPLOYED_COMMIT_FILE"). The MCP server runs from source:"
+  log "    if it is what failed, check that commit out and run this script again."
+fi
 
 echo ""
 log "── Reloading PM2 with restored build ──────────────────"

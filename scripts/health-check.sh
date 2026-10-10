@@ -3,6 +3,18 @@
 # Exits 0 if all checks pass, 1 if any fail.
 set -euo pipefail
 
+# `pm2` lives under one nvm Node version, which is not the one first on PATH
+# in most shells. Without this the PM2 checks below report three failures
+# for processes that are running.
+if ! command -v pm2 &>/dev/null; then
+  for bin in "$HOME"/.nvm/versions/node/*/bin; do
+    if [[ -x "$bin/pm2" ]]; then
+      export PATH="$bin:$PATH"
+      break
+    fi
+  done
+fi
+
 PASS=0; FAIL=0; WARN=0
 
 _check() {
