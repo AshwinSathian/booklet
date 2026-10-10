@@ -336,7 +336,7 @@ Notes from the discussion.
     slug: "onboarding-guide",
     name: "Onboarding Guide",
     headline: "Free Onboarding Guide Template",
-    description: "Setup, prerequisites, first steps, key contacts",
+    description: "Setup, prerequisites, day-one steps, key contacts",
     metaDescription:
       "Free onboarding guide template. Create a clear, shareable onboarding doc for new team members. No account required.",
     category: "General",

@@ -326,14 +326,14 @@ function ProblemMock() {
       {/* Before: raw Markdown in a chat/message context */}
       <div>
         <div className="mb-3 flex items-center gap-2">
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500/15 text-red-400">
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-danger/15 text-danger">
             <svg width="9" height="9" fill="none" viewBox="0 0 12 12" aria-hidden>
               <path d="M6 1v5M6 9v.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
             </svg>
           </span>
           <span className="text-[12px] font-semibold text-text-muted">Pasted into chat or email</span>
         </div>
-        <div className="overflow-hidden rounded-2xl border border-red-500/12 bg-bg-elevated shadow-card">
+        <div className="overflow-hidden rounded-2xl border border-danger/12 bg-bg-elevated shadow-card">
           <div className="flex items-center gap-2.5 border-b border-border-default bg-bg-soft px-4 py-2.5">
             <div className="h-6 w-6 rounded-full bg-fill-3 shrink-0" />
             <div>
@@ -370,7 +370,7 @@ pool_size: 5 # was 50
       {/* After: clean Booklet published page */}
       <div>
         <div className="mb-3 flex items-center gap-2">
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400">
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-success/15 text-success">
             <svg width="9" height="9" fill="none" viewBox="0 0 12 12" aria-hidden>
               <path d="M2 6.5 4.5 9 10 3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
@@ -386,10 +386,10 @@ pool_size: 5 # was 50
             aria-hidden
             className="absolute -top-2.5 left-4 h-5 w-9 rounded-full border border-accent/30 bg-accent-dim"
           />
-          <div className="relative overflow-hidden rounded-2xl border border-t-2 border-emerald-500/12 border-t-accent bg-bg-elevated shadow-card">
+          <div className="relative overflow-hidden rounded-2xl border border-t-2 border-success/12 border-t-accent bg-bg-elevated shadow-card">
           {/* Browser bar */}
           <div className="flex items-center gap-2.5 border-b border-border-default bg-bg-soft px-4 py-2.5">
-            <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-400" />
+            <span className="h-2 w-2 shrink-0 rounded-full bg-success" />
             <span className="font-mono text-2xs text-text-muted truncate">
               booklet.ashwinsathian.com/p/Ab3k91QxZp
             </span>
@@ -400,10 +400,10 @@ pool_size: 5 # was 50
               Incident Report
             </div>
             <div className="mt-2.5 flex flex-wrap gap-1.5">
-              <span className="inline-flex rounded-full border border-red-500/25 bg-red-500/10 px-2 py-0.5 text-[9px] font-semibold text-red-400">
+              <span className="inline-flex rounded-full border border-danger/25 bg-danger/10 px-2 py-0.5 text-[9px] font-semibold text-danger">
                 P1 Severity
               </span>
-              <span className="inline-flex rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2 py-0.5 text-[9px] font-semibold text-emerald-400">
+              <span className="inline-flex rounded-full border border-success/25 bg-success/10 px-2 py-0.5 text-[9px] font-semibold text-success">
                 Resolved
               </span>
             </div>
@@ -710,7 +710,7 @@ export function Landing() {
       {
         tag: "Incident",
         title: "Incident summaries",
-        desc: "Timeline, severity and root cause on one page, with status and owners in a strip at the top. Send the link when the incident closes.",
+        desc: "Timeline, severity and root cause on one page. Send the link when the incident closes.",
         href: "https://booklet.ashwinsathian.com/p/example-incident-report",
       },
       {

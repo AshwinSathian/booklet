@@ -94,9 +94,9 @@ export function DiagramBlock({ lang, code }: { lang: string; code: string }) {
       </div>
 
       {errMsg ? (
-        <div className="m-4 rounded-xl border border-red-500/30 bg-red-500/10 p-4">
-          <p className="text-sm font-semibold text-red-400">Diagram error</p>
-          <pre className="mt-2 whitespace-pre-wrap text-xs text-red-300">{errMsg}</pre>
+        <div className="m-4 rounded-xl border border-danger/30 bg-danger/10 p-4">
+          <p className="text-sm font-semibold text-danger">Diagram error</p>
+          <pre className="mt-2 whitespace-pre-wrap text-xs text-danger">{errMsg}</pre>
         </div>
       ) : null}
 

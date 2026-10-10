@@ -114,12 +114,12 @@ export function DraftRow({
       </div>
 
       {isEditing && !isValidDraftTitle(editingTitle) ? (
-        <div className="text-xs text-red-400">A title is required.</div>
+        <div className="text-xs text-danger">A title is required.</div>
       ) : null}
 
       {isConfirmingDelete ? (
-        <div className="flex items-center justify-between gap-2 rounded-lg border border-red-500/20 bg-red-500/8 px-3 py-2">
-          <span className="text-xs text-red-400">Delete this draft? You can&apos;t undo this.</span>
+        <div className="flex items-center justify-between gap-2 rounded-lg border border-danger/20 bg-danger/8 px-3 py-2">
+          <span className="text-xs text-danger">Delete this draft? You can&apos;t undo this.</span>
           <div className="flex gap-1.5">
             <Button variant="secondary" size="sm" onClick={onCancelDeleteConfirm}>Cancel</Button>
             <Button variant="danger" size="sm" onClick={onDelete}>Delete</Button>

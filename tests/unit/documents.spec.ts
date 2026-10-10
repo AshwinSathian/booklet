@@ -220,6 +220,12 @@ test.describe("document types", () => {
     expect(strip).toContain("10 October 2026");
   });
 
+  test("a high severity is drawn in the danger colour, a low one is not", async () => {
+    const strip = (severity: string) => html(DocHeaderStrip({ meta: { type: "incident", severity }, userId: null }));
+    for (const high of ["P1", "sev-0", "Critical"]) expect(await strip(high)).toContain("text-danger");
+    for (const low of ["P3", "Low"]) expect(await strip(low)).not.toContain("text-danger");
+  });
+
   test("a page with no frontmatter has no header strip", () => {
     expect(DocHeaderStrip({ meta: null, userId: null })).toBeNull();
   });

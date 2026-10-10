@@ -35,10 +35,10 @@ function Code({ children }: { children: React.ReactNode }) {
 
 function MethodBadge({ method }: { method: "GET" | "POST" | "PATCH" | "DELETE" }) {
   const colors: Record<string, string> = {
-    GET: "bg-emerald-500/15 text-emerald-400",
-    POST: "bg-blue-500/15 text-blue-400",
-    PATCH: "bg-amber-500/15 text-amber-400",
-    DELETE: "bg-red-500/15 text-red-400",
+    GET: "bg-success/15 text-success",
+    POST: "bg-info/15 text-info",
+    PATCH: "bg-warning/15 text-warning",
+    DELETE: "bg-danger/15 text-danger",
   };
   return (
     <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[0.7rem] font-bold font-mono uppercase tracking-wide ${colors[method]}`}>
@@ -90,7 +90,7 @@ function Table({ rows }: { rows: [string, string][] }) {
         <tbody>
           {rows.map(([status, reason]) => (
             <tr key={status} className="border-b border-border-default/50">
-              <td className="py-2 pr-8 font-mono text-xs text-amber-400">{status}</td>
+              <td className="py-2 pr-8 font-mono text-xs text-warning">{status}</td>
               <td className="py-2 text-xs text-text-secondary">{reason}</td>
             </tr>
           ))}
@@ -253,7 +253,7 @@ slug: incident-auth-2026-05
                     ["date", "string", "Shown above the page. YYYY-MM-DD is formatted; anything else is shown as written"],
                   ].map(([field, type, notes]) => (
                     <tr key={field} className="border-b border-border-default/50">
-                      <td className="py-2 pr-6 font-mono text-xs text-amber-400">{field}</td>
+                      <td className="py-2 pr-6 font-mono text-xs text-warning">{field}</td>
                       <td className="py-2 pr-6 font-mono text-xs text-text-muted">{type}</td>
                       <td className="py-2 text-xs text-text-secondary">{notes}</td>
                     </tr>

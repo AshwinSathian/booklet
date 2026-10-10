@@ -127,7 +127,7 @@ export function AccountClient({ email, needsVerification, hasPassword, providers
   return (
     <>
       {notice && (
-        <p role={notice.kind === "error" ? "alert" : "status"} className={`mt-6 text-sm ${notice.kind === "error" ? "text-red-400" : "text-text-secondary"}`}>
+        <p role={notice.kind === "error" ? "alert" : "status"} className={`mt-6 text-sm ${notice.kind === "error" ? "text-danger" : "text-text-secondary"}`}>
           {notice.text}
         </p>
       )}

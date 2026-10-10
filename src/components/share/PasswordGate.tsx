@@ -65,7 +65,7 @@ export function PasswordGate({ pageId }: { pageId: string }) {
               className="w-full rounded-xl border border-border-default bg-bg-elevated px-4 py-2.5 text-sm text-text-primary placeholder:text-text-muted outline-none focus:border-accent/50 focus:ring-2 focus:ring-accent/15 transition"
             />
             {error && (
-              <p className="text-xs text-red-400">{error}</p>
+              <p className="text-xs text-danger">{error}</p>
             )}
             <button
               type="submit"

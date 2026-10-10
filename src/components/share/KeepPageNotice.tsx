@@ -55,7 +55,7 @@ export function KeepPageNotice({
           {deletedOn
             ? "Nobody else can open it now. Only you can see this notice."
             : "You published it without an account. Only you can see this notice."}
-          {error ? <span className="block text-red-400">{error}</span> : null}
+          {error ? <span className="block text-danger">{error}</span> : null}
         </p>
         {signedIn ? (
           <button

@@ -1257,7 +1257,7 @@ export function PasteInput({
               <span
                 data-testid="char-limit-counter"
                 role="status"
-                className={`text-2xs tabular-nums ${charCount > STORAGE.maxInputChars ? "text-red-400" : "text-amber-400"}`}
+                className={`text-2xs tabular-nums ${charCount > STORAGE.maxInputChars ? "text-danger" : "text-warning"}`}
               >
                 {charCount.toLocaleString()} / {STORAGE.maxInputChars.toLocaleString()} characters
               </span>

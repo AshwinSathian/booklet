@@ -72,7 +72,7 @@ export function OAuthConsent({
           <li key={s}>• {SCOPE_TEXT[s] ?? s}</li>
         ))}
       </ul>
-      {error && <p className="text-sm text-red-400">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
       <div className="flex items-center justify-center gap-3 pt-1">
         <Button variant="secondary" size="lg" onClick={() => decide("deny")} disabled={status === "working"}>
           Cancel

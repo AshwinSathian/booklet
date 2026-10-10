@@ -24,10 +24,10 @@ type Release = {
 };
 
 const TAG_COLORS: Record<Entry["tag"], string> = {
-  New: "bg-emerald-500/15 text-emerald-400",
-  Improved: "bg-blue-500/15 text-blue-400",
-  Fixed: "bg-violet-500/15 text-violet-400",
-  Removed: "bg-red-500/15 text-red-400",
+  New: "bg-success/15 text-success",
+  Improved: "bg-info/15 text-info",
+  Fixed: "bg-special/15 text-special",
+  Removed: "bg-danger/15 text-danger",
 };
 
 const RELEASES: Release[] = [

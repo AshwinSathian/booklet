@@ -88,7 +88,7 @@ export function ImportUrlDialog({
             className="rounded-lg border border-border-default bg-bg px-3 py-2 text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft"
           />
         </label>
-        {error ? <p role="alert" className="text-xs text-red-400">{error}</p> : null}
+        {error ? <p role="alert" className="text-xs text-danger">{error}</p> : null}
         <div className="flex justify-end gap-2">
           <Button variant="secondary" size="md" type="button" onClick={onClose}>
             Cancel

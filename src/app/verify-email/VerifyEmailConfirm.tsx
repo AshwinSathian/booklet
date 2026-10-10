@@ -66,7 +66,7 @@ export function VerifyEmailConfirm({ token }: { token: string }) {
   return (
     <div className="w-full max-w-xs space-y-3 text-center">
       <p className="text-sm text-text-secondary">Confirm this email address for your Booklet account.</p>
-      {error && <p role="alert" className="text-xs text-red-400">{error}</p>}
+      {error && <p role="alert" className="text-xs text-danger">{error}</p>}
       <Button
         type="button"
         variant="primary"

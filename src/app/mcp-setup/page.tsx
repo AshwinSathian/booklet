@@ -498,7 +498,7 @@ function VSCodeInstructions({ apiKey }: { apiKey: string }) {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs">
+      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-info/10 border border-info/20 text-info text-xs">
         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" aria-hidden className="shrink-0">
           <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
           <path d="M12 8v4M12 16h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -544,7 +544,7 @@ function ZedInstructions({ apiKey }: { apiKey: string }) {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs">
+      <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-info/10 border border-info/20 text-info text-xs">
         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" aria-hidden className="shrink-0">
           <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
           <path d="M12 8v4M12 16h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -731,12 +731,12 @@ export default function McpSetupPage() {
               </div>
               <div>
                 <h1 className="text-[clamp(20px,3vw,26px)] mb-1">
-                  Connect Booklet to your AI
+                  Connect Booklet to an MCP client
                 </h1>
                 <p className="text-sm text-text-secondary max-w-prose">
-                  Booklet&apos;s MCP server lets Claude, Cursor, Windsurf, and other AI tools publish,
-                  update, and manage your pages — entirely through conversation. One-time setup, no
-                  copy-pasting.
+                  Booklet has an MCP server. Once it is connected, Claude, Cursor, Windsurf or
+                  another MCP client can publish, update, find and delete your pages when you ask
+                  it to. You set it up once.
                 </p>
               </div>
             </div>
@@ -745,8 +745,8 @@ export default function McpSetupPage() {
               {[
                 {
                   icon: <TerminalIcon size={15} />,
-                  title: "Say it, publish it",
-                  body: "\"Publish this as a Booklet page\" — done.",
+                  title: "Publish from a conversation",
+                  body: "Ask for the answer to be published as a Booklet page and you get its link back.",
                 },
                 {
                   icon: (
@@ -755,7 +755,7 @@ export default function McpSetupPage() {
                     </svg>
                   ),
                   title: "Edit in place",
-                  body: "Update any page by ID or slug, right from chat.",
+                  body: "Name a page by ID or slug and its content is updated at the same URL.",
                 },
                 {
                   icon: (
@@ -763,7 +763,7 @@ export default function McpSetupPage() {
                       <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   ),
-                  title: "5 pre-built templates",
+                  title: "Five document prompts",
                   body: "Incident reports, ADRs, RFCs, runbooks, release notes.",
                 },
               ].map((card) => (
@@ -779,8 +779,9 @@ export default function McpSetupPage() {
             </div>
 
             <p className="mt-6 text-sm text-text-secondary max-w-prose">
-              A published page has its own URL, so it is not locked in a chat thread, and the
-              server works with any MCP client rather than one vendor&apos;s.
+              A published page has its own URL, so the people you send it to don&apos;t need the
+              chat it came from. The server follows the MCP specification, so the client does not
+              have to be Claude.
             </p>
             <p className="mt-3 text-sm text-text-secondary max-w-prose">
               Typical uses: paste an alert timeline and ask for a published post-mortem, turn a

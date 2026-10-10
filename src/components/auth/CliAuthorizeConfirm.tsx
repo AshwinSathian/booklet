@@ -40,7 +40,7 @@ export function CliAuthorizeConfirm({ port, state }: { port: string; state: stri
           <span className="font-mono">booklet login</span> yourself.
         </p>
       </div>
-      {error && <p className="text-sm text-red-400">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
       <div className="flex items-center justify-center gap-3 pt-1">
         <Button href="/my-pages" variant="secondary" size="lg">
           Cancel

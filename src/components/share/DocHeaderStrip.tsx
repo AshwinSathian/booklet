@@ -18,6 +18,9 @@ export function StatusChip({ status }: { status: string }) {
   );
 }
 
+/** Severities that mean "drop everything". They are drawn in the danger colour. */
+const HIGH_SEVERITY = /^(p0|p1|sev[ -]?[01]|critical|high)$/i;
+
 function str(v: unknown): string | null {
   return typeof v === "string" && v.trim() ? v : null;
 }
@@ -61,7 +64,7 @@ export function DocHeaderStrip({
   return (
     <div
       data-doc-header
-      className="mb-6 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-text-secondary print:mb-4"
+      className="mb-6 flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-border-subtle pb-4 text-sm text-text-secondary print:mb-4"
     >
       {docType && (
         <span data-doc-type={docType} className={`${chip} bg-fill-1 text-text-primary`}>
@@ -69,7 +72,14 @@ export function DocHeaderStrip({
         </span>
       )}
       {status && <StatusChip status={status} />}
-      {severity && <span className={`${chip} border border-border-default text-text-primary`}>{severity}</span>}
+      {severity && (
+        <span
+          data-severity={severity}
+          className={`${chip} ${HIGH_SEVERITY.test(severity.trim()) ? "bg-danger/10 text-danger" : "border border-border-default text-text-primary"}`}
+        >
+          {severity}
+        </span>
+      )}
       {teamOnly && (
         <span className={`${chip} border border-border-default text-text-secondary`} title="Only members of this page's team space can open it">
           Team only
