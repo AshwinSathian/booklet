@@ -500,9 +500,13 @@ the rest of the CLI's command surface (`whoami`, `pages list/delete`,
 real signed-up throwaway account. It drives the CLI as an actual child
 process with an isolated `$HOME` (so it never touches your real
 `~/.readable/config.json`) and feeds the session cookie through
-`/cli-auth` exactly as a browser would, including following the redirect
-to the CLI's loopback callback server — this is the flow that would have
-caught the `redirect()`-inside-`try` bug above before a real user hit it.
+`/cli-auth` and `POST /api/auth/cli-authorize` as a browser would, then
+calls the CLI's loopback callback server with the returned URL — this is
+the flow that would have caught the `redirect()`-inside-`try` bug above
+before a real user hit it. (Updated 2026-10-10: the script still expected
+the pre-September `GET /cli-auth` redirect, the `rdbl_` key prefix and a
+plain-JSON MCP response, so it had been failing since 2026-09-05 without
+anyone running it.)
 Same self-cleaning discipline: everything is tagged
 `e2e-cli-verify-<timestamp>` and deleted at the end, scoped to what the run
 created. Run it after any deploy touching `src/app/cli-auth`,
