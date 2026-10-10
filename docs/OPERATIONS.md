@@ -266,7 +266,11 @@ through the editor, an API key or an OAuth token, and when it creates an API
 key, authorizes the CLI or approves an app. The link is mailed at signup and
 at the first sign-in after that, works for 24 hours, and is confirmed by a
 button on `/verify-email` (a POST, so a mail scanner opening the link
-confirms nothing). Finishing a password reset also verifies the address.
+confirms nothing). The button only works while signed in to the account the
+link was sent for: otherwise the owner of an address could be led into
+confirming an account whose password someone else chose. Finishing a
+password reset also verifies the address, and is the way back for someone
+whose address was registered by another person.
 
 Accounts that existed before this shipped were not exempted (owner decision,
 2026-10-10): each has to confirm once. To verify one by hand:

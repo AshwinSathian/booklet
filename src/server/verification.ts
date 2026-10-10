@@ -28,10 +28,14 @@ export const UNVERIFIED_MESSAGE =
 /**
  * An account with an unconfirmed address can write drafts and cannot
  * publish, update a published page, or create credentials (API keys, CLI
- * and app sign-ins). The credential rule is what makes linking a provider
- * sign-in by email safe: whoever registered an address they do not own
- * holds nothing that outlives the real owner's arrival. It applies to every
- * way in: browser session, API key and OAuth token.
+ * and app sign-ins, passkeys, webhooks). It applies to every way in:
+ * browser session, API key and OAuth token.
+ *
+ * The credential rule is what protects an address's real owner from
+ * whoever registered it first. That person holds a password and sessions
+ * and nothing else. A password reset removes both. Confirming by link
+ * requires that password's session (see the verify-email route), so the
+ * owner cannot be led into confirming an account someone else can enter.
  */
 export async function assertVerified(userId: string): Promise<void> {
   if (!emailVerificationRequired()) return;

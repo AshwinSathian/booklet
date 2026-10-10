@@ -8,7 +8,7 @@ import { sessionCookieFor, withRequestScope } from "./helpers/request-scope";
 import { getDb } from "@/lib/mongodb";
 import { ensureIndexes } from "@/lib/db/index-specs.mjs";
 import { createApiKey, createPageRecord, getPageRecord, updatePageRecord } from "@/lib/db";
-import { createPasskey, createUser, findSessionByHash, getIdentitiesByUser, getPasskeysByUser, getUserByEmail, getUserById } from "@/lib/db/auth";
+import { createUser, findSessionByHash, getIdentitiesByUser, getUserByEmail, getUserById } from "@/lib/db/auth";
 import { generateRawKey, hashApiKey } from "@/lib/api-key";
 import { hashUserPassword } from "@/lib/auth/password";
 import { hashSessionToken } from "@/lib/auth/session-token";
@@ -136,6 +136,12 @@ test.afterAll(async () => {
   await db.collection("pages").deleteMany({ _id: { $in: pageIds } } as never);
 });
 
+/** Presses "Confirm email" with `token`, signed in as `cookie` (or signed out). */
+function confirm(cookie: string | null, token: string) {
+  const req = withSession(cookie, "/api/auth/verify-email", { body: { token } });
+  return withRequestScope(req, () => verifyEmail(req));
+}
+
 /** The verification link's token, read out of the mail "sent" to `to`. */
 async function tokenMailedTo(to: string): Promise<string> {
   await expect.poll(() => sentMail.some((m) => m.to === to)).toBe(true);
@@ -152,7 +158,7 @@ test.describe("email verification", () => {
   });
 
   test("an unverified account gets 403 on publish through an API key, and 201 once verified", async () => {
-    const { user, rawKey } = await newUser();
+    const { user, rawKey, cookie } = await newUser();
 
     const refused = await publishWithKey(rawKey);
     expect(refused.status).toBe(403);
@@ -161,7 +167,7 @@ test.describe("email verification", () => {
 
     await sendVerification(user, ORIGIN);
     const token = await tokenMailedTo(user.email!);
-    const res = await verifyEmail(withSession(null, "/api/auth/verify-email", { body: { token } }));
+    const res = await confirm(cookie, token);
     expect(res.status).toBe(200);
     expect((await getUserById(user.id))?.email_verified_at).toBeTruthy();
 
@@ -170,18 +176,33 @@ test.describe("email verification", () => {
     pageIds.push((await ok.json()).id);
   });
 
-  test("a verification link works once, and not after the address was replaced by a newer link", async () => {
-    const { user } = await newUser();
+  test("a verification link works once, and not after a newer link replaced it", async () => {
+    const { user, cookie } = await newUser();
     await sendVerification(user, ORIGIN);
     const first = await tokenMailedTo(user.email!);
     sentMail.length = 0;
     await sendVerification(user, ORIGIN);
     const second = await tokenMailedTo(user.email!);
 
-    const stale = await verifyEmail(withSession(null, "/api/auth/verify-email", { body: { token: first } }));
-    expect(stale.status).toBe(400);
-    expect((await verifyEmail(withSession(null, "/api/auth/verify-email", { body: { token: second } }))).status).toBe(200);
-    expect((await verifyEmail(withSession(null, "/api/auth/verify-email", { body: { token: second } }))).status).toBe(400);
+    expect((await confirm(cookie, first)).status).toBe(400);
+    expect((await confirm(cookie, second)).status).toBe(200);
+    expect((await confirm(cookie, second)).status).toBe(400);
+  });
+
+  test("the link alone confirms nothing: it needs the session of the account it was sent for", async () => {
+    // Someone registered an address they do not own. Its owner gets the
+    // mail and presses the button, signed out or signed in as themselves.
+    // Neither may verify an account whose password the first person chose.
+    const { user } = await newUser({ password: "attacker-chosen" });
+    const other = await newUser({ verified: true });
+
+    await sendVerification(user, ORIGIN);
+    const token = await tokenMailedTo(user.email!);
+    expect((await confirm(null, token)).status).toBe(401);
+    expect((await getUserById(user.id))?.email_verified_at).toBeFalsy();
+    // Signed out, the token was not spent.
+    expect((await confirm(other.cookie, token)).status).toBe(400);
+    expect((await getUserById(user.id))?.email_verified_at).toBeFalsy();
   });
 
   test("an unverified account cannot publish from the editor, update a page, or create an API key", async () => {

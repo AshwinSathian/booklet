@@ -25,6 +25,8 @@
  *   - `/my-pages`   — dashboard, linked post-auth in various places
  *   - `/cli-auth`   — `?port=&state=` return target for `booklet login`
  *   - `/t/join`     — `?token=` team-invite return target
+ *   - `/verify-email` — `?token=` back to the confirm button after signing in
+ *   - `/settings`   — account settings
  *   - `/p/<id>`     — back to a share page after "Sign in to keep this page"
  *                     (src/components/share/KeepPageNotice.tsx). Matched
  *                     exactly, not as a prefix: one path segment of
@@ -34,7 +36,7 @@
  *                     accepted.
  */
 const SHARE_PAGE = /^\/p\/[A-Za-z0-9_-]{1,80}$/;
-const SAFE_REDIRECT_PREFIXES = ["/app", "/my-pages", "/cli-auth", "/oauth/authorize", "/t/join"] as const;
+const SAFE_REDIRECT_PREFIXES = ["/app", "/my-pages", "/cli-auth", "/oauth/authorize", "/t/join", "/verify-email", "/settings"] as const;
 
 /**
  * Returns true only if `url` is a same-app relative path under one of

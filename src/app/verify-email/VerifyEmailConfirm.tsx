@@ -7,7 +7,7 @@ import { useSession } from "@/components/auth/SessionProvider";
 import { ROUTES } from "@/lib/constants";
 
 export function VerifyEmailConfirm({ token }: { token: string }) {
-  const { refetch } = useSession();
+  const { refetch, isLoaded, isSignedIn } = useSession();
   const [state, setState] = useState<"idle" | "sending" | "done">("idle");
   const [error, setError] = useState<string | null>(token ? null : "This link is missing its token. Open the link from the email again.");
 
@@ -40,6 +40,25 @@ export function VerifyEmailConfirm({ token }: { token: string }) {
         <Link href={ROUTES.app} className="text-sm text-accent transition-colors hover:text-accent-soft">
           Open the editor
         </Link>
+      </div>
+    );
+  }
+
+  // Confirming needs the account's own session (see the route).
+  if (isLoaded && !isSignedIn) {
+    return (
+      <div className="w-full max-w-xs space-y-3 text-center">
+        <p className="text-sm text-text-secondary">Sign in to the account this link was sent for, and you will come back here to confirm.</p>
+        <Link
+          href={`${ROUTES.signIn}?redirect_url=${encodeURIComponent(`/verify-email?token=${encodeURIComponent(token)}`)}`}
+          className="text-sm font-semibold text-accent transition-colors hover:text-accent-soft"
+        >
+          Sign in
+        </Link>
+        <p className="text-xs text-text-muted">
+          If you did not create this account, do not sign in to it. Use{" "}
+          <Link href={ROUTES.forgotPassword} className="text-accent hover:text-accent-soft">Forgot your password</Link> to take the address back.
+        </p>
       </div>
     );
   }

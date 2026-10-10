@@ -16,7 +16,7 @@ const SSO_ERRORS: Record<string, string> = {
   sso_no_email: "That account has no verified email address, so it cannot be used to sign in.",
   sso_failed: "Could not sign in with that provider. Try again.",
   sso_email_unverified:
-    "A Booklet account already uses that email address, and the address has not been confirmed. Sign in with its password and confirm the email, or use Forgot your password. Then connect this provider in Account settings.",
+    "A Booklet account already uses that email address, and the address has not been confirmed. If the account is yours, sign in with its password and confirm the email. If you never created it, use Forgot your password to take the address back. Then try again.",
 };
 
 const ALT_BUTTON =
