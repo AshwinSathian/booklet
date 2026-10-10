@@ -1,5 +1,5 @@
 import type { Inline } from "@/lib/blocks";
-import { sanitizeImageUrl, sanitizeUrl } from "@/lib/render-shared";
+import { sanitizeImageUrl, sanitizeUrl, USER_LINK_REL } from "@/lib/render-shared";
 import type { WikilinkRenderCtx } from "@/lib/wikilinks/render-context";
 import React from "react";
 import { InlineMath } from "./InlineMath";
@@ -54,7 +54,7 @@ export function InlineRenderer({
                 key={i}
                 href={href}
                 target={href === "#" ? "_self" : "_blank"}
-                rel="noreferrer"
+                rel={USER_LINK_REL}
                 className="text-accent-soft underline decoration-accent/40 underline-offset-4 transition hover:decoration-accent-soft"
               >
                 <InlineRenderer inl={node.c} wikilinkCtx={wikilinkCtx} />
