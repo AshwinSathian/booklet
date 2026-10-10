@@ -23,10 +23,8 @@ const ORIGIN = "http://localhost";
 const CLAUDE_CALLBACK = "https://claude.ai/api/mcp/auth_callback";
 const userIds: string[] = [];
 const clientIds: string[] = [];
-let ipCounter = 0;
-
-/** A fresh address per request, so the per-IP rate limits never interfere. */
-const ip = () => ({ "x-forwarded-for": `198.51.100.${++ipCounter % 250}`, "cf-connecting-ip": `198.51.100.${ipCounter % 250}` });
+/** A fresh address per request, so the per-IP rate limits never interfere, even across reruns in the same minute. */
+const ip = () => ({ "cf-connecting-ip": `2001:db8::${crypto.randomUUID().slice(0, 4)}:${crypto.randomUUID().slice(0, 4)}` });
 
 function pkce() {
   const verifier = `verifier-${crypto.randomUUID()}-${crypto.randomUUID()}`.slice(0, 64);
@@ -259,10 +257,21 @@ test("code replay: the second use fails and withdraws the tokens the first use g
   expect((await listPages(new Request(`${ORIGIN}/api/v1/pages`, api(first.access_token)))).status).toBe(401);
   expect((await tokenRequest({ grant_type: "refresh_token", refresh_token: first.refresh_token, client_id: g.clientId })).status).toBe(400);
 
-  // Simultaneous redemptions: exactly one wins.
-  const race = await getCode();
-  const results = await Promise.all([redeem(race), redeem(race), redeem(race)]);
-  expect(results.filter((r) => r.status === 200)).toHaveLength(1);
+  // Simultaneous redemptions are a replay too. At most one gets a response
+  // with tokens, and whichever order the requests land in, nothing it was
+  // given still works afterwards.
+  for (let i = 0; i < 5; i++) {
+    const race = await getCode();
+    const results = await Promise.all([redeem(race), redeem(race), redeem(race)]);
+    const winners = results.filter((r) => r.status === 200);
+    expect(winners.length).toBeLessThanOrEqual(1);
+    for (const w of winners) {
+      const { access_token } = await w.json();
+      expect((await listPages(new Request(`${ORIGIN}/api/v1/pages`, api(access_token)))).status).toBe(401);
+    }
+    const rows = await (await getDb()).collection("oauth_tokens").find({ user_id: race.user.userId }).toArray();
+    expect(rows.every((r) => r.revoked_at instanceof Date)).toBe(true);
+  }
 });
 
 test("refresh token reuse: tolerated for a few seconds, then it withdraws the grant", async () => {

@@ -44,6 +44,8 @@ type CodeDoc = {
   expires_at: Date;
   used_at: Date | null;
   purge_at: Date; // TTL index
+  /** Set when the grant this code started is withdrawn. */
+  revoked_at?: Date;
 };
 
 type TokenDoc = {
@@ -188,7 +190,7 @@ async function issueTokens(grant: Pick<TokenDoc, "grant_id" | "client_id" | "use
   // The grant may have been withdrawn while this request was running (a
   // replay detected by a parallel request). Its other tokens carry the
   // mark; tokens issued after it must not outlive it.
-  if (await col.findOne({ grant_id: grant.grant_id, revoked_at: { $exists: true } })) {
+  if (await grantIsRevoked(grant.grant_id)) {
     await col.updateMany({ _id: { $in: ids } }, { $set: { revoked_at: new Date() } });
     throw new OAuthTokenError("invalid_grant", "This authorization was withdrawn. Sign in again.");
   }
@@ -202,7 +204,16 @@ async function issueTokens(grant: Pick<TokenDoc, "grant_id" | "client_id" | "use
  * TTL index removes the rows when they would have expired anyway.
  */
 async function revokeGrant(grantId: string): Promise<void> {
-  await (await tokens()).updateMany({ grant_id: grantId }, { $set: { revoked_at: new Date() } });
+  const revoked_at = new Date();
+  // The code is marked too: when a code is replayed while its first
+  // redemption is still running, no token rows exist yet to carry the mark.
+  await (await codes()).updateMany({ grant_id: grantId }, { $set: { revoked_at } });
+  await (await tokens()).updateMany({ grant_id: grantId }, { $set: { revoked_at } });
+}
+
+async function grantIsRevoked(grantId: string): Promise<boolean> {
+  const marked = { grant_id: grantId, revoked_at: { $exists: true } };
+  return Boolean((await (await tokens()).findOne(marked)) ?? (await (await codes()).findOne(marked)));
 }
 
 // A refresh token may be used again for this long after its first use. A

@@ -93,6 +93,7 @@ export const INDEX_SPECS = [
   // Codes and tokens are keyed by their hash (_id). TTL indexes remove them
   // once expired; grant_id backs "revoke everything from this consent".
   { collection: "oauth_codes", spec: { purge_at: 1 }, options: { expireAfterSeconds: 0 } },
+  { collection: "oauth_codes", spec: { grant_id: 1 } },
   { collection: "oauth_tokens", spec: { expires_at: 1 }, options: { expireAfterSeconds: 0 } },
   { collection: "oauth_tokens", spec: { grant_id: 1 } },
   { collection: "oauth_tokens", spec: { user_id: 1 } },
