@@ -192,6 +192,16 @@ test("the publish control offers Unlisted, selected, to a signed-in author", asy
   await page.locator("textarea").first().fill("# Listed page\n\nBody.");
   await visibility.click();
   await expect(page.getByRole("menuitemradio", { name: /^Unlisted/ })).toHaveAttribute("aria-checked", "true");
+  // The pill closes its own menu, and the keyboard reaches every choice.
+  await visibility.click();
+  await expect(page.getByRole("menu")).toHaveCount(0);
+  await visibility.click();
+  await expect(page.getByRole("menuitemradio", { name: /^Unlisted/ })).toBeFocused();
+  await page.keyboard.press("ArrowDown");
+  await expect(page.getByRole("menuitemradio", { name: /^Public/ })).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("menu")).toHaveCount(0);
+  await visibility.click();
   await page.getByRole("menuitemradio", { name: /^Public/ }).click();
   await expect(visibility).toHaveText("Public");
   const publish = page.waitForResponse((r) => r.url().endsWith("/api/publish") && r.request().method() === "POST");

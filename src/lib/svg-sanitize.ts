@@ -33,12 +33,32 @@ const DISALLOWED_TAGS = new Set([
 ]);
 const HREF_ATTRS = new Set(["href", "xlink:href"]);
 
+/** A link a reader may follow: a place in this document or site, or a web, mail or phone address. */
 function isSafeHref(value: string): boolean {
   const v = value.trim().toLowerCase();
   if (!v) return true;
   if (v.startsWith("#")) return true;
-  return v.startsWith("http://") || v.startsWith("https://") || v.startsWith("mailto:");
+  // A path on this site: "/p/x", "./x", "../x", "?q". Not "//host", which is another host.
+  if (/^(\/(?!\/)|\.\.?\/|\?)/.test(v)) return true;
+  return v.startsWith("http://") || v.startsWith("https://") || v.startsWith("mailto:") || v.startsWith("tel:");
 }
+
+/**
+ * What an element that fetches as soon as it is drawn may point at: a place
+ * in this document or inline data. A diagram loads nothing from anywhere
+ * else, so reading a page never tells a third host that it was read through
+ * a diagram. (Markdown images in the page body are a separate, deliberate
+ * feature and are not affected.)
+ */
+function isInertSource(value: string): boolean {
+  const v = value.trim().toLowerCase();
+  return !v || v.startsWith("#") || v.startsWith("data:image/");
+}
+
+// Elements whose href is fetched on render, not followed on click.
+const LOADS_ITS_HREF = new Set(["image", "use", "feimage", "script", "pattern", "filter", "lineargradient", "radialgradient", "textpath", "mpath"]);
+// Attributes that are fetched on render wherever they appear.
+const SOURCE_ATTRS = new Set(["src", "srcset", "poster", "background", "data", "ping", "lowsrc", "dynsrc"]);
 
 /** CSS as the browser will read it: comments gone, escapes decoded (`\75rl(` is `url(`). */
 function decodeCss(css: string): string {
@@ -103,6 +123,10 @@ function clean(root: Element, opts: { labels: boolean }): void {
       const name = attr.name.toLowerCase();
       if (name.startsWith("on")) {
         el.removeAttribute(attr.name);
+      } else if (HREF_ATTRS.has(name) && LOADS_ITS_HREF.has(tag) && !isInertSource(attr.value)) {
+        el.removeAttribute(attr.name);
+      } else if (SOURCE_ATTRS.has(name) && !isInertSource(attr.value)) {
+        el.removeAttribute(attr.name);
       } else if ((HREF_ATTRS.has(name) || name === "action" || name === "formaction") && !isSafeHref(attr.value)) {
         el.removeAttribute(attr.name);
       } else if (name === "style") {
@@ -112,17 +136,28 @@ function clean(root: Element, opts: { labels: boolean }): void {
   }
 }
 
-/** Returns sanitized SVG markup, or "" if the input isn't parseable SVG. */
-export function sanitizeCompiledSvg(svg: string): string {
+/**
+ * The SVG a diagram compiler produced (Graphviz), as a sanitized element
+ * ready to mount, or null if the markup is not parseable SVG. Parsed as XML:
+ * the compiler emits a standalone SVG document.
+ */
+export function sanitizeCompiledSvgElement(svg: string): Element | null {
   const doc = new DOMParser().parseFromString(svg, "image/svg+xml");
-
-  if (doc.querySelector("parsererror")) return "";
-
+  if (doc.querySelector("parsererror")) return null;
   const root = doc.documentElement;
-  if (!root || root.nodeName.toLowerCase() !== "svg") return "";
-
+  if (!root || root.nodeName.toLowerCase() !== "svg") return null;
   clean(root, { labels: false });
-  return new XMLSerializer().serializeToString(root);
+  return root;
+}
+
+/**
+ * The same, as markup, or "" if the input isn't parseable SVG. For the HTML
+ * export, which is a file and so has to be text. On the page, mount the
+ * element instead: a string would be parsed a second time.
+ */
+export function sanitizeCompiledSvg(svg: string): string {
+  const root = sanitizeCompiledSvgElement(svg);
+  return root ? new XMLSerializer().serializeToString(root) : "";
 }
 
 /**
@@ -138,8 +173,10 @@ export function sanitizeCompiledSvg(svg: string): string {
  * serialise-and-parse for a browser to read differently.
  *
  * Mermaid's `securityLevel: "strict"` has already run DOMPurify over this
- * markup. What that leaves, and this removes, is CSS that loads from another
- * host (`themeCSS` in an init directive reaches the <style> element).
+ * markup. What that leaves, and this removes, is anything that fetches from
+ * another host when the diagram is drawn: CSS (`themeCSS` in an init
+ * directive reaches the <style> element), and <img> or <image> in a label
+ * or an image shape.
  */
 export function sanitizeRenderedSvg(svg: string): Element | null {
   const body = new DOMParser().parseFromString(svg, "text/html").body;

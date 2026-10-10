@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { JSDOM } from "jsdom";
-import { inertCss, sanitizeCompiledSvg, sanitizeRenderedSvg } from "@/lib/svg-sanitize";
+import { inertCss, sanitizeCompiledSvg, sanitizeCompiledSvgElement, sanitizeRenderedSvg } from "@/lib/svg-sanitize";
 
 // sanitizeCompiledSvg uses the browser's DOMParser/XMLSerializer — it only
 // ever runs client-side, after a dynamic ssr:false import in
@@ -152,9 +152,35 @@ test.describe("sanitizeRenderedSvg (Mermaid on the page)", () => {
     expect(root?.querySelector(".nodeLabel")).not.toBeNull();
   });
 
+  test("nothing in a diagram is fetched from another host when it is drawn", () => {
+    const root = sanitizeRenderedSvg(
+      mermaid(
+        '<img src="https://evil.example/beacon.png" srcset="https://evil.example/2x.png 2x"><img src="data:image/png;base64,AAAA"><video poster="https://evil.example/p.png"></video>',
+      ).replace("<g class=", '<image href="https://evil.example/shape.png"></image><use href="https://evil.example/s.svg#x"></use><g class='),
+    );
+    const html = root?.outerHTML ?? "";
+    expect(html).not.toContain("evil.example");
+    expect(html).toContain("data:image/png;base64,AAAA");
+  });
+
+  test("links a reader can follow are kept: this site, the web, mail, phone", () => {
+    const root = sanitizeRenderedSvg(
+      mermaid('<a href="/p/example-adr">a</a><a href="../runbook">b</a><a href="https://example.com">c</a><a href="tel:+15550100">d</a><a href="//evil.example/x">e</a><a href="javascript:alert(1)">f</a>'),
+    );
+    const hrefs = Array.from(root?.querySelectorAll("a") ?? []).map((a) => a.getAttribute("href"));
+    expect(hrefs).toEqual(["/p/example-adr", "../runbook", "https://example.com", "tel:+15550100", null, null]);
+  });
+
   test("anything that is not exactly one <svg> is refused", () => {
     expect(sanitizeRenderedSvg("<div>not a diagram</div>")).toBeNull();
     expect(sanitizeRenderedSvg(`${mermaid()}<script>alert(1)</script>`)).toBeNull();
     expect(sanitizeRenderedSvg("")).toBeNull();
   });
+});
+
+test("sanitizeCompiledSvgElement returns the cleaned tree, and null for what is not SVG", () => {
+  const root = sanitizeCompiledSvgElement(`<svg ${SVG_NS}><script>alert(1)</script><a href="/p/x"><text>node</text></a></svg>`);
+  expect(root?.querySelector("script")).toBeNull();
+  expect(root?.querySelector("a")?.getAttribute("href")).toBe("/p/x");
+  expect(sanitizeCompiledSvgElement("<div/>")).toBeNull();
 });

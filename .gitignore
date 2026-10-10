@@ -16,6 +16,8 @@
 # next.js
 /.next/
 /.next.previous/
+# redeploy.sh's rollback copies of the workspace builds
+packages/*/dist.previous/
 /out/
 
 # production

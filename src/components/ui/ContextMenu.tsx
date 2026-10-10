@@ -22,12 +22,15 @@ type AnchorRect = { top: number; bottom: number; left: number; right: number; al
 export function ContextMenu({
   position,
   anchor,
+  anchorRef,
   onClose,
   widthClass = "min-w-45",
   children,
 }: {
   position?: ContextMenuPosition | null;
   anchor?: AnchorRect | null;
+  /** The trigger, when there is one. A press on it is left to its own click handler. */
+  anchorRef?: RefObject<HTMLElement | null>;
   onClose: () => void;
   widthClass?: string;
   children: ReactNode;
@@ -78,6 +81,9 @@ export function ContextMenu({
     }
 
     function handlePointerDown(e: PointerEvent) {
+      // Closing here on a press of the trigger would be undone by the
+      // trigger's own click, which toggles: the menu would close and reopen.
+      if (anchorRef?.current?.contains(e.target as Node)) return;
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) onClose();
     }
     function handleKeyDown(e: KeyboardEvent) {
@@ -120,7 +126,7 @@ export function ContextMenu({
       window.removeEventListener("scroll", handleScroll, true);
       restoreFocusRef.current?.focus();
     };
-  }, [open, onClose]);
+  }, [open, onClose, anchorRef]);
 
   if (!open) return null;
 
@@ -178,7 +184,7 @@ export function Menu({
   }, [open, align, anchorRef]);
 
   return (
-    <ContextMenu anchor={anchor} onClose={onClose} widthClass={widthClass}>
+    <ContextMenu anchor={anchor} anchorRef={anchorRef} onClose={onClose} widthClass={widthClass}>
       {children}
     </ContextMenu>
   );
@@ -217,7 +223,7 @@ export function ContextMenuItem({
       : danger
         ? "text-danger hover:bg-danger/8 focus-visible:bg-danger/8"
         : active || checked
-          ? "text-accent bg-accent-dim hover:bg-accent-dim"
+          ? "text-accent bg-accent-dim hover:bg-accent-dim focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-accent"
           : "text-text-secondary hover:bg-fill-2 hover:text-text-primary focus-visible:bg-fill-2 focus-visible:text-text-primary",
     "focus-visible:outline-none",
   ].join(" ");

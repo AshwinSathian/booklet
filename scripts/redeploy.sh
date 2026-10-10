@@ -41,18 +41,7 @@ if [[ ! -x "$NODE_BIN/node" ]]; then
 fi
 export PATH="$NODE_BIN:$PATH"
 
-# Make sure `pm2` is resolvable regardless of the caller's active Node
-# version — nvm only puts a version's bin/ on PATH once something has
-# `nvm use`'d it, which a manual invocation's shell (or the pre-push hook's)
-# will not generally match. Same gap pm2-startup.sh already guards against.
-if ! command -v pm2 &>/dev/null; then
-  for bin in "$HOME"/.nvm/versions/node/*/bin; do
-    if [[ -x "$bin/pm2" ]]; then
-      export PATH="$bin:$PATH"
-      break
-    fi
-  done
-fi
+source "$(dirname "${BASH_SOURCE[0]}")/lib/pm2-path.sh"
 
 REPO="/Users/ashwinsathian/Documents/Personal/booklet"
 LOG_DIR="$HOME/.booklet-deploy-logs"
@@ -132,11 +121,19 @@ run "npm run build --workspace=packages/shared"
 
 echo ""
 log "── Building every other workspace that has a build ───"
-# booklet-cli today. `--if-present` skips workspaces with no build script
-# (mcp-server runs from source), and a workspace added later is built
-# without this script being edited. The verify suite at the end runs the
-# CLI from packages/cli/dist, so a stale build there fails it.
-run "npm run build --workspaces --if-present"
+# booklet-cli today; a workspace added later is built without this script
+# being edited, and one with no build script (mcp-server runs from source)
+# is skipped. Not `--workspaces`: that would build packages/shared a second
+# time, wiping the dist/ the live MCP server loads for longer than needed.
+# The verify suite at the end runs the CLI from packages/cli/dist, so a
+# stale build there fails it.
+OTHER_WORKSPACES=$(npm query .workspace | node -e '
+  let s = ""; process.stdin.on("data", (d) => (s += d)).on("end", () => {
+    for (const w of JSON.parse(s)) if (w.location !== "packages/shared" && w.scripts && w.scripts.build) console.log(w.location);
+  });')
+for ws in $OTHER_WORKSPACES; do
+  run "npm run build --workspace=$ws"
+done
 
 echo ""
 log "── Building Next.js (production) ────────────────────"
@@ -197,8 +194,10 @@ if [[ "$HEALTH_OK" == "true" ]]; then
   log "── Verifying the live site (both production-verify suites) ──"
   # Against the public hostnames, through the tunnel, as a visitor would.
   # Each suite creates its own account and pages and removes them.
+  # Both suites also read the database directly, to clean up after
+  # themselves. They default to this Mac's; a caller's MONGODB_URI wins.
   VERIFY_OK=true
-  export MONGODB_URI="mongodb://127.0.0.1:27017/booklet?directConnection=true"
+  export MONGODB_URI="${MONGODB_URI:-mongodb://127.0.0.1:27017/booklet?directConnection=true}"
   if ! TEST_BASE_URL=https://booklet.ashwinsathian.com TEST_API_BASE_URL=https://booklet-api.ashwinsathian.com \
       npx playwright test --config=scripts/production-verify/playwright.config.ts 2>&1 | tee -a "$LOG"; then
     VERIFY_OK=false

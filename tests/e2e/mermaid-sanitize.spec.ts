@@ -11,6 +11,7 @@ const DIAGRAM = [
   `%%{init: {"themeCSS": ".node rect { fill: url(https://evil.example/beacon.png); } .edgeLabel { background: url('https://evil.example/b2.png'); }"}}%%`,
   "flowchart LR",
   "  A[Alert fires] --> B[Page the on-call]",
+  `  B --> C["Resolve <img src='https://evil.example/label.png'>"]`,
   "```",
 ].join("\n");
 

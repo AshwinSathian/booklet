@@ -1,4 +1,5 @@
 import { GRAPHVIZ_LANGS } from "@/lib/blocks";
+import { MERMAID_SAFETY } from "@/lib/mermaid-config";
 import { sanitizeCompiledSvg } from "@/lib/svg-sanitize";
 import type { RenderedDiagrams } from "./html";
 
@@ -33,7 +34,7 @@ export async function renderDiagramsForExport(blocks: unknown): Promise<Rendered
   if (sources.size === 0) return out;
 
   const mermaid = (await import("mermaid")).default;
-  mermaid.initialize({ startOnLoad: false, theme: "default", securityLevel: "strict", htmlLabels: false, flowchart: { htmlLabels: false } });
+  mermaid.initialize({ startOnLoad: false, theme: "default", ...MERMAID_SAFETY, htmlLabels: false, flowchart: { htmlLabels: false } });
   try {
     for (const source of sources) {
       try {
@@ -46,7 +47,7 @@ export async function renderDiagramsForExport(blocks: unknown): Promise<Rendered
     }
   } finally {
     // Mermaid's configuration is global: give the page's own diagrams their HTML labels back.
-    mermaid.initialize({ startOnLoad: false, securityLevel: "strict", htmlLabels: true, flowchart: { htmlLabels: true } });
+    mermaid.initialize({ startOnLoad: false, ...MERMAID_SAFETY, htmlLabels: true, flowchart: { htmlLabels: true } });
   }
   return out;
 }

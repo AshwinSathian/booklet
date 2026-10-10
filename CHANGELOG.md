@@ -14,12 +14,18 @@ Notable changes to the Booklet app and MCP server. The format follows
 ### Security
 
 - **Mermaid diagrams on a page are sanitized before they are mounted.** They
-  used to rely on Mermaid's own pass alone, which lets CSS through: a
-  `themeCSS` in a diagram's init directive could load an image from another
-  host when the page was read. The diagram is now checked as a parsed tree
-  (styles, event handlers, script links, form controls inside labels) and
-  that tree is what is mounted. Graphviz diagrams and the HTML export
-  already went through the sanitizer.
+  used to rely on Mermaid's own pass alone, which keeps CSS and images: a
+  `themeCSS` in a diagram's init directive, or an `<img>` in a label, made
+  every reader's browser fetch from another host. Two changes close that.
+  Mermaid is configured so that a directive cannot set `themeCSS` and a
+  label cannot contain an element that fetches or submits. And the drawn
+  diagram is checked as a parsed tree (styles, images, event handlers,
+  script links, form controls) and that tree is what is mounted, for
+  Mermaid and Graphviz alike. One route is left: a Mermaid image shape is
+  fetched while Mermaid lays the diagram out. That is the same request an
+  image in the page's Markdown makes, which is a feature.
+- Links inside a diagram to a path on the same site (`/p/...`) and `tel:`
+  links are kept. The sanitizer used to remove them from Graphviz diagrams.
 
 ### Changed
 
