@@ -10,6 +10,10 @@ import {
   UpdatePageOutputSchema,
   GetPageOutputSchema,
   DeletePageOutputSchema,
+  CreateDocumentInputSchema,
+  CreateDocumentOutputSchema,
+  SearchPagesInputSchema,
+  SearchPagesOutputSchema,
 } from "./schemas.js";
 import {
   handlePublishPage,
@@ -17,6 +21,8 @@ import {
   handleGetPage,
   handleListPages,
   handleDeletePage,
+  handleCreateDocument,
+  handleSearchPages,
   handleResourcesList,
   handleResourcesRead,
 } from "./tools.js";
@@ -24,7 +30,7 @@ import { PROMPT_DEFINITIONS, renderPrompt } from "./prompts.js";
 
 // Must match mcp-server/package.json and mcp-server/server.json (the MCP
 // registry entry); tests/unit/mcp-version.spec.ts checks all three.
-export const SERVER_VERSION = "3.0.0";
+export const SERVER_VERSION = "3.1.0";
 
 // Tools are registered, and so listed, in this order. Keep it fixed: a
 // client caches tools/list, and a reordered list is a changed list.
@@ -34,6 +40,8 @@ export const TOOL_NAMES = [
   "get_page",
   "list_pages",
   "delete_page",
+  "create_document",
+  "search_pages",
 ] as const;
 
 export const PROMPT_NAMES = PROMPT_DEFINITIONS.map((p) => p.name);
@@ -120,6 +128,32 @@ export function createMcpServer(apiBase: string, apiKey: string): McpServer {
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     },
     async (args) => handleDeletePage(args, apiKey, apiBase),
+  );
+
+  server.registerTool(
+    "create_document",
+    {
+      title: "Create Document",
+      description:
+        "Publish an engineering document (incident, postmortem, adr, rfc, runbook, release-notes) with its type, status and other fields. Use this instead of publish_page for those types; pass `space` to put it in a team space.",
+      inputSchema: CreateDocumentInputSchema,
+      outputSchema: CreateDocumentOutputSchema,
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+    },
+    async (args) => handleCreateDocument(args, apiKey, apiBase),
+  );
+
+  server.registerTool(
+    "search_pages",
+    {
+      title: "Search Pages",
+      description:
+        "Find pages by title text, document type, or team space. Without `space` it searches your own pages; with it, every page in that space. Use it to find a page to link to as [[Title]] or to update.",
+      inputSchema: SearchPagesInputSchema,
+      outputSchema: SearchPagesOutputSchema,
+      annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+    },
+    async (args) => handleSearchPages(args, apiKey, apiBase),
   );
 
   server.registerResource(

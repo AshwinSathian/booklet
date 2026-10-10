@@ -20,7 +20,7 @@ export type PageRow = {
   id: string;
   slug: string | null;
   title: string | null;
-  visibility: "public" | "unlisted";
+  visibility: "public" | "unlisted" | "team";
   collection_id: string | null;
   view_count: number;
   has_password: boolean;
@@ -250,17 +250,20 @@ function PageCard({
   onDeleted,
   onSlugSaved,
   onVisibilityChanged,
+  inTeamSpace,
   onDragStart,
   onDragEnd,
 }: {
   page: PageRow;
+  /** The page is in a team space, so it can be restricted to that space's members. */
+  inTeamSpace: boolean;
   index: number;
   selected: boolean;
   onSelectClick: (e: React.MouseEvent) => void;
   onContextMenu: (e: React.MouseEvent) => void;
   onDeleted: (id: string) => void;
   onSlugSaved: (id: string, slug: string | null) => void;
-  onVisibilityChanged: (id: string, v: "public" | "unlisted") => void;
+  onVisibilityChanged: (id: string, v: "public" | "unlisted" | "team") => void;
   onDragStart: (pageId: string) => string[];
   onDragEnd: () => void;
 }) {
@@ -280,8 +283,9 @@ function PageCard({
 
   const url = pageUrl(page);
 
-  const handleToggleVisibility = useCallback(async () => {
-    const next = page.visibility === "public" ? "unlisted" : "public";
+  const handleToggleVisibility = useCallback(async (to?: "team") => {
+    // Leaving team-only goes to unlisted, never straight to public.
+    const next = to ?? (page.visibility === "unlisted" ? "public" : "unlisted");
     setTogglingVisibility(true);
     try {
       const res = await fetch(`/api/pages/${page.id}`, {
@@ -404,10 +408,12 @@ function PageCard({
                   <span>Updated {formatDate(page.updated_at)}</span>
                 </>
               )}
-              {page.visibility === "unlisted" && (
+              {page.visibility !== "public" && (
                 <>
                   <span className="opacity-30" aria-hidden>·</span>
-                  <span className="text-amber-400/80 font-medium">Unlisted</span>
+                  <span className="text-amber-400/80 font-medium">
+                    {page.visibility === "team" ? "Team only" : "Unlisted"}
+                  </span>
                 </>
               )}
             </div>
@@ -496,12 +502,14 @@ function PageCard({
         <ContextMenuSeparator />
 
         <ContextMenuItem
-          icon={page.visibility === "public" ? "eye" : "eye-off"}
-          label={page.visibility === "public" ? "Make unlisted" : "Make public"}
+          icon={page.visibility === "unlisted" ? "eye-off" : "eye"}
+          label={page.visibility === "unlisted" ? "Make public" : "Make unlisted"}
           description={
             page.visibility === "public"
               ? "Hide from search engines and explore"
-              : "Allow indexing and discovery"
+              : page.visibility === "team"
+                ? "Let anyone with the link read it"
+                : "Allow indexing and discovery"
           }
           active={page.visibility === "unlisted"}
           activeLabel="Unlisted"
@@ -511,6 +519,18 @@ function PageCard({
             setMenuOpen(false);
           }}
         />
+        {inTeamSpace && page.visibility !== "team" ? (
+          <ContextMenuItem
+            icon="lock"
+            label="Make team-only"
+            description="Only members of its team space can open it"
+            disabled={togglingVisibility}
+            onSelect={async () => {
+              await handleToggleVisibility("team");
+              setMenuOpen(false);
+            }}
+          />
+        ) : null}
         {hasPassword ? (
           <ContextMenuItem
             icon="lock"
@@ -665,7 +685,7 @@ export function MyPagesList({
     id: string;
     slug: string | null;
     title: string | null;
-    visibility: "public" | "unlisted";
+    visibility: "public" | "unlisted" | "team";
     collection_id: string | null;
     view_count: number;
     has_password: boolean;
@@ -702,7 +722,7 @@ export function MyPagesList({
     setPages((prev) => prev.map((p) => (p.id === id ? { ...p, slug } : p)));
   }, []);
 
-  const handleVisibilityChanged = useCallback((id: string, visibility: "public" | "unlisted") => {
+  const handleVisibilityChanged = useCallback((id: string, visibility: "public" | "unlisted" | "team") => {
     setPages((prev) => prev.map((p) => (p.id === id ? { ...p, visibility } : p)));
   }, []);
 
@@ -1073,6 +1093,7 @@ export function MyPagesList({
                 onDeleted={handleDeleted}
                 onSlugSaved={handleSlugSaved}
                 onVisibilityChanged={handleVisibilityChanged}
+                inTeamSpace={collections.some((c) => c.id === page.collection_id && c.is_team_space)}
                 onDragStart={(pageId) => {
                   const ids = selectedIds.has(pageId) && selectedIds.size > 1
                     ? [...selectedIds].filter((id) => pages.some((p) => p.id === id))

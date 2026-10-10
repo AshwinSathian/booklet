@@ -1,5 +1,5 @@
 import { getDb } from "@/lib/mongodb";
-import type { DbApiKey, DbCollection, DbCollectionMember, DbPage, DbUser, DbWebhook, CollectionMemberRole } from "./types";
+import type { DbApiKey, DbCollection, DbCollectionMember, DbPage, DbPageLink, DbUser, DbWebhook, CollectionMemberRole } from "./types";
 
 // ---------------------------------------------------------------------------
 // Internal document shapes (MongoDB _id = our string id)
@@ -40,6 +40,7 @@ function toPage(doc: PageDoc): DbPage {
     password_hash: rest.password_hash ?? null,
     frontmatter_meta: rest.frontmatter_meta ?? null,
     taken_down_at: rest.taken_down_at ?? null,
+    doc_type: rest.doc_type ?? null,
   };
 }
 
@@ -108,6 +109,7 @@ export async function createPageRecord(
   // Unlisted unless the author opts in: reachable by link, absent from
   // /explore, tag pages, the sitemap and search engines.
   visibility: DbPage["visibility"] = "unlisted",
+  extra: { collectionId?: string | null; docType?: DbPage["doc_type"] } = {},
 ): Promise<void> {
   const db = await getDb();
   const now = new Date().toISOString();
@@ -117,7 +119,8 @@ export async function createPageRecord(
     // slug intentionally omitted — see PageDoc's comment above.
     title,
     visibility,
-    collection_id: null,
+    doc_type: extra.docType ?? null,
+    collection_id: extra.collectionId ?? null,
     team_id: teamId,
     view_count: 0,
     password_hash: null,
@@ -162,13 +165,22 @@ export async function getPagesByUser(
     offset?: number;
     query?: string;
     tag?: string;
+    type?: string;
+    /**
+     * List this team space instead of the user's own pages: every page in
+     * it, whoever owns it. The caller must have checked membership.
+     */
+    spaceId?: string;
     /** Keyset position: return only pages sorted after this one. */
     after?: { created_at: string; id: string };
   } = {},
 ): Promise<{ pages: DbPage[]; total: number }> {
   const db = await getDb();
   const col = db.collection<PageDoc>("pages");
-  const filter: Record<string, unknown> = { user_id: userId };
+  const filter: Record<string, unknown> = opts.spaceId
+    ? { collection_id: opts.spaceId, taken_down_at: null }
+    : { user_id: userId };
+  if (opts.type) filter.doc_type = opts.type;
   const trimmedQuery = opts.query?.trim().slice(0, MAX_SEARCH_FILTER_LENGTH);
   if (trimmedQuery) filter.title = { $regex: escapeRegExp(trimmedQuery), $options: "i" };
   const trimmedTag = opts.tag?.trim().slice(0, MAX_SEARCH_FILTER_LENGTH);
@@ -197,7 +209,7 @@ export async function getPagesByUser(
 
 export async function updatePageRecord(
   pageId: string,
-  patch: Partial<Pick<DbPage, "slug" | "title" | "visibility" | "collection_id" | "team_id" | "password_hash" | "frontmatter_meta" | "updated_at">>,
+  patch: Partial<Pick<DbPage, "slug" | "title" | "visibility" | "doc_type" | "collection_id" | "team_id" | "password_hash" | "frontmatter_meta" | "updated_at">>,
 ): Promise<void> {
   if (Object.keys(patch).length === 0) return;
   const db = await getDb();
@@ -220,15 +232,15 @@ export async function updatePageRecord(
 
 /**
  * Mirrors a takedown onto the `pages` record (if the page has one) and
- * forces it unlisted, so it also drops out of every listing query —
- * /explore, tag pages, profiles, team spaces and the sitemap all filter on
- * `visibility: "public"`.
+ * makes a public page unlisted, so it also drops out of every listing query
+ * — /explore, tag pages, profiles, team spaces and the sitemap all filter on
+ * `visibility: "public"`. A team-only page stays team-only: making it
+ * unlisted would widen who can read it if the takedown were ever reversed.
  */
 export async function markPageTakenDown(pageId: string, at: string): Promise<void> {
-  const db = await getDb();
-  await db
-    .collection<PageDoc>("pages")
-    .updateOne({ _id: pageId }, { $set: { taken_down_at: at, visibility: "unlisted" } });
+  const pages = (await getDb()).collection<PageDoc>("pages");
+  await pages.updateOne({ _id: pageId }, { $set: { taken_down_at: at } });
+  await pages.updateOne({ _id: pageId, visibility: "public" }, { $set: { visibility: "unlisted" } });
 }
 
 export async function getPublicPagesByUser(userId: string, limit = 100): Promise<ExploreItem[]> {
@@ -322,6 +334,80 @@ export async function getPagesByCollection(collectionId: string): Promise<Explor
     .project<ExploreProjection>(EXPLORE_PROJECTION)
     .toArray();
   return docs.map(toExploreItem);
+}
+
+/**
+ * Every page in a team space that has not been taken down, for the space
+ * home. `publicOnly` is what a visitor who is not a member gets.
+ *
+ * ponytail: capped at 500 with no paging; page the space home when a space
+ * outgrows it.
+ */
+export async function getSpacePages(collectionId: string, publicOnly: boolean): Promise<DbPage[]> {
+  const db = await getDb();
+  const docs = await db
+    .collection<PageDoc>("pages")
+    .find({
+      collection_id: collectionId,
+      taken_down_at: null,
+      ...(publicOnly ? { visibility: "public" as const, password_hash: null } : {}),
+    })
+    .sort({ created_at: -1 })
+    .limit(500)
+    .toArray();
+  return docs.map(toPage);
+}
+
+// ---------------------------------------------------------------------------
+// Published links between pages (`[[Title]]` resolved at publish)
+// ---------------------------------------------------------------------------
+
+/**
+ * Published pages a `[[Title]]` in a page may point at: the other pages of
+ * the same team space, or, outside a space, the author's own pages. Titles
+ * match exactly, ignoring case.
+ */
+export async function findLinkTargets(
+  scope: { spaceId: string } | { userId: string },
+  titles: string[],
+): Promise<DbPage[]> {
+  if (titles.length === 0) return [];
+  const db = await getDb();
+  const docs = await db
+    .collection<PageDoc>("pages")
+    .find({
+      ...("spaceId" in scope ? { collection_id: scope.spaceId } : { user_id: scope.userId }),
+      taken_down_at: null,
+      title: { $in: titles.map((t) => new RegExp(`^${escapeRegExp(t.slice(0, MAX_SEARCH_FILTER_LENGTH))}$`, "i")) },
+    })
+    // The oldest page wins when two share a title, so a link does not move
+    // to a newer page of the same name.
+    .sort({ created_at: 1 })
+    .limit(500)
+    .toArray();
+  return docs.map(toPage);
+}
+
+/** Replaces the outgoing links of `sourceId` with `targetIds`. */
+export async function setPageLinks(sourceId: string, targetIds: string[]): Promise<void> {
+  const links = (await getDb()).collection<DbPageLink>("page_links");
+  await links.deleteMany({ source_id: sourceId });
+  if (targetIds.length) {
+    await links.insertMany([...new Set(targetIds)].map((target_id) => ({ source_id: sourceId, target_id })));
+  }
+}
+
+/** Pages that link to `targetId`, newest first. Not filtered by who may see them. */
+export async function getBacklinkPages(targetId: string): Promise<DbPage[]> {
+  const db = await getDb();
+  const rows = await db.collection<DbPageLink>("page_links").find({ target_id: targetId }).limit(200).toArray();
+  if (rows.length === 0) return [];
+  const docs = await db
+    .collection<PageDoc>("pages")
+    .find({ _id: { $in: rows.map((r) => r.source_id) }, taken_down_at: null })
+    .sort({ created_at: -1 })
+    .toArray();
+  return docs.map(toPage);
 }
 
 // ---------------------------------------------------------------------------
@@ -471,6 +557,12 @@ export async function removeCollectionMember(collectionId: string, userId: strin
   await db.collection<CollectionMemberDoc>("collection_members").deleteOne({ collection_id: collectionId, user_id: userId });
 }
 
+export async function getCollectionMember(collectionId: string, userId: string): Promise<DbCollectionMember | null> {
+  const db = await getDb();
+  const doc = await db.collection<CollectionMemberDoc>("collection_members").findOne({ collection_id: collectionId, user_id: userId });
+  return doc ? toCollectionMember(doc) : null;
+}
+
 export async function getCollectionMemberships(userId: string): Promise<{ collection_id: string; role: CollectionMemberRole }[]> {
   const db = await getDb();
   const docs = await db
@@ -541,7 +633,7 @@ export async function deletePageRecord(pageId: string): Promise<void> {
 /**
  * Deletes every record keyed by page_id outside of the page/doc/version
  * collections themselves (analytics, publish
- * events) — call this alongside deletePageRecord/deletePageVersions so a
+ * events, links to and from the page) — call this alongside deletePageRecord/deletePageVersions so a
  * deleted page doesn't leave orphaned rows behind. Best-effort: callers
  * already treat page deletion as complete once the doc/record/versions are
  * gone, so a failure here is logged by the caller, not fatal to the delete.
@@ -551,6 +643,7 @@ export async function deletePageAssociatedRecords(pageId: string): Promise<void>
   await Promise.all([
     db.collection("analytics_events").deleteMany({ page_id: pageId }),
     db.collection("publish_events").deleteMany({ page_id: pageId }),
+    db.collection("page_links").deleteMany({ $or: [{ source_id: pageId }, { target_id: pageId }] }),
   ]);
 }
 

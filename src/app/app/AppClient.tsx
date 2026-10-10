@@ -36,7 +36,7 @@ import {
 import type { WikilinkRenderCtx } from "@/lib/wikilinks/render-context";
 import { SAMPLE_MARKDOWN } from "@/lib/sample";
 import { normalizeInput } from "@/lib/sanitize";
-import { getTemplateBySlug } from "@/lib/templates";
+import { getTemplateBySlug, templateMarkdown } from "@/lib/templates";
 import { stripFrontmatter } from "@/lib/frontmatter";
 import { formatTimeHHMM } from "@/lib/ui/time";
 import { AppLoader } from "@/components/ui/AppLoader";
@@ -236,9 +236,8 @@ function AppPageContent() {
       typeof window !== "undefined"
         ? new URLSearchParams(window.location.search).get("template")
         : null;
-    const templateContent = templateSlug
-      ? (getTemplateBySlug(templateSlug)?.content ?? null)
-      : null;
+    const template = templateSlug ? getTemplateBySlug(templateSlug) : undefined;
+    const templateContent = template ? templateMarkdown(template) : null;
 
     const storedId = getActiveDraftId();
     const storedDraft = templateContent ? null : (storedId ? getDraft(storedId) : null);
@@ -587,7 +586,10 @@ function AppPageContent() {
         body: JSON.stringify({
           settings,
           raw,
-          visibility: publishVisibility,
+          // "team:<id>" is a team space to publish into, readable by its members only.
+          ...(publishVisibility.startsWith("team:")
+            ? { visibility: "team", space_id: publishVisibility.slice(5) }
+            : { visibility: publishVisibility }),
           // Anonymous publishes pass a robot check where one is configured.
           ...(isSignedIn ? {} : { turnstile_token: await getTurnstileToken() }),
         }),

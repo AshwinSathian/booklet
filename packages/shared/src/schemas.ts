@@ -11,13 +11,25 @@ import { z } from "zod";
 /** Largest Markdown document any publish path accepts, in characters. */
 export const MAX_RAW_CHARS = 200_000;
 
-export const VisibilitySchema = z.enum(["public", "unlisted"]);
+/**
+ * `team` restricts a page to the members of the team space it is in. It is
+ * only valid for a page in a team space.
+ */
+export const VisibilitySchema = z.enum(["public", "unlisted", "team"]);
+export type Visibility = z.infer<typeof VisibilitySchema>;
+
+/** Engineering document types. Set with frontmatter `type`. */
+export const DOC_TYPES = ["incident", "postmortem", "adr", "rfc", "runbook", "release-notes"] as const;
+export const DocTypeSchema = z.enum(DOC_TYPES);
+export type DocType = z.infer<typeof DocTypeSchema>;
 
 const EXAMPLE_PAGE = {
   id: "Ab3k91QxZp",
   title: "Release Notes v2.1",
   slug: "release-notes-v2-1",
   visibility: "unlisted" as const,
+  doc_type: "release-notes" as const,
+  space: null,
   view_count: 42,
   url: "https://booklet.ashwinsathian.com/p/release-notes-v2-1",
   created_at: "2026-04-29T10:00:00.000Z",
@@ -29,6 +41,10 @@ const pageFields = {
   title: z.string().nullable(),
   slug: z.string().nullable(),
   visibility: VisibilitySchema,
+  /** From frontmatter `type`; null for an untyped page. */
+  doc_type: DocTypeSchema.nullable(),
+  /** Slug of the team space the page is in, or null. */
+  space: z.string().nullable(),
   view_count: z.number(),
   url: z.string(),
   created_at: z.string(),
@@ -58,6 +74,8 @@ export const PublishRequestSchema = z
     settings: z.object({ width: z.enum(["normal", "wide"]) }).partial().optional(),
     /** Overrides frontmatter `visibility`. A new page is unlisted unless this or frontmatter says public. */
     visibility: VisibilitySchema.optional(),
+    /** Slug of a team space you can write to. The page is created in it. Required for `visibility: "team"`. */
+    space: z.string().optional(),
   })
   .meta({ examples: [{ raw: "# Release Notes\n\nWhat changed...", visibility: "unlisted" }] });
 export type PublishRequest = z.infer<typeof PublishRequestSchema>;

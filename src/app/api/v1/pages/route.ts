@@ -1,4 +1,7 @@
 import { getPagesByUser } from "@/lib/db";
+import { isDocType } from "@/lib/doc-types";
+import { getSpaceForMember } from "@/server/access";
+import { spaceSlugs } from "@/server/pages";
 import { problem } from "@/server/errors";
 import { v1 } from "@/server/v1";
 import { ROUTES } from "@/lib/constants";
@@ -40,6 +43,14 @@ export const GET = v1("pages_list", 60, "pages:read", async (req: Request, userI
   const query = url.searchParams.get("q") ?? undefined;
   const tag = url.searchParams.get("tag") ?? undefined;
 
+  const type = url.searchParams.get("type") ?? undefined;
+  if (type !== undefined && !isDocType(type)) return problem(422, "Unknown document type.");
+
+  // With `space`, the list is that team space's pages, whoever owns them,
+  // and the caller must be in the space. Without it, the caller's own pages.
+  const spaceSlug = url.searchParams.get("space");
+  const space = spaceSlug === null ? null : await getSpaceForMember(spaceSlug, userId);
+
   // `cursor` walks the list by position in the sort order, so pages created
   // or deleted during the walk never shift it. `offset` still works; when
   // both are sent the offset counts from the cursor.
@@ -47,7 +58,8 @@ export const GET = v1("pages_list", 60, "pages:read", async (req: Request, userI
   const after = cursor ? decodeCursor(cursor) : undefined;
   if (after === null) return problem(400, "Invalid cursor");
 
-  const { pages, total } = await getPagesByUser(userId, { limit, offset, query, tag, after });
+  const { pages, total } = await getPagesByUser(userId, { limit, offset, query, tag, type, spaceId: space?.id, after });
+  const slugs = await spaceSlugs(pages);
 
   const origin = getSiteOrigin(req);
 
@@ -58,6 +70,8 @@ export const GET = v1("pages_list", 60, "pages:read", async (req: Request, userI
       title: p.title ?? null,
       slug: p.slug ?? null,
       visibility: p.visibility,
+      doc_type: p.doc_type ?? null,
+      space: (p.collection_id && slugs.get(p.collection_id)) || null,
       view_count: p.view_count,
       url: `${origin}${path}`,
       created_at: p.created_at,

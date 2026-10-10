@@ -3,7 +3,9 @@ import { AppLogo, BookletMark } from "@/components/ui/AppLogo";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import type { Block } from "@/lib/blocks";
 import { APP_NAME, ROUTES } from "@/lib/constants";
-import { getPageBySlug, getPageRecord, incrementViewCount } from "@/lib/db";
+import { getBacklinkPages, getPageBySlug, getPageRecord, incrementViewCount } from "@/lib/db";
+import { canListPage, canViewPage } from "@/server/access";
+import { DocHeaderStrip } from "@/components/share/DocHeaderStrip";
 import { absoluteUrl, buildMetadata } from "@/lib/seo";
 import { buildLockedPageMetadata } from "@/lib/locked-page-metadata";
 import { getDoc } from "@/lib/storage";
@@ -48,10 +50,13 @@ async function resolveSharePage(idOrSlug: string) {
 
   doc = await getDoc(idOrSlug);
 
+  // No catch on these lookups: the record is what says a page is team-only,
+  // so a failed read must fail the request, not serve the page as if it
+  // had no record.
   if (doc) {
-    pageRecord = await getPageRecord(resolvedId).catch(() => null);
+    pageRecord = await getPageRecord(resolvedId);
   } else {
-    const slugRecord = await getPageBySlug(idOrSlug).catch(() => null);
+    const slugRecord = await getPageBySlug(idOrSlug);
     if (slugRecord) {
       doc = await getDoc(slugRecord.id);
       resolvedId = slugRecord.id;
@@ -65,6 +70,13 @@ async function resolveSharePage(idOrSlug: string) {
   // fails open. No catch: if this lookup itself fails, the request errors
   // rather than rendering content that may have been taken down.
   const gone = doc ? await getGoneReason(resolvedId) : null;
+
+  // A team-only page does not exist for anyone outside its team space: the
+  // caller treats `doc: null` as a 404, in the metadata as well as the page.
+  const viewerId = pageRecord?.visibility === "team" ? ((await getSession())?.userId ?? null) : null;
+  if (!(await canViewPage(pageRecord, viewerId))) {
+    return { doc: null, resolvedId, pageRecord: null, gone: null };
+  }
 
   return { doc, resolvedId, pageRecord, gone };
 }
@@ -303,16 +315,18 @@ export default async function SharePage({
 
         <div className="flex flex-col lg:flex-row gap-12">
           <div className="min-w-0 flex-1">
-            <FrontmatterMetaStrip
+            <DocHeaderStrip
               meta={pageRecord?.frontmatter_meta ?? null}
               userId={pageRecord?.user_id ?? null}
+              teamOnly={pageRecord?.visibility === "team"}
             />
             <BlockRenderer
               blocks={doc.blocks}
               settings={doc.settings}
               headingAnchors={anchorMap}
             />
-            {isNotPasswordLocked && (
+            <ReferencedBy pageId={resolvedId} />
+            {isNotPasswordLocked && pageRecord?.visibility !== "team" && (
               <ShareButtons url={pageUrl} title={pageTitle} />
             )}
           </div>
@@ -360,71 +374,42 @@ export default async function SharePage({
 }
 
 // ---------------------------------------------------------------------------
-// Frontmatter metadata strip
+// Backlinks
 // ---------------------------------------------------------------------------
 
-function FrontmatterMetaStrip({
-  meta,
-  userId,
-}: {
-  meta: Record<string, unknown> | null;
-  userId: string | null;
-}) {
-  if (!meta) return null;
-
-  const author = typeof meta.author === "string" ? meta.author : null;
-  const dateRaw = typeof meta.date === "string" ? meta.date : null;
-  const tags = Array.isArray(meta.tags) ? (meta.tags as unknown[]).filter((t): t is string => typeof t === "string") : [];
-
-  if (!author && !dateRaw && tags.length === 0) return null;
-
-  let formattedDate: string | null = null;
-  if (dateRaw) {
-    try {
-      formattedDate = new Date(dateRaw).toLocaleDateString(undefined, {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-    } catch {
-      formattedDate = dateRaw;
-    }
+/**
+ * Pages that link here through `[[Title]]`, limited to the ones this viewer
+ * could find anyway (see canListPage): a team-only or unlisted page that
+ * references this one is not named to someone outside it.
+ */
+async function ReferencedBy({ pageId }: { pageId: string }) {
+  const sources = await getBacklinkPages(pageId).catch(() => []);
+  if (sources.length === 0) return null;
+  const viewerId = (await getSession())?.userId ?? null;
+  const visible = [];
+  for (const page of sources) {
+    if (await canListPage(page, viewerId)) visible.push(page);
   }
+  if (visible.length === 0) return null;
 
   return (
-    <div className="mb-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-text-secondary print:mb-4">
-      {author && (
-        <span>
-          by{" "}
-          {userId ? (
+    <nav aria-labelledby="referenced-by" className="mt-10 border-t border-border-subtle pt-6 print:hidden">
+      <h2 id="referenced-by" className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+        Referenced by
+      </h2>
+      <ul className="mt-3 space-y-1.5">
+        {visible.map((page) => (
+          <li key={page.id}>
             <Link
-              href={`/u/${userId}`}
-              className="font-medium text-text-primary transition hover:text-accent"
+              href={ROUTES.publish(page.slug ?? page.id)}
+              className="text-sm text-accent-soft underline decoration-accent/40 underline-offset-4 transition hover:decoration-accent-soft"
             >
-              {author}
+              {page.title ?? "Untitled"}
             </Link>
-          ) : (
-            <span className="font-medium text-text-primary">{author}</span>
-          )}
-        </span>
-      )}
-      {formattedDate && (
-        <span className="text-text-muted">{formattedDate}</span>
-      )}
-      {tags.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {tags.map((tag) => (
-            <Link
-              key={tag}
-              href={`/tags/${encodeURIComponent(tag)}`}
-              className="rounded-pill bg-accent-dim text-accent text-xs px-2 py-0.5 font-medium transition hover:bg-accent/20 hover:text-accent"
-            >
-              #{tag}
-            </Link>
-          ))}
-        </div>
-      )}
-    </div>
+          </li>
+        ))}
+      </ul>
+    </nav>
   );
 }
 

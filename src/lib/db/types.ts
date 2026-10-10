@@ -1,3 +1,5 @@
+import type { DocType } from "booklet-api-client";
+
 export type UserPlan = "free";
 
 export type DbUser = {
@@ -58,7 +60,10 @@ export type DbPage = {
   user_id: string;
   slug: string | null;
   title: string | null;
-  visibility: "public" | "unlisted";
+  /** "team": only members of the team space in `collection_id` (and the owner) can read it. */
+  visibility: "public" | "unlisted" | "team";
+  /** From frontmatter `type`. Absent on records written before 2026-10. */
+  doc_type?: DocType | null;
   collection_id: string | null;
   team_id: string | null;         // null = personal page
   view_count: number;
@@ -80,6 +85,12 @@ export type DbReport = {
   reporter_email: string | null;
   created_at: string;
   status: "open" | "actioned" | "dismissed";
+};
+
+/** A resolved `[[Title]]` link from one published page to another. */
+export type DbPageLink = {
+  source_id: string;
+  target_id: string;
 };
 
 export type DbCollection = {

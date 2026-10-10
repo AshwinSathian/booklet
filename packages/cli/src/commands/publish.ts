@@ -1,4 +1,5 @@
 import { Command } from "commander";
+import type { Visibility } from "booklet-api-client";
 import { readFile, watch } from "fs/promises";
 import { requireClient } from "../api.js";
 import { CliError, EXIT, toCliError } from "../errors.js";
@@ -15,13 +16,13 @@ async function readInput(filePath: string): Promise<string> {
   return readFile(filePath, "utf8");
 }
 
-type Visibility = "public" | "unlisted";
+const VISIBILITIES: readonly string[] = ["public", "unlisted", "team"] satisfies Visibility[];
 type PublishResult = { id: string; url: string; updated: boolean; warning?: string };
 
 /** Publishes or updates, and returns what happened. Throws CliError on failure. */
 async function doPublish(
   raw: string,
-  opts: { update?: string; slug?: string; visibility?: Visibility },
+  opts: { update?: string; slug?: string; visibility?: Visibility; space?: string },
 ): Promise<PublishResult> {
   const client = await requireClient();
 
@@ -39,10 +40,10 @@ async function doPublish(
     return { id: result.id, url: result.url, updated: true };
   }
 
-  // POST new page. Visibility goes in the same request; frontmatter in the
-  // document is applied server-side.
+  // POST new page. Visibility and space go in the same request; frontmatter
+  // in the document is applied server-side.
   const { id, url } = await client
-    .publishPage(raw, opts.visibility ? { visibility: opts.visibility } : undefined)
+    .publishPage(raw, { visibility: opts.visibility, space: opts.space })
     .catch((e) => {
       throw toCliError(e, "Publish failed");
     });
@@ -66,13 +67,18 @@ export function registerPublishCommand(program: Command) {
     .command("publish [file]")
     .description("Publish a Markdown file (use - for stdin)")
     .option("--slug <slug>", "Set a custom URL slug")
-    .option("--visibility <v>", "unlisted (link only, not indexed) or public (listed on Explore). Default: unlisted")
+    .option(
+      "--visibility <v>",
+      "unlisted (link only, not indexed), public (listed on Explore) or team (members of --space only). Default: unlisted",
+    )
+    .option("--space <slug>", "Publish into this team space (the slug in /t/<slug>). New pages only")
     .option("--update <id>", "Update an existing page by ID instead of creating new")
     .option("--watch", "Watch file for changes and re-publish automatically")
     .option("--open", "Open the published page in your browser after success")
     .action(async (file: string | undefined, opts: {
       slug?: string;
       visibility?: string;
+      space?: string;
       update?: string;
       watch?: boolean;
       open?: boolean;
@@ -82,10 +88,18 @@ export function registerPublishCommand(program: Command) {
       if (opts.watch && filePath === "-") {
         throw new CliError("--watch cannot be used with stdin.", EXIT.USAGE);
       }
-      if (opts.visibility !== undefined && opts.visibility !== "public" && opts.visibility !== "unlisted") {
-        throw new CliError(`--visibility must be "public" or "unlisted", not "${opts.visibility}".`, EXIT.USAGE);
+      if (opts.visibility !== undefined && !VISIBILITIES.includes(opts.visibility)) {
+        throw new CliError(`--visibility must be "public", "unlisted" or "team", not "${opts.visibility}".`, EXIT.USAGE);
       }
-      const publishOpts = { update: opts.update, slug: opts.slug, visibility: opts.visibility as Visibility | undefined };
+      if (opts.space && opts.update) {
+        throw new CliError("--space only applies to a new page. Move an existing page from My pages on the web.", EXIT.USAGE);
+      }
+      const publishOpts = {
+        update: opts.update,
+        slug: opts.slug,
+        visibility: opts.visibility as Visibility | undefined,
+        space: opts.space,
+      };
 
       let raw: string;
       try {

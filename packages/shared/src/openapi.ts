@@ -9,6 +9,7 @@ import { z } from "zod";
 import {
   ApiErrorSchema,
   DeletePageResponseSchema,
+  DOC_TYPES,
   ListPagesResponseSchema,
   PageDetailResponseSchema,
   PatchPageRequestSchema,
@@ -171,6 +172,8 @@ export function buildOpenApi(version: string) {
             { name: "offset", in: "query", required: false, description: "Number of pages to skip. Prefer `cursor`.", schema: { type: "integer", minimum: 0, default: 0 } },
             { name: "q", in: "query", required: false, description: "Case-insensitive match on the title.", schema: { type: "string" } },
             { name: "tag", in: "query", required: false, description: "Exact match on a frontmatter tag.", schema: { type: "string" } },
+            { name: "type", in: "query", required: false, description: "Only pages of this document type (frontmatter `type`).", schema: { type: "string", enum: [...DOC_TYPES] } },
+            { name: "space", in: "query", required: false, description: "Slug of a team space you belong to. Lists every page in the space, not only yours.", schema: { type: "string" } },
           ],
           responses: { "200": ok("One page of results", "ListPagesResponse"), ...errors(400, 401, 429) },
         },

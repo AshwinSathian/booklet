@@ -1,4 +1,4 @@
-import { addCollectionMember, createCollectionRecord, deleteCollectionRecord, getCollectionBySlug, getCollectionsByUser, getTeamSpacesByMembership, updateCollectionRecord } from "@/lib/db";
+import { addCollectionMember, createCollectionRecord, deleteCollectionRecord, getCollectionBySlug, getCollectionMemberships, getCollectionsByUser, getTeamSpacesByMembership, updateCollectionRecord } from "@/lib/db";
 import { createId } from "@/lib/id";
 import { getSession } from "@/lib/auth/session";
 import { logError } from "@/lib/logger";
@@ -28,8 +28,14 @@ export async function GET() {
     getTeamSpacesByMembership(userId),
   ]);
 
+  // `role` tells the editor which spaces to offer when publishing: a viewer
+  // can open a space and cannot add pages to it.
   const ownedIds = new Set(owned.map((c) => c.id));
-  const teams = [...owned, ...member.filter((c) => !ownedIds.has(c.id))];
+  const roles = new Map((await getCollectionMemberships(userId)).map((m) => [m.collection_id, m.role]));
+  const teams = [
+    ...owned.map((c) => ({ ...c, role: "owner" as const })),
+    ...member.filter((c) => !ownedIds.has(c.id)).map((c) => ({ ...c, role: roles.get(c.id) ?? "viewer" })),
+  ];
 
   return NextResponse.json({ teams });
 }

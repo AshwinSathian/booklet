@@ -1,7 +1,11 @@
+import type { DocType } from "booklet-api-client";
+
 export type Template = {
   name: string;
   description: string;
   content: string;
+  /** Frontmatter for an engineering document type; other templates get a plain `status` and `date`. */
+  doc?: { type: DocType; status: string; severity?: string };
   // SEO landing page fields (optional — only templates with these get a /templates/* page)
   slug?: string;
   aliases?: string[];
@@ -11,6 +15,23 @@ export type Template = {
   useCases?: string[];
 };
 
+/**
+ * A template as it goes into the editor: its content under a frontmatter
+ * block. Published, the block becomes the page's header strip (type, status,
+ * severity, date, owners), and `type` is what a team space groups by.
+ */
+export function templateMarkdown(template: Template, today = new Date().toISOString().slice(0, 10)): string {
+  const { type, status = "Draft", severity } = template.doc ?? {};
+  const lines = [
+    ...(type ? [`type: ${type}`] : []),
+    `status: ${status}`,
+    ...(severity ? [`severity: ${severity}`] : []),
+    `date: ${today}`,
+    "owners: []",
+  ];
+  return `---\n${lines.join("\n")}\n---\n\n${template.content.trimStart()}`;
+}
+
 export function getTemplateBySlug(slug: string): Template | undefined {
   return TEMPLATES.find((t) => t.slug === slug || t.aliases?.includes(slug));
 }
@@ -19,6 +40,7 @@ export const TEMPLATES: Template[] = [
   {
     slug: "incident-report",
     name: "Incident Report",
+    doc: { type: "incident", status: "Resolved", severity: "P2" },
     headline: "Free Incident Report Template",
     description: "P1/P2 post-mortem: severity, timeline, root cause, next steps",
     metaDescription:
@@ -29,8 +51,6 @@ export const TEMPLATES: Template[] = [
 
 ## Summary
 
-**Severity:** P1 / P2
-**Status:** Resolved / Ongoing
 **Duration:** HH:MM – HH:MM UTC
 **Impact:** Brief description of user-visible impact.
 
@@ -78,6 +98,7 @@ Describe the underlying technical cause.
     slug: "architecture-decision-record",
     aliases: ["adr"],
     name: "Architecture Decision Record",
+    doc: { type: "adr", status: "Proposed" },
     headline: "Free Architecture Decision Record (ADR) Template",
     description: "ADR: status, context, decision, consequences",
     metaDescription:
@@ -86,8 +107,6 @@ Describe the underlying technical cause.
     useCases: ["Staff engineers", "Tech leads", "Software architects", "Engineering teams"],
     content: `# ADR-NNN: [Decision Title]
 
-**Status:** Proposed / Accepted / Deprecated / Superseded
-**Date:** YYYY-MM-DD
 **Deciders:** @name1, @name2
 
 ---
@@ -129,6 +148,7 @@ What is the change we're making?
   {
     slug: "release-notes",
     name: "Release Notes",
+    doc: { type: "release-notes", status: "Released" },
     headline: "Free Release Notes Template",
     description: "Version, highlights, changes, breaking changes",
     metaDescription:
@@ -137,7 +157,6 @@ What is the change we're making?
     useCases: ["Product teams", "Engineering teams", "Open source maintainers", "SaaS companies"],
     content: `# Release Notes — v[X.Y.Z]
 
-**Released:** YYYY-MM-DD
 **Milestone:** [Link to milestone or tracker]
 
 ---
@@ -394,6 +413,7 @@ Post in **#team-channel** or ask **@buddy**.
   {
     slug: "runbook",
     name: "Runbook",
+    doc: { type: "runbook", status: "Current" },
     headline: "Free Runbook Template",
     description: "Trigger, pre-conditions, steps, rollback, escalation",
     metaDescription:
@@ -404,7 +424,6 @@ Post in **#team-channel** or ask **@buddy**.
 
 **Last updated:** YYYY-MM-DD
 **Owner:** @team or @name
-**Severity:** P1 / P2 / Routine
 
 ---
 
@@ -470,6 +489,7 @@ If these steps do not resolve the issue:
   {
     slug: "postmortem",
     name: "Postmortem",
+    doc: { type: "postmortem", status: "Draft", severity: "P2" },
     headline: "Free Blameless Postmortem Template",
     description: "Blameless postmortem: impact, timeline, root cause, contributing factors, action items",
     metaDescription:
@@ -478,11 +498,8 @@ If these steps do not resolve the issue:
     useCases: ["SRE teams", "Engineering managers", "DevOps engineers", "On-call engineers"],
     content: `# Postmortem — [Service / Feature Name]
 
-**Date:** YYYY-MM-DD
-**Severity:** P1 / P2
 **Duration:** HH:MM – HH:MM UTC
 **Author(s):** @name1, @name2
-**Status:** Draft / Final
 
 ---
 
@@ -771,6 +788,7 @@ What is the design trying to achieve? What constraints shaped it?
   {
     slug: "api-changelog",
     name: "API Changelog",
+    doc: { type: "release-notes", status: "Released" },
     description: "Communicate breaking changes, deprecations, and new endpoints to API consumers.",
     category: "Engineering",
     headline: "API Changelog Template",

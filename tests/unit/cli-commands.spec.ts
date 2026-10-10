@@ -17,6 +17,8 @@ const PAGE = {
   title: "Release Notes",
   slug: "release-notes",
   visibility: "unlisted",
+  doc_type: null,
+  space: null,
   view_count: 3,
   url: "https://example.test/p/release-notes",
   created_at: "2026-04-29T10:00:00.000Z",

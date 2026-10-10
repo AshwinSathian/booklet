@@ -44,6 +44,7 @@ import { PATCH as patchPageMeta } from "@/app/api/pages/[id]/route";
 import { POST as forgotPassword } from "@/app/api/auth/forgot-password/route";
 import { markDocTakenDown } from "@/lib/storage";
 import { markPageTakenDown } from "@/lib/db";
+import { handleCreateDocument } from "../../mcp-server/src/tools.js";
 
 // Phase 5a: email verification, provider sign-in linking, Turnstile, and the
 // account page's export, delete and connected-apps actions.
@@ -240,6 +241,21 @@ test.describe("email verification", () => {
 
     const who = withSession(cookie, "/api/auth/me", { method: "GET" });
     expect((await (await withRequestScope(who, () => me())).json()).emailVerified).toBe(false);
+  });
+
+  test("the MCP create_document tool tells an unverified account what to do", async () => {
+    const { rawKey } = await newUser();
+    // The tool reaches the API over fetch; this file's fetch stub lets the
+    // call through to the real publish handler.
+    const before = globalThis.fetch;
+    globalThis.fetch = ((input: RequestInfo | URL, init?: RequestInit) => v1Publish(new Request(input, init))) as typeof fetch;
+    try {
+      const result = await handleCreateDocument({ type: "adr", title: "ADR-001", body: "Context." }, rawKey, ORIGIN);
+      expect(result.isError).toBe(true);
+      expect((result.content[0] as { text: string }).text).toContain("Confirm your email address first");
+    } finally {
+      globalThis.fetch = before;
+    }
   });
 
   test("with no mail configured, verification is not enforced", async () => {

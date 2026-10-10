@@ -1,11 +1,19 @@
 import { updatePageRecord } from "@/lib/db";
 import { getSession } from "@/lib/auth/session";
-import { getOwnedCollection } from "@/server/collections";
+import { getAssignableCollection } from "@/server/collections";
+import { ServiceError } from "@/server/errors";
 import { getOwnedPage } from "@/server/pages";
 import { toErrorResponse } from "@/server/errors";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
+
+const teamOnlyPageStays = () =>
+  new ServiceError(
+    "TEAM_ONLY_PAGE",
+    "This page is team-only. Change its visibility before moving it out of its team space.",
+    422,
+  );
 
 async function readPageId(req: Request): Promise<string | null> {
   try {
@@ -26,10 +34,13 @@ export async function POST(
   const { id } = await params;
   let page;
   try {
-    await getOwnedCollection(id, userId);
+    await getAssignableCollection(id, userId);
     const pageId = await readPageId(req);
     if (!pageId) return NextResponse.json({ error: "Missing pageId" }, { status: 400 });
     page = await getOwnedPage(pageId, userId);
+    // A team-only page is readable by the members of the space it is in.
+    // Moving it would hand it to another team, or to nobody.
+    if (page.visibility === "team" && page.collection_id !== id) throw teamOnlyPageStays();
   } catch (e) {
     return toErrorResponse(e);
   }
@@ -51,10 +62,11 @@ export async function DELETE(
   const { id } = await params;
   let page;
   try {
-    await getOwnedCollection(id, userId);
+    await getAssignableCollection(id, userId);
     const pageId = await readPageId(req);
     if (!pageId) return NextResponse.json({ error: "Missing pageId" }, { status: 400 });
     page = await getOwnedPage(pageId, userId);
+    if (page.visibility === "team" && page.collection_id === id) throw teamOnlyPageStays();
   } catch (e) {
     return toErrorResponse(e);
   }

@@ -2,6 +2,8 @@
 // Each prompt returns a ready-to-publish document so the agent only needs to
 // fill in details, then call publish_page.
 
+import { frontmatterBlock } from "booklet-api-client";
+
 export const PROMPT_DEFINITIONS = [
   {
     name: "incident_report",
@@ -47,17 +49,16 @@ export const PROMPT_DEFINITIONS = [
   },
 ] as const;
 
+// Each template opens with frontmatter: `type` puts the page in its group in a
+// team space, and the other fields show in the page's header strip.
+
 type PromptName = (typeof PROMPT_DEFINITIONS)[number]["name"];
 
 function renderIncidentReport(args: Record<string, string>): string {
   const title = args["title"] ?? "Untitled Incident";
   const severity = args["severity"] ?? "P2";
   const date = args["date"] ?? new Date().toISOString().split("T")[0];
-  return `# Incident Report: ${title}
-
-**Severity:** ${severity}
-**Date:** ${date}
-**Status:** Draft
+  return `${frontmatterBlock({ type: "incident", status: "Draft", severity, date })}# Incident Report: ${title}
 
 ---
 
@@ -107,10 +108,7 @@ function renderAdr(args: Record<string, string>): string {
   const title = args["title"] ?? "Untitled Decision";
   const status = args["status"] ?? "Proposed";
   const date = new Date().toISOString().split("T")[0];
-  return `# ADR: ${title}
-
-**Status:** ${status}
-**Date:** ${date}
+  return `${frontmatterBlock({ type: "adr", status, date })}# ADR: ${title}
 
 ---
 
@@ -149,9 +147,7 @@ function renderReleaseNotes(args: Record<string, string>): string {
   const product = args["product"] ?? "Product";
   const version = args["version"] ?? "1.0.0";
   const date = args["date"] ?? new Date().toISOString().split("T")[0];
-  return `# ${product} ${version} — Release Notes
-
-**Released:** ${date}
+  return `${frontmatterBlock({ type: "release-notes", status: "Released", date })}# ${product} ${version} — Release Notes
 
 ---
 
@@ -190,11 +186,7 @@ function renderRfc(args: Record<string, string>): string {
   const title = args["title"] ?? "Untitled RFC";
   const author = args["author"] ?? "Author";
   const date = new Date().toISOString().split("T")[0];
-  return `# RFC: ${title}
-
-**Author:** ${author}
-**Date:** ${date}
-**Status:** Draft
+  return `${frontmatterBlock({ type: "rfc", status: "Draft", date, owners: [author] })}# RFC: ${title}
 
 ---
 
@@ -235,10 +227,7 @@ function renderRunbook(args: Record<string, string>): string {
   const service = args["service"] ?? "Service";
   const team = args["team"] ?? "Platform";
   const date = new Date().toISOString().split("T")[0];
-  return `# ${service} — Runbook
-
-**Owner:** ${team}
-**Last updated:** ${date}
+  return `${frontmatterBlock({ type: "runbook", status: "Current", date, owners: [team] })}# ${service} — Runbook
 
 ---
 
