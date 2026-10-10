@@ -168,8 +168,6 @@ export const INDEX_SPECS = [
   { collection: "webhooks", spec: { user_id: 1, created_at: -1 } },
 
   // --- publish_events ---
-  // deleteAccount, and the admin metrics' per-user counts.
-  { collection: "publish_events", spec: { user_id: 1, created_at: 1 } },
   // deletePageAssociatedRecords.
   { collection: "publish_events", spec: { page_id: 1 } },
 
@@ -207,9 +205,25 @@ export const INDEX_SPECS = [
  * Creates every index in INDEX_SPECS. Safe to call repeatedly and safe to
  * call concurrently from multiple processes — `createIndex` is a no-op if
  * an equivalent index already exists.
+ *
+ * When a spec's options have changed since a database's index was built
+ * (IndexOptionsConflict 85, IndexKeySpecsConflict 86), the index on those
+ * keys is dropped and built again with the options here. That is how an
+ * existing database picks up, say, `users.email` losing `sparse`, with the
+ * collection unguarded for the milliseconds between the two commands and
+ * not for a whole deploy.
  */
 export async function ensureIndexes(db) {
   await Promise.all(
-    INDEX_SPECS.map(({ collection, spec, options }) => db.collection(collection).createIndex(spec, options)),
+    INDEX_SPECS.map(async ({ collection, spec, options }) => {
+      const col = db.collection(collection);
+      try {
+        await col.createIndex(spec, options);
+      } catch (err) {
+        if (err?.code !== 85 && err?.code !== 86) throw err;
+        await col.dropIndex(spec);
+        await col.createIndex(spec, options);
+      }
+    }),
   );
 }

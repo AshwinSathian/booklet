@@ -48,10 +48,11 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
       # Names from before the product was called Booklet must not come
-      # back anywhere in the code.
+      # back anywhere in the code. Changelogs say what was removed, so they
+      # are left out.
       - name: No pre-Booklet names
         run: |
-          if git grep -nE 'rdbl_|READABLE_|"readable"|readable-(api|mcp)|27017/readable' -- src mcp-server packages scripts tests; then
+          if git grep -nE 'rdbl_|READABLE_|"readable"|readable-(api|mcp)|27017/readable' -- src mcp-server packages scripts tests ':!**/CHANGELOG.md' ':!src/app/changelog'; then
             echo "::error::Stale pre-Booklet name found (see matches above)."
             exit 1
           fi

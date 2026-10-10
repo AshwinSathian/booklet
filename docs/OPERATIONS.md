@@ -198,15 +198,18 @@ db.pages.updateOne({ _id: "vqInYRN7Gh" }, { $set: { password_hash: "reset:2026-1
 db.collections.dropIndex("user_id_1_name_1")                                   // already gone in production
 db.pages.dropIndex("featured_1_visibility_1_password_hash_1_created_at_-1")    // already gone in production
 db.pages.dropIndex("user_id_1_created_at_-1")
-// users.email is now unique without `sparse`. Drop the old index BEFORE the
-// new build starts; the app creates the new one at startup.
-db.users.dropIndex("email_1")
+// Read by nothing since My pages stopped scanning the publish log.
+db.publish_events.dropIndex("user_id_1_created_at_1")
 // Test clients left by dynamic registration probes.
 db.oauth_clients.deleteMany({ client_name: { $in: ["ProbeAlpha", "ProbeBeta"] } })
 // My pages reads pages.last_source. Fill it once from the publish log.
 db.publish_events.aggregate([{ $sort: { created_at: 1 } }, { $group: { _id: "$page_id", source: { $last: "$source" } } }])
   .forEach((r) => db.pages.updateOne({ _id: r._id }, { $set: { last_source: r.source } }))
 ```
+
+`users.email` went from unique and sparse to unique. Nothing is run by hand
+for that: `ensureIndexes` rebuilds an index whose options have changed, at
+the first start of the new build.
 
 Production had no user without an email and no draft in the schema-1
 format on the server (that format only ever lived in browsers). A database

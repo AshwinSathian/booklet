@@ -32,6 +32,11 @@ function decodeCursor(cursor: string): { created_at: string; id: string } | null
 
 export const GET = v1("pages_list", 60, "pages:read", async (req: Request, userId: string) => {
   const url = new URL(req.url);
+  // Removed in 2.0.0. Ignoring it would hand a caller that still pages by
+  // offset the first page on every request.
+  if (url.searchParams.has("offset")) {
+    return problem(400, "`offset` is not supported. Pass each response's `next_cursor` as `cursor`.");
+  }
   const rawLimit = parseInt(url.searchParams.get("limit") ?? String(DEFAULT_LIMIT), 10);
 
   const limit = Number.isFinite(rawLimit) && rawLimit > 0 ? Math.min(rawLimit, MAX_LIMIT) : DEFAULT_LIMIT;

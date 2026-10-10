@@ -32,7 +32,7 @@ API keys
 
 - Error bodies are RFC 9457 problem details and no longer carry an `error`
   member. Read `detail`.
-- `GET /api/v1/pages` has no `offset` parameter and its response has no
+- `GET /api/v1/pages` answers 400 to `offset` and its response has no
   `offset` field. Pass each response's `next_cursor` as `cursor`.
 - A page created without a visibility is unlisted. Pass
   `visibility: "public"` for the old behaviour.
@@ -79,9 +79,9 @@ Editor
 
 Self-hosting
 
-- `users.email` is required and its index is unique without `sparse`.
-  Before the first start on an existing database, run
-  `db.users.dropIndex("email_1")`; the app creates the new index.
+- `users.email` is required and its index is unique without `sparse`. The
+  app rebuilds the index at its first start. A database that still holds a
+  user with no email, or two with the same one, has to be cleaned first.
 - The app no longer drops superseded indexes at startup, and the one-time
   scripts `backfill-anonymous-expiry.mjs` and `restore-frontmatter-raw.mjs`
   are gone. `docs/OPERATIONS.md` lists what to remove by hand.

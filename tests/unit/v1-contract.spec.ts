@@ -212,6 +212,12 @@ test.describe("conditional requests", () => {
   });
 });
 
+test("offset on the page list is refused, not ignored", async () => {
+  const { rawKey } = await newUser();
+  const body = await expectProblem(await listPages(call(rawKey, "/pages?limit=10&offset=10")), 400);
+  expect(body.detail).toContain("next_cursor");
+});
+
 test("cursor pagination returns each of 250 pages exactly once while pages are inserted", async () => {
   const { rawKey, userId } = await newUser();
   const seeded = new Set<string>();

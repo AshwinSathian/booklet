@@ -781,7 +781,9 @@ export default function McpSetupPage() {
             <p className="mt-6 text-sm text-text-secondary max-w-prose">
               A published page has its own URL, so the people you send it to don&apos;t need the
               chat it came from. The server follows the MCP specification, so the client does not
-              have to be Claude.
+              have to be Claude. It speaks protocol version 2026-07-28: a client that knows
+              earlier versions alone gets an &ldquo;unsupported protocol version&rdquo; error and
+              needs updating.
             </p>
             <p className="mt-3 text-sm text-text-secondary max-w-prose">
               Typical uses: paste an alert timeline and ask for a published post-mortem, turn a

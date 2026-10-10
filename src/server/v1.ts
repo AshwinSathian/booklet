@@ -10,7 +10,7 @@ import { problem, toErrorResponse } from "./errors";
  *
  * `problem()` also carries an `error` member, which the web app's own session
  * routes need: the UI reads it. /api/v1 is RFC 9457 only, so it is dropped
- * here, the one place every v1 response passes through.
+ * on the way out (`rfc9457Only`).
  */
 export function v1<C>(
   bucket: string,
@@ -43,8 +43,21 @@ export function v1<C>(
   };
 
   // `ctx` is optional so routes without params can be called with one argument.
-  return async (req: Request, ctx?: C): Promise<Response> => {
-    const res = await run(req, ctx);
+  return rfc9457Only(run) as (req: Request, ctx?: C) => Promise<Response>;
+}
+
+/**
+ * Wraps a handler so a problem-details response leaves without the `error`
+ * member. `v1()` applies it; the session-authenticated routes under
+ * /api/v1 (API keys) use it directly.
+ *
+ * ponytail: re-serialises each error body. `problem()` is shared with the
+ * session routes, `toErrorResponse` and `unverifiedResponse`, whose UI
+ * callers read `error`; move those callers to `detail` and this goes away.
+ */
+export function rfc9457Only<A extends unknown[]>(handler: (...args: A) => Promise<Response>) {
+  return async (...args: A): Promise<Response> => {
+    const res = await handler(...args);
     if (!res.headers.get("content-type")?.startsWith("application/problem+json")) return res;
     const { error: _error, ...body } = (await res.json()) as Record<string, unknown>;
     return Response.json(body, { status: res.status, headers: res.headers });

@@ -20,9 +20,6 @@ export async function recordPublishEvent(opts: {
   richBlockKinds?: string[];
 }): Promise<void> {
   const db = await getDb();
-  // My pages shows this per row. An anonymous publish has no page record,
-  // and the update then matches nothing.
-  await db.collection<{ _id: string }>("pages").updateOne({ _id: opts.pageId }, { $set: { last_source: opts.source } });
   await db.collection<PublishEvent>("publish_events").insertOne({
     id: crypto.randomUUID(),
     user_id: opts.userId,
@@ -33,4 +30,8 @@ export async function recordPublishEvent(opts: {
     created_at: new Date().toISOString(),
     ...(opts.richBlockKinds?.length ? { rich_block_kinds: opts.richBlockKinds } : {}),
   });
+  // My pages shows this per row. After the insert, so a failure here never
+  // costs the log its event. An anonymous publish has no page record, and
+  // the update then matches nothing.
+  await db.collection<{ _id: string }>("pages").updateOne({ _id: opts.pageId }, { $set: { last_source: opts.source } });
 }

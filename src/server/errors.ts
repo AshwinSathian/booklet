@@ -33,7 +33,7 @@ const TITLES: Record<number, string> = {
  * An RFC 9457 problem-details response. `type` stays "about:blank", so
  * `title` is the status phrase and `detail` carries the specific message.
  * `error` repeats `detail` for the web app's own UI, which reads it from the
- * session routes. /api/v1 responses do not carry it (see `v1()`).
+ * session routes. /api/v1 responses do not carry it (see `rfc9457Only`).
  */
 export function problem(
   status: number,

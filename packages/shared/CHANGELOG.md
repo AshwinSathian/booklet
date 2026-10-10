@@ -8,8 +8,8 @@ All notable changes to `booklet-api-client` are documented here. Format follows
 Needs a Booklet server at 2.0.0 or later.
 
 ### Removed
-- **Breaking:** `offset` on `listPages`, and `offset` in `ListPagesResponse`. Walk a list with
-  `cursor` and `next_cursor`, or call `listAllPages`.
+- **Breaking:** `offset` on `listPages`, and `offset` in `ListPagesResponse`. The server answers
+  400 to it. Walk a list with `cursor` and `next_cursor`, or call `listAllPages`.
 - **Breaking:** the `error` member of `ApiErrorSchema`. The server sends RFC 9457 problem details
   only: read `detail`. `BookletApiError.message` is now taken from `detail`.
 

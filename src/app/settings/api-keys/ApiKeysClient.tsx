@@ -141,9 +141,9 @@ export function ApiKeysSection({ initialKeys }: { initialKeys: KeyRow[] }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ label }),
       });
-      const data = (await res.json().catch(() => ({}))) as { id: string; label: string | null; key: string; error?: string };
+      const data = (await res.json().catch(() => ({}))) as { id: string; label: string | null; key: string; detail?: string };
       // 403 here is an unconfirmed email address; the message says what to do.
-      setError(res.ok ? null : (data.error ?? "Could not create the key."));
+      setError(res.ok ? null : (data.detail ?? "Could not create the key."));
       if (!res.ok) return;
       const newKey: KeyRow = {
         id: data.id,

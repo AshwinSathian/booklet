@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { JSDOM } from "jsdom";
-import { sanitizeCompiledSvg } from "@/lib/svg-sanitize";
+import { inertCss, sanitizeCompiledSvg } from "@/lib/svg-sanitize";
 
 // sanitizeCompiledSvg uses the browser's DOMParser/XMLSerializer — it only
 // ever runs client-side, after a dynamic ssr:false import in
@@ -80,6 +80,32 @@ test.describe("sanitizeCompiledSvg", () => {
     expect(out).not.toContain("@import");
     expect(out).toContain("url(#grad)");
     expect(out).toContain(".n{fill:");
+  });
+
+  test("same-document references survive in every spelling, and inline data: does too", () => {
+    for (const ref of ['url(#g)', 'url("#g")', "url('#g')", "url( #g )", "url(data:image/png;base64,AAAA)"]) {
+      expect(inertCss(`.n{fill:${ref}}`)).toBe(`.n{fill:${ref}}`);
+    }
+  });
+
+  test("escaped, commented, string-form and unterminated loaders are all neutralised", () => {
+    const hostile = [
+      ".a{background:\\75rl(https://evil.example/t.png)}",
+      '@\\69mport "https://evil.example/a.css";',
+      ".a{background:u/**/rl(https://evil.example/t.png)}",
+      '.a{background:image-set("https://evil.example/x.png" 1x)}',
+      ".a{background:URL( 'https://evil.example/t.png' )}",
+      ".a{background:url(https://evil.example/never-closed",
+      ".a{background:url(//evil.example/t.png)}",
+    ];
+    for (const css of hostile) expect(inertCss(css), css).not.toContain("evil.example");
+  });
+
+  test("a style attribute is filtered like a <style> element", () => {
+    const svg = `<svg ${SVG_NS}><rect style="mask-image:url(https://evil.example/p.png);fill:url(#g)"/></svg>`;
+    const out = sanitizeCompiledSvg(svg);
+    expect(out).not.toContain("evil.example");
+    expect(out).toContain("url(#g)");
   });
 
   test("returns empty string for unparseable input", () => {
