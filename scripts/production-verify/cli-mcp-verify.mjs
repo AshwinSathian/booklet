@@ -85,7 +85,6 @@ async function main() {
 
   let sessionCookie;
   let userId;
-  let oauthClientId;
 
   try {
     // ── 1. Real signup against the live API ──────────────────────────────
@@ -440,14 +439,10 @@ async function main() {
     );
 
     const redirectUri = "https://claude.ai/api/mcp/auth_callback";
-    const reg = await fetch(asMeta.registration_endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ client_name: `e2e-cli-verify-${RUN_ID}`, redirect_uris: [redirectUri] }),
-    });
-    const client = await reg.json().catch(() => null);
-    oauthClientId = client?.client_id;
-    ok("client registration accepts Claude's callback URL", reg.status === 201 && Boolean(oauthClientId), `got ${reg.status}`);
+    // The client is Claude's own metadata document, the one a Claude.ai
+    // connector presents. Nothing is registered: the app fetches the document.
+    const oauthClientId = "https://claude.ai/oauth/mcp-oauth-client-metadata";
+    ok("there is no dynamic client registration", asMeta.registration_endpoint === undefined && asMeta.client_id_metadata_document_supported === true);
 
     const verifier = randomBytes(48).toString("base64url");
     const authParams = {
@@ -542,7 +537,6 @@ async function main() {
           `${sessionsDeleted.deletedCount} session(s), ${userDeleted.deletedCount} user`,
       );
     }
-    if (oauthClientId) await db.collection("oauth_clients").deleteOne({ _id: oauthClientId });
     await mongo.close();
   }
 

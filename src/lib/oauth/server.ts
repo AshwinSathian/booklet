@@ -108,7 +108,7 @@ export async function validateAuthorizeRequest(params: AuthorizeParams, issuer: 
   }
   const redirectUri = params.redirect_uri;
   if (!redirectUri || !redirectUriMatches(client.redirect_uris, redirectUri)) {
-    return { ok: false, redirect: null, message: "This app asked to send you to an address it has not registered." };
+    return { ok: false, redirect: null, message: "This app asked to send you to an address it does not list as its own." };
   }
 
   const fail = (error: string, message: string): AuthorizeValidation => ({
@@ -355,7 +355,7 @@ export async function listConnectedApps(userId: string): Promise<ConnectedApp[]>
       try {
         fallback = new URL(clientId).host;
       } catch {
-        /* a registered client: its ID is not a URL */
+        /* not a URL: nothing better to show */
       }
       return { clientId, name: client?.client_name || fallback, scope: OAUTH_SCOPES.filter((s) => scopes.has(s)) };
     }),

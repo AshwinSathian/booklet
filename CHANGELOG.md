@@ -51,6 +51,10 @@ MCP server 4.0.0
 - Protocol 2026-07-28 only. A 2025-era client, one that opens with
   `initialize`, gets the unsupported-protocol-version error.
 - `list_pages` takes `cursor` and no longer takes `offset`.
+- OAuth dynamic client registration is gone: `POST /api/oauth/register`
+  answers 404 and the metadata has no `registration_endpoint`. A client is
+  identified by a Client ID Metadata Document, as Claude.ai's connector is.
+  A client that can only register itself uses an API key instead.
 - A request without a credential gets 401 with a `WWW-Authenticate`
   challenge, and reading an unknown resource is error `-32602`.
 
@@ -91,12 +95,22 @@ Self-hosting
 - **Trust page** at `/trust`: who runs Booklet, where it is hosted, how it
   is backed up, who pays for it, and how to export or delete an account.
 - The landing page has a section on team spaces and document types.
+- The MCP server has an icon: it serves the app's at `/favicon.ico` and
+  `/favicon.svg` on its own host and names it in its server information. A
+  client listing its connectors used to show the parent domain's icon.
+- `node scripts/build-icons.mjs` rebuilds the static icons from the mark
+  the app serves at `/icon`.
 
 ### Changed
 
 - Site copy rewritten around engineering documents: landing, pricing,
   about, the setup guides and the README. Claims that could not be checked
   against the code were removed.
+- The MCP setup guide starts with choosing a tool, Claude.ai first, and
+  shows the API key step for the tools that need a key. It used to open
+  with "Get your API key" for everyone, Claude.ai included.
+- The browser tab icon, the PWA icons and `/icon` are the same mark. The
+  static files were two brand revisions behind.
 - My pages reads each page's publish source from the page record. It used
   to scan the account's whole publish log on every load.
 - The SVG sanitizer removes `@import` and external `url()` from a diagram's
@@ -251,8 +265,7 @@ Programmatic surfaces brought up to current conventions (roadmap Phase 4).
 - **OAuth sign-in for MCP clients.** A Claude.ai custom connector pointed at
   `https://booklet-mcp.ashwinsathian.com/mcp` signs in with a Booklet
   account; no API key is pasted anywhere. Authorization code with PKCE
-  (S256 only), clients identified by a Client ID Metadata Document or by
-  dynamic registration, scopes `pages:read` and `pages:write`, one-hour
+  (S256 only), clients identified by a Client ID Metadata Document, scopes `pages:read` and `pages:write`, one-hour
   access tokens and rotating 30-day refresh tokens. API keys keep working.
 - **Problem details.** `/api/v1` errors are RFC 9457 bodies
   (`application/problem+json`). A 413 says which

@@ -91,10 +91,9 @@ export default async function OAuthAuthorizePage({
       <OAuthConsent
         params={params}
         clientName={client.client_name}
-        // For a metadata-document client the host of its client_id is a
-        // fact about who it is; a registered client only has the name it
-        // chose, so the destination is what the user can actually check.
-        clientHost={client.source === "metadata" ? new URL(client.client_id).host : null}
+        // The host of the client_id is a fact about who the client is: its
+        // metadata document was fetched from there. The name is its own claim.
+        clientHost={new URL(client.client_id).host}
         destination={describeDestination(redirectUri)}
         scope={scope}
       />

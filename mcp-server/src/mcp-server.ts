@@ -52,9 +52,20 @@ export const PROMPT_NAMES = PROMPT_DEFINITIONS.map((p) => p.name);
  * index.ts calls this once per request, for both protocol eras. `apiKey` is
  * the caller's bearer credential, an API key or an OAuth access token.
  */
-export function createMcpServer(apiBase: string, apiKey: string): McpServer {
+export function createMcpServer(apiBase: string, apiKey: string, siteUrl = "https://booklet.ashwinsathian.com"): McpServer {
   const server = new McpServer(
-    { name: "booklet", version: SERVER_VERSION },
+    {
+      name: "booklet",
+      title: "Booklet",
+      version: SERVER_VERSION,
+      websiteUrl: siteUrl,
+      // What a client shows beside the connector. Without it a client falls
+      // back to whatever icon it finds for the host's parent domain.
+      icons: [
+        { src: `${siteUrl}/favicon.svg`, mimeType: "image/svg+xml", sizes: ["any"] },
+        { src: `${siteUrl}/favicon.ico`, mimeType: "image/x-icon", sizes: ["32x32"] },
+      ],
+    },
     {
       // Cache hints for protocol 2026-07-28 list results; 2025-era responses
       // are unaffected. "private" everywhere: the resource list is per

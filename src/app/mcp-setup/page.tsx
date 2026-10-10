@@ -201,8 +201,8 @@ interface Platform {
 }
 
 const PLATFORMS: Platform[] = [
-  { id: "claude-desktop", label: "Claude Desktop", icon: <ClaudeSparkIcon /> },
   { id: "claude-ai", label: "Claude.ai", badge: "Pro / Max", icon: <ClaudeSparkIcon /> },
+  { id: "claude-desktop", label: "Claude Desktop", icon: <ClaudeSparkIcon /> },
   { id: "cursor", label: "Cursor", icon: <CursorIcon /> },
   { id: "windsurf", label: "Windsurf", icon: <WindsurfIcon /> },
   { id: "vscode", label: "VS Code", icon: <VSCodeIcon /> },
@@ -667,7 +667,7 @@ function PromptChip({ text }: { text: string }) {
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function McpSetupPage() {
-  const [platform, setPlatform] = useState<PlatformId>("claude-desktop");
+  const [platform, setPlatform] = useState<PlatformId>("claude-ai");
   const [apiKey, setApiKey] = useState("bklt_YOUR_API_KEY");
 
   const platformContent: Record<PlatformId, ReactNode> = {
@@ -693,8 +693,8 @@ export default function McpSetupPage() {
           <nav className="flex flex-col gap-1 text-xs">
             {[
               ["#overview", "Overview"],
-              ["#api-key", "Get your API key"],
-              ["#connect", "Connect to your tool"],
+              ["#connect", "Choose your tool"],
+              ["#add", "Connect it"],
               ["#prompts", "Try it out"],
               ["#tools", "Available tools"],
               ["#templates", "Templates"],
@@ -792,14 +792,58 @@ export default function McpSetupPage() {
             </p>
           </section>
 
-          {/* Step 1 — API Key */}
+          {/* Step 1 — Choose the tool. Claude.ai is first: it needs no key. */}
+          <section id="connect" className="scroll-mt-20">
+            <SectionAnchor id="" title="Step 1 — Choose your tool" />
+            <p className="text-sm text-text-secondary mb-4">
+              Claude.ai signs in with your Booklet account, so there is no key to create or paste. The
+              other tools use an API key.
+            </p>
+
+            {/* Platform tabs */}
+            <div className="flex flex-wrap gap-1.5 mb-6">
+              {PLATFORMS.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setPlatform(p.id)}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition border",
+                    platform === p.id
+                      ? "bg-accent/10 border-accent/40 text-accent"
+                      : "border-border-default text-text-muted hover:border-accent/20 hover:text-text-secondary bg-bg-elevated",
+                  )}
+                >
+                  <span className="opacity-80">{p.icon}</span>
+                  {p.label}
+                  {p.badge && (
+                    <span className="ml-0.5 rounded px-1 py-0.5 text-2xs bg-fill-2 text-text-primary font-semibold">
+                      {p.badge}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+
+          </section>
+
+          {platform === "claude-ai" ? (
+            <section id="add" className="scroll-mt-20">
+              <SectionAnchor id="" title="Step 2 — Add the connector and sign in" />
+            {/* Platform instructions */}
+            <div className="rounded-xl border border-border-default bg-bg-elevated p-5 sm:p-6">
+              {platformContent[platform]}
+            </div>
+            </section>
+          ) : (
+            <>
+          {/* Step 2 — API key, for every tool but Claude.ai */}
           <section id="api-key" className="scroll-mt-20">
-            <SectionAnchor id="" title="Step 1 — Get your API key" />
+            <SectionAnchor id="" title="Step 2 — Get an API key" />
 
             <p className="text-sm text-text-secondary mb-4">
-              Claude.ai does not need a key: it signs in with your Booklet account, so skip to step 2.
-              Every other tool below authenticates with a Booklet API key. The key identifies you and
-              scopes all operations to your pages.
+              {PLATFORMS.find((p) => p.id === platform)?.label} sends a Booklet API key with each request.
+              The key acts as you, on your pages alone.
             </p>
 
             <div className="space-y-4">
@@ -820,7 +864,7 @@ export default function McpSetupPage() {
                 </p>
               </Step>
 
-              <Step n={3} title="Paste it below (optional — personalises all snippets on this page)">
+              <Step n={3} title="Paste it here, if you want it filled into the config below">
                 <div className="mt-1 flex items-center gap-2">
                   <input
                     type="text"
@@ -836,7 +880,7 @@ export default function McpSetupPage() {
                 </div>
                 {apiKey !== "bklt_YOUR_API_KEY" && (
                   <p className="text-xs text-accent mt-1.5">
-                    ✓ All config snippets on this page now include your key.
+                    ✓ The config below now includes your key.
                   </p>
                 )}
                 <p className="text-xs text-text-muted mt-1">
@@ -846,44 +890,20 @@ export default function McpSetupPage() {
             </div>
           </section>
 
-          {/* Step 2 — Connect */}
-          <section id="connect" className="scroll-mt-20">
-            <SectionAnchor id="" title="Step 2 — Connect to your AI tool" />
 
-            {/* Platform tabs */}
-            <div className="flex flex-wrap gap-1.5 mb-6">
-              {PLATFORMS.map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => setPlatform(p.id)}
-                  className={cn(
-                    "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition border",
-                    platform === p.id
-                      ? "bg-accent/10 border-accent/40 text-accent"
-                      : "border-border-default text-text-muted hover:border-accent/20 hover:text-text-secondary bg-bg-elevated",
-                  )}
-                >
-                  <span className="opacity-80">{p.icon}</span>
-                  {p.label}
-                  {p.badge && (
-                    <span className="ml-0.5 rounded px-1 py-0.5 text-2xs bg-[#D97757]/15 text-[#D97757] [.light_&]:text-[#8f4017] font-semibold">
-                      {p.badge}
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
-
+              <section id="add" className="scroll-mt-20">
+                <SectionAnchor id="" title={`Step 3 — Add Booklet to ${PLATFORMS.find((p) => p.id === platform)?.label}`} />
             {/* Platform instructions */}
             <div className="rounded-xl border border-border-default bg-bg-elevated p-5 sm:p-6">
               {platformContent[platform]}
             </div>
-          </section>
+              </section>
+            </>
+          )}
 
-          {/* Step 3 — Try it out */}
+          {/* Try it out */}
           <section id="prompts" className="scroll-mt-20">
-            <SectionAnchor id="" title="Step 3 — Try it out" />
+            <SectionAnchor id="" title="Then try it" />
             <p className="text-sm text-text-secondary mb-4">
               Once connected, try these prompts. Click any chip to copy it.
             </p>

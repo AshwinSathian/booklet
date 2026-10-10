@@ -18,7 +18,6 @@ export function oauthServerMetadata(issuer: string) {
     issuer,
     authorization_endpoint: `${issuer}/oauth/authorize`,
     token_endpoint: `${issuer}/api/oauth/token`,
-    registration_endpoint: `${issuer}/api/oauth/register`,
     revocation_endpoint: `${issuer}/api/oauth/revoke`,
     scopes_supported: [...OAUTH_SCOPES],
     response_types_supported: ["code"],

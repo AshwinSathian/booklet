@@ -1,15 +1,10 @@
 /**
  * OAuth clients. Booklet is a public authorization server for MCP clients,
- * so a client is not something an admin creates. It is identified in one of
- * two ways:
- *
- * - A Client ID Metadata Document: the client_id is an https URL, and the
- *   JSON document at that URL lists the client's name and redirect URIs.
- *   Nothing is stored; the document is fetched (through the SSRF guard) and
- *   cached briefly.
- * - Dynamic registration (RFC 7591), for clients that do not publish a
- *   metadata document: POST /api/oauth/register stores the redirect URIs
- *   and returns a generated client_id.
+ * so a client is not something an admin creates, and nothing about one is
+ * stored. A client is identified by a Client ID Metadata Document: its
+ * client_id is an https URL, and the JSON document at that URL lists the
+ * client's name and redirect URIs. The document is fetched (through the
+ * SSRF guard) and cached briefly.
  *
  * Every client is public (no secret). What protects the user is the exact
  * redirect URI match, PKCE, and the consent screen naming where the grant
@@ -17,19 +12,13 @@
  */
 
 import https from "node:https";
-import { getDb } from "@/lib/mongodb";
-import { createId } from "@/lib/id";
 import { bareHostname, pinnedLookup, resolveHostForDelivery } from "@/lib/ssrf-guard";
 
 export type OAuthClient = {
   client_id: string;
   client_name: string | null;
   redirect_uris: string[];
-  /** How the client is known: a fetched metadata document, or a registration. */
-  source: "metadata" | "registered";
 };
-
-type ClientDoc = { _id: string; client_name: string | null; redirect_uris: string[]; created_at: string };
 
 const MAX_REDIRECT_URIS = 10;
 const MAX_NAME_LENGTH = 100;
@@ -37,9 +26,9 @@ const MAX_URI_LENGTH = 2000;
 
 // Schemes that would run code or read local data if a browser followed a
 // redirect to them. Everything else that is not http(s) is a private-use
-// scheme a native app registered (cursor://, vscode://, …). A denylist and
+// scheme a native app owns (cursor://, vscode://, …). A denylist and
 // not RFC 8252's reverse-DNS allowlist, because the MCP clients in use
-// register single-word schemes. A redirect to one only ever happens after
+// have single-word schemes. A redirect to one only ever happens after
 // the signed-in user clicks Allow or Cancel on a screen naming the app.
 const FORBIDDEN_SCHEMES = new Set(["javascript:", "data:", "vbscript:", "file:", "blob:", "about:", "ftp:", "ws:", "wss:"]);
 const LOOPBACK_HOSTS = new Set(["127.0.0.1", "localhost", "[::1]"]);
@@ -48,7 +37,7 @@ function isLoopback(url: URL): boolean {
   return url.protocol === "http:" && LOOPBACK_HOSTS.has(url.hostname);
 }
 
-/** Whether `uri` may be registered as a redirect URI at all. */
+/** Whether `uri` may be one of a client's redirect URIs at all. */
 export function isAllowedRedirectUri(uri: unknown): uri is string {
   if (typeof uri !== "string" || uri.length > MAX_URI_LENGTH) return false;
   let url: URL;
@@ -64,7 +53,7 @@ export function isAllowedRedirectUri(uri: unknown): uri is string {
 }
 
 /**
- * Whether the redirect URI on a request is one the client registered. Exact
+ * Whether the redirect URI on a request is one the client lists. Exact
  * string match, with the one exception RFC 8252 section 7.3 requires: a
  * loopback URI matches on any port, because native apps listen on whatever
  * port is free.
@@ -97,23 +86,6 @@ function cleanMetadata(body: unknown): { client_name: string | null; redirect_ur
     redirect_uris,
     client_name: typeof client_name === "string" && client_name.trim() ? client_name.trim().slice(0, MAX_NAME_LENGTH) : null,
   };
-}
-
-// ── Dynamic registration ────────────────────────────────────────────────────
-
-const REGISTERED_ID = /^bkc_[0-9A-Za-z]{24}$/;
-
-/** Stores a registration and returns the client, or null if the metadata is not acceptable. */
-export async function registerClient(body: unknown): Promise<OAuthClient | null> {
-  const meta = cleanMetadata(body);
-  if (!meta) return null;
-  const client_id = `bkc_${createId(24)}`;
-  // ponytail: registrations are never pruned. If the collection grows, add
-  // last_used_at and delete clients unused for 90 days.
-  await (await getDb())
-    .collection<ClientDoc>("oauth_clients")
-    .insertOne({ _id: client_id, ...meta, created_at: new Date().toISOString() });
-  return { client_id, ...meta, source: "registered" };
 }
 
 // ── Client ID Metadata Documents ────────────────────────────────────────────
@@ -204,20 +176,15 @@ async function fetchMetadataClient(url: URL): Promise<OAuthClient | null> {
   // that happens to have a redirect_uris key could be used as a client.
   if (!body || typeof body !== "object" || (body as Record<string, unknown>).client_id !== url.href) return null;
   const meta = cleanMetadata(body);
-  return meta ? { client_id: url.href, ...meta, source: "metadata" } : null;
+  return meta ? { client_id: url.href, ...meta } : null;
 }
 
 /** Test seam: replaces the metadata fetch. */
 export const metadataFetcher = { fetch: fetchMetadataClient };
 
-/** Looks a client up by its client_id, in whichever of the two forms it is. */
+/** Looks a client up by its client_id, the URL of its metadata document. */
 export async function getClient(clientId: unknown): Promise<OAuthClient | null> {
   if (typeof clientId !== "string" || !clientId) return null;
-
-  if (REGISTERED_ID.test(clientId)) {
-    const doc = await (await getDb()).collection<ClientDoc>("oauth_clients").findOne({ _id: clientId });
-    return doc ? { client_id: doc._id, client_name: doc.client_name, redirect_uris: doc.redirect_uris, source: "registered" } : null;
-  }
 
   const url = isMetadataUrl(clientId);
   if (!url) return null;

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-// The token, registration, revocation and metadata endpoints are called by
+// The token, revocation and metadata endpoints are called by
 // OAuth clients, some of them browser-based (MCP Inspector, web IDEs). They
 // carry no cookies and need no ambient authority, so any origin may call
 // them.

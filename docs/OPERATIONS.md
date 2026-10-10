@@ -200,8 +200,8 @@ db.pages.dropIndex("featured_1_visibility_1_password_hash_1_created_at_-1")    /
 db.pages.dropIndex("user_id_1_created_at_-1")
 // Read by nothing since My pages stopped scanning the publish log.
 db.publish_events.dropIndex("user_id_1_created_at_1")
-// Test clients left by dynamic registration probes.
-db.oauth_clients.deleteMany({ client_name: { $in: ["ProbeAlpha", "ProbeBeta"] } })
+// Dynamic client registration is gone; the collection held two test clients.
+db.oauth_clients.drop()
 // My pages reads pages.last_source. Fill it once from the publish log.
 db.publish_events.aggregate([{ $sort: { created_at: 1 } }, { $group: { _id: "$page_id", source: { $last: "$source" } } }])
   .forEach((r) => db.pages.updateOne({ _id: r._id }, { $set: { last_source: r.source } }))
@@ -849,8 +849,9 @@ The flow, by URL:
 2. That document names the app as the authorization server. The app's own
    metadata is at `/.well-known/oauth-authorization-server`.
 3. The client identifies itself with a Client ID Metadata Document (its
-   `client_id` is an https URL the app fetches through the SSRF guard) or
-   registers at `POST /api/oauth/register`.
+   `client_id` is an https URL the app fetches through the SSRF guard).
+   There is no client registration: 2.0.0 removed it, after a Claude.ai
+   connector was seen signing in with its metadata document alone.
 4. The browser opens `/oauth/authorize`. That page only shows a consent
    screen. The code is issued by `POST /api/oauth/authorize`, which needs
    the session cookie and a same-origin `Origin` header.
@@ -862,7 +863,7 @@ The flow, by URL:
 
 Code: `src/lib/oauth/server.ts` (codes, tokens, PKCE), `src/lib/oauth/clients.ts`
 (client lookup, redirect URI rules), `mcp-server/src/auth.ts` (the resource
-server's check). Collections: `oauth_clients`, `oauth_codes`, `oauth_tokens`.
+server's check). Collections: `oauth_codes`, `oauth_tokens`.
 Codes and tokens are stored as HMACs under `API_KEY_PEPPER`, so rotating
 that pepper signs every connected app out, as it invalidates every API key.
 
@@ -881,8 +882,8 @@ db.oauth_tokens.deleteMany({ user_id: "<user id>" })   // one user
 db.oauth_tokens.deleteMany({ client_id: "<client id>" }) // one app, everyone
 ```
 
-**What is deliberately simple.** Registered clients are never pruned. The
-Client ID Metadata Document cache is per process (10 minutes). An access
+**What is deliberately simple.** The Client ID Metadata Document cache is
+per process (10 minutes). An access
 token issued for the MCP server is also accepted by `/api/v1` directly,
 because the MCP server forwards it; both are Booklet and the scopes are the
 same.

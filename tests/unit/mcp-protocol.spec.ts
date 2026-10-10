@@ -28,6 +28,7 @@ test.beforeAll(() => {
     const req = new Request(input, init);
     const url = new URL(req.url);
     if (url.origin !== ENV.BOOKLET_API_BASE) throw new Error(`unexpected fetch: ${url}`);
+    if (url.pathname === "/favicon.svg") return new Response("<svg/>", { headers: { "content-type": "image/svg+xml" } });
     apiCalls.push(`${req.method} ${url.pathname} ${req.headers.get("authorization")}`);
     if (url.pathname === "/api/oauth/tokeninfo") return tokeninfo();
     if (url.pathname === "/api/v1/publish") {
@@ -130,6 +131,13 @@ test("2026-07-28 list results carry ttlMs and cacheScope: private", async () => 
     expect(body).toContain('"ttlMs":300000');
     expect(body).toContain('"cacheScope":"private"');
   }
+});
+
+test("the MCP host serves the app's icon, with no credential", async () => {
+  const res = await serve("https://mcp.example.test/favicon.svg");
+  expect(res.status).toBe(200);
+  expect(res.headers.get("content-type")).toBe("image/svg+xml");
+  expect(await res.text()).toBe("<svg/>");
 });
 
 test.describe("authorization", () => {
