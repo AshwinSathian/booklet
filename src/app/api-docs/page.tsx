@@ -409,11 +409,11 @@ jobs:
 
       - name: Publish to Booklet
         env:
-          READABLE_API_KEY: \${{ secrets.READABLE_API_KEY }}
+          BOOKLET_API_KEY: \${{ secrets.BOOKLET_API_KEY }}
         run: |
-          if [ -n "\${{ vars.READABLE_PAGE_ID }}" ]; then
+          if [ -n "\${{ vars.BOOKLET_PAGE_ID }}" ]; then
             npx booklet-cli publish CHANGELOG.md \\
-              --update \${{ vars.READABLE_PAGE_ID }}
+              --update \${{ vars.BOOKLET_PAGE_ID }}
           else
             npx booklet-cli publish CHANGELOG.md \\
               --slug release-notes --visibility public
@@ -422,24 +422,24 @@ jobs:
             <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mt-5 mb-2">Option B — raw curl</p>
             <Pre>{`      - name: Publish to Booklet
         env:
-          READABLE_API_KEY: \${{ secrets.READABLE_API_KEY }}
-          PAGE_ID: \${{ vars.READABLE_PAGE_ID }}   # optional: update in-place
+          BOOKLET_API_KEY: \${{ secrets.BOOKLET_API_KEY }}
+          PAGE_ID: \${{ vars.BOOKLET_PAGE_ID }}   # optional: update in-place
         run: |
           BODY=$(jq -n --rawfile raw CHANGELOG.md '{"raw": $raw}')
 
           if [ -n "$PAGE_ID" ]; then
             curl -fsSL -X PATCH "${base}/api/v1/pages/$PAGE_ID" \\
-              -H "Authorization: Bearer $READABLE_API_KEY" \\
+              -H "Authorization: Bearer $BOOKLET_API_KEY" \\
               -H "Content-Type: application/json" \\
               -d "$BODY"
           else
             curl -fsSL -X POST "${base}/api/v1/publish" \\
-              -H "Authorization: Bearer $READABLE_API_KEY" \\
+              -H "Authorization: Bearer $BOOKLET_API_KEY" \\
               -H "Content-Type: application/json" \\
               -d "$BODY" | jq -r '.url'
           fi`}</Pre>
             <p className="mt-3 text-sm text-text-secondary">
-              Add <Code>READABLE_API_KEY</Code> under Settings → Secrets → Actions. Set <Code>READABLE_PAGE_ID</Code> as a repository variable to reuse the same URL on every run.
+              Add <Code>BOOKLET_API_KEY</Code> under Settings → Secrets → Actions. Set <Code>BOOKLET_PAGE_ID</Code> as a repository variable to reuse the same URL on every run.
             </p>
           </Section>
 

@@ -48,6 +48,15 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: ${{ env.NODE_VERSION }}
+      # Pre-rename names (the product was "Readable") must not come back in
+      # user-facing pages: they tell people to create secrets and config
+      # keys the CLI and Action no longer read.
+      - name: No Readable-era names in app pages
+        run: |
+          if git grep -nE 'rdbl_|READABLE_|"readable"' -- src/app; then
+            echo "::error::Stale Readable-era name found in src/app (see matches above)."
+            exit 1
+          fi
       - run: npm ci --prefer-offline
       - run: npm run lint
 

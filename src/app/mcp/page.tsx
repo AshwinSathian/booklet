@@ -195,13 +195,13 @@ export default function McpPage() {
             <h2 className="text-xl text-text-primary mb-3">Quick config</h2>
             <p className="text-sm text-text-muted mb-4">
               Paste this into your editor&apos;s MCP configuration. Replace{" "}
-              <code className="rounded bg-fill-2 px-1 py-0.5 text-xs font-mono text-accent-soft">rdbl_YOUR_KEY</code> with your API key.
+              <code className="rounded bg-fill-2 px-1 py-0.5 text-xs font-mono text-accent-soft">bklt_YOUR_KEY</code> with your API key.
             </p>
             <pre className="rounded-xl bg-bg-soft border border-border-default p-4 text-xs font-mono text-text-secondary overflow-x-auto leading-relaxed whitespace-pre">{`{
   "mcpServers": {
-    "readable": {
+    "booklet": {
       "url": "https://booklet-mcp.ashwinsathian.com/mcp",
-      "headers": { "Authorization": "Bearer rdbl_YOUR_KEY" }
+      "headers": { "Authorization": "Bearer bklt_YOUR_KEY" }
     }
   }
 }`}</pre>

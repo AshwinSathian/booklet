@@ -286,17 +286,25 @@ cat README.md | npx booklet-cli publish -`}</CodeBlock>
 
             <div className="flex flex-col gap-5">
               <Step n={1} title="Add your API key as a secret">
-                In your repo settings, add a secret named <code className="rounded bg-fill-2 px-1 py-0.5 text-xs font-mono text-accent-soft">READABLE_API_KEY</code> with your Booklet API key.
+                In your repo settings, add a secret named <code className="rounded bg-fill-2 px-1 py-0.5 text-xs font-mono text-accent-soft">BOOKLET_API_KEY</code> with your Booklet API key.
               </Step>
               <Step n={2} title="Add the workflow step">
-                Call the REST API directly with <code className="rounded bg-fill-2 px-1 py-0.5 text-xs font-mono text-accent-soft">curl</code> in a run step, pointing it at your Markdown file.
+                Use the <code className="rounded bg-fill-2 px-1 py-0.5 text-xs font-mono text-accent-soft">AshwinSathian/publish-to-booklet</code> Action, or call the REST API directly with <code className="rounded bg-fill-2 px-1 py-0.5 text-xs font-mono text-accent-soft">curl</code> in a run step as shown here.
               </Step>
               <Step n={3} title="Use the output URL">
                 Parse the JSON response with <code className="rounded bg-fill-2 px-1 py-0.5 text-xs font-mono text-accent-soft">jq</code> to get the page URL — pipe it to a Slack notification, a PR comment, or anywhere else.
               </Step>
             </div>
 
-            <div className="mt-6">
+            <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2">
+              <a
+                href="https://github.com/AshwinSathian/publish-to-booklet"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent transition hover:text-accent-soft"
+              >
+                publish-to-booklet Action on GitHub
+              </a>
               <Link
                 href="/api-docs#github-actions"
                 className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent transition hover:text-accent-soft"
@@ -327,11 +335,11 @@ jobs:
       - name: Publish to Booklet
         id: publish
         env:
-          READABLE_API_KEY: \${{ secrets.READABLE_API_KEY }}
+          BOOKLET_API_KEY: \${{ secrets.BOOKLET_API_KEY }}
         run: |
           BODY=$(jq -n --rawfile raw CHANGELOG.md '{"raw": $raw, "visibility": "public"}')
           URL=$(curl -fsSL -X POST https://booklet-api.ashwinsathian.com/api/v1/publish \\
-            -H "Authorization: Bearer $READABLE_API_KEY" \\
+            -H "Authorization: Bearer $BOOKLET_API_KEY" \\
             -H "Content-Type: application/json" \\
             -d "$BODY" | jq -r '.url')
           echo "url=$URL" >> "$GITHUB_OUTPUT"
@@ -395,7 +403,7 @@ jobs:
             <CodeBlock>{`// claude_desktop_config.json
 {
   "mcpServers": {
-    "readable": {
+    "booklet": {
       "url": "https://booklet-mcp.ashwinsathian.com/mcp",
       "headers": { "Authorization": "Bearer bklt_YOUR_KEY" }
     }
@@ -494,13 +502,13 @@ curl -X POST https://booklet-api.ashwinsathian.com/api/v1/publish \\
 
 # Response
 {
-  "id": "page_abc123",
+  "id": "k3Xv9pQ2mT",
   "url": "https://booklet.ashwinsathian.com/p/my-page",
   "slug": "my-page"
 }
 
 # Update existing page
-curl -X PATCH https://booklet-api.ashwinsathian.com/api/v1/pages/page_abc123 \\
+curl -X PATCH https://booklet-api.ashwinsathian.com/api/v1/pages/k3Xv9pQ2mT \\
   -H "Authorization: Bearer bklt_YOUR_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{"raw": "# Updated content"}'`}</CodeBlock>
@@ -551,7 +559,7 @@ curl -X PATCH https://booklet-api.ashwinsathian.com/api/v1/pages/page_abc123 \\
             <CodeBlock>{`// Webhook payload (page.published event)
 {
   "event": "page.published",
-  "page_id": "page_abc123",
+  "page_id": "k3Xv9pQ2mT",
   "url": "https://booklet.ashwinsathian.com/p/my-page",
   "slug": "my-page",
   "title": "My Page Title",

@@ -211,7 +211,7 @@ const PLATFORMS: Platform[] = [
 
 // ─── Config snippets ──────────────────────────────────────────────────────────
 
-function makeDesktopConfig(key = "rdbl_YOUR_API_KEY") {
+function makeDesktopConfig(key = "bklt_YOUR_API_KEY") {
   return JSON.stringify(
     {
       mcpServers: {
@@ -226,7 +226,7 @@ function makeDesktopConfig(key = "rdbl_YOUR_API_KEY") {
   );
 }
 
-function makeCursorConfig(key = "rdbl_YOUR_API_KEY") {
+function makeCursorConfig(key = "bklt_YOUR_API_KEY") {
   return JSON.stringify(
     {
       mcpServers: {
@@ -241,7 +241,7 @@ function makeCursorConfig(key = "rdbl_YOUR_API_KEY") {
   );
 }
 
-function makeVSCodeConfig(key = "rdbl_YOUR_API_KEY") {
+function makeVSCodeConfig(key = "bklt_YOUR_API_KEY") {
   return JSON.stringify(
     {
       servers: {
@@ -257,7 +257,7 @@ function makeVSCodeConfig(key = "rdbl_YOUR_API_KEY") {
   );
 }
 
-function makeZedConfig(key = "rdbl_YOUR_API_KEY") {
+function makeZedConfig(key = "bklt_YOUR_API_KEY") {
   return JSON.stringify(
     {
       context_servers: {
@@ -385,7 +385,7 @@ function ClaudeAiInstructions({ apiKey }: { apiKey: string }) {
               label="Authorization header"
               value={`Bearer ${apiKey}`}
               copyable
-              masked={apiKey === "rdbl_YOUR_API_KEY"}
+              masked={apiKey === "bklt_YOUR_API_KEY"}
             />
           </div>
         </Step>
@@ -480,7 +480,7 @@ function WindsurfInstructions({ apiKey }: { apiKey: string }) {
           <div className="rounded-xl border border-border-default bg-bg-soft p-4 space-y-3 text-sm">
             <Field label="Server name" value="booklet" />
             <Field label="Server URL" value={MCP_URL} copyable />
-            <Field label="Authorization" value={headerValue} copyable masked={apiKey === "rdbl_YOUR_API_KEY"} />
+            <Field label="Authorization" value={headerValue} copyable masked={apiKey === "bklt_YOUR_API_KEY"} />
           </div>
         </Step>
 
@@ -670,7 +670,7 @@ function PromptChip({ text }: { text: string }) {
 
 export default function McpSetupPage() {
   const [platform, setPlatform] = useState<PlatformId>("claude-desktop");
-  const [apiKey, setApiKey] = useState("rdbl_YOUR_API_KEY");
+  const [apiKey, setApiKey] = useState("bklt_YOUR_API_KEY");
 
   const platformContent: Record<PlatformId, ReactNode> = {
     "claude-desktop": <ClaudeDesktopInstructions apiKey={apiKey} />,
@@ -804,7 +804,7 @@ export default function McpSetupPage() {
                 <p className="text-sm text-text-secondary">
                   Click <strong>Generate key</strong>, give it a label like{" "}
                   <Code>claude-mcp</Code> or <Code>cursor</Code>, and copy the key immediately. It
-                  starts with <Code>rdbl_</Code> and is shown only once.
+                  starts with <Code>bklt_</Code> and is shown only once.
                 </p>
               </Step>
 
@@ -815,14 +815,14 @@ export default function McpSetupPage() {
                     value={apiKey}
                     onChange={(e) => {
                       const v = e.target.value.trim();
-                      setApiKey(v || "rdbl_YOUR_API_KEY");
+                      setApiKey(v || "bklt_YOUR_API_KEY");
                     }}
-                    placeholder="rdbl_YOUR_API_KEY"
+                    placeholder="bklt_YOUR_API_KEY"
                     spellCheck={false}
                     className="flex-1 rounded-lg border border-border-default bg-bg-soft px-3 py-2 text-sm font-mono text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-accent/50 focus:border-accent/50 transition"
                   />
                 </div>
-                {apiKey !== "rdbl_YOUR_API_KEY" && (
+                {apiKey !== "bklt_YOUR_API_KEY" && (
                   <p className="text-xs text-accent mt-1.5">
                     ✓ All config snippets on this page now include your key.
                   </p>
@@ -1024,7 +1024,7 @@ export default function McpSetupPage() {
               {[
                 {
                   q: "The server shows as connected but tools aren't working",
-                  a: "Check your API key — it must start with rdbl_ and not have been revoked. Go to My Pages → API Keys to verify.",
+                  a: "Check your API key — it must start with bklt_ and not have been revoked. Go to My Pages → API Keys to verify.",
                 },
                 {
                   q: "Claude Desktop doesn't show the Booklet server",
