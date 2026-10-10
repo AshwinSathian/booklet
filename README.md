@@ -46,7 +46,6 @@ That's it: you get back a permanent, shareable URL. No account needed to try the
 - **CLI**: publish Markdown from your terminal (`npx booklet-cli`)
 - **GitHub Action**: publish docs in CI via [`AshwinSathian/publish-to-booklet`](https://github.com/AshwinSathian/publish-to-booklet)
 - **MCP server**: expose the API to AI assistants (Claude, Cursor, etc.) via the Model Context Protocol
-<!-- VS Code extension: built, not yet on the Marketplace; re-add once AshwinSathian.booklet-vscode is published -->
 - **Frontmatter**: YAML frontmatter sets title, slug, visibility, tags, author, date
 
 ---
@@ -198,10 +197,9 @@ src/
 packages/           # npm workspaces; one root lockfile covers all of these
   shared/           # booklet-api-client: shared /api/v1 schemas + client
   cli/              # booklet-cli npm package
-  vscode/           # VS Code extension: publish from editor
 mcp-server/         # MCP server (plain Node process, run under PM2)
 .github/
-  workflows/        # ci.yml, publish-cli.yml, publish-shared.yml, publish-vscode.yml
+  workflows/        # ci.yml, publish-cli.yml, publish-shared.yml
   examples/         # publish-to-booklet.yml, use in your own repo
 ```
 

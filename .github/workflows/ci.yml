@@ -89,7 +89,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        package: [mcp-server, packages/shared, packages/cli, packages/vscode]
+        package: [mcp-server, packages/shared, packages/cli]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -101,7 +101,7 @@ jobs:
       # lockfile/install covers every package; no more per-package
       # package-lock.json to `npm ci --prefix` against.
       - run: npm ci --prefer-offline
-      # mcp-server/cli/vscode all import booklet-api-client (packages/shared)
+      # mcp-server and cli both import booklet-api-client (packages/shared)
       # — npm workspaces symlinks the *source* directory,
       # but its package.json's types/main/module fields point at dist/,
       # which only exists after packages/shared's own build runs. Skipping

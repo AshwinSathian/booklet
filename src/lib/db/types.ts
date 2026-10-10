@@ -131,7 +131,7 @@ export type PublishEvent = {
   // recognized X-Booklet-Source header (raw curl, an unlisted integration).
   // The 4 first-party clients each send their own value — see
   // src/lib/request-source.ts, which is what actually assigns this field.
-  source: "browser" | "api" | "cli" | "github-action" | "vscode" | "mcp";
+  source: "browser" | "api" | "cli" | "github-action" | "mcp";
   created_at: string;
   // Distinct "rich block" kinds (callout, toggle, columns, ...) present in
   // this publish — see src/lib/block-usage.ts. Optional/absent on events

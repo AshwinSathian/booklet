@@ -396,7 +396,7 @@ ingress:
       httpHostHeader: ${APP_HOSTNAME}
 
   # Same app/port as above — dedicated hostname for external API consumers
-  # (CLI/GitHub Action/VS Code/MCP). src/middleware.ts restricts this
+  # (CLI/GitHub Action/MCP). src/middleware.ts restricts this
   # hostname to /api/* only.
   - hostname: ${API_HOSTNAME}
     service: http://127.0.0.1:${APP_PORT}

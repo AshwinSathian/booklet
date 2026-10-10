@@ -53,7 +53,7 @@ const SECURITY_HEADERS: Record<string, string> = {
 // booklet-api.ashwinsathian.com is the same Next.js process as
 // booklet.ashwinsathian.com (see ecosystem.config.js — one PM2 app, one
 // port), routed under its own hostname purely so external API consumers
-// (CLI, GitHub Action, VS Code extension, MCP server) have a stable,
+// (CLI, GitHub Action, MCP server) have a stable,
 // clearly-scoped entry point distinct from the marketing/editor UI. This is
 // enforced here, not just a DNS-level convention: that hostname serves
 // /api/* only, everything else 404s. The main hostname keeps serving both

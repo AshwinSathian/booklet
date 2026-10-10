@@ -14,7 +14,7 @@ import type {
 // Booklet API client — one instance per MCP call (stateless server; apiKey
 // and apiBase both vary per incoming request). Delegates the actual
 // HTTP/auth/JSON-parsing work to booklet-api-client, shared with
-// packages/cli, packages/github-action, and packages/vscode.
+// packages/cli and the publish-to-booklet GitHub Action.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const UPSTREAM_TIMEOUT_MS = 10_000;

@@ -1,13 +1,12 @@
 /**
  * Thin typed fetch client for /api/v1/*. Deliberately no dependencies beyond
- * global fetch (Node 18+) and zod — every consumer (CLI, GitHub Action, VS
- * Code extension, MCP server) already runs on a fetch-capable runtime.
+ * global fetch (Node 18+) and zod — every consumer (CLI, GitHub Action,
+ * MCP server) already runs on a fetch-capable runtime.
  *
  * Throws BookletApiError on any non-2xx response, carrying both the
  * upstream HTTP status and the server's own `{error}` message when present.
- * Two of the four consumers (packages/github-action, packages/vscode)
- * already used exactly this throw-and-catch shape before this package
- * existed; the other two (packages/cli, mcp-server) each build their own
+ * The GitHub Action uses this throw-and-catch shape directly; packages/cli
+ * and mcp-server each build their own
  * non-throwing `{ok, ...}` wrapper on top for command-flow control (e.g.
  * `process.exit(1)`) — a thin adapter around this client, not a rewrite of
  * their command logic.
@@ -30,7 +29,7 @@ import {
 export type ClientOptions = {
   baseUrl: string;
   apiKey: string;
-  /** Sent as X-Booklet-Source, e.g. "cli" | "github-action" | "vscode" | "mcp". */
+  /** Sent as X-Booklet-Source, e.g. "cli" | "github-action" | "mcp". */
   source: string;
   fetchTimeoutMs?: number;
 };

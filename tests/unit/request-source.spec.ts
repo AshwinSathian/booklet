@@ -2,15 +2,14 @@ import { test, expect } from "@playwright/test";
 import { resolveApiClientSource } from "@/lib/request-source";
 
 // Regression coverage: /api/v1/publish and /api/v1/pages/[id] previously
-// hardcoded source: "api" for every request, even though all 4 first-party
-// clients (packages/cli, packages/github-action, packages/vscode,
-// mcp-server) already send X-Booklet-Source via packages/shared's
+// hardcoded source: "api" for every request, even though all first-party
+// clients (packages/cli, the GitHub Action, mcp-server) already send X-Booklet-Source via packages/shared's
 // createClient(). That collapsed MCP/agent-driven publish volume into the
 // same bucket as raw curl usage, making it unmeasurable.
 
 test.describe("resolveApiClientSource", () => {
   test("recognizes each first-party client header value", () => {
-    for (const source of ["cli", "github-action", "vscode", "mcp"] as const) {
+    for (const source of ["cli", "github-action", "mcp"] as const) {
       const req = new Request("http://localhost:3100/api/v1/publish", {
         headers: { "X-Booklet-Source": source },
       });

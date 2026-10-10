@@ -38,7 +38,7 @@ npm run typecheck --workspace mcp-server
 
 ## Where things live
 
-`packages/` is npm workspaces — `shared` (the API client used by the CLI, MCP server, and VS Code extension), `cli`, and `vscode`. `mcp-server/` is a standalone Node process, not a Cloudflare Worker (see `docs/OPERATIONS.md` for why). The root `src/` is the Next.js app. See the [Project structure](README.md#project-structure) section of the README for the full breakdown.
+`packages/` is npm workspaces — `shared` (the API client used by the CLI and MCP server) and `cli`. `mcp-server/` is a standalone Node process, not a Cloudflare Worker (see `docs/OPERATIONS.md` for why). The root `src/` is the Next.js app. See the [Project structure](README.md#project-structure) section of the README for the full breakdown.
 
 ## Reporting bugs
 
