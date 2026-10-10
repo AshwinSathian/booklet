@@ -9,7 +9,7 @@ Booklet turns Markdown into a shareable page with one link. Paste or write Markd
 - Converts Markdown into a formatted, readable web page with a shareable URL
 - Renders GitHub-Flavored Markdown — headings, code blocks, tables, lists, task lists, blockquotes — plus KaTeX math, Mermaid and Graphviz diagrams, callouts (`> [!NOTE]`, `[!TIP]`, `[!WARNING]`, `[!IMPORTANT]`, `[!CAUTION]`), collapsible toggle sections, and multi-column layouts
 - Auto-generates a table of contents once a document has enough headings
-- Reads YAML frontmatter: `title`, `slug`, `visibility`, `description`, `author`, `date`, `tags`
+- Reads YAML frontmatter: `title`, `slug`, `visibility`, `description`, `author`, `date`, `tags`, and for engineering documents `type` (`incident`, `postmortem`, `adr`, `rfc`, `runbook`, `release-notes`), `status`, `severity`, `owners`, `supersedes`, shown in a strip above the page
 - Live preview in the browser editor as you type
 - Multiple named drafts, autosaved locally in the browser
 - 21 built-in templates (incident report, ADR, runbook, release notes, postmortem, and more — full list below)
@@ -18,7 +18,8 @@ Booklet turns Markdown into a shareable page with one link. Paste or write Markd
 - Version history: restore any of the last 50 versions of a page (signed-in only)
 - Password-protected pages (signed-in only)
 - Custom URL slugs (signed-in only)
-- Team spaces: a shared collection of pages under one URL, with invited members
+- Team spaces: a shared collection of pages under one URL (`/t/<slug>`), grouped by document type, with invited members. A page can be team-only: members can open it, everyone else gets a 404
+- `[[Title]]` in a published page links to the published page of that title in the same team space (or among the author's own pages), and that page lists what references it
 - New pages are unlisted (not indexed) unless the author makes them public; public pages appear on Explore, newest first
 - Every published page has a "Report this page" link; a taken-down page returns 410 Gone
 
@@ -43,7 +44,7 @@ Booklet runs a native MCP server so Claude and other MCP-compatible AI assistant
 MCP endpoint: `https://booklet-mcp.ashwinsathian.com/mcp` (remote, Streamable HTTP — nothing to install)
 Auth: OAuth sign-in (Claude.ai custom connectors and other clients that support it: add the URL, sign in, no key), or an `Authorization: Bearer <bklt_...>` header with the same API key as the REST API
 
-**Tools:** `publish_page`, `update_page`, `get_page`, `list_pages`, `delete_page`
+**Tools:** `publish_page`, `update_page`, `get_page`, `list_pages`, `delete_page`, `create_document`, `search_pages`
 **Resources:** published pages, browsable and readable as `booklet://pages/:id`
 **Prompts:** five pre-built document templates the assistant can fill in and publish directly — `incident_report`, `adr`, `release_notes`, `rfc`, `runbook`
 

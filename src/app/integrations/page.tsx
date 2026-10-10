@@ -302,6 +302,8 @@ jobs:
                 { name: "get_page", desc: "Retrieve the raw content of any page" },
                 { name: "list_pages", desc: "List all pages in your account" },
                 { name: "delete_page", desc: "Permanently delete a page" },
+                { name: "create_document", desc: "Publish an incident report, ADR, RFC or runbook with its fields" },
+                { name: "search_pages", desc: "Find pages by title, type or team space" },
               ].map((t) => (
                 <div key={t.name} className="flex items-start gap-3 rounded-lg border border-border-subtle bg-bg-soft px-3.5 py-2.5">
                   <code className="shrink-0 rounded bg-accent/10 border border-accent/20 px-1.5 py-0.5 text-xs font-mono text-accent">

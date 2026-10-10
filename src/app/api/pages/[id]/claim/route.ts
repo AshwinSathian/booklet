@@ -6,8 +6,9 @@ import { isSameOriginRequest } from "@/lib/auth/origin-check";
 import { getSession } from "@/lib/auth/session";
 import { createPageRecord, getPageRecord } from "@/lib/db";
 import { snapshotPageVersion } from "@/lib/db/versions";
-import { extractDocTitle } from "@/lib/doc-title";
+import { parseFrontmatter } from "@/lib/frontmatter";
 import { GONE_MESSAGES } from "@/lib/gone-notice";
+import { recordFields } from "@/server/pages";
 import { logError } from "@/lib/logger";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { clearClaimToken, clearDocExpiry, getDoc, getDocState } from "@/lib/storage";
@@ -73,7 +74,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     try {
       // `pages._id` is unique, so of two racing claims exactly one insert
       // succeeds — that insert is the ownership decision.
-      await createPageRecord(id, userId, extractDocTitle(doc.blocks));
+      // The document's frontmatter was never stored anywhere but in its
+      // Markdown, since there was no record to hold it.
+      const record = recordFields(doc.raw ? parseFrontmatter(doc.raw).meta : {}, doc.blocks);
+      await createPageRecord(id, userId, record.title, null, record.frontmatter_meta, "unlisted", {
+        docType: record.doc_type,
+      });
     } catch (e) {
       if (typeof e === "object" && e !== null && "code" in e && e.code === 11000) {
         return NextResponse.json({ error: "This page already belongs to an account." }, { status: 409 });

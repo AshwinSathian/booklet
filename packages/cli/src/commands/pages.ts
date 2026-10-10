@@ -1,4 +1,5 @@
 import { Command } from "commander";
+import { DOC_TYPES, type DocType } from "booklet-api-client";
 import { requireClient } from "../api.js";
 import { CliError, EXIT, toCliError } from "../errors.js";
 import { success, info, bold, dim, gray, openUrl, print, emit, isJson, table } from "../fmt.js";
@@ -37,8 +38,18 @@ export function registerPagesCommand(program: Command) {
     .description("List all your pages")
     .option("--query <text>", "Only show pages whose title contains this text")
     .option("--tag <tag>", "Only show pages with this exact frontmatter tag")
-    .action(async (opts: { query?: string; tag?: string }) => {
-      const items = await (await requireClient()).listAllPages({ query: opts.query, tag: opts.tag });
+    .option("--type <type>", `Only show this document type (${DOC_TYPES.join(", ")})`)
+    .option("--space <slug>", "List a team space you belong to (every member's pages) instead of your own pages")
+    .action(async (opts: { query?: string; tag?: string; type?: string; space?: string }) => {
+      if (opts.type !== undefined && !(DOC_TYPES as readonly string[]).includes(opts.type)) {
+        throw new CliError(`--type must be one of: ${DOC_TYPES.join(", ")}.`, EXIT.USAGE);
+      }
+      const items = await (await requireClient()).listAllPages({
+        query: opts.query,
+        tag: opts.tag,
+        type: opts.type as DocType | undefined,
+        space: opts.space,
+      });
 
       if (isJson()) {
         emit(items);
@@ -47,7 +58,7 @@ export function registerPagesCommand(program: Command) {
 
       if (items.length === 0) {
         info(
-          opts.query || opts.tag
+          opts.query || opts.tag || opts.type || opts.space
             ? "No pages matched that filter."
             : "No pages yet. Run `booklet publish <file>` to create one.",
         );
@@ -56,10 +67,11 @@ export function registerPagesCommand(program: Command) {
 
       print();
       table(
-        ["Title", "ID / Slug", "Visibility", "Views", "Updated"],
+        ["Title", "ID / Slug", "Type", "Visibility", "Views", "Updated"],
         items.map((p) => [
           p.title ?? dim("Untitled"),
           p.slug ?? gray(p.id),
+          p.doc_type ?? "",
           p.visibility,
           p.view_count,
           formatDate(p.updated_at),

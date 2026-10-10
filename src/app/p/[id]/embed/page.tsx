@@ -21,9 +21,9 @@ async function resolveEmbedPage(idOrSlug: string) {
   let pageRecord = null;
 
   if (doc) {
-    pageRecord = await getPageRecord(resolvedId).catch(() => null);
+    pageRecord = await getPageRecord(resolvedId);
   } else {
-    const slugRecord = await getPageBySlug(idOrSlug).catch(() => null);
+    const slugRecord = await getPageBySlug(idOrSlug);
     if (slugRecord) {
       doc = await getDoc(slugRecord.id);
       resolvedId = slugRecord.id;
@@ -33,6 +33,10 @@ async function resolveEmbedPage(idOrSlug: string) {
 
   // Same render guard as the share page — see resolveSharePage there.
   const gone = doc ? await getGoneReason(resolvedId) : null;
+
+  // A team-only page is never embeddable: an embed is for other sites,
+  // where there is no Booklet session to check membership against.
+  if (pageRecord?.visibility === "team") return { doc: null, resolvedId, pageRecord: null, gone: null };
 
   return { doc, resolvedId, pageRecord, gone };
 }

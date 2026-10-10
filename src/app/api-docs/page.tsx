@@ -190,15 +190,23 @@ export default function ApiDocsPage() {
                 <Code>public</Code> here or in frontmatter: anyone with the link can read it, and it stays out of
                 Explore, the sitemap and search engines. <Code>raw</Code> can be up to 200,000 characters.
               </p>
+              <p className="mt-3 text-sm text-text-secondary">
+                <Code>space</Code> is the slug of a team space you can write to (the last part of{" "}
+                <Code>/t/&lt;slug&gt;</Code>). The page is created in it. With <Code>visibility: &quot;team&quot;</Code>,
+                only members of that space can open the page and everyone else gets a 404.{" "}
+                <Code>team</Code> without a space is a 422.
+              </p>
               <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mt-4 mb-2">Response 201</p>
               <Pre>{ex("PublishResponse")}</Pre>
               <div className="mt-4">
                 <Table rows={[
                   ["400", "Invalid JSON, empty document, or missing raw"],
                   ["401", "Missing or invalid API key"],
+                  ["403", "You can read the team space but not publish to it"],
+                  ["404", "No team space with that slug, or you are not in it"],
                   ["409", "The frontmatter slug is taken"],
                   ["413", "Document too large: over 200,000 characters, or over 600,000 bytes once parsed"],
-                  ["422", "Invalid slug, or an Idempotency-Key reused with a different body"],
+                  ["422", "Invalid slug, visibility team without a space, or an Idempotency-Key reused with a different body"],
                   ["429", "Rate limit exceeded (60 req/min)"],
                   ["500", "Internal storage error"],
                 ]} />
@@ -232,11 +240,17 @@ slug: incident-auth-2026-05
                 <tbody>
                   {[
                     ["title", "string", "Overrides the extracted H1 title (max 200 chars)"],
-                    ["visibility", '"public" | "unlisted"', "Defaults to unlisted (link only, not listed or indexed)"],
+                    ["visibility", '"public" | "unlisted" | "team"', "Defaults to unlisted (link only, not listed or indexed). team needs space"],
+                    ["space", "string", "Slug of a team space to publish into"],
+                    ["type", "string", "incident, postmortem, adr, rfc, runbook or release-notes. Shown above the page and used to group a team space"],
+                    ["status", "string", "Shown above the page, e.g. Proposed, Accepted, Resolved (max 40 chars)"],
+                    ["severity", "string", "Shown above the page, e.g. P1 (max 20 chars)"],
+                    ["owners", "string[]", "People or teams responsible, shown above the page"],
+                    ["supersedes", "string", "Title of the document this one replaces"],
                     ["slug", "string", "Custom URL slug — available to all signed-in accounts (max 60 chars)"],
                     ["description", "string", "Used for SEO meta description (max 300 chars)"],
                     ["author", "string", "Stored as metadata, max 100 chars"],
-                    ["date", "string", "Stored as metadata, any format"],
+                    ["date", "string", "Shown above the page. YYYY-MM-DD is formatted; anything else is shown as written"],
                   ].map(([field, type, notes]) => (
                     <tr key={field} className="border-b border-border-default/50">
                       <td className="py-2 pr-6 font-mono text-xs text-amber-400">{field}</td>
@@ -271,7 +285,9 @@ slug: incident-auth-2026-05
             <Endpoint method="GET" path="/api/v1/pages" description="Returns the pages owned by the authenticated account, newest first.">
               <p className="text-sm text-text-secondary mb-3">
                 Query parameters: <Code>limit</Code> (1 to 100, default 20), <Code>cursor</Code>, <Code>q</Code>{" "}
-                (title contains) and <Code>tag</Code>. To read every page, pass each response&apos;s{" "}
+                (title contains), <Code>tag</Code>, <Code>type</Code> (a document type) and <Code>space</Code> (the
+                slug of a team space you belong to: the list is then every page in that space, not only yours). To
+                read every page, pass each response&apos;s{" "}
                 <Code>next_cursor</Code> as <Code>cursor</Code> until it is <Code>null</Code>. Pages published or
                 deleted while you walk the list are never repeated or skipped. <Code>offset</Code> still works.
               </p>

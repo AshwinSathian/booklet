@@ -2,12 +2,10 @@ import { assertVerified } from "@/server/verification";
 import type { PublishedDoc } from "@/lib/blocks";
 import { DEFAULT_SETTINGS } from "@/lib/blocks";
 import { BLOCKS } from "@/lib/constants";
-import { updatePageRecord, deletePageRecord, deletePageAssociatedRecords } from "@/lib/db";
+import { updatePageRecord, deletePageRecord, deletePageAssociatedRecords, setPageLinks } from "@/lib/db";
+import { assertVisibilityAllowed } from "@/server/access";
 import { deletePageVersions, snapshotPageVersion } from "@/lib/db/versions";
 import { recordPublishEvent } from "@/lib/db/publish-events";
-import { parseToBlocks } from "@/lib/parse";
-import { stripWikilinksFromBlocks } from "@/lib/wikilinks/strip";
-import { validateBlocks } from "@/lib/block-schema";
 import { collectRichBlockKinds } from "@/lib/block-usage";
 import { getDoc, putDoc, deleteDoc } from "@/lib/storage";
 import { ROUTES } from "@/lib/constants";
@@ -16,9 +14,10 @@ import {
   getOwnedPage,
   getOwnedPageByIdOrSlug,
   assertNotTakenDown,
-  assertRawWithinLimit,
   assertSlugAvailable,
-  assertStoredWithinLimit,
+  buildDocument,
+  relinkPage,
+  spaceSlugs,
   assertIfMatch,
   ifNoneMatchHits,
   pageEtag,
@@ -40,7 +39,7 @@ type ContentPayload = {
 
 type MetadataPayload = {
   slug?: string | null;
-  visibility?: "public" | "unlisted";
+  visibility?: "public" | "unlisted" | "team";
 };
 
 type PatchPayload = ContentPayload & MetadataPayload;
@@ -80,6 +79,8 @@ export const GET = v1("page_get", 120, "pages:read", async (req: Request, userId
     title: record.title ?? null,
     slug: record.slug ?? null,
     visibility: record.visibility,
+    doc_type: record.doc_type ?? null,
+    space: (record.collection_id && (await spaceSlugs([record])).get(record.collection_id)) || null,
     view_count: record.view_count,
     url,
     created_at: record.created_at,
@@ -128,33 +129,21 @@ export const PATCH = v1("patch", 60, "pages:write", async (req: Request, userId:
       metaPatch.slug = slug;
     }
     if ("visibility" in payload) {
-      if (payload.visibility !== "public" && payload.visibility !== "unlisted") {
-        return problem(422, "visibility must be 'public' or 'unlisted'");
+      if (payload.visibility !== "public" && payload.visibility !== "unlisted" && payload.visibility !== "team") {
+        return problem(422, "visibility must be 'public', 'unlisted' or 'team'");
       }
+      await assertVisibilityAllowed(payload.visibility, record.collection_id, userId);
       metaPatch.visibility = payload.visibility;
     }
   }
 
   if (hasContent && payload?.raw) {
-    assertRawWithinLimit(payload.raw);
-
-    // `blocks` is always derived server-side from `raw` — see
-    // src/lib/block-schema.ts's header for why a client-supplied block tree
-    // is no longer accepted.
-    // See src/lib/blocks.ts's `Inline` doc comment: wikilinks are private
-    // and drafting-time-only, stripped to plain text before storage.
-    const blocks = stripWikilinksFromBlocks(parseToBlocks(payload.raw));
-    if (!blocks.length) {
-      return problem(400, "Nothing to publish — the document is empty.");
-    }
-
-    const blocksError = validateBlocks(blocks);
-    if (blocksError) {
-      logError("v1/pages", "Parser produced an invalid block shape", new Error(blocksError));
-      return problem(500, "Failed to parse document. Please report this.");
-    }
-
-    assertStoredWithinLimit(blocks, payload.raw);
+    const built = await buildDocument(
+      payload.raw,
+      { id, userId, collectionId: record.collection_id, visibility: metaPatch.visibility ?? record.visibility },
+      getSiteOrigin(req),
+    );
+    const { blocks } = built;
 
     const doc: PublishedDoc = {
       v: BLOCKS.version,
@@ -166,6 +155,7 @@ export const PATCH = v1("patch", 60, "pages:write", async (req: Request, userId:
 
     try {
       await putDoc(id, doc);
+      void setPageLinks(id, built.linkTargetIds).catch((err) => logError("v1/pages", "Link write failed", err));
       void snapshotPageVersion(id, doc).catch((err) => {
         logError("v1/pages", "Version snapshot failed", err);
       });
@@ -186,14 +176,25 @@ export const PATCH = v1("patch", 60, "pages:write", async (req: Request, userId:
       source: resolveApiClientSource(req),
     }).catch((err) => logError("v1/pages", "Event record failed", err));
 
-    metaPatch.updated_at = new Date().toISOString();
+    // The title, type and frontmatter fields follow the document.
+    Object.assign(metaPatch, built.record, { updated_at: new Date().toISOString() });
+  } else if (metaPatch.visibility && metaPatch.visibility !== record.visibility) {
+    // Before the record changes, so the page is never public while it
+    // still carries links only a less visible page may have.
+    await relinkPage(record, metaPatch.visibility, getSiteOrigin(req));
   }
 
   if (Object.keys(metaPatch).length > 0) {
     try {
       await updatePageRecord(id, metaPatch);
     } catch (dbErr) {
+      // Not swallowed: a caller told "200" after asking for `team` or
+      // `unlisted` would believe a page is restricted when it is not.
+      if (typeof dbErr === "object" && dbErr !== null && "code" in dbErr && dbErr.code === 11000) {
+        return problem(409, "Slug is already taken.");
+      }
       logError("v1/pages", "DB patch write failed", dbErr);
+      return problem(500, "Update failed");
     }
   }
 

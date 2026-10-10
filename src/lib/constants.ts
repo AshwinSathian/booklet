@@ -13,6 +13,8 @@ export const ROUTES = {
   resetPassword: "/reset-password",
   myPages: "/my-pages",
   account: "/settings/account",
+  spaces: "/t",
+  space: (slug: string) => `/t/${slug}`,
   mcpSetup: "/mcp-setup",
   integrations: "/integrations",
 } as const;

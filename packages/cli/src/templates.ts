@@ -1,16 +1,19 @@
 // Starting points for `booklet new <template>`. Plain Markdown, meant to be
 // edited: every placeholder is a line to replace.
 
+import { frontmatterBlock, type DocumentFields } from "booklet-api-client";
+
 const today = () => new Date().toISOString().slice(0, 10);
+
+// The frontmatter is what Booklet shows in the page's header strip and what
+// a team space groups by. `owners` starts empty for the author to fill in.
+const doc = (fields: DocumentFields) => frontmatterBlock({ date: today(), owners: [], ...fields });
 
 export const TEMPLATES: Record<string, { description: string; body: () => string }> = {
   incident: {
     description: "Incident report: impact, timeline, root cause, follow-ups",
-    body: () => `# Incident: <short title>
+    body: () => `${doc({ type: "incident", status: "Resolved", severity: "P2" })}# Incident: <short title>
 
-**Date:** ${today()}
-**Severity:** P2
-**Status:** Resolved
 
 ## Summary
 
@@ -42,10 +45,8 @@ What failed and why.
   },
   adr: {
     description: "Architecture decision record: context, decision, consequences",
-    body: () => `# ADR-000: <decision title>
+    body: () => `${doc({ type: "adr", status: "Proposed" })}# ADR-000: <decision title>
 
-**Status:** Proposed
-**Date:** ${today()}
 
 ## Context
 
@@ -66,11 +67,9 @@ What becomes easier, what becomes harder, and what we accept.
   },
   rfc: {
     description: "Request for comments: problem, proposal, open questions",
-    body: () => `# RFC: <title>
+    body: () => `${doc({ type: "rfc", status: "Draft" })}# RFC: <title>
 
 **Author:** <name>
-**Status:** Draft
-**Date:** ${today()}
 
 ## Problem
 
@@ -95,7 +94,7 @@ How this ships, and how it is rolled back.
   },
   runbook: {
     description: "Runbook: when to use it, steps, verification, rollback",
-    body: () => `# Runbook: <task>
+    body: () => `${doc({ type: "runbook", status: "Current" })}# Runbook: <task>
 
 **Owner:** <team>
 **Last reviewed:** ${today()}
@@ -130,7 +129,7 @@ How to undo it.
   },
   "release-notes": {
     description: "Release notes: added, changed, fixed, upgrade notes",
-    body: () => `# <Product> <version>
+    body: () => `${doc({ type: "release-notes", status: "Released" })}# <Product> <version>
 
 Released ${today()}.
 

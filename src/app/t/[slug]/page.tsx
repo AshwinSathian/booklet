@@ -1,7 +1,10 @@
 import { AppLogo } from "@/components/ui/AppLogo";
+import { StatusChip, formatDocDate } from "@/components/share/DocHeaderStrip";
 import { ROUTES } from "@/lib/constants";
-import { getCollectionBySlug, getCollectionMembers, getCollectionMemberships, getPagesByCollection } from "@/lib/db";
+import { getCollectionBySlug, getCollectionMembers, getSpacePages } from "@/lib/db";
 import { getSession } from "@/lib/auth/session";
+import { groupSpacePages } from "@/lib/space-groups";
+import { spaceRole } from "@/server/access";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -17,16 +20,12 @@ export async function generateMetadata({
   const { slug } = await params;
   const team = await getCollectionBySlug(slug);
   if (!team) return { title: "Team not found" };
-  return { title: `${team.name} — Booklet` };
-}
-
-function timeAgo(iso: string): string {
-  const diff = (Date.now() - new Date(iso).getTime()) / 1000;
-  if (diff < 60) return "just now";
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  if (diff < 86400 * 30) return `${Math.floor(diff / 86400)}d ago`;
-  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  // The feed link is only advertised when there is a feed (see feed.xml/route.ts).
+  const hasFeed = (await getSpacePages(team.id, true)).length > 0;
+  return {
+    title: `${team.name} — Booklet`,
+    ...(hasFeed ? { alternates: { types: { "application/atom+xml": `/t/${slug}/feed.xml` } } } : {}),
+  };
 }
 
 export default async function TeamPage({
@@ -40,22 +39,18 @@ export default async function TeamPage({
   if (!team) notFound();
 
   const userId = (await getSession())?.userId ?? null;
-  const isMember = userId
-    ? (await getCollectionMemberships(userId)).some((m) => m.collection_id === team.id)
-    : false;
-  const isOwner = team.user_id === userId;
-
-  const [pages, members] = await Promise.all([
-    getPagesByCollection(team.id),
-    getCollectionMembers(team.id),
-  ]);
+  // Members see every page in the space. Everyone else sees its public
+  // pages: an unlisted or team-only page is never named to them.
+  const role = await spaceRole(team, userId);
+  const [pages, members] = await Promise.all([getSpacePages(team.id, role === null), getCollectionMembers(team.id)]);
+  const groups = groupSpacePages(pages);
 
   return (
     <div className="min-h-screen bg-bg text-text-primary">
       <header className="border-b border-border-subtle bg-bg/85 backdrop-blur-xl sticky top-0 z-20">
         <div className="mx-auto w-full max-w-3xl px-4 h-12 flex items-center justify-between gap-4">
           <AppLogo onlyIcon={false} />
-          {(isOwner || isMember) && (
+          {role && (
             <Link
               href={`/t/${slug}/admin`}
               className="text-xs text-text-muted hover:text-text-primary transition"
@@ -75,44 +70,58 @@ export default async function TeamPage({
           </p>
         </div>
 
-        {pages.length === 0 ? (
+        {groups.length === 0 ? (
           <div className="py-20 text-center">
-            <p className="text-text-muted text-sm">No public pages in this team yet.</p>
-            {(isOwner || isMember) && (
+            <p className="text-text-muted text-sm">
+              {role ? "No pages in this space yet." : "No public pages in this space yet."}
+            </p>
+            {role && role !== "viewer" && (
               <div className="mt-4">
                 <Link
                   href={ROUTES.app}
                   className="inline-flex items-center gap-1.5 rounded-pill bg-accent px-4 py-2 text-sm font-semibold text-accent-contrast transition hover:bg-accent-hover"
                 >
-                  Create a page →
+                  Write a page →
                 </Link>
+                <p className="mt-3 text-xs text-text-muted">
+                  In the editor, choose &ldquo;Team only ({team.name})&rdquo; next to Publish.
+                </p>
               </div>
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {pages.map((page) => (
-              <Link
-                key={page.id}
-                href={`/p/${page.slug ?? page.id}`}
-                className="group flex flex-col justify-between rounded-xl border border-border-subtle p-4 hover:border-accent-soft/40 hover:bg-fill-1 transition"
-              >
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-text-primary group-hover:text-accent transition truncate">
-                    {page.title ?? "Untitled"}
-                  </p>
-                </div>
-                <div className="mt-3 flex items-center justify-between">
-                  <span className="text-2xs text-text-muted">{timeAgo(page.created_at)}</span>
-                  <div className="flex items-center gap-1 text-2xs text-text-muted">
-                    <svg width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden>
-                      <path d="M1 8C2.5 4.5 5 3 8 3s5.5 1.5 7 5c-1.5 3.5-4 5-7 5S2.5 11.5 1 8z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                      <circle cx="8" cy="8" r="2" stroke="currentColor" strokeWidth="1.5" />
-                    </svg>
-                    {page.view_count.toLocaleString()}
-                  </div>
-                </div>
-              </Link>
+          <div className="space-y-10">
+            {groups.map((group) => (
+              <section key={group.key} aria-labelledby={`group-${group.key}`} data-group={group.key}>
+                <h2 id={`group-${group.key}`} className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+                  {group.heading} <span className="font-normal tabular-nums">({group.pages.length})</span>
+                </h2>
+                <ul className="mt-3 divide-y divide-border-subtle border-y border-border-subtle">
+                  {group.pages.map((page) => {
+                    const status = page.frontmatter_meta?.status;
+                    const date = page.frontmatter_meta?.date;
+                    return (
+                      <li key={page.id}>
+                        <Link
+                          href={ROUTES.publish(page.slug ?? page.id)}
+                          className="group flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-3 transition hover:bg-fill-1"
+                        >
+                          <span className="min-w-0 truncate text-sm font-medium text-text-primary group-hover:text-accent transition">
+                            {page.title ?? "Untitled"}
+                          </span>
+                          <span className="flex shrink-0 items-center gap-2 text-2xs text-text-muted">
+                            {typeof status === "string" && status ? <StatusChip status={status} /> : null}
+                            {page.visibility !== "public" ? (
+                              <span>{page.visibility === "team" ? "Team only" : "Unlisted"}</span>
+                            ) : null}
+                            <time>{formatDocDate(typeof date === "string" && date ? date : page.created_at)}</time>
+                          </span>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
             ))}
           </div>
         )}

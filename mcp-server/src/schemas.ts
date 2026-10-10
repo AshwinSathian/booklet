@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { MAX_RAW_CHARS, VisibilitySchema } from "booklet-api-client";
+import { DocTypeSchema, MAX_RAW_CHARS, VisibilitySchema } from "booklet-api-client";
 
 // Mirrors src/lib/slug.ts's canonical rule in the main app (3-60 chars,
 // no leading/trailing/consecutive hyphens) — this package is a standalone
@@ -39,9 +39,42 @@ export const PublishPageInputSchema = z.object({
     .describe(`Markdown content to publish (GFM + Mermaid diagrams). Max ${MAX_RAW_LABEL} characters.`),
   title: z.string().optional().describe("Overrides the page title. Defaults to the first H1 in `raw`."),
   slug: slugSchema.optional(),
+  visibility: z
+    .enum(["public", "unlisted"])
+    .optional()
+    .describe(
+      '"unlisted" (default: reachable by URL, hidden from listings and search engines) or "public" (listed on Explore and indexable).',
+    ),
+});
+
+const spaceSchema = z.string().min(1).max(60).describe("Slug of a team space you belong to, as in /t/<slug>.");
+
+export const CreateDocumentInputSchema = z.object({
+  type: DocTypeSchema.describe("Document type. Sets the page's header strip and its group in a team space."),
+  title: z.string().min(1).max(200).describe('Page title, e.g. "ADR-012 Queue retries". Other pages link to it as [[title]].'),
+  body: z
+    .string()
+    .min(1, "`body` must be a non-empty string")
+    .max(MAX_RAW_CHARS - 2_000, "`body` is too long")
+    .describe("Markdown body, without frontmatter and without the title heading. [[Title]] links to a page of that title in the same space."),
+  status: z.string().max(40).optional().describe('e.g. "Proposed", "Accepted", "Resolved".'),
+  severity: z.string().max(20).optional().describe('e.g. "P1". For incidents and postmortems.'),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "`date` must be YYYY-MM-DD").optional().describe("YYYY-MM-DD. Defaults to today."),
+  owners: z.array(z.string().max(60)).max(20).optional().describe("People or teams responsible."),
+  supersedes: z.string().max(200).optional().describe("Title of the document this one replaces."),
+  space: spaceSchema.optional(),
   visibility: VisibilitySchema.optional().describe(
-    '"unlisted" (default: reachable by URL, hidden from listings and search engines) or "public" (listed on Explore and indexable).',
+    '"unlisted" (default), "public", or "team" (only members of `space` can open it; needs `space`).',
   ),
+});
+
+export const SearchPagesInputSchema = z.object({
+  query: z.string().optional().describe("Text the title must contain (case-insensitive)."),
+  type: DocTypeSchema.optional().describe("Only this document type."),
+  space: spaceSchema
+    .optional()
+    .describe("Search this team space (every member's pages) instead of your own pages. Slug as in /t/<slug>."),
+  limit: z.number().int().positive().max(100).optional().describe("Max results. Default 20, max 100."),
 });
 
 export const UpdatePageInputSchema = z
@@ -57,7 +90,9 @@ export const UpdatePageInputSchema = z
       .nullable()
       .optional()
       .describe("New custom slug, or null to remove it and revert to the page ID."),
-    visibility: VisibilitySchema.optional().describe('Change visibility to "public" or "unlisted".'),
+    visibility: VisibilitySchema.optional().describe(
+      'Change visibility to "public", "unlisted" or "team" (team space members only; the page must be in a team space).',
+    ),
   })
   .refine(
     (v) => v.raw !== undefined || v.slug !== undefined || v.visibility !== undefined,
@@ -113,6 +148,26 @@ export const GetPageOutputSchema = z.object({
   updated_at: z.string(),
   content_omitted: z.boolean(),
   content_length: z.number().optional(),
+});
+
+export const CreateDocumentOutputSchema = z.object({
+  id: z.string(),
+  url: z.string(),
+  type: DocTypeSchema,
+});
+
+export const SearchPagesOutputSchema = z.object({
+  pages: z.array(
+    z.object({
+      id: z.string(),
+      title: z.string().nullable(),
+      url: z.string(),
+      type: DocTypeSchema.nullable(),
+      visibility: VisibilitySchema,
+      space: z.string().nullable(),
+    }),
+  ),
+  total: z.number(),
 });
 
 export const DeletePageOutputSchema = z.object({

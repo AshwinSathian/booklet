@@ -80,6 +80,15 @@ export const INDEX_SPECS = [
   },
   // Team-space page listing (getPagesByCollection)
   { collection: "pages", spec: { collection_id: 1, visibility: 1, created_at: -1 } },
+  // `?type=` on the page list, for one account and for one team space.
+  { collection: "pages", spec: { user_id: 1, doc_type: 1, created_at: -1 } },
+  { collection: "pages", spec: { collection_id: 1, doc_type: 1, created_at: -1 } },
+
+  // --- page_links ---
+  // `[[Title]]` links resolved at publish. One row per (source, target);
+  // target_id backs the "Referenced by" list on a share page.
+  { collection: "page_links", spec: { source_id: 1, target_id: 1 }, options: { unique: true } },
+  { collection: "page_links", spec: { target_id: 1 } },
 
   // --- api_keys ---
   { collection: "api_keys", spec: { user_id: 1, created_at: -1 } },

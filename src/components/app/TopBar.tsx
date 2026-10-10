@@ -3,7 +3,7 @@
 import { DocSettings } from "@/lib/blocks";
 import { ROUTES, UI } from "@/lib/constants";
 import { copyTextToClipboard, markdownToHtml } from "@/lib/export";
-import { TEMPLATES, type Template } from "@/lib/templates";
+import { TEMPLATES, templateMarkdown, type Template } from "@/lib/templates";
 import { DEFAULT_THEME_ID, THEMES } from "@/lib/themes";
 import { prefersReducedMotion } from "@/lib/ui/motion";
 import { useSession } from "@/components/auth/SessionProvider";
@@ -584,7 +584,29 @@ function PublishReveal({ onDone }: { onDone: () => void }) {
 // Publish / post-publish button group
 // ---------------------------------------------------------------------------
 
-export type PublishVisibility = "unlisted" | "public";
+/** `team:<space id>` publishes into that team space, readable by its members only. */
+export type PublishVisibility = "unlisted" | "public" | `team:${string}`;
+
+type Space = { id: string; name: string; slug: string | null; role: "owner" | "editor" | "viewer" };
+
+/** The signed-in user's team spaces, or null until the one request for them returns. */
+function useSpaces(enabled: boolean): Space[] | null {
+  const [spaces, setSpaces] = useState<Space[] | null>(null);
+  useEffect(() => {
+    if (!enabled) return;
+    let cancelled = false;
+    fetch("/api/teams")
+      .then((res) => (res.ok ? res.json() : { teams: [] }))
+      .then((data: { teams?: Space[] }) => {
+        if (!cancelled) setSpaces(data.teams ?? []);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [enabled]);
+  return spaces;
+}
 
 function PublishArea({
   status,
@@ -613,6 +635,7 @@ function PublishArea({
   onOpenPublished: () => void;
 }) {
   const isPublishing = status === "publishing";
+  const spaces = useSpaces(publishVisibility !== undefined);
   const [showPublishOptions, setShowPublishOptions] = useState(false);
   const [showReveal, setShowReveal] = useState(false);
   const prevStatusRef = useRef<EditorStatus>(status);
@@ -667,6 +690,12 @@ function PublishArea({
           >
             <Icon name="list" size={12} />
             <span className="hidden sm:inline">My pages</span>
+          </a>
+        )}
+        {/* The step after a first publish: somewhere for the team's pages to live. */}
+        {publishedOwned && spaces?.length === 0 && (
+          <a href={ROUTES.spaces} className="hidden sm:inline text-xs text-text-muted hover:text-accent transition ml-1.5">
+            Create a space
           </a>
         )}
       </div>
@@ -735,12 +764,19 @@ function PublishArea({
           aria-label="Who can find this page"
           title="Who can find this page"
           value={publishVisibility}
-          onChange={(e) => onPublishVisibilityChange(e.target.value === "public" ? "public" : "unlisted")}
+          onChange={(e) => onPublishVisibilityChange(e.target.value as PublishVisibility)}
           disabled={isPublishing}
           className="h-8 max-w-[7.5rem] sm:max-w-[13rem] rounded-pill border border-border-default bg-bg px-3 text-xs text-text-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft"
         >
           <option value="unlisted">Unlisted (anyone with the link)</option>
           <option value="public">Public (listed on Explore)</option>
+          {(spaces ?? [])
+            .filter((space) => space.role !== "viewer")
+            .map((space) => (
+              <option key={space.id} value={`team:${space.id}`}>
+                Team only ({space.name})
+              </option>
+            ))}
         </select>
       ) : null}
       <Button variant="primary" size="md" onClick={onPublish} disabled={!canPublish || isPublishing}>
@@ -1226,7 +1262,7 @@ export function TopBar({
         onCreateDraft={onCreateDraft}
         onOpenDraft={onSwitchDraft}
         onRequestImportMarkdown={openImportPicker}
-        onSelectTemplate={(template) => onInsertTemplate?.(template.name, template.content)}
+        onSelectTemplate={(template) => onInsertTemplate?.(template.name, templateMarkdown(template))}
         onClose={() => setVisibleMoreActions(false)}
       />
 

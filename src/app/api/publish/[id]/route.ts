@@ -1,17 +1,13 @@
 import { unverifiedResponse } from "@/server/verification";
 import type { PublishedDoc } from "@/lib/blocks";
 import { DEFAULT_SETTINGS } from "@/lib/blocks";
-import { BLOCKS, STORAGE } from "@/lib/constants";
-import { updatePageRecord } from "@/lib/db";
+import { BLOCKS } from "@/lib/constants";
+import { setPageLinks, updatePageRecord } from "@/lib/db";
 import { snapshotPageVersion } from "@/lib/db/versions";
-import { parseToBlocks } from "@/lib/parse";
-import { stripWikilinksFromBlocks } from "@/lib/wikilinks/strip";
-import { stripFrontmatter } from "@/lib/frontmatter";
-import { validateBlocks } from "@/lib/block-schema";
 import { putDoc } from "@/lib/storage";
 import { logError } from "@/lib/logger";
 import { getSession } from "@/lib/auth/session";
-import { assertNotTakenDown, assertRawWithinLimit, getOwnedPage } from "@/server/pages";
+import { assertNotTakenDown, buildDocument, getOwnedPage, type BuiltDocument } from "@/server/pages";
 import { toErrorResponse } from "@/server/errors";
 import { getSiteOrigin } from "@/lib/site-url";
 import { NextResponse } from "next/server";
@@ -60,44 +56,18 @@ export async function PATCH(
       return NextResponse.json({ error: "Nothing to publish — provide `raw` markdown." }, { status: 400 });
     }
 
+    // Same pipeline as a first publish: see buildDocument.
+    let built: BuiltDocument;
     try {
-      assertRawWithinLimit(payload.raw);
+      built = await buildDocument(
+        payload.raw,
+        { id, userId, collectionId: record.collection_id, visibility: record.visibility },
+        getSiteOrigin(req),
+      );
     } catch (e) {
       return toErrorResponse(e);
     }
-
-    // `blocks` is always derived server-side from `raw` — see
-    // src/lib/block-schema.ts's header for why a client-supplied block tree
-    // is no longer accepted anywhere. This route previously accepted
-    // `blocks` directly with no shape validation at all (unlike the other
-    // three publish/patch routes, which at least ran validateBlocks against
-    // a client-supplied tree) — deriving from `raw` here closes that gap
-    // the same way as the others, rather than adding a third, different
-    // partial fix.
-    // See src/lib/blocks.ts's `Inline` doc comment: wikilinks are private
-    // and drafting-time-only, stripped to plain text before storage.
-    const blocks = stripWikilinksFromBlocks(parseToBlocks(stripFrontmatter(payload.raw)));
-    if (!blocks.length) {
-      return NextResponse.json({ error: "Nothing to publish" }, { status: 400 });
-    }
-
-    const blocksError = validateBlocks(blocks);
-    if (blocksError) {
-      logError("patch-publish", "Parser produced an invalid block shape", new Error(blocksError));
-      return NextResponse.json({ error: "Failed to parse document. Please report this." }, { status: 500 });
-    }
-
-    try {
-      const bytes = new TextEncoder().encode(JSON.stringify({ blocks, raw: payload.raw }));
-      if (bytes.byteLength > STORAGE.maxDocBytes) {
-        return NextResponse.json(
-          { error: "Document is too large." },
-          { status: 413 },
-        );
-      }
-    } catch {
-      return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
-    }
+    const { blocks } = built;
 
     const doc: PublishedDoc = {
       v: BLOCKS.version,
@@ -109,6 +79,7 @@ export async function PATCH(
 
     try {
       await putDoc(id, doc);
+      void setPageLinks(id, built.linkTargetIds).catch((err) => logError("patch-publish", "Link write failed", err));
       void snapshotPageVersion(id, doc).catch((err) => {
         logError("patch-publish", "Version snapshot failed", err);
       });
@@ -119,9 +90,10 @@ export async function PATCH(
 
     const updatedAt = new Date().toISOString();
     try {
-      await updatePageRecord(id, { updated_at: updatedAt });
+      // The title, type and frontmatter fields follow the document.
+      await updatePageRecord(id, { ...built.record, updated_at: updatedAt });
     } catch (dbErr) {
-      logError("patch-publish", "DB updated_at write failed", dbErr);
+      logError("patch-publish", "DB record write failed", dbErr);
     }
 
     const publishedUrl = `${getSiteOrigin(req)}/p/${record.slug ?? id}`;

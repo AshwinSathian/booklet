@@ -15,8 +15,17 @@
  */
 
 import { createHash } from "node:crypto";
-import { getPageBySlug, getPageRecord } from "@/lib/db";
+import type { Block } from "@/lib/blocks";
+import { validateBlocks } from "@/lib/block-schema";
+import { getCollectionRecord, getPageBySlug, getPageRecord, setPageLinks } from "@/lib/db";
+import { getDoc, putDoc } from "@/lib/storage";
 import type { DbPage } from "@/lib/db/types";
+import { docTypeOf } from "@/lib/doc-types";
+import { extractDocTitle } from "@/lib/doc-title";
+import { parseFrontmatter, type FrontmatterMeta } from "@/lib/frontmatter";
+import { logError } from "@/lib/logger";
+import { parseToBlocks } from "@/lib/parse";
+import { resolveWikilinks, type LinkSource } from "./links";
 import { isValidSlug, SLUG_RULES_MESSAGE } from "@/lib/slug";
 import { STORAGE } from "@/lib/constants";
 import { GONE_MESSAGES } from "@/lib/gone-notice";
@@ -81,6 +90,80 @@ export function assertStoredWithinLimit(blocks: unknown, raw: string): void {
       { limit: "stored_bytes", max: STORAGE.maxDocBytes, actual },
     );
   }
+}
+
+/** Collection id → team space slug, for the pages that are in a team space. */
+export async function spaceSlugs(pages: Array<Pick<DbPage, "collection_id">>): Promise<Map<string, string>> {
+  const slugs = new Map<string, string>();
+  for (const id of new Set(pages.map((p) => p.collection_id))) {
+    const slug = id ? (await getCollectionRecord(id))?.slug : null;
+    if (id && slug) slugs.set(id, slug);
+  }
+  return slugs;
+}
+
+export type BuiltDocument = {
+  fm: FrontmatterMeta;
+  blocks: Block[];
+  /** Pages this one links to through `[[Title]]`; store with setPageLinks after the document. */
+  linkTargetIds: string[];
+  /** What the `pages` record takes from the document. */
+  record: Pick<DbPage, "title" | "doc_type" | "frontmatter_meta">;
+};
+
+/**
+ * Turns submitted Markdown into what gets stored, for all four publish and
+ * update routes: both size limits, frontmatter, blocks derived on the
+ * server (never accepted from a client, see src/lib/block-schema.ts), and
+ * wikilinks resolved or turned to text. Throws a ServiceError the route
+ * hands to toErrorResponse.
+ *
+ * `raw` is stored whole, frontmatter included, so the editor, the API and
+ * the Markdown export all give back what was published.
+ */
+export async function buildDocument(raw: string, source: LinkSource, origin: string): Promise<BuiltDocument> {
+  assertRawWithinLimit(raw);
+  const { meta: fm, body } = parseFrontmatter(raw);
+  const { blocks, targetIds } = await resolveWikilinks(parseToBlocks(body), source, origin);
+  if (!blocks.length) {
+    throw new ServiceError("EMPTY_DOCUMENT", "Nothing to publish — the document is empty.", 400);
+  }
+  // A check on the parser's own output, not a client trust boundary.
+  const blocksError = validateBlocks(blocks);
+  if (blocksError) {
+    logError("buildDocument", "Parser produced an invalid block shape", new Error(blocksError));
+    throw new ServiceError("PARSE_FAILED", "Failed to parse document. Please report this.", 500);
+  }
+  assertStoredWithinLimit(blocks, raw);
+  return { fm, blocks, linkTargetIds: targetIds, record: recordFields(fm, blocks) };
+}
+
+/** What a `pages` record takes from a document's frontmatter and blocks. */
+export function recordFields(fm: FrontmatterMeta, blocks: Block[]): BuiltDocument["record"] {
+  return {
+    title: fm.title ?? extractDocTitle(blocks),
+    doc_type: docTypeOf(fm),
+    frontmatter_meta: Object.keys(fm).length > 0 ? (fm as Record<string, unknown>) : null,
+  };
+}
+
+/**
+ * Resolves a page's `[[Title]]` links again from its stored Markdown, as if
+ * it were being published with `visibility`. Which links a page may carry
+ * depends on its visibility (see mayLink in ./links.ts), so a page that
+ * becomes public must lose its links to pages that are not. Does nothing
+ * for a page stored without its Markdown.
+ */
+export async function relinkPage(page: DbPage, visibility: DbPage["visibility"], origin: string): Promise<void> {
+  const doc = await getDoc(page.id);
+  if (!doc?.raw) return;
+  const built = await buildDocument(
+    doc.raw,
+    { id: page.id, userId: page.user_id, collectionId: page.collection_id, visibility },
+    origin,
+  );
+  await putDoc(page.id, { ...doc, blocks: built.blocks });
+  await setPageLinks(page.id, built.linkTargetIds);
 }
 
 /**

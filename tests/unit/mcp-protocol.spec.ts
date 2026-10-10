@@ -66,13 +66,13 @@ for (const [era, options] of [
   ["2026-07-28", { versionNegotiation: { mode: { pin: "2026-07-28" } } }],
   ["2025-11-25", undefined],
 ] as const) {
-  test(`a ${era} client lists 5 tools, 5 prompts and the resource template`, async () => {
+  test(`a ${era} client lists 7 tools, 5 prompts and the resource template`, async () => {
     const client = await connect(API_KEY, options as never);
     expect(client.getNegotiatedProtocolVersion()).toBe(era);
 
     const { tools } = await client.listTools();
     expect(tools.map((t) => t.name)).toEqual([...TOOL_NAMES]); // fixed order
-    expect(tools).toHaveLength(5);
+    expect(tools).toHaveLength(7);
 
     const { prompts } = await client.listPrompts();
     expect(prompts.map((p) => p.name).sort()).toEqual([...PROMPT_NAMES].sort());

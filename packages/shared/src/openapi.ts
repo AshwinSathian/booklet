@@ -9,6 +9,7 @@ import { z } from "zod";
 import {
   ApiErrorSchema,
   DeletePageResponseSchema,
+  DOC_TYPES,
   ListPagesResponseSchema,
   PageDetailResponseSchema,
   PatchPageRequestSchema,
@@ -97,7 +98,7 @@ const ERROR_TEXT: Record<number, string> = {
   410: "The page was taken down",
   412: "If-Match did not match the page's current ETag",
   413: "Document too large; `limit` says whether characters or stored bytes",
-  422: "Invalid slug or visibility, or the Idempotency-Key was reused with a different body",
+  422: "Invalid slug, visibility or document type, `team` visibility on a page outside a team space, or the Idempotency-Key was reused with a different body",
   429: "Rate limit exceeded; wait for Retry-After seconds",
 };
 
@@ -138,7 +139,7 @@ export function buildOpenApi(version: string) {
           operationId: "publishPage",
           tags: ["Pages"],
           summary: "Publish a page",
-          description: "Creates a page from Markdown and returns its URL. The page is unlisted unless `visibility` or frontmatter says public.",
+          description: "Creates a page from Markdown and returns its URL. The page is unlisted unless `visibility` or frontmatter says otherwise. `space` creates it in a team space; `visibility: team` needs one.",
           parameters: [
             {
               name: "Idempotency-Key",
@@ -150,7 +151,7 @@ export function buildOpenApi(version: string) {
             },
           ],
           requestBody: { required: true, ...json("PublishRequest") },
-          responses: { "201": ok("The page was published", "PublishResponse"), ...errors(400, 401, 409, 413, 422, 429) },
+          responses: { "201": ok("The page was published", "PublishResponse"), ...errors(400, 401, 403, 404, 409, 413, 422, 429) },
         },
       },
       "/api/v1/pages": {
@@ -171,6 +172,8 @@ export function buildOpenApi(version: string) {
             { name: "offset", in: "query", required: false, description: "Number of pages to skip. Prefer `cursor`.", schema: { type: "integer", minimum: 0, default: 0 } },
             { name: "q", in: "query", required: false, description: "Case-insensitive match on the title.", schema: { type: "string" } },
             { name: "tag", in: "query", required: false, description: "Exact match on a frontmatter tag.", schema: { type: "string" } },
+            { name: "type", in: "query", required: false, description: "Only pages of this document type (frontmatter `type`).", schema: { type: "string", enum: [...DOC_TYPES] } },
+            { name: "space", in: "query", required: false, description: "Slug of a team space you belong to. Lists every page in the space, not only yours.", schema: { type: "string" } },
           ],
           responses: { "200": ok("One page of results", "ListPagesResponse"), ...errors(400, 401, 429) },
         },

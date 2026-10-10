@@ -26,6 +26,8 @@ import {
   type PublishResponse,
   type DeletePageResponse,
   type ApiError,
+  type DocType,
+  type Visibility,
 } from "./schemas.js";
 
 export type ClientOptions = {
@@ -111,6 +113,10 @@ export function createClient(options: ClientOptions) {
       query?: string;
       /** Exact match against a page's frontmatter tags. */
       tag?: string;
+      /** Only pages of this document type. */
+      type?: DocType;
+      /** Slug of a team space you belong to: lists every page in it, not only yours. */
+      space?: string;
     }): Promise<ListPagesResponse> {
       const qp = new URLSearchParams();
       if (params?.limit) qp.set("limit", String(params.limit));
@@ -118,13 +124,15 @@ export function createClient(options: ClientOptions) {
       if (params?.cursor) qp.set("cursor", params.cursor);
       if (params?.query) qp.set("q", params.query);
       if (params?.tag) qp.set("tag", params.tag);
+      if (params?.type) qp.set("type", params.type);
+      if (params?.space) qp.set("space", params.space);
       const qs = qp.toString();
       const { body } = await request(`/api/v1/pages${qs ? `?${qs}` : ""}`);
       return ListPagesResponseSchema.parse(body);
     },
 
     /** Every page, walking `next_cursor` until the list ends. */
-    async listAllPages(params?: { query?: string; tag?: string }): Promise<ListPagesResponse["pages"]> {
+    async listAllPages(params?: { query?: string; tag?: string; type?: DocType; space?: string }): Promise<ListPagesResponse["pages"]> {
       const all: ListPagesResponse["pages"] = [];
       let cursor: string | undefined;
       do {
@@ -138,14 +146,20 @@ export function createClient(options: ClientOptions) {
     async publishPage(
       raw: string,
       opts?: {
-        visibility?: "public" | "unlisted";
+        visibility?: Visibility | undefined;
+        /** Slug of a team space to create the page in. */
+        space?: string | undefined;
         /** Makes a retry safe: a repeat with the same key and body returns the first response. */
         idempotencyKey?: string;
       },
     ): Promise<PublishResponse> {
       const { body } = await request("/api/v1/publish", {
         method: "POST",
-        body: JSON.stringify({ raw, ...(opts?.visibility ? { visibility: opts.visibility } : {}) }),
+        body: JSON.stringify({
+          raw,
+          ...(opts?.visibility ? { visibility: opts.visibility } : {}),
+          ...(opts?.space ? { space: opts.space } : {}),
+        }),
         ...(opts?.idempotencyKey ? { headers: { "Idempotency-Key": opts.idempotencyKey } } : {}),
       });
       return PublishResponseSchema.parse(body);

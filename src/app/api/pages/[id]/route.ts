@@ -5,8 +5,10 @@ import { deleteDoc, getDoc } from "@/lib/storage";
 import { hashPassword } from "@/lib/password";
 import { logError } from "@/lib/logger";
 import { getSession } from "@/lib/auth/session";
-import { getOwnedPage, assertNotTakenDown, assertSlugAvailable } from "@/server/pages";
+import { getOwnedPage, assertNotTakenDown, assertSlugAvailable, relinkPage } from "@/server/pages";
+import { getSiteOrigin } from "@/lib/site-url";
 import { toErrorResponse } from "@/server/errors";
+import { assertVisibilityAllowed } from "@/server/access";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -60,8 +62,10 @@ export async function PATCH(
     return NextResponse.json({ error: "Missing page id" }, { status: 400 });
   }
 
+  let record;
   try {
-    assertNotTakenDown(await getOwnedPage(id, userId));
+    record = await getOwnedPage(id, userId);
+    assertNotTakenDown(record);
   } catch (e) {
     return toErrorResponse(e);
   }
@@ -105,11 +109,16 @@ export async function PATCH(
   }
 
   if (body.visibility !== undefined) {
-    if (body.visibility !== "public" && body.visibility !== "unlisted") {
+    if (body.visibility !== "public" && body.visibility !== "unlisted" && body.visibility !== "team") {
       return NextResponse.json(
-        { error: "visibility must be 'public' or 'unlisted'" },
+        { error: "visibility must be 'public', 'unlisted' or 'team'" },
         { status: 422 },
       );
+    }
+    try {
+      await assertVisibilityAllowed(body.visibility, record.collection_id, userId);
+    } catch (e) {
+      return toErrorResponse(e);
     }
     patch.visibility = body.visibility;
   }
@@ -119,6 +128,11 @@ export async function PATCH(
   }
 
   try {
+    if (patch.visibility && patch.visibility !== record.visibility) {
+      // Before the record changes, so the page is never public while it
+      // still carries links only a less visible page may have.
+      await relinkPage(record, patch.visibility, getSiteOrigin(req));
+    }
     await updatePageRecord(id, patch);
   } catch (e: unknown) {
     // The slug availability check above isn't atomic with this write — a

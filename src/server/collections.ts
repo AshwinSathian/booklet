@@ -10,12 +10,26 @@
 
 import { getCollectionChildren, getCollectionRecord } from "@/lib/db";
 import type { DbCollection } from "@/lib/db/types";
+import { spaceRole } from "./access";
 import { ServiceError } from "./errors";
 
 export async function getOwnedCollection(id: string, userId: string): Promise<DbCollection> {
   const collection = await getCollectionRecord(id);
   if (!collection) throw new ServiceError("NOT_FOUND", "Not found", 404);
   if (collection.user_id !== userId) throw new ServiceError("FORBIDDEN", "Forbidden", 403);
+  return collection;
+}
+
+/**
+ * A collection the caller may put their own pages in or take them out of:
+ * one they own, or a team space they can write to.
+ */
+export async function getAssignableCollection(id: string, userId: string): Promise<DbCollection> {
+  const collection = await getCollectionRecord(id);
+  if (!collection) throw new ServiceError("NOT_FOUND", "Not found", 404);
+  if (collection.user_id === userId) return collection;
+  const role = await spaceRole(collection, userId);
+  if (role !== "editor") throw new ServiceError("FORBIDDEN", "Forbidden", 403);
   return collection;
 }
 

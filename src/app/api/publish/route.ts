@@ -2,17 +2,12 @@ import { TURNSTILE_FAILED, verifyTurnstile } from "@/lib/turnstile";
 import { unverifiedResponse } from "@/server/verification";
 import type { PublishedDoc } from "@/lib/blocks";
 import { DEFAULT_SETTINGS } from "@/lib/blocks";
-import { BLOCKS, ROUTES, STORAGE } from "@/lib/constants";
-import { createPageRecord } from "@/lib/db";
+import { BLOCKS, ROUTES } from "@/lib/constants";
+import { createPageRecord, setPageLinks } from "@/lib/db";
 import { createId } from "@/lib/id";
-import { extractDocTitle } from "@/lib/doc-title";
 import { snapshotPageVersion } from "@/lib/db/versions";
 import { recordPublishEvent } from "@/lib/db/publish-events";
-import { parseToBlocks } from "@/lib/parse";
-import { stripWikilinksFromBlocks } from "@/lib/wikilinks/strip";
-import { stripFrontmatter } from "@/lib/frontmatter";
-import { putDoc } from "@/lib/storage";
-import { validateBlocks } from "@/lib/block-schema";
+import { deleteDoc, putDoc } from "@/lib/storage";
 import { collectRichBlockKinds } from "@/lib/block-usage";
 import { checkRateLimit, checkMonthlyQuota } from "@/lib/rate-limit";
 import { ANONYMOUS_LIMITS } from "@/lib/quota";
@@ -28,7 +23,8 @@ import {
   generateClaimToken,
   hashClaimToken,
 } from "@/lib/anonymous-claim";
-import { assertRawWithinLimit } from "@/server/pages";
+import { assertVisibilityAllowed, getWritableSpace } from "@/server/access";
+import { buildDocument, type BuiltDocument } from "@/server/pages";
 import { toErrorResponse } from "@/server/errors";
 import { NextResponse } from "next/server";
 
@@ -37,8 +33,10 @@ export const runtime = "nodejs";
 type PublishPayload = {
   raw: string;
   settings?: PublishedDoc["settings"];
-  /** Signed-in publishes only. Anything other than "public" means unlisted. */
+  /** Signed-in publishes only. Anything other than "public" or "team" means unlisted. */
   visibility?: unknown;
+  /** Signed-in publishes only: id of a team space to create the page in. */
+  space_id?: unknown;
   /** Anonymous publishes only, and only where Turnstile is configured. */
   turnstile_token?: unknown;
 };
@@ -73,52 +71,27 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Nothing to publish — provide `raw` markdown." }, { status: 400 });
     }
 
+    const id = createId(10);
+    const origin = getSiteOrigin(req);
+    const visibility = payload.visibility === "public" || payload.visibility === "team" ? payload.visibility : "unlisted";
+
+    // The editor keeps any frontmatter block in `raw`; buildDocument reads
+    // it and leaves it out of the rendered blocks. A `[[Title]]` that
+    // matches one of the author's published pages becomes a link; every
+    // other wikilink, and all of them on an anonymous publish, is plain
+    // text (see src/server/links.ts).
+    let built: BuiltDocument;
+    let spaceId: string | null = null;
     try {
-      assertRawWithinLimit(payload.raw);
+      if (userId && payload.space_id !== undefined && payload.space_id !== null) {
+        spaceId = (await getWritableSpace({ id: payload.space_id }, userId)).id;
+      }
+      if (userId) await assertVisibilityAllowed(visibility, spaceId, userId);
+      built = await buildDocument(payload.raw, { id, userId, collectionId: spaceId, visibility }, origin);
     } catch (e) {
       return toErrorResponse(e);
     }
-
-    // `blocks` is always derived server-side from `raw` — a client can no
-    // longer submit a pre-built block tree directly (see block-schema.ts's
-    // header for why: an unvalidated client-supplied tree was a
-    // stack-overflow DoS vector, reachable here without even
-    // authentication). validateBlocks() below is a defensive invariant
-    // check on parseToBlocks' *own* output, not a client trust boundary.
-    //
-    // The editor's `raw` textarea deliberately keeps any frontmatter block
-    // visible for editing (see stripFrontmatter's own doc comment) — it's
-    // not part of the rendered document, so it's stripped here the same way
-    // the client used to strip it before computing `blocks` itself.
-    // Wikilinks (`[[...]]`) are a private, drafting-time-only concept (see
-    // src/lib/blocks.ts's `Inline` doc comment) — stripped to plain text
-    // before this ever reaches validateBlocks/storage, so a published page
-    // never carries the private-linking concept.
-    const blocks = stripWikilinksFromBlocks(parseToBlocks(stripFrontmatter(payload.raw)));
-    if (!blocks.length) {
-      return NextResponse.json({ error: "Nothing to publish" }, { status: 400 });
-    }
-
-    const blocksError = validateBlocks(blocks);
-    if (blocksError) {
-      logError("publish", "Parser produced an invalid block shape", new Error(blocksError));
-      return NextResponse.json({ error: "Failed to parse document. Please report this." }, { status: 500 });
-    }
-
-    // Measures the actual stored shape (parsed blocks + raw), not just the
-    // incoming payload — blocks are now always server-derived, and their
-    // JSON can be larger than the source markdown that produced them.
-    try {
-      const bytes = new TextEncoder().encode(JSON.stringify({ blocks, raw: payload.raw }));
-      if (bytes.byteLength > STORAGE.maxDocBytes) {
-        return NextResponse.json(
-          { error: "Document is too large to publish." },
-          { status: 413 },
-        );
-      }
-    } catch {
-      return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
-    }
+    const { blocks } = built;
 
     // Anonymous publishes have no DB "pages" record and no owner, so they're
     // otherwise unbounded — enforce the advertised anonymous quota here,
@@ -135,7 +108,6 @@ export async function POST(req: Request) {
       if (quota) return quota;
     }
 
-    const id = createId(10);
     const doc: PublishedDoc = {
       v: BLOCKS.version,
       createdAt: new Date().toISOString(),
@@ -175,31 +147,32 @@ export async function POST(req: Request) {
     }).catch((err) => logError("publish", "Event record failed", err));
 
     if (isAuthenticated && userId) {
+      // The record is what makes the page owned and what a team-only page's
+      // access check reads; without it the document would be an ownerless
+      // page open to anyone with the link. So a failure undoes the publish.
       try {
-        const title = extractDocTitle(blocks);
-        await createPageRecord(
-          id,
-          userId,
-          title,
-          null,
-          null,
-          payload.visibility === "public" ? "public" : "unlisted",
-        );
-        void snapshotPageVersion(id, doc).catch((err) => {
-          logError("publish", "Version snapshot failed", err);
+        await createPageRecord(id, userId, built.record.title, null, built.record.frontmatter_meta, visibility, {
+          collectionId: spaceId,
+          docType: built.record.doc_type,
         });
-        void deliverWebhooks(userId, "page.published", {
-          page_id: id,
-          page_url: `${getSiteOrigin(req)}/p/${id}`,
-          title,
-          published_at: doc.createdAt,
-        }).catch(() => {});
       } catch (dbErr) {
         logError("publish", "DB ownership write failed", dbErr);
+        await deleteDoc(id).catch(() => {});
+        return NextResponse.json({ error: "Publish failed" }, { status: 500 });
       }
+      void setPageLinks(id, built.linkTargetIds).catch((err) => logError("publish", "Link write failed", err));
+      void snapshotPageVersion(id, doc).catch((err) => {
+        logError("publish", "Version snapshot failed", err);
+      });
+      void deliverWebhooks(userId, "page.published", {
+        page_id: id,
+        page_url: `${origin}/p/${id}`,
+        title: built.record.title,
+        published_at: doc.createdAt,
+      }).catch(() => {});
     }
 
-    const publishedUrl = `${getSiteOrigin(req)}${ROUTES.publish(id)}`;
+    const publishedUrl = `${origin}${ROUTES.publish(id)}`;
 
     const res = NextResponse.json({
       id,

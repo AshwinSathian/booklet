@@ -1,13 +1,15 @@
 import type { z } from "zod";
 import { ResourceNotFoundError, type CallToolResult } from "@modelcontextprotocol/server";
 import { ERRORS, type McpErrorShape } from "./errors.js";
-import { createClient, BookletApiError, type PageListItem, type PatchPageRequest } from "booklet-api-client";
+import { createClient, frontmatterBlock, BookletApiError, type PageListItem, type PatchPageRequest } from "booklet-api-client";
 import type {
   PublishPageInputSchema,
   UpdatePageInputSchema,
   GetPageInputSchema,
   ListPagesInputSchema,
   DeletePageInputSchema,
+  CreateDocumentInputSchema,
+  SearchPagesInputSchema,
 } from "./schemas.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -36,7 +38,8 @@ function mapUpstreamError(err: BookletApiError): McpErrorShape {
   // 403 is "not your page", or an OAuth token without the scope this tool
   // needs. The API's message says which; "Forbidden" alone is the first.
   if (status === 403) return message === "Forbidden" ? ERRORS.FORBIDDEN() : ERRORS.VALIDATION(message);
-  if (status === 404) return ERRORS.NOT_FOUND("Page");
+  // "Team space not found." is the API's own 404 for a `space` the caller is not in.
+  if (status === 404) return err.problem?.code === "SPACE_NOT_FOUND" ? ERRORS.VALIDATION(message) : ERRORS.NOT_FOUND("Page");
   // The API says which of its two size limits was hit; pass that on.
   if (status === 413) return ERRORS.VALIDATION(message);
   if (status === 429) return ERRORS.RATE_LIMITED();
@@ -98,6 +101,22 @@ function unexpectedError(toolName: string, e: unknown): CallToolResult {
 // schemas in schemas.ts before any of these run.
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * `raw` with `fields` set in its frontmatter. A document that already opens
+ * with a frontmatter block (the prompts in prompts.ts all do) keeps it: the
+ * fields replace lines of the same name and are otherwise added to it. A
+ * second block in front of the first would leave the first as page content.
+ */
+export function withFrontmatter(raw: string, fields: { title?: string | undefined; slug?: string | undefined }): string {
+  const set = Object.entries(fields).filter((e): e is [string, string] => e[1] !== undefined);
+  if (set.length === 0) return raw;
+  const lines = set.map(([k, v]) => `${k}: ${JSON.stringify(v)}`);
+  const existing = /^---[ \t]*\n([\s\S]*?)\n---[ \t]*(?:\n|$)/.exec(raw);
+  if (!existing) return `---\n${lines.join("\n")}\n---\n${raw}`;
+  const kept = (existing[1] ?? "").split("\n").filter((line) => !set.some(([k]) => line.startsWith(`${k}:`)));
+  return `---\n${[...kept, ...lines].join("\n")}\n---\n${raw.slice(existing[0].length)}`;
+}
+
 export async function handlePublishPage(
   args: z.infer<typeof PublishPageInputSchema>,
   apiKey: string,
@@ -106,18 +125,8 @@ export async function handlePublishPage(
   try {
     const { raw, title, slug, visibility } = args;
 
-    // The v1/publish endpoint reads slug/visibility from YAML frontmatter.
-    let finalRaw = raw;
-    if (slug !== undefined || visibility !== undefined || title !== undefined) {
-      const fmLines = ["---"];
-      if (title !== undefined) fmLines.push(`title: "${title.replace(/"/g, '\\"')}"`);
-      if (slug !== undefined) fmLines.push(`slug: ${slug}`);
-      if (visibility !== undefined) fmLines.push(`visibility: ${visibility}`);
-      fmLines.push("---");
-      finalRaw = fmLines.join("\n") + "\n" + raw;
-    }
-
-    const r = await client(apiKey, apiBase).publishPage(finalRaw);
+    // The v1/publish endpoint reads title and slug from YAML frontmatter.
+    const r = await client(apiKey, apiBase).publishPage(withFrontmatter(raw, { title, slug }), { visibility });
     return toolResult(
       `Page published.\n\nURL: ${r.url}\nID: ${r.id}\n\nShare this link. The page is live and permanent.`,
       { link: resourceLink(r.id, title ?? r.id), structuredContent: { id: r.id, url: r.url } },
@@ -262,6 +271,67 @@ export async function handleListPages(
     return toolResult(`Your Booklet pages${filterNote} (${pages.length}):\n\n${header}\n${rows}${paginationNote}`);
   } catch (e) {
     return unexpectedError("list_pages", e);
+  }
+}
+
+/**
+ * publish_page for an engineering document: the caller gives the type and
+ * its fields, and this writes the frontmatter and the title heading, so the
+ * page gets its header strip and lands in the right group of its space.
+ */
+export async function handleCreateDocument(
+  args: z.infer<typeof CreateDocumentInputSchema>,
+  apiKey: string,
+  apiBase: string,
+): Promise<CallToolResult> {
+  try {
+    const { type, title, body, space, visibility, status, severity, owners, supersedes } = args;
+    const date = args.date ?? new Date().toISOString().slice(0, 10);
+    const raw = `${frontmatterBlock({ type, title, status, severity, date, owners, supersedes })}# ${title}\n\n${body}`;
+
+    const r = await client(apiKey, apiBase).publishPage(raw, { visibility, space });
+    const where = space ? ` in the ${space} space` : "";
+    return toolResult(`Document published${where}.\n\nURL: ${r.url}\nID: ${r.id}\nType: ${type}`, {
+      link: resourceLink(r.id, title),
+      structuredContent: { id: r.id, url: r.url, type },
+    });
+  } catch (e) {
+    return unexpectedError("create_document", e);
+  }
+}
+
+export async function handleSearchPages(
+  args: z.infer<typeof SearchPagesInputSchema>,
+  apiKey: string,
+  apiBase: string,
+): Promise<CallToolResult> {
+  try {
+    const { query, type, space } = args;
+    const result = await client(apiKey, apiBase).listPages({
+      limit: args.limit ?? 20,
+      ...(query !== undefined ? { query } : {}),
+      ...(type !== undefined ? { type } : {}),
+      ...(space !== undefined ? { space } : {}),
+    });
+    const pages = result.pages.map((p) => ({
+      id: p.id,
+      title: p.title,
+      url: p.url,
+      type: p.doc_type,
+      visibility: p.visibility,
+      space: p.space,
+    }));
+    const rows = pages
+      .map((p) => `| ${escapeMdCell(p.title ?? "(untitled)")} | ${p.type ?? ""} | ${p.id} | ${p.url} | ${p.visibility} |`)
+      .join("\n");
+    const text = pages.length
+      ? `${pages.length} of ${result.total} matching pages:\n\n| Title | Type | ID | URL | Visibility |\n|---|---|---|---|---|\n${rows}`
+      : "No pages match. Try a shorter query, or drop `type`.";
+    // Structured, unlike list_pages: the point of a search is to act on the
+    // result (link to it, update it), and results are capped at 100 rows.
+    return toolResult(text, { structuredContent: { pages, total: result.total } });
+  } catch (e) {
+    return unexpectedError("search_pages", e);
   }
 }
 

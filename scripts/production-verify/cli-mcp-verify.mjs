@@ -324,8 +324,10 @@ async function main() {
     const toolsList = await mcpCall("tools/list", {});
     const toolNames = (toolsList.body?.result?.tools ?? []).map((t) => t.name);
     ok(
-      "MCP tools/list exposes all 5 tools",
-      ["publish_page", "update_page", "get_page", "list_pages", "delete_page"].every((n) => toolNames.includes(n)),
+      "MCP tools/list exposes all 7 tools",
+      ["publish_page", "update_page", "get_page", "list_pages", "delete_page", "create_document", "search_pages"].every((n) =>
+        toolNames.includes(n),
+      ),
       toolNames.join(", "),
     );
 
@@ -376,6 +378,25 @@ async function main() {
         arguments: { id: mcpPageId, confirm: true },
       });
       ok("MCP delete_page succeeds", mcpDelete.status === 200 && !mcpDelete.body?.result?.isError);
+    }
+
+    // An engineering document: typed frontmatter in, header strip out.
+    const adrTitle = `ADR-001 ${docTitle}`;
+    const mcpDoc = await mcpCall("tools/call", {
+      name: "create_document",
+      arguments: { type: "adr", title: adrTitle, status: "Proposed", body: "## Context\n\nProduction verification." },
+    });
+    const adrId = mcpDoc.body?.result?.structuredContent?.id;
+    ok("MCP create_document succeeds", mcpDoc.status === 200 && !mcpDoc.body?.result?.isError && Boolean(adrId));
+    if (adrId) {
+      const adrHtml = await (await fetch(`${BASE}/p/${adrId}`)).text();
+      ok("the document's page shows the ADR header strip with its status", adrHtml.includes('data-doc-type="adr"') && adrHtml.includes('data-status="Proposed"'));
+      const adrGet = await mcpCall("tools/call", { name: "get_page", arguments: { id: adrId } });
+      ok("its Markdown carries the ADR frontmatter", (adrGet.body?.result?.content?.[0]?.text ?? "").includes('type: "adr"'));
+      const found = await mcpCall("tools/call", { name: "search_pages", arguments: { query: docTitle, type: "adr" } });
+      const foundPages = found.body?.result?.structuredContent?.pages ?? [];
+      ok("MCP search_pages finds it by type", foundPages.length === 1 && foundPages[0].id === adrId, JSON.stringify(foundPages));
+      await mcpCall("tools/call", { name: "delete_page", arguments: { id: adrId, confirm: true } });
     }
 
     const noAuth = await fetch(`${MCP_BASE}/mcp`, {
