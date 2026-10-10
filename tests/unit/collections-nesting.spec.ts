@@ -108,8 +108,8 @@ test.describe("deleteCollectionRecord cascade", () => {
       // value (would collide across these two inserts). See the identical
       // reasoning on CollectionDoc/PageDoc in src/lib/db/index.ts.
       await db.collection("pages").insertMany([
-        { _id: parentPageId, user_id: userId, title: "Parent page", visibility: "public", collection_id: parentId, team_id: null, view_count: 0, remove_attribution_badge: false, password_hash: null, featured: false, frontmatter_meta: null, created_at: now, updated_at: now },
-        { _id: childPageId, user_id: userId, title: "Child page", visibility: "public", collection_id: childId, team_id: null, view_count: 0, remove_attribution_badge: false, password_hash: null, featured: false, frontmatter_meta: null, created_at: now, updated_at: now },
+        { _id: parentPageId, user_id: userId, title: "Parent page", visibility: "public", collection_id: parentId, team_id: null, view_count: 0, password_hash: null, frontmatter_meta: null, created_at: now, updated_at: now },
+        { _id: childPageId, user_id: userId, title: "Child page", visibility: "public", collection_id: childId, team_id: null, view_count: 0, password_hash: null, frontmatter_meta: null, created_at: now, updated_at: now },
       ] as never);
 
       await deleteCollectionRecord(parentId, userId);

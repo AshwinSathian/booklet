@@ -42,7 +42,7 @@ export default function TemplatesPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <SiteHeader ctaLabel="Start writing" ctaTrackLocation="templates_topbar" />
+      <SiteHeader ctaLabel="Start writing" />
 
       <main className="mx-auto w-full max-w-4xl px-4 py-12">
         {/* Hero */}

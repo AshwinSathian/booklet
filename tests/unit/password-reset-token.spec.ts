@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { generatePasswordResetToken, hashPasswordResetToken } from "@/lib/auth/password-reset-token";
 
-// Mirrors tests/unit/unlock-token.spec.ts and tests/unit/claim-token.spec.ts
+// Mirrors tests/unit/unlock-token.spec.ts
 // style — pure generate/hash functions, no DB/server needed.
 
 test.beforeAll(() => {

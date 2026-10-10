@@ -59,8 +59,6 @@ mcp-server/.wrangler/
 packages/*/node_modules/
 packages/*/dist/
 
-# clerk configuration (can include secrets)
-/.clerk/
 
 # Playwright
 test-results/
@@ -74,9 +72,6 @@ MARKET_PLAN.md
 
 # Claude Code agent worktrees (scratch checkouts, merged/discarded per-task)
 /.claude/worktrees/
-
-# vsce package output — built by CI/publish, not committed
-packages/vscode/*.vsix
 
 # Agent-created git worktrees (scratch, never committed)
 .worktrees/

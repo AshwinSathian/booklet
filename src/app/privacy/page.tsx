@@ -64,7 +64,7 @@ export default function PrivacyPage() {
               <strong className="text-text-primary">Page analytics</strong> — We count views, track scroll depth (50% and 100%
               read events), record HTTP referrers, and infer approximate country from Cloudflare headers. This
               data is attached to individual pages and accessible only to the page owner. We do not sell analytics
-              data or use it for advertising.
+              data or use it for advertising. No third-party analytics script runs on any {APP_NAME} page.
             </p>
             <p>
               <strong className="text-text-primary">API keys</strong> — If you generate API keys, the raw key is shown once and
@@ -74,8 +74,8 @@ export default function PrivacyPage() {
 
           <Section title="How we use your data">
             <p>We use collected data solely to operate the service: storing and serving your pages, associating
-              pages with your account, and delivering analytics you asked for. We do not currently send any
-              transactional or marketing email.</p>
+              pages with your account, and delivering analytics you asked for. The only email we send you is a password-reset link
+              when you ask for one. We send no marketing email.</p>
             <p>We do not serve ads, sell your data to third parties, or use your content to train AI models.</p>
           </Section>
 
@@ -109,6 +109,7 @@ export default function PrivacyPage() {
               on infrastructure we run ourselves, with no third-party identity or data processor in the loop.</p>
             <ul className="list-disc list-inside flex flex-col gap-1.5">
               <li><strong className="text-text-primary">Cloudflare</strong> — edge network and tunnel in front of our servers</li>
+              <li><strong className="text-text-primary">Resend</strong> — delivers our email. It receives your email address when you request a password reset, and the text of an abuse report (with your email address, if you gave one) when you report a page</li>
               <li><strong className="text-text-primary">MongoDB</strong> — self-hosted primary database for all page and account records, including anonymous pages</li>
             </ul>
           </Section>

@@ -1,4 +1,7 @@
 export const APP_NAME = "Booklet";
+// Shown as "Source" in the site footer (AGPL-3.0 section 13). If you run a
+// modified copy, point this at your own source.
+export const REPO_URL = "https://github.com/AshwinSathian/booklet";
 
 export const ROUTES = {
   home: "/",

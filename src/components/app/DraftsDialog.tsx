@@ -1,7 +1,5 @@
 "use client";
 
-import { trackEvent } from "@/lib/analytics";
-import { ANALYTICS_EVENTS, hashId } from "@/lib/analytics-events";
 import { useEffect, useRef } from "react";
 import { Button } from "../ui/Button";
 import { Icon } from "../ui/Icon";
@@ -19,8 +17,8 @@ export function DraftsDialog({
   visible: boolean;
   activeDraftId: string | null;
   onHide: () => void;
-  onOpenDraft: (id: string, origin?: "drafts_dialog") => void;
-  onCreateDraft: (origin?: "drafts_dialog") => string;
+  onOpenDraft: (id: string) => void;
+  onCreateDraft: () => string;
   onRequestImportMarkdown: () => void;
 }) {
   const backdropRef = useRef<HTMLDivElement>(null);
@@ -64,8 +62,7 @@ export function DraftsDialog({
               variant="primary"
               size="sm"
               onClick={() => {
-                const id = onCreateDraft("drafts_dialog");
-                trackEvent(ANALYTICS_EVENTS.draft_created, { draft_hash: hashId(id), origin: "drafts_dialog" });
+                onCreateDraft();
                 onHide();
               }}
             >

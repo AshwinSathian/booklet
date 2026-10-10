@@ -8,7 +8,7 @@ export type AdminMetrics = {
   monthlyRepublishRate: number;       // % of users who published 2+ times in 30 days
   anonymousPublishPct: number;        // % of publishes with no user_id
   // Per-source share of weekly publishes — browser vs. each first-party API
-  // client (cli, github-action, vscode, mcp) vs. generic "api". Sorted by
+  // client (cli, github-action, mcp) vs. generic "api". Sorted by
   // count desc. This is what actually makes machine/agent-driven publish
   // volume (in particular mcp) visible instead of collapsed into "api".
   sourceBreakdown: Array<{ source: PublishEvent["source"]; count: number; pct: number }>;

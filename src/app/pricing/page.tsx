@@ -89,7 +89,7 @@ const FEATURE_GROUPS: { heading: string; items: string[] }[] = [
 export default function PricingPage() {
   return (
     <div className="min-h-screen bg-bg text-text-primary">
-      <SiteHeader ctaLabel="Start writing" ctaTrackLocation="pricing_topbar" />
+      <SiteHeader ctaLabel="Start writing" />
 
       <main className="mx-auto max-w-3xl px-6 py-16">
         {/* Hero */}

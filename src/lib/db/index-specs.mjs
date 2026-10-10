@@ -20,8 +20,8 @@
 export const INDEX_SPECS = [
   // --- users ---
   { collection: "users", spec: { _id: 1 } }, // already primary; explicit for clarity
-  // Sparse: only enforced once email is populated for every doc (post-Clerk-
-  // migration, see PLAN-backend-auth-migration.md) — sparse avoids a
+  // Sparse: only enforced once email is populated for every doc (older docs
+  // predate the in-house auth, see PLAN-backend-auth-migration.md) — sparse avoids a
   // duplicate-null collision across legacy docs missing the field.
   { collection: "users", spec: { email: 1 }, options: { unique: true, sparse: true } },
 
@@ -52,8 +52,6 @@ export const INDEX_SPECS = [
   },
   // Explore / recent-public-pages queries (getRecentPublicPages, getPublicPagesByUser)
   { collection: "pages", spec: { visibility: 1, password_hash: 1, created_at: -1 } },
-  // Featured-pages query (getFeaturedPages)
-  { collection: "pages", spec: { featured: 1, visibility: 1, password_hash: 1, created_at: -1 } },
   // Tag-filtered explore query (getPagesByTag)
   {
     collection: "pages",
@@ -132,27 +130,6 @@ export const INDEX_SPECS = [
   // getWebhooksByUser lists a user's webhooks sorted by recency.
   { collection: "webhooks", spec: { user_id: 1, created_at: -1 } },
 
-  // --- reactions ---
-  // getPageReactions queries `{ page_id: pageId }` (an equality match, not
-  // the old `{ _id: { $regex: `^${pageId}:` } }` prefix scan it used to do
-  // — that was a $regex-injection issue: an unvalidated pageId route param
-  // built directly into a regex could over-match other pages' reaction
-  // docs, or cause ReDoS via a pathological pattern). This index serves
-  // that equality match.
-  { collection: "reactions", spec: { page_id: 1 } },
-
-  // --- reaction_state ---
-  // Per-session toggle state for reactions (addReactionForSession /
-  // removeReactionForSession in src/lib/db/reactions.ts) — "has this
-  // session already reacted with this emoji on this page." Authoritative
-  // guard so a session can only contribute +1 to a given (page, emoji)
-  // count at a time, no matter how many times it clicks/replays.
-  {
-    collection: "reaction_state",
-    spec: { session_hash: 1, page_id: 1, emoji: 1 },
-    options: { unique: true },
-  },
-
   // --- view_dedupe ---
   // View-count dedupe (incrementViewCount in src/lib/db/index.ts) — one
   // counted view per session_hash per page, mirroring analytics_events'
@@ -190,10 +167,17 @@ export async function ensureIndexes(db) {
   // exist at all yet (a genuinely fresh database, e.g. a CI service
   // container — found live: this exact case, uncaught, was crashing
   // ensureIndexes and failing every unit test in the same run).
-  try {
-    await db.collection("collections").dropIndex("user_id_1_name_1");
-  } catch (err) {
-    if (err?.code !== 27 && err?.code !== 26) throw err;
+  // The second entry backed the Featured-pages query, removed with the Featured
+  // toggle in 2026-10.
+  for (const [collection, index] of [
+    ["collections", "user_id_1_name_1"],
+    ["pages", "featured_1_visibility_1_password_hash_1_created_at_-1"],
+  ]) {
+    try {
+      await db.collection(collection).dropIndex(index);
+    } catch (err) {
+      if (err?.code !== 27 && err?.code !== 26) throw err;
+    }
   }
 
   await Promise.all(

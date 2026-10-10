@@ -29,8 +29,7 @@ const SessionContext = createContext<SessionContextValue>({
   refetch: async () => {},
 });
 
-// Client-side sign-in state, mirroring Clerk's useUser() shape closely
-// enough that call sites stayed near-identical when this replaced it. The
+// Client-side sign-in state. The
 // session cookie itself is httpOnly (unreadable from JS by design), so this
 // is the one round trip that syncs auth state into the client tree — fetched
 // once at the root (see src/app/layout.tsx) rather than per-component, and

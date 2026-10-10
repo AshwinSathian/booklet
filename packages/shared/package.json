@@ -34,7 +34,7 @@
     "access": "public"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22"
   },
   "author": {
     "name": "Ashwin Sathian",
@@ -49,6 +49,12 @@
   },
   "keywords": [
     "booklet",
-    "api-client"
-  ]
+    "api-client",
+    "markdown",
+    "publishing",
+    "zod"
+  ],
+  "bugs": {
+    "url": "https://github.com/AshwinSathian/booklet/issues"
+  }
 }

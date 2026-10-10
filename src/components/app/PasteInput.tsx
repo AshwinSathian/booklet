@@ -271,15 +271,18 @@ function FindReplaceBar({
 
   const safeMatchIdx = matches.length > 0 ? matchIdx % matches.length : 0;
 
-  // Scroll textarea to and select the current match
+  // Scroll the textarea to the current match and select it. `focus` moves
+  // the keyboard there too, which is right for Enter and the arrow buttons
+  // and wrong while the user is still typing the search term: the next
+  // keystroke would replace the selected match in the document.
   const jumpToMatch = useCallback(
-    (idx: number, positions: number[]) => {
+    (idx: number, positions: number[], focus = true) => {
       const ta = textareaRef.current;
       if (!ta || positions.length === 0) return;
       const pos = positions[idx % positions.length];
       const needle = findText;
       requestAnimationFrame(() => {
-        ta.focus();
+        if (focus) ta.focus();
         ta.setSelectionRange(pos, pos + needle.length);
         // Scroll the textarea to show the selection
         const linesBefore = value.slice(0, pos).split("\n").length;
@@ -307,7 +310,7 @@ function FindReplaceBar({
   useEffect(() => {
     if (matches.length > 0) {
       setMatchIdx(0);
-      jumpToMatch(0, matches);
+      jumpToMatch(0, matches, false);
     }
   // Only run when findText or caseSensitive changes, not on every value change
   // eslint-disable-next-line react-hooks/exhaustive-deps

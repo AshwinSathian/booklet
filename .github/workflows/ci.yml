@@ -28,7 +28,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  NODE_VERSION: "20"
+  NODE_VERSION: "24"
 
 # Every job here only reads the checked-out code — nothing pushes, tags, or
 # writes issues/PRs, so a single repo-wide read-only grant covers all of it.
@@ -58,6 +58,16 @@ jobs:
           fi
       - run: npm ci --prefer-offline
       - run: npm run lint
+      # The app is AGPL-3.0-only, so every production dependency must carry a
+      # license that can be combined with it. A new dependency under anything
+      # else fails here and gets a decision instead of slipping in. Known
+      # non-obvious entries: @img/sharp-libvips (LGPL, a separate native
+      # library), caniuse-lite (CC-BY data), geist (OFL-1.1 font, which the
+      # checker reports as "MIT*").
+      - name: Production dependency licenses
+        run: >-
+          npx --yes license-checker@25.0.1 --production --excludePrivatePackages --summary
+          --onlyAllow 'MIT;MIT-0;ISC;BSD-2-Clause;BSD-3-Clause;Apache-2.0;0BSD;CC0-1.0;Unlicense;BlueOak-1.0.0;MPL-2.0;Python-2.0;CC-BY-4.0;LGPL-3.0-or-later'
 
   typecheck-root:
     name: Typecheck (root)
@@ -89,7 +99,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        package: [mcp-server, packages/shared, packages/cli, packages/vscode]
+        package: [mcp-server, packages/shared, packages/cli]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -101,7 +111,7 @@ jobs:
       # lockfile/install covers every package; no more per-package
       # package-lock.json to `npm ci --prefix` against.
       - run: npm ci --prefer-offline
-      # mcp-server/cli/vscode all import booklet-api-client (packages/shared)
+      # mcp-server and cli both import booklet-api-client (packages/shared)
       # — npm workspaces symlinks the *source* directory,
       # but its package.json's types/main/module fields point at dist/,
       # which only exists after packages/shared's own build runs. Skipping
@@ -139,7 +149,7 @@ jobs:
           # Next.js only needs NEXT_PUBLIC_* vars at build time (they get
           # inlined into the client bundle). Every non-NEXT_PUBLIC_ var in
           # .env.example (MONGODB_URI, INVITE_JWT_SECRET, UNLOCK_TOKEN_SECRET,
-          # SESSION_TOKEN_PEPPER, CLAIM_TOKEN_SECRET, ADMIN_IPS,
+          # SESSION_TOKEN_PEPPER, ADMIN_IPS,
           # ADMIN_USER_IDS, API_KEY_PEPPER, READABLE_WEBHOOK_SECRET) is read
           # lazily inside function bodies at request time (src/lib/mongodb.ts,
           # src/lib/unlock-token.ts, src/lib/invite-token.ts,
@@ -216,7 +226,6 @@ jobs:
       API_KEY_PEPPER: ci-only-api-key-pepper-not-used-anywhere-real
       SESSION_TOKEN_PEPPER: ci-only-session-pepper-not-used-anywhere-real
       PASSWORD_RESET_TOKEN_PEPPER: ci-only-reset-pepper-not-used-anywhere-real
-      CLAIM_TOKEN_SECRET: ci-only-claim-secret-not-used-anywhere-real
       # tests/e2e/moderation-expiry.spec.ts seeds a user with this id and
       # sends cf-connecting-ip: 127.0.0.1 — see that file's header.
       ADMIN_USER_IDS: e2e-admin

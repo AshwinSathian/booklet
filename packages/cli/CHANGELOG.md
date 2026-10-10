@@ -3,6 +3,15 @@
 All notable changes to `booklet-cli` are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Changed
+- Requires Node.js 22 or later (was 18). Node 18 and 20 have reached end of life.
+
+### Fixed
+- `publish --visibility public` now sets the page public. Since new pages became unlisted by
+  default on the server, 1.0.2 skipped the visibility update and published unlisted.
+
 ## [1.0.0] - 2026-08-04
 
 No functional changes from 0.2.0 — version bump to mark general availability. Publishes via

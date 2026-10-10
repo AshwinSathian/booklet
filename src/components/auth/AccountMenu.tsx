@@ -17,7 +17,7 @@ function avatarHue(userId: string): number {
   return hash % 360;
 }
 
-// Replaces Clerk's <UserButton /> — a minimal avatar-triggered dropdown with
+// A minimal avatar-triggered dropdown with
 // the account's email, a link to My Pages, and sign out.
 export function AccountMenu() {
   const { userId, email, refetch } = useSession();

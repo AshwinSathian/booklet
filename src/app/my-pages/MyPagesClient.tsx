@@ -24,8 +24,6 @@ export type PageRow = {
   collection_id: string | null;
   view_count: number;
   has_password: boolean;
-  featured: boolean;
-  remove_attribution_badge: boolean;
   created_at: string;
   updated_at: string;
   baseUrl: string;
@@ -279,8 +277,6 @@ function PageCard({
   const [passwordPrompt, setPasswordPrompt] = useState(false);
   const [passwordDraft, setPasswordDraft] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
-  const [featured, setFeatured] = useState(page.featured);
-  const [togglingFeatured, setTogglingFeatured] = useState(false);
 
   const url = pageUrl(page);
 
@@ -335,20 +331,6 @@ function PageCard({
       setSavingPassword(false);
     }
   }, [page.id]);
-
-  const handleToggleFeatured = useCallback(async () => {
-    setTogglingFeatured(true);
-    try {
-      const res = await fetch(`/api/pages/${page.id}`, {
-        method: "PATCH",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ featured: !featured }),
-      });
-      if (res.ok) setFeatured((f) => !f);
-    } finally {
-      setTogglingFeatured(false);
-    }
-  }, [page.id, featured]);
 
   const handleDuplicate = useCallback(async () => {
     setDuplicating(true);
@@ -571,15 +553,6 @@ function PageCard({
             onSelect={() => setPasswordPrompt(true)}
           />
         )}
-        <ContextMenuItem
-          icon={featured ? "star-filled" : "star"}
-          label={featured ? "Remove from Explore" : "Feature on Explore"}
-          description={featured ? "Page is shown on the public Explore page" : "Show this page on the public Explore page"}
-          active={featured}
-          activeLabel="Featured"
-          disabled={togglingFeatured}
-          onSelect={() => void handleToggleFeatured()}
-        />
 
         <ContextMenuSeparator />
 
@@ -696,8 +669,6 @@ export function MyPagesList({
     collection_id: string | null;
     view_count: number;
     has_password: boolean;
-    featured: boolean;
-    remove_attribution_badge: boolean;
     created_at: string;
     updated_at: string;
   }>;

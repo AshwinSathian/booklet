@@ -1,7 +1,7 @@
 /**
  * Zod schemas for the Booklet /api/v1 REST surface — the single source of
- * truth for every client (mcp-server, packages/cli, packages/github-action,
- * packages/vscode). Covers exactly the 5 endpoints those four consumers
+ * truth for every client (mcp-server, packages/cli, the GitHub Action).
+ * Covers exactly the 5 endpoints those consumers
  * actually call: POST /publish, PATCH /pages/:id, GET /pages/:id,
  * DELETE /pages/:id, GET /pages.
  */

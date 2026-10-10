@@ -1,6 +1,5 @@
 import { test, expect } from "@playwright/test";
 import { MongoClient } from "mongodb";
-import { SignJWT } from "jose";
 
 // This app keys every collection's _id with an app-generated string, never
 // Mongo's default ObjectId — see src/lib/db/index.ts's Doc types.
@@ -14,7 +13,6 @@ type StringIdDoc = { _id: string; [key: string]: unknown };
  *
  *   TEST_BASE_URL=https://booklet.ashwinsathian.com \
  *   MONGODB_URI="mongodb://127.0.0.1:27017/booklet?directConnection=true" \
- *   CLAIM_TOKEN_SECRET=<same value as .env.production.local> \
  *   npx playwright test scripts/production-verify/prod-smoke.spec.ts --config=playwright.config.ts
  *
  * Every account/page/session this creates is tagged with an
@@ -30,8 +28,6 @@ const MONGODB_URI = process.env.MONGODB_URI ?? "mongodb://127.0.0.1:27017/bookle
 const RUN_ID = Date.now();
 const EMAIL = `e2e-verify-${RUN_ID}@example.test`;
 const PASSWORD = "prod-verify-correct-horse-battery";
-const CLAIM_EMAIL = `e2e-verify-claim-${RUN_ID}@example.test`;
-const CLAIM_USER_ID = `e2e_verify_claim_${RUN_ID}`;
 
 let createdPageIds: string[] = [];
 
@@ -164,53 +160,6 @@ test.describe("Production verification — v1 API via booklet-api.ashwinsathian.
   });
 });
 
-test.describe("Production verification — migrated-user claim flow", () => {
-  test.beforeAll(async () => {
-    const secret = process.env.CLAIM_TOKEN_SECRET;
-    if (!secret) test.skip(true, "CLAIM_TOKEN_SECRET not provided — skipping claim-flow verification");
-  });
-
-  test("insert a migrated-style user, claim via /claim, then log in with the new password", async ({ page, request }) => {
-    const client = new MongoClient(MONGODB_URI);
-    await client.connect();
-    await client.db("booklet").collection<StringIdDoc>("users").insertOne({
-      _id: CLAIM_USER_ID,
-      email: CLAIM_EMAIL,
-      password_hash: null,
-      display_name: "E2E Verify Claim",
-      plan: "free",
-      created_at: new Date().toISOString(),
-    });
-    await client.close();
-
-    const secret = new TextEncoder().encode(process.env.CLAIM_TOKEN_SECRET!);
-    const token = await new SignJWT({ userId: CLAIM_USER_ID })
-      .setProtectedHeader({ alg: "HS256" })
-      .setExpirationTime("30d")
-      .setIssuedAt()
-      .sign(secret);
-
-    await page.goto(`${BASE}/claim?token=${token}`);
-    await page.locator("#password").fill(PASSWORD);
-    await page.locator("#confirm").fill(PASSWORD);
-    await page.locator('button[type="submit"]').first().click();
-    await page.waitForURL(/\/my-pages/, { timeout: 15000 });
-
-    await page.request.post(`${BASE}/api/auth/logout`);
-
-    const loginRes = await request.post(`${BASE}/api/auth/login`, {
-      data: { email: CLAIM_EMAIL, password: PASSWORD },
-    });
-    expect(loginRes.ok()).toBe(true);
-
-    // Replaying the same claim token must fail now that a password is set.
-    const replayRes = await request.post(`${BASE}/api/auth/claim`, {
-      data: { token, password: "a-different-password-123" },
-    });
-    expect(replayRes.status()).toBe(409);
-  });
-});
-
 test.afterAll(async () => {
   const client = new MongoClient(MONGODB_URI);
   await client.connect();
@@ -218,7 +167,7 @@ test.afterAll(async () => {
 
   const users = await db
     .collection<StringIdDoc>("users")
-    .find({ email: { $in: [EMAIL, CLAIM_EMAIL] } })
+    .find({ email: EMAIL })
     .toArray();
   const userIds = users.map((u) => u._id);
 
@@ -241,11 +190,11 @@ test.afterAll(async () => {
     await db.collection("sessions").deleteMany({ user_id: { $in: userIds } });
     await db.collection("api_keys").deleteMany({ user_id: { $in: userIds } });
   }
-  await db.collection<StringIdDoc>("users").deleteMany({ _id: { $in: [...userIds, CLAIM_USER_ID] } });
-  await db.collection("users").deleteMany({ email: { $in: [EMAIL, CLAIM_EMAIL] } });
+  await db.collection<StringIdDoc>("users").deleteMany({ _id: { $in: userIds } });
+  await db.collection("users").deleteMany({ email: EMAIL });
 
   console.log(
-    `[prod-smoke cleanup] removed ${userIds.length + 1} test user(s), ${allPageIds.length} test page(s)`,
+    `[prod-smoke cleanup] removed ${userIds.length} test user(s), ${allPageIds.length} test page(s)`,
   );
   await client.close();
 });

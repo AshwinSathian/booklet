@@ -1,8 +1,9 @@
 {
   "name": "@booklet/mcp-server",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "MCP server for publishing Markdown to Booklet from AI assistants and agents",
   "private": true,
+  "license": "MIT",
   "scripts": {
     "dev": "tsx src/node-server.ts",
     "serve:node": "node --import tsx/esm src/node-server.ts",
@@ -18,5 +19,26 @@
     "@types/node": "^25.9.1",
     "tsx": "^4.22.3",
     "typescript": "^5.0.0"
-  }
+  },
+  "author": {
+    "name": "Ashwin Sathian",
+    "email": "ashwinsathyan19@gmail.com"
+  },
+  "homepage": "https://booklet.ashwinsathian.com/mcp-setup",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AshwinSathian/booklet.git",
+    "directory": "mcp-server"
+  },
+  "bugs": {
+    "url": "https://github.com/AshwinSathian/booklet/issues"
+  },
+  "keywords": [
+    "booklet",
+    "mcp",
+    "model-context-protocol",
+    "mcp-server",
+    "markdown",
+    "publishing"
+  ]
 }

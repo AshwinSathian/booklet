@@ -19,8 +19,8 @@ import { goneNoticeHtml, isGoneReason, type GoneReason } from "@/lib/gone-notice
 // Flagged as a follow-up decision rather than made unilaterally here.
 const SCRIPT_SRC =
   process.env.NODE_ENV === "development"
-    ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' https://www.googletagmanager.com"
-    : "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://www.googletagmanager.com";
+    ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval'"
+    : "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'";
 
 const SECURITY_HEADERS: Record<string, string> = {
   "X-Frame-Options": "DENY",
@@ -38,7 +38,7 @@ const SECURITY_HEADERS: Record<string, string> = {
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
-    "connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com",
+    "connect-src 'self'",
     "frame-src 'none'",
     // Modern replacement for X-Frame-Options; overridden to '*' for /p/[id]/embed
     // below. X-Frame-Options is also still set for older-browser defense in depth.
@@ -53,7 +53,7 @@ const SECURITY_HEADERS: Record<string, string> = {
 // booklet-api.ashwinsathian.com is the same Next.js process as
 // booklet.ashwinsathian.com (see ecosystem.config.js — one PM2 app, one
 // port), routed under its own hostname purely so external API consumers
-// (CLI, GitHub Action, VS Code extension, MCP server) have a stable,
+// (CLI, GitHub Action, MCP server) have a stable,
 // clearly-scoped entry point distinct from the marketing/editor UI. This is
 // enforced here, not just a DNS-level convention: that hostname serves
 // /api/* only, everything else 404s. The main hostname keeps serving both

@@ -38,7 +38,6 @@ function toPage(doc: PageDoc): DbPage {
     collection_id: rest.collection_id ?? null,
     team_id: rest.team_id ?? null,
     password_hash: rest.password_hash ?? null,
-    featured: rest.featured ?? false,
     frontmatter_meta: rest.frontmatter_meta ?? null,
     taken_down_at: rest.taken_down_at ?? null,
   };
@@ -121,9 +120,7 @@ export async function createPageRecord(
     collection_id: null,
     team_id: teamId,
     view_count: 0,
-    remove_attribution_badge: false,
     password_hash: null,
-    featured: false,
     frontmatter_meta: frontmatterMeta,
     taken_down_at: null,
     created_at: now,
@@ -183,7 +180,7 @@ export async function getPagesByUser(
 
 export async function updatePageRecord(
   pageId: string,
-  patch: Partial<Pick<DbPage, "slug" | "title" | "visibility" | "collection_id" | "team_id" | "remove_attribution_badge" | "password_hash" | "featured" | "frontmatter_meta" | "updated_at">>,
+  patch: Partial<Pick<DbPage, "slug" | "title" | "visibility" | "collection_id" | "team_id" | "password_hash" | "frontmatter_meta" | "updated_at">>,
 ): Promise<void> {
   if (Object.keys(patch).length === 0) return;
   const db = await getDb();
@@ -260,18 +257,6 @@ export async function getRecentPublicPages(limit = 48): Promise<ExploreItem[]> {
   const docs = await db
     .collection<PageDoc>("pages")
     .find({ visibility: "public", password_hash: null })
-    .sort({ created_at: -1 })
-    .limit(limit)
-    .project<ExploreProjection>(EXPLORE_PROJECTION)
-    .toArray();
-  return docs.map(toExploreItem);
-}
-
-export async function getFeaturedPages(limit = 50): Promise<ExploreItem[]> {
-  const db = await getDb();
-  const docs = await db
-    .collection<PageDoc>("pages")
-    .find({ featured: true, visibility: "public", password_hash: null })
     .sort({ created_at: -1 })
     .limit(limit)
     .project<ExploreProjection>(EXPLORE_PROJECTION)
@@ -538,7 +523,7 @@ export async function deletePageRecord(pageId: string): Promise<void> {
 
 /**
  * Deletes every record keyed by page_id outside of the page/doc/version
- * collections themselves (analytics, reactions, reaction state, publish
+ * collections themselves (analytics, publish
  * events) — call this alongside deletePageRecord/deletePageVersions so a
  * deleted page doesn't leave orphaned rows behind. Best-effort: callers
  * already treat page deletion as complete once the doc/record/versions are
@@ -548,8 +533,6 @@ export async function deletePageAssociatedRecords(pageId: string): Promise<void>
   const db = await getDb();
   await Promise.all([
     db.collection("analytics_events").deleteMany({ page_id: pageId }),
-    db.collection("reactions").deleteMany({ page_id: pageId }),
-    db.collection("reaction_state").deleteMany({ page_id: pageId }),
     db.collection("publish_events").deleteMany({ page_id: pageId }),
   ]);
 }

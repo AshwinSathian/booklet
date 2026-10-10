@@ -6,12 +6,6 @@ import { APP_NAME, ROUTES } from "@/lib/constants";
 import type { Metadata } from "next";
 import Link from "next/link";
 
-// The VS Code extension is built and ready but not yet published to the
-// Marketplace — flip this once `AshwinSathian.booklet-vscode` is live so
-// its nav item, metadata mentions, and dedicated section reappear. Search
-// this file for VSCODE_EXTENSION_PUBLISHED to find every gated spot.
-const VSCODE_EXTENSION_PUBLISHED = false;
-
 export const metadata: Metadata = {
   ...buildMetadata({
     title: `${APP_NAME} Integrations — CLI, GitHub Actions, MCP & API`,
@@ -82,7 +76,6 @@ function Step({
 
 const NAV_ITEMS = [
   { href: "#cli", label: "CLI" },
-  ...(VSCODE_EXTENSION_PUBLISHED ? [{ href: "#vscode", label: "VS Code" }] : []),
   { href: "#github-actions", label: "GitHub Actions" },
   { href: "#mcp", label: "MCP / AI editors" },
   { href: "#rest-api", label: "REST API" },
@@ -96,7 +89,7 @@ const NAV_ITEMS = [
 export default function IntegrationsPage() {
   return (
     <div className="min-h-screen bg-bg text-text-primary">
-      <SiteHeader ctaTrackLocation="integrations_topbar" />
+      <SiteHeader />
 
       {/* Hero */}
       <section className="mx-auto w-full max-w-5xl px-4 pt-16 pb-10 text-center">
@@ -200,73 +193,6 @@ cat README.md | npx booklet-cli publish -`}</CodeBlock>
         </div>
       </section>
 
-      {/* ─── VS Code ─────────────────────────────────────────────────────────── */}
-      {VSCODE_EXTENSION_PUBLISHED && (
-        <section className="mx-auto w-full max-w-5xl px-4 py-14 border-t border-border-subtle">
-          <SectionAnchor id="vscode" />
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
-            <div>
-              <IntegrationBadge label="VS Code" color="border-sky-500/30 bg-sky-500/8 text-sky-400" />
-              <h2 className="text-2xl font-light text-text-primary mt-3 mb-3">
-                Booklet for VS Code
-              </h2>
-              <p className="text-sm text-text-muted leading-relaxed mb-6">
-                Publish the current Markdown file — or just your current selection —
-                without leaving VS Code. The extension adds three commands to the
-                command palette and can store your API key in VS Code&apos;s
-                secret storage so it never touches your filesystem.
-              </p>
-
-              <div className="flex flex-col gap-5">
-                <Step n={1} title="Install the extension">
-                  Search for <em>Booklet</em> in the VS Code Extensions panel, or install from the marketplace.
-                </Step>
-                <Step n={2} title="Set your API key">
-                  Run <strong>Booklet: Set API Key</strong> from the command palette. Stored securely in VS Code secret storage.
-                </Step>
-                <Step n={3} title="Publish with one command">
-                  Open any <code className="rounded bg-fill-2 px-1 py-0.5 text-xs font-mono text-accent-soft">.md</code> file and run <strong>Booklet: Publish Current File</strong>. The URL is copied to your clipboard.
-                </Step>
-              </div>
-
-              <div className="mt-6">
-                <a
-                  href="https://marketplace.visualstudio.com/items?itemName=AshwinSathian.booklet-vscode"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent transition hover:text-accent-soft"
-                >
-                  View on VS Code Marketplace
-                  <svg width="11" height="11" fill="none" viewBox="0 0 12 12" aria-hidden>
-                    <path d="M2.5 9.5 9.5 2.5M9.5 2.5H4M9.5 2.5V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </a>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-4">
-              <div className="rounded-xl border border-border-subtle bg-bg-elevated p-5 flex flex-col gap-3">
-                <p className="text-xs font-semibold uppercase tracking-widest text-text-muted">Command palette</p>
-                {[
-                  { cmd: "Booklet: Publish Current File", desc: "Publish the current file as a new page" },
-                  { cmd: "Booklet: Publish Selection", desc: "Publish only the highlighted text" },
-                  { cmd: "Booklet: Set API Key", desc: "Save your key to VS Code secret storage" },
-                ].map((item) => (
-                  <div key={item.cmd} className="flex items-start gap-3 rounded-lg border border-border-subtle bg-bg-soft px-3.5 py-3">
-                    <code className="shrink-0 rounded bg-accent/10 border border-accent/20 px-1.5 py-0.5 text-xs font-mono text-accent">
-                      {item.cmd}
-                    </code>
-                    <span className="text-xs text-text-muted leading-relaxed">{item.desc}</span>
-                  </div>
-                ))}
-              </div>
-              <p className="text-xs text-text-muted">
-                The extension works in VS Code, VS Code Insiders, and any fork that supports the VS Code extension API.
-              </p>
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* ─── GitHub Actions ──────────────────────────────────────────────────── */}
       <section className="mx-auto w-full max-w-5xl px-4 py-14 border-t border-border-subtle">
@@ -386,17 +312,9 @@ jobs:
               ))}
             </div>
 
-            <div className="flex items-center gap-3">
-              <Button variant="primary" size="md" href="/mcp-setup">
-                Setup guide
-              </Button>
-              <Link
-                href="/mcp"
-                className="text-sm text-text-muted transition hover:text-text-primary"
-              >
-                Learn more →
-              </Link>
-            </div>
+            <Button variant="primary" size="md" href="/mcp-setup">
+              Setup guide
+            </Button>
           </div>
 
           <div className="flex flex-col gap-4">

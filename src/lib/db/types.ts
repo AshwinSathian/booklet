@@ -1,12 +1,10 @@
 export type UserPlan = "free";
 
 export type DbUser = {
-  id: string;                     // app-owned; preserved as-is for users migrated off Clerk
-  // Nullable for the remainder of the Clerk-removal migration (Phase 1 tightens
-  // this to `string` once every signup/login path guarantees it) — see
-  // PLAN-backend-auth-migration.md.
+  id: string;                     // app-owned
+  // Nullable: user rows created before the in-house auth have no email.
   email: string | null;
-  password_hash: string | null;   // argon2id hash (src/lib/auth/password.ts); null = pre-Phase-1 user or migrated user pending /claim
+  password_hash: string | null;   // argon2id hash (src/lib/auth/password.ts); null = user row created before the in-house auth
   display_name: string | null;
   plan: UserPlan;
   created_at: string;
@@ -37,9 +35,7 @@ export type DbPage = {
   collection_id: string | null;
   team_id: string | null;         // null = personal page
   view_count: number;
-  remove_attribution_badge: boolean;
   password_hash: string | null;   // PBKDF2-SHA256 hash (see src/lib/password.ts); null = no password
-  featured: boolean;              // opt-in: appear on /explore featured section
   frontmatter_meta: Record<string, unknown> | null;  // parsed YAML frontmatter fields
   taken_down_at: string | null;   // ISO timestamp of an admin takedown; mirrors docs.taken_down_at
   created_at: string;
@@ -131,7 +127,7 @@ export type PublishEvent = {
   // recognized X-Booklet-Source header (raw curl, an unlisted integration).
   // The 4 first-party clients each send their own value — see
   // src/lib/request-source.ts, which is what actually assigns this field.
-  source: "browser" | "api" | "cli" | "github-action" | "vscode" | "mcp";
+  source: "browser" | "api" | "cli" | "github-action" | "mcp";
   created_at: string;
   // Distinct "rich block" kinds (callout, toggle, columns, ...) present in
   // this publish — see src/lib/block-usage.ts. Optional/absent on events
@@ -139,8 +135,3 @@ export type PublishEvent = {
   rich_block_kinds?: string[];
 };
 
-export type DbReaction = {
-  page_id: string;
-  emoji: string;
-  count: number;
-};

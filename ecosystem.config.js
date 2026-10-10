@@ -1,5 +1,11 @@
 const BASE = "/Users/ashwinsathian/Documents/Personal/booklet";
 const LOGS = `${process.env.HOME}/.pm2/logs`;
+// Both apps name their interpreter, so the Node version does not depend on
+// which Node the PM2 daemon happened to be started under. Keep in step with
+// .nvmrc and NODE_BIN in scripts/redeploy.sh and scripts/pm2-startup.sh.
+const NODE_BIN = `${process.env.HOME}/.nvm/versions/node/v24.19.0/bin`;
+const NODE = `${NODE_BIN}/node`;
+const PATH = `${NODE_BIN}:${process.env.PATH}`;
 
 /** @type {import('pm2').StartOptions[]} */
 module.exports = {
@@ -7,18 +13,20 @@ module.exports = {
     // ─── Main Next.js application ────────────────────────────────────────────
     {
       name: "booklet-app",
-      script: `${BASE}/node_modules/.bin/next`,
+      script: `${BASE}/node_modules/next/dist/bin/next`,
       args: "start -p 3100",
       cwd: BASE,
-      interpreter: "none",
+      interpreter: NODE,
 
       env_production: {
         NODE_ENV: "production",
         PORT: "3100",
+        PATH,
       },
       env: {
         NODE_ENV: "production",
         PORT: "3100",
+        PATH,
       },
 
       instances: 1,
@@ -43,34 +51,26 @@ module.exports = {
     // ─── MCP server (Node.js bridge) ─────────────────────────────────────────
     {
       name: "booklet-mcp",
-      // Resolve the tsx binary via npx rather than a hardcoded node_modules/.bin
-      // path — under npm workspaces (see PLAN-backend-auth-migration.md), a
-      // dependency shared across workspaces (tsx is also used transitively
-      // elsewhere) can get hoisted to the repo root's node_modules/.bin
-      // instead of staying nested under mcp-server/node_modules/.bin, and
-      // which one happens is not guaranteed stable across `npm install` runs.
-      // A hardcoded path silently breaks (ENOENT) the moment hoisting shifts;
-      // npx resolves through normal Node module resolution regardless of
-      // where it landed.
-      script: "npx",
-      args: "tsx src/node-server.ts",
+      // tsx is loaded with --import, so Node resolves it through normal
+      // module resolution wherever npm workspaces hoisted it (a hardcoded
+      // node_modules/.bin/tsx path broke when hoisting moved it).
+      script: "src/node-server.ts",
       cwd: `${BASE}/mcp-server`,
-      interpreter: "none",
+      interpreter: NODE,
+      node_args: "--import tsx",
 
       env_production: {
         NODE_ENV: "production",
         PORT: "8788",
         BOOKLET_API_BASE: "http://localhost:3100",
-        MCP_SERVER_NAME: "booklet",
-        MCP_SERVER_VERSION: "1.0.0",
+        PATH,
       },
       env: {
         NODE_ENV: "production",
         PORT: "8788",
         // Loopback — no tunnel round-trip for internal calls
         BOOKLET_API_BASE: "http://localhost:3100",
-        MCP_SERVER_NAME: "booklet",
-        MCP_SERVER_VERSION: "1.0.0",
+        PATH,
       },
 
       instances: 1,

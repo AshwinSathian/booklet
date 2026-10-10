@@ -2,7 +2,7 @@
 
 [![npm version](https://img.shields.io/npm/v/booklet-cli)](https://www.npmjs.com/package/booklet-cli)
 [![npm downloads](https://img.shields.io/npm/dw/booklet-cli)](https://www.npmjs.com/package/booklet-cli)
-[![License: MIT](https://img.shields.io/github/license/AshwinSathian/booklet)](https://github.com/AshwinSathian/booklet/blob/main/LICENSE)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](https://github.com/AshwinSathian/booklet/blob/main/packages/cli/LICENSE)
 
 Publish Markdown from your terminal, a CI pipeline, or a script — as [Booklet](https://booklet.ashwinsathian.com) pages
 with a permanent, shareable URL.

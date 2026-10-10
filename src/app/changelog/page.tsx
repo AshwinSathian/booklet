@@ -32,6 +32,21 @@ const TAG_COLORS: Record<Entry["tag"], string> = {
 
 const RELEASES: Release[] = [
   {
+    version: "v1.1.0",
+    date: "2026-10-10",
+    summary: "The app is now AGPL-3.0, Google Analytics is gone, and several unused features were removed.",
+    entries: [
+      { date: "2026-10-10", tag: "Improved", text: "License: the web app is now AGPL-3.0-only. The CLI, API client, MCP server and GitHub Action stay MIT. The footer links to the source" },
+      { date: "2026-10-10", tag: "Removed", text: "Google Analytics. No third-party analytics script loads on any page, and the content security policy no longer allows one. Page-view counts for page owners are first-party and unchanged" },
+      { date: "2026-10-10", tag: "Removed", text: "Emoji reactions on published pages" },
+      { date: "2026-10-10", tag: "Removed", text: "The floating \"make your own\" prompt on published pages. The footer attribution stays" },
+      { date: "2026-10-10", tag: "Improved", text: "Explore is one list of public pages, newest first, with tag filtering. The Trending and Featured tabs and the \"Feature on Explore\" toggle are gone: a page appears on Explore when its visibility is Public" },
+      { date: "2026-10-10", tag: "Fixed", text: "Typing in the editor's find box no longer jumps into the document, where the next keystroke replaced the first match" },
+      { date: "2026-10-10", tag: "Improved", text: "/mcp now redirects to the MCP setup guide" },
+      { date: "2026-10-10", tag: "Improved", text: "The service runs on Node.js 24. The CLI and API client now require Node.js 22 or later, starting with their next release" },
+    ],
+  },
+  {
     version: "October 2026",
     date: "2026-10-10",
     summary: "New pages are unlisted by default, anonymous pages expire after 90 days, and every page can be reported.",
@@ -113,7 +128,7 @@ function TagPill({ tag }: { tag: Entry["tag"] }) {
 export default function ChangelogPage() {
   return (
     <div className="min-h-screen bg-bg text-text-primary flex flex-col">
-      <SiteHeader ctaTrackLocation="changelog_topbar" />
+      <SiteHeader />
 
       <main className="flex-1 mx-auto w-full max-w-3xl px-4 py-12 sm:py-16">
         <div className="mb-10">

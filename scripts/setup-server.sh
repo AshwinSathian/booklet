@@ -12,7 +12,7 @@
 #
 # What it sets up:
 #   • MongoDB Community (Homebrew) — started as a LaunchAgent
-#   • Node.js via nvm (or uses existing ≥18 Node)
+#   • Node.js via nvm (needs Node 24)
 #   • PM2 process manager — booklet-app (:3100) + booklet-mcp (:8788)
 #   • PM2 LaunchAgent for auto-start on login
 #   • Cloudflare Tunnel (cloudflared via Homebrew)
@@ -97,13 +97,13 @@ section "Node.js"
 if command -v node &>/dev/null; then
   NODE_VER=$(node --version | sed 's/v//')
   NODE_MAJOR=$(echo "$NODE_VER" | cut -d. -f1)
-  if [[ "$NODE_MAJOR" -ge 18 ]]; then
+  if [[ "$NODE_MAJOR" -ge 24 ]]; then
     ok "Node.js v$NODE_VER"
   else
-    die "Node.js v$NODE_VER is too old. Need ≥18. Install via nvm: https://github.com/nvm-sh/nvm"
+    die "Node.js v$NODE_VER is too old. Need 24. Install via nvm: https://github.com/nvm-sh/nvm"
   fi
 else
-  die "Node.js not found. Install via nvm or brew install node@20"
+  die "Node.js not found. Install Node 24 via nvm (nvm install 24.19.0 — the path ecosystem.config.js names)"
 fi
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -155,7 +155,7 @@ if [[ -f "$ENV_FILE" ]]; then
   ok ".env.production.local exists"
   # Verify required keys are set (non-empty, non-placeholder)
   MISSING=()
-  for key in MONGODB_URI NEXT_PUBLIC_SITE_URL SESSION_TOKEN_PEPPER CLAIM_TOKEN_SECRET INVITE_JWT_SECRET UNLOCK_TOKEN_SECRET API_KEY_PEPPER; do
+  for key in MONGODB_URI NEXT_PUBLIC_SITE_URL SESSION_TOKEN_PEPPER INVITE_JWT_SECRET UNLOCK_TOKEN_SECRET API_KEY_PEPPER; do
     val=$(grep "^${key}=" "$ENV_FILE" 2>/dev/null | cut -d= -f2- || true)
     if [[ -z "$val" || "$val" == *"REPLACE_ME"* ]]; then
       MISSING+=("$key")
@@ -171,7 +171,7 @@ else
   cp "$REPO_ROOT/.env.production.local.example" "$ENV_FILE"
   printf "\n"
   printf "  Edit %s and fill in:\n" "$ENV_FILE"
-  printf "    • SESSION_TOKEN_PEPPER, CLAIM_TOKEN_SECRET, INVITE_JWT_SECRET,\n"
+  printf "    • SESSION_TOKEN_PEPPER, INVITE_JWT_SECRET,\n"
   printf "      UNLOCK_TOKEN_SECRET, API_KEY_PEPPER (each a dedicated random\n"
   printf "      secret, e.g. via: openssl rand -base64 32)\n"
   printf "    • MONGODB_URI       (use: mongodb://127.0.0.1:27017/booklet?directConnection=true)\n"
@@ -396,7 +396,7 @@ ingress:
       httpHostHeader: ${APP_HOSTNAME}
 
   # Same app/port as above — dedicated hostname for external API consumers
-  # (CLI/GitHub Action/VS Code/MCP). src/middleware.ts restricts this
+  # (CLI/GitHub Action/MCP). src/middleware.ts restricts this
   # hostname to /api/* only.
   - hostname: ${API_HOSTNAME}
     service: http://127.0.0.1:${APP_PORT}

@@ -109,7 +109,7 @@ export default function ApiDocsPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <SiteHeader ctaTrackLocation="api_docs_topbar" />
+      <SiteHeader />
 
       <div className="flex-1 mx-auto w-full max-w-5xl px-4 py-10 flex gap-10">
         {/* Sidebar nav */}

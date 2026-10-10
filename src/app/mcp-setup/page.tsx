@@ -684,7 +684,7 @@ export default function McpSetupPage() {
   return (
     <div className="min-h-screen bg-bg text-text-primary flex flex-col">
       {/* Header */}
-      <SiteHeader ctaTrackLocation="mcp_setup_topbar" />
+      <SiteHeader />
 
       <div className="flex-1 mx-auto w-full max-w-5xl px-4 py-10 flex gap-10">
         {/* Sidebar */}
@@ -779,6 +779,16 @@ export default function McpSetupPage() {
                 </div>
               ))}
             </div>
+
+            <p className="mt-6 text-sm text-text-secondary max-w-prose">
+              A published page has its own URL, so it is not locked in a chat thread, and the
+              server works with any MCP client rather than one vendor&apos;s.
+            </p>
+            <p className="mt-3 text-sm text-text-secondary max-w-prose">
+              Typical uses: paste an alert timeline and ask for a published post-mortem, turn a
+              diff into an ADR, draft release notes from a git log, or document a module&apos;s
+              public API from its source.
+            </p>
           </section>
 
           {/* Step 1 — API Key */}

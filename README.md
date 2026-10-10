@@ -2,7 +2,7 @@
 
 **Publish clean, readable pages from Markdown — by hand, by script, or by your AI assistant.**
 
-[![License: MIT](https://img.shields.io/github/license/AshwinSathian/booklet)](LICENSE)
+[![License: AGPL-3.0](https://img.shields.io/github/license/AshwinSathian/booklet)](LICENSE)
 [![npm version](https://img.shields.io/npm/v/booklet-cli?label=booklet-cli)](https://www.npmjs.com/package/booklet-cli)
 [![npm downloads](https://img.shields.io/npm/dw/booklet-cli)](https://www.npmjs.com/package/booklet-cli)
 [![CI](https://img.shields.io/github/actions/workflow/status/AshwinSathian/booklet/ci.yml?branch=main&label=CI)](https://github.com/AshwinSathian/booklet/actions/workflows/ci.yml)
@@ -46,7 +46,6 @@ That's it: you get back a permanent, shareable URL. No account needed to try the
 - **CLI**: publish Markdown from your terminal (`npx booklet-cli`)
 - **GitHub Action**: publish docs in CI via [`AshwinSathian/publish-to-booklet`](https://github.com/AshwinSathian/publish-to-booklet)
 - **MCP server**: expose the API to AI assistants (Claude, Cursor, etc.) via the Model Context Protocol
-<!-- VS Code extension: built, not yet on the Marketplace; re-add once AshwinSathian.booklet-vscode is published -->
 - **Frontmatter**: YAML frontmatter sets title, slug, visibility, tags, author, date
 
 ---
@@ -130,7 +129,7 @@ cd mcp-server && npm run dev
 | Markdown | unified + remark-parse + remark-gfm + remark-math |
 | Math | KaTeX |
 | Diagrams | Mermaid |
-| Analytics | Google Analytics 4 |
+| Analytics | First-party page-view counts (MongoDB) |
 
 ---
 
@@ -138,7 +137,7 @@ cd mcp-server && npm run dev
 
 ### Prerequisites
 
-- Node.js 20+
+- Node.js 24 (see `.nvmrc`)
 - MongoDB connection string (a local `mongod`, or any self-hosted/managed instance)
 
 ### Install & run
@@ -154,7 +153,6 @@ Create `.env.local`:
 
 ```env
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
-NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
 MONGODB_URI=mongodb://localhost:27017/booklet
 
 # Required: dedicated secret that signs/verifies team-invite JWT tokens.
@@ -198,10 +196,9 @@ src/
 packages/           # npm workspaces; one root lockfile covers all of these
   shared/           # booklet-api-client: shared /api/v1 schemas + client
   cli/              # booklet-cli npm package
-  vscode/           # VS Code extension: publish from editor
 mcp-server/         # MCP server (plain Node process, run under PM2)
 .github/
-  workflows/        # ci.yml, publish-cli.yml, publish-shared.yml, publish-vscode.yml
+  workflows/        # ci.yml, publish-cli.yml, publish-shared.yml
   examples/         # publish-to-booklet.yml, use in your own repo
 ```
 
@@ -222,3 +219,18 @@ Required secret: `NPM_TOKEN` (Granular Access Token with publish + 2FA bypass).
 ### Publish docs to Booklet from your repo
 
 Two ways: the [`AshwinSathian/publish-to-booklet`](https://github.com/AshwinSathian/publish-to-booklet) GitHub Action, or `booklet-cli` via `npx`. See [.github/examples/publish-to-booklet.yml](.github/examples/publish-to-booklet.yml) for both — copy it into your own repo's `.github/workflows/`, add a `BOOKLET_API_KEY` secret, and it publishes on every release.
+
+## License
+
+Booklet has two licenses, split by directory.
+
+| Path | License |
+|---|---|
+| Everything not listed below (the Next.js app in `src/`, `scripts/`, `tests/`, `docs/`) | [AGPL-3.0-only](LICENSE) |
+| `packages/cli` (`booklet-cli`) | [MIT](packages/cli/LICENSE) |
+| `packages/shared` (`booklet-api-client`) | [MIT](packages/shared/LICENSE) |
+| `mcp-server` | [MIT](mcp-server/LICENSE) |
+
+The [`publish-to-booklet`](https://github.com/AshwinSathian/publish-to-booklet) GitHub Action lives in its own repository and is MIT.
+
+The app was MIT up to and including commit [`1839525`](https://github.com/AshwinSathian/booklet/commit/183952540525ad2a45089aed5d88fd3f61f7f689). That commit and everything before it can still be used under MIT. Later commits to the app are AGPL-3.0-only: if you run a modified copy as a network service, section 13 requires you to offer its users the source.

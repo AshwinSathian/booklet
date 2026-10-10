@@ -19,6 +19,8 @@ Booklet turns Markdown into a shareable page with one link. Paste or write Markd
 - Password-protected pages (signed-in only)
 - Custom URL slugs (signed-in only)
 - Team spaces: a shared collection of pages under one URL, with invited members
+- New pages are unlisted (not indexed) unless the author makes them public; public pages appear on Explore, newest first
+- Every published page has a "Report this page" link; a taken-down page returns 410 Gone
 
 ## REST API
 
@@ -87,6 +89,7 @@ Repository: https://github.com/AshwinSathian/publish-to-booklet
 - API docs: https://booklet.ashwinsathian.com/api-docs
 - MCP setup: https://booklet.ashwinsathian.com/mcp-setup
 - Explore public pages: https://booklet.ashwinsathian.com/explore
+- Source code: https://github.com/AshwinSathian/booklet
 
 ## Pricing
 
@@ -97,6 +100,8 @@ Free, permanently — there is no paid tier. Anonymous publishing needs no accou
 - Next.js 16 (App Router), TypeScript, Tailwind CSS
 - Self-hosted MongoDB; the app runs as a single process behind a Cloudflare Tunnel
 - No user content is used for training or resold
+- No third-party analytics or tracking scripts
+- Open source: the app is AGPL-3.0-only; the CLI, API client, MCP server and GitHub Action are MIT
 - XSS-safe: content renders through a custom block-based AST renderer, never as raw injected HTML
 
 ## Templates available
