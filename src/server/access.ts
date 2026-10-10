@@ -74,10 +74,15 @@ export async function getWritableSpace(ref: { slug: unknown } | { id: unknown },
   return space;
 }
 
-/** `team` visibility only means something for a page in a team space. */
-export async function assertVisibilityAllowed(visibility: unknown, collectionId: string | null): Promise<void> {
+/**
+ * `team` visibility only means something for a page in a team space, and
+ * only a current member of that space may set it. A page stays in a space
+ * after its owner is removed from it; that page must not become a
+ * team-only one, which may link to the space's other team-only pages.
+ */
+export async function assertVisibilityAllowed(visibility: unknown, collectionId: string | null, userId: string): Promise<void> {
   if (visibility !== "team") return;
-  if (!collectionId || !(await getCollectionRecord(collectionId))?.is_team_space) {
+  if (!collectionId || !(await spaceRole(await getCollectionRecord(collectionId), userId))) {
     throw new ServiceError(
       "TEAM_VISIBILITY_NEEDS_SPACE",
       "visibility 'team' is only for a page in a team space. Publish it with `space`, or move it into a space first.",

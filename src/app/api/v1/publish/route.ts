@@ -58,7 +58,7 @@ async function publish(req: Request, userId: string, bodyText: string): Promise<
     payload.visibility === "public" || payload.visibility === "unlisted" || payload.visibility === "team"
       ? payload.visibility
       : (declared.visibility ?? "unlisted");
-  await assertVisibilityAllowed(visibility, space?.id ?? null);
+  await assertVisibilityAllowed(visibility, space?.id ?? null, userId);
 
   const id = createId(10);
   const origin = getSiteOrigin(req);

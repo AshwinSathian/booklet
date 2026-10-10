@@ -86,7 +86,7 @@ export async function POST(req: Request) {
       if (userId && payload.space_id !== undefined && payload.space_id !== null) {
         spaceId = (await getWritableSpace({ id: payload.space_id }, userId)).id;
       }
-      if (userId) await assertVisibilityAllowed(visibility, spaceId);
+      if (userId) await assertVisibilityAllowed(visibility, spaceId, userId);
       built = await buildDocument(payload.raw, { id, userId, collectionId: spaceId, visibility }, origin);
     } catch (e) {
       return toErrorResponse(e);

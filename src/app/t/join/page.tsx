@@ -1,4 +1,4 @@
-import { addCollectionMember, getCollectionRecord } from "@/lib/db";
+import { addCollectionMember, getCollectionMember, getCollectionRecord } from "@/lib/db";
 import { getUserById } from "@/lib/db/auth";
 import { createId } from "@/lib/id";
 import { verifyInviteToken } from "@/lib/invite-token";
@@ -64,6 +64,12 @@ export default async function TeamJoinPage({
   // removed could walk back in with the link they joined by.
   if (team.invites_valid_after && (payload.iat ?? 0) * 1000 < Date.parse(team.invites_valid_after)) {
     return <ErrorPage message="This invite link has expired or is invalid." />;
+  }
+
+  // Someone already in the space keeps the role they have: an invite always
+  // carries "editor", and a link opened again must not undo a change to viewer.
+  if (team.user_id === userId || (await getCollectionMember(payload.teamId, userId))) {
+    redirect(`/t/${team.slug ?? payload.teamId}`);
   }
 
   await addCollectionMember(

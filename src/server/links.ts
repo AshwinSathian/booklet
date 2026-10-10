@@ -7,10 +7,11 @@
 
 import type { Block } from "@/lib/blocks";
 import { findLinkTargets, getCollectionRecord } from "@/lib/db";
-import type { DbPage } from "@/lib/db/types";
+import type { DbCollection, DbPage } from "@/lib/db/types";
 import { ROUTES } from "@/lib/constants";
 import { normalizeTitleKey } from "@/lib/wikilinks/resolve";
 import { stripWikilinksFromBlocks } from "@/lib/wikilinks/strip";
+import { spaceRole } from "./access";
 
 /** The page being published. `userId` null is an anonymous publish, which resolves nothing. */
 export type LinkSource = {
@@ -38,14 +39,16 @@ function mayLink(source: DbPage["visibility"], target: DbPage["visibility"]): bo
   return target !== "team" || source === "team";
 }
 
-async function isTeamSpace(collectionId: string | null): Promise<boolean> {
-  return collectionId ? ((await getCollectionRecord(collectionId))?.is_team_space ?? false) : false;
+async function teamSpace(collectionId: string | null): Promise<DbCollection | null> {
+  const collection = collectionId ? await getCollectionRecord(collectionId) : null;
+  return collection?.is_team_space ? collection : null;
 }
 
 /**
  * Returns `blocks` with every wikilink replaced, and the ids of the pages
- * the resolved ones point at. A page in a team space links to that space's
- * pages; any other page links to its author's pages that are in no space.
+ * the resolved ones point at. A page in a team space, published by a member
+ * of it, links to that space's pages; any other page links to its author's
+ * pages that are in no space.
  */
 export async function resolveWikilinks(
   blocks: Block[],
@@ -59,7 +62,10 @@ export async function resolveWikilinks(
   });
   if (!source.userId || wanted.size === 0) return { blocks: stripWikilinksFromBlocks(blocks), targetIds: [] };
 
-  const inSpace = await isTeamSpace(source.collectionId);
+  // The author must still be in the space. A page stays where it is when its
+  // owner is removed, and republishing it with guessed titles would
+  // otherwise confirm the space's page titles and hand back their URLs.
+  const inSpace = (await spaceRole(await teamSpace(source.collectionId), source.userId)) !== null;
   const candidates = await findLinkTargets(
     inSpace ? { spaceId: source.collectionId as string } : { userId: source.userId },
     [...wanted.values()],
@@ -71,7 +77,7 @@ export async function resolveWikilinks(
     if (page.id === source.id || byTitle.has(key) || !mayLink(source.visibility, page.visibility)) continue;
     // Outside a space, the author's pages that sit in some team space are
     // that team's, not part of this page's neighbourhood.
-    if (!inSpace && (await isTeamSpace(page.collection_id))) continue;
+    if (!inSpace && (await teamSpace(page.collection_id))) continue;
     byTitle.set(key, page);
   }
 

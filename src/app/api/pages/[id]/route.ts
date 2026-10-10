@@ -115,7 +115,7 @@ export async function PATCH(
       );
     }
     try {
-      await assertVisibilityAllowed(body.visibility, record.collection_id);
+      await assertVisibilityAllowed(body.visibility, record.collection_id, userId);
     } catch (e) {
       return toErrorResponse(e);
     }

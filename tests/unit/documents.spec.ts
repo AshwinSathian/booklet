@@ -14,7 +14,9 @@ import {
   createCollectionRecord,
   deleteCollectionRecord,
   getBacklinkPages,
+  getCollectionMember,
   getPageRecord,
+  removeCollectionMember,
   markPageTakenDown,
   updateCollectionRecord,
   updatePageRecord,
@@ -26,6 +28,9 @@ import { parseFrontmatter } from "@/lib/frontmatter";
 import { TEMPLATES, getTemplateBySlug, templateMarkdown } from "@/lib/templates";
 import { adrNumber, buildSpaceFeed, groupSpacePages } from "@/lib/space-groups";
 import { getDoc } from "@/lib/storage";
+import { createUser } from "@/lib/db/auth";
+import { signInviteToken } from "@/lib/invite-token";
+import JoinPage from "@/app/t/join/page";
 import { canListPage, canViewPage } from "@/server/access";
 import { deleteAccount, exportPagesZip } from "@/server/account";
 import { DocHeaderStrip } from "@/components/share/DocHeaderStrip";
@@ -543,6 +548,44 @@ test.describe("team-only visibility", () => {
     const theirs = await published(viewer, { raw: "# Viewer's" });
     const refused = web(viewer.cookie, `/api/collections/${s.id}/pages`, { body: { pageId: theirs } });
     expect((await withRequestScope(refused, () => addToCollection(refused, ctx(s.id)))).status).toBe(403);
+  });
+
+  test("a removed member's leftover page is no window into the space", async () => {
+    const owner = await account();
+    const removed = await account();
+    const s = await space(owner, [[removed, "editor"]]);
+    const leftover = await published(removed, { raw: "# Leftover", space: s.slug });
+    await removeCollectionMember(s.id, removed.userId);
+    // Published after the removal: a title the removed member never saw.
+    const secret = await published(owner, { raw: "# Q4 reorganisation plan", space: s.slug, visibility: "team" });
+
+    // They cannot make the leftover page team-only, which would let it link to team-only pages.
+    const toTeam = await v1Patch(api(removed, `/pages/${leftover}`, { method: "PATCH", body: { visibility: "team" } }), ctx(leftover));
+    expect(toTeam.status).toBe(422);
+    const viaWeb = web(removed.cookie, `/api/pages/${leftover}`, { method: "PATCH", body: { visibility: "team" } });
+    expect((await withRequestScope(viaWeb, () => webPatchMeta(viaWeb, ctx(leftover)))).status).toBe(422);
+
+    // And guessing titles through it resolves nothing in the space, by the API or the editor.
+    const guess = "# Leftover\n\n[[Q4 reorganisation plan]]";
+    expect((await v1Patch(api(removed, `/pages/${leftover}`, { method: "PATCH", body: { raw: guess } }), ctx(leftover))).status).toBe(200);
+    expect(links((await getDoc(leftover))!.blocks)).toEqual([]);
+    const update = web(removed.cookie, `/api/publish/${leftover}`, { method: "PATCH", body: { raw: guess } });
+    expect((await withRequestScope(update, () => webUpdate(update, ctx(leftover)))).status).toBe(200);
+    expect(JSON.stringify((await getDoc(leftover))!.blocks)).not.toContain(secret);
+    expect((await getBacklinkPages(secret)).map((p) => p.id)).toEqual([]);
+  });
+
+  test("opening an invite again does not change a member's role", async () => {
+    process.env.INVITE_JWT_SECRET ??= "test-only-invite-secret-do-not-use-in-prod";
+    const owner = await account();
+    const viewer = await account();
+    const address = `viewer-${crypto.randomUUID()}@example.com`;
+    await createUser(viewer.userId, address, null);
+    const s = await space(owner, [[viewer, "viewer"]]);
+    const token = await signInviteToken({ teamId: s.id, invitedEmail: address, invitedBy: owner.userId });
+    await as(viewer.cookie, () => JoinPage({ searchParams: Promise.resolve({ token }) })).catch(() => {});
+    expect((await getCollectionMember(s.id, viewer.userId))?.role).toBe("viewer");
+    await (await getDb()).collection("users").deleteOne({ _id: viewer.userId } as never);
   });
 
   test("`?space=` lists the whole space to a member and is a 404 to anyone else", async () => {

@@ -131,7 +131,7 @@ export const PATCH = v1("patch", 60, "pages:write", async (req: Request, userId:
       if (payload.visibility !== "public" && payload.visibility !== "unlisted" && payload.visibility !== "team") {
         return problem(422, "visibility must be 'public', 'unlisted' or 'team'");
       }
-      await assertVisibilityAllowed(payload.visibility, record.collection_id);
+      await assertVisibilityAllowed(payload.visibility, record.collection_id, userId);
       metaPatch.visibility = payload.visibility;
     }
   }
