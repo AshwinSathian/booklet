@@ -41,6 +41,7 @@ const RELEASES: Release[] = [
       { date: "2026-10-10", tag: "Removed", text: "Emoji reactions on published pages" },
       { date: "2026-10-10", tag: "Removed", text: "The floating \"make your own\" prompt on published pages. The footer attribution stays" },
       { date: "2026-10-10", tag: "Improved", text: "Explore is one list of public pages, newest first, with tag filtering. The Trending and Featured tabs and the \"Feature on Explore\" toggle are gone: a page appears on Explore when its visibility is Public" },
+      { date: "2026-10-10", tag: "Fixed", text: "Typing in the editor's find box no longer jumps into the document, where the next keystroke replaced the first match" },
       { date: "2026-10-10", tag: "Improved", text: "/mcp now redirects to the MCP setup guide" },
       { date: "2026-10-10", tag: "Improved", text: "The service runs on Node.js 24. The CLI and API client now require Node.js 22 or later, starting with their next release" },
     ],

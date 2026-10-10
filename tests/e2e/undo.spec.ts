@@ -28,6 +28,22 @@ async function openEditorWith(page: Page, content: string) {
   return textarea;
 }
 
+// Typing in "Find…" used to move focus to the textarea with the first match
+// selected, so the next keystroke replaced that match in the document.
+test("typing a search term keeps focus in the find box and leaves the document alone", async ({ page }) => {
+  const textarea = await openEditorWith(page, "cat dog cat");
+  await page.getByTitle("Find & replace (⌘F)").click();
+  const find = page.getByPlaceholder("Find…");
+  await find.pressSequentially("cat", { delay: 60 });
+  await expect(find).toHaveValue("cat");
+  await expect(find).toBeFocused();
+  await expect(textarea).toHaveValue("cat dog cat");
+
+  // Enter is an explicit "go to match": focus moves, the match is selected.
+  await find.press("Enter");
+  await expect(textarea).toBeFocused();
+});
+
 test.describe("undo after programmatic edits", () => {
   test("Bold on a selected word is undone by the platform undo shortcut", async ({ page }) => {
     const textarea = await openEditorWith(page, "alpha beta gamma");
@@ -57,15 +73,8 @@ test.describe("undo after programmatic edits", () => {
   test("replace-all is undone in one step", async ({ page }) => {
     const textarea = await openEditorWith(page, "cat dog cat");
     await page.getByTitle("Find & replace (⌘F)").click();
-    // Replacement first, then the search term: typing in "Find…" queues a
-    // requestAnimationFrame that moves focus to the textarea and selects the
-    // first match (FindReplaceBar.jumpToMatch). Filling "Replace with…"
-    // after it raced that focus change about 1 run in 30, and the
-    // replacement text landed in the textarea instead. Waiting for the
-    // focus move makes the order deterministic.
-    await page.getByPlaceholder("Replace with…").fill("bird");
     await page.getByPlaceholder("Find…").fill("cat");
-    await expect(textarea).toBeFocused();
+    await page.getByPlaceholder("Replace with…").fill("bird");
     await page.getByRole("button", { name: "All", exact: true }).click();
     await expect(textarea).toHaveValue("bird dog bird");
 

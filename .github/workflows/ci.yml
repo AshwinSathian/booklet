@@ -58,6 +58,16 @@ jobs:
           fi
       - run: npm ci --prefer-offline
       - run: npm run lint
+      # The app is AGPL-3.0-only, so every production dependency must carry a
+      # license that can be combined with it. A new dependency under anything
+      # else fails here and gets a decision instead of slipping in. Known
+      # non-obvious entries: @img/sharp-libvips (LGPL, a separate native
+      # library), caniuse-lite (CC-BY data), geist (OFL-1.1 font, which the
+      # checker reports as "MIT*").
+      - name: Production dependency licenses
+        run: >-
+          npx --yes license-checker@25.0.1 --production --excludePrivatePackages --summary
+          --onlyAllow 'MIT;MIT-0;ISC;BSD-2-Clause;BSD-3-Clause;Apache-2.0;0BSD;CC0-1.0;Unlicense;BlueOak-1.0.0;MPL-2.0;Python-2.0;CC-BY-4.0;LGPL-3.0-or-later'
 
   typecheck-root:
     name: Typecheck (root)

@@ -56,6 +56,8 @@ code.
   publish with the stored Markdown cut off at 200,000 characters.
 - Undo reverses toolbar formatting, slash-menu inserts, wikilink completion
   and replace-all in the editor.
+- Typing in the editor's find box no longer moves focus into the document,
+  where the next keystroke replaced the first match.
 - User-authored links carry `rel="nofollow ugc noopener noreferrer"`.
 - Setup and API pages showed the key prefix and secret names from before
   the project was renamed.
