@@ -1,27 +1,19 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.AshwinSathian/booklet",
-  "description": "Publish, update, list, and delete Markdown pages on Booklet directly from your AI assistant.",
+  "description": "Publish, update, read, list and delete Markdown pages on Booklet from your AI assistant. Sign in with OAuth.",
   "repository": {
     "url": "https://github.com/AshwinSathian/booklet",
     "source": "github",
     "id": "1146975942",
     "subfolder": "mcp-server"
   },
-  "version": "2.0.0",
+  "version": "3.0.0",
   "websiteUrl": "https://booklet.ashwinsathian.com/mcp-setup",
   "remotes": [
     {
       "type": "streamable-http",
-      "url": "https://booklet-mcp.ashwinsathian.com/mcp",
-      "headers": [
-        {
-          "description": "Booklet API key, as 'Bearer <bklt_...>'",
-          "isRequired": true,
-          "isSecret": true,
-          "name": "Authorization"
-        }
-      ]
+      "url": "https://booklet-mcp.ashwinsathian.com/mcp"
     }
   ]
 }

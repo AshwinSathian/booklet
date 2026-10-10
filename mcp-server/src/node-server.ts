@@ -12,6 +12,9 @@ const PORT = Number(process.env.PORT ?? 8788);
 // Mirror the Env bindings expected by the Worker
 const env = {
   BOOKLET_API_BASE: process.env.BOOKLET_API_BASE ?? "http://localhost:3100",
+  // Optional: the defaults in index.ts are the production hostnames.
+  ...(process.env.BOOKLET_PUBLIC_URL ? { BOOKLET_PUBLIC_URL: process.env.BOOKLET_PUBLIC_URL } : {}),
+  ...(process.env.MCP_PUBLIC_URL ? { MCP_PUBLIC_URL: process.env.MCP_PUBLIC_URL } : {}),
 };
 
 const server = http.createServer(async (req, res) => {

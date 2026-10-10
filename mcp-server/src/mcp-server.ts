@@ -1,4 +1,4 @@
-import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { McpServer, ResourceTemplate } from "@modelcontextprotocol/server";
 import { z } from "zod";
 import {
   PublishPageInputSchema,
@@ -24,8 +24,10 @@ import { PROMPT_DEFINITIONS, renderPrompt } from "./prompts.js";
 
 // Must match mcp-server/package.json and mcp-server/server.json (the MCP
 // registry entry); tests/unit/mcp-version.spec.ts checks all three.
-export const SERVER_VERSION = "2.0.0";
+export const SERVER_VERSION = "3.0.0";
 
+// Tools are registered, and so listed, in this order. Keep it fixed: a
+// client caches tools/list, and a reordered list is a changed list.
 export const TOOL_NAMES = [
   "publish_page",
   "update_page",
@@ -38,12 +40,25 @@ export const PROMPT_NAMES = PROMPT_DEFINITIONS.map((p) => p.name);
 
 /**
  * Builds a fresh, fully-wired McpServer for a single request. Stateless by
- * design (no session, no state kept between calls) — matches the
- * WebStandardStreamableHTTPServerTransport's stateless mode used in
- * index.ts, and the server's pre-existing per-request auth model.
+ * design (no session, no state kept between calls): createMcpHandler in
+ * index.ts calls this once per request, for both protocol eras. `apiKey` is
+ * the caller's bearer credential, an API key or an OAuth access token.
  */
 export function createMcpServer(apiBase: string, apiKey: string): McpServer {
-  const server = new McpServer({ name: "booklet", version: SERVER_VERSION });
+  const server = new McpServer(
+    { name: "booklet", version: SERVER_VERSION },
+    {
+      // Cache hints for protocol 2026-07-28 list results; 2025-era responses
+      // are unaffected. "private" everywhere: the resource list is per
+      // account, and the rest costs nothing to keep private too.
+      cacheHints: {
+        "tools/list": { ttlMs: 300_000, cacheScope: "private" },
+        "prompts/list": { ttlMs: 300_000, cacheScope: "private" },
+        "resources/templates/list": { ttlMs: 300_000, cacheScope: "private" },
+        "resources/list": { ttlMs: 30_000, cacheScope: "private" },
+      },
+    },
+  );
 
   server.registerTool(
     "publish_page",

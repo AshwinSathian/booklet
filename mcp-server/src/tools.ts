@@ -1,5 +1,5 @@
 import type { z } from "zod";
-import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
+import { ResourceNotFoundError, type CallToolResult } from "@modelcontextprotocol/server";
 import { ERRORS, type McpErrorShape } from "./errors.js";
 import { createClient, BookletApiError, type PageListItem, type PatchPageRequest } from "booklet-api-client";
 import type {
@@ -35,7 +35,8 @@ function mapUpstreamError(err: BookletApiError): McpErrorShape {
   if (status === 401) return ERRORS.UNAUTHORIZED();
   if (status === 403) return ERRORS.FORBIDDEN();
   if (status === 404) return ERRORS.NOT_FOUND("Page");
-  if (status === 413) return ERRORS.DOCUMENT_TOO_LARGE();
+  // The API says which of its two size limits was hit; pass that on.
+  if (status === 413) return ERRORS.VALIDATION(message);
   if (status === 429) return ERRORS.RATE_LIMITED();
   if (status === 400 || status === 409 || status === 422) return ERRORS.VALIDATION(message);
   return ERRORS.UPSTREAM(status);
@@ -303,21 +304,19 @@ export async function handleResourcesList(apiKey: string, apiBase: string): Prom
 }
 
 export async function handleResourcesRead(uri: string, apiKey: string, apiBase: string): Promise<unknown> {
-  const match = uri.match(/^booklet:\/\/pages\/(.+)$/);
-  if (!match) {
-    return {
-      contents: [{ uri, mimeType: "text/plain", text: `Error: Invalid resource URI: ${uri}` }],
-    };
-  }
+  // An unknown resource is a protocol error (-32602 since 2026-07-28), not
+  // a successful read whose text says "error".
+  const id = uri.match(/^booklet:\/\/pages\/(.+)$/)?.[1];
+  if (!id) throw new ResourceNotFoundError(uri);
 
-  const id = match[1] ?? "";
   let r;
   try {
     r = await client(apiKey, apiBase).getPage(id);
-  } catch {
-    return {
-      contents: [{ uri, mimeType: "text/plain", text: `Error: Page not found or access denied.` }],
-    };
+  } catch (e) {
+    if (e instanceof BookletApiError && (e.status === 404 || e.status === 403 || e.status === 410)) {
+      throw new ResourceNotFoundError(uri);
+    }
+    throw e;
   }
 
   const text = r.raw ?? `*(No raw Markdown stored for page ${id})*`;
