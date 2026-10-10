@@ -19,7 +19,7 @@
 import https from "node:https";
 import { getDb } from "@/lib/mongodb";
 import { createId } from "@/lib/id";
-import { bareHostname, resolveHostForDelivery } from "@/lib/ssrf-guard";
+import { bareHostname, pinnedLookup, resolveHostForDelivery } from "@/lib/ssrf-guard";
 
 export type OAuthClient = {
   client_id: string;
@@ -144,7 +144,15 @@ function isMetadataUrl(clientId: string): URL | null {
  * answer differently at connect time). No redirects are followed.
  */
 function fetchJsonPinned(url: URL, address: string, family: 4 | 6): Promise<unknown> {
-  return new Promise((resolve) => {
+  return new Promise((done) => {
+    // `timeout` below only fires when the socket goes idle. This is the
+    // deadline for the whole exchange, so a server that drips bytes cannot
+    // hold the request open.
+    const deadline = setTimeout(() => req.destroy(), METADATA_TIMEOUT_MS);
+    const resolve = (value: unknown) => {
+      clearTimeout(deadline);
+      done(value);
+    };
     const req = https.request(
       {
         hostname: url.hostname,
@@ -153,7 +161,7 @@ function fetchJsonPinned(url: URL, address: string, family: 4 | 6): Promise<unkn
         method: "GET",
         headers: { Host: url.host, Accept: "application/json", "User-Agent": "Booklet-OAuth/1.0" },
         timeout: METADATA_TIMEOUT_MS,
-        lookup: (_h, _o, cb) => cb(null, address, family),
+        lookup: pinnedLookup(address, family),
         servername: url.hostname,
       },
       (res) => {

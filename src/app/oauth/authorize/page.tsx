@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { OAuthConsent } from "@/components/auth/OAuthConsent";
 import { absoluteUrl } from "@/lib/seo";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { validateAuthorizeRequest, type AuthorizeParams } from "@/lib/oauth/server";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -46,6 +47,22 @@ export default async function OAuthAuthorizePage({
     ? new URL(absoluteUrl("/")).origin
     : `${h.get("x-forwarded-proto") ?? "http"}://${h.get("host")}`;
 
+  // Sign-in comes first. Validating the request can fetch the client's
+  // metadata document from a host the caller chose, and that is not
+  // something to do for an anonymous visitor.
+  const session = await getSession();
+  if (!session) {
+    const qs = new URLSearchParams(Object.entries(params).filter((e): e is [string, string] => e[1] !== undefined));
+    redirect(`/sign-in?redirect_url=${encodeURIComponent(`/oauth/authorize?${qs}`)}`);
+  }
+  if (await checkRateLimit(`oauth_authorize_page__${session.userId}`, 30)) {
+    return (
+      <AuthLayout>
+        <p className="text-sm text-text-secondary">Too many attempts. Wait a minute and try again.</p>
+      </AuthLayout>
+    );
+  }
+
   const validation = await validateAuthorizeRequest(params, issuer);
   if (!validation.ok) {
     // Never redirect from here. Anyone can register a client with any
@@ -66,12 +83,6 @@ export default async function OAuthAuthorizePage({
         </Link>
       </AuthLayout>
     );
-  }
-
-  const session = await getSession();
-  if (!session) {
-    const qs = new URLSearchParams(Object.entries(params).filter((e): e is [string, string] => e[1] !== undefined));
-    redirect(`/sign-in?redirect_url=${encodeURIComponent(`/oauth/authorize?${qs}`)}`);
   }
 
   const { client, redirectUri, scope } = validation.request;

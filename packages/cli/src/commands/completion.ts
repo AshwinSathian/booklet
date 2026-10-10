@@ -63,7 +63,8 @@ export function registerCompletionCommand(program: Command) {
     .command("completion <shell>")
     .description("Print a shell completion script (bash, zsh, or fish)")
     .action((shell: string) => {
-      const script = { bash: BASH_SCRIPT, zsh: ZSH_SCRIPT, fish: FISH_SCRIPT }[shell];
+      const scripts: Record<string, string> = { bash: BASH_SCRIPT, zsh: ZSH_SCRIPT, fish: FISH_SCRIPT };
+      const script = Object.hasOwn(scripts, shell) ? scripts[shell] : undefined;
       if (!script) {
         throw new CliError(`Unsupported shell: ${shell}. Supported: bash, zsh, fish.`, EXIT.USAGE);
       }

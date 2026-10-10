@@ -43,7 +43,11 @@ export const INDEX_SPECS = [
   { collection: "password_reset_tokens", spec: { expires_at: 1 }, options: { expireAfterSeconds: 0 } },
 
   // --- pages ---
-  { collection: "pages", spec: { user_id: 1, created_at: -1 } },
+  // _id is the tie-breaker of the listing sort (getPagesByUser) and of its
+  // keyset cursor, so it is part of the index. The index this replaced,
+  // { user_id: 1, created_at: -1 }, may still exist in an older database;
+  // it is harmless and can be dropped.
+  { collection: "pages", spec: { user_id: 1, created_at: -1, _id: -1 } },
   { collection: "pages", spec: { collection_id: 1, user_id: 1 } },
   {
     collection: "pages",

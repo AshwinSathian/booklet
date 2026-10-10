@@ -17,7 +17,8 @@ function formatDate(iso: string): string {
 }
 
 async function confirm(question: string): Promise<boolean> {
-  const rl = createInterface({ input: process.stdin, output: process.stdout });
+  // The prompt goes to stderr: under --json, stdout carries only the result.
+  const rl = createInterface({ input: process.stdin, output: process.stderr });
   return new Promise((resolve) => {
     rl.question(`${question} [y/N] `, (ans) => {
       rl.close();

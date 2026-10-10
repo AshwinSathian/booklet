@@ -30,6 +30,10 @@ test.beforeAll(() => {
     if (url.origin !== ENV.BOOKLET_API_BASE) throw new Error(`unexpected fetch: ${url}`);
     apiCalls.push(`${req.method} ${url.pathname} ${req.headers.get("authorization")}`);
     if (url.pathname === "/api/oauth/tokeninfo") return tokeninfo();
+    if (url.pathname === "/api/v1/publish") {
+      const detail = "This token does not have the pages:write scope.";
+      return Response.json({ type: "about:blank", title: "Forbidden", status: 403, detail, error: detail }, { status: 403 });
+    }
     if (url.pathname === "/api/v1/pages") {
       return Response.json({ pages: [], total: 0, limit: 20, offset: 0, next_cursor: null });
     }
@@ -142,6 +146,15 @@ test.describe("authorization", () => {
     const client = await connect(OAUTH_TOKEN);
     await client.callTool({ name: "list_pages", arguments: {} });
     expect(apiCalls).toContain(`GET /api/v1/pages Bearer ${OAUTH_TOKEN}`);
+    await client.close();
+  });
+
+  test("a tool the token's scopes do not cover says so, not 'you do not own this page'", async () => {
+    tokeninfo = () => Response.json({ active: true, client_id: "c1", scope: "pages:read", exp: exp(), resource: ENV.MCP_PUBLIC_URL });
+    const client = await connect(OAUTH_TOKEN);
+    const result = await client.callTool({ name: "publish_page", arguments: { raw: "# Hi" } });
+    expect(result.isError).toBe(true);
+    expect(JSON.stringify(result.content)).toContain("pages:write scope");
     await client.close();
   });
 

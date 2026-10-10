@@ -40,6 +40,10 @@ export function OAuthConsent({
         return;
       }
       window.location.href = data.redirect;
+      // An https redirect unloads this page. A native app's own scheme
+      // (cursor://, vscode://) does not, so give the buttons back in case
+      // the hand-off was dismissed and the user wants to try again.
+      setTimeout(() => setStatus("idle"), 3000);
     } catch {
       setStatus("error");
       setError("Something went wrong. Please try again.");

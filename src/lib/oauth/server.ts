@@ -56,8 +56,10 @@ type TokenDoc = {
   scope: OAuthScope[];
   resource: string;
   expires_at: Date; // TTL index
-  /** Refresh tokens only: set when exchanged. A second use is a replay. */
+  /** Refresh tokens only: set when exchanged. A later use is a replay. */
   rotated_at: Date | null;
+  /** Set on every token of a grant when the grant is withdrawn. */
+  revoked_at?: Date;
 };
 
 async function codes() {
@@ -177,16 +179,37 @@ async function issueTokens(grant: Pick<TokenDoc, "grant_id" | "client_id" | "use
   const access = `bkat_${createId(40)}`;
   const refresh = `bkrt_${createId(40)}`;
   const now = Date.now();
-  await (await tokens()).insertMany([
-    { ...grant, _id: await hashApiKey(access), kind: "access", expires_at: new Date(now + ACCESS_TOKEN_TTL_S * 1000), rotated_at: null },
-    { ...grant, _id: await hashApiKey(refresh), kind: "refresh", expires_at: new Date(now + REFRESH_TOKEN_TTL_S * 1000), rotated_at: null },
+  const col = await tokens();
+  const ids = [await hashApiKey(access), await hashApiKey(refresh)];
+  await col.insertMany([
+    { ...grant, _id: ids[0], kind: "access", expires_at: new Date(now + ACCESS_TOKEN_TTL_S * 1000), rotated_at: null },
+    { ...grant, _id: ids[1], kind: "refresh", expires_at: new Date(now + REFRESH_TOKEN_TTL_S * 1000), rotated_at: null },
   ]);
+  // The grant may have been withdrawn while this request was running (a
+  // replay detected by a parallel request). Its other tokens carry the
+  // mark; tokens issued after it must not outlive it.
+  if (await col.findOne({ grant_id: grant.grant_id, revoked_at: { $exists: true } })) {
+    await col.updateMany({ _id: { $in: ids } }, { $set: { revoked_at: new Date() } });
+    throw new OAuthTokenError("invalid_grant", "This authorization was withdrawn. Sign in again.");
+  }
   return { access_token: access, token_type: "Bearer", expires_in: ACCESS_TOKEN_TTL_S, refresh_token: refresh, scope: grant.scope.join(" ") };
 }
 
+/**
+ * Withdraws a grant. Its tokens are marked, not deleted: the marks are how
+ * a request that is issuing tokens for the same grant at this moment finds
+ * out (see issueTokens), and how a later replay is still recognized. The
+ * TTL index removes the rows when they would have expired anyway.
+ */
 async function revokeGrant(grantId: string): Promise<void> {
-  await (await tokens()).deleteMany({ grant_id: grantId });
+  await (await tokens()).updateMany({ grant_id: grantId }, { $set: { revoked_at: new Date() } });
 }
+
+// A refresh token may be used again for this long after its first use. A
+// client whose first response was lost, or which refreshed from two workers
+// at once, gets a second pair instead of losing the grant. After the window
+// a second use is treated as theft.
+const REFRESH_REUSE_GRACE_MS = 10_000;
 
 const CODE_VERIFIER = /^[A-Za-z0-9\-._~]{43,128}$/;
 
@@ -242,9 +265,20 @@ export async function exchangeRefreshToken(form: { refresh_token?: string; clien
 
   const _id = await hashApiKey(refresh_token);
   const col = await tokens();
-  const doc = await col.findOneAndUpdate({ _id, kind: "refresh", rotated_at: null }, { $set: { rotated_at: new Date() } });
+  const now = new Date();
+  const doc = await col.findOneAndUpdate(
+    {
+      _id,
+      kind: "refresh",
+      revoked_at: { $exists: false },
+      $or: [{ rotated_at: null }, { rotated_at: { $gt: new Date(now.getTime() - REFRESH_REUSE_GRACE_MS) } }],
+    },
+    // Keep the time of the first use, so the grace window does not slide.
+    [{ $set: { rotated_at: { $ifNull: ["$rotated_at", now] } } }],
+  );
   if (!doc) {
-    // A refresh token used a second time: it was copied. Withdraw the grant.
+    // A refresh token used again after the grace window: it was copied.
+    // Withdraw the grant.
     const replayed = await col.findOne({ _id, kind: "refresh" });
     if (replayed) await revokeGrant(replayed.grant_id);
     throw new OAuthTokenError("invalid_grant", "The refresh token is invalid or was already used.");
@@ -274,6 +308,7 @@ export async function revokeToken(token: string): Promise<void> {
   if (doc) await revokeGrant(doc.grant_id);
 }
 
+
 /** Withdraws every grant a user has given. For password changes and account deletion. */
 export async function revokeAllForUser(userId: string): Promise<void> {
   await (await tokens()).deleteMany({ user_id: userId });
@@ -289,7 +324,7 @@ export async function verifyAccessToken(raw: string): Promise<AccessTokenInfo | 
   const doc = await (await tokens()).findOne({ _id: await hashApiKey(raw), kind: "access" });
   // The TTL index removes expired tokens within about a minute; this check
   // covers that minute.
-  if (!doc || doc.expires_at.getTime() <= Date.now()) return null;
+  if (!doc || doc.revoked_at || doc.expires_at.getTime() <= Date.now()) return null;
   // Tokens are only ever issued for oauthResource(). If that setting
   // changes, tokens for the old value stop working.
   if (doc.resource !== oauthResource()) return null;

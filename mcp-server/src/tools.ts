@@ -33,7 +33,9 @@ function client(apiKey: string, apiBase: string) {
 function mapUpstreamError(err: BookletApiError): McpErrorShape {
   const { status, message } = err;
   if (status === 401) return ERRORS.UNAUTHORIZED();
-  if (status === 403) return ERRORS.FORBIDDEN();
+  // 403 is "not your page", or an OAuth token without the scope this tool
+  // needs. The API's message says which; "Forbidden" alone is the first.
+  if (status === 403) return message === "Forbidden" ? ERRORS.FORBIDDEN() : ERRORS.VALIDATION(message);
   if (status === 404) return ERRORS.NOT_FOUND("Page");
   // The API says which of its two size limits was hit; pass that on.
   if (status === 413) return ERRORS.VALIDATION(message);

@@ -184,6 +184,8 @@ test("new writes a template, refuses to overwrite, and rejects an unknown name",
 
   const unknown = await cli(["new", "nope"], { cwd });
   expect(unknown.code).toBe(2);
+  // A name every object inherits is still not a template.
+  expect((await cli(["new", "constructor"], { cwd })).code).toBe(2);
   expect(existsSync(join(cwd, "nope.md"))).toBe(false);
 
   for (const name of ["incident", "rfc", "runbook", "release-notes"]) {
@@ -218,6 +220,7 @@ test("completion --json", async () => {
   const r = await cli(["completion", "zsh", "--json"]);
   expect(r.json()).toMatchObject({ shell: "zsh" });
   expect((await cli(["completion", "tcsh"])).code).toBe(2);
+  expect((await cli(["completion", "constructor"])).code).toBe(2);
 });
 
 test.describe("exit codes", () => {

@@ -264,13 +264,32 @@ test("code replay: the second use fails and withdraws the tokens the first use g
   expect(results.filter((r) => r.status === 200)).toHaveLength(1);
 });
 
-test("refresh token replay withdraws the grant", async () => {
+test("refresh token reuse: tolerated for a few seconds, then it withdraws the grant", async () => {
   const g = await getCode();
   const first = await (await redeem(g)).json();
-  const second = await (await tokenRequest({ grant_type: "refresh_token", refresh_token: first.refresh_token, client_id: g.clientId })).json();
-  const replay = await tokenRequest({ grant_type: "refresh_token", refresh_token: first.refresh_token, client_id: g.clientId });
-  expect(replay.status).toBe(400);
+  const refresh = () => tokenRequest({ grant_type: "refresh_token", refresh_token: first.refresh_token, client_id: g.clientId });
+
+  // A client whose first response was lost retries at once, or two workers
+  // refresh together: each gets a working pair and the grant survives.
+  const [a, b] = await Promise.all([refresh(), refresh()]);
+  expect([a.status, b.status]).toEqual([200, 200]);
+  const second = await a.json();
+  expect((await listPages(new Request(`${ORIGIN}/api/v1/pages`, api(second.access_token)))).status).toBe(200);
+
+  // The same token again after the grace window is a stolen token.
+  await (await getDb())
+    .collection("oauth_tokens")
+    .updateOne({ _id: await hashApiKey(first.refresh_token) } as never, { $set: { rotated_at: new Date(Date.now() - 60_000) } });
+  expect((await refresh()).status).toBe(400);
   expect((await listPages(new Request(`${ORIGIN}/api/v1/pages`, api(second.access_token)))).status).toBe(401);
+
+  // The grant stays withdrawn: its other refresh tokens are dead too, and
+  // the marked rows are still there to say why.
+  const again = await tokenRequest({ grant_type: "refresh_token", refresh_token: second.refresh_token, client_id: g.clientId });
+  expect(again.status).toBe(400);
+  const rows = await (await getDb()).collection("oauth_tokens").find({ user_id: g.user.userId }).toArray();
+  expect(rows.length).toBeGreaterThan(0);
+  expect(rows.every((r) => r.revoked_at instanceof Date)).toBe(true);
 });
 
 test.describe("a token for another resource", () => {

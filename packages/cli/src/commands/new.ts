@@ -14,7 +14,8 @@ export function registerNewCommand(program: Command) {
     .option("--force", "Overwrite the file if it exists")
     .addHelpText("after", `\nTemplates:\n${NAMES.map((n) => `  ${n.padEnd(15)}${TEMPLATES[n].description}`).join("\n")}`)
     .action(async (template: string, opts: { output?: string; force?: boolean }) => {
-      const entry = TEMPLATES[template];
+      // hasOwn: "constructor" and friends are not templates.
+      const entry = Object.hasOwn(TEMPLATES, template) ? TEMPLATES[template] : undefined;
       if (!entry) {
         throw new CliError(`Unknown template "${template}". Choose one of: ${NAMES.join(", ")}.`, EXIT.USAGE);
       }
