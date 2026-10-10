@@ -46,4 +46,12 @@ Use a [GitHub issue](https://github.com/AshwinSathian/booklet/issues/new/choose)
 
 ## License
 
-By contributing, you agree your changes are licensed under the project's [MIT license](LICENSE).
+Booklet is licensed per directory: the app is AGPL-3.0-only, and `packages/cli`, `packages/shared` and `mcp-server` are MIT (see the [License](README.md#license) section of the README).
+
+By contributing, you agree that:
+
+1. Your changes are licensed under the license of the directory they touch.
+2. You certify the [Developer Certificate of Origin 1.1](https://developercertificate.org/) for them. Sign off every commit with `git commit -s`, which adds a `Signed-off-by:` line with your name and email.
+3. You grant the maintainer (Ashwin Sathian) a perpetual, worldwide, non-exclusive, royalty-free, irrevocable license to relicense your contribution under other terms, including terms that are not open source.
+
+Point 3 has not been reviewed by a lawyer. It needs that review before the project is offered under a second license.

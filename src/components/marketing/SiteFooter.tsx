@@ -1,5 +1,5 @@
 import { AppLogo } from "@/components/ui/AppLogo";
-import { APP_NAME, ROUTES } from "@/lib/constants";
+import { APP_NAME, REPO_URL, ROUTES } from "@/lib/constants";
 import Link from "next/link";
 
 function cn(...classes: Array<string | false | null | undefined>) {
@@ -43,6 +43,10 @@ export function SiteFooter({ className }: SiteFooterProps) {
               <Link href="/about" className="transition hover:text-text-primary">About</Link>
               <Link href="/privacy" className="transition hover:text-text-primary">Privacy</Link>
               <Link href="/terms" className="transition hover:text-text-primary">Terms</Link>
+              {/* AGPL-3.0 section 13: users of the hosted app are offered its source. */}
+              <a href={REPO_URL} target="_blank" rel="noopener noreferrer" className="transition hover:text-text-primary">
+                Source
+              </a>
               {STATUS_PAGE_URL ? (
                 <a
                   href={STATUS_PAGE_URL}
@@ -58,7 +62,7 @@ export function SiteFooter({ className }: SiteFooterProps) {
 
           {/* Bottom row: copyright */}
           <div className="mt-8 border-t border-border-subtle pt-6 text-[12px] text-text-muted">
-            © {new Date().getFullYear()} {APP_NAME}. All rights reserved.
+            © {new Date().getFullYear()} {APP_NAME}. Licensed under AGPL-3.0.
           </div>
         </div>
       </div>

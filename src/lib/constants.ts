@@ -1,4 +1,5 @@
 export const APP_NAME = "Booklet";
+export const REPO_URL = "https://github.com/AshwinSathian/booklet";
 
 export const ROUTES = {
   home: "/",
