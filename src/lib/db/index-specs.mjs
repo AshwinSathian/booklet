@@ -85,6 +85,14 @@ export const INDEX_SPECS = [
   // schedule via `expiresAt`, so one TTL index covers both bucket shapes.
   { collection: "rate_limits", spec: { expiresAt: 1 }, options: { expireAfterSeconds: 0 } },
 
+  // --- OAuth authorization server (src/lib/oauth/server.ts) ---
+  // Codes and tokens are keyed by their hash (_id). TTL indexes remove them
+  // once expired; grant_id backs "revoke everything from this consent".
+  { collection: "oauth_codes", spec: { purge_at: 1 }, options: { expireAfterSeconds: 0 } },
+  { collection: "oauth_tokens", spec: { expires_at: 1 }, options: { expireAfterSeconds: 0 } },
+  { collection: "oauth_tokens", spec: { grant_id: 1 } },
+  { collection: "oauth_tokens", spec: { user_id: 1 } },
+
   // --- idempotency_keys ---
   // Stored responses for `Idempotency-Key` on POST /api/v1/publish
   // (src/server/idempotency.ts). Kept for 24 hours.
