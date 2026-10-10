@@ -102,7 +102,7 @@ function cli(args: string[], opts: { key?: string | null; stdin?: string; cwd?: 
   };
   if (opts.key !== null) env.BOOKLET_API_KEY = opts.key ?? KEY;
   return new Promise((done) => {
-    const child = execFile(process.execPath, [BIN, ...args], { env, cwd: opts.cwd ?? home }, (err, stdout, stderr) => {
+    const child = execFile(process.execPath, [BIN, ...args], { env: env as NodeJS.ProcessEnv, cwd: opts.cwd ?? home }, (err, stdout, stderr) => {
       const code = err ? (typeof err.code === "number" ? err.code : 1) : 0;
       done({ code, stdout, stderr, json: () => JSON.parse(stdout) });
     });
