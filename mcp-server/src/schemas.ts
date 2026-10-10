@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { VisibilitySchema } from "booklet-api-client";
+import { MAX_RAW_CHARS, VisibilitySchema } from "booklet-api-client";
 
 // Mirrors src/lib/slug.ts's canonical rule in the main app (3-60 chars,
 // no leading/trailing/consecutive hyphens) — this package is a standalone
@@ -28,12 +28,15 @@ const slugSchema = z
     'Custom URL slug, e.g. "my-release-notes". 3-60 lowercase letters/numbers/hyphens, no leading, trailing, or consecutive hyphens. Results in a URL like /p/my-release-notes.',
   );
 
+const MAX_RAW_LABEL = MAX_RAW_CHARS.toLocaleString("en-US");
+const RAW_TOO_LONG = `\`raw\` exceeds ${MAX_RAW_LABEL} character limit`;
+
 export const PublishPageInputSchema = z.object({
   raw: z
     .string()
     .min(1, "`raw` must be a non-empty string")
-    .max(350_000, "`raw` exceeds 350,000 character limit")
-    .describe("Markdown content to publish (GFM + Mermaid diagrams). Max 350,000 characters."),
+    .max(MAX_RAW_CHARS, RAW_TOO_LONG)
+    .describe(`Markdown content to publish (GFM + Mermaid diagrams). Max ${MAX_RAW_LABEL} characters.`),
   title: z.string().optional().describe("Overrides the page title. Defaults to the first H1 in `raw`."),
   slug: slugSchema.optional(),
   visibility: VisibilitySchema.optional().describe(
@@ -47,7 +50,7 @@ export const UpdatePageInputSchema = z
     raw: z
       .string()
       .min(1, "`raw` must be a non-empty string if provided")
-      .max(350_000, "`raw` exceeds 350,000 character limit")
+      .max(MAX_RAW_CHARS, RAW_TOO_LONG)
       .optional()
       .describe("New Markdown content. Replaces the existing content entirely."),
     slug: slugSchema

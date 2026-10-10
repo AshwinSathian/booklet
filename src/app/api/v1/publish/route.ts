@@ -15,7 +15,7 @@ import { validateBlocks } from "@/lib/block-schema";
 import { collectRichBlockKinds } from "@/lib/block-usage";
 import { putDoc } from "@/lib/storage";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { assertSlugAvailable } from "@/server/pages";
+import { assertRawWithinLimit, assertSlugAvailable } from "@/server/pages";
 import { toErrorResponse } from "@/server/errors";
 import { getSiteOrigin } from "@/lib/site-url";
 import { resolveApiClientSource } from "@/lib/request-source";
@@ -47,6 +47,12 @@ export async function POST(req: Request) {
 
   if (!payload?.raw || typeof payload.raw !== "string" || !payload.raw.trim()) {
     return NextResponse.json({ error: "Nothing to publish — provide `raw` markdown." }, { status: 400 });
+  }
+
+  try {
+    assertRawWithinLimit(payload.raw);
+  } catch (e) {
+    return toErrorResponse(e);
   }
 
   // Extract frontmatter metadata before parsing.
@@ -102,7 +108,7 @@ export async function POST(req: Request) {
     createdAt: new Date().toISOString(),
     settings: settings ?? DEFAULT_SETTINGS,
     blocks,
-    raw: body.slice(0, STORAGE.maxInputChars),
+    raw: body,
   };
 
   try {

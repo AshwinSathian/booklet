@@ -13,7 +13,7 @@ import { getDoc, putDoc, deleteDoc } from "@/lib/storage";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { ROUTES } from "@/lib/constants";
 import { logError } from "@/lib/logger";
-import { getOwnedPage, getOwnedPageByIdOrSlug, assertSlugAvailable } from "@/server/pages";
+import { getOwnedPage, getOwnedPageByIdOrSlug, assertRawWithinLimit, assertSlugAvailable } from "@/server/pages";
 import { toErrorResponse } from "@/server/errors";
 import { getSiteOrigin } from "@/lib/site-url";
 import { resolveApiClientSource } from "@/lib/request-source";
@@ -148,6 +148,12 @@ export async function PATCH(
   }
 
   if (hasContent && payload?.raw) {
+    try {
+      assertRawWithinLimit(payload.raw);
+    } catch (e) {
+      return toErrorResponse(e);
+    }
+
     // `blocks` is always derived server-side from `raw` — see
     // src/lib/block-schema.ts's header for why a client-supplied block tree
     // is no longer accepted.
@@ -181,7 +187,7 @@ export async function PATCH(
       createdAt: record.created_at,
       settings: payload.settings ?? DEFAULT_SETTINGS,
       blocks,
-      raw: payload.raw.slice(0, STORAGE.maxInputChars),
+      raw: payload.raw,
     };
 
     try {

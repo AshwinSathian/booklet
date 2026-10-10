@@ -151,7 +151,7 @@ export async function handleUpdatePage(
 }
 
 // Above this many characters, get_page omits the inline body and points at
-// resources/read instead. Booklet pages can be up to 350,000 characters —
+// resources/read instead. Booklet pages can be up to 200,000 characters —
 // inlining that on every metadata check would be ~90K+ tokens of context for
 // no reason. 8,000 chars comfortably covers the vast majority of real pages
 // (incident reports, ADRs, release notes) without ever truncating them.

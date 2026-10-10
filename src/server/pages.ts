@@ -17,6 +17,7 @@
 import { getPageBySlug, getPageRecord } from "@/lib/db";
 import type { DbPage } from "@/lib/db/types";
 import { isValidSlug, SLUG_RULES_MESSAGE } from "@/lib/slug";
+import { STORAGE } from "@/lib/constants";
 import { ServiceError } from "./errors";
 
 export async function getOwnedPage(id: string, userId: string): Promise<DbPage> {
@@ -42,5 +43,21 @@ export async function assertSlugAvailable(slug: string, excludePageId: string | 
   const existing = await getPageBySlug(slug);
   if (existing && existing.id !== excludePageId) {
     throw new ServiceError("SLUG_TAKEN", "Slug is already taken.", 409);
+  }
+}
+
+/**
+ * The one document size limit, shared by all four publish/update routes.
+ * Rejects instead of truncating: these routes used to store
+ * `raw.slice(0, maxInputChars)` beside blocks parsed from the whole input, so
+ * an oversized document published with a silently shortened source.
+ */
+export function assertRawWithinLimit(raw: string): void {
+  if (raw.length > STORAGE.maxInputChars) {
+    throw new ServiceError(
+      "DOCUMENT_TOO_LARGE",
+      `Document is too large. The limit is ${STORAGE.maxInputChars.toLocaleString("en-US")} characters; this one has ${raw.length.toLocaleString("en-US")}.`,
+      413,
+    );
   }
 }

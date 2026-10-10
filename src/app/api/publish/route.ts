@@ -19,6 +19,8 @@ import { getClientIp } from "@/lib/request-ip";
 import { getSiteOrigin } from "@/lib/site-url";
 import { logError } from "@/lib/logger";
 import { getSession } from "@/lib/auth/session";
+import { assertRawWithinLimit } from "@/server/pages";
+import { toErrorResponse } from "@/server/errors";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -48,6 +50,12 @@ export async function POST(req: Request) {
 
     if (!payload?.raw || typeof payload.raw !== "string" || !payload.raw.trim()) {
       return NextResponse.json({ error: "Nothing to publish — provide `raw` markdown." }, { status: 400 });
+    }
+
+    try {
+      assertRawWithinLimit(payload.raw);
+    } catch (e) {
+      return toErrorResponse(e);
     }
 
     // `blocks` is always derived server-side from `raw` — a client can no
@@ -112,7 +120,7 @@ export async function POST(req: Request) {
       createdAt: new Date().toISOString(),
       settings: payload.settings ?? DEFAULT_SETTINGS,
       blocks,
-      raw: payload.raw.slice(0, STORAGE.maxInputChars),
+      raw: payload.raw,
     };
 
     try {

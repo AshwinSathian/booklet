@@ -10,7 +10,7 @@ import { validateBlocks } from "@/lib/block-schema";
 import { putDoc } from "@/lib/storage";
 import { logError } from "@/lib/logger";
 import { getSession } from "@/lib/auth/session";
-import { getOwnedPage } from "@/server/pages";
+import { assertRawWithinLimit, getOwnedPage } from "@/server/pages";
 import { toErrorResponse } from "@/server/errors";
 import { getSiteOrigin } from "@/lib/site-url";
 import { NextResponse } from "next/server";
@@ -55,6 +55,12 @@ export async function PATCH(
       return NextResponse.json({ error: "Nothing to publish — provide `raw` markdown." }, { status: 400 });
     }
 
+    try {
+      assertRawWithinLimit(payload.raw);
+    } catch (e) {
+      return toErrorResponse(e);
+    }
+
     // `blocks` is always derived server-side from `raw` — see
     // src/lib/block-schema.ts's header for why a client-supplied block tree
     // is no longer accepted anywhere. This route previously accepted
@@ -93,7 +99,7 @@ export async function PATCH(
       createdAt: record.created_at,
       settings: payload.settings ?? DEFAULT_SETTINGS,
       blocks,
-      raw: payload.raw.slice(0, STORAGE.maxInputChars),
+      raw: payload.raw,
     };
 
     try {

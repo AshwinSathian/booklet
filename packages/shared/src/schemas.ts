@@ -8,6 +8,9 @@
 
 import { z } from "zod";
 
+/** Largest Markdown document any publish path accepts, in characters. */
+export const MAX_RAW_CHARS = 200_000;
+
 export const VisibilitySchema = z.enum(["public", "unlisted"]);
 
 export const PageListItemSchema = z.object({
