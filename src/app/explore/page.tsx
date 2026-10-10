@@ -22,7 +22,7 @@ export default async function ExplorePage() {
 
   return (
     <div className="min-h-screen bg-bg text-text-primary flex flex-col">
-      <SiteHeader ctaLabel="Create a page" ctaTrackLocation="explore_topbar" />
+      <SiteHeader ctaLabel="Create a page" />
 
       <main className="flex-1 mx-auto w-full max-w-4xl px-4 py-10">
         <div className="mb-8">

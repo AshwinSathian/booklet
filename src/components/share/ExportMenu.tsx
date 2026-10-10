@@ -1,7 +1,5 @@
 "use client";
 
-import { trackEvent } from "@/lib/analytics";
-import { ANALYTICS_EVENTS } from "@/lib/analytics-events";
 import type { Block, DocSettings } from "@/lib/blocks";
 import { blocksToHtmlDocument } from "@/lib/export";
 import { useRef, useState } from "react";
@@ -49,7 +47,6 @@ export function ExportMenu({
   const handleMarkdown = () => {
     if (!raw) return;
     downloadBlob(raw, `${filename}.md`, "text/markdown;charset=utf-8");
-    trackEvent(ANALYTICS_EVENTS.share_export_markdown, {});
     setOpen(false);
   };
 
@@ -62,7 +59,6 @@ export function ExportMenu({
     try {
       const html = await blocksToHtmlDocument(blocks, title);
       downloadBlob(html, `${filename}.html`, "text/html;charset=utf-8");
-      trackEvent(ANALYTICS_EVENTS.share_export_html, {});
       setOpen(false);
     } finally {
       setExportingHtml(false);
@@ -70,7 +66,6 @@ export function ExportMenu({
   };
 
   const handlePrint = () => {
-    trackEvent(ANALYTICS_EVENTS.share_print, {});
     setOpen(false);
     window.print();
   };

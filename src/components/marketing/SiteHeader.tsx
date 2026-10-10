@@ -3,7 +3,6 @@
 import { AppLogo } from "@/components/ui/AppLogo";
 import { Button } from "@/components/ui/Button";
 import ThemeToggle from "@/components/ui/ThemeToggle";
-import { trackEvent } from "@/lib/analytics";
 import { ROUTES } from "@/lib/constants";
 import { useSession } from "@/components/auth/SessionProvider";
 import { AccountMenu } from "@/components/auth/AccountMenu";
@@ -133,7 +132,7 @@ function MobileNavPanel({
             variant="primary"
             size="lg"
             href={ROUTES.app}
-            onClick={() => { onClose(); trackEvent("open_editor_clicked", { location: "mobile_nav" }); }}
+            onClick={onClose}
             className="w-full justify-center"
           >
             Open editor
@@ -165,8 +164,7 @@ export interface SiteHeaderProps {
   ctaLabel?: string;
   /** Href for the primary CTA. Defaults to the editor route. */
   ctaHref?: string;
-  /** `location` field passed to the `open_editor_clicked` analytics event. */
-  ctaTrackLocation?: string;
+
   /** Set to false to render a static (non-sticky) header. Defaults to true. */
   sticky?: boolean;
   className?: string;
@@ -175,7 +173,6 @@ export interface SiteHeaderProps {
 export function SiteHeader({
   ctaLabel = "Open editor",
   ctaHref = ROUTES.app,
-  ctaTrackLocation = "topbar",
   sticky = true,
   className,
 }: SiteHeaderProps) {
@@ -267,7 +264,6 @@ export function SiteHeader({
                 variant="primary"
                 size="lg"
                 href={ctaHref}
-                onClick={() => trackEvent("open_editor_clicked", { location: ctaTrackLocation })}
               >
                 {ctaLabel}
                 <svg width="12" height="12" fill="none" viewBox="0 0 12 12" aria-hidden>

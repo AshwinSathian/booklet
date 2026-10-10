@@ -3,7 +3,6 @@
 import { RevealHero } from "@/components/marketing/RevealHero";
 import { SiteFooter } from "@/components/marketing/SiteFooter";
 import { SiteHeader } from "@/components/marketing/SiteHeader";
-import { trackEvent } from "@/lib/analytics";
 import { APP_NAME, ROUTES } from "@/lib/constants";
 import { useSession } from "@/components/auth/SessionProvider";
 import type { Easing, Variants } from "framer-motion";
@@ -248,7 +247,6 @@ function ExampleCard({
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-accent transition hover:text-accent-soft"
-          onClick={() => trackEvent("example_clicked", { example: tag })}
         >
           View live example
           <svg width="12" height="12" fill="none" viewBox="0 0 12 12" aria-hidden>
@@ -473,7 +471,7 @@ function ApiBlock() {
           ))}
         </div>
         <div>
-          <PrimaryButton href={ROUTES.signIn} onClick={() => trackEvent("api_cta_clicked")}>
+          <PrimaryButton href={ROUTES.signIn}>
             Get an API key
             <svg width="12" height="12" fill="none" viewBox="0 0 12 12" aria-hidden>
               <path d="M2.5 9.5 9.5 2.5M9.5 2.5H4M9.5 2.5V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -749,7 +747,7 @@ export function Landing() {
   return (
     <div className="relative min-h-screen bg-bg text-text-primary">
 
-      <SiteHeader ctaTrackLocation="topbar" />
+      <SiteHeader />
 
       {/* ──────────────────────────────────────────────────────────────────── */}
       {/* Hero                                                                  */}
@@ -817,7 +815,6 @@ export function Landing() {
               <PrimaryButton
                 href={ROUTES.app}
                 large
-                onClick={() => trackEvent("open_editor_clicked", { location: "hero" })}
               >
                 Open the editor
                 <svg width="14" height="14" fill="none" viewBox="0 0 12 12" aria-hidden>
@@ -864,7 +861,6 @@ export function Landing() {
             <motion.div variants={heroItem} className="mt-3 text-[13px]">
               <a
                 href="#api"
-                onClick={() => trackEvent("integration_clicked", { integration: "claude_mcp", location: "hero" })}
                 className="inline-flex items-center gap-1.5 text-text-muted transition hover:text-accent"
               >
                 or publish straight from Claude, Cursor, or a CI pipeline
@@ -1092,7 +1088,6 @@ export function Landing() {
               <Link
                 href={ROUTES.mcpSetup}
                 className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-accent transition hover:text-accent-soft mt-auto"
-                onClick={() => trackEvent("integration_clicked", { integration: "claude_mcp" })}
               >
                 Add to Claude
                 <svg width="12" height="12" fill="none" viewBox="0 0 12 12" aria-hidden>
@@ -1123,7 +1118,6 @@ export function Landing() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 text-[13px] font-semibold text-accent transition hover:text-accent-soft mt-auto"
-                onClick={() => trackEvent("integration_clicked", { integration: "cli" })}
               >
                 View on npm
                 <svg width="12" height="12" fill="none" viewBox="0 0 12 12" aria-hidden>
@@ -1396,7 +1390,6 @@ export function Landing() {
                 <PrimaryButton
                   href={ROUTES.app}
                   large
-                  onClick={() => trackEvent("open_editor_clicked", { location: "cta" })}
                 >
                   Open the editor
                   <svg width="14" height="14" fill="none" viewBox="0 0 12 12" aria-hidden>
@@ -1410,7 +1403,7 @@ export function Landing() {
                   </svg>
                 </PrimaryButton>
                 {isLoaded && !isSignedIn && (
-                  <GhostButton href={ROUTES.signUp} onClick={() => trackEvent("sign_up_clicked", { location: "cta" })}>
+                  <GhostButton href={ROUTES.signUp}>
                     Create a free account
                   </GhostButton>
                 )}

@@ -89,7 +89,7 @@ const NAV_ITEMS = [
 export default function IntegrationsPage() {
   return (
     <div className="min-h-screen bg-bg text-text-primary">
-      <SiteHeader ctaTrackLocation="integrations_topbar" />
+      <SiteHeader />
 
       {/* Hero */}
       <section className="mx-auto w-full max-w-5xl px-4 pt-16 pb-10 text-center">

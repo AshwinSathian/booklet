@@ -684,7 +684,7 @@ export default function McpSetupPage() {
   return (
     <div className="min-h-screen bg-bg text-text-primary flex flex-col">
       {/* Header */}
-      <SiteHeader ctaTrackLocation="mcp_setup_topbar" />
+      <SiteHeader />
 
       <div className="flex-1 mx-auto w-full max-w-5xl px-4 py-10 flex gap-10">
         {/* Sidebar */}

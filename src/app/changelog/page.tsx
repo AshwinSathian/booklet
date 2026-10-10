@@ -113,7 +113,7 @@ function TagPill({ tag }: { tag: Entry["tag"] }) {
 export default function ChangelogPage() {
   return (
     <div className="min-h-screen bg-bg text-text-primary flex flex-col">
-      <SiteHeader ctaTrackLocation="changelog_topbar" />
+      <SiteHeader />
 
       <main className="flex-1 mx-auto w-full max-w-3xl px-4 py-12 sm:py-16">
         <div className="mb-10">

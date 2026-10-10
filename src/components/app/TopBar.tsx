@@ -1,7 +1,5 @@
 "use client";
 
-import { trackEvent } from "@/lib/analytics";
-import { ANALYTICS_EVENTS, hashId } from "@/lib/analytics-events";
 import { DocSettings } from "@/lib/blocks";
 import { ROUTES, UI } from "@/lib/constants";
 import { copyTextToClipboard, markdownToHtml } from "@/lib/export";
@@ -89,8 +87,8 @@ function MoreActionsDrawer({
   open: boolean;
   sections: ActionSection[];
   activeDraftId: string | null;
-  onCreateDraft: (origin?: "drafts_dialog") => string;
-  onOpenDraft: (id: string, origin?: "drafts_dialog") => void;
+  onCreateDraft: () => string;
+  onOpenDraft: (id: string) => void;
   onRequestImportMarkdown: () => void;
   onSelectTemplate?: (template: Template) => void;
   onClose: () => void;
@@ -220,8 +218,8 @@ function DrawerDraftsView({
   activeDraftId: string | null;
   onBack: () => void;
   onClose: () => void;
-  onCreateDraft: (origin?: "drafts_dialog") => string;
-  onOpenDraft: (id: string, origin?: "drafts_dialog") => void;
+  onCreateDraft: () => string;
+  onOpenDraft: (id: string) => void;
   onRequestImportMarkdown: () => void;
 }) {
   const actions = useDraftListActions({
@@ -245,8 +243,7 @@ function DrawerDraftsView({
             variant="primary"
             size="sm"
             onClick={() => {
-              const id = onCreateDraft("drafts_dialog");
-              trackEvent(ANALYTICS_EVENTS.draft_created, { draft_hash: hashId(id), origin: "drafts_dialog" });
+              onCreateDraft();
               onClose();
             }}
           >
@@ -997,8 +994,8 @@ export function TopBar({
   onNew: () => void;
   onRenameCurrentDraft: (next: string) => void;
   activeDraftId: string | null;
-  onSwitchDraft: (id: string, origin?: "drafts_dialog") => void;
-  onCreateDraft: (origin?: "drafts_dialog") => string;
+  onSwitchDraft: (id: string) => void;
+  onCreateDraft: () => string;
   onPublish: () => void;
   publishVisibility: PublishVisibility;
   onPublishVisibilityChange: (v: PublishVisibility) => void;
@@ -1045,7 +1042,6 @@ export function TopBar({
     try {
       await copyTextToClipboard(raw ?? "");
       toast.showCoalesced(TOAST_KEYS.copyMd, "success", "Copied", "Markdown copied.");
-      trackEvent(ANALYTICS_EVENTS.export_copy_markdown, { raw_len: (raw ?? "").length });
     } catch (e) {
       toast.error("Copy failed", toErrorMessage(e));
     }
@@ -1056,7 +1052,6 @@ export function TopBar({
       const html = await markdownToHtml(raw ?? "");
       await copyTextToClipboard(html);
       toast.showCoalesced(TOAST_KEYS.copyHtml, "success", "Copied", "HTML copied.");
-      trackEvent(ANALYTICS_EVENTS.export_copy_html, { raw_len: (raw ?? "").length, html_len: html.length });
     } catch (e) {
       toast.error("Copy failed", toErrorMessage(e));
     }
@@ -1293,7 +1288,7 @@ export function TopBar({
         onCreateDraft={onCreateDraft}
         onRequestImportMarkdown={openImportPicker}
         onOpenDraft={(id) => {
-          onSwitchDraft(id, "drafts_dialog");
+          onSwitchDraft(id);
           setVisibleDrafts(false);
         }}
         onHide={() => setVisibleDrafts(false)}

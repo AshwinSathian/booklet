@@ -1,4 +1,3 @@
-import { Analytics } from "@/components/analytics/Analytics";
 import { APP_NAME } from "@/lib/constants";
 import { SessionProvider } from "@/components/auth/SessionProvider";
 import type { Metadata, Viewport } from "next";
@@ -6,7 +5,6 @@ import { Source_Serif_4 } from "next/font/google";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { ThemeProvider } from "next-themes";
-import { Suspense } from "react";
 import "./globals.css";
 
 // Distinct reading typeface for published-page body content — see
@@ -119,9 +117,6 @@ export default function RootLayout({
       <html lang="en" suppressHydrationWarning className={`${GeistSans.variable} ${GeistMono.variable} ${sourceSerif4.variable}`}>
         <body>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-            <Suspense fallback={null}>
-              <Analytics />
-            </Suspense>
             {children}
           </ThemeProvider>
         </body>

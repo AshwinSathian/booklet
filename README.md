@@ -129,7 +129,7 @@ cd mcp-server && npm run dev
 | Markdown | unified + remark-parse + remark-gfm + remark-math |
 | Math | KaTeX |
 | Diagrams | Mermaid |
-| Analytics | Google Analytics 4 |
+| Analytics | First-party page-view counts (MongoDB) |
 
 ---
 
@@ -153,7 +153,6 @@ Create `.env.local`:
 
 ```env
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
-NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
 MONGODB_URI=mongodb://localhost:27017/booklet
 
 # Required: dedicated secret that signs/verifies team-invite JWT tokens.

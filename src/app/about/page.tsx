@@ -15,7 +15,7 @@ export const metadata: Metadata = buildMetadata({
 export default function AboutPage() {
   return (
     <div className="min-h-screen bg-bg text-text-primary flex flex-col">
-      <SiteHeader ctaTrackLocation="about_topbar" />
+      <SiteHeader />
 
       <main className="flex-1 mx-auto w-full max-w-3xl px-4 py-12 sm:py-16">
         <div className="max-w-2xl">
