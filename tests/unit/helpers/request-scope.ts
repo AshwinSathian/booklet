@@ -1,5 +1,3 @@
-// Keep this import first, and import this helper first in a spec — see als.ts.
-import "./als";
 import { workAsyncStorage } from "next/dist/server/app-render/work-async-storage.external";
 import { workUnitAsyncStorage } from "next/dist/server/app-render/work-unit-async-storage.external";
 import { RequestCookies } from "next/dist/server/web/spec-extension/cookies";
@@ -16,6 +14,7 @@ import { SESSION_COOKIE_NAME } from "@/lib/auth/constants";
  * what lets a unit spec call a session-authenticated Route Handler directly
  * (the API-key routes never needed it — they read `req.headers` themselves).
  *
+ * Depends on the AsyncLocalStorage shim in playwright.unit.config.ts.
  * Reaches into next/dist internals, so a Next upgrade can break it; the
  * failure mode is loud (every spec using it throws), not a silent pass.
  */

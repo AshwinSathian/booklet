@@ -17,5 +17,12 @@ export default defineConfig({
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
     },
+    // WebKit runs only the specs that exercise engine-specific editing
+    // behaviour; the rest of the suite stays Chromium-only to keep it fast.
+    {
+      name: "webkit",
+      use: { ...devices["Desktop Safari"] },
+      testMatch: /undo\.spec\.ts/,
+    },
   ],
 });
