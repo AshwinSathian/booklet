@@ -12,8 +12,6 @@ const PORT = Number(process.env.PORT ?? 8788);
 // Mirror the Env bindings expected by the Worker
 const env = {
   BOOKLET_API_BASE: process.env.BOOKLET_API_BASE ?? "http://localhost:3100",
-  MCP_SERVER_NAME: process.env.MCP_SERVER_NAME ?? "booklet",
-  MCP_SERVER_VERSION: process.env.MCP_SERVER_VERSION ?? "1.0.0",
 };
 
 const server = http.createServer(async (req, res) => {

@@ -137,7 +137,7 @@ cd mcp-server && npm run dev
 
 ### Prerequisites
 
-- Node.js 20+
+- Node.js 24 (see `.nvmrc`)
 - MongoDB connection string (a local `mongod`, or any self-hosted/managed instance)
 
 ### Install & run

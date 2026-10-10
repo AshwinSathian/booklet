@@ -71,6 +71,26 @@ launch agent, `~/Library/LaunchAgents/homebrew.mxcl.mongodb-community@8.0.plist`
 no service definition), and the 7.0 formula should stay stopped or be
 uninstalled.
 
+## Node.js runtime
+
+Since 2026-10 production, CI and the publish workflows run Node 24 (`.nvmrc`).
+Node 20 reached end of life on 2026-04-30.
+
+- `ecosystem.config.js` names the interpreter for both PM2 apps
+  (`~/.nvm/versions/node/v24.19.0/bin/node`), so the version does not depend
+  on which Node the PM2 daemon was started under. `pm2 describe booklet-app`
+  shows it. `scripts/redeploy.sh`, `scripts/pm2-startup.sh` and
+  `.githooks/pre-push` put the same directory first on `PATH`. To move to a
+  newer 24.x, install it with nvm and change that path in those four files.
+- The `pm2` CLI itself can stay installed under another nvm version; the
+  scripts search every nvm version for it.
+- `jsdom` 30 and `eslint-config-next` 16 (with a native flat config) landed
+  with this change. Both were reverted in 2026-09 for Node 20 reasons
+  recorded under "Dependency audit" below. `eslint-config-next` 16 enables
+  four rules that are switched off in `eslint.config.mjs` because the
+  existing code has not been reviewed against them.
+- `PORT` must stay set for `booklet-app` (see "How the 410 is produced").
+
 ## Abuse reports and takedown
 
 Every share page and embed links to `/report?page=<id>`. A report is stored
@@ -148,14 +168,12 @@ are opaque, DB-backed tokens (`sessions` collection, TTL-indexed, 30-day
 sliding window), hashed with an HMAC pepper before storage — the same
 generate-raw/hash-with-pepper/store-hash-only pattern already used for API
 keys (`src/lib/api-key.ts`) — and delivered via an httpOnly/Secure/
-SameSite=Lax cookie (`readable_session`). See `src/lib/auth/session.ts`.
+SameSite=Lax cookie (`booklet_session`). See `src/lib/auth/session.ts`.
 
 **Required env vars** (fail closed if unset, no fallback — see
 `.env.example` for generation commands): `SESSION_TOKEN_PEPPER`,
-`CLAIM_TOKEN_SECRET`. `ADMIN_USER_IDS` is unchanged in meaning (still a
-comma-separated list of user IDs) but no longer refers to Clerk IDs for new
-signups — see the migration note below for why existing admin IDs don't
-need to change.
+`PASSWORD_RESET_TOKEN_PEPPER`. `ADMIN_USER_IDS` is a comma-separated list of
+user IDs.
 
 **Admin gating is split across two layers**, not one: `src/middleware.ts`
 does a cheap, Edge-safe IP allowlist check (`ADMIN_IPS`) only; the
@@ -165,77 +183,26 @@ session lookup. Both must pass. `/my-pages`'s cookie-presence redirect in
 middleware is similarly non-authoritative — the real check is
 `getSession()` inside each page/route.
 
-**No email delivery.** Password reset and email verification are
-out of scope for this iteration. Account recovery for users migrated off Clerk uses the
-same signed-link-shared-manually pattern as team invites — see the
-migration runbook below.
+**Email delivery.** `src/lib/email.ts` sends mail through Resend
+(`RESEND_API_KEY`, `EMAIL_FROM_ADDRESS`): the password-reset link, abuse
+reports to `ABUSE_REPORT_EMAIL`, and the backup-failure alert. Signup does
+not verify the email address yet (planned for Phase 5).
 
-## Production cutover — DONE (2026-07-11)
+## Auth cutover (2026-07-11)
 
-The Clerk → in-house auth cutover described below has been executed
-against real production. Kept as a runbook (not rewritten into past tense)
-because the same sequence applies to any *future* from-scratch server
-setup or disaster recovery restore — this is what `scripts/setup-server.sh`
-and a from-backup restore both still need to follow.
-
-**What actually happened**, for the record: at cutover time production had
-**zero real Clerk users** (confirmed via the Clerk API,
-`GET https://api.clerk.com/v1/users/count`) — 91 real anonymous published
-pages existed (no accounts), so `scripts/migrate-clerk-users.mjs` ran as a
-genuine no-op. `CLERK_SECRET_KEY` has been removed from
-`.env.production.local`; the Clerk application itself can be deleted in the
-Clerk dashboard whenever convenient (not required — nothing depends on it).
-
-1. **Back up MongoDB first.** This deployment has no automated backup
-   pipeline (see the single-machine-deployment section below) — take a
-   manual `mongodump` of the `readable` database before touching anything.
-2. **Rehearse against a restored copy**, not production directly, if the
-   real user count is non-zero: restore the backup to a scratch local
-   `mongod` (or a second database name), point `MONGODB_URI` at it, and run
-   `node scripts/migrate-clerk-users.mjs` with `CLERK_SECRET_KEY` (still
-   valid at this point) and `CLAIM_TOKEN_SECRET` set. Confirm the printed
-   summary line's counts match expectations and spot-check a few generated
-   `/claim?token=...` links resolve correctly against a locally-running app
-   pointed at that same scratch database.
-3. **Deploy the Clerk-free build** via the normal `scripts/redeploy.sh`
-   path (pre-push hook, or run it directly) — this already has
-   backup-before-build + health-check + auto-rollback-on-failure built in
-   for the *application* layer. Add the new required env vars
-   (`SESSION_TOKEN_PEPPER`, `CLAIM_TOKEN_SECRET`) to
-   `.env.production.local` before this step, or every session-dependent
-   request fails closed immediately after deploy.
-4. **Run the real migration**: `node scripts/migrate-clerk-users.mjs`
-   against the real `MONGODB_URI`, with `CLERK_SECRET_KEY` still set (it's
-   only needed for this one script, not the app itself — safe to remove
-   from `.env.production.local` once every user has claimed). It prints one
-   `email\t/claim?token=...` line per user needing to set a password;
-   nothing here sends email — share these links with the affected users
-   through whatever channel you'd already use to reach them.
-5. **Verify**: sign up a fresh test account, sign in, publish, and confirm
-   `/admin` is still reachable with the existing `ADMIN_USER_IDS` value —
-   Clerk user IDs are preserved as-is as the new local user IDs, so no admin
-   reconfiguration should be needed. `scripts/production-verify/` has a
-   scoped, self-cleaning Playwright suite for exactly this — see its own
-   section below.
-6. **Revoke `CLERK_SECRET_KEY`** (delete the Clerk application, or just
-   rotate/revoke the key) once step 4's migration has run and you don't
-   expect to re-run it. Nothing in the running app reads it — only the
-   one-time migration script does.
-
-**Rollback**: if the Clerk-free deploy needs to be reverted, `git revert`
-back to the last Clerk-based commit and redeploy — the `users` collection
-gained new fields (`password_hash`, `display_name`) and a new `sessions`
-collection, but nothing about the rollback removes or corrupts pre-existing
-Clerk-era data (the migration script only ever adds/backfills, never
-deletes). Note this only reverts the *application*; anyone who already
-claimed a password-based account keeps that password_hash — reverting to
-Clerk doesn't retroactively invalidate it, so treat a rollback as a
-one-way decision too, not a clean undo.
+The move from the third-party sign-in provider to in-house auth ran against
+production on 2026-07-11. Production had zero accounts with that provider
+and 91 anonymous published pages, so the user migration was a no-op. The
+migration flow (the `/claim` page, `POST /api/auth/claim`,
+`src/lib/auth/claim-token.ts`, `scripts/migrate-clerk-users.mjs`,
+`CLAIM_TOKEN_SECRET`) and `scripts/migrate-from-atlas.sh` were deleted in
+2026-10. They are in git history at commit `1839525` if a record is needed.
+`CLAIM_TOKEN_SECRET` can be removed from `.env.production.local`.
 
 **Incidents found and fixed during this cutover** (all verified against live
 production afterward):
 - `ecosystem.config.js` hardcoded `mcp-server/node_modules/.bin/tsx`, which
-  npm workspace hoisting had moved to the repo root — `readable-mcp` was
+  npm workspace hoisting had moved to the repo root — `booklet-mcp` (then `readable-mcp`) was
   silently crash-looping (`Script not found`) from the moment this
   session's workspaces conversion ran `npm install`. Fixed by resolving
   `tsx` via `npx` instead of a hardcoded path.
@@ -254,7 +221,7 @@ production afterward):
   `url`/`page_url` from the request's own origin — correct only when called
   directly from a browser/external client, and *wrong* whenever a request
   arrives over an internal hop, which is exactly what the MCP server does
-  (`READABLE_API_BASE=http://localhost:3100`, loopback, no tunnel round
+  (`BOOKLET_API_BASE=http://localhost:3100`, loopback, no tunnel round
   trip). A page published through the MCP server got back
   `"url": "http://localhost:3100/p/..."`. Fixed centrally in
   `src/lib/site-url.ts`'s `getSiteOrigin()`. `/api/publish` (the browser
@@ -271,9 +238,9 @@ production afterward):
   "Something went wrong" on *every single successful login*, not just
   failures. The API key was actually created correctly each time; the
   browser just never got redirected back to the CLI's local callback
-  server, so `readable login` hung until its 5-minute timeout. Found live
+  server, so `booklet login` hung until its 5-minute timeout. Found live
   from a real user report (not caught by CI, since the existing e2e suite
-  didn't exercise `readable login`'s real browser-driven flow). Fixed by
+  didn't exercise `booklet login`'s real browser-driven flow). Fixed by
   moving `redirect()` outside the `try` block. Verified against production
   with `scripts/production-verify/cli-mcp-verify.mjs` — see below.
 
@@ -304,7 +271,8 @@ bypassed by re-parse" bug class).
   signed-in visitor. Rewritten as an explicit confirmation screen; the key
   is now only minted by a same-origin POST from a real button click
   (`POST /api/auth/cli-authorize`, new file).
-- `src/app/api/auth/claim/route.ts` was the one session-minting endpoint
+- `src/app/api/auth/claim/route.ts` (deleted 2026-10 with the rest of the
+  migration flow) was the one session-minting endpoint
   missing the `isSameOriginRequest` check every other one
   (login/signup/reset-password) already has — a login-CSRF gap.
 - `src/lib/webhook-delivery.ts`'s DNS-rebinding defense re-checked the
@@ -355,7 +323,7 @@ bypassed by re-parse" bug class).
   iteration count now encoded in the stored hash (`iterations:salt:hash`)
   so existing page passwords keep verifying at whatever count they were
   created with, instead of breaking on the bump.
-- `scripts/migrate-from-atlas.sh`'s dump directory (a plaintext copy of the
+- `scripts/migrate-from-atlas.sh` (deleted 2026-10)'s dump directory (a plaintext copy of the
   full production DB) was created with default permissions; now `chmod
   700`. Also warns when the Atlas URI is passed via argv, visible to other
   local users via `ps`/`/proc` for the process's lifetime.
@@ -439,10 +407,9 @@ published tool real external users run), `@napi-rs/keyring` (1 → 2,
 (0.44 → 0.45, account password hashing — no advisory, and a botched bump
 here risks locking out real users). `@types/node` was *not* bumped to its
 `latest` (26.x) despite `npm outdated` suggesting it — this project's
-actual runtime is Node 20.x (CI pins `NODE_VERSION: "20"`, production runs
-under nvm's `v20.19.5`), so 26.x types would describe API surface that
-doesn't exist on the machine actually running this code; already at the
-newest 20.x-compatible version.
+runtime was Node 20.x at the time, so 26.x types would describe API surface
+that doesn't exist on the machine running this code. (`@types/node` moved to
+24.x with the runtime in 2026-10; see "Node.js runtime" above.)
 
 Verified with `tsc`/`eslint`/the full unit suite across every workspace,
 a production build, and a live browser pass (KaTeX display + inline math,
@@ -454,19 +421,18 @@ republish this round.
 
 ## booklet-api.ashwinsathian.com
 
-Dedicated hostname for external API consumers (CLI, GitHub Action, VS Code
-extension, MCP server), added alongside the cutover. It is **not** a
-separate backend service or process — same `readable-app` PM2 app, same
+Dedicated hostname for external API consumers (CLI, GitHub Action, MCP server), added alongside the cutover. It is **not** a
+separate backend service or process — same `booklet-app` PM2 app, same
 port 3100, routed through the same Cloudflare Tunnel
-(`~/.cloudflared/readable-config.yml`) under a second hostname.
+(`~/.cloudflared/booklet-config.yml`) under a second hostname.
 `src/middleware.ts` enforces the separation: requests with
 `Host: booklet-api.ashwinsathian.com` get a 404 for anything outside
 `/api/*`. `booklet.ashwinsathian.com` is unchanged and still serves both
 the UI and `/api/*` (the web app's own client-side code calls same-origin
-`/api/*` routes, and `readable login`'s browser flow needs a UI page on
+`/api/*` routes, and `booklet login`'s browser flow needs a UI page on
 whatever base the CLI uses — see `packages/cli/src/config.ts`'s comment for
 why the CLI deliberately keeps the main hostname as its default while
-GitHub Action/VS Code, which never load a web page, default to the API
+the GitHub Action, which never loads a web page, defaults to the API
 hostname). `scripts/health-check.sh` checks both that the hostname routes
 correctly *and* that it actually rejects a non-API path, not just that DNS
 resolves.
@@ -476,8 +442,7 @@ resolves.
 `scripts/production-verify/prod-smoke.spec.ts` is a scoped, self-cleaning
 Playwright suite for verifying a live deployment end-to-end — signup,
 editor publish, my-pages, logout/login, CSRF rejection, admin gating, the
-full v1 API surface via `booklet-api.ashwinsathian.com`, and the
-migrated-user claim flow. Deliberately kept outside `tests/e2e/` (it has
+and the full v1 API surface via `booklet-api.ashwinsathian.com`. Deliberately kept outside `tests/e2e/` (it has
 its own `playwright.config.ts`) so it's never picked up by the normal
 dev/CI test run — every account/page it creates is tagged
 `e2e-verify-<timestamp>` and deleted in `afterAll`, scoped precisely to
@@ -486,20 +451,19 @@ what that run created. Run it after any production deploy:
 ```bash
 TEST_BASE_URL=https://booklet.ashwinsathian.com \
 TEST_API_BASE_URL=https://booklet-api.ashwinsathian.com \
-MONGODB_URI="mongodb://127.0.0.1:27017/readable?directConnection=true" \
-CLAIM_TOKEN_SECRET=<same value as .env.production.local> \
+MONGODB_URI="mongodb://127.0.0.1:27017/booklet?directConnection=true" \
 npx playwright test --config=scripts/production-verify/playwright.config.ts
 ```
 
 `scripts/production-verify/cli-mcp-verify.mjs` covers what the Playwright
-suite above doesn't: the real `readable login` browser-redirect handshake,
+suite above doesn't: the real `booklet login` browser-redirect handshake,
 the rest of the CLI's command surface (`whoami`, `pages list/delete`,
 `publish`, `logout`), and the MCP server's JSON-RPC tool surface
 (`initialize`, `tools/list`, `publish_page`, `list_pages`, `get_page`,
 `update_page`, `delete_page`) — all against the live hostnames, using a
 real signed-up throwaway account. It drives the CLI as an actual child
 process with an isolated `$HOME` (so it never touches your real
-`~/.readable/config.json`) and feeds the session cookie through
+`~/.booklet/config.json`) and feeds the session cookie through
 `/cli-auth` and `POST /api/auth/cli-authorize` as a browser would, then
 calls the CLI's loopback callback server with the returned URL — this is
 the flow that would have caught the `redirect()`-inside-`try` bug above
@@ -513,7 +477,7 @@ created. Run it after any deploy touching `src/app/cli-auth`,
 `packages/cli`, or `mcp-server`:
 
 ```bash
-MONGODB_URI="mongodb://127.0.0.1:27017/readable?directConnection=true" \
+MONGODB_URI="mongodb://127.0.0.1:27017/booklet?directConnection=true" \
 node scripts/production-verify/cli-mcp-verify.mjs
 ```
 
@@ -522,18 +486,18 @@ node scripts/production-verify/cli-mcp-verify.mjs
 The repo is an npm workspace (`mcp-server`, `packages/*`) — one root
 `package.json`/lockfile covers every package; there's no more
 `packages/*/package-lock.json`. `packages/shared` (published to npm as
-`readable-api-client`) is the single source of truth for the `/api/v1/*`
+`booklet-api-client`) is the single source of truth for the `/api/v1/*`
 request/response contract (zod schemas + a thin typed fetch client) —
-`mcp-server`, `packages/cli`, and `packages/vscode` all depend on it instead
+`mcp-server` and `packages/cli` both depend on it instead
 of hand-rolling their own fetch calls, as does the GitHub Action
 ([`AshwinSathian/publish-to-booklet`](https://github.com/AshwinSathian/publish-to-booklet),
 extracted from this monorepo into its own repo so it can carry a real
 Marketplace listing — it depends on the published `booklet-api-client` npm
-package rather than the workspace). `cli`, `vscode`, and the Action all
+package rather than the workspace). `cli` and the Action both
 bundle it at build time via `tsup` (`noExternal`) into a single
-self-contained output file, since none of them get a real `npm install`
-step wherever they actually run (a published npm package, a GitHub Actions
-runner with no install step, a VS Code Extension Host). `mcp-server`
+self-contained output file, since neither gets a real `npm install`
+step where it runs (a published npm package, a GitHub Actions
+runner with no install step). `mcp-server`
 resolves it normally
 via `node_modules` since it runs as a regular long-lived Node process under
 PM2.
@@ -565,8 +529,8 @@ etc.) needs a real account/DSN, and none is set up yet.
 
 ## Infrastructure: single-machine deployment
 
-**Current state:** one PM2 process (`readable-app`, `fork` mode, 1 instance)
-plus a second PM2 process (`readable-mcp`) on a personal Mac, both reverse-
+**Current state:** one PM2 process (`booklet-app`, `fork` mode, 1 instance)
+plus a second PM2 process (`booklet-mcp`) on a personal Mac, both reverse-
 proxied to the public internet via a Cloudflare Tunnel (`cloudflared`). No
 failover for machine sleep, reboot, OOM, or an ISP outage.
 

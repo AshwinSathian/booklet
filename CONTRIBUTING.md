@@ -13,7 +13,7 @@ npm install
 npm run dev        # Next.js dev server at http://localhost:3000
 ```
 
-You'll need Node.js 20+ and a MongoDB connection string — see the [Local development](README.md#local-development) section of the README for the full environment variable list. `mcp-server/` and `packages/*` are npm workspaces off the same root install; there's no separate `npm install` needed inside them.
+You'll need Node.js 24 (`nvm use` reads `.nvmrc`) and a MongoDB connection string — see the [Local development](README.md#local-development) section of the README for the full environment variable list. `mcp-server/` and `packages/*` are npm workspaces off the same root install; there's no separate `npm install` needed inside them.
 
 ## Before opening a PR
 

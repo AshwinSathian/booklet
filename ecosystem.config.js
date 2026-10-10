@@ -63,18 +63,14 @@ module.exports = {
         NODE_ENV: "production",
         PORT: "8788",
         BOOKLET_API_BASE: "http://localhost:3100",
-        MCP_SERVER_NAME: "booklet",
         PATH,
-        MCP_SERVER_VERSION: "1.0.0",
       },
       env: {
         NODE_ENV: "production",
         PORT: "8788",
         // Loopback — no tunnel round-trip for internal calls
         BOOKLET_API_BASE: "http://localhost:3100",
-        MCP_SERVER_NAME: "booklet",
         PATH,
-        MCP_SERVER_VERSION: "1.0.0",
       },
 
       instances: 1,

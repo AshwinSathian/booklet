@@ -49,6 +49,12 @@
   },
   "keywords": [
     "booklet",
-    "api-client"
-  ]
+    "api-client",
+    "markdown",
+    "publishing",
+    "zod"
+  ],
+  "bugs": {
+    "url": "https://github.com/AshwinSathian/booklet/issues"
+  }
 }

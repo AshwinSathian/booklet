@@ -1,7 +1,7 @@
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { extractApiKey } from "./auth.js";
 import { isAllowedOrigin } from "./origin.js";
-import { createMcpServer, TOOL_NAMES, PROMPT_NAMES } from "./mcp-server.js";
+import { createMcpServer, TOOL_NAMES, PROMPT_NAMES, SERVER_VERSION } from "./mcp-server.js";
 import { ERRORS } from "./errors.js";
 import type { Env } from "./types.js";
 
@@ -14,7 +14,7 @@ import type { Env } from "./types.js";
 
 const SERVER_MANIFEST = {
   name: "booklet",
-  version: "2.0.0",
+  version: SERVER_VERSION,
   description:
     "Publish, update, read, list, and delete Booklet pages from your AI conversation. Includes pre-built templates for incident reports, ADRs, release notes, RFCs, and runbooks.",
 };
@@ -77,7 +77,7 @@ export default {
       }
 
       if (method === "GET" && url.pathname === "/health") {
-        return jsonResponse({ ok: true, service: "booklet-mcp", version: "2.0.0" }, 200, origin);
+        return jsonResponse({ ok: true, service: "booklet-mcp", version: SERVER_VERSION }, 200, origin);
       }
 
       if (method === "GET" && url.pathname === "/") {

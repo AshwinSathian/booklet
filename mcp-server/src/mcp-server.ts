@@ -22,7 +22,9 @@ import {
 } from "./tools.js";
 import { PROMPT_DEFINITIONS, renderPrompt } from "./prompts.js";
 
-const SERVER_VERSION = "2.0.0";
+// Must match mcp-server/package.json and mcp-server/server.json (the MCP
+// registry entry); tests/unit/mcp-version.spec.ts checks all three.
+export const SERVER_VERSION = "2.0.0";
 
 export const TOOL_NAMES = [
   "publish_page",
