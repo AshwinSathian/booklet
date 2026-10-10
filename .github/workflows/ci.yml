@@ -58,6 +58,9 @@ jobs:
           fi
       - run: npm ci --prefer-offline
       - run: npm run lint
+      # Every text colour token against every surface it is drawn on, for
+      # the app's two themes and each document theme (WCAG AA, 4.5:1).
+      - run: node scripts/check-contrast.mjs
       # The app is AGPL-3.0-only, so every production dependency must carry a
       # license that can be combined with it. A new dependency under anything
       # else fails here and gets a decision instead of slipping in. Known

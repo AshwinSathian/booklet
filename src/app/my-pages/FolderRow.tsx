@@ -58,7 +58,7 @@ export function FolderRow({
       onDoubleClick={onOpen}
       onContextMenu={onContextMenu}
     >
-      <Icon name="folder" size={16} className="shrink-0 text-accent/80" />
+      <Icon name="folder" size={16} className="shrink-0 text-accent" />
       {renaming ? (
         <input
           autoFocus

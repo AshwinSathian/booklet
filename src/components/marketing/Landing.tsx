@@ -343,7 +343,7 @@ function ProblemMock() {
           </div>
           <div className="p-5">
             <div className="text-[11px] text-text-secondary mb-3">Here&apos;s the incident summary:</div>
-            <pre className="overflow-hidden whitespace-pre-wrap font-mono text-[10.5px] leading-[1.72] text-text-muted/90 select-none">
+            <pre className="overflow-hidden whitespace-pre-wrap font-mono text-[10.5px] leading-[1.72] text-text-muted select-none">
 {`## Incident Report
 
 **Severity:** P1
@@ -423,7 +423,7 @@ pool_size: 5 # was 50
             <div className="mt-2.5 rounded-lg border border-border-default bg-bg px-3 py-2 font-mono text-2xs text-text-muted">
               <span className="text-accent-soft">pool_size</span>
               {": 5  "}
-              <span className="text-text-muted/60"># was 50</span>
+              <span className="text-text-muted"># was 50</span>
             </div>
           </div>
           </div>
@@ -492,7 +492,7 @@ function ApiBlock() {
           <span className="ml-2 font-mono text-2xs text-text-muted">REST API</span>
         </div>
         <div className="p-5">
-          <pre className="overflow-x-auto font-mono text-[12px] leading-[1.78] text-text-secondary">
+          <pre tabIndex={0} className="overflow-x-auto font-mono text-[12px] leading-[1.78] text-text-secondary">
 {`# Publish a new page
 POST /api/v1/publish
 Authorization: Bearer bklt_...
@@ -1044,7 +1044,7 @@ export function Landing() {
           <motion.div variants={reduce ? undefined : fadeUp}>
             <div className="flex flex-col gap-4 rounded-xl border border-border-default bg-bg-elevated p-6 shadow-card transition hover:border-border-strong hover:bg-bg-soft h-full">
               {/* Claude brand icon — Anthropic's actual brand orange (#D97757), distinct from Booklet's new accent */}
-              <div className="w-10 h-10 rounded-lg bg-[#D97757]/10 flex items-center justify-center text-[#D97757]">
+              <div className="w-10 h-10 rounded-lg bg-[#D97757]/10 flex items-center justify-center text-[#D97757] [.light_&]:text-[#8f4017]">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
                   <path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.93 4.93l2.12 2.12M16.95 16.95l2.12 2.12M4.93 19.07l2.12-2.12M16.95 7.05l2.12-2.12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                 </svg>
@@ -1058,7 +1058,7 @@ export function Landing() {
               </div>
               {/* Config snippet with copy button */}
               <div className="relative group">
-                <pre className="text-[11px] font-mono bg-bg-soft border border-border-default rounded-lg px-3 py-3 text-text-muted overflow-x-auto leading-relaxed whitespace-pre">{`{
+                <pre tabIndex={0} className="text-[11px] font-mono bg-bg-soft border border-border-default rounded-lg px-3 py-3 text-text-muted overflow-x-auto leading-relaxed whitespace-pre">{`{
   "mcpServers": {
 
       "booklet": {
@@ -1330,17 +1330,16 @@ export function Landing() {
           </FaqItem>
           <FaqItem question="Can I export a published page?">
             Yes — every published page has an <strong>Export</strong> menu. Download the original Markdown source,
-            a self-contained HTML file, or use Print or Save as PDF (⌘P) for a clean, chrome-free PDF. Math and
-            Graphviz/DOT diagrams are compiled into the HTML file directly; Mermaid diagrams export as their
-            source text rather than a rendered image, since rendering Mermaid needs a full browser.
+            a self-contained HTML file, or use Print to PDF (⌘P) for a clean, chrome-free PDF. Math and
+            diagrams are drawn into the HTML file itself, so it opens anywhere with nothing to load.
           </FaqItem>
           <FaqItem question="Where are drafts stored?">
             Entirely in your browser. Nothing leaves your device until you hit Publish. Clearing browser storage removes local drafts.
           </FaqItem>
           <FaqItem question="Is there an API?">
             Yes. Publish pages directly from CI/CD pipelines, scripts, or automation — using a simple REST API.
-            Sign in to generate a key from My Pages, then see the full{" "}
-            <a href="/api-docs" className="text-accent hover:underline">API reference</a>.
+            Sign in to generate a key under Settings, then see the full{" "}
+            <a href="/api-docs" className="text-accent underline underline-offset-2">API reference</a>.
           </FaqItem>
           <FaqItem question="What Markdown is supported?">
             Booklet supports GitHub-Flavored Markdown (GFM): H1–H4 headings, bold, italic,

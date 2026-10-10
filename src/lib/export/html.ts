@@ -50,13 +50,26 @@ export async function markdownToHtml(raw: string): Promise<string> {
   return blocksToHtml(blocks);
 }
 
+/**
+ * Mermaid diagrams already drawn on the page, keyed by their source. Mermaid
+ * needs a browser's text measurement to lay a diagram out, so the export
+ * does not compile it: the caller copies the SVG the page rendered (see
+ * collectRenderedDiagrams in ./diagrams.ts) and passes it here.
+ */
+export type RenderedDiagrams = ReadonlyMap<string, string>;
+const NO_DIAGRAMS: RenderedDiagrams = new Map();
+
 export async function blocksToHtml(blocks: Block[]): Promise<string> {
-  const inner = (await Promise.all(blocks.map(renderBlock))).join("");
+  const inner = (await Promise.all(blocks.map((b) => renderBlock(b, NO_DIAGRAMS)))).join("");
   return `<div>${inner}</div>`;
 }
 
-export async function blocksToHtmlDocument(blocks: Block[], title: string): Promise<string> {
-  const body = (await Promise.all(blocks.map(renderBlock))).join("\n");
+export async function blocksToHtmlDocument(
+  blocks: Block[],
+  title: string,
+  diagrams: RenderedDiagrams = NO_DIAGRAMS,
+): Promise<string> {
+  const body = (await Promise.all(blocks.map((b) => renderBlock(b, diagrams)))).join("\n");
   const safeTitle = escapeHtmlInner(title || "Booklet export");
   return `<!DOCTYPE html>
 <html lang="en">
@@ -103,11 +116,11 @@ function escapeHtmlInner(s: string): string {
     .replace(/'/g, "&#39;");
 }
 
-async function joinBlocks(blocks: Block[], sep = ""): Promise<string> {
-  return (await Promise.all(blocks.map(renderBlock))).join(sep);
+async function joinBlocks(blocks: Block[], diagrams: RenderedDiagrams, sep = ""): Promise<string> {
+  return (await Promise.all(blocks.map((b) => renderBlock(b, diagrams)))).join(sep);
 }
 
-async function renderBlock(b: Block): Promise<string> {
+async function renderBlock(b: Block, diagrams: RenderedDiagrams): Promise<string> {
   switch (b.t) {
     case "heading": {
       const level = clampHeadingLevel(b.level);
@@ -131,16 +144,16 @@ async function renderBlock(b: Block): Promise<string> {
       return `<${tag}>${items.join("")}</${tag}>`;
     }
     case "quote": {
-      const inner = await joinBlocks(b.blocks);
+      const inner = await joinBlocks(b.blocks, diagrams);
       return `<blockquote>${inner}</blockquote>`;
     }
     case "callout": {
       const meta = CALLOUT_META[b.kind];
-      const inner = await joinBlocks(b.blocks);
+      const inner = await joinBlocks(b.blocks, diagrams);
       return `<div style="border:1px solid ${meta.colorVar};background:${calloutBg(meta.colorVar)};border-radius:8px;padding:1rem;margin:0 0 1em"><p style="margin:0 0 .5em;font-weight:700;color:${meta.colorVar}">${escapeHtmlInner(meta.label)}</p>${inner}</div>`;
     }
     case "toggle": {
-      const inner = await joinBlocks(b.blocks);
+      const inner = await joinBlocks(b.blocks, diagrams);
       // Native <details>/<summary> — every mainstream email/doc-paste target
       // either renders these correctly or degrades to always-expanded
       // content, never to nothing, so this is safe as an export fallback too.
@@ -148,7 +161,7 @@ async function renderBlock(b: Block): Promise<string> {
     }
     case "columns": {
       const cols = await Promise.all(
-        b.columns.map(async (col) => `<div style="flex:1 1 0;min-width:0">${await joinBlocks(col)}</div>`),
+        b.columns.map(async (col) => `<div style="flex:1 1 0;min-width:0">${await joinBlocks(col, diagrams)}</div>`),
       );
       return `<div style="display:flex;gap:1.25rem;flex-wrap:wrap;margin:0 0 1em">${cols.join("")}</div>`;
     }
@@ -188,16 +201,16 @@ async function renderBlock(b: Block): Promise<string> {
       // module loads exactly the same way, just ahead of time at export
       // instead of on mount.
       //
-      // Mermaid diagrams are NOT compiled here: Mermaid's layout engine
-      // requires real browser text-measurement APIs (getBBox etc.) that
-      // even Mermaid's own official CLI only gets by driving a full
-      // headless Chromium — there's no lightweight way to do this inline
-      // at export time. They're kept as clearly-labeled, syntax-highlighted
-      // source (see the FAQ copy, which now says this explicitly instead of
-      // implying every diagram renders).
+      // Mermaid is not compiled here: its layout engine needs a browser's
+      // text measurement (getBBox), so the export reuses the SVG the page
+      // has already drawn, sanitized by the caller. A diagram that was not
+      // on screen (or failed to render) falls back to its source.
       if (GRAPHVIZ_LANGS.has(b.lang)) {
         const svg = await renderGraphvizToSvg(b.code);
         if (svg) return svg;
+      } else {
+        const svg = diagrams.get(b.code);
+        if (svg) return `<figure>${svg}</figure>`;
       }
       const langClass = ` class="language-${escapeAttr(b.lang)}"`;
       return `<pre><code${langClass}>${escapeHtml(b.code)}</code></pre>`;
@@ -217,7 +230,7 @@ async function renderBlock(b: Block): Promise<string> {
     case "footnotes": {
       const items = await Promise.all(
         b.items.map(async (item) => {
-          const inner = await joinBlocks(item.blocks);
+          const inner = await joinBlocks(item.blocks, diagrams);
           return `<li id="fn-${escapeAttr(item.id)}">${inner} <a href="#fnref-${escapeAttr(item.id)}">↩</a></li>`;
         }),
       );

@@ -39,6 +39,7 @@ import { POST as report } from "@/app/api/reports/route";
 import { DELETE as disconnectProvider } from "@/app/api/auth/sso/[provider]/route";
 import { POST as removeAccount } from "@/app/api/account/delete/route";
 import { POST as createWebhookRoute } from "@/app/api/webhooks/route";
+import { POST as resendDelivery } from "@/app/api/webhooks/[id]/deliveries/[deliveryId]/resend/route";
 import { POST as registerPasskey } from "@/app/api/auth/passkey/register/route";
 import { PATCH as patchPageMeta } from "@/app/api/pages/[id]/route";
 import { POST as forgotPassword } from "@/app/api/auth/forgot-password/route";
@@ -236,6 +237,11 @@ test.describe("email verification", () => {
     // account over, or that changes how a page is published.
     const hook = withSession(cookie, "/api/webhooks", { body: { url: "https://example.com/hook", events: ["page.published"] } });
     expect((await withRequestScope(hook, () => createWebhookRoute(hook))).status).toBe(403);
+    // The gate is checked before the delivery is looked up, so the ids need not exist.
+    const resend = withSession(cookie, "/api/webhooks/w/deliveries/d/resend");
+    expect(
+      (await withRequestScope(resend, () => resendDelivery(resend, { params: Promise.resolve({ id: "w", deliveryId: "d" }) }))).status,
+    ).toBe(403);
     const passkey = withSession(cookie, "/api/auth/passkey/register", { body: {} });
     expect((await withRequestScope(passkey, () => registerPasskey(passkey))).status).toBe(403);
     const meta = withSession(cookie, `/api/pages/${id}`, { method: "PATCH", body: { visibility: "public" } });

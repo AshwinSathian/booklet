@@ -56,14 +56,14 @@ export default async function TagPage({
         <div className="mx-auto w-full max-w-4xl px-4 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <AppLogo onlyIcon={false} />
-            <span className="text-text-muted/40" aria-hidden>/</span>
+            <span className="text-text-muted" aria-hidden>/</span>
             <Link
               href="/tags"
               className="text-sm text-text-muted transition hover:text-text-primary"
             >
               Tags
             </Link>
-            <span className="text-text-muted/40" aria-hidden>/</span>
+            <span className="text-text-muted" aria-hidden>/</span>
             <span className="text-sm text-text-primary font-medium">{decoded}</span>
           </div>
           <Button variant="primary" size="md" href={ROUTES.app}>
@@ -107,13 +107,13 @@ export default async function TagPage({
                   <p className="text-sm font-medium text-text-primary group-hover:text-accent transition line-clamp-2 leading-snug mb-1">
                     {page.title ?? "Untitled"}
                   </p>
-                  <p className="text-2xs text-text-muted/60 font-mono truncate">
+                  <p className="text-2xs text-text-muted font-mono truncate">
                     {page.slug ? `/p/${page.slug}` : `/p/${page.id}`}
                   </p>
                 </div>
                 <div className="flex items-center justify-between mt-3 gap-2">
-                  <span className="text-2xs text-text-muted/50">{timeAgo(page.created_at)}</span>
-                  <span className="text-2xs text-text-muted/50 tabular-nums">
+                  <span className="text-2xs text-text-muted">{timeAgo(page.created_at)}</span>
+                  <span className="text-2xs text-text-muted tabular-nums">
                     {page.view_count === 1 ? "1 view" : `${page.view_count.toLocaleString()} views`}
                   </span>
                 </div>
@@ -123,7 +123,7 @@ export default async function TagPage({
         ) : (
           <div className="rounded-xl border border-dashed border-border-subtle px-6 py-16 text-center">
             <p className="text-sm text-text-muted mb-4">No public pages with this tag yet.</p>
-            <p className="text-xs text-text-muted/70">
+            <p className="text-xs text-text-muted">
               Add <code className="rounded bg-fill-2 px-1 py-0.5 font-mono">tags: [{decoded}]</code> to your page&apos;s YAML frontmatter to appear here.
             </p>
           </div>

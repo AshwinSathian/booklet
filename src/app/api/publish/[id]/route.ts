@@ -3,7 +3,9 @@ import type { PublishedDoc } from "@/lib/blocks";
 import { DEFAULT_SETTINGS } from "@/lib/blocks";
 import { BLOCKS } from "@/lib/constants";
 import { setPageLinks, updatePageRecord } from "@/lib/db";
+import { recordPublishEvent } from "@/lib/db/publish-events";
 import { snapshotPageVersion } from "@/lib/db/versions";
+import { deliverWebhooks } from "@/lib/webhook-delivery";
 import { putDoc } from "@/lib/storage";
 import { logError } from "@/lib/logger";
 import { getSession } from "@/lib/auth/session";
@@ -97,6 +99,20 @@ export async function PATCH(
     }
 
     const publishedUrl = `${getSiteOrigin(req)}/p/${record.slug ?? id}`;
+
+    void recordPublishEvent({
+      userId,
+      pageId: id,
+      isUpdate: true,
+      contentLength: payload.raw.length,
+      source: "browser",
+    }).catch((err) => logError("patch-publish", "Event record failed", err));
+    void deliverWebhooks(userId, "page.updated", {
+      page_id: id,
+      page_url: `${getSiteOrigin(req)}/p/${id}`,
+      title: built.record.title,
+      published_at: updatedAt,
+    }).catch(() => {});
 
     return NextResponse.json({ id, url: publishedUrl, updated_at: updatedAt });
   } catch (e: unknown) {

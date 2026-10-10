@@ -1,5 +1,6 @@
 "use client";
 
+import { ImportUrlDialog } from "./ImportUrlDialog";
 import { DocSettings } from "@/lib/blocks";
 import { ROUTES, UI } from "@/lib/constants";
 import { copyTextToClipboard, markdownToHtml } from "@/lib/export";
@@ -930,7 +931,7 @@ function PostPublishSlugBar({
           Set a custom URL before sharing:
         </span>
         <div className="flex items-center gap-0 min-w-0 flex-1">
-          <span className="text-xs text-text-muted/60 px-2 py-1 bg-bg border border-r-0 border-border-default rounded-l-md whitespace-nowrap hidden sm:inline">
+          <span className="text-xs text-text-muted px-2 py-1 bg-bg border border-r-0 border-border-default rounded-l-md whitespace-nowrap hidden sm:inline">
             {hostLabel}/p/
           </span>
           <input
@@ -943,7 +944,7 @@ function PostPublishSlugBar({
             }}
             placeholder="my-incident-2026"
             className={[
-              "min-w-0 flex-1 sm:w-52 sm:flex-none px-2 py-1 text-xs bg-bg border rounded-md sm:rounded-l-none sm:rounded-r-md text-text-primary placeholder:text-text-muted/40",
+              "min-w-0 flex-1 sm:w-52 sm:flex-none px-2 py-1 text-xs bg-bg border rounded-md sm:rounded-l-none sm:rounded-r-md text-text-primary placeholder:text-text-muted",
               "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft",
               "transition-colors duration-fast",
               availability === "taken" ? "border-red-400/60" : "border-border-default",
@@ -1097,6 +1098,14 @@ export function TopBar({
     fileInputRef.current?.click();
   }, []);
 
+  const [importUrlOpen, setImportUrlOpen] = useState(false);
+  const onUrlImported = useCallback((title: string, text: string) => {
+    onImportMarkdown(title, text);
+    setVisibleDrafts(false);
+    setVisibleMoreActions(false);
+    toast.showCoalesced(TOAST_KEYS.importMd, "success", "Imported", "Draft created from the linked file.");
+  }, [onImportMarkdown, toast]);
+
   const onFilePicked = useCallback(async (file: File | null) => {
     if (!file) return;
     try {
@@ -1145,6 +1154,7 @@ export function TopBar({
         { label: "My drafts", detail: "Open saved local drafts.", icon: "list", shortcut: "⌘D", view: "drafts" },
         { label: "Templates", detail: "Insert a structured starting point.", icon: "markdown", view: "templates" },
         { label: "Import Markdown", detail: "Create a draft from a .md file.", icon: "import", onClick: openImportPicker },
+        { label: "Import from URL", detail: "Create a draft from a Markdown file on GitHub.", icon: "import", onClick: () => setImportUrlOpen(true) },
       ],
     },
     {
@@ -1254,6 +1264,8 @@ export function TopBar({
         className="hidden"
         onChange={(e) => { void onFilePicked(e.target.files?.[0] ?? null); }}
       />
+
+      <ImportUrlDialog open={importUrlOpen} onClose={() => setImportUrlOpen(false)} onImported={onUrlImported} />
 
       <MoreActionsDrawer
         open={visibleMoreActions}

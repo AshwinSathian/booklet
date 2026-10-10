@@ -189,6 +189,7 @@ function AdminPageInner({ slug }: { slug: string }) {
               value={teamName}
               onChange={(e) => setTeamName(e.target.value)}
               maxLength={80}
+              aria-label="Team space name"
               onKeyDown={(e) => { if (e.key === "Enter") void handleRename(); }}
               className="min-w-0 flex-1 rounded-lg border border-border-default bg-bg px-3 py-2 text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft"
             />
@@ -246,7 +247,7 @@ function AdminPageInner({ slug }: { slug: string }) {
               placeholder="colleague@example.com"
               value={inviteEmail}
               onChange={(e) => setInviteEmail(e.target.value)}
-              className="min-w-0 flex-1 rounded-lg border border-border-default bg-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft"
+              className="min-w-0 flex-1 rounded-lg border border-border-default bg-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft"
               onKeyDown={(e) => { if (e.key === "Enter") void handleInvite(); }}
             />
             <Button

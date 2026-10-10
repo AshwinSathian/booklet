@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { ROUTES } from "@/lib/constants";
 
 const INPUT_CLASS =
-  "w-full rounded-lg border border-border-default bg-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft";
+  "w-full rounded-lg border border-border-default bg-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft";
 
 export function ResetPasswordForm() {
   const router = useRouter();

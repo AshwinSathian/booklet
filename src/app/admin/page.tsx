@@ -58,7 +58,7 @@ export default async function AdminPage() {
       <div className="mb-8 flex items-baseline gap-4">
         <h1 className="text-xl font-bold font-display">Booklet — Internal Metrics</h1>
         <span className="text-xs text-text-muted">{new Date().toUTCString()}</span>
-        <Link href="/admin/reports" className="ml-auto text-xs text-accent hover:underline">
+        <Link href="/admin/reports" className="ml-auto text-xs text-accent underline underline-offset-2">
           Abuse reports ({openReports} open)
         </Link>
       </div>

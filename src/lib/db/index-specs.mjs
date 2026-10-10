@@ -174,6 +174,20 @@ export const INDEX_SPECS = [
   // getWebhooksByUser lists a user's webhooks sorted by recency.
   { collection: "webhooks", spec: { user_id: 1, created_at: -1 } },
 
+  // --- publish_events ---
+  // getLastPublishSources: each of a user's pages with its latest source.
+  { collection: "publish_events", spec: { user_id: 1, created_at: 1 } },
+  // deletePageAssociatedRecords.
+  { collection: "publish_events", spec: { page_id: 1 } },
+
+  // --- webhook_deliveries ---
+  // The delivery log per webhook, newest first (getWebhookDeliveries, and
+  // the trim to 50 in recordWebhookDelivery).
+  { collection: "webhook_deliveries", spec: { webhook_id: 1, created_at: -1 } },
+  // deletePageAssociatedRecords and deleteAccount.
+  { collection: "webhook_deliveries", spec: { page_id: 1 } },
+  { collection: "webhook_deliveries", spec: { user_id: 1 } },
+
   // --- view_dedupe ---
   // View-count dedupe (incrementViewCount in src/lib/db/index.ts) — one
   // counted view per session_hash per page, mirroring analytics_events'

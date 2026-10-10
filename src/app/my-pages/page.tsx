@@ -2,13 +2,11 @@ import { AppLogo } from "@/components/ui/AppLogo";
 import { AccountMenu } from "@/components/auth/AccountMenu";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import { ROUTES } from "@/lib/constants";
-import { getApiKeysByUser, getCollectionsByUser, getPagesByUser, getTeamSpacesByMembership, getWebhooksByUser } from "@/lib/db";
+import { getCollectionsByUser, getLastPublishSources, getPagesByUser, getTeamSpacesByMembership } from "@/lib/db";
 import { getSession } from "@/lib/auth/session";
 import Link from "next/link";
 import { headers } from "next/headers";
 import { MyPagesList } from "./MyPagesClient";
-import { ApiKeysSection } from "./ApiKeysClient";
-import { WebhooksSection } from "./WebhooksClient";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -34,12 +32,13 @@ export default async function MyPagesPage() {
 
   const hdrs = await headers();
   const baseUrl = getBaseUrl(hdrs);
-  const [{ pages }, apiKeys, ownedCollections, teamSpaces, webhooks] = await Promise.all([
+  // Every row is one of the caller's own pages (getPagesByUser), so titles
+  // and publish sources need no further access check.
+  const [{ pages }, ownedCollections, teamSpaces, sources] = await Promise.all([
     getPagesByUser(userId),
-    getApiKeysByUser(userId),
     getCollectionsByUser(userId),
     getTeamSpacesByMembership(userId),
-    getWebhooksByUser(userId),
+    getLastPublishSources(userId),
   ]);
   // Merge owned collections + team spaces the user is a member of (but doesn't own)
   const ownedIds = new Set(ownedCollections.map((c) => c.id));
@@ -94,6 +93,7 @@ export default async function MyPagesPage() {
               collection_id: p.collection_id,
               view_count: p.view_count,
               has_password: Boolean(p.password_hash),
+              source: sources.get(p.id) ?? null,
               created_at: p.created_at,
               updated_at: p.updated_at,
             }))}
@@ -108,25 +108,6 @@ export default async function MyPagesPage() {
             baseUrl={baseUrl}
           />
         </ToastProvider>
-
-        <ApiKeysSection
-          initialKeys={apiKeys.map((k) => ({
-            id: k.id,
-            label: k.label,
-            created_at: k.created_at,
-            last_used_at: k.last_used_at,
-          }))}
-        />
-
-        <WebhooksSection
-          initialWebhooks={webhooks.map((w) => ({
-            id: w.id,
-            url: w.url,
-            events: w.events,
-            created_at: w.created_at,
-            last_triggered_at: w.last_triggered_at,
-          }))}
-        />
       </main>
     </div>
   );

@@ -88,7 +88,7 @@ export default function TermsPage() {
               {ABUSE_EMAIL ? (
                 <>
                   {" "}You can also write to{" "}
-                  <a href={`mailto:${ABUSE_EMAIL}`} className="text-accent hover:underline">
+                  <a href={`mailto:${ABUSE_EMAIL}`} className="text-accent underline underline-offset-2">
                     {ABUSE_EMAIL}
                   </a>
                   .
@@ -102,7 +102,7 @@ export default function TermsPage() {
           <Section title="API and programmatic access">
             <p>
               API access is subject to the rate limits described in the{" "}
-              <Link href="/api-docs" className="text-accent hover:underline">API reference</Link>. Automated
+              <Link href="/api-docs" className="text-accent underline underline-offset-2">API reference</Link>. Automated
               scraping, abuse, or attempts to circumvent rate limits may result in key revocation.
             </p>
           </Section>
@@ -131,7 +131,7 @@ export default function TermsPage() {
           <Section title="Contact">
             <p>
               Questions about these terms? Email{" "}
-              <a href="mailto:hello@booklet.ashwinsathian.com" className="text-accent hover:underline">
+              <a href="mailto:hello@booklet.ashwinsathian.com" className="text-accent underline underline-offset-2">
                 hello@booklet.ashwinsathian.com
               </a>
               .

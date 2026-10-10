@@ -71,7 +71,7 @@ function Endpoint({ method, path, description, children }: { method: "GET" | "PO
 
 function Pre({ children }: { children: string }) {
   return (
-    <pre className="rounded-xl bg-bg-soft border border-border-default p-4 text-xs font-mono text-text-secondary overflow-x-auto leading-relaxed whitespace-pre">
+    <pre tabIndex={0} className="rounded-xl bg-bg-soft border border-border-default p-4 text-xs font-mono text-text-secondary overflow-x-auto leading-relaxed whitespace-pre">
       {children}
     </pre>
   );
@@ -138,7 +138,7 @@ export default function ApiDocsPage() {
               ["#github-actions", "GitHub Actions"],
               ["#mcp", "Use with Claude"],
             ].map(([href, label]) => (
-              <a key={href} href={href} className="text-text-muted hover:text-text-primary transition py-0.5">
+              <a key={href} href={href} className="text-text-muted hover:text-text-primary transition py-1">
                 {label}
               </a>
             ))}
@@ -151,7 +151,7 @@ export default function ApiDocsPage() {
             <h1 className="text-[clamp(22px,3vw,28px)] mb-2 font-display">API Reference</h1>
             <p className="text-sm text-text-secondary max-w-prose">
               Publish and manage Booklet pages programmatically. All endpoints require an API key obtainable from{" "}
-              <Link href="/my-pages" className="text-accent hover:underline">My Pages</Link>.
+              <Link href="/settings/api-keys" className="text-accent underline underline-offset-2">Settings, API keys</Link>.
             </p>
           </div>
 
@@ -160,7 +160,7 @@ export default function ApiDocsPage() {
             <p className="mt-3 text-sm text-text-secondary">All requests and responses use JSON. Timestamps are ISO 8601 UTC.</p>
             <p className="mt-3 text-sm text-text-secondary">
               The whole API is described in OpenAPI 3.1 at{" "}
-              <a href="/api/v1/openapi.json" className="text-accent hover:underline"><Code>/api/v1/openapi.json</Code></a>.
+              <a href="/api/v1/openapi.json" className="text-accent underline underline-offset-2"><Code>/api/v1/openapi.json</Code></a>.
             </p>
           </Section>
 
@@ -170,11 +170,11 @@ export default function ApiDocsPage() {
             </p>
             <Pre>{`Authorization: Bearer bklt_<your-key>`}</Pre>
             <p className="mt-3 text-sm text-text-secondary">
-              Generate keys at <Link href="/my-pages" className="text-accent hover:underline">/my-pages</Link>. Keys are scoped to your account and never expire (delete and regenerate to rotate).
+              Generate keys at <Link href="/settings/api-keys" className="text-accent underline underline-offset-2">/settings/api-keys</Link>. Keys are scoped to your account and never expire (delete and regenerate to rotate).
             </p>
             <p className="mt-3 text-sm text-text-secondary">
               Each key is rate-limited to <strong className="text-text-primary">60 requests per minute</strong>. Exceeding the limit returns HTTP{" "}
-              <Code>429</Code>. The limit resets at the start of the next minute. See <a href="#rate-limits" className="text-accent hover:underline">Rate limits</a> for details.
+              <Code>429</Code>. The limit resets at the start of the next minute. See <a href="#rate-limits" className="text-accent underline underline-offset-2">Rate limits</a> for details.
             </p>
           </Section>
 

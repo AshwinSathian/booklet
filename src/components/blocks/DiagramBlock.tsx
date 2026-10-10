@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { GRAPHVIZ_LANGS } from "@/lib/blocks";
+import { MERMAID_SOURCE_ATTR } from "@/lib/export/diagrams";
 import { sanitizeCompiledSvg } from "@/lib/svg-sanitize";
 
 async function renderMermaid(code: string): Promise<string> {
@@ -12,6 +13,11 @@ async function renderMermaid(code: string): Promise<string> {
     startOnLoad: false,
     theme: isDark ? "dark" : "default",
     securityLevel: "strict",
+    // Labels as SVG <text>, not HTML inside <foreignObject>: the HTML
+    // export copies this SVG through a sanitizer that removes
+    // foreignObject, which would leave a diagram with no labels.
+    htmlLabels: false,
+    flowchart: { htmlLabels: false },
   });
 
   const uid = `diagram-${Math.random().toString(36).slice(2)}`;
@@ -103,6 +109,7 @@ export function DiagramBlock({ lang, code }: { lang: string; code: string }) {
       {/* Always mounted so containerRef is stable; hidden until ready */}
       <div
         ref={containerRef}
+        {...(ready && !GRAPHVIZ_LANGS.has(lang) ? { [MERMAID_SOURCE_ATTR]: code } : {})}
         className={[
           "flex justify-center overflow-auto p-4 [&_svg]:max-w-full [&_svg]:h-auto",
           errMsg ? "hidden" : "",

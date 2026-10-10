@@ -84,7 +84,7 @@ export const SyntaxOverlay = forwardRef<HTMLDivElement, { value: string; dimOuts
               <div key={i} className={dimmed ? "opacity-40 transition-opacity duration-normal" : "transition-opacity duration-normal"}>
                 {tokenizeLine(line).map((tok, j) =>
                   tok.syntax ? (
-                    <span key={j} className="text-text-muted/60">{tok.text}</span>
+                    <span key={j} className="text-text-muted">{tok.text}</span>
                   ) : (
                     <span key={j}>{tok.text}</span>
                   ),

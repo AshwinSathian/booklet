@@ -72,6 +72,8 @@ export function CodeBlock({
       </div>
 
       <pre
+        // A scrollable block has to be reachable by keyboard.
+        tabIndex={0}
         className={[
           "p-4 text-[13px] leading-[1.55] overflow-auto",
           "font-mono text-text-primary",

@@ -9,6 +9,63 @@ Notable changes to the Booklet app and MCP server. The format follows
 
 ## [Unreleased]
 
+Dashboard and editor (roadmap Phase 5c). No API change, so the CLI, API
+client and MCP server keep their versions.
+
+### Added
+
+- **Settings pages.** API keys are at `/settings/api-keys` and webhooks at
+  `/settings/webhooks`, beside Account, with all three in the account menu.
+  My pages now holds pages and folders only.
+- **Publish source.** Each row on My pages says how the page was last
+  published or updated: Web, API, CLI, MCP or Action.
+- **Webhook delivery log.** Each webhook lists its last 50 deliveries with
+  the status code the receiver answered, or why there was no answer.
+  "Resend" sends the same body again and adds the new attempt as its own
+  row. Deleting a webhook, a page or the account removes the rows.
+- **Version diff.** Version history compares any two versions line by line,
+  frontmatter included. "Restore" now asks first, and says that it adds a
+  new version and overwrites nothing.
+- **Import from URL** in the editor's menu: a link to a public Markdown file
+  on GitHub (`github.com/.../blob/...` or `raw.githubusercontent.com`) opens
+  as a new draft. Nothing is published. Files over 200,000 characters are
+  refused.
+- `node scripts/check-contrast.mjs` checks every text colour of the app's
+  two themes and the five document themes against every surface it is
+  drawn on. CI runs it.
+
+### Changed
+
+- **HTML export includes Mermaid diagrams**, as the SVG the page has
+  already drawn. They used to export as source text. Mermaid labels are now
+  SVG text, so some long labels wrap differently than before.
+- The export menu's PDF option is called "Print to PDF".
+- **Accessibility.** Every page passes axe's WCAG 2.2 AA rules in the light
+  and the dark theme, and a test fails when a new page is not covered.
+  To get there: secondary, muted and accent text colours are darker in the
+  light theme and lighter in the dark one, in the app and in all five
+  document themes (the Signature theme's dark accent goes from `#a12f3e` to
+  `#ca8b93`); status colours and syntax highlighting have light-theme
+  values; links inside text are underlined; scrollable code blocks can be
+  reached by keyboard; editor toolbar buttons are at least 24 by 24 pixels.
+- Creating an API key with an unconfirmed email address now shows why it
+  was refused. The button used to do nothing.
+
+### Fixed
+
+- The `page.updated` webhook event is sent. Webhooks could subscribe to it,
+  and nothing fired it.
+- A page updated in the web editor is counted as an update in the publish
+  log. Only API updates were.
+- An event handler on the root `<svg>` element of a Graphviz diagram is
+  removed like one on any other element.
+
+### Not planned
+
+- **Custom domains for team spaces** (roadmap task 5.13). It depended on
+  moving to Cloudflare Workers, and Booklet stays self-hosted (see
+  [ADR 0001](docs/adr/0001-hosting-platform.md)).
+
 Documents (roadmap Phase 5b). MCP server 3.1.0.
 
 ### Added

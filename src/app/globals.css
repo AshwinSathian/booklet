@@ -65,10 +65,10 @@
 
   /* ── Text (DARK) ────────────────────────────────────────────────────────── */
   --color-text-primary:   #f5f5f7;        /* Apple primary label               */
-  --color-text-secondary: #98989f;        /* Apple secondary label             */
+  --color-text-secondary: #9c9ca3;        /* Apple secondary label             */
   /* Lifted from #636366 (was 3.5:1 on bg, 3.0:1 on bg-elevated — failed WCAG
      AA's 4.5:1). Now 5.3:1 on bg, 4.5:1 on bg-elevated (the harder case). */
-  --color-text-muted:     #7f7f82;        /* Apple tertiary label              */
+  --color-text-muted:     #9e9ea0;        /* Apple tertiary label              */
 
   /* ── Accent (DARK) — "Precision" (2026-08-01) ────────────────────────────────── */
   /* A single amber/gold accent replaces "Ink & Paper"'s oxblood — chosen to
@@ -130,10 +130,10 @@ html.light {
 
   /* ── Text (LIGHT) ───────────────────────────────────────────────────────── */
   --color-text-primary:   #1d1d1f;        /* Apple label                       */
-  --color-text-secondary: #6e6e73;        /* Apple secondaryLabel              */
+  --color-text-secondary: #5a5a5e;        /* Apple secondaryLabel              */
   /* Darkened from #86868b (was 3.6:1 on bg, 3.0:1 on bg-elevated — failed
      WCAG AA's 4.5:1). Now 5.7:1 on bg, 4.7:1 on bg-elevated (the harder case). */
-  --color-text-muted:     #66666a;        /* Apple tertiaryLabel               */
+  --color-text-muted:     #5a5a5d;        /* Apple tertiaryLabel               */
 
   /* ── Accent (LIGHT) — "Precision" ───────────────────────────────────────── */
   /* Amber itself fails as bare text or a white-text button fill on a WHITE
@@ -141,11 +141,11 @@ html.light {
      uses a deep ochre instead, tuned so both roles clear AA: as bare text on
      --color-bg (#fafafa) it's ~5.96:1; as a button fill with
      --color-accent-contrast (white) label it's the same ~5.96:1. */
-  --color-accent:          #8a5a00;
-  --color-accent-hover:    #6f4700;
-  --color-accent-soft:     #9e680a;
+  --color-accent:          #7c5100;
+  --color-accent-hover:    #6b4600;
+  --color-accent-soft:     #7b5108;
   --color-accent-contrast: #fafafa;
-  --color-accent-dim:      rgba(138, 90, 0, 0.10);
+  --color-accent-dim:      rgba(124, 81, 0, 0.1);
 
   /* ── Borders (LIGHT) ────────────────────────────────────────────────────── */
   --color-border-strong:  rgba(0, 0, 0, 0.14);
@@ -163,6 +163,19 @@ html.light {
   --shadow-hard:  0 2px 0 0 rgba(0, 0, 0, 0.12);
 
   /* ── Scrollbar (LIGHT) ──────────────────────────────────────────────────── */
+  /* Status colours (LIGHT). Tailwind's 300 and 400 shades are used across
+     the app as status text (errors, method badges, callout labels). They
+     are tuned for a dark surface and sit near 2:1 on a light one, so the
+     light theme points them at the 800 shade: at least 4.5:1 on every
+     light surface and on the 8-15% tints these labels are drawn over. */
+  --color-red-300: #991b1b;     --color-red-400: #991b1b;
+  --color-rose-400: #9f1239;
+  --color-amber-300: #92400e;   --color-amber-400: #92400e;
+  --color-green-400: #166534;   --color-emerald-400: #065f46;
+  --color-teal-400: #115e59;    --color-sky-400: #075985;
+  --color-blue-400: #1e40af;    --color-violet-400: #5b21b6;
+  --color-purple-400: #6b21a8;
+
   --scrollbar-thumb:       rgba(0, 0, 0, 0.14);
   --scrollbar-thumb-hover: rgba(0, 0, 0, 0.28);
 
@@ -464,7 +477,7 @@ a, button, [role="button"], input, select, textarea {
   --hljs-keyword:  #cba6f7;
   --hljs-string:   #a6e3a1;
   --hljs-number:   #fab387;
-  --hljs-comment:  #6c7086;
+  --hljs-comment:  #8c8fa1;
   --hljs-fn:       #89b4fa;
   --hljs-type:     #f9e2af;
   --hljs-operator: #89dceb;
@@ -474,15 +487,15 @@ a, button, [role="button"], input, select, textarea {
 
 html.light {
   --hljs-fg:       #24273a;
-  --hljs-keyword:  #8839ef;
-  --hljs-string:   #40a02b;
-  --hljs-number:   #fe640b;
-  --hljs-comment:  #9ca0b0;
-  --hljs-fn:       #1e66f5;
-  --hljs-type:     #df8e1d;
-  --hljs-operator: #04a5e5;
-  --hljs-attr:     #d20f39;
-  --hljs-literal:  #fe640b;
+  --hljs-keyword:  #7531ce;
+  --hljs-string:   #29661b;
+  --hljs-number:   #9c3d07;
+  --hljs-comment:  #565962;
+  --hljs-fn:       #1853c6;
+  --hljs-type:     #7e5010;
+  --hljs-operator: #026085;
+  --hljs-attr:     #b50d31;
+  --hljs-literal:  #9c3d07;
 }
 
 .hljs                        { color: var(--hljs-fg); }

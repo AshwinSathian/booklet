@@ -1,8 +1,9 @@
 import http from "node:http";
 import https from "node:https";
-import { getWebhooksByUser, touchWebhookTriggered } from "@/lib/db";
+import { getWebhooksByUser, recordWebhookDelivery, touchWebhookTriggered } from "@/lib/db";
+import { logError } from "@/lib/logger";
 import { bareHostname, resolveHostForDelivery, pinnedLookup } from "@/lib/ssrf-guard";
-import type { DbWebhook } from "@/lib/db/types";
+import type { DbWebhook, DbWebhookDelivery } from "@/lib/db/types";
 
 type WebhookEvent = DbWebhook["events"][number];
 
@@ -50,12 +51,12 @@ function requestPinned(
   address: string,
   family: 4 | 6,
   init: { headers: Record<string, string>; body: string; timeoutMs: number },
-): Promise<{ ok: boolean } | null> {
+): Promise<{ status: number } | { error: string }> {
   return new Promise((resolve) => {
     const isHttps = url.protocol === "https:";
     const mod = isHttps ? https : http;
     let settled = false;
-    const done = (result: { ok: boolean } | null) => {
+    const done = (result: { status: number } | { error: string }) => {
       if (settled) return;
       settled = true;
       resolve(result);
@@ -76,13 +77,14 @@ function requestPinned(
       },
       (res) => {
         res.resume(); // drain the body; we only care about the status
-        const status = res.statusCode ?? 0;
-        done({ ok: status >= 200 && status < 300 });
+        done({ status: res.statusCode ?? 0 });
       },
     );
 
-    req.on("timeout", () => req.destroy(new Error("Webhook delivery timed out")));
-    req.on("error", () => done(null));
+    req.on("timeout", () => req.destroy(new Error("Timed out after 10 seconds")));
+    // Only a fixed set of words reaches the log the owner reads: a raw
+    // socket error could name an address the lookup was steered to.
+    req.on("error", (err) => done({ error: /timed out/i.test(err.message) ? "Timed out after 10 seconds" : "Could not connect" }));
     req.end(init.body);
   });
 }
@@ -94,6 +96,64 @@ async function resolveOneSafeAddress(hostname: string): Promise<{ address: strin
   return result.addresses[0];
 }
 
+/**
+ * Sends one signed body to one webhook and records the attempt in its
+ * delivery log. Used for a first delivery and for "Resend", which sends a
+ * logged body again and so adds a second row.
+ *
+ * The hostname is resolved and checked immediately before the request, and
+ * the connection goes to that checked address (see requestPinned): DNS
+ * answers can change between registration and delivery, and between a
+ * check and a connection made moments apart.
+ */
+export async function sendToWebhook(
+  webhook: DbWebhook,
+  event: WebhookEvent,
+  pageId: string,
+  body: string,
+  // Only a unit spec passes this, to reach a stub on loopback.
+  resolve: typeof resolveOneSafeAddress = resolveOneSafeAddress,
+): Promise<DbWebhookDelivery> {
+  let result: { status: number } | { error: string };
+  try {
+    const parsed = new URL(webhook.url);
+    const safeAddress = await resolve(bareHostname(parsed));
+    if (!safeAddress) {
+      result = { error: "The URL does not resolve to a public address" };
+    } else {
+      result = await requestPinned(parsed, safeAddress.address, safeAddress.family, {
+        headers: {
+          "Content-Type": "application/json",
+          "X-Booklet-Signature": `sha256=${await signPayload(webhook.secret, body)}`,
+          "X-Booklet-Event": event,
+        },
+        body,
+        timeoutMs: 10_000,
+      });
+    }
+  } catch {
+    result = { error: "Could not connect" };
+  }
+
+  const status = "status" in result ? result.status : null;
+  const delivery: DbWebhookDelivery = {
+    id: crypto.randomUUID(),
+    webhook_id: webhook.id,
+    user_id: webhook.user_id,
+    page_id: pageId,
+    event,
+    body,
+    status_code: status,
+    ok: status !== null && status >= 200 && status < 300,
+    error: "error" in result ? result.error : null,
+    created_at: new Date().toISOString(),
+  };
+  await recordWebhookDelivery(delivery).catch((err) => logError("webhook", "Delivery log write failed", err));
+  if (delivery.ok) void touchWebhookTriggered(webhook.id).catch(() => {});
+  return delivery;
+}
+
+/** Fire-and-forget from the publish and update routes: a failed delivery never fails the request. */
 export async function deliverWebhooks(
   userId: string,
   event: WebhookEvent,
@@ -104,43 +164,5 @@ export async function deliverWebhooks(
   if (relevant.length === 0) return;
 
   const body = JSON.stringify({ event, ...payload });
-
-  await Promise.allSettled(
-    relevant.map(async (webhook) => {
-      try {
-        // Re-resolve and re-check the hostname immediately before the
-        // outbound request, then connect directly to the validated address
-        // (see requestPinned) rather than letting a separate resolution
-        // happen at connect time — DNS answers can change between
-        // registration and delivery (rebinding), and can just as easily
-        // change between a validation lookup and a connection lookup done
-        // moments apart, so "check, then let something else re-resolve and
-        // connect" is not actually closed by re-checking alone.
-        let parsed: URL;
-        try {
-          parsed = new URL(webhook.url);
-        } catch {
-          return;
-        }
-        const safeAddress = await resolveOneSafeAddress(bareHostname(parsed));
-        if (!safeAddress) return;
-
-        const signature = await signPayload(webhook.secret, body);
-        const result = await requestPinned(parsed, safeAddress.address, safeAddress.family, {
-          headers: {
-            "Content-Type": "application/json",
-            "X-Booklet-Signature": `sha256=${signature}`,
-            "X-Booklet-Event": event,
-          },
-          body,
-          timeoutMs: 10_000,
-        });
-        if (result?.ok) {
-          void touchWebhookTriggered(webhook.id).catch(() => {});
-        }
-      } catch {
-        // fire-and-forget; delivery failure is non-fatal
-      }
-    }),
-  );
+  await Promise.allSettled(relevant.map((webhook) => sendToWebhook(webhook, event, payload.page_id, body)));
 }

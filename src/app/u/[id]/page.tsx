@@ -134,13 +134,13 @@ export default async function UserProfilePage({
                   <p className="text-sm font-medium text-text-primary group-hover:text-accent transition line-clamp-2 leading-snug mb-1">
                     {page.title ?? "Untitled"}
                   </p>
-                  <p className="text-2xs text-text-muted/60 font-mono truncate">
+                  <p className="text-2xs text-text-muted font-mono truncate">
                     {page.slug ? `/p/${page.slug}` : `/p/${page.id}`}
                   </p>
                 </div>
                 <div className="flex items-center justify-between mt-3 gap-2">
-                  <span className="text-2xs text-text-muted/50">{timeAgo(page.created_at)}</span>
-                  <span className="text-2xs text-text-muted/50 tabular-nums">
+                  <span className="text-2xs text-text-muted">{timeAgo(page.created_at)}</span>
+                  <span className="text-2xs text-text-muted tabular-nums">
                     {page.view_count === 1 ? "1 view" : `${page.view_count.toLocaleString()} views`}
                   </span>
                 </div>

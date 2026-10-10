@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { useSession } from "@/components/auth/SessionProvider";
 
 const INPUT_CLASS =
-  "w-full rounded-lg border border-border-default bg-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft";
+  "w-full rounded-lg border border-border-default bg-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft";
 
 const SSO_ERRORS: Record<string, string> = {
   sso_state: "That sign-in did not start in this browser, or it took too long. Try again.",

@@ -24,9 +24,20 @@ export type PageRow = {
   collection_id: string | null;
   view_count: number;
   has_password: boolean;
+  /** How the page was last published or updated; null for pages older than the event log. */
+  source: PublishSource | null;
   created_at: string;
   updated_at: string;
   baseUrl: string;
+};
+
+type PublishSource = "browser" | "api" | "cli" | "github-action" | "mcp";
+const SOURCE_LABELS: Record<PublishSource, string> = {
+  browser: "Web",
+  api: "API",
+  cli: "CLI",
+  mcp: "MCP",
+  "github-action": "Action",
 };
 
 export type CollectionRow = {
@@ -149,17 +160,17 @@ function SlugEditor({
       <div className="flex items-center gap-1.5 mt-1.5">
         {slug ? (
           <span className="flex items-center gap-1 text-xs text-text-muted">
-            <span className="text-text-muted/50">{hostLabel}/p/</span>
+            <span className="text-text-muted">{hostLabel}/p/</span>
             <span className="font-medium text-accent">{slug}</span>
           </span>
         ) : (
-          <span className="text-xs text-text-muted/40 italic">No custom URL</span>
+          <span className="text-xs text-text-muted italic">No custom URL</span>
         )}
         <button
           type="button"
           onClick={beginEdit}
           title={slug ? "Edit URL" : "Add custom URL"}
-          className="flex items-center justify-center h-5 w-5 rounded text-text-muted/40 transition hover:text-text-muted hover:bg-fill-2"
+          className="flex items-center justify-center h-5 w-5 rounded text-text-muted transition hover:text-text-muted hover:bg-fill-2"
         >
           <Icon name="pencil" size={10} />
         </button>
@@ -181,7 +192,7 @@ function SlugEditor({
             }}
             disabled={saving}
             title="Remove custom URL"
-            className="flex items-center justify-center h-5 w-5 rounded text-text-muted/40 transition hover:text-red-400 hover:bg-red-400/8 disabled:opacity-40"
+            className="flex items-center justify-center h-5 w-5 rounded text-text-muted transition hover:text-red-400 hover:bg-red-400/8 disabled:opacity-40"
           >
             <Icon name="close" size={9} />
           </button>
@@ -193,7 +204,7 @@ function SlugEditor({
   return (
     <div className="mt-2 flex flex-col gap-1">
       <div className="flex items-center gap-0">
-        <span className="text-xs text-text-muted/60 px-2 py-1 bg-bg-soft border border-r-0 border-border-default rounded-l-md whitespace-nowrap hidden sm:inline">
+        <span className="text-xs text-text-muted px-2 py-1 bg-bg-soft border border-r-0 border-border-default rounded-l-md whitespace-nowrap hidden sm:inline">
           {hostLabel}/p/
         </span>
         <input
@@ -206,7 +217,7 @@ function SlugEditor({
           }}
           placeholder="my-custom-slug"
           className={[
-            "min-w-0 w-44 px-2 py-1 text-xs bg-bg border rounded-md sm:rounded-l-none sm:rounded-r-md text-text-primary placeholder:text-text-muted/40",
+            "min-w-0 w-44 px-2 py-1 text-xs bg-bg border rounded-md sm:rounded-l-none sm:rounded-r-md text-text-primary placeholder:text-text-muted",
             "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft",
             availability === "taken" ? "border-red-400/60" : "border-border-default",
           ].join(" ")}
@@ -406,6 +417,15 @@ function PageCard({
                 <>
                   <span className="opacity-30" aria-hidden>·</span>
                   <span>Updated {formatDate(page.updated_at)}</span>
+                </>
+              )}
+              {page.source && (
+                <>
+                  <span className="opacity-30" aria-hidden>·</span>
+                  <span title="How this page was last published">
+                    <span className="sr-only">Published from </span>
+                    {SOURCE_LABELS[page.source]}
+                  </span>
                 </>
               )}
               {page.visibility !== "public" && (
@@ -635,7 +655,7 @@ function SearchSortBar({
     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
       <div className="relative flex-1 w-full sm:max-w-xs">
         <svg
-          className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted/50"
+          className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted"
           width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden
         >
           <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.5" />
@@ -646,12 +666,14 @@ function SearchSortBar({
           value={query}
           onChange={(e) => onQuery(e.target.value)}
           placeholder="Search pages…"
-          className="w-full rounded-lg border border-border-default bg-bg pl-8 pr-3 py-1.5 text-sm text-text-primary placeholder:text-text-muted/50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft"
+          aria-label="Search pages"
+          className="w-full rounded-lg border border-border-default bg-bg pl-8 pr-3 py-1.5 text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft"
         />
       </div>
 
       <div className="flex items-center gap-2 shrink-0">
         <select
+          aria-label="Sort pages"
           value={sort}
           onChange={(e) => onSort(e.target.value as SortKey)}
           className="rounded-lg border border-border-default bg-bg px-2.5 py-1.5 text-sm text-text-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft appearance-none pr-7 bg-no-repeat"
@@ -689,6 +711,7 @@ export function MyPagesList({
     collection_id: string | null;
     view_count: number;
     has_password: boolean;
+    source: PublishSource | null;
     created_at: string;
     updated_at: string;
   }>;
@@ -939,7 +962,7 @@ export function MyPagesList({
   if (pages.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-fill-2 text-text-muted/40">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-fill-2 text-text-muted">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden>
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             <polyline points="14 2 14 8 20 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>

@@ -1,5 +1,7 @@
 // Sanitizes SVG markup produced by a diagram compiler (Graphviz via
-// @viz-js/viz) before it's assigned via innerHTML in DiagramBlock. Diagram
+// @viz-js/viz) before it's assigned via innerHTML in DiagramBlock, and the
+// rendered Mermaid SVG the HTML export copies off the page
+// (src/lib/export/diagrams.ts). Diagram
 // source is user-controlled text (a fenced code block's contents) — DOT
 // supports HTML-like labels and per-node/edge `URL`/`href` attributes, both
 // of which can carry a script or a `javascript:`/`data:` URI through to the
@@ -48,7 +50,8 @@ export function sanitizeCompiledSvg(svg: string): string {
   const root = doc.documentElement;
   if (!root || root.nodeName.toLowerCase() !== "svg") return "";
 
-  for (const el of Array.from(root.querySelectorAll("*"))) {
+  // The root too: `<svg onload=...>` is an event handler like any other.
+  for (const el of [root, ...Array.from(root.querySelectorAll("*"))]) {
     const tag = el.nodeName.toLowerCase();
     if (DISALLOWED_TAGS.has(tag)) {
       el.remove();

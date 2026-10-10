@@ -18,7 +18,7 @@ function avatarHue(userId: string): number {
 }
 
 // A minimal avatar-triggered dropdown with
-// the account's email, links to My Pages, Spaces and Account settings, and sign out.
+// the account's email, links to My Pages, Spaces, Account, API keys and Webhooks, and sign out.
 export function AccountMenu() {
   const { userId, email, refetch } = useSession();
   const [open, setOpen] = useState(false);
@@ -90,6 +90,20 @@ export function AccountMenu() {
             className="block px-3 py-1.5 text-sm text-text-secondary transition hover:bg-fill-1 hover:text-text-primary"
           >
             Account
+          </Link>
+          <Link
+            href={ROUTES.apiKeys}
+            onClick={() => setOpen(false)}
+            className="block px-3 py-1.5 text-sm text-text-secondary transition hover:bg-fill-1 hover:text-text-primary"
+          >
+            API keys
+          </Link>
+          <Link
+            href={ROUTES.webhooks}
+            onClick={() => setOpen(false)}
+            className="block px-3 py-1.5 text-sm text-text-secondary transition hover:bg-fill-1 hover:text-text-primary"
+          >
+            Webhooks
           </Link>
           <button
             type="button"

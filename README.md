@@ -179,7 +179,8 @@ src/
   app/
     app/            # Editor (client)
     p/[id]/         # Share page + embed
-    my-pages/       # Dashboard: pages, API keys, webhooks, collections
+    my-pages/       # Dashboard: pages and folders, version history, analytics
+    settings/       # Account, API keys, webhooks and their delivery log
     api/v1/         # REST API
     explore/        # Public page directory
     templates/      # Template landing pages

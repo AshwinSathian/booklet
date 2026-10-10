@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { JSDOM } from "jsdom";
-import { blocksToHtml } from "@/lib/export/html";
+import { blocksToHtml, blocksToHtmlDocument } from "@/lib/export/html";
 import type { Block } from "@/lib/blocks";
 
 // Every renderBlock case in src/lib/export/html.ts has a `default: return ""`
@@ -175,7 +175,19 @@ test.describe("blocksToHtml — diagram export", () => {
     expect(html).toContain("language-dot");
   });
 
-  test("a Mermaid diagram stays as syntax-highlighted source (documented limitation, not a silent drop)", async () => {
+  test("a Mermaid diagram uses the SVG already rendered on the page, and no source block", async () => {
+    const code = "graph TD; A-->B;";
+    const html = await blocksToHtmlDocument(
+      [{ t: "diagram", lang: "mermaid", code }],
+      "Doc",
+      new Map([[code, '<svg xmlns="http://www.w3.org/2000/svg"><text>A</text></svg>']]),
+    );
+    expect(html).toContain("<figure><svg");
+    expect(html).not.toContain("language-mermaid");
+    expect(html).not.toContain("A--&gt;B");
+  });
+
+  test("a Mermaid diagram that was not rendered on the page falls back to its source", async () => {
     const html = await blocksToHtml([
       { t: "diagram", lang: "mermaid", code: "graph TD; A-->B;" },
     ]);
