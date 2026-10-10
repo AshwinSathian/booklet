@@ -60,15 +60,26 @@ function decodeCss(css: string): string {
  * Text filtering, unlike the DOM walk around it, because the SVG parser
  * hands a stylesheet over as one string. Escapes and comments are resolved
  * first so that what is matched is what the browser will see.
+ *
+ * Run until nothing changes: one pass can leave behind exactly what it was
+ * looking for (`\5c\5c 75rl(` decodes to `\75rl(`, and removing the inner
+ * `@import;` of `@im@import;port` joins the outer one). Every pass that
+ * changes the text shortens it or settles a `url()`, so the loop ends.
  */
 export function inertCss(css: string): string {
-  return (css.includes("\\") || css.includes("/*") ? decodeCss(css) : css)
-    .replace(/@import[^;]*;?/gi, "")
-    .replace(/(?:-webkit-)?image-set\([^)]*(?:\)|$)/gi, "none")
-    .replace(/url\(([^)]*)(?:\)|$)/gi, (whole, arg: string) => {
-      const target = arg.trim().replace(/^['"]|['"]$/g, "").trim().toLowerCase();
-      return target.startsWith("#") || target.startsWith("data:") ? whole : "none";
-    });
+  let out = css;
+  let before: string;
+  do {
+    before = out;
+    out = (out.includes("\\") || out.includes("/*") ? decodeCss(out) : out)
+      .replace(/@import[^;]*;?/gi, "")
+      .replace(/(?:-webkit-)?image-set\([^)]*(?:\)|$)/gi, "none")
+      .replace(/url\(([^)]*)(?:\)|$)/gi, (whole, arg: string) => {
+        const target = arg.trim().replace(/^['"]|['"]$/g, "").trim().toLowerCase();
+        return target.startsWith("#") || target.startsWith("data:") ? whole : "none";
+      });
+  } while (out !== before);
+  return out;
 }
 
 /** Returns sanitized SVG markup, or "" if the input isn't parseable SVG. */

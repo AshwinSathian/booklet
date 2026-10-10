@@ -97,6 +97,10 @@ test.describe("sanitizeCompiledSvg", () => {
       ".a{background:URL( 'https://evil.example/t.png' )}",
       ".a{background:url(https://evil.example/never-closed",
       ".a{background:url(//evil.example/t.png)}",
+      // One pass would leave these two behind as live loaders.
+      ".a{background:\\5c\\5c 75rl(https://evil.example/t.png)}",
+      ".a{background:\\\\5c 75rl(https://evil.example/t.png)}",
+      '@im@import;port "https://evil.example/a.css";',
     ];
     for (const css of hostile) expect(inertCss(css), css).not.toContain("evil.example");
   });
