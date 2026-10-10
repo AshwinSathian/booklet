@@ -7,9 +7,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = buildMetadata({
-  title: "Free — No paid plans",
+  title: "Free, with no paid plan",
   description:
-    "Booklet is completely free. Publish Markdown pages, get analytics, use the API, version history, password protection — all included. No credit card.",
+    "Booklet is free and has no paid plan. An account gets team spaces, version history, analytics, the API, webhooks and the MCP server. Who pays for hosting is on the Trust page.",
   pathname: "/pricing",
 });
 
@@ -42,46 +42,46 @@ const FEATURE_GROUPS: { heading: string; items: string[] }[] = [
     heading: "Writing & publishing",
     items: [
       "Live Markdown preview as you type",
-      "Publish with one click — clean shareable URL",
-      "Unlimited local drafts, auto-saved to your browser",
-      "Full GitHub-Flavored Markdown support",
-      "Mermaid diagram rendering (flowcharts, sequence, architecture)",
-      "Formatting toolbar — bold, italic, headings, code, links",
-      "YAML frontmatter support (title, author, date, tags, visibility)",
+      "Publish to a link you can share",
+      "Drafts saved in your browser, synced to your account when signed in",
+      "GitHub-Flavored Markdown, KaTeX math",
+      "Mermaid and Graphviz diagrams",
+      "Formatting toolbar and a slash menu",
+      "YAML frontmatter (type, status, owners, tags, visibility)",
       "21 ready-to-use templates (incident report, postmortem, ADR, runbook, and more)",
     ],
   },
   {
     heading: "Pages & sharing",
     items: [
-      "Unlimited pages (anonymous publishing is capped at 10/month)",
+      "Pages without a monthly cap (10 a month with no account)",
       "Custom URL slugs (e.g. /p/my-incident-report)",
-      "Unlisted pages — accessible by link, not discoverable",
+      "Unlisted pages by default, public pages when you choose, team pages in a space",
       "Password-protected pages",
-      "Per-page view analytics with read-depth tracking",
-      "Version history — restore any of the last 50 snapshots",
-      "Auto Table of Contents for long documents",
-      "Reading time displayed on every shared page",
+      "Per-page views, and how many readers reached 50% and 100%",
+      "Version history: 50 snapshots per page, line diff, restore",
+      "Table of contents on long documents",
+      "Team spaces, with document types and links between pages",
     ],
   },
   {
     heading: "Export & organisation",
     items: [
-      "Export to Markdown, self-contained HTML, or PDF",
-      "Collections — group related pages into organised sets",
-      "My Pages dashboard to manage all your published pages",
-      "Attribution badge on every page (links back to Booklet)",
+      "Export to Markdown or self-contained HTML, and Print to PDF",
+      "Folders for your own pages",
+      "My pages, with how each page was last published",
+      "Download every page as a ZIP of Markdown files",
     ],
   },
   {
     heading: "API & integrations",
     items: [
-      "REST API v1 — publish, update, list, and delete pages",
-      "API key management (generate, revoke, label keys)",
-      "Publish webhooks — get notified on page.published and page.updated",
-      "Claude MCP server — use Booklet directly from Claude",
-      "GitHub Actions integration — publish from CI/CD pipelines",
-      "CLI — booklet-cli npm package, publish from any terminal or CI",
+      "REST API: publish, update, list and delete pages",
+      "API keys you can label and revoke",
+      "Webhooks on page.published and page.updated, with a delivery log",
+      "MCP server for Claude and other MCP clients",
+      "GitHub Action for publishing from a workflow",
+      "CLI: the booklet-cli npm package",
     ],
   },
 ];
@@ -96,15 +96,19 @@ export default function PricingPage() {
         <div className="mb-14 text-center">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-accent/20 bg-accent-dim px-4 py-1.5 text-xs font-semibold tracking-wide text-accent">
             <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-            Free forever
+            Free
           </div>
           <h1 className="text-[clamp(32px,5vw,48px)] font-thin leading-[1.05] text-text-primary font-display">
-            Everything included. No catch.
+            Free, and there is no paid plan.
           </h1>
           <p className="mt-4 text-base text-text-secondary max-w-lg mx-auto leading-relaxed">
-            {APP_NAME} is completely free. Every feature — the API, version history, analytics,
-            password protection, webhooks, MCP — is available to everyone with an account.
-            No credit card. No paid plan. No upgrade prompt.
+            Every feature of {APP_NAME} comes with a free account: team spaces, the API, version
+            history, analytics, password protection, webhooks and the MCP server. Nothing asks for a
+            card. The maintainer pays for the hosting, and the{" "}
+            <Link href="/trust" className="text-accent underline underline-offset-2 hover:text-accent-soft transition">
+              Trust page
+            </Link>{" "}
+            says what that hosting is.
           </p>
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Button variant="primary" size="md" href={ROUTES.app}>
@@ -144,12 +148,12 @@ export default function PricingPage() {
         {/* Anonymous vs signed-in note */}
         <div className="mt-14 rounded-xl border border-border-subtle bg-bg-elevated px-6 py-7">
           <h2 className="text-sm font-semibold text-text-primary mb-3 font-display">
-            Anonymous vs. signed-in
+            With and without an account
           </h2>
           <p className="text-sm text-text-secondary leading-relaxed mb-4">
-            You can publish immediately without creating an account — no sign-up required.
-            Creating a free account unlocks editing pages in place, custom slugs, the My Pages
-            dashboard, analytics, version history, the API, and all other features listed above.
+            You can publish without an account, up to 10 pages a month. An account removes the cap
+            and adds editing in place, custom slugs, My pages, analytics, version history, team
+            spaces and the API.
           </p>
           <p className="text-sm text-text-secondary leading-relaxed mb-4">
             A page published without an account is kept for 90 days. Sign in and claim it from the
@@ -163,9 +167,8 @@ export default function PricingPage() {
         {/* CTA */}
         <div className="mt-10 text-center">
           <p className="text-xs text-text-muted">
-            Built for developers, writers, and teams who need to share things clearly.{" "}
             <Link href="/explore" className="text-accent underline underline-offset-2 hover:text-accent-soft transition">
-              Browse pages people are sharing →
+              Pages their authors made public →
             </Link>
           </p>
         </div>

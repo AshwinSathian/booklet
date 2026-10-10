@@ -8,7 +8,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = buildMetadata({
   title: "About",
   description:
-    `${APP_NAME} is a tool for sharing ideas clearly — paste Markdown, get a shareable page in seconds. Built for engineers and writers who care about signal over noise.`,
+    `${APP_NAME} publishes Markdown as web pages, with document types, links and team spaces for incident reports, ADRs, RFCs and runbooks. Who builds it and why.`,
   pathname: "/about",
 });
 
@@ -21,32 +21,41 @@ export default function AboutPage() {
         <div className="max-w-2xl">
           <p className="text-xs font-semibold uppercase tracking-widest text-text-muted mb-4">About</p>
           <h1 className="text-[clamp(26px,4vw,36px)] text-text-primary mb-6 font-display">
-            {APP_NAME} — share ideas clearly
+            About {APP_NAME}
           </h1>
 
           <div className="prose-sm text-text-secondary flex flex-col gap-5 leading-relaxed">
             <p>
-              {APP_NAME} started from a simple frustration: sharing technical content — incident reports,
-              architecture decisions, release notes — was either ugly (raw Markdown in a Slack message) or
-              slow (spinning up a Notion doc, fighting formatting, managing access). There was no middle path.
+              {APP_NAME} started from a simple frustration. Sharing technical writing &mdash; an incident
+              report, an architecture decision, release notes &mdash; meant either pasting raw Markdown into
+              Slack, or opening a doc tool and then fighting its formatting and its access settings.
             </p>
 
             <p>
-              {APP_NAME} is that middle path. Paste Markdown, get a formatted page with a shareable
-              URL in seconds. No account required to start. No clutter. No ads. Just your content, rendered clearly.
+              So {APP_NAME} does one thing. You write Markdown, and it gives you a page with a link. You
+              don&apos;t need an account to try it, and there are no ads on it.
             </p>
 
             <p>
-              The design principle is ruthless: every pixel that doesn&apos;t serve comprehension is removed.
-              Wide or narrow reading width. Dark and light mode. A table of contents when the document warrants
-              one. Code blocks that don&apos;t break. Nothing more.
+              It has since grown towards the documents engineering teams pass around: incident reports,
+              ADRs, RFCs, runbooks. A document can carry its type, status and owners. One can link to
+              another. And a team can keep them in a space of its own, with some pages kept to its members.
             </p>
 
             <p>
-              For teams that want more — custom URLs, version history, analytics, password protection,
-              API access, and a CI integration to publish directly from a repository — signing in unlocks all of
-              that, free. A page published without an account is kept for 90 days. Sign in and claim it from
-              the browser you published it in, and it doesn&apos;t expire.
+              The page itself is plain on purpose. A reading width you can change, dark and light themes,
+              a table of contents when the document is long enough to need one, code blocks that don&apos;t
+              break. That&apos;s about it.
+            </p>
+
+            <p>
+              All of it is free. Without an account you can publish ten pages a month and each is kept for
+              90 days; sign in and both limits go away. Who pays for it, where it runs and how it&apos;s
+              backed up are on the{" "}
+              <Link href="/trust" className="text-accent underline underline-offset-2">
+                Trust page
+              </Link>
+              .
             </p>
 
             <p>
@@ -59,7 +68,7 @@ export default function AboutPage() {
               >
                 Ashwin Sathian
               </a>
-              . It runs on Next.js and MongoDB.
+              . It runs on Next.js and MongoDB, and the source is on GitHub under AGPL-3.0.
             </p>
           </div>
 
