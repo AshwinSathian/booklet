@@ -587,12 +587,16 @@ function PublishReveal({ onDone }: { onDone: () => void }) {
 // Publish / post-publish button group
 // ---------------------------------------------------------------------------
 
+export type PublishVisibility = "unlisted" | "public";
+
 function PublishArea({
   status,
   canPublish,
   publishedUrl,
   publishedOwned,
   copyLinkPulse,
+  publishVisibility,
+  onPublishVisibilityChange,
   onPublish,
   onUpdatePage,
   onCopyLink,
@@ -603,6 +607,9 @@ function PublishArea({
   publishedUrl: string | null;
   publishedOwned: boolean;
   copyLinkPulse: boolean;
+  /** Undefined when signed out: anonymous pages are always unlisted. */
+  publishVisibility?: PublishVisibility;
+  onPublishVisibilityChange: (v: PublishVisibility) => void;
   onPublish: () => void;
   onUpdatePage: () => void;
   onCopyLink: () => void;
@@ -725,16 +732,31 @@ function PublishArea({
   const label = status === "error" ? "Retry" : "Publish";
 
   return (
-    <Button variant="primary" size="md" onClick={onPublish} disabled={!canPublish || isPublishing}>
-      {isPublishing ? (
-        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" className="animate-spin" aria-hidden>
-          <path d="M6.5 1a5.5 5.5 0 1 0 5.5 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
-      ) : (
-        <Icon name="upload" size={13} />
-      )}
-      <span className="hidden sm:inline">{label}</span>
-    </Button>
+    <>
+      {publishVisibility ? (
+        <select
+          aria-label="Who can find this page"
+          title="Who can find this page"
+          value={publishVisibility}
+          onChange={(e) => onPublishVisibilityChange(e.target.value === "public" ? "public" : "unlisted")}
+          disabled={isPublishing}
+          className="h-8 max-w-[7.5rem] sm:max-w-[13rem] rounded-pill border border-border-default bg-bg px-3 text-xs text-text-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft"
+        >
+          <option value="unlisted">Unlisted (anyone with the link)</option>
+          <option value="public">Public (listed on Explore)</option>
+        </select>
+      ) : null}
+      <Button variant="primary" size="md" onClick={onPublish} disabled={!canPublish || isPublishing}>
+        {isPublishing ? (
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none" className="animate-spin" aria-hidden>
+            <path d="M6.5 1a5.5 5.5 0 1 0 5.5 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        ) : (
+          <Icon name="upload" size={13} />
+        )}
+        <span className="hidden sm:inline">{label}</span>
+      </Button>
+    </>
   );
 }
 
@@ -944,6 +966,8 @@ export function TopBar({
   onSwitchDraft,
   onCreateDraft,
   onPublish,
+  publishVisibility,
+  onPublishVisibilityChange,
   onCopyLink,
   onOpenPublished,
   onUpdatePage,
@@ -976,6 +1000,8 @@ export function TopBar({
   onSwitchDraft: (id: string, origin?: "drafts_dialog") => void;
   onCreateDraft: (origin?: "drafts_dialog") => string;
   onPublish: () => void;
+  publishVisibility: PublishVisibility;
+  onPublishVisibilityChange: (v: PublishVisibility) => void;
   onUpdatePage: () => void;
   onCopyLink: () => void;
   onOpenPublished: () => void;
@@ -1179,6 +1205,8 @@ export function TopBar({
             publishedUrl={publishedUrl ?? null}
             publishedOwned={publishedOwned ?? false}
             copyLinkPulse={copyLinkPulse ?? false}
+            publishVisibility={isSignedIn ? publishVisibility : undefined}
+            onPublishVisibilityChange={onPublishVisibilityChange}
             onPublish={onPublish}
             onUpdatePage={onUpdatePage}
             onCopyLink={onCopyLink}
@@ -1212,10 +1240,15 @@ export function TopBar({
         <div className="border-t border-accent/20 bg-accent-dim/60 backdrop-blur-xl px-3 py-2">
           <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3">
             <p className="text-xs text-text-secondary">
-              <span className="font-semibold text-text-primary">Want to edit or update this page?</span>
-              {" "}Sign in (free) to edit it in place, track views, and keep it under your account.
+              <span className="font-semibold text-text-primary">This page is kept for 90 days.</span>
+              {" "}Sign in (free) and claim it to keep it, edit it in place and track views.
             </p>
-            <Button variant="primary" size="sm" href={ROUTES.signIn} className="shrink-0">
+            <Button
+              variant="primary"
+              size="sm"
+              href={publishedId ? `${ROUTES.signIn}?redirect_url=${encodeURIComponent(`/p/${publishedId}`)}` : ROUTES.signIn}
+              className="shrink-0"
+            >
               Sign in free
             </Button>
           </div>

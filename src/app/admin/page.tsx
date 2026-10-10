@@ -1,5 +1,9 @@
 import { getAdminMetrics } from "@/lib/db/admin-metrics";
+import { countOpenReports } from "@/lib/db/reports";
 import { logError } from "@/lib/logger";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { isAdminRequest } from "@/server/admin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,9 +34,15 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 export default async function AdminPage() {
+  // Checked here as well as in layout.tsx: a layout and its page render in
+  // parallel, so a layout-only notFound() sets the 404 status while this
+  // page's data still streams into the response body.
+  if (!(await isAdminRequest())) notFound();
+
   let m;
+  let openReports;
   try {
-    m = await getAdminMetrics();
+    [m, openReports] = await Promise.all([getAdminMetrics(), countOpenReports()]);
   } catch (err) {
     logError("admin", "Failed to load metrics", err);
     return (
@@ -48,6 +58,9 @@ export default async function AdminPage() {
       <div className="mb-8 flex items-baseline gap-4">
         <h1 className="text-xl font-bold font-display">Booklet — Internal Metrics</h1>
         <span className="text-xs text-text-muted">{new Date().toUTCString()}</span>
+        <Link href="/admin/reports" className="ml-auto text-xs text-accent hover:underline">
+          Abuse reports ({openReports} open)
+        </Link>
       </div>
 
       <Section title="Publish funnel — last 7 days">

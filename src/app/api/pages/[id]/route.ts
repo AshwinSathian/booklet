@@ -4,7 +4,7 @@ import { deleteDoc, getDoc } from "@/lib/storage";
 import { hashPassword } from "@/lib/password";
 import { logError } from "@/lib/logger";
 import { getSession } from "@/lib/auth/session";
-import { getOwnedPage, assertSlugAvailable } from "@/server/pages";
+import { getOwnedPage, assertNotTakenDown, assertSlugAvailable } from "@/server/pages";
 import { toErrorResponse } from "@/server/errors";
 import { NextResponse } from "next/server";
 
@@ -55,7 +55,7 @@ export async function PATCH(
   }
 
   try {
-    await getOwnedPage(id, userId);
+    assertNotTakenDown(await getOwnedPage(id, userId));
   } catch (e) {
     return toErrorResponse(e);
   }
@@ -150,7 +150,9 @@ export async function DELETE(
   }
 
   try {
-    await getOwnedPage(id, userId);
+    // Deleting would free the slug for a fresh copy at the same URL and
+    // destroy the record of what was taken down.
+    assertNotTakenDown(await getOwnedPage(id, userId));
   } catch (e) {
     return toErrorResponse(e);
   }

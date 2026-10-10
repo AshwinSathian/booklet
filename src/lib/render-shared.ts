@@ -55,3 +55,11 @@ export const CALLOUT_META: Record<CalloutKind, CalloutMeta> = {
   important: { label: "Important", colorVar: "#7c5cfc" },
   caution: { label: "Caution", colorVar: "#ef4444" },
 };
+
+/**
+ * `rel` for every link whose target came from user-authored Markdown.
+ * `nofollow ugc` withholds ranking credit (anyone can publish here, so links
+ * must be worthless to spammers); `noopener noreferrer` keeps the opened page
+ * from getting a window.opener handle or a Referer.
+ */
+export const USER_LINK_REL = "nofollow ugc noopener noreferrer";

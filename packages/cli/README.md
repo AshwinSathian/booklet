@@ -85,7 +85,7 @@ Options:
 | Flag | Description |
 |------|-------------|
 | `--slug <slug>` | Set a custom URL slug (e.g. `my-readme`) |
-| `--visibility <v>` | `public` (default) or `unlisted` |
+| `--visibility <v>` | `unlisted` (default: reachable by link, not listed or indexed) or `public` (listed on Explore) |
 | `--update <id>` | Update an existing page by ID |
 | `--watch` | Watch file and re-publish on change |
 | `--open` | Open the page in your browser after publishing |
@@ -174,7 +174,7 @@ Supported frontmatter fields:
 |-------|------|-------|
 | `title` | string | Overrides the extracted H1 title (max 200 chars) |
 | `slug` | string | Custom URL slug (max 60 chars) |
-| `visibility` | `"public"` \| `"unlisted"` | Defaults to public |
+| `visibility` | `"public"` \| `"unlisted"` | Defaults to unlisted |
 | `description` | string | SEO meta description (max 300 chars) |
 | `author` | string | Stored as metadata (max 100 chars) |
 | `date` | string | Stored as metadata, any format |

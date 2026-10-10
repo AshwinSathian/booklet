@@ -1,7 +1,7 @@
 # CI gate for the Booklet monorepo.
 #
 # Runs on every pull request targeting main (and on push to main, so main
-# itself always has a green build). Five jobs cover everything that can run
+# itself always has a green build). Six jobs cover everything that can run
 # without secrets this repo doesn't have in GitHub Actions:
 #   - lint            eslint over the whole repo
 #   - typecheck-root  tsc --noEmit for the Next.js app (src/**)
@@ -12,9 +12,8 @@
 #                     secret is read at build time — see comment below)
 #   - unit-tests      tests/unit/** against a real MongoDB service container
 #
-# The full Playwright e2e suite (tests/e2e/) is intentionally NOT run here —
-# see the e2e-manual job at the bottom for why and what it would take to
-# enable it.
+#   - e2e            tests/e2e/** against a production build (pull requests
+#                    and manual runs only — see the job's own comment)
 name: CI
 
 on:
@@ -48,6 +47,15 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: ${{ env.NODE_VERSION }}
+      # Pre-rename names (the product was "Readable") must not come back in
+      # user-facing pages: they tell people to create secrets and config
+      # keys the CLI and Action no longer read.
+      - name: No Readable-era names in app pages
+        run: |
+          if git grep -nE 'rdbl_|READABLE_|"readable"' -- src/app; then
+            echo "::error::Stale Readable-era name found in src/app (see matches above)."
+            exit 1
+          fi
       - run: npm ci --prefer-offline
       - run: npm run lint
 
@@ -173,25 +181,23 @@ jobs:
       # no browser is launched, so no `playwright install` step is needed.
       - run: npm run test:unit
 
-  # ── Full Playwright e2e suite — NOT part of the required PR gate ────────────
-  # tests/e2e/happy-paths.spec.ts and tests/e2e/unit/safe-redirect.spec.ts
-  # drive a live `next start` instance through real sign-in/sign-up flows
-  # (in-house auth — see PLAN-backend-auth-migration.md). Deliberately still
-  # workflow_dispatch-only (not a required PR gate) — full browser e2e on
-  # every push is a real time/flake-risk tradeoff a solo maintainer may not
-  # want, so that stays an explicit choice rather than something this fix
-  # silently opts into. To make it a required check: change `if:` below to
-  # `pull_request`/`push`.
+  # ── Full Playwright e2e suite ───────────────────────────────────────────────
+  # Drives a production build (`next start`) through real browser flows:
+  # sign-up and sign-in, publish, undo in Chromium and WebKit, report →
+  # takedown → 410, admin gating, claiming an anonymous page. Runs on pull
+  # requests because several acceptance criteria can only be checked here
+  # (browser undo stacks; the middleware's loopback 410 check, which unit
+  # specs have to stub). Not run on push to main: the PR run already covered
+  # the same commit.
   #
-  # The crypto secrets (INVITE_JWT_SECRET etc.) are dedicated CI-only values,
-  # unrelated to and not reused from production's — this job's MongoDB is a
-  # throwaway per-run service container (same pattern as unit-tests), so
-  # there is no real data at stake here regardless.
-  e2e-manual:
-    name: E2E (manual — needs Mongo + secret env vars)
-    if: github.event_name == 'workflow_dispatch'
+  # Every secret below is a throwaway literal, not a GitHub secret: the
+  # database is a per-run service container with nothing real in it, and
+  # literals keep the job working on forks, which get no secrets.
+  e2e:
+    name: E2E (production build, Chromium + WebKit)
+    if: github.event_name != 'push'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     services:
       mongodb:
         image: mongo:7
@@ -202,6 +208,21 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 6
+    env:
+      PORT: "3100"
+      MONGODB_URI: "mongodb://localhost:27017/booklet?retryWrites=true&w=majority"
+      INVITE_JWT_SECRET: ci-only-invite-secret-not-used-anywhere-real
+      UNLOCK_TOKEN_SECRET: ci-only-unlock-secret-not-used-anywhere-real
+      API_KEY_PEPPER: ci-only-api-key-pepper-not-used-anywhere-real
+      SESSION_TOKEN_PEPPER: ci-only-session-pepper-not-used-anywhere-real
+      PASSWORD_RESET_TOKEN_PEPPER: ci-only-reset-pepper-not-used-anywhere-real
+      CLAIM_TOKEN_SECRET: ci-only-claim-secret-not-used-anywhere-real
+      # tests/e2e/moderation-expiry.spec.ts seeds a user with this id and
+      # sends cf-connecting-ip: 127.0.0.1 — see that file's header.
+      ADMIN_USER_IDS: e2e-admin
+      ADMIN_IPS: 127.0.0.1
+      NEXT_PUBLIC_SITE_URL: http://localhost:3100
+      TEST_BASE_URL: http://localhost:3100
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -210,29 +231,22 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
       - run: npm ci --prefer-offline
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install --with-deps chromium webkit
+      - run: npm run build --workspace packages/shared
       - run: npm run build
         env:
           NODE_ENV: production
-          NEXT_PUBLIC_SITE_URL: http://localhost:3100
-      - run: npm start &
-        env:
-          PORT: "3100"
-          MONGODB_URI: "mongodb://localhost:27017/readable?retryWrites=true&w=majority"
-          INVITE_JWT_SECRET: ${{ secrets.INVITE_JWT_SECRET }}
-          UNLOCK_TOKEN_SECRET: ${{ secrets.UNLOCK_TOKEN_SECRET }}
-          API_KEY_PEPPER: ${{ secrets.API_KEY_PEPPER }}
-          SESSION_TOKEN_PEPPER: ${{ secrets.SESSION_TOKEN_PEPPER }}
-          CLAIM_TOKEN_SECRET: ${{ secrets.CLAIM_TOKEN_SECRET }}
+      - run: npm start > next-start.log 2>&1 &
       - name: Wait for server to be ready
         run: |
-          for i in $(seq 1 30); do
-            curl -sf http://localhost:3100 >/dev/null && exit 0
+          for i in $(seq 1 60); do
+            curl -sf http://localhost:3100/api/health >/dev/null && exit 0
             sleep 1
           done
           echo "Server did not become ready in time" >&2
+          cat next-start.log >&2
           exit 1
       - run: npx playwright test --config=playwright.config.ts
-        env:
-          TEST_BASE_URL: http://localhost:3100
-
+      - name: Server log (on failure)
+        if: failure()
+        run: cat next-start.log

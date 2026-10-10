@@ -67,9 +67,19 @@ export const INDEX_SPECS = [
   { collection: "api_keys", spec: { key_hash: 1 }, options: { unique: true } },
 
   // --- docs ---
-  // No TTL index — all published pages (including anonymous ones) are
-  // stored indefinitely; this is a deliberate product decision, not an
-  // oversight. See terms/page.tsx and privacy/page.tsx.
+  // Anonymous pages carry `expires_at` (publish date + 90 days) and are
+  // deleted 30 days after it by purgeExpiredAnonymousDocs
+  // (src/lib/db/purge.ts). Deliberately NOT a TTL index: the purge also
+  // checks that no `pages` record exists, so a page that was claimed can
+  // never be deleted by a stale expires_at. Sparse because owned pages
+  // never have the field.
+  { collection: "docs", spec: { expires_at: 1 }, options: { sparse: true } },
+
+  // --- reports ---
+  // Abuse reports (src/lib/db/reports.ts). The admin queue lists open
+  // reports newest first; takedown closes every open report for a page.
+  { collection: "reports", spec: { status: 1, created_at: -1 } },
+  { collection: "reports", spec: { page_id: 1, status: 1 } },
 
   // --- rate_limits ---
   // Shared by both the per-minute rate limiter and the anonymous monthly

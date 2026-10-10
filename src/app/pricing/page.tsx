@@ -151,6 +151,10 @@ export default function PricingPage() {
             Creating a free account unlocks editing pages in place, custom slugs, the My Pages
             dashboard, analytics, version history, the API, and all other features listed above.
           </p>
+          <p className="text-sm text-text-secondary leading-relaxed mb-4">
+            A page published without an account is kept for 90 days. Sign in and claim it from the
+            browser you published it in, and it doesn&apos;t expire.
+          </p>
           <Button variant="secondary" size="sm" href={ROUTES.signUp}>
             Create a free account
           </Button>

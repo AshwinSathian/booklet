@@ -41,15 +41,16 @@ export default function PrivacyPage() {
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest text-text-muted mb-3">Legal</p>
             <h1 className="text-[clamp(22px,3.5vw,30px)] text-text-primary mb-2 font-display">Privacy Policy</h1>
-            <p className="text-sm text-text-muted">Last updated: July 2026</p>
+            <p className="text-sm text-text-muted">Last updated: October 2026</p>
           </div>
 
           <Section title="What we collect">
             <p>
               <strong className="text-text-primary">Anonymous visitors</strong> — When you publish a page without signing in,
-              your content is stored indefinitely in our database (MongoDB), the same as signed-in pages — there
-              is no expiry. We store no personal data alongside it. A session token is issued to associate the
-              page with your browser so you can see it in your history, but we do not track you across sites.
+              your content is stored in our database (MongoDB). The page is served for 90 days and deleted 30 days
+              after that, unless you sign in and claim it. We store no personal data alongside it. A cookie is
+              set in the browser you published from so that only that browser can claim the page later; we do
+              not track you across sites.
               Anonymous publishing is capped at {ANONYMOUS_LIMITS.pagesPerMonth} pages per month per IP address to
               keep the service sustainable for everyone; signing in removes that cap.
             </p>
@@ -89,8 +90,10 @@ export default function PrivacyPage() {
 
           <Section title="Data retention and deletion">
             <p>
-              Published pages are stored indefinitely. Signed-in users can delete their own pages at any time from
-              the My Pages dashboard. Anonymous pages can be deleted by contacting us.
+              Pages under an account are stored until you delete them, which you can do at any time from the
+              My Pages dashboard. Pages published without an account stop being served after 90 days and are
+              deleted 30 days later; to have one removed sooner, contact us. If you report a page, we store
+              the report and, if you give one, your email address.
             </p>
             <p>
               To delete your account and all associated data, email{" "}

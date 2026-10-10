@@ -57,6 +57,8 @@ _check "PM2-managed (not orphan)" "booklet-app" "pm2 jlist 2>/dev/null | python3
     [print(p['name']) for p in procs if p['name']=='booklet-app']\""
 _check "port 3100 open"        "ok"        "nc -z 127.0.0.1 3100 1>/dev/null 2>/dev/null && echo ok"
 _check "HTTP 200 on /"         "200"       "curl -s -o /dev/null -w '%{http_code}' http://localhost:3100"
+# / is static and answers 200 with the database down; /api/health pings it.
+_check "/api/health (DB ping)" '"ok":true' "curl -s --max-time 8 http://localhost:3100/api/health"
 
 # ── MCP Server ────────────────────────────────────────────────────────────────
 echo ""

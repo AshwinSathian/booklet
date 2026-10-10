@@ -32,6 +32,21 @@ const TAG_COLORS: Record<Entry["tag"], string> = {
 
 const RELEASES: Release[] = [
   {
+    version: "October 2026",
+    date: "2026-10-10",
+    summary: "New pages are unlisted by default, anonymous pages expire after 90 days, and every page can be reported.",
+    entries: [
+      { date: "2026-10-10", tag: "Improved", text: "New pages are unlisted: anyone with the link can read them, and they stay out of Explore and search engines unless you choose Public when you publish. Pages that were already public are unchanged. API and CLI users: pass visibility \"public\" to list a page" },
+      { date: "2026-10-10", tag: "Improved", text: "Pages published without an account are now kept for 90 days. Open the page in the browser you published it from, sign in, and choose \"Keep this page\" to stop it expiring. Anonymous pages published before this date expire 90 days from it" },
+      { date: "2026-10-10", tag: "New", text: "\"Report this page\" link on every published page and embed. A page that breaks the terms is taken down and its link returns 410 Gone" },
+      { date: "2026-10-10", tag: "New", text: "Status link in the site footer, backed by an external uptime monitor" },
+      { date: "2026-10-10", tag: "Fixed", text: "Documents over 200,000 characters are rejected with a clear error. They used to publish with the stored Markdown source cut off at 200,000 characters" },
+      { date: "2026-10-10", tag: "Fixed", text: "Undo (⌘Z / Ctrl+Z) now reverses toolbar formatting, slash-menu inserts, wikilink completion and replace-all in the editor" },
+      { date: "2026-10-10", tag: "Fixed", text: "Links in published pages carry rel=\"nofollow ugc\", so publishing a page passes no search ranking to what it links to" },
+      { date: "2026-10-10", tag: "Fixed", text: "Setup pages showed the API key prefix and secret name from before the rename; they now show bklt_ and BOOKLET_API_KEY" },
+    ],
+  },
+  {
     version: "June–July 2026",
     date: "2026-07-22",
     summary: "In-house authentication, permanent anonymous pages, rich Markdown blocks, and a hardened parser.",

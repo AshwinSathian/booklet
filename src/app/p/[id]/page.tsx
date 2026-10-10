@@ -27,6 +27,13 @@ import { StickyHeader } from "@/components/share/StickyHeader";
 import { Reactions } from "@/components/share/Reactions";
 import { ShareButtons } from "@/components/share/ShareButtons";
 import { ScrollCta } from "@/components/share/ScrollCta";
+import { GoneNotice } from "@/components/share/GoneNotice";
+import { KeepPageNotice } from "@/components/share/KeepPageNotice";
+import { PURGE_GRACE_DAYS, claimCookieName, claimTokenMatches } from "@/lib/anonymous-claim";
+import { getSession } from "@/lib/auth/session";
+import { GONE_MESSAGES } from "@/lib/gone-notice";
+import { getDocState } from "@/lib/storage";
+import { getGoneReason } from "@/server/page-gone";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -53,7 +60,30 @@ async function resolveSharePage(idOrSlug: string) {
     }
   }
 
-  return { doc, resolvedId, pageRecord };
+  // Taken down, or an expired anonymous page. The middleware normally
+  // answers 410 before this renders; checking again here is what keeps the
+  // content (and its title, in generateMetadata) hidden if that check ever
+  // fails open. No catch: if this lookup itself fails, the request errors
+  // rather than rendering content that may have been taken down.
+  const gone = doc ? await getGoneReason(resolvedId) : null;
+
+  return { doc, resolvedId, pageRecord, gone };
+}
+
+/**
+ * The expiry date to show the author of an unclaimed anonymous page, or
+ * null for everyone else — readers, and any page that has an owner.
+ */
+function formatNoticeDate(d: Date): string {
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+}
+
+async function expiryForAuthor(resolvedId: string, hasOwner: boolean): Promise<Date | null> {
+  if (hasOwner) return null;
+  const state = await getDocState(resolvedId).catch(() => null);
+  if (!state?.expiresAt) return null;
+  const token = (await cookies()).get(claimCookieName(resolvedId))?.value;
+  return (await claimTokenMatches(token, state.claimTokenHash)) ? state.expiresAt : null;
 }
 
 // ---------------------------------------------------------------------------
@@ -66,12 +96,21 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id: idOrSlug } = await params;
-  const { doc, pageRecord } = await resolveSharePage(idOrSlug);
+  const { doc, pageRecord, gone } = await resolveSharePage(idOrSlug);
 
   if (!doc) {
     return buildMetadata({
       title: "Not found",
       description: "This page doesn't exist, or the link is incorrect.",
+      pathname: `/p/${idOrSlug}`,
+      noIndex: true,
+    });
+  }
+
+  if (gone) {
+    return buildMetadata({
+      title: "Page unavailable",
+      description: GONE_MESSAGES[gone],
       pathname: `/p/${idOrSlug}`,
       noIndex: true,
     });
@@ -86,7 +125,10 @@ export async function generateMetadata({
     return buildLockedPageMetadata(`/p/${idOrSlug}`);
   }
 
-  const isUnlisted = pageRecord?.visibility === "unlisted";
+  // Indexable only when the author opted in. Anonymous publishes have no
+  // `pages` record at all, so "not public" (rather than "is unlisted") is
+  // what keeps them out of search engines too.
+  const isPublic = pageRecord?.visibility === "public";
   const title = extractTitle(doc.blocks) ?? "Shared page";
   const fmMeta = pageRecord?.frontmatter_meta as Record<string, unknown> | null | undefined;
   const fmDescription = typeof fmMeta?.description === "string" ? fmMeta.description : null;
@@ -101,7 +143,7 @@ export async function generateMetadata({
       title,
       description,
       pathname: `/p/${idOrSlug}`,
-      noIndex: isUnlisted,
+      noIndex: !isPublic,
     }),
     openGraph: {
       type: "article",
@@ -130,9 +172,16 @@ export default async function SharePage({
   params: Promise<{ id: string }>;
 }) {
   const { id: idOrSlug } = await params;
-  const { doc, resolvedId, pageRecord } = await resolveSharePage(idOrSlug);
+  const { doc, resolvedId, pageRecord, gone } = await resolveSharePage(idOrSlug);
 
   if (!doc) return <NotFoundOrExpired />;
+  // Null unless this browser published the page and nobody owns it yet.
+  const expiresAt = await expiryForAuthor(resolvedId, pageRecord !== null);
+  // An expired page is still shown to its author, with the notice below,
+  // so it can be claimed before the purge deletes it.
+  if (gone && !(gone === "expired" && expiresAt)) return <GoneNotice reason={gone} />;
+
+  const viewerSignedIn = expiresAt ? (await getSession()) !== null : false;
 
   // Password gate: check cookie before revealing content.
   if (pageRecord?.password_hash) {
@@ -179,6 +228,16 @@ export default async function SharePage({
           from stored/request input, so this is safe to render verbatim. */}
       <style dangerouslySetInnerHTML={{ __html: themeStyleTagContent(theme) }} />
       <ReadingProgress />
+      {expiresAt ? (
+        <KeepPageNotice
+          pageId={resolvedId}
+          expiresOn={formatNoticeDate(expiresAt)}
+          deletedOn={
+            gone === "expired" ? formatNoticeDate(new Date(expiresAt.getTime() + PURGE_GRACE_DAYS * 86_400_000)) : null
+          }
+          signedIn={viewerSignedIn}
+        />
+      ) : null}
       <AnalyticsBeacon pageId={resolvedId} />
       {isNotPasswordLocked && <ScrollCta href={ROUTES.app} />}
 
@@ -282,6 +341,13 @@ export default async function SharePage({
                 </div>
               </div>
             </div>
+            <Link
+              href={`/report?page=${encodeURIComponent(resolvedId)}`}
+              rel="nofollow"
+              className="text-2xs text-text-muted underline-offset-2 transition hover:text-text-secondary hover:underline sm:ml-auto"
+            >
+              Report this page
+            </Link>
             <Link
               href={ROUTES.app}
               className="inline-flex items-center gap-1.5 rounded-pill border border-border-default px-3.5 py-1.5 text-xs font-medium text-text-secondary transition hover:border-accent-soft/50 hover:text-text-primary"

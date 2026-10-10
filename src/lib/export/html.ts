@@ -2,7 +2,7 @@ import katex from "katex";
 import type { Block, Inline, TableAlign } from "@/lib/blocks";
 import { GRAPHVIZ_LANGS } from "@/lib/blocks";
 import { parseToBlocks } from "@/lib/parse";
-import { CALLOUT_META, sanitizeImageUrl, sanitizeUrl } from "@/lib/render-shared";
+import { CALLOUT_META, sanitizeImageUrl, sanitizeUrl, USER_LINK_REL } from "@/lib/render-shared";
 import { normalizeInput } from "@/lib/sanitize";
 import { sanitizeCompiledSvg } from "@/lib/svg-sanitize";
 
@@ -244,7 +244,7 @@ function renderInline(i: Inline): string {
       return `<code>${escapeHtml(i.v)}</code>`;
     case "link": {
       const safeHref = escapeAttr(sanitizeUrl(i.href));
-      return `<a href="${safeHref}" rel="noopener noreferrer">${renderInlines(i.c)}</a>`;
+      return `<a href="${safeHref}" rel="${USER_LINK_REL}">${renderInlines(i.c)}</a>`;
     }
     case "del":
       return `<del>${renderInlines(i.c)}</del>`;

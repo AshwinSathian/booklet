@@ -41,8 +41,22 @@ export type DbPage = {
   password_hash: string | null;   // PBKDF2-SHA256 hash (see src/lib/password.ts); null = no password
   featured: boolean;              // opt-in: appear on /explore featured section
   frontmatter_meta: Record<string, unknown> | null;  // parsed YAML frontmatter fields
+  taken_down_at: string | null;   // ISO timestamp of an admin takedown; mirrors docs.taken_down_at
   created_at: string;
   updated_at: string;
+};
+
+export const REPORT_REASONS = ["spam", "phishing", "malware", "illegal", "harassment", "copyright", "other"] as const;
+export type ReportReason = (typeof REPORT_REASONS)[number];
+
+export type DbReport = {
+  id: string;
+  page_id: string;
+  reason: ReportReason;
+  detail: string | null;
+  reporter_email: string | null;
+  created_at: string;
+  status: "open" | "actioned" | "dismissed";
 };
 
 export type DbCollection = {

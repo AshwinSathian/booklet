@@ -18,6 +18,8 @@ import {
   type InsertItem,
   type InsertSnippet,
 } from "@/lib/editor/insertItems";
+import { applyUndoableEdit } from "@/lib/editor/undoable-edit";
+import { STORAGE } from "@/lib/constants";
 import { usePrefersReducedMotion } from "@/lib/motion";
 import { getCaretCoordinates, positionPopupNearCaret } from "@/lib/ui/caret";
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
@@ -55,6 +57,9 @@ const FORMATS: Record<string, FormatSpec> = {
   ordered:    { kind: "line", prefix: "1. " },
 };
 
+/** Above this many characters the status bar shows the count against the publish limit. */
+const CHAR_COUNTER_THRESHOLD = 180_000;
+
 function applyFormat(
   ta: HTMLTextAreaElement,
   formatKey: string,
@@ -74,7 +79,7 @@ function applyFormat(
     const cursorStart = start + prefix.length;
     const cursorEnd = cursorStart + inner.length;
 
-    onChange(newValue);
+    applyUndoableEdit(ta, newValue, onChange);
     requestAnimationFrame(() => {
       ta.focus();
       ta.setSelectionRange(cursorStart, cursorEnd);
@@ -97,7 +102,7 @@ function applyFormat(
     const newValue = value.slice(0, lineStart) + newBlock + value.slice(blockEnd);
 
     const delta = newBlock.length - block.length;
-    onChange(newValue);
+    applyUndoableEdit(ta, newValue, onChange);
     requestAnimationFrame(() => {
       ta.focus();
       ta.setSelectionRange(start + (allHavePrefix ? -prefix.length : prefix.length), end + delta);
@@ -114,7 +119,7 @@ function insertTable(ta: HTMLTextAreaElement, onChange: (v: string) => void) {
   const { insertion, leadingOffset } = normalizeBlockInsertion(before, after, TABLE_SNIPPET_TEXT);
 
   const newValue = before + insertion + after;
-  onChange(newValue);
+  applyUndoableEdit(ta, newValue, onChange);
 
   // Place cursor on the first cell
   const firstCellStart = before.length + leadingOffset + 2; // after "| "
@@ -313,15 +318,21 @@ function FindReplaceBar({
     const pos = matches[safeMatchIdx];
     const before = value.slice(0, pos);
     const after = value.slice(pos + findText.length);
-    onChange(before + replaceText + after);
+    const next = before + replaceText + after;
+    if (textareaRef.current) applyUndoableEdit(textareaRef.current, next, onChange);
+    else onChange(next);
     // matchIdx stays the same; next match will be at updated positions
-  }, [matches, safeMatchIdx, findText, replaceText, value, onChange]);
+  }, [matches, safeMatchIdx, findText, replaceText, value, onChange, textareaRef]);
 
   const handleReplaceAll = useCallback(() => {
     if (!findText) return;
     const flags = caseSensitive ? "g" : "gi";
     const escaped = findText.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    onChange(value.replace(new RegExp(escaped, flags), replaceText));
+    // Function replacer: `replaceText` is literal, so "$1"/"$&" in it must
+    // not be read as replacement patterns.
+    const next = value.replace(new RegExp(escaped, flags), () => replaceText);
+    if (textareaRef.current) applyUndoableEdit(textareaRef.current, next, onChange);
+    else onChange(next);
     onClose();
     textareaRef.current?.focus();
   }, [findText, replaceText, caseSensitive, value, onChange, onClose, textareaRef]);
@@ -896,7 +907,7 @@ export function PasteInput({
       const newValue = value.slice(0, start) + insertion + value.slice(caret);
       const newCaret = start + insertion.length;
 
-      onChange(newValue);
+      applyUndoableEdit(ta, newValue, onChange);
       setWikilinkTrigger(null);
       requestAnimationFrame(() => {
         ta.focus();
@@ -958,7 +969,7 @@ export function PasteInput({
       const from = start + leadingOffset + (snippet.selectFrom ?? snippet.text.length);
       const to = start + leadingOffset + (snippet.selectTo ?? snippet.selectFrom ?? snippet.text.length);
 
-      onChange(newValue);
+      applyUndoableEdit(ta, newValue, onChange);
       setSlashTrigger(null);
       requestAnimationFrame(() => {
         ta.focus();
@@ -1168,7 +1179,7 @@ export function PasteInput({
               if (!e.shiftKey) {
                 if (start === end) {
                   const next = v.slice(0, start) + "  " + v.slice(end);
-                  onChange(next);
+                  applyUndoableEdit(ta, next, onChange);
                   requestAnimationFrame(() => { ta.focus(); ta.setSelectionRange(start + 2, start + 2); });
                 } else {
                   const lineStart = v.lastIndexOf("\n", start - 1) + 1;
@@ -1177,7 +1188,7 @@ export function PasteInput({
                   const block = v.slice(lineStart, blockEnd);
                   const newBlock = block.split("\n").map((l) => "  " + l).join("\n");
                   const delta = newBlock.length - block.length;
-                  onChange(v.slice(0, lineStart) + newBlock + v.slice(blockEnd));
+                  applyUndoableEdit(ta, v.slice(0, lineStart) + newBlock + v.slice(blockEnd), onChange);
                   requestAnimationFrame(() => { ta.focus(); ta.setSelectionRange(start + 2, end + delta); });
                 }
               } else {
@@ -1192,7 +1203,7 @@ export function PasteInput({
                 const newBlock = newLines.join("\n");
                 const delta = newBlock.length - block.length;
                 const removedFirst = lines[0].startsWith("  ") ? 2 : lines[0].startsWith(" ") ? 1 : 0;
-                onChange(v.slice(0, lineStart) + newBlock + v.slice(blockEnd));
+                applyUndoableEdit(ta, v.slice(0, lineStart) + newBlock + v.slice(blockEnd), onChange);
                 requestAnimationFrame(() => {
                   ta.focus();
                   ta.setSelectionRange(Math.max(lineStart, start - removedFirst), end + delta);
@@ -1237,9 +1248,21 @@ export function PasteInput({
               {wordCount.toLocaleString()} {wordCount === 1 ? "word" : "words"}
             </span>
             <span className="text-2xs text-text-muted/30" aria-hidden>·</span>
-            <span className="text-2xs text-text-muted tabular-nums">
-              {charCount.toLocaleString()} chars
-            </span>
+            {charCount > CHAR_COUNTER_THRESHOLD ? (
+              // Near the publish limit the plain count becomes "used / limit"
+              // so a 413 from the publish routes is never a surprise.
+              <span
+                data-testid="char-limit-counter"
+                role="status"
+                className={`text-2xs tabular-nums ${charCount > STORAGE.maxInputChars ? "text-red-400" : "text-amber-400"}`}
+              >
+                {charCount.toLocaleString()} / {STORAGE.maxInputChars.toLocaleString()} characters
+              </span>
+            ) : (
+              <span className="text-2xs text-text-muted tabular-nums">
+                {charCount.toLocaleString()} chars
+              </span>
+            )}
             {wordCount > 50 && (
               <>
                 <span className="text-2xs text-text-muted/30" aria-hidden>·</span>

@@ -1,3 +1,5 @@
+import { MAX_RAW_CHARS } from "booklet-api-client";
+
 export function mcpError(code: number, message: string, data?: unknown) {
   return { code, message, ...(data !== undefined ? { data } : {}) };
 }
@@ -18,7 +20,7 @@ export const ERRORS = {
     mcpError(-32002, "Rate limit exceeded. Booklet allows 60 requests per minute per API key."),
   NOT_FOUND: (resource: string) => mcpError(-32003, `${resource} not found`),
   FORBIDDEN: () => mcpError(-32004, "You do not own this page"),
-  DOCUMENT_TOO_LARGE: () => mcpError(-32005, "Document exceeds 350 KB limit"),
+  DOCUMENT_TOO_LARGE: () => mcpError(-32005, `Document exceeds the ${MAX_RAW_CHARS.toLocaleString("en-US")} character limit`),
   UPSTREAM: (status: number) =>
     mcpError(-32006, `Booklet API returned an unexpected error (HTTP ${status})`),
   // For client-error statuses the REST API already returns a specific,

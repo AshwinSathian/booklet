@@ -40,6 +40,7 @@ function toPage(doc: PageDoc): DbPage {
     password_hash: rest.password_hash ?? null,
     featured: rest.featured ?? false,
     frontmatter_meta: rest.frontmatter_meta ?? null,
+    taken_down_at: rest.taken_down_at ?? null,
   };
 }
 
@@ -105,6 +106,9 @@ export async function createPageRecord(
   title: string | null = null,
   teamId: string | null = null,
   frontmatterMeta: Record<string, unknown> | null = null,
+  // Unlisted unless the author opts in: reachable by link, absent from
+  // /explore, tag pages, the sitemap and search engines.
+  visibility: DbPage["visibility"] = "unlisted",
 ): Promise<void> {
   const db = await getDb();
   const now = new Date().toISOString();
@@ -113,7 +117,7 @@ export async function createPageRecord(
     user_id: userId,
     // slug intentionally omitted — see PageDoc's comment above.
     title,
-    visibility: "public",
+    visibility,
     collection_id: null,
     team_id: teamId,
     view_count: 0,
@@ -121,6 +125,7 @@ export async function createPageRecord(
     password_hash: null,
     featured: false,
     frontmatter_meta: frontmatterMeta,
+    taken_down_at: null,
     created_at: now,
     updated_at: now,
   });
@@ -197,6 +202,19 @@ export async function updatePageRecord(
   }
 
   await db.collection<PageDoc>("pages").updateOne({ _id: pageId }, update);
+}
+
+/**
+ * Mirrors a takedown onto the `pages` record (if the page has one) and
+ * forces it unlisted, so it also drops out of every listing query —
+ * /explore, tag pages, profiles, team spaces and the sitemap all filter on
+ * `visibility: "public"`.
+ */
+export async function markPageTakenDown(pageId: string, at: string): Promise<void> {
+  const db = await getDb();
+  await db
+    .collection<PageDoc>("pages")
+    .updateOne({ _id: pageId }, { $set: { taken_down_at: at, visibility: "unlisted" } });
 }
 
 export async function getPublicPagesByUser(userId: string, limit = 100): Promise<ExploreItem[]> {

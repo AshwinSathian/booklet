@@ -33,3 +33,40 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string): Prom
     `,
   });
 }
+
+/**
+ * Notifies the abuse inbox of a new report. Plain text on purpose: every
+ * field below except the URL is written by an anonymous reporter, and a
+ * text body cannot carry markup.
+ *
+ * Returns false (and sends nothing) when ABUSE_REPORT_EMAIL or
+ * RESEND_API_KEY is unset — the report is still stored and shows in
+ * /admin/reports, so a missing mail config must not fail the request.
+ */
+export async function sendAbuseReportEmail(report: {
+  pageUrl: string;
+  adminUrl: string;
+  reason: string;
+  detail: string | null;
+  reporterEmail: string | null;
+}): Promise<boolean> {
+  const to = process.env.ABUSE_REPORT_EMAIL;
+  if (!to || !process.env.RESEND_API_KEY) return false;
+
+  const { error } = await getResendClient().emails.send({
+    from: FROM_ADDRESS,
+    to,
+    subject: `Booklet abuse report: ${report.reason}`,
+    text: [
+      `Page: ${report.pageUrl}`,
+      `Reason: ${report.reason}`,
+      `Reporter: ${report.reporterEmail ?? "(not given)"}`,
+      "",
+      report.detail ?? "(no detail given)",
+      "",
+      `Review: ${report.adminUrl}`,
+    ].join("\n"),
+  });
+  if (error) throw new Error(`Resend rejected the abuse report email: ${error.message}`);
+  return true;
+}

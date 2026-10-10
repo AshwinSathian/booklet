@@ -13,10 +13,17 @@ import { getDoc, putDoc, deleteDoc } from "@/lib/storage";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { ROUTES } from "@/lib/constants";
 import { logError } from "@/lib/logger";
-import { getOwnedPage, getOwnedPageByIdOrSlug, assertSlugAvailable } from "@/server/pages";
+import {
+  getOwnedPage,
+  getOwnedPageByIdOrSlug,
+  assertNotTakenDown,
+  assertRawWithinLimit,
+  assertSlugAvailable,
+} from "@/server/pages";
 import { toErrorResponse } from "@/server/errors";
 import { getSiteOrigin } from "@/lib/site-url";
 import { resolveApiClientSource } from "@/lib/request-source";
+import { GONE_MESSAGES } from "@/lib/gone-notice";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -61,6 +68,13 @@ export async function GET(
     return toErrorResponse(e);
   }
 
+  // A taken-down page is not served over the API either. (Its owner can
+  // still read their own source in the dashboard; nothing is deleted.
+  // Expiry never applies here: this route only serves pages with an owner.)
+  if (record.taken_down_at) {
+    return NextResponse.json({ error: GONE_MESSAGES.taken_down }, { status: 410 });
+  }
+
   const doc = await getDoc(record.id);
 
   const url = `${getSiteOrigin(req)}${ROUTES.publish(record.slug ?? record.id)}`;
@@ -100,6 +114,7 @@ export async function PATCH(
   let record;
   try {
     record = await getOwnedPage(id, userId);
+    assertNotTakenDown(record);
   } catch (e) {
     return toErrorResponse(e);
   }
@@ -148,6 +163,12 @@ export async function PATCH(
   }
 
   if (hasContent && payload?.raw) {
+    try {
+      assertRawWithinLimit(payload.raw);
+    } catch (e) {
+      return toErrorResponse(e);
+    }
+
     // `blocks` is always derived server-side from `raw` — see
     // src/lib/block-schema.ts's header for why a client-supplied block tree
     // is no longer accepted.
@@ -181,7 +202,7 @@ export async function PATCH(
       createdAt: record.created_at,
       settings: payload.settings ?? DEFAULT_SETTINGS,
       blocks,
-      raw: payload.raw.slice(0, STORAGE.maxInputChars),
+      raw: payload.raw,
     };
 
     try {
@@ -247,7 +268,9 @@ export async function DELETE(
   }
 
   try {
-    await getOwnedPage(id, userId);
+    // Deleting would free the slug for a fresh copy at the same URL and
+    // destroy the record of what was taken down.
+    assertNotTakenDown(await getOwnedPage(id, userId));
   } catch (e) {
     return toErrorResponse(e);
   }

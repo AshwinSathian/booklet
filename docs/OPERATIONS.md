@@ -5,6 +5,141 @@ an internal audit remediation effort. Updated 2026-07 with the in-house
 auth migration (the original design RFC has since been removed from the repo;
 this document is the durable operational record).
 
+## Backups and restore
+
+Added 2026-10-10. `scripts/backup-mongo.sh` runs nightly at 03:30 from
+launchd (`scripts/com.booklet.backup.plist`). It pipes `mongodump --archive
+--gzip` through `age` and uploads the result to the R2 bucket with `rclone`,
+then deletes all but the newest 30 archives. Log:
+`~/.booklet-deploy-logs/backup.log`.
+
+The archive is encrypted with an age public key before it leaves the Mac.
+The private key is not needed for backups and should not be stored next to
+the R2 credentials: with it kept elsewhere, a leaked R2 token exposes
+ciphertext only. Losing the private key makes every archive unreadable, so
+keep a second copy of it somewhere that is not this Mac.
+
+Configuration is in `~/.booklet/backup.env` (mode 600). The variables are
+listed at the top of `scripts/backup-mongo.sh`. A failed run emails
+`BACKUP_ALERT_EMAIL` through Resend and exits non-zero.
+
+**Restore.** These three commands restore the newest archive over the live
+database. `--drop` replaces each collection that exists in the archive.
+
+```bash
+source ~/.booklet/backup.env
+LATEST=$(rclone lsf --files-only --include "booklet-*.archive.gz.age" "$BACKUP_REMOTE" | sort | tail -1)
+rclone cat "$BACKUP_REMOTE/$LATEST" \
+  | age --decrypt --identity /path/to/age-private-key.txt \
+  | mongorestore --uri="mongodb://127.0.0.1:27017/?directConnection=true" --archive --gzip --drop
+```
+
+The `mongorestore` URI must not name a database. Given one, it restores
+only namespaces already in that database and reports success having
+restored nothing.
+
+**Restore drill.** `bash scripts/backup-restore-drill.sh
+/path/to/age-private-key.txt` restores the newest archive into a scratch
+database (`booklet_restore_drill`), prints the `pages`, `docs` and `users`
+counts beside production's, and drops the scratch database. Run it right
+after a backup; anything published in between makes the counts differ.
+
+## Monitoring
+
+`GET /api/health` pings MongoDB and returns `{"ok":true}`, or 503 within 3
+seconds if the database does not answer. The home page is static and
+returns 200 with the database down, so it is not a useful probe.
+
+The external monitor probes these every 5 minutes and emails on failure:
+
+- `https://booklet.ashwinsathian.com/api/health`
+- `https://booklet-api.ashwinsathian.com/api/health`
+- `https://booklet-mcp.ashwinsathian.com/health`
+
+`NEXT_PUBLIC_STATUS_PAGE_URL` in `.env.production.local` puts a "Status"
+link in the site footer. It is read at build time, so changing it needs a
+redeploy. `scripts/health-check.sh` also checks `/api/health`, which means
+a deploy that cannot reach the database now rolls back.
+
+**MongoDB version (outage of 2026-10-09).** The data files are at
+`featureCompatibilityVersion` 8.0. On 2026-10-09 the `mongodb-community@7.0`
+Homebrew service was started against them; 7.0 refuses 8.0 data files and
+exits with code 62, and the site returned 500 on every database-backed page
+until it was noticed on 2026-10-10. MongoDB must be started from the 8.0
+launch agent, `~/Library/LaunchAgents/homebrew.mxcl.mongodb-community@8.0.plist`.
+`brew services start mongodb-community@8.0` does not work (the formula has
+no service definition), and the 7.0 formula should stay stopped or be
+uninstalled.
+
+## Abuse reports and takedown
+
+Every share page and embed links to `/report?page=<id>`. A report is stored
+in the `reports` collection and emailed to `ABUSE_REPORT_EMAIL` (plain
+text, through Resend). If that variable or `RESEND_API_KEY` is unset the
+report is still stored, and a warning is logged.
+
+To act on a report: open `/admin/reports` from an IP in `ADMIN_IPS`, signed
+in as a user in `ADMIN_USER_IDS`. "Take down" sets `taken_down_at` on the
+document and its page record, makes the page unlisted, and closes every
+open report for that page. "Dismiss" closes the one report. From then on
+`/p/:id`, `/p/:id/embed` and `GET /api/v1/pages/:id` return 410 with a
+one-line notice. The document is kept, not deleted, and its owner can no
+longer edit, re-list or delete the page (those requests return 410), so a
+custom slug stays attached to the taken-down page.
+
+There is no "restore" button. To reverse a takedown, unset the field by
+hand:
+
+```js
+db.docs.updateOne({ _id: "<id>" }, { $unset: { taken_down_at: "" } })
+db.pages.updateOne({ _id: "<id>" }, { $set: { taken_down_at: null } })
+```
+
+**How the 410 is produced.** A Server Component cannot return 410, and
+`src/middleware.ts` runs on the Edge runtime with no MongoDB driver. So the
+middleware calls `http://127.0.0.1:$PORT/api/pages/:id/gone` for each
+`/p/...` request and answers 410 itself when that says the page is gone. If
+the call fails or takes over 2 seconds the request continues, and the page
+renders its own notice with status 200 instead. `PORT` must be set to the
+port the app listens on (`ecosystem.config.js` sets 3100).
+
+## Anonymous page expiry
+
+A page published without an account gets `docs.expires_at` = publish time +
+90 days and is served until then. `src/instrumentation.ts` runs a purge one
+minute after each start and every 24 hours after that; it deletes documents
+more than 30 days past `expires_at` that have no `pages` record.
+
+The publisher's browser holds a `booklet_claim_<id>` cookie. With it, the
+share page shows the expiry date, and after sign-in a "Keep this page"
+button that creates the page record and removes `expires_at`.
+
+Anonymous pages published before 2026-10-10 were stamped once, at that
+deploy, with `node scripts/backfill-anonymous-expiry.mjs`. They have no
+claim cookie, so nobody can claim them from the site. To keep one, give it
+an owner by hand before it expires:
+
+```js
+db.docs.updateOne({ _id: "<id>" }, { $unset: { expires_at: "" } })
+```
+
+## Running tests on this Mac
+
+`src/lib/mongodb.ts` always uses the database named `booklet`, whatever
+database name is in `MONGODB_URI`. Production's MongoDB is on this Mac at
+port 27017, so `npm run test:unit` with the default URI reads and writes
+production data. Point tests at a separate `mongod`:
+
+```bash
+mongod --dbpath /tmp/booklet-test-db --port 27018 --bind_ip 127.0.0.1 &
+MONGODB_URI="mongodb://127.0.0.1:27018/booklet?directConnection=true" npm run test:unit
+```
+
+Production also serves from this checkout: `next start` reads `.next/` here
+and the MCP server runs from `mcp-server/src`. Running `next build` or `next
+dev` in this directory replaces files the live site is reading. Build and
+run feature branches in a separate `git worktree`.
+
 ## Auth: in-house (Clerk removed)
 
 **Current state:** Email + password, no third-party identity provider.

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Nightly Booklet database backup (scripts/backup-mongo.sh), 03:30 local time.
+
+  Install:
+    mkdir -p ~/.booklet-deploy-logs
+    cp scripts/com.booklet.backup.plist ~/Library/LaunchAgents/
+    launchctl load -w ~/Library/LaunchAgents/com.booklet.backup.plist
+
+  Run once now:   launchctl start com.booklet.backup
+  Log:            ~/.booklet-deploy-logs/backup.log
+
+  launchd runs a missed job when the Mac next wakes, so a night asleep does
+  not skip the backup.
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.booklet.backup</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>/Users/ashwinsathian/Documents/Personal/booklet/scripts/backup-mongo.sh</string>
+    </array>
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>3</integer>
+        <key>Minute</key>
+        <integer>30</integer>
+    </dict>
+    <key>StandardOutPath</key>
+    <string>/Users/ashwinsathian/.booklet-deploy-logs/backup.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/ashwinsathian/.booklet-deploy-logs/backup.log</string>
+</dict>
+</plist>

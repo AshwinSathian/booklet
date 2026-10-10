@@ -47,7 +47,7 @@ export function createMcpServer(apiBase: string, apiKey: string): McpServer {
     "publish_page",
     {
       title: "Publish Page",
-      description: "Publish a new Booklet page from Markdown. Returns a permanent, public URL.",
+      description: "Publish a new Booklet page from Markdown. Returns its URL. The page is unlisted unless `visibility` is \"public\".",
       inputSchema: PublishPageInputSchema,
       outputSchema: PublishPageOutputSchema,
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },

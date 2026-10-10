@@ -15,7 +15,7 @@ import { validateBlocks } from "@/lib/block-schema";
 import { collectRichBlockKinds } from "@/lib/block-usage";
 import { putDoc } from "@/lib/storage";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { assertSlugAvailable } from "@/server/pages";
+import { assertRawWithinLimit, assertSlugAvailable } from "@/server/pages";
 import { toErrorResponse } from "@/server/errors";
 import { getSiteOrigin } from "@/lib/site-url";
 import { resolveApiClientSource } from "@/lib/request-source";
@@ -27,6 +27,8 @@ export const runtime = "nodejs";
 type PublishPayload = {
   raw?: string;
   settings?: PublishedDoc["settings"];
+  /** Overrides frontmatter `visibility`. Unknown values are ignored. */
+  visibility?: unknown;
 };
 
 export async function POST(req: Request) {
@@ -47,6 +49,12 @@ export async function POST(req: Request) {
 
   if (!payload?.raw || typeof payload.raw !== "string" || !payload.raw.trim()) {
     return NextResponse.json({ error: "Nothing to publish — provide `raw` markdown." }, { status: 400 });
+  }
+
+  try {
+    assertRawWithinLimit(payload.raw);
+  } catch (e) {
+    return toErrorResponse(e);
   }
 
   // Extract frontmatter metadata before parsing.
@@ -102,7 +110,7 @@ export async function POST(req: Request) {
     createdAt: new Date().toISOString(),
     settings: settings ?? DEFAULT_SETTINGS,
     blocks,
-    raw: body.slice(0, STORAGE.maxInputChars),
+    raw: body,
   };
 
   try {
@@ -136,7 +144,9 @@ export async function POST(req: Request) {
     // whether we tell the caller their requested slug didn't take, instead
     // of silently dropping it.
     const postPatch: Parameters<typeof updatePageRecord>[1] = {};
-    if (fm.visibility) postPatch.visibility = fm.visibility;
+    const visibility =
+      payload.visibility === "public" || payload.visibility === "unlisted" ? payload.visibility : fm.visibility;
+    if (visibility) postPatch.visibility = visibility;
     if (normalizedSlug) postPatch.slug = normalizedSlug;
     if (Object.keys(postPatch).length > 0) {
       await updatePageRecord(id, postPatch).catch((e) => {

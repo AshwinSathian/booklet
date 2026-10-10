@@ -11,6 +11,10 @@ export const metadata: Metadata = buildMetadata({
   noIndex: false,
 });
 
+// Read at build time (this page is static): the same address abuse reports
+// are emailed to. The sentence that names it is left out when it is unset.
+const ABUSE_EMAIL = process.env.ABUSE_REPORT_EMAIL?.trim() || null;
+
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="flex flex-col gap-3">
@@ -40,7 +44,7 @@ export default function TermsPage() {
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest text-text-muted mb-3">Legal</p>
             <h1 className="text-[clamp(22px,3.5vw,30px)] text-text-primary mb-2 font-display">Terms of Service</h1>
-            <p className="text-sm text-text-muted">Last updated: July 2026</p>
+            <p className="text-sm text-text-muted">Last updated: October 2026</p>
           </div>
 
           <Section title="Acceptance">
@@ -73,8 +77,25 @@ export default function TermsPage() {
 
           <Section title="Anonymous pages">
             <p>
-              Pages published without an account are stored indefinitely. We reserve the right to remove anonymous
-              pages that violate these terms or are flagged as abusive.
+              Pages published without an account are kept for 90 days and then removed, unless the author signs
+              in and claims the page. We may remove an anonymous page sooner if it breaks these terms.
+            </p>
+          </Section>
+
+          <Section title="Reporting abuse">
+            <p>
+              Every published page has a &ldquo;Report this page&rdquo; link in its footer.
+              {ABUSE_EMAIL ? (
+                <>
+                  {" "}You can also write to{" "}
+                  <a href={`mailto:${ABUSE_EMAIL}`} className="text-accent hover:underline">
+                    {ABUSE_EMAIL}
+                  </a>
+                  .
+                </>
+              ) : null}{" "}
+              A page that breaks these terms is taken down, and its link then shows a notice in place of the
+              content.
             </p>
           </Section>
 
