@@ -144,6 +144,7 @@ test("the whole flow: consent, code, tokens, API call, refresh, revoke", async (
   // Only hashes are stored.
   const stored = await (await getDb()).collection("oauth_tokens").find({ user_id: g.user.userId }).toArray();
   expect(stored).toHaveLength(2);
+  expect(Object.keys(stored[0]).sort()).toEqual(["_id", "client_id", "expires_at", "grant_id", "kind", "resource", "rotated_at", "scope", "user_id"]);
   expect(JSON.stringify(stored)).not.toContain(tokens.access_token);
   expect(JSON.stringify(stored)).not.toContain(tokens.refresh_token);
 

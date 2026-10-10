@@ -256,7 +256,9 @@ export async function exchangeAuthorizationCode(form: {
     throw new OAuthTokenError("invalid_grant", "code_verifier does not match the code_challenge.");
   }
 
-  return issueTokens(doc);
+  // Only the grant's own fields: the code document also holds the redirect
+  // URI and the challenge, which have no business on a token row.
+  return issueTokens({ grant_id: doc.grant_id, client_id: doc.client_id, user_id: doc.user_id, scope: doc.scope, resource: doc.resource });
 }
 
 export async function exchangeRefreshToken(form: { refresh_token?: string; client_id?: string; scope?: string }): Promise<TokenResponse> {
