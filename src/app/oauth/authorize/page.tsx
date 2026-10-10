@@ -48,9 +48,12 @@ export default async function OAuthAuthorizePage({
 
   const validation = await validateAuthorizeRequest(params, issuer);
   if (!validation.ok) {
-    // A problem the client can be told about goes back to the client. A
-    // client or redirect URI that cannot be trusted stays on this page.
-    if (validation.redirect) redirect(validation.redirect);
+    // Never redirect from here. Anyone can register a client with any
+    // https redirect URI, so sending the browser to `redirect_uri` on a
+    // bad request would make this page an open redirector: a link to
+    // booklet that lands on a site of the sender's choosing, with no click.
+    // The client is told about errors only after the user acts on the
+    // consent screen (POST /api/oauth/authorize).
     return (
       <AuthLayout>
         <p className="text-3xl">⚠</p>

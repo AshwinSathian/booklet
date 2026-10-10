@@ -7,6 +7,53 @@ Notable changes to the Booklet app and MCP server. The format follows
 `booklet-cli` has its own changelog in
 [packages/cli/CHANGELOG.md](packages/cli/CHANGELOG.md).
 
+## [Unreleased]
+
+Programmatic surfaces brought up to current conventions. `booklet-cli` and
+`booklet-api-client` are both 2.0.0 (see their own changelogs); the MCP
+server is 3.0.0.
+
+### Added
+
+- **OAuth sign-in for MCP clients.** A Claude.ai custom connector pointed at
+  `https://booklet-mcp.ashwinsathian.com/mcp` signs in with a Booklet
+  account; no API key is pasted anywhere. Authorization code with PKCE
+  (S256 only), clients identified by a Client ID Metadata Document or by
+  dynamic registration, scopes `pages:read` and `pages:write`, one-hour
+  access tokens and rotating 30-day refresh tokens. API keys keep working.
+- **Problem details.** `/api/v1` errors are RFC 9457 bodies
+  (`application/problem+json`) and keep the `error` string. A 413 says which
+  limit was hit: `characters` (200,000) or `stored_bytes` (600,000).
+- **Rate-limit headers.** Every `/api/v1` response carries `RateLimit` and
+  `RateLimit-Policy`; a 429 adds `Retry-After`.
+- **Safe retries.** `POST /api/v1/publish` accepts `Idempotency-Key`. A repeat
+  within 24 hours returns the first response and publishes nothing.
+- **Conditional requests.** `GET /api/v1/pages/:id` returns an `ETag`;
+  `PATCH` and `DELETE` honor `If-Match` and answer 412 when it is stale.
+- **Cursor pagination.** `GET /api/v1/pages` returns `next_cursor` and
+  accepts `cursor`. `offset` still works.
+- **OpenAPI.** `/api/v1/openapi.json` is an OpenAPI 3.1 document generated
+  from the same schemas the clients validate with. The examples on
+  `/api-docs` are rendered from it.
+- **Markdown for agents.** `/p/:id.md`, and `/p/:id` requested with
+  `Accept: text/markdown`, return a page's raw Markdown. Password-protected,
+  taken-down and expired pages return 404.
+
+### Changed
+
+- **MCP server 3.0.0** runs on `@modelcontextprotocol/server` 2.x and speaks
+  protocol 2026-07-28, while still answering 2025-11-25 clients. A request
+  without a credential now gets `401` with a `WWW-Authenticate` challenge
+  (it used to be a JSON-RPC error body). Reading an unknown resource is
+  error `-32602`.
+- A password reset now also disconnects apps that were connected through
+  OAuth.
+
+### Not planned
+
+- Custom domains for team spaces. They depended on moving to Cloudflare,
+  and Booklet stays self-hosted (`docs/adr/0001-hosting-platform.md`).
+
 ## [1.1.0] - 2026-10-10
 
 The first tagged release. It covers two rounds of work: fixing known

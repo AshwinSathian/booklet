@@ -41,7 +41,7 @@ Full reference: https://booklet.ashwinsathian.com/api-docs
 Booklet runs a native MCP server so Claude and other MCP-compatible AI assistants can publish and manage pages directly, in the same conversation.
 
 MCP endpoint: `https://booklet-mcp.ashwinsathian.com/mcp` (remote, Streamable HTTP — nothing to install)
-Auth: `Authorization: Bearer <bklt_...>` header, same API key as the REST API
+Auth: OAuth sign-in (Claude.ai custom connectors and other clients that support it: add the URL, sign in, no key), or an `Authorization: Bearer <bklt_...>` header with the same API key as the REST API
 
 **Tools:** `publish_page`, `update_page`, `get_page`, `list_pages`, `delete_page`
 **Resources:** published pages, browsable and readable as `booklet://pages/:id`

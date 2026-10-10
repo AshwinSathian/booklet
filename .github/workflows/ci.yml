@@ -187,6 +187,12 @@ jobs:
       # tests/unit/*.spec.ts import mcp-server/src/*.ts directly, which needs
       # packages/shared built first — see typecheck-root's comment above.
       - run: npm run build --workspace packages/shared
+      # /api/v1/openapi.json is generated from the zod schemas; this checks
+      # that what comes out is a valid OpenAPI 3.1 description.
+      - name: Lint the OpenAPI document
+        run: |
+          node -e 'process.stdout.write(JSON.stringify(require("booklet-api-client").buildOpenApi("0.0.0")))' > "$RUNNER_TEMP/openapi.json"
+          npx --yes @redocly/cli@2.62.1 lint "$RUNNER_TEMP/openapi.json"
       # tests/unit/** run via @playwright/test as a plain Node test runner —
       # no browser is launched, so no `playwright install` step is needed.
       - run: npm run test:unit

@@ -106,7 +106,7 @@ A plain Node process (`mcp-server/`) that exposes Booklet's API to AI assistants
 **Resources:** published pages are also exposed as browsable/readable MCP resources (`booklet://pages/:id`)
 **Prompts:** five pre-built document templates the assistant can fill in and publish directly — `incident_report`, `adr` (Architecture Decision Record), `release_notes`, `rfc`, and `runbook`
 
-Point any MCP-compatible client at the endpoint above with your API key in the `Authorization` header. [booklet.ashwinsathian.com/mcp-setup](https://booklet.ashwinsathian.com/mcp-setup) has copy-paste config for Claude Desktop, Claude.ai, Cursor, Windsurf, VS Code, and Zed.
+Point any MCP-compatible client at the endpoint above. Clients that support OAuth (Claude.ai custom connectors) sign in with your Booklet account; the rest send your API key in the `Authorization` header. [booklet.ashwinsathian.com/mcp-setup](https://booklet.ashwinsathian.com/mcp-setup) has copy-paste config for Claude Desktop, Claude.ai, Cursor, Windsurf, VS Code, and Zed.
 
 To run the server itself locally:
 

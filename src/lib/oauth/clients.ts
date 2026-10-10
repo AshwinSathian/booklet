@@ -37,7 +37,10 @@ const MAX_URI_LENGTH = 2000;
 
 // Schemes that would run code or read local data if a browser followed a
 // redirect to them. Everything else that is not http(s) is a private-use
-// scheme a native app registered (cursor://, vscode://, …).
+// scheme a native app registered (cursor://, vscode://, …). A denylist and
+// not RFC 8252's reverse-DNS allowlist, because the MCP clients in use
+// register single-word schemes. A redirect to one only ever happens after
+// the signed-in user clicks Allow or Cancel on a screen naming the app.
 const FORBIDDEN_SCHEMES = new Set(["javascript:", "data:", "vbscript:", "file:", "blob:", "about:", "ftp:", "ws:", "wss:"]);
 const LOOPBACK_HOSTS = new Set(["127.0.0.1", "localhost", "[::1]"]);
 

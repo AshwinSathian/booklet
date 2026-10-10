@@ -4,7 +4,7 @@ import { randomBytes } from "node:crypto";
 import { createClient } from "booklet-api-client";
 import { readConfig, writeConfig, getApiKey, getApiBase, setApiKey, clearApiKey, getApiKeySource } from "../config.js";
 import { CliError, EXIT, toCliError } from "../errors.js";
-import { success, info, bold, dim, gray, openUrl, print, emit } from "../fmt.js";
+import { success, info, bold, dim, gray, openUrl, print, emit, isJson } from "../fmt.js";
 
 const BROWSER_AUTH_TIMEOUT_MS = 5 * 60_000; // 5 minutes
 
@@ -132,9 +132,11 @@ async function loginWithBrowser(base: string): Promise<{ key: string; pageCount:
   print();
   openUrl(authUrl);
   info(`Opening ${bold(new URL(base).hostname)} in your browser…`);
-  // stderr, so the URL is still shown under --json.
-  console.error(dim(`  Didn't open? Visit: ${authUrl}`));
-  console.error(dim(`  In a non-interactive environment? Use: booklet login --key <key>`));
+  // The URL must reach the user even under --json, where stdout is
+  // reserved for the result: it goes to stderr there.
+  const say = isJson() ? console.error : console.log;
+  say(dim(`  Didn't open? Visit: ${authUrl}`));
+  say(dim(`  In a non-interactive environment? Use: booklet login --key <key>`));
   print();
   info("Waiting for authorization… (Ctrl+C to cancel)");
 

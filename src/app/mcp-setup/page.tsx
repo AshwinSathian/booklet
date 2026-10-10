@@ -351,7 +351,7 @@ function ClaudeDesktopInstructions({ apiKey }: { apiKey: string }) {
   );
 }
 
-function ClaudeAiInstructions({ apiKey }: { apiKey: string }) {
+function ClaudeAiInstructions() {
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#D97757]/10 border border-[#D97757]/20 text-[#D97757] text-xs">
@@ -363,38 +363,36 @@ function ClaudeAiInstructions({ apiKey }: { apiKey: string }) {
       </div>
 
       <div className="space-y-4">
-        <Step n={1} title="Open Claude Settings">
-          <p className="text-sm text-text-secondary">
+        <Step n={1} title="Add the connector">
+          <p className="text-sm text-text-secondary mb-2">
             Go to{" "}
             <a href="https://claude.ai" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">
               claude.ai
             </a>{" "}
-            → click your avatar (top-right) → <strong>Settings</strong> →{" "}
-            <strong>Integrations</strong>.
-          </p>
-        </Step>
-
-        <Step n={2} title="Add a new MCP server">
-          <p className="text-sm text-text-secondary mb-2">
-            Click <strong>Add integration</strong> and fill in the form:
+            → <strong>Settings</strong> → <strong>Connectors</strong> → <strong>Add custom connector</strong>, and
+            enter:
           </p>
           <div className="rounded-xl border border-border-default bg-bg-soft p-4 space-y-3 text-sm">
-            <Field label="Integration name" value="Booklet" />
-            <Field label="MCP server URL" value={MCP_URL} copyable />
-            <Field
-              label="Authorization header"
-              value={`Bearer ${apiKey}`}
-              copyable
-              masked={apiKey === "bklt_YOUR_API_KEY"}
-            />
+            <Field label="Name" value="Booklet" />
+            <Field label="Remote MCP server URL" value={MCP_URL} copyable />
           </div>
         </Step>
 
-        <Step n={3} title="Save and start a new conversation">
+        <Step n={2} title="Sign in">
           <p className="text-sm text-text-secondary">
-            Click <strong>Save</strong>. Open a new chat — the Booklet tools will be available
-            automatically. You can confirm by asking:{" "}
-            <Code>What Booklet tools do you have?</Code>
+            Click <strong>Connect</strong>. Claude opens Booklet in your browser. Sign in if you are not already,
+            check that the screen names Claude and what it is asking for, and click <strong>Allow</strong>. You
+            are sent back to Claude, connected.
+          </p>
+        </Step>
+
+        <Step n={3} title="Start a new conversation">
+          <p className="text-sm text-text-secondary">
+            Open a new chat and ask: <Code>What Booklet tools do you have?</Code>
+          </p>
+          <p className="text-sm text-text-secondary mt-2">
+            Claude keeps its access until you remove the connector in Claude&apos;s settings. Resetting your
+            Booklet password also disconnects it.
           </p>
         </Step>
       </div>
@@ -674,7 +672,7 @@ export default function McpSetupPage() {
 
   const platformContent: Record<PlatformId, ReactNode> = {
     "claude-desktop": <ClaudeDesktopInstructions apiKey={apiKey} />,
-    "claude-ai": <ClaudeAiInstructions apiKey={apiKey} />,
+    "claude-ai": <ClaudeAiInstructions />,
     cursor: <CursorInstructions apiKey={apiKey} />,
     windsurf: <WindsurfInstructions apiKey={apiKey} />,
     vscode: <VSCodeInstructions apiKey={apiKey} />,
@@ -796,7 +794,8 @@ export default function McpSetupPage() {
             <SectionAnchor id="" title="Step 1 — Get your API key" />
 
             <p className="text-sm text-text-secondary mb-4">
-              Every MCP request is authenticated with a Booklet API key. The key identifies you and
+              Claude.ai does not need a key: it signs in with your Booklet account, so skip to step 2.
+              Every other tool below authenticates with a Booklet API key. The key identifies you and
               scopes all operations to your pages.
             </p>
 
@@ -1086,7 +1085,9 @@ export default function McpSetupPage() {
                 <Link href={ROUTES.myPages} className="text-accent hover:underline">
                   My Pages → API Keys
                 </Link>
-                . This takes effect immediately across all connected clients.
+                . This takes effect immediately across all connected clients. A client that signed in
+                instead (Claude.ai) holds a token that expires after an hour and is renewed while the
+                connector stays installed; Booklet stores only a hash of it.
               </p>
             </div>
           </section>

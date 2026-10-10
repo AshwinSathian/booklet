@@ -9,7 +9,10 @@
 // 307 redirect to the CLI's local loopback callback server), then runs
 // real CLI commands (pages list/publish/delete, whoami, logout) and real
 // MCP JSON-RPC tool calls (initialize, tools/list, publish_page,
-// list_pages, get_page, update_page, delete_page) against production.
+// list_pages, get_page, update_page, delete_page) against production, and
+// finally the OAuth sign-in a Claude.ai connector performs (discovery,
+// client registration, consent, PKCE token exchange, an MCP call with the
+// token, revocation).
 //
 // Everything this creates is tagged with an "e2e-cli-verify-<timestamp>"
 // email/title prefix and deleted at the end, scoped precisely to what this
@@ -20,6 +23,7 @@
 //   node scripts/production-verify/cli-mcp-verify.mjs
 
 import { spawn } from "node:child_process";
+import { createHash, randomBytes } from "node:crypto";
 import { mkdtemp, rm, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -80,6 +84,7 @@ async function main() {
 
   let sessionCookie;
   let userId;
+  let oauthClientId;
 
   try {
     // ── 1. Real signup against the live API ──────────────────────────────
@@ -269,7 +274,7 @@ async function main() {
 
     // ── 11. MCP server — JSON-RPC over the public hostname ───────────────
     section("MCP server");
-    async function mcpCall(method, params) {
+    async function mcpCall(method, params, token = apiKey) {
       const res = await fetch(`${MCP_BASE}/mcp`, {
         method: "POST",
         headers: {
@@ -277,7 +282,7 @@ async function main() {
           // Streamable HTTP: the spec requires a client to accept both, and
           // the server may answer either way.
           Accept: "application/json, text/event-stream",
-          Authorization: `Bearer ${apiKey}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
       });
@@ -368,6 +373,113 @@ async function main() {
       body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list" }),
     });
     ok("MCP rejects requests with no API key", noAuth.status === 401);
+
+    // ── 12. OAuth sign-in, the way a Claude.ai custom connector does it ──
+    section("MCP OAuth sign-in");
+    const challenge = noAuth.headers.get("www-authenticate") ?? "";
+    const prmUrl = challenge.match(/resource_metadata="([^"]+)"/)?.[1];
+    ok("401 carries WWW-Authenticate with resource_metadata", Boolean(prmUrl), challenge);
+
+    const prm = prmUrl ? await (await fetch(prmUrl)).json().catch(() => null) : null;
+    ok("protected resource metadata names this MCP server", prm?.resource === `${MCP_BASE}/mcp`, JSON.stringify(prm));
+    const issuer = prm?.authorization_servers?.[0];
+    ok("its authorization server is the Booklet app", issuer === BASE, String(issuer));
+
+    const asMeta = await (await fetch(`${issuer}/.well-known/oauth-authorization-server`)).json().catch(() => null);
+    ok(
+      "authorization server metadata: S256 only, issuer matches",
+      asMeta?.issuer === issuer && JSON.stringify(asMeta?.code_challenge_methods_supported) === '["S256"]',
+      JSON.stringify(asMeta),
+    );
+
+    const redirectUri = "https://claude.ai/api/mcp/auth_callback";
+    const reg = await fetch(asMeta.registration_endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ client_name: `e2e-cli-verify-${RUN_ID}`, redirect_uris: [redirectUri] }),
+    });
+    const client = await reg.json().catch(() => null);
+    oauthClientId = client?.client_id;
+    ok("client registration accepts Claude's callback URL", reg.status === 201 && Boolean(oauthClientId), `got ${reg.status}`);
+
+    const verifier = randomBytes(48).toString("base64url");
+    const authParams = {
+      response_type: "code",
+      client_id: oauthClientId,
+      redirect_uri: redirectUri,
+      code_challenge: createHash("sha256").update(verifier).digest("base64url"),
+      code_challenge_method: "S256",
+      scope: "pages:read pages:write",
+      state: `state-${RUN_ID}`,
+      resource: prm.resource,
+    };
+
+    const consentPage = await fetch(`${asMeta.authorization_endpoint}?${new URLSearchParams(authParams)}`, {
+      headers: { Cookie: sessionCookie },
+      redirect: "manual",
+    });
+    const consentHtml = await consentPage.text();
+    ok("consent screen renders and grants nothing by itself", consentPage.status === 200 && consentHtml.includes("Allow"), `got ${consentPage.status}`);
+    ok(
+      "loading the consent screen issued no code",
+      (await db.collection("oauth_codes").countDocuments({ user_id: userId })) === 0,
+    );
+
+    // The browser clicking "Allow".
+    const allow = await fetch(`${BASE}/api/oauth/authorize`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Cookie: sessionCookie, Origin: BASE },
+      body: JSON.stringify({ params: authParams, decision: "approve" }),
+    });
+    const allowBody = await allow.json().catch(() => null);
+    const back = allowBody?.redirect ? new URL(allowBody.redirect) : null;
+    const oauthCode = back?.searchParams.get("code");
+    ok("Allow redirects to the client's callback with a code", back?.href.startsWith(redirectUri) && Boolean(oauthCode), JSON.stringify(allowBody));
+    ok("the redirect carries state and iss", back?.searchParams.get("state") === authParams.state && back?.searchParams.get("iss") === issuer);
+
+    const exchange = (extra) =>
+      fetch(asMeta.token_endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ client_id: oauthClientId, ...extra }),
+      });
+    const tokenRes = await exchange({ grant_type: "authorization_code", code: oauthCode, redirect_uri: redirectUri, code_verifier: verifier, resource: prm.resource });
+    const tokens = await tokenRes.json().catch(() => null);
+    ok("code + PKCE verifier exchange for tokens", tokenRes.status === 200 && Boolean(tokens?.access_token && tokens?.refresh_token), `got ${tokenRes.status}: ${JSON.stringify(tokens)}`);
+
+    const replay = await exchange({ grant_type: "authorization_code", code: oauthCode, redirect_uri: redirectUri, code_verifier: verifier });
+    ok("the code cannot be used twice", replay.status === 400);
+    // The replay withdrew the grant, which is correct. Sign in again.
+    const allow2 = await (
+      await fetch(`${BASE}/api/oauth/authorize`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Cookie: sessionCookie, Origin: BASE },
+        body: JSON.stringify({ params: authParams, decision: "approve" }),
+      })
+    ).json();
+    const tokens2 = await (
+      await exchange({ grant_type: "authorization_code", code: new URL(allow2.redirect).searchParams.get("code"), redirect_uri: redirectUri, code_verifier: verifier })
+    ).json();
+
+    const oauthList = await mcpCall("tools/call", { name: "list_pages", arguments: {} }, tokens2.access_token);
+    ok(
+      "MCP list_pages works with the OAuth token and returns the caller's pages",
+      oauthList.status === 200 && !oauthList.body?.result?.isError,
+      JSON.stringify(oauthList.body)?.slice(0, 300),
+    );
+    const staleToken = await mcpCall("tools/call", { name: "list_pages", arguments: {} }, tokens?.access_token);
+    ok("the token from the replayed code no longer works", staleToken.status === 401, `got ${staleToken.status}`);
+
+    const refreshed = await (await exchange({ grant_type: "refresh_token", refresh_token: tokens2.refresh_token })).json();
+    ok("refresh token rotates", Boolean(refreshed?.access_token) && refreshed.refresh_token !== tokens2.refresh_token);
+
+    await fetch(asMeta.revocation_endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ token: refreshed.refresh_token }),
+    });
+    const afterRevoke = await mcpCall("tools/call", { name: "list_pages", arguments: {} }, refreshed.access_token);
+    ok("a revoked token is refused with 401", afterRevoke.status === 401, `got ${afterRevoke.status}`);
   } finally {
     // ── Cleanup — scoped precisely to this run's data ──────────────────────
     section("Cleanup");
@@ -375,12 +487,15 @@ async function main() {
       const pagesDeleted = await db.collection("pages").deleteMany({ user_id: userId });
       const keysDeleted = await db.collection("api_keys").deleteMany({ user_id: userId });
       const sessionsDeleted = await db.collection("sessions").deleteMany({ user_id: userId });
+      await db.collection("oauth_tokens").deleteMany({ user_id: userId });
+      await db.collection("oauth_codes").deleteMany({ user_id: userId });
       const userDeleted = await db.collection("users").deleteMany({ _id: userId });
       console.log(
         `  Deleted: ${pagesDeleted.deletedCount} page(s), ${keysDeleted.deletedCount} key(s), ` +
           `${sessionsDeleted.deletedCount} session(s), ${userDeleted.deletedCount} user`,
       );
     }
+    if (oauthClientId) await db.collection("oauth_clients").deleteOne({ _id: oauthClientId });
     await mongo.close();
   }
 
