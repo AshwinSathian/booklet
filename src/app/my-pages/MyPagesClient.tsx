@@ -24,7 +24,7 @@ export type PageRow = {
   collection_id: string | null;
   view_count: number;
   has_password: boolean;
-  /** How the page was last published or updated; null for pages older than the event log. */
+  /** How the page was last published or updated; null until the page is next published. */
   source: PublishSource | null;
   created_at: string;
   updated_at: string;

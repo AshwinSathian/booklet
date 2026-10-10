@@ -73,6 +73,15 @@ test.describe("sanitizeCompiledSvg", () => {
     expect(out).toContain('href="#node1"');
   });
 
+  test("a <style> keeps its rules but loads nothing: no @import, no external url()", () => {
+    const svg = `<svg ${SVG_NS}><style>@import url("https://evil.example/a.css"); .n{fill:url(#grad);background:url('https://evil.example/t.png')}</style><rect class="n"/></svg>`;
+    const out = sanitizeCompiledSvg(svg);
+    expect(out).not.toContain("evil.example");
+    expect(out).not.toContain("@import");
+    expect(out).toContain("url(#grad)");
+    expect(out).toContain(".n{fill:");
+  });
+
   test("returns empty string for unparseable input", () => {
     expect(sanitizeCompiledSvg("not svg at all { garbage")).toBe("");
   });

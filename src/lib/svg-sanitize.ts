@@ -56,6 +56,13 @@ export function sanitizeCompiledSvg(svg: string): string {
       el.remove();
       continue;
     }
+    // Mermaid ships its own <style>. Nothing in it needs to load anything:
+    // drop @import and every url() that is not a same-document reference.
+    if (tag === "style") {
+      el.textContent = (el.textContent ?? "")
+        .replace(/@import[^;]*;?/gi, "")
+        .replace(/url\(\s*['"]?(?!#)[^)]*\)/gi, "none");
+    }
     for (const attr of Array.from(el.attributes)) {
       const name = attr.name.toLowerCase();
       if (name.startsWith("on")) {

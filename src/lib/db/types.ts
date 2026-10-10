@@ -69,6 +69,8 @@ export type DbPage = {
   password_hash: string | null;   // PBKDF2-SHA256 hash (see src/lib/password.ts); null = no password
   frontmatter_meta: Record<string, unknown> | null;  // parsed YAML frontmatter fields
   taken_down_at: string | null;   // ISO timestamp of an admin takedown; mirrors docs.taken_down_at
+  /** How the page was last published or updated. Written by recordPublishEvent. */
+  last_source?: PublishEvent["source"];
   created_at: string;
   updated_at: string;
 };

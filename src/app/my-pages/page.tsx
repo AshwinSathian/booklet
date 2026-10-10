@@ -2,7 +2,7 @@ import { AppLogo } from "@/components/ui/AppLogo";
 import { AccountMenu } from "@/components/auth/AccountMenu";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import { ROUTES } from "@/lib/constants";
-import { getCollectionsByUser, getLastPublishSources, getPagesByUser, getTeamSpacesByMembership } from "@/lib/db";
+import { getCollectionsByUser, getPagesByUser, getTeamSpacesByMembership } from "@/lib/db";
 import { getSession } from "@/lib/auth/session";
 import Link from "next/link";
 import { headers } from "next/headers";
@@ -34,11 +34,10 @@ export default async function MyPagesPage() {
   const baseUrl = getBaseUrl(hdrs);
   // Every row is one of the caller's own pages (getPagesByUser), so titles
   // and publish sources need no further access check.
-  const [{ pages }, ownedCollections, teamSpaces, sources] = await Promise.all([
+  const [{ pages }, ownedCollections, teamSpaces] = await Promise.all([
     getPagesByUser(userId),
     getCollectionsByUser(userId),
     getTeamSpacesByMembership(userId),
-    getLastPublishSources(userId),
   ]);
   // Merge owned collections + team spaces the user is a member of (but doesn't own)
   const ownedIds = new Set(ownedCollections.map((c) => c.id));
@@ -93,7 +92,7 @@ export default async function MyPagesPage() {
               collection_id: p.collection_id,
               view_count: p.view_count,
               has_password: Boolean(p.password_hash),
-              source: sources.get(p.id) ?? null,
+              source: p.last_source ?? null,
               created_at: p.created_at,
               updated_at: p.updated_at,
             }))}

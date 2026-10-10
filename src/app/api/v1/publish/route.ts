@@ -92,15 +92,6 @@ async function publish(req: Request, userId: string, bodyText: string): Promise<
     return problem(500, "Publish failed");
   }
 
-  void recordPublishEvent({
-    userId,
-    pageId: id,
-    isUpdate: false,
-    contentLength: payload.raw.length,
-    richBlockKinds: collectRichBlockKinds(blocks),
-    source: resolveApiClientSource(req),
-  }).catch((err) => logError("v1/publish", "Event record failed", err));
-
   // The record is what makes a page owned, and what a team-only page's
   // access check reads. Without it the document would be an ownerless page
   // open to anyone with the link, so a failure here undoes the publish.
@@ -114,6 +105,16 @@ async function publish(req: Request, userId: string, bodyText: string): Promise<
     await deleteDoc(id).catch(() => {});
     return problem(500, "Publish failed");
   }
+
+  // After the page record: the event also writes the record's `last_source`.
+  void recordPublishEvent({
+    userId,
+    pageId: id,
+    isUpdate: false,
+    contentLength: payload.raw.length,
+    richBlockKinds: collectRichBlockKinds(blocks),
+    source: resolveApiClientSource(req),
+  }).catch((err) => logError("v1/publish", "Event record failed", err));
 
   // The slug was validated above, but that check-then-write isn't atomic: a
   // concurrent publish can claim the same slug in between, and the write

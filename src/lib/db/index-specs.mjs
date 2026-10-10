@@ -168,7 +168,7 @@ export const INDEX_SPECS = [
   { collection: "webhooks", spec: { user_id: 1, created_at: -1 } },
 
   // --- publish_events ---
-  // getLastPublishSources: each of a user's pages with its latest source.
+  // deleteAccount, and the admin metrics' per-user counts.
   { collection: "publish_events", spec: { user_id: 1, created_at: 1 } },
   // deletePageAssociatedRecords.
   { collection: "publish_events", spec: { page_id: 1 } },
