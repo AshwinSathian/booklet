@@ -40,6 +40,7 @@ function toPage(doc: PageDoc): DbPage {
     password_hash: rest.password_hash ?? null,
     featured: rest.featured ?? false,
     frontmatter_meta: rest.frontmatter_meta ?? null,
+    taken_down_at: rest.taken_down_at ?? null,
   };
 }
 
@@ -124,6 +125,7 @@ export async function createPageRecord(
     password_hash: null,
     featured: false,
     frontmatter_meta: frontmatterMeta,
+    taken_down_at: null,
     created_at: now,
     updated_at: now,
   });
@@ -200,6 +202,19 @@ export async function updatePageRecord(
   }
 
   await db.collection<PageDoc>("pages").updateOne({ _id: pageId }, update);
+}
+
+/**
+ * Mirrors a takedown onto the `pages` record (if the page has one) and
+ * forces it unlisted, so it also drops out of every listing query —
+ * /explore, tag pages, profiles, team spaces and the sitemap all filter on
+ * `visibility: "public"`.
+ */
+export async function markPageTakenDown(pageId: string, at: string): Promise<void> {
+  const db = await getDb();
+  await db
+    .collection<PageDoc>("pages")
+    .updateOne({ _id: pageId }, { $set: { taken_down_at: at, visibility: "unlisted" } });
 }
 
 export async function getPublicPagesByUser(userId: string, limit = 100): Promise<ExploreItem[]> {

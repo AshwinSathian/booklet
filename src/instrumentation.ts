@@ -34,4 +34,24 @@ export async function register() {
   } catch (err) {
     logError("startup", "Failed to ensure MongoDB indexes (continuing to start anyway)", err);
   }
+
+  // Daily purge of anonymous pages 30 days past their 90-day expiry. An
+  // in-process timer, not launchd/cron: the app already runs as one
+  // long-lived process, and the first run a minute after every start means
+  // a restart never skips a day. `unref` so the timer never holds the
+  // process open.
+  const purge = async () => {
+    try {
+      const [{ getDb }, { purgeExpiredAnonymousDocs }] = await Promise.all([
+        import("@/lib/mongodb"),
+        import("@/lib/db/expiry.mjs"),
+      ]);
+      const deleted = await purgeExpiredAnonymousDocs(await getDb());
+      if (deleted > 0) logInfo("expiry", "Purged expired anonymous pages", { deleted });
+    } catch (err) {
+      logError("expiry", "Anonymous page purge failed", err);
+    }
+  };
+  setTimeout(purge, 60_000).unref();
+  setInterval(purge, 86_400_000).unref();
 }

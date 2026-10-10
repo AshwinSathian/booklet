@@ -1240,10 +1240,15 @@ export function TopBar({
         <div className="border-t border-accent/20 bg-accent-dim/60 backdrop-blur-xl px-3 py-2">
           <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3">
             <p className="text-xs text-text-secondary">
-              <span className="font-semibold text-text-primary">Want to edit or update this page?</span>
-              {" "}Sign in (free) to edit it in place, track views, and keep it under your account.
+              <span className="font-semibold text-text-primary">This page is kept for 90 days.</span>
+              {" "}Sign in (free) and claim it to keep it, edit it in place and track views.
             </p>
-            <Button variant="primary" size="sm" href={ROUTES.signIn} className="shrink-0">
+            <Button
+              variant="primary"
+              size="sm"
+              href={publishedId ? `${ROUTES.signIn}?redirect_url=${encodeURIComponent(`/p/${publishedId}`)}` : ROUTES.signIn}
+              className="shrink-0"
+            >
               Sign in free
             </Button>
           </div>

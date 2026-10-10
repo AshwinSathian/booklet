@@ -1317,18 +1317,18 @@ export function Landing() {
             No. {APP_NAME} works immediately — no signup, no email, no password. Just
             write and publish (up to 10 pages a month). Creating an account (free) removes
             that monthly cap and unlocks custom slugs, analytics, version history, the API,
-            and My Pages. Pages are permanent either way.
-            Everything is free — there is no paid plan.
+            and My Pages. Pages under an account don&apos;t expire; pages published without one
+            are kept for 90 days. Everything is free — there is no paid plan.
           </FaqItem>
           <FaqItem question="Are published pages public?">
-            Yes — they&apos;re accessible by anyone with the link. If you publish it,
-            assume it can be forwarded. Signed-in users can mark pages as &ldquo;unlisted&rdquo; to
-            hide them from any discovery while keeping the link functional.
+            Anyone with the link can read a page, so assume it can be forwarded. New pages
+            are unlisted: they stay out of Explore and search engines unless you choose
+            &ldquo;Public&rdquo; when you publish.
           </FaqItem>
           <FaqItem question="How long do pages last?">
-            Pages are permanent — there is no expiry. Anonymous pages stay live indefinitely;
-            signed-in users additionally get the ability to edit, delete, and track views on
-            their pages.
+            A page under an account stays until you delete it. A page published without an
+            account is kept for 90 days. To keep one longer, open it in the browser you
+            published it from, sign in, and choose &ldquo;Keep this page&rdquo;.
           </FaqItem>
           <FaqItem question="Can I edit after publishing?">
             Anonymous pages can&apos;t be edited after publishing — update your draft and republish for a new link.

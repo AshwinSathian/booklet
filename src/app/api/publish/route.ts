@@ -19,6 +19,13 @@ import { getClientIp } from "@/lib/request-ip";
 import { getSiteOrigin } from "@/lib/site-url";
 import { logError } from "@/lib/logger";
 import { getSession } from "@/lib/auth/session";
+import {
+  ANONYMOUS_PAGE_TTL_DAYS,
+  PURGE_GRACE_DAYS,
+  claimCookieName,
+  generateClaimToken,
+  hashClaimToken,
+} from "@/lib/anonymous-claim";
 import { assertRawWithinLimit } from "@/server/pages";
 import { toErrorResponse } from "@/server/errors";
 import { NextResponse } from "next/server";
@@ -125,8 +132,22 @@ export async function POST(req: Request) {
       raw: payload.raw,
     };
 
+    // No account means no owner record: the page expires unless its author
+    // signs in and claims it, and this cookie is what proves authorship
+    // then. See src/lib/anonymous-claim.ts.
+    const claimToken = isAuthenticated ? null : generateClaimToken();
+
     try {
-      await putDoc(id, doc);
+      await putDoc(
+        id,
+        doc,
+        claimToken
+          ? {
+              expiresAt: new Date(Date.now() + ANONYMOUS_PAGE_TTL_DAYS * 86_400_000),
+              claimTokenHash: await hashClaimToken(claimToken),
+            }
+          : undefined,
+      );
     } catch (e: unknown) {
       logError("publish", "Publish failed", e);
       return NextResponse.json({ error: "Publish failed" }, { status: 500 });
@@ -168,11 +189,23 @@ export async function POST(req: Request) {
 
     const publishedUrl = `${getSiteOrigin(req)}${ROUTES.publish(id)}`;
 
-    return NextResponse.json({
+    const res = NextResponse.json({
       id,
       url: publishedUrl,
       owned: isAuthenticated,
     });
+    if (claimToken) {
+      res.cookies.set(claimCookieName(id), claimToken, {
+        httpOnly: true,
+        // Same rule as the session cookie (src/lib/auth/session.ts): Secure
+        // whenever the request really arrived over HTTPS via the tunnel.
+        secure: req.headers.get("x-forwarded-proto") === "https",
+        sameSite: "lax",
+        path: "/",
+        maxAge: (ANONYMOUS_PAGE_TTL_DAYS + PURGE_GRACE_DAYS) * 86_400,
+      });
+    }
+    return res;
   } catch (e: unknown) {
     logError("publish", "Unhandled error", e);
     return NextResponse.json({ error: "An unexpected error occurred" }, { status: 500 });

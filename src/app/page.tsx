@@ -37,7 +37,7 @@ const jsonLd = {
         "Table rendering",
         "No account required",
         "Draft auto-save to localStorage",
-        "Permanent published pages",
+        "Pages that do not expire when published from an account",
         "REST API for publishing from scripts and automation",
         "Command-line interface (booklet-cli)",
         "GitHub Action for publishing docs in CI",

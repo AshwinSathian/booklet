@@ -17,6 +17,7 @@ import { getOwnedPage, getOwnedPageByIdOrSlug, assertRawWithinLimit, assertSlugA
 import { toErrorResponse } from "@/server/errors";
 import { getSiteOrigin } from "@/lib/site-url";
 import { resolveApiClientSource } from "@/lib/request-source";
+import { GONE_MESSAGES } from "@/lib/gone-notice";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -59,6 +60,13 @@ export async function GET(
     record = await getOwnedPageByIdOrSlug(id, userId);
   } catch (e) {
     return toErrorResponse(e);
+  }
+
+  // A taken-down page has no readable content on any surface, its owner's
+  // API key included. (Expiry never applies here: this route only serves
+  // pages that have an owner.)
+  if (record.taken_down_at) {
+    return NextResponse.json({ error: GONE_MESSAGES.taken_down }, { status: 410 });
   }
 
   const doc = await getDoc(record.id);

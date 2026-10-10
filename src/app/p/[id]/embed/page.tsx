@@ -9,6 +9,8 @@ import { getTheme, themeScopeClass, themeStyleTagContent } from "@/lib/themes";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { cookies } from "next/headers";
+import { GoneNotice } from "@/components/share/GoneNotice";
+import { getGoneReason } from "@/server/page-gone";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,7 +31,10 @@ async function resolveEmbedPage(idOrSlug: string) {
     }
   }
 
-  return { doc, resolvedId, pageRecord };
+  // Same render guard as the share page — see resolveSharePage there.
+  const gone = doc ? await getGoneReason(resolvedId).catch(() => null) : null;
+
+  return { doc, resolvedId, pageRecord, gone };
 }
 
 function extractTitle(blocks: { t: string; level?: number; inl?: unknown[] }[]): string | null {
@@ -54,8 +59,9 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id: idOrSlug } = await params;
-  const { doc, pageRecord } = await resolveEmbedPage(idOrSlug);
+  const { doc, pageRecord, gone } = await resolveEmbedPage(idOrSlug);
   if (!doc) return buildMetadata({ title: "Not found", noIndex: true });
+  if (gone) return buildMetadata({ title: "Page unavailable", noIndex: true });
 
   // Locked pages: generic metadata only — see src/lib/locked-page-metadata.ts.
   // Must come before extractTitle() below touches real content.
@@ -79,7 +85,7 @@ export default async function EmbedPage({
   params: Promise<{ id: string }>;
 }) {
   const { id: idOrSlug } = await params;
-  const { doc, resolvedId, pageRecord } = await resolveEmbedPage(idOrSlug);
+  const { doc, resolvedId, pageRecord, gone } = await resolveEmbedPage(idOrSlug);
 
   if (!doc) {
     return (
@@ -88,6 +94,8 @@ export default async function EmbedPage({
       </div>
     );
   }
+
+  if (gone) return <GoneNotice reason={gone} embed />;
 
   // Password-protected: show a placeholder in embeds
   if (pageRecord?.password_hash) {
@@ -143,6 +151,15 @@ export default async function EmbedPage({
         <div className={`mx-auto w-full px-5 py-3 ${maxW} flex items-center justify-between gap-3`}>
           <span className="text-2xs text-text-muted">
             Published via {APP_NAME}
+            {" · "}
+            <Link
+              href={`/report?page=${encodeURIComponent(resolvedId)}`}
+              target="_blank"
+              rel="nofollow noopener noreferrer"
+              className="underline-offset-2 hover:underline"
+            >
+              Report this page
+            </Link>
           </span>
           <Link
             href={`/p/${idOrSlug}`}

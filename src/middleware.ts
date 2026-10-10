@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getClientIp } from "@/lib/request-ip";
 import { SESSION_COOKIE_NAME } from "@/lib/auth/constants";
+import { goneNoticeHtml, isGoneReason, type GoneReason } from "@/lib/gone-notice";
 
 // 'unsafe-eval' is dropped in production: nothing in this codebase calls
 // eval()/new Function() (verified — grepped clean), and Next's dev server
@@ -63,7 +64,47 @@ const SECURITY_HEADERS: Record<string, string> = {
 // ever reaching this app now, so it's intentionally not listed here.
 const API_HOSTNAME = "booklet-api.ashwinsathian.com";
 
-export default function middleware(req: NextRequest) {
+const SHARE_PATH = /^\/p\/([^/]+)(\/embed)?\/?$/;
+
+/**
+ * Asks the app's own Node runtime whether a share page is gone (taken down,
+ * or an expired anonymous page). This middleware runs on the Edge runtime,
+ * which has no MongoDB driver, and a Server Component cannot return 410 —
+ * so the status has to be decided here, with the lookup done by
+ * /api/pages/:id/gone over loopback.
+ *
+ * Fails open: if the check errors or times out the request continues, and
+ * the page's own render guard still refuses to show the content (with a
+ * 200 instead of a 410). Availability of every share page must not hinge
+ * on this hop.
+ */
+async function fetchGoneReason(id: string): Promise<GoneReason | null> {
+  try {
+    const res = await fetch(`http://127.0.0.1:${process.env.PORT || 3000}/api/pages/${encodeURIComponent(id)}/gone`, {
+      signal: AbortSignal.timeout(2000),
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    const body = (await res.json()) as { gone?: unknown };
+    return isGoneReason(body.gone) ? body.gone : null;
+  } catch {
+    return null;
+  }
+}
+
+function withSecurityHeaders(res: Response, isEmbedRoute: boolean): Response {
+  for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
+    if (isEmbedRoute && key === "X-Frame-Options") continue;
+    if (isEmbedRoute && key === "Content-Security-Policy") {
+      res.headers.set(key, value.replace(/frame-ancestors[^;]*(;|$)/, "frame-ancestors *$1"));
+      continue;
+    }
+    res.headers.set(key, value);
+  }
+  return res;
+}
+
+export default async function middleware(req: NextRequest) {
   const host = req.headers.get("host") ?? "";
   if (host === API_HOSTNAME || host.startsWith(`${API_HOSTNAME}:`)) {
     if (!req.nextUrl.pathname.startsWith("/api/")) {
@@ -96,19 +137,34 @@ export default function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/sign-in", req.url));
   }
 
-  const res = NextResponse.next();
-
   // Embed pages must be iframe-able from any origin.
   const isEmbedRoute = /^\/p\/[^/]+\/embed(\/|$)/.test(req.nextUrl.pathname);
-  for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
-    if (isEmbedRoute && key === "X-Frame-Options") continue;
-    if (isEmbedRoute && key === "Content-Security-Policy") {
-      res.headers.set(key, value.replace(/frame-ancestors[^;]*(;|$)/, "frame-ancestors *$1"));
-      continue;
+
+  const share = SHARE_PATH.exec(req.nextUrl.pathname);
+  if (share && (req.method === "GET" || req.method === "HEAD")) {
+    let id = share[1];
+    try {
+      id = decodeURIComponent(id);
+    } catch {
+      /* malformed escape: look it up as-is, it will not match anything */
     }
-    res.headers.set(key, value);
+    const reason = await fetchGoneReason(id);
+    if (reason) {
+      return withSecurityHeaders(
+        new Response(req.method === "HEAD" ? null : goneNoticeHtml(reason), {
+          status: 410,
+          headers: {
+            "content-type": "text/html; charset=utf-8",
+            "cache-control": "no-store",
+            "x-robots-tag": "noindex",
+          },
+        }),
+        isEmbedRoute,
+      );
+    }
   }
-  return res;
+
+  return withSecurityHeaders(NextResponse.next(), isEmbedRoute);
 }
 
 export const config = {

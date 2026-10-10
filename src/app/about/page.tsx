@@ -45,7 +45,8 @@ export default function AboutPage() {
             <p>
               For teams that want more — custom URLs, version history, analytics, password protection,
               API access, and a CI integration to publish directly from a repository — signing in unlocks all of
-              that, free. (Pages are permanent either way, account or not.)
+              that, free. A page published without an account is kept for 90 days. Sign in and claim it from
+              the browser you published it in, and it doesn&apos;t expire.
             </p>
 
             <p>
