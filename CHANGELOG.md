@@ -111,6 +111,9 @@ Self-hosting
   with "Get your API key" for everyone, Claude.ai included.
 - The browser tab icon, the PWA icons and `/icon` are the same mark. The
   static files were two brand revisions behind.
+- Sign-in, sign-up, password reset, email verification, the CLI and OAuth
+  consent screens and the team invite page show one centred card with the
+  Booklet logo under it. The left-hand branding pane is gone.
 - My pages reads each page's publish source from the page record. It used
   to scan the account's whole publish log on every load.
 - The SVG sanitizer removes `@import` and external `url()` from a diagram's
