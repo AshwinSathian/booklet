@@ -1,0 +1,40 @@
+# External uptime probe. Production is one Mac behind a Cloudflare Tunnel;
+# nothing on that Mac can report that the Mac itself is off, asleep or
+# offline. A GitHub-hosted runner can.
+#
+# GitHub emails the person who last edited this schedule when a run fails
+# (Settings -> Notifications -> Actions). Scheduled runs can start several
+# minutes late, so this notices an outage within about 20 minutes, not
+# within one. It is the free floor, not a replacement for a real monitor
+# with a status page (docs/OPERATIONS.md, "Monitoring").
+name: uptime
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Probe the three hostnames
+        run: |
+          fail=0
+          probe() {
+            # Two tries a minute apart: one dropped request is not an outage.
+            for attempt in 1 2; do
+              body=$(curl -sS --max-time 15 "$1" || true)
+              if grep -q '"ok":true' <<<"$body"; then echo "ok   $1"; return; fi
+              [[ $attempt == 1 ]] && sleep 60
+            done
+            echo "::error::DOWN $1 (last response: ${body:0:120})"
+            fail=1
+          }
+          probe https://booklet.ashwinsathian.com/api/health
+          probe https://booklet-api.ashwinsathian.com/api/health
+          probe https://booklet-mcp.ashwinsathian.com/health
+          exit $fail

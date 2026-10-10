@@ -44,7 +44,30 @@ process_online() {
     2>/dev/null
 }
 
+# The MongoDB launch agent has KeepAlive off, so launchd does not bring
+# mongod back after a crash. This does. Only ever the 8.0 agent: the data
+# files are at featureCompatibilityVersion 8.0 and the 7.0 formula cannot
+# open them (outage of 2026-10-09, docs/OPERATIONS.md).
+#
+# The port is probed, not the process name: a scratch mongod on another
+# port (how tests run on this Mac) must not count as production being up.
+# At most one start a minute, so a mongod that cannot start is not
+# relaunched 5,760 times a day. `touch ~/.booklet/mongod-maintenance`
+# switches this off while mongod is stopped on purpose; remove the file after.
+MONGO_AGENT="homebrew.mxcl.mongodb-community@8.0"
+MONGO_LAST_START=0
+ensure_mongod() {
+  if nc -z 127.0.0.1 27017 >/dev/null 2>&1; then return; fi
+  if [[ -e "$HOME/.booklet/mongod-maintenance" ]]; then return; fi
+  local now; now=$(date +%s)
+  if (( now - MONGO_LAST_START < 60 )); then return; fi
+  MONGO_LAST_START=$now
+  log "nothing is listening on 27017 — starting launch agent $MONGO_AGENT"
+  launchctl start "$MONGO_AGENT" || log "WARN: launchctl start $MONGO_AGENT failed"
+}
+
 ensure_booklet() {
+  ensure_mongod
   if ! ping_pm2; then
     log "PM2 daemon not responding — skipping (brnr watchdog will resurrect it)"
     return

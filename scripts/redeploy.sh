@@ -68,9 +68,19 @@ log "── Syncing pm2-startup.sh to ~/.booklet/ ──────────
 # launchd reads from ~/.booklet/ (not ~/Documents, which TCC blocks).
 # Keep the deployed copy in sync with the repo on every redeploy.
 if [[ -f "$REPO/scripts/pm2-startup.sh" ]]; then
-  cp "$REPO/scripts/pm2-startup.sh" "$HOME/.booklet/pm2-startup.sh"
-  chmod +x "$HOME/.booklet/pm2-startup.sh"
-  xattr -d com.apple.provenance "$HOME/.booklet/pm2-startup.sh" 2>/dev/null || true
+  if ! cmp -s "$REPO/scripts/pm2-startup.sh" "$HOME/.booklet/pm2-startup.sh"; then
+    cp "$REPO/scripts/pm2-startup.sh" "$HOME/.booklet/pm2-startup.sh"
+    chmod +x "$HOME/.booklet/pm2-startup.sh"
+    xattr -d com.apple.provenance "$HOME/.booklet/pm2-startup.sh" 2>/dev/null || true
+    # The watchdog is a long-running bash loop: it keeps running the copy
+    # it started with until it is restarted. It only supervises; restarting
+    # it does not touch the apps.
+    if launchctl kickstart -k "gui/$(id -u)/com.booklet.pm2" 2>/dev/null; then
+      log "    pm2-startup.sh changed — watchdog restarted"
+    else
+      log "    pm2-startup.sh changed — could not restart com.booklet.pm2; it runs the old copy until next login"
+    fi
+  fi
 fi
 
 echo ""

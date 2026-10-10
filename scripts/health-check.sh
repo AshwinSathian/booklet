@@ -81,6 +81,27 @@ _check "process running"       "ok"        "pgrep -x cloudflared > /dev/null && 
 _check "4 connections"         "ok"        \
   "cloudflared tunnel info 36f0ab5f-f084-4d8e-982a-ca50bf263e80 2>/dev/null | grep -c 'CONNECTOR ID' | awk '{print (\$1>=1)?\"ok\":\"no-connections\"}'"
 
+# ── Staying up ────────────────────────────────────────────────────────────────
+# Warnings, not failures: none of these takes the site down today, each one
+# is how it goes down later. See docs/OPERATIONS.md, "Keeping this Mac serving".
+echo ""
+echo "[ Staying Up ]"
+# The persistent agent or the system setting; a caffeinate that some other
+# tool happens to be running right now does not count.
+# (No `| grep -q` here: this script runs with pipefail, and grep -q closing
+# the pipe early makes the left side fail.)
+_warn  "idle sleep is blocked"   "blocked" \
+  "if [ \"\$(pmset -g | awk '\$1==\"sleep\" {print \$2}')\" = 0 ] || launchctl list com.booklet.awake >/dev/null 2>&1; then echo blocked; else echo 'sleep enabled and com.booklet.awake not loaded'; fi"
+_warn  "restarts after power loss" "1" "pmset -g | awk '\$1==\"autorestart\" {print \$2}'"
+_warn  "macOS updates do not auto-install" "0" \
+  "defaults read /Library/Preferences/com.apple.SoftwareUpdate AutomaticallyInstallMacOSUpdates 2>/dev/null || echo 0"
+# Reads the same configuration as the backup script, so it sees a local
+# directory and an rclone remote alike.
+_warn  "backup newer than 26 hours" "^fresh\$" \
+  "( f=\"\${BOOKLET_BACKUP_ENV:-\$HOME/.booklet/backup.env}\"; [ -f \"\$f\" ] && . \"\$f\"; r=\"\${BACKUP_REMOTE:-\$HOME/.booklet/backups}\"; /opt/homebrew/bin/rclone lsf --files-only --max-age 26h --include 'booklet-*.archive.gz' --include 'booklet-*.archive.gz.age' \"\$r\" 2>/dev/null | head -1 | grep -c . >/dev/null && echo fresh || echo \"no archive newer than 26 h in \$r\" )"
+_warn  "backup agent loaded"     "com.booklet.backup" \
+  "launchctl list 2>/dev/null | grep com.booklet.backup | awk '{print \$3}'"
+
 # ── PM2 persistence ───────────────────────────────────────────────────────────
 echo ""
 echo "[ PM2 Persistence ]"

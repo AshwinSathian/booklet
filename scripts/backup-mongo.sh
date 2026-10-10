@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
 # =============================================================================
-# backup-mongo.sh — nightly encrypted off-site backup of the Booklet database.
+# backup-mongo.sh — nightly backup of the Booklet database.
 #
 #   mongodump (gzip archive) → age (public-key encryption) → rclone → R2
+#
+# With no configuration at all it still runs: a plain gzip archive goes to
+# ~/.booklet/backups on this Mac. That copy survives a bad migration or an
+# accidental delete. It does not survive the loss of this disk; only the
+# off-site form above does.
 #
 # The archive is encrypted on this machine with an age PUBLIC key before it
 # leaves it. The matching private key is not on this machine's backup path
@@ -13,8 +18,10 @@
 # Run by hand at any time:  bash scripts/backup-mongo.sh
 #
 # Configuration: ~/.booklet/backup.env (chmod 600), sourced below.
-#   BACKUP_AGE_RECIPIENT   age public key, "age1…"                (required)
-#   BACKUP_REMOTE          rclone destination, "remote:bucket"    (required)
+#   BACKUP_AGE_RECIPIENT   age public key, "age1…". Required unless
+#                          BACKUP_REMOTE is a directory on this Mac.
+#   BACKUP_REMOTE          rclone destination, "remote:bucket", or a local
+#                          directory. Default: ~/.booklet/backups
 #   MONGODB_URI            defaults to the local production database
 #   BACKUP_KEEP            archives to keep, default 30
 #   BACKUP_ALERT_EMAIL     where a failure is reported            (optional)
@@ -29,6 +36,12 @@ set -euo pipefail
 export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 
 ENV_FILE="${BOOKLET_BACKUP_ENV:-$HOME/.booklet/backup.env}"
+# A config file that was asked for by name and is missing is an error, not a
+# reason to fall back to local-only backups.
+if [[ -n "${BOOKLET_BACKUP_ENV:-}" && ! -f "$ENV_FILE" ]]; then
+  echo "BOOKLET_BACKUP_ENV points at $ENV_FILE, which does not exist." >&2
+  exit 1
+fi
 if [[ -f "$ENV_FILE" ]]; then
   set -a
   # shellcheck disable=SC1090
@@ -39,7 +52,8 @@ fi
 MONGODB_URI="${MONGODB_URI:-mongodb://127.0.0.1:27017/booklet?directConnection=true}"
 BACKUP_KEEP="${BACKUP_KEEP:-30}"
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
-NAME="booklet-${STAMP}.archive.gz.age"
+BACKUP_REMOTE="${BACKUP_REMOTE:-$HOME/.booklet/backups}"
+NAME="booklet-${STAMP}.archive.gz${BACKUP_AGE_RECIPIENT:+.age}"
 WORK="$(mktemp -d)"
 chmod 700 "$WORK"
 
@@ -81,18 +95,40 @@ cleanup() {
 trap cleanup EXIT
 
 STEP="checking configuration"
-: "${BACKUP_AGE_RECIPIENT:?BACKUP_AGE_RECIPIENT is not set (see $ENV_FILE)}"
-: "${BACKUP_REMOTE:?BACKUP_REMOTE is not set (see $ENV_FILE)}"
-for bin in mongodump age rclone; do
+# An rclone remote is "name:path"; anything starting with / is this Mac.
+if [[ "$BACKUP_REMOTE" == /* ]]; then
+  mkdir -p "$BACKUP_REMOTE"
+  chmod 700 "$BACKUP_REMOTE"
+  log "LOCAL ONLY: archives stay on this Mac ($BACKUP_REMOTE). No off-site copy is made."
+elif [[ -z "${BACKUP_AGE_RECIPIENT:-}" ]]; then
+  log "BACKUP_AGE_RECIPIENT is not set: refusing to send an unencrypted archive to $BACKUP_REMOTE."
+  exit 1
+fi
+for bin in mongodump rclone ${BACKUP_AGE_RECIPIENT:+age}; do
   command -v "$bin" >/dev/null || { log "$bin is not installed (brew install $bin)"; exit 1; }
 done
 
+# Before the dump and never fatal: a broken backup must not also stop log
+# rotation, which is when the log would grow fastest.
+# mongod never rotates its own log; it had reached 339 MB by 2026-10.
+# logRotate renames the current file with a timestamp and starts a new one.
+MONGO_LOG_DIR="${MONGO_LOG_DIR:-/opt/homebrew/var/log/mongodb}"
+if command -v mongosh >/dev/null && mongosh "$MONGODB_URI" --quiet --eval 'db.adminCommand({ logRotate: 1 })' >/dev/null; then
+  find "$MONGO_LOG_DIR" -name 'mongo.log.*' -mtime +14 -delete 2>/dev/null || true
+else
+  log "Could not rotate the MongoDB log (the backup goes ahead)."
+fi
+
 STEP="mongodump | age"
-log "Dumping and encrypting → $NAME"
+log "Dumping → $NAME"
 # pipefail (set above) makes a mongodump failure fail the pipeline, so a
 # truncated dump is never uploaded as if it were a good archive.
-mongodump --uri="$MONGODB_URI" --archive --gzip --quiet \
-  | age --encrypt --recipient "$BACKUP_AGE_RECIPIENT" --output "$WORK/$NAME"
+if [[ -n "${BACKUP_AGE_RECIPIENT:-}" ]]; then
+  mongodump --uri="$MONGODB_URI" --archive --gzip --quiet \
+    | age --encrypt --recipient "$BACKUP_AGE_RECIPIENT" --output "$WORK/$NAME"
+else
+  mongodump --uri="$MONGODB_URI" --archive="$WORK/$NAME" --gzip --quiet
+fi
 
 SIZE=$(wc -c < "$WORK/$NAME" | tr -d ' ')
 # An age file with an empty payload is ~200 bytes; a real dump of even an
@@ -119,7 +155,7 @@ STEP="pruning old archives"
 # prune run after the next success would delete every older archive.
 # Names sort chronologically (UTC timestamp), so "all but the last N" is
 # "all but the newest N".
-rclone lsf --files-only --include "booklet-*.archive.gz.age" "$BACKUP_REMOTE" | sort \
+rclone lsf --files-only --include "booklet-*.archive.gz" --include "booklet-*.archive.gz.age" "$BACKUP_REMOTE" | sort \
   | awk -v keep="$BACKUP_KEEP" '{ a[NR] = $0 } END { for (i = 1; i <= NR - keep; i++) print a[i] }' \
   | while IFS= read -r old; do
       log "Pruning $old"

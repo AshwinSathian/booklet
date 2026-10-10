@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Keeps this Mac from idle-sleeping while it serves Booklet. A sleeping Mac
+  drops the Cloudflare Tunnel and every page returns 530.
+
+  caffeinate -i blocks idle sleep, -m blocks disk sleep, -s blocks system
+  sleep on AC power. It needs no admin rights. The system-wide equivalent
+  is `sudo pmset -a sleep 0 disksleep 0`; with that set, this agent is
+  redundant and harmless.
+
+  Install:
+    cp scripts/com.booklet.awake.plist ~/Library/LaunchAgents/
+    launchctl load -w ~/Library/LaunchAgents/com.booklet.awake.plist
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.booklet.awake</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/caffeinate</string>
+        <string>-ims</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+</dict>
+</plist>
