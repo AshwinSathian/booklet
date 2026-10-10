@@ -14,6 +14,7 @@ const LINK_ERRORS: Record<string, string> = {
   sso_identity_taken: "That account already signs in to a different Booklet account.",
   sso_provider_already_linked: "This Booklet account is already connected to another account at that provider. Disconnect it first.",
   sso_no_email: "That account has no verified email address, so it cannot be connected.",
+  sso_email_unverified: "Confirm this account's email address first. Until then you can only connect an account that uses the same address.",
   sso_cancelled: "Connecting was cancelled.",
 };
 
@@ -132,9 +133,9 @@ export function AccountClient({ email, needsVerification, hasPassword, providers
       )}
 
       {needsVerification && (
-        <Section title="Confirm your email" hint={`You can write drafts now. Publishing starts once you open the link we sent to ${email}.`}>
+        <Section title="Confirm your email" hint={`You can write drafts now. Publishing starts once you open the link we email to ${email}.`}>
           <Button variant="secondary" size="md" disabled={busy} onClick={() => void run(() => send("/api/auth/verify-email/send", "POST"), "Sent. Check your inbox.")}>
-            Send the link again
+            Email me the link
           </Button>
         </Section>
       )}

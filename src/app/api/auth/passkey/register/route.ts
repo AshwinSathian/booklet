@@ -1,3 +1,4 @@
+import { unverifiedResponse } from "@/server/verification";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import type { RegistrationResponseJSON } from "@simplewebauthn/server";
@@ -35,6 +36,11 @@ export async function POST(req: Request) {
   if (!session) return NextResponse.json({ error: "Not signed in" }, { status: 401 });
   const limited = await checkRateLimit(`passkey_register__${session.userId}`, 20);
   if (limited) return limited;
+
+  // A passkey is a way in that outlives a password reset, so it is only
+  // given to an account whose address is confirmed.
+  const unverified = await unverifiedResponse(session.userId);
+  if (unverified) return unverified;
 
   const body = (await req.json().catch(() => null)) as { response?: RegistrationResponseJSON; name?: unknown } | null;
   const origin = getSiteOrigin(req);

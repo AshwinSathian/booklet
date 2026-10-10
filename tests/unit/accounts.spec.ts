@@ -38,6 +38,12 @@ import { GET as me } from "@/app/api/auth/me/route";
 import { POST as report } from "@/app/api/reports/route";
 import { DELETE as disconnectProvider } from "@/app/api/auth/sso/[provider]/route";
 import { POST as removeAccount } from "@/app/api/account/delete/route";
+import { POST as createWebhookRoute } from "@/app/api/webhooks/route";
+import { POST as registerPasskey } from "@/app/api/auth/passkey/register/route";
+import { PATCH as patchPageMeta } from "@/app/api/pages/[id]/route";
+import { POST as forgotPassword } from "@/app/api/auth/forgot-password/route";
+import { markDocTakenDown } from "@/lib/storage";
+import { markPageTakenDown } from "@/lib/db";
 
 // Phase 5a: email verification, provider sign-in linking, Turnstile, and the
 // account page's export, delete and connected-apps actions.
@@ -201,6 +207,16 @@ test.describe("email verification", () => {
     const key = withSession(cookie, "/api/v1/keys", { body: { label: "x" } });
     expect((await withRequestScope(key, () => createKey(key))).status).toBe(403);
 
+    // Nor anything else that would outlast the address's owner taking the
+    // account over, or that changes how a page is published.
+    const hook = withSession(cookie, "/api/webhooks", { body: { url: "https://example.com/hook", events: ["page.published"] } });
+    expect((await withRequestScope(hook, () => createWebhookRoute(hook))).status).toBe(403);
+    const passkey = withSession(cookie, "/api/auth/passkey/register", { body: {} });
+    expect((await withRequestScope(passkey, () => registerPasskey(passkey))).status).toBe(403);
+    const meta = withSession(cookie, `/api/pages/${id}`, { method: "PATCH", body: { visibility: "public" } });
+    expect((await withRequestScope(meta, () => patchPageMeta(meta, { params: Promise.resolve({ id }) }))).status).toBe(403);
+    expect((await getPageRecord(id))?.visibility).toBe("unlisted");
+
     const who = withSession(cookie, "/api/auth/me", { method: "GET" });
     expect((await (await withRequestScope(who, () => me())).json()).emailVerified).toBe(false);
   });
@@ -239,21 +255,32 @@ test.describe("provider sign-in linking", () => {
     expect((await getUserById(user.id))?.password_hash).toBeTruthy();
   });
 
-  test("linking to an unverified account removes what its creator could sign in with", async () => {
-    // Someone registered an address they do not own, set a password and a
-    // passkey, and stayed signed in. Then the address's owner arrives.
-    const { user, cookie } = await newUser({ password: "attacker-chosen" });
-    await createPasskey({ id: `cred-${crypto.randomUUID()}`, user_id: user.id, public_key: "AA", counter: 0, transports: null, name: "theirs" });
-    const sessionHash = await hashSessionToken(cookie.split("=")[1]);
-    expect(await findSessionByHash(sessionHash)).not.toBeNull();
+  test("a provider sign-in is not linked to an account whose address was never verified", async () => {
+    // Someone registered an address they do not own and set a password.
+    // Then the address's owner arrives through a provider. Linking would
+    // give the first person the owner's account.
+    const { user } = await newUser({ password: "attacker-chosen" });
 
-    expect(await resolveSsoUser("github", profile(user.email!))).toBe(user.id);
+    await expect(resolveSsoUser("github", profile(user.email!))).rejects.toThrow("email_unverified");
 
     const after = await getUserById(user.id);
-    expect(after?.password_hash).toBeNull();
-    expect(after?.email_verified_at).toBeTruthy();
-    expect(await getPasskeysByUser(user.id)).toHaveLength(0);
-    expect(await findSessionByHash(sessionHash)).toBeNull();
+    expect(after?.password_hash).toBeTruthy();
+    expect(after?.email_verified_at).toBeFalsy();
+    expect(await getIdentitiesByUser(user.id)).toHaveLength(0);
+  });
+
+  test("where verification is enforced, an unverified account can connect only a provider account with its own address", async () => {
+    process.env.RESEND_API_KEY = "re_test";
+    try {
+      const { user } = await newUser({ password: "password-d" });
+      await expect(linkIdentity(user.id, "github", profile(email()))).rejects.toThrow("email_unverified");
+      expect(await getIdentitiesByUser(user.id)).toHaveLength(0);
+
+      await linkIdentity(user.id, "github", profile(user.email!));
+      expect((await getUserById(user.id))?.email_verified_at).toBeTruthy();
+    } finally {
+      delete process.env.RESEND_API_KEY;
+    }
   });
 
   test("an identity that signs in one account cannot be connected to another", async () => {
@@ -326,7 +353,28 @@ test.describe("Turnstile", () => {
   });
 });
 
+function zipFile(zip: Buffer): string {
+  const file = join(mkdtempSync(join(tmpdir(), "booklet-zip-")), "pages.zip");
+  writeFileSync(file, zip);
+  return file;
+}
+
 test.describe("account page actions", () => {
+  test("forgot-password also mails an account that has no password", async () => {
+    process.env.RESEND_API_KEY = "re_test";
+    try {
+      const userId = await resolveSsoUser("google", { providerUserId: `g-${crypto.randomUUID()}`, email: email() });
+      userIds.push(userId);
+      const address = (await getUserById(userId))!.email!;
+      const req = withSession(null, "/api/auth/forgot-password", { body: { email: address } });
+      expect((await forgotPassword(req)).status).toBe(200);
+      await expect.poll(() => sentMail.some((m) => m.to === address && m.html.includes("reset-password?token="))).toBe(true);
+    } finally {
+      delete process.env.RESEND_API_KEY;
+      await (await getDb()).collection("password_reset_tokens").deleteMany({ user_id: { $in: userIds } });
+    }
+  });
+
   test("the ZIP writer produces an archive unzip can read", () => {
     const dir = mkdtempSync(join(tmpdir(), "booklet-zip-"));
     const file = join(dir, "out.zip");
@@ -369,6 +417,12 @@ test.describe("account page actions", () => {
     const other = await newUser({ verified: true });
     const mine = await seedPage(user.id, "# Mine\n\nBody.", "Mine");
     const theirs = await seedPage(other.user.id, "# Theirs\n\nBody.", "Theirs");
+    // A page an admin took down: deleting the account must not delete it.
+    const frozen = await seedPage(user.id, "# Frozen\n\nBody.", "Frozen");
+    const at = new Date().toISOString();
+    await markDocTakenDown(frozen, at);
+    await markPageTakenDown(frozen, at);
+    expect(execFileSync("unzip", ["-Z1", zipFile(await exportPagesZip(user.id, ORIGIN))]).toString()).not.toContain(frozen);
 
     const wrong = withSession(cookie, "/api/account/delete", { body: { password: "not-it" } });
     expect((await withRequestScope(wrong, () => removeAccount(wrong))).status).toBe(403);
@@ -384,6 +438,8 @@ test.describe("account page actions", () => {
     expect(await getPageRecord(mine)).toBeNull();
     expect(await getDoc(mine)).toBeNull();
     expect(await getPageRecord(theirs)).not.toBeNull();
+    expect((await getPageRecord(frozen))?.taken_down_at).toBe(at);
+    expect(await getDoc(frozen)).not.toBeNull();
     expect((await publishWithKey(rawKey)).status).toBe(401);
     expect(await findSessionByHash(await hashSessionToken(cookie.split("=")[1]))).toBeNull();
   });

@@ -1,3 +1,6 @@
+import { getUserById } from "@/lib/db/auth";
+import { logError } from "@/lib/logger";
+import { sendVerification } from "@/server/verification";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import type { AuthenticationResponseJSON } from "@simplewebauthn/server";
@@ -44,7 +47,10 @@ export async function POST(req: Request) {
     const store = await cookies();
     const challengeId = store.get(WEBAUTHN_COOKIE)?.value;
     store.delete({ name: WEBAUTHN_COOKIE, path: "/api/auth/passkey" });
-    await createSession(await verifyPasskeyLogin(origin, challengeId, body.response));
+    const userId = await verifyPasskeyLogin(origin, challengeId, body.response);
+    await createSession(userId);
+    const user = await getUserById(userId);
+    if (user) await sendVerification(user, origin, { onlyIfNoneLive: true }).catch((err) => logError("passkey", "Could not send verification email", err));
     return NextResponse.json({ ok: true });
   } catch (e) {
     return toErrorResponse(e);

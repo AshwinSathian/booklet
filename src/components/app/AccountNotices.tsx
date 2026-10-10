@@ -46,12 +46,12 @@ export function AccountNotices() {
     <>
       {!emailVerified && (
         <div role="status" className={BAR}>
-          <span>Confirm your email address to publish. We sent you a link.</span>
+          <span>Confirm your email address to publish.</span>
           {sent === "sent" ? (
-            <span>Sent. Check your inbox.</span>
+            <span>Link sent. Check your inbox.</span>
           ) : (
             <button type="button" disabled={busy} onClick={() => void resend()} className={ACTION}>
-              {sent === "failed" ? "Could not send. Try again" : "Send it again"}
+              {sent === "failed" ? "Could not send. Try again" : "Email me the link"}
             </button>
           )}
           <Link href={ROUTES.account} className={ACTION}>Account settings</Link>

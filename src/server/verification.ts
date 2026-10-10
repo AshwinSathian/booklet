@@ -23,7 +23,7 @@ export function isVerified(user: Pick<DbUser, "email_verified_at"> | null): bool
 }
 
 export const UNVERIFIED_MESSAGE =
-  "Confirm your email address before publishing. Open the link we emailed you, or send a new one from Account settings.";
+  "Confirm your email address first. Sign in to Booklet on the web and choose \"Email me the link\" in Account settings.";
 
 /**
  * An account with an unconfirmed address can write drafts and cannot

@@ -279,11 +279,15 @@ db.users.updateOne({ email: "<address>" }, { $set: { email_verified_at: new Date
 `<PROVIDER>_CLIENT_ID` and `<PROVIDER>_CLIENT_SECRET` are set
 (`.env.example` has the callback URLs to register). Identities are in
 `user_identities`. A sign-in whose verified email matches an existing
-account is linked to it. If that account's own address was never verified,
-its password, passkeys, sessions and connected apps are removed first:
-whoever created it may not be the address's owner. Its API keys are kept,
-because an unverified account cannot create one; a key on such an account
-dates from before verification existed.
+account is linked to it, but only if that account's own address is
+verified. Otherwise the sign-in is refused with an explanation: whoever
+created the account may not be the address's owner, and linking would hand
+them the owner's sign-in. The person signs in with the password and
+confirms the email, or resets the password, and then connects the provider
+from Account settings. On an install with no mail configured no address is
+ever verified, so providers are always connected from Account settings.
+An unverified account cannot add a passkey or a webhook, and can only
+connect a provider account that has its own email address.
 
 **Passkeys.** Added from `/settings/account`, used from the sign-in page.
 The relying-party ID is the hostname in `NEXT_PUBLIC_SITE_URL`, so passkeys
@@ -304,7 +308,9 @@ or remove passkeys, disconnect an app that signed in through OAuth, download
 every page as a ZIP of Markdown files, and delete the account. Deletion
 removes the user's pages, versions, drafts, API keys, webhooks, sessions,
 identities and passkeys, and the team spaces they own; other people's pages
-in those spaces stay with their owners.
+in those spaces stay with their owners. A page that was taken down is kept,
+without an owner, so its URL goes on answering 410 and its slug stays
+taken. The export leaves taken-down pages out.
 
 `/p/<id>` for a page that does not exist now answers 404. It used to answer
 200 with a "doesn't exist" notice.

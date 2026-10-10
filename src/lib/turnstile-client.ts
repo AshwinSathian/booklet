@@ -36,13 +36,25 @@ export async function getTurnstileToken(): Promise<string | undefined> {
   host.style.cssText = "position:fixed;bottom:16px;right:16px;z-index:1000";
   document.body.appendChild(host);
   return new Promise<string>((resolve, reject) => {
+    const fail = () => done(() => reject(new Error("The robot check did not finish. Reload the page and try again.")));
     const id = turnstile.render(host, {
       sitekey: SITE_KEY,
       appearance: "interaction-only",
       callback: (token: string) => done(() => resolve(token)),
-      "error-callback": () => done(() => reject(new Error("The robot check failed. Reload the page and try again."))),
+      "error-callback": fail,
+      "timeout-callback": fail,
+      "expired-callback": fail,
+      "unsupported-callback": fail,
     });
+    // The widget can ask for a click and never get one. Two minutes is
+    // long enough to notice it in the corner and short enough that the
+    // form does not stay busy for good.
+    const timer = window.setTimeout(fail, 120_000);
+    let settled = false;
     function done(settle: () => void) {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timer);
       turnstile.remove(id);
       host.remove();
       settle();

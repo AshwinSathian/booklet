@@ -24,6 +24,8 @@ async function ownedPages(userId: string): Promise<PageRow[]> {
 export async function exportPagesZip(userId: string, origin: string): Promise<Buffer> {
   const files: Array<{ name: string; content: string }> = [];
   for (const page of await ownedPages(userId)) {
+    // A taken-down page is not handed back, here or anywhere else.
+    if (page.taken_down_at) continue;
     const doc = await getDoc(page._id);
     if (!doc) continue;
     const frontmatter = yaml.dump(
@@ -52,10 +54,16 @@ export async function exportPagesZip(userId: string, origin: string): Promise<Bu
 }
 
 /**
- * Deletes an account and everything it owns. Order matters: first what can
- * act for the user (so nothing writes while the rest goes), then the
- * content, and the user row last, so a failure part-way leaves an account
- * that can sign in and run the deletion again.
+ * Deletes an account and what it owns. Order matters. First what can act
+ * for the user without them (API keys, webhooks, connected apps), so
+ * nothing writes while the rest goes. Then the content. The ways to sign in
+ * and the user row go last, so a failure part-way leaves an account its
+ * owner can still sign in to and delete again.
+ *
+ * A page an admin took down is kept, with its record: deleting it would
+ * turn its 410 into a 404 and free its slug for a fresh copy at the same
+ * URL, which is what the freeze on taken-down pages exists to prevent (see
+ * assertNotTakenDown). It no longer has an owner.
  *
  * Team spaces the user owns are deleted. Pages other people put in them
  * stay with their owners and leave the space.
@@ -63,21 +71,19 @@ export async function exportPagesZip(userId: string, origin: string): Promise<Bu
 export async function deleteAccount(userId: string): Promise<void> {
   const db = await getDb();
   const mine = { user_id: userId };
+  const removeAll = (collections: string[]) => Promise.all(collections.map((c) => db.collection(c).deleteMany(mine)));
 
-  await deleteAllUserSessions(userId);
   await revokeAllForUser(userId);
-  await Promise.all(
-    ["api_keys", "webhooks", "passkeys", "user_identities", "password_reset_tokens", "email_verification_tokens", "webauthn_challenges", "idempotency_keys"].map(
-      (c) => db.collection(c).deleteMany(mine),
-    ),
-  );
+  await removeAll(["api_keys", "webhooks", "idempotency_keys"]);
 
   for (const page of await ownedPages(userId)) {
+    if (page.taken_down_at) continue;
     await deleteDoc(page._id);
     await deletePageVersions(page._id);
     await deletePageAssociatedRecords(page._id);
   }
-  await db.collection("pages").deleteMany(mine);
+  // `taken_down_at: null` also matches records that predate the field.
+  await db.collection("pages").deleteMany({ ...mine, taken_down_at: null });
   await db.collection("drafts").deleteMany(mine);
 
   const collectionIds = (await db.collection<{ _id: string }>("collections").find(mine).project({ _id: 1 }).toArray()).map((c) => c._id);
@@ -90,5 +96,7 @@ export async function deleteAccount(userId: string): Promise<void> {
   }
   await db.collection("collection_members").deleteMany(mine);
 
+  await removeAll(["passkeys", "user_identities", "password_reset_tokens", "email_verification_tokens", "webauthn_challenges"]);
+  await deleteAllUserSessions(userId);
   await db.collection("users").deleteOne({ _id: userId } as never);
 }

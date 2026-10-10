@@ -34,8 +34,9 @@ async function getJson(url: string, accessToken: string): Promise<unknown> {
   return res.json();
 }
 
-// SSO_GITHUB_BASE_URL and SSO_GOOGLE_BASE_URL point a provider at another
-// host: a stub in tests, or a GitHub Enterprise Server.
+// SSO_GITHUB_BASE_URL and SSO_GOOGLE_BASE_URL point a provider at a stub.
+// They exist for tests/e2e/accounts.spec.ts and are not a way to use
+// GitHub Enterprise Server, whose API lives under a different path.
 function github(): ProviderConfig | null {
   const clientId = process.env.GITHUB_CLIENT_ID;
   const clientSecret = process.env.GITHUB_CLIENT_SECRET;

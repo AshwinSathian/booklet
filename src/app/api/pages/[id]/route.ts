@@ -1,3 +1,4 @@
+import { unverifiedResponse } from "@/server/verification";
 import { updatePageRecord, deletePageRecord, deletePageAssociatedRecords } from "@/lib/db";
 import { deletePageVersions } from "@/lib/db/versions";
 import { deleteDoc, getDoc } from "@/lib/storage";
@@ -48,6 +49,11 @@ export async function PATCH(
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  // Slug, password and visibility decide how a page is published, so this
+  // is gated like the publish routes.
+  const unverified = await unverifiedResponse(userId);
+  if (unverified) return unverified;
 
   const { id } = await params;
   if (!id?.trim()) {
