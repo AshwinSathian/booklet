@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { getTurnstileToken } from "@/lib/turnstile-client";
 import type { ReportReason } from "@/lib/db/types";
 
 const REASONS: Array<{ value: ReportReason; label: string }> = [
@@ -31,7 +32,13 @@ export function ReportForm({ pageId }: { pageId: string }) {
       const res = await fetch("/api/reports", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ page_id: pageId, reason, detail, reporter_email: email }),
+        body: JSON.stringify({
+          page_id: pageId,
+          reason,
+          detail,
+          reporter_email: email,
+          turnstile_token: await getTurnstileToken(),
+        }),
       });
       if (res.ok) {
         setState("sent");
@@ -39,8 +46,8 @@ export function ReportForm({ pageId }: { pageId: string }) {
       }
       const data = (await res.json().catch(() => ({}))) as { error?: string };
       setError(data.error ?? "Could not send the report. Try again.");
-    } catch {
-      setError("Could not send the report. Try again.");
+    } catch (e) {
+      setError(e instanceof Error && e.message.includes("robot") ? e.message : "Could not send the report. Try again.");
     }
     setState("idle");
   }

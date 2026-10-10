@@ -12,6 +12,7 @@ export const ROUTES = {
   forgotPassword: "/forgot-password",
   resetPassword: "/reset-password",
   myPages: "/my-pages",
+  account: "/settings/account",
   mcpSetup: "/mcp-setup",
   integrations: "/integrations",
 } as const;

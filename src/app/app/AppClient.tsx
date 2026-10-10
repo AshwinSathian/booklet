@@ -41,6 +41,8 @@ import { stripFrontmatter } from "@/lib/frontmatter";
 import { formatTimeHHMM } from "@/lib/ui/time";
 import { AppLoader } from "@/components/ui/AppLoader";
 import { useSession } from "@/components/auth/SessionProvider";
+import { AccountNotices } from "@/components/app/AccountNotices";
+import { getTurnstileToken } from "@/lib/turnstile-client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type SaveState = "saved" | "saving";
@@ -83,6 +85,15 @@ function AppPageContent() {
   const skipNextAutosaveRef = useRef(true);
 
   const saveUiTimerRef = useRef<number | null>(null);
+  // The save state as last committed. setSaveStateSmoothed reads it from
+  // here, not from the `saveState` render value, so the callback keeps one
+  // identity. It used to depend on `saveState`, and the autosave effect
+  // depends on the callback: every save changed the state, which re-ran the
+  // effect, which saved again, about twice a second for as long as the
+  // editor was open. Besides the wasted writes, the constant saves kept
+  // resetting cloud sync's 1.5-second debounce, so a signed-in user's
+  // drafts were never uploaded.
+  const saveStateRef = useRef<SaveState>("saved");
   const saveUiLastChangedAtRef = useRef<number>(Date.now());
 
   const saveWarningWasShownRef = useRef(false);
@@ -105,7 +116,7 @@ function AppPageContent() {
   const setSaveStateSmoothed = useCallback(
     (next: SaveState) => {
       const now = Date.now();
-      const current = saveState;
+      const current = saveStateRef.current;
       if (current === next) return;
 
       const lastChanged = saveUiLastChangedAtRef.current;
@@ -121,6 +132,7 @@ function AppPageContent() {
       const commit = (value: SaveState) => {
         clearTimer();
         saveUiLastChangedAtRef.current = Date.now();
+        saveStateRef.current = value;
         setSaveState(value);
       };
 
@@ -154,7 +166,7 @@ function AppPageContent() {
 
       commit(next);
     },
-    [saveState],
+    [],
   );
 
   const handlePersistOutcome = useCallback(
@@ -246,6 +258,7 @@ function AppPageContent() {
     setLastPublishedId(draft.lastPublished?.id ?? null);
     setLastPublishedOwned(draft.lastPublished?.owned ?? false);
 
+    saveStateRef.current = "saved";
     setSaveState("saved");
     setLastSavedAtLabel(
       draft.updatedAt ? formatTimeHHMM(new Date(draft.updatedAt)) : null,
@@ -571,7 +584,13 @@ function AppPageContent() {
         // `blocks` is no longer sent — the server always derives it from
         // `raw` (see src/lib/block-schema.ts's header for why a
         // client-computed block tree is no longer trusted directly).
-        body: JSON.stringify({ settings, raw, visibility: publishVisibility }),
+        body: JSON.stringify({
+          settings,
+          raw,
+          visibility: publishVisibility,
+          // Anonymous publishes pass a robot check where one is configured.
+          ...(isSignedIn ? {} : { turnstile_token: await getTurnstileToken() }),
+        }),
       });
 
       if (!res.ok) {
@@ -612,7 +631,7 @@ function AppPageContent() {
       setStatus("error");
       toast.error("Publish failed", toErrorMessage(e));
     }
-  }, [activeDraftId, settings, toast, canPublish, raw, publishVisibility]);
+  }, [activeDraftId, settings, toast, canPublish, raw, publishVisibility, isSignedIn]);
 
   const onUpdatePage = useCallback(async () => {
     if (!canPublish) {
@@ -750,6 +769,7 @@ function AppPageContent() {
 
   return (
     <div className="h-screen min-h-screen flex flex-col overflow-hidden">
+      <AccountNotices />
       <TopBar
         status={status}
         canPublish={canPublish}

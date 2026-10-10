@@ -9,6 +9,46 @@ Notable changes to the Booklet app and MCP server. The format follows
 
 ## [Unreleased]
 
+Accounts (roadmap Phase 5a).
+
+### Added
+
+- **Sign in with GitHub or Google.** Shown when the provider is configured.
+  A sign-in whose verified email matches an existing account is linked to it.
+- **Passkeys.** Add one in Account settings, then sign in with no password.
+- **Email verification.** New and existing accounts confirm their address
+  from a link we email.
+- **Account settings** at `/settings/account`: change password, sign-in
+  methods, connected apps with a Disconnect button, download every page as a
+  ZIP of Markdown files, delete the account and its pages.
+- **Move local drafts into your account.** After the first sign-in in a
+  browser, drafts written before signing in can be moved in with one click.
+- **Robot check** (Cloudflare Turnstile) on publishing without an account,
+  signup and the report form, where configured.
+
+### Changed
+
+- **Breaking:** an account with an unconfirmed email address gets 403 when
+  it publishes or updates a page (editor, API key or OAuth token), creates
+  an API key, authorizes the CLI or approves an app. This includes accounts
+  created before this release. It applies only where email is configured.
+- **Breaking:** `/p/<id>` for a page that does not exist answers 404, not 200.
+- Changing a password, like resetting one, signs out other browsers and
+  disconnects connected apps.
+
+### Fixed
+
+- The editor saved the open draft about twice a second for as long as it
+  was open. For a signed-in user this also kept cloud draft sync from ever
+  uploading.
+
+### Not planned
+
+- Custom domains for team spaces (roadmap task 5.13). Booklet stays
+  self-hosted; see `docs/adr/0001-hosting-platform.md`.
+
+Earlier in this unreleased cycle:
+
 Programmatic surfaces brought up to current conventions. `booklet-cli` and
 `booklet-api-client` are both 2.0.0 (see their own changelogs); the MCP
 server is 3.0.0.

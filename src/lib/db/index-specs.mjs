@@ -42,6 +42,23 @@ export const INDEX_SPECS = [
   { collection: "password_reset_tokens", spec: { user_id: 1 } },
   { collection: "password_reset_tokens", spec: { expires_at: 1 }, options: { expireAfterSeconds: 0 } },
 
+  // --- email_verification_tokens ---
+  // Same shape as password_reset_tokens: looked up by hash, one live token
+  // per user, removed by TTL 24 hours after issue.
+  { collection: "email_verification_tokens", spec: { token_hash: 1 }, options: { unique: true } },
+  { collection: "email_verification_tokens", spec: { user_id: 1 } },
+  { collection: "email_verification_tokens", spec: { expires_at: 1 }, options: { expireAfterSeconds: 0 } },
+
+  // --- user_identities ---
+  // A GitHub or Google account signs in exactly one Booklet user, and a
+  // user has at most one identity per provider.
+  { collection: "user_identities", spec: { provider: 1, provider_user_id: 1 }, options: { unique: true } },
+  { collection: "user_identities", spec: { user_id: 1, provider: 1 }, options: { unique: true } },
+
+  // --- passkeys, webauthn_challenges ---
+  { collection: "passkeys", spec: { user_id: 1, created_at: 1 } },
+  { collection: "webauthn_challenges", spec: { expires_at: 1 }, options: { expireAfterSeconds: 0 } },
+
   // --- pages ---
   // _id is the tie-breaker of the listing sort (getPagesByUser) and of its
   // keyset cursor, so it is part of the index. The index this replaced,

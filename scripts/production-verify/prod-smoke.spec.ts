@@ -60,6 +60,20 @@ test.describe("Production verification — booklet-api.ashwinsathian.com host re
   });
 });
 
+async function markVerified() {
+  const client = new MongoClient(MONGODB_URI);
+  await client.connect();
+  try {
+    const res = await client
+      .db("booklet")
+      .collection("users")
+      .updateOne({ email: EMAIL }, { $set: { email_verified_at: new Date().toISOString() } });
+    expect(res.matchedCount).toBe(1);
+  } finally {
+    await client.close();
+  }
+}
+
 test.describe("Production verification — signup, publish, session lifecycle", () => {
   test("sign up, publish via the editor, reach my-pages, log out, log back in", async ({ page }) => {
     await page.goto(`${BASE}/sign-up`);
@@ -67,6 +81,9 @@ test.describe("Production verification — signup, publish, session lifecycle", 
     await page.locator("#password").fill(PASSWORD);
     await page.locator('button[type="submit"]').first().click();
     await page.waitForURL(/\/app/, { timeout: 15000 });
+    // A new account cannot publish until its email is confirmed, and this
+    // address receives no mail. Confirm it the way the link would.
+    await markVerified();
 
     // Publish a real page through the actual editor UI, not the API directly.
     const textarea = page.locator("textarea").first();

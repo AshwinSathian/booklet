@@ -1,3 +1,7 @@
+import { TURNSTILE_FAILED, verifyTurnstile } from "@/lib/turnstile";
+import { sendVerification } from "@/server/verification";
+import { getSiteOrigin } from "@/lib/site-url";
+import { logError } from "@/lib/logger";
 import { NextResponse } from "next/server";
 import { createUser, getUserByEmail } from "@/lib/db/auth";
 import { createId } from "@/lib/id";
@@ -19,7 +23,12 @@ export async function POST(req: Request) {
   const rl = await checkRateLimit(`signup__ip__${ip}`, 5);
   if (rl) return rl;
 
-  const parsed = SignupSchema.safeParse(await req.json().catch(() => null));
+  const body = (await req.json().catch(() => null)) as { turnstile_token?: unknown } | null;
+  if (!(await verifyTurnstile(req, body?.turnstile_token))) {
+    return NextResponse.json({ error: TURNSTILE_FAILED }, { status: 403 });
+  }
+
+  const parsed = SignupSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid email or password" }, { status: 400 });
   }
@@ -48,6 +57,7 @@ export async function POST(req: Request) {
     throw err;
   }
   await createSession(user.id);
+  await sendVerification(user, getSiteOrigin(req)).catch((err) => logError("signup", "Could not send verification email", err));
 
   return NextResponse.json({ ok: true, email: user.email }, { status: 201 });
 }

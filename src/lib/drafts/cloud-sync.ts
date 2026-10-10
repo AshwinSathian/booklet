@@ -28,10 +28,11 @@
  * it for that account. Pre-existing local drafts that were authored
  * anonymously (or under a different account that previously used this
  * browser) are never bulk-adopted into a newly-signed-in account — they
- * stay local-only until the user explicitly edits them while signed in.
- * This is a deliberate v1 simplification: no UI to "claim" old drafts,
- * because doing that silently would risk attributing someone else's
- * content to whoever happens to be signed in later.
+ * stay local-only until the user edits them while signed in, or accepts
+ * the one-time offer to move them into the account (listUnclaimedDrafts /
+ * adoptDrafts below). Nothing is adopted silently: that would risk
+ * attributing someone else's content to whoever happens to be signed in
+ * later.
  */
 
 import { coerceDraftDoc } from "./migrate";
@@ -261,5 +262,32 @@ export async function pullCloudDrafts(userId: string): Promise<void> {
 
     const full = getDraft(meta.id);
     if (full) void pushDraft(full);
+  }
+}
+
+/**
+ * Local drafts no account has claimed and that have something in them: the
+ * ones written before signing in. Empty once this account has answered the
+ * offer in this browser, whichever way.
+ */
+export function listUnclaimedDrafts(userId: string): DraftMeta[] {
+  if (!isBrowser() || window.localStorage.getItem(DRAFTS_STORAGE_KEYS.adoptionAnswered) === userId) return [];
+  const owners = readOwnerMap();
+  return listDrafts().filter((meta) => !owners[meta.id] && Boolean(getDraft(meta.id)?.raw.trim()));
+}
+
+/** Records the answer to the offer. With `adopt`, claims every unclaimed draft for the account and uploads it. */
+export async function answerDraftAdoption(userId: string, adopt: boolean): Promise<void> {
+  const drafts = adopt ? listUnclaimedDrafts(userId) : [];
+  try {
+    window.localStorage.setItem(DRAFTS_STORAGE_KEYS.adoptionAnswered, userId);
+  } catch {
+    // best-effort bookkeeping only
+  }
+  for (const meta of drafts) {
+    const full = getDraft(meta.id);
+    if (!full) continue;
+    claim(meta.id, userId);
+    await pushDraft(full);
   }
 }

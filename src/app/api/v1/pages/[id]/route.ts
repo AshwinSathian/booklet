@@ -1,3 +1,4 @@
+import { assertVerified } from "@/server/verification";
 import type { PublishedDoc } from "@/lib/blocks";
 import { DEFAULT_SETTINGS } from "@/lib/blocks";
 import { BLOCKS } from "@/lib/constants";
@@ -90,6 +91,7 @@ export const GET = v1("page_get", 120, "pages:read", async (req: Request, userId
 // ─── PATCH: update content, slug, or visibility ───────────────────────────────
 
 export const PATCH = v1("patch", 60, "pages:write", async (req: Request, userId: string, { params }: Ctx) => {
+  await assertVerified(userId);
 
   const { id } = await params;
   if (!id?.trim()) {

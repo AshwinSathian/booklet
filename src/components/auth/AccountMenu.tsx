@@ -18,7 +18,7 @@ function avatarHue(userId: string): number {
 }
 
 // A minimal avatar-triggered dropdown with
-// the account's email, a link to My Pages, and sign out.
+// the account's email, links to My Pages and Account settings, and sign out.
 export function AccountMenu() {
   const { userId, email, refetch } = useSession();
   const [open, setOpen] = useState(false);
@@ -76,6 +76,13 @@ export function AccountMenu() {
             className="block px-3 py-1.5 text-sm text-text-secondary transition hover:bg-fill-1 hover:text-text-primary"
           >
             My pages
+          </Link>
+          <Link
+            href={ROUTES.account}
+            onClick={() => setOpen(false)}
+            className="block px-3 py-1.5 text-sm text-text-secondary transition hover:bg-fill-1 hover:text-text-primary"
+          >
+            Account
           </Link>
           <button
             type="button"

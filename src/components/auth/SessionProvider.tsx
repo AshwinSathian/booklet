@@ -7,6 +7,8 @@ type SessionState = {
   isSignedIn: boolean;
   userId: string | null;
   email: string | null;
+  /** False only for a signed-in account that still has to confirm its address. */
+  emailVerified: boolean;
 };
 
 type SessionContextValue = SessionState & {
@@ -26,6 +28,7 @@ const SessionContext = createContext<SessionContextValue>({
   isSignedIn: false,
   userId: null,
   email: null,
+  emailVerified: true,
   refetch: async () => {},
 });
 
@@ -40,17 +43,24 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     isSignedIn: false,
     userId: null,
     email: null,
+    emailVerified: true,
   });
   const mountedRef = useRef(true);
 
   const refetch = useCallback(async () => {
     try {
       const res = await fetch("/api/auth/me");
-      const data = (await res.json()) as { userId: string | null; email: string | null };
+      const data = (await res.json()) as { userId: string | null; email: string | null; emailVerified?: boolean };
       if (!mountedRef.current) return;
-      setState({ isLoaded: true, isSignedIn: Boolean(data.userId), userId: data.userId, email: data.email });
+      setState({
+        isLoaded: true,
+        isSignedIn: Boolean(data.userId),
+        userId: data.userId,
+        email: data.email,
+        emailVerified: !data.userId || data.emailVerified !== false,
+      });
     } catch {
-      if (mountedRef.current) setState({ isLoaded: true, isSignedIn: false, userId: null, email: null });
+      if (mountedRef.current) setState({ isLoaded: true, isSignedIn: false, userId: null, email: null, emailVerified: true });
     }
   }, []);
 

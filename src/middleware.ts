@@ -22,6 +22,10 @@ const SCRIPT_SRC =
     ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval'"
     : "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'";
 
+// Cloudflare Turnstile loads a script and runs in an iframe from this one
+// origin. Allowed only when a site key was present at build time.
+const TURNSTILE = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ? " https://challenges.cloudflare.com" : "";
+
 const SECURITY_HEADERS: Record<string, string> = {
   "X-Frame-Options": "DENY",
   "X-Content-Type-Options": "nosniff",
@@ -34,12 +38,12 @@ const SECURITY_HEADERS: Record<string, string> = {
   "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
   "Content-Security-Policy": [
     "default-src 'self'",
-    SCRIPT_SRC,
+    SCRIPT_SRC + TURNSTILE,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
     "connect-src 'self'",
-    "frame-src 'none'",
+    TURNSTILE ? `frame-src${TURNSTILE}` : "frame-src 'none'",
     // Modern replacement for X-Frame-Options; overridden to '*' for /p/[id]/embed
     // below. X-Frame-Options is also still set for older-browser defense in depth.
     "frame-ancestors 'none'",
@@ -134,7 +138,7 @@ export default async function middleware(req: NextRequest) {
   // no session cookie at all — avoids rendering a server component that
   // would just redirect anyway. This is NOT the security boundary; every
   // /my-pages page performs its own authoritative getSession() check.
-  if (req.nextUrl.pathname.startsWith("/my-pages") && !req.cookies.has(SESSION_COOKIE_NAME)) {
+  if (/^\/(my-pages|settings)(\/|$)/.test(req.nextUrl.pathname) && !req.cookies.has(SESSION_COOKIE_NAME)) {
     return NextResponse.redirect(new URL("/sign-in", req.url));
   }
 

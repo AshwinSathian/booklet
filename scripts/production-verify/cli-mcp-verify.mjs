@@ -103,6 +103,17 @@ async function main() {
     userId = userDoc?._id;
     ok("user record created in Mongo", Boolean(userId));
 
+    // A new account cannot publish or create credentials until its email is
+    // confirmed, and this address receives no mail. First check that rule,
+    // then confirm the address the way the link would.
+    const earlyKey = await fetch(`${BASE}/api/v1/keys`, {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: sessionCookie, origin: BASE },
+      body: JSON.stringify({ label: "too-early" }),
+    });
+    ok("an unverified account cannot create an API key (403)", earlyKey.status === 403, `got ${earlyKey.status}`);
+    await db.collection("users").updateOne({ _id: userId }, { $set: { email_verified_at: new Date().toISOString() } });
+
     // ── 2. Real `booklet login` browser flow ────────────────────────────
     section("CLI login (browser flow)");
     const home = await mkdtemp(join(tmpdir(), "booklet-cli-verify-"));

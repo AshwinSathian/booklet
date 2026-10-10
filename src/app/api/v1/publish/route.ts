@@ -1,3 +1,4 @@
+import { assertVerified } from "@/server/verification";
 import type { PublishedDoc } from "@/lib/blocks";
 import { DEFAULT_SETTINGS } from "@/lib/blocks";
 import { BLOCKS, ROUTES } from "@/lib/constants";
@@ -32,6 +33,7 @@ type PublishPayload = {
 };
 
 export const POST = v1("publish", 60, "pages:write", async (req: Request, userId: string) => {
+  await assertVerified(userId);
   const bodyText = await req.text();
   return idempotent(req, userId, bodyText, () => publish(req, userId, bodyText));
 });

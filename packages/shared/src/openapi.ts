@@ -91,7 +91,7 @@ function ok(description: string, name: OpenApiSchemaName, headers: Record<string
 const ERROR_TEXT: Record<number, string> = {
   400: "Invalid JSON, an empty document, or a malformed parameter",
   401: "Missing or invalid credential",
-  403: "The page belongs to another account, or the token lacks the scope",
+  403: "The page belongs to another account, the token lacks the scope, or the account's email address is not confirmed yet",
   404: "Page not found",
   409: "Slug already taken, or a request with this Idempotency-Key is still running",
   410: "The page was taken down",

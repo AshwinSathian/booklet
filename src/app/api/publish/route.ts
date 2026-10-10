@@ -1,3 +1,5 @@
+import { TURNSTILE_FAILED, verifyTurnstile } from "@/lib/turnstile";
+import { unverifiedResponse } from "@/server/verification";
 import type { PublishedDoc } from "@/lib/blocks";
 import { DEFAULT_SETTINGS } from "@/lib/blocks";
 import { BLOCKS, ROUTES, STORAGE } from "@/lib/constants";
@@ -37,6 +39,8 @@ type PublishPayload = {
   settings?: PublishedDoc["settings"];
   /** Signed-in publishes only. Anything other than "public" means unlisted. */
   visibility?: unknown;
+  /** Anonymous publishes only, and only where Turnstile is configured. */
+  turnstile_token?: unknown;
 };
 
 export async function POST(req: Request) {
@@ -49,12 +53,20 @@ export async function POST(req: Request) {
 
     const userId = (await getSession())?.userId ?? null;
     const isAuthenticated = Boolean(userId);
+    // A signed-in account with an unconfirmed address is refused here; it
+    // does not fall through to an anonymous publish.
+    const unverified = userId ? await unverifiedResponse(userId) : null;
+    if (unverified) return unverified;
 
     let payload: PublishPayload | null = null;
     try {
       payload = (await req.json()) as PublishPayload;
     } catch {
       return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
+
+    if (!isAuthenticated && !(await verifyTurnstile(req, payload?.turnstile_token))) {
+      return NextResponse.json({ error: TURNSTILE_FAILED }, { status: 403 });
     }
 
     if (!payload?.raw || typeof payload.raw !== "string" || !payload.raw.trim()) {

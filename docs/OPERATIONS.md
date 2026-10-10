@@ -253,9 +253,66 @@ and the MCP server runs from `mcp-server/src`. Running `next build` or `next
 dev` in this directory replaces files the live site is reading. Build and
 run feature branches in a separate `git worktree`.
 
+## Accounts: verification, provider sign-in, passkeys, Turnstile
+
+All four are in `src/server/verification.ts`, `src/server/sso.ts`,
+`src/server/passkeys.ts` and `src/lib/turnstile.ts`. Each is off until its
+settings exist, and the app runs without any of them.
+
+**Email verification.** On whenever `RESEND_API_KEY` is set. An account
+whose `users.email_verified_at` is empty can sign in and write drafts. It
+gets 403 (`code: EMAIL_UNVERIFIED`) when it publishes or updates a page,
+through the editor, an API key or an OAuth token, and when it creates an API
+key, authorizes the CLI or approves an app. The link is mailed at signup and
+at the first sign-in after that, works for 24 hours, and is confirmed by a
+button on `/verify-email` (a POST, so a mail scanner opening the link
+confirms nothing). Finishing a password reset also verifies the address.
+
+Accounts that existed before this shipped were not exempted (owner decision,
+2026-10-10): each has to confirm once. To verify one by hand:
+
+```js
+db.users.updateOne({ email: "<address>" }, { $set: { email_verified_at: new Date().toISOString() } })
+```
+
+**GitHub and Google sign-in.** A provider's button appears only when both
+`<PROVIDER>_CLIENT_ID` and `<PROVIDER>_CLIENT_SECRET` are set
+(`.env.example` has the callback URLs to register). Identities are in
+`user_identities`. A sign-in whose verified email matches an existing
+account is linked to it. If that account's own address was never verified,
+its password, passkeys, sessions and connected apps are removed first:
+whoever created it may not be the address's owner. Its API keys are kept,
+because an unverified account cannot create one; a key on such an account
+dates from before verification existed.
+
+**Passkeys.** Added from `/settings/account`, used from the sign-in page.
+The relying-party ID is the hostname in `NEXT_PUBLIC_SITE_URL`, so passkeys
+stop working if the site moves to another hostname. Stored in `passkeys`
+(public key and counter only).
+
+**Turnstile.** On when both `NEXT_PUBLIC_TURNSTILE_SITE_KEY` and
+`TURNSTILE_SECRET_KEY` are set. It guards anonymous publish, signup and the
+report form; the API, CLI and MCP server are not affected. The site key is
+read at build time and adds `challenges.cloudflare.com` to the CSP, so
+changing it needs `npm run deploy`. If Cloudflare's verification endpoint
+cannot be reached, those three forms refuse until it can: remove
+`TURNSTILE_SECRET_KEY` and reload PM2 to switch the check off.
+
+**Account page.** `/settings/account`: change or set a password (signs out
+other browsers and disconnects apps), connect or disconnect providers, add
+or remove passkeys, disconnect an app that signed in through OAuth, download
+every page as a ZIP of Markdown files, and delete the account. Deletion
+removes the user's pages, versions, drafts, API keys, webhooks, sessions,
+identities and passkeys, and the team spaces they own; other people's pages
+in those spaces stay with their owners.
+
+`/p/<id>` for a page that does not exist now answers 404. It used to answer
+200 with a "doesn't exist" notice.
+
 ## Auth: in-house (Clerk removed)
 
-**Current state:** Email + password, no third-party identity provider.
+**Current state:** Email + password, with optional GitHub and Google
+sign-in and passkeys (see the section above).
 Passwords are hashed with `argon2id` (`src/lib/auth/password.ts`). Sessions
 are opaque, DB-backed tokens (`sessions` collection, TTL-indexed, 30-day
 sliding window), hashed with an HMAC pepper before storage — the same
@@ -278,8 +335,8 @@ middleware is similarly non-authoritative — the real check is
 
 **Email delivery.** `src/lib/email.ts` sends mail through Resend
 (`RESEND_API_KEY`, `EMAIL_FROM_ADDRESS`): the password-reset link, abuse
-reports to `ABUSE_REPORT_EMAIL`, and the backup-failure alert. Signup does
-not verify the email address yet (planned for Phase 5).
+reports to `ABUSE_REPORT_EMAIL`, the backup-failure alert, and the
+email-verification link.
 
 ## Auth cutover (2026-07-11)
 

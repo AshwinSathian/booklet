@@ -1,5 +1,6 @@
 import { AppLogo } from "@/components/ui/AppLogo";
 import { APP_NAME, ROUTES } from "@/lib/constants";
+import { enabledSsoProviders } from "@/lib/auth/sso";
 import { ANONYMOUS_LIMITS } from "@/lib/quota";
 import { buildMetadata } from "@/lib/seo";
 import Link from "next/link";
@@ -22,6 +23,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 export default function PrivacyPage() {
+  // Only the providers this deployment has configured are named.
+  const providers = enabledSsoProviders();
+  const providerNames = providers.map((p) => p.label).join(" or ");
   return (
     <div className="min-h-screen bg-bg text-text-primary flex flex-col">
       <header className="sticky top-0 z-20 border-b border-border-subtle bg-bg/85 backdrop-blur-xl">
@@ -55,10 +59,18 @@ export default function PrivacyPage() {
               keep the service sustainable for everyone; signing in removes that cap.
             </p>
             <p>
-              <strong className="text-text-primary">Signed-in accounts</strong> — Authentication is handled entirely by us,
-              with no third-party identity provider. When you create an account, we store your email address and a
-              salted, memory-hard hash of your password (argon2id) — never the password itself. Signing in issues a
-              random session token, stored server-side and referenced only by an httpOnly cookie in your browser.
+              <strong className="text-text-primary">Signed-in accounts</strong> — When you create an account, we store your
+              email address and a salted, memory-hard hash of your password (argon2id) — never the password itself.
+              We email you a link to confirm the address. Signing in issues a random session token, stored
+              server-side and referenced only by an httpOnly cookie in your browser. If you add a passkey, we
+              store its public key; the private key never leaves your device.
+              {providers.length > 0 && (
+                <>
+                  {" "}If you sign in with {providerNames}, we receive your account ID there and your verified email
+                  address, and nothing else: no profile, contacts or repositories.
+                </>
+              )}
+              {" "}You can download your pages or delete your account, with everything in it, from Account settings.
             </p>
             <p>
               <strong className="text-text-primary">Page analytics</strong> — We count views, track scroll depth (50% and 100%
@@ -82,8 +94,9 @@ export default function PrivacyPage() {
           <Section title="Cookies and local storage">
             <p>
               {APP_NAME} uses browser <strong className="text-text-primary">localStorage</strong> to save your editor drafts
-              locally — this data never leaves your device unless you publish. We use one first-party, httpOnly
-              session cookie (issued directly by us, not a third party) for signed-in auth. We do not use
+              locally. Drafts stay on your device unless you publish them, or sign in, which syncs them to your
+              account. We use one first-party, httpOnly session cookie for signed-in auth, and short-lived
+              first-party cookies while a provider or passkey sign-in is in progress. We do not use
               third-party tracking cookies.
             </p>
           </Section>
@@ -105,11 +118,17 @@ export default function PrivacyPage() {
           </Section>
 
           <Section title="Third-party services">
-            <p>We keep this list short by design — authentication, sessions, and all page data are handled entirely
-              on infrastructure we run ourselves, with no third-party identity or data processor in the loop.</p>
+            <p>We keep this list short by design. Sessions and all page data are handled on infrastructure we run
+              ourselves.</p>
             <ul className="list-disc list-inside flex flex-col gap-1.5">
               <li><strong className="text-text-primary">Cloudflare</strong> — edge network and tunnel in front of our servers</li>
-              <li><strong className="text-text-primary">Resend</strong> — delivers our email. It receives your email address when you request a password reset, and the text of an abuse report (with your email address, if you gave one) when you report a page</li>
+              <li><strong className="text-text-primary">Resend</strong> — delivers our email. It receives your email address when you create an account or request a password reset, and the text of an abuse report (with your email address, if you gave one) when you report a page</li>
+              {providers.length > 0 && (
+                <li><strong className="text-text-primary">{providerNames}</strong> — only if you choose to sign in with one. It learns that you signed in to {APP_NAME}</li>
+              )}
+              {process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
+                <li><strong className="text-text-primary">Cloudflare Turnstile</strong> — a robot check on publishing without an account, creating an account and reporting a page. It runs in your browser and sends Cloudflare your IP address and browser signals</li>
+              )}
               <li><strong className="text-text-primary">MongoDB</strong> — self-hosted primary database for all page and account records, including anonymous pages</li>
             </ul>
           </Section>
