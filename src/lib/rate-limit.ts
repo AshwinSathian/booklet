@@ -1,14 +1,20 @@
-import { getDb } from "@/lib/mongodb";
+import { getD1 } from "@/lib/d1";
 import { NextResponse } from "next/server";
 
-type RateLimitDoc = {
-  _id: string;
-  count: number;
-  expiresAt: Date;
-};
+// One statement: SQLite runs it atomically, so concurrent callers cannot
+// read the same count. Replaces findOneAndUpdate with $inc and upsert.
+async function hit(key: string, expiresAt: number): Promise<number> {
+  const row = await getD1()
+    .prepare(
+      "INSERT INTO rate_limits (id, count, expires_at) VALUES (?, 1, ?) ON CONFLICT (id) DO UPDATE SET count = count + 1 RETURNING count",
+    )
+    .bind(key, expiresAt)
+    .first<{ count: number }>();
+  return row?.count ?? 1;
+}
 
 /**
- * MongoDB-backed sliding-window rate limiter (60-second buckets).
+ * D1-backed fixed-window rate limiter (60-second buckets).
  *
  * @param discriminator  Unique string identifying the bucket, e.g. `publish__ip__1.2.3.4`
  * @param limitPerMin    Max allowed calls within the current 60-second window
@@ -19,22 +25,7 @@ export async function checkRateLimit(
   limitPerMin: number,
 ): Promise<NextResponse | null> {
   const bucket = Math.floor(Date.now() / 60_000);
-  const key = `__rl__${discriminator}__${bucket}`;
-  const expiresAt = new Date((bucket + 2) * 60_000); // expires after two bucket windows
-
-  const db = await getDb();
-  const result = await db
-    .collection<RateLimitDoc>("rate_limits")
-    .findOneAndUpdate(
-      { _id: key },
-      {
-        $inc: { count: 1 },
-        $setOnInsert: { _id: key, expiresAt },
-      },
-      { upsert: true, returnDocument: "after" },
-    );
-
-  const count = result?.count ?? 1;
+  const count = await hit(`__rl__${discriminator}__${bucket}`, (bucket + 2) * 60_000);
 
   if (count > limitPerMin) {
     return NextResponse.json(
@@ -47,12 +38,7 @@ export async function checkRateLimit(
 }
 
 /**
- * MongoDB-backed rolling-calendar-month quota counter.
- *
- * Same bucket-key + atomic-`$inc` + TTL-index pattern as `checkRateLimit`
- * above, reusing the same `rate_limits` collection (it already has a TTL
- * index on `expiresAt`; a monthly bucket is just a differently-shaped key
- * with a differently-shaped expiry, not a different subsystem).
+ * Calendar-month quota counter in the same table.
  *
  * @param discriminator  Unique string identifying the counter, e.g. `publish__ip__1.2.3.4`
  * @param limit          Max allowed calls within the current calendar month
@@ -65,24 +51,9 @@ export async function checkMonthlyQuota(
 ): Promise<NextResponse | null> {
   const now = new Date();
   const monthBucket = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
-  const key = `__mq__${discriminator}__${monthBucket}`;
-  // Expire a few days into the following month so the TTL index cleans up
-  // the bucket automatically without racing the last few hours of the month.
-  const expiresAt = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 3));
-
-  const db = await getDb();
-  const result = await db
-    .collection<RateLimitDoc>("rate_limits")
-    .findOneAndUpdate(
-      { _id: key },
-      {
-        $inc: { count: 1 },
-        $setOnInsert: { _id: key, expiresAt },
-      },
-      { upsert: true, returnDocument: "after" },
-    );
-
-  const count = result?.count ?? 1;
+  // Expires a few days into the following month.
+  const expiresAt = Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 3);
+  const count = await hit(`__mq__${discriminator}__${monthBucket}`, expiresAt);
 
   if (count > limit) {
     return NextResponse.json({ error: message }, { status: 429 });

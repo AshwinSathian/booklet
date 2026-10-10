@@ -1,5 +1,3 @@
-import http from "node:http";
-import https from "node:https";
 import { getWebhooksByUser, touchWebhookTriggered } from "@/lib/db";
 import { bareHostname, resolveHostForDelivery } from "@/lib/ssrf-guard";
 import type { DbWebhook } from "@/lib/db/types";
@@ -30,63 +28,30 @@ async function signPayload(secret: string, body: string): Promise<string> {
 }
 
 /**
- * POSTs to a URL while pinning the TCP connection to a specific, already
- * SSRF-validated IP address, using node:http(s) directly instead of `fetch`.
+ * POSTs with `fetch`. A Worker cannot pin a connection to an address it
+ * resolved itself (node:http's `lookup` option is not honored there), so
+ * the DNS-rebinding defense of the Node build does not carry over. What
+ * still holds, and why that is acceptable on Workers, is in the ADR (S5).
  *
- * `fetch` (undici) does its own independent DNS resolution when it connects
- * — if we validated the hostname with a separate lookup and then handed the
- * URL to `fetch`, an attacker controlling the hostname's DNS could answer
- * the validation lookup with a public IP and the connection's lookup
- * (moments later, low TTL) with an internal one (DNS rebinding). Forcing
- * the actual socket to connect to the address we already checked closes
- * that gap: the Host header / TLS SNI still use the original hostname, only
- * the raw connection target is pinned.
- *
- * Never follows redirects (matches the previous `redirect: "manual"`
- * behavior) — a receiver that 3xx's is treated as a delivery failure.
+ * Never follows redirects: a receiver that 3xx's is a delivery failure.
  */
-function requestPinned(
+async function post(
   url: URL,
-  address: string,
-  family: 4 | 6,
   init: { headers: Record<string, string>; body: string; timeoutMs: number },
 ): Promise<{ ok: boolean } | null> {
-  return new Promise((resolve) => {
-    const isHttps = url.protocol === "https:";
-    const mod = isHttps ? https : http;
-    let settled = false;
-    const done = (result: { ok: boolean } | null) => {
-      if (settled) return;
-      settled = true;
-      resolve(result);
-    };
-
-    const req = mod.request(
-      {
-        hostname: url.hostname,
-        port: url.port || (isHttps ? 443 : 80),
-        path: `${url.pathname}${url.search}`,
-        method: "POST",
-        headers: { ...init.headers, Host: url.host },
-        timeout: init.timeoutMs,
-        // Pin the connection to the pre-validated address instead of letting
-        // Node re-resolve `url.hostname` itself.
-        lookup: (_hostname, _options, callback) => {
-          callback(null, address, family);
-        },
-        ...(isHttps ? { servername: url.hostname } : {}),
-      },
-      (res) => {
-        res.resume(); // drain the body; we only care about the status
-        const status = res.statusCode ?? 0;
-        done({ ok: status >= 200 && status < 300 });
-      },
-    );
-
-    req.on("timeout", () => req.destroy(new Error("Webhook delivery timed out")));
-    req.on("error", () => done(null));
-    req.end(init.body);
-  });
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: init.headers,
+      body: init.body,
+      redirect: "manual",
+      signal: AbortSignal.timeout(init.timeoutMs),
+    });
+    await res.body?.cancel();
+    return { ok: res.ok };
+  } catch {
+    return null;
+  }
 }
 
 /** Resolves, validates, and returns one already-checked address to connect to. */
@@ -111,13 +76,8 @@ export async function deliverWebhooks(
     relevant.map(async (webhook) => {
       try {
         // Re-resolve and re-check the hostname immediately before the
-        // outbound request, then connect directly to the validated address
-        // (see requestPinned) rather than letting a separate resolution
-        // happen at connect time — DNS answers can change between
-        // registration and delivery (rebinding), and can just as easily
-        // change between a validation lookup and a connection lookup done
-        // moments apart, so "check, then let something else re-resolve and
-        // connect" is not actually closed by re-checking alone.
+        // outbound request. On Workers this narrows the window but does not
+        // close it: fetch resolves again by itself (see post above).
         let parsed: URL;
         try {
           parsed = new URL(webhook.url);
@@ -128,7 +88,7 @@ export async function deliverWebhooks(
         if (!safeAddress) return;
 
         const signature = await signPayload(webhook.secret, body);
-        const result = await requestPinned(parsed, safeAddress.address, safeAddress.family, {
+        const result = await post(parsed, {
           headers: {
             "Content-Type": "application/json",
             "X-Booklet-Signature": `sha256=${signature}`,

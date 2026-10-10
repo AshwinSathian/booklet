@@ -1,23 +1,17 @@
 /**
  * In-house auth data access: users (password-based) and sessions.
- * See PLAN-backend-auth-migration.md for the full design.
+ * D1 port. expires_at is stored as epoch milliseconds; an hourly Cron
+ * Trigger deletes expired rows in place of MongoDB's TTL indexes.
  */
 
-import { getDb } from "@/lib/mongodb";
+import { getD1 } from "@/lib/d1";
 import { createId } from "@/lib/id";
 import type { DbPasswordResetToken, DbSession, DbUser } from "./types";
 
-type UserDoc = Omit<DbUser, "id"> & { _id: string };
-type SessionDoc = Omit<DbSession, "id"> & { _id: string };
+type TokenRow<T> = Omit<T, "expires_at"> & { expires_at: number };
 
-function toUser(doc: UserDoc): DbUser {
-  const { _id, ...rest } = doc;
-  return { id: _id, ...rest };
-}
-
-function toSession(doc: SessionDoc): DbSession {
-  const { _id, ...rest } = doc;
-  return { id: _id, ...rest };
+function withDate<T extends { expires_at: Date }>(row: TokenRow<T> | null): T | null {
+  return row ? ({ ...row, expires_at: new Date(row.expires_at) } as unknown as T) : null;
 }
 
 /** Creates a new password-based user. Caller must have already checked email uniqueness. */
@@ -27,35 +21,32 @@ export async function createUser(
   passwordHash: string,
   displayName: string | null = null,
 ): Promise<DbUser> {
-  const db = await getDb();
-  const doc: UserDoc = {
-    _id: id,
+  const user: DbUser = {
+    id,
     email: email.toLowerCase(),
     password_hash: passwordHash,
     display_name: displayName,
     plan: "free",
     created_at: new Date().toISOString(),
   };
-  await db.collection<UserDoc>("users").insertOne(doc);
-  return toUser(doc);
+  await getD1()
+    .prepare("INSERT INTO users (id, email, password_hash, display_name, plan, created_at) VALUES (?, ?, ?, ?, ?, ?)")
+    .bind(user.id, user.email, user.password_hash, user.display_name, user.plan, user.created_at)
+    .run();
+  return user;
 }
 
 export async function getUserById(id: string): Promise<DbUser | null> {
-  const db = await getDb();
-  const doc = await db.collection<UserDoc>("users").findOne({ _id: id });
-  return doc ? toUser(doc) : null;
+  return getD1().prepare("SELECT * FROM users WHERE id = ?").bind(id).first<DbUser>();
 }
 
 export async function getUserByEmail(email: string): Promise<DbUser | null> {
-  const db = await getDb();
-  const doc = await db.collection<UserDoc>("users").findOne({ email: email.toLowerCase() });
-  return doc ? toUser(doc) : null;
+  return getD1().prepare("SELECT * FROM users WHERE email = ?").bind(email.toLowerCase()).first<DbUser>();
 }
 
 /** Sets a user's password (password reset). */
 export async function setUserPassword(userId: string, passwordHash: string): Promise<void> {
-  const db = await getDb();
-  await db.collection<UserDoc>("users").updateOne({ _id: userId }, { $set: { password_hash: passwordHash } });
+  await getD1().prepare("UPDATE users SET password_hash = ? WHERE id = ?").bind(passwordHash, userId).run();
 }
 
 export async function createSessionRecord(
@@ -63,46 +54,43 @@ export async function createSessionRecord(
   tokenHash: string,
   expiresAt: Date,
 ): Promise<DbSession> {
-  const db = await getDb();
-  const doc: SessionDoc = {
-    _id: createId(20),
+  const session: DbSession = {
+    id: createId(20),
     user_id: userId,
     token_hash: tokenHash,
     created_at: new Date().toISOString(),
     expires_at: expiresAt,
   };
-  await db.collection<SessionDoc>("sessions").insertOne(doc);
-  return toSession(doc);
+  await getD1()
+    .prepare("INSERT INTO sessions (id, user_id, token_hash, created_at, expires_at) VALUES (?, ?, ?, ?, ?)")
+    .bind(session.id, userId, tokenHash, session.created_at, expiresAt.getTime())
+    .run();
+  return session;
 }
 
+// MongoDB's TTL index removed expired rows within about a minute. The
+// cleanup cron is hourly, so the lookups filter on expires_at themselves.
 export async function findSessionByHash(tokenHash: string): Promise<DbSession | null> {
-  const db = await getDb();
-  const doc = await db.collection<SessionDoc>("sessions").findOne({ token_hash: tokenHash });
-  return doc ? toSession(doc) : null;
+  return withDate<DbSession>(
+    await getD1()
+      .prepare("SELECT * FROM sessions WHERE token_hash = ? AND expires_at > ?")
+      .bind(tokenHash, Date.now())
+      .first<TokenRow<DbSession>>(),
+  );
 }
 
 /** Slides a session's expiry forward (called when it's past the halfway point of its window). */
 export async function touchSessionExpiry(id: string, expiresAt: Date): Promise<void> {
-  const db = await getDb();
-  await db.collection<SessionDoc>("sessions").updateOne({ _id: id }, { $set: { expires_at: expiresAt } });
+  await getD1().prepare("UPDATE sessions SET expires_at = ? WHERE id = ?").bind(expiresAt.getTime(), id).run();
 }
 
 export async function deleteSessionByHash(tokenHash: string): Promise<void> {
-  const db = await getDb();
-  await db.collection<SessionDoc>("sessions").deleteOne({ token_hash: tokenHash });
+  await getD1().prepare("DELETE FROM sessions WHERE token_hash = ?").bind(tokenHash).run();
 }
 
 /** Logout-everywhere: revokes every session for a user. */
 export async function deleteAllUserSessions(userId: string): Promise<void> {
-  const db = await getDb();
-  await db.collection<SessionDoc>("sessions").deleteMany({ user_id: userId });
-}
-
-type PasswordResetTokenDoc = Omit<DbPasswordResetToken, "id"> & { _id: string };
-
-function toPasswordResetToken(doc: PasswordResetTokenDoc): DbPasswordResetToken {
-  const { _id, ...rest } = doc;
-  return { id: _id, ...rest };
+  await getD1().prepare("DELETE FROM sessions WHERE user_id = ?").bind(userId).run();
 }
 
 /** Creates a reset token, first deleting any earlier still-live token for this user — only one live reset link at a time. */
@@ -111,24 +99,24 @@ export async function createPasswordResetToken(
   tokenHash: string,
   expiresAt: Date,
 ): Promise<void> {
-  const db = await getDb();
-  await db.collection<PasswordResetTokenDoc>("password_reset_tokens").deleteMany({ user_id: userId });
-  await db.collection<PasswordResetTokenDoc>("password_reset_tokens").insertOne({
-    _id: createId(20),
-    user_id: userId,
-    token_hash: tokenHash,
-    created_at: new Date().toISOString(),
-    expires_at: expiresAt,
-  });
+  const db = getD1();
+  await db.batch([
+    db.prepare("DELETE FROM password_reset_tokens WHERE user_id = ?").bind(userId),
+    db
+      .prepare("INSERT INTO password_reset_tokens (id, user_id, token_hash, created_at, expires_at) VALUES (?, ?, ?, ?, ?)")
+      .bind(createId(20), userId, tokenHash, new Date().toISOString(), expiresAt.getTime()),
+  ]);
 }
 
 export async function findPasswordResetTokenByHash(tokenHash: string): Promise<DbPasswordResetToken | null> {
-  const db = await getDb();
-  const doc = await db.collection<PasswordResetTokenDoc>("password_reset_tokens").findOne({ token_hash: tokenHash });
-  return doc ? toPasswordResetToken(doc) : null;
+  return withDate<DbPasswordResetToken>(
+    await getD1()
+      .prepare("SELECT * FROM password_reset_tokens WHERE token_hash = ? AND expires_at > ?")
+      .bind(tokenHash, Date.now())
+      .first<TokenRow<DbPasswordResetToken>>(),
+  );
 }
 
 export async function deletePasswordResetToken(tokenHash: string): Promise<void> {
-  const db = await getDb();
-  await db.collection<PasswordResetTokenDoc>("password_reset_tokens").deleteOne({ token_hash: tokenHash });
+  await getD1().prepare("DELETE FROM password_reset_tokens WHERE token_hash = ?").bind(tokenHash).run();
 }

@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "booklet-spike-app",
+  "main": "custom-worker.ts",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
+  "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "booklet-spike-app" }],
+  "d1_databases": [
+    { "binding": "DB", "database_name": "booklet-spike", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }
+  ],
+  // 17 3 * * *: daily purge of expired anonymous documents.
+  // 0 * * * *: hourly delete of expired sessions, reset tokens, rate-limit buckets and dedupe rows.
+  "triggers": { "crons": ["17 3 * * *", "0 * * * *"] },
+  "observability": { "enabled": true }
+}

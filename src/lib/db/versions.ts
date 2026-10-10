@@ -1,127 +1,67 @@
 import type { PublishedDoc } from "@/lib/blocks";
-import { getDb } from "@/lib/mongodb";
+import { getD1 } from "@/lib/d1";
 import type { PageVersion } from "./types";
 
 const MAX_VERSIONS_PER_PAGE = 50;
-
-// Bounded retry count for the compare-and-swap-via-retry loop below — a
-// clear thrown error after this many attempts is correct; we must not spin
-// forever under sustained contention (e.g. a pathological autosave loop).
-const MAX_SNAPSHOT_RETRIES = 5;
 
 export type PageVersionListItem = Pick<
   PageVersion,
   "id" | "page_id" | "version_number" | "created_at" | "size_bytes"
 >;
 
-function isDuplicateKeyError(err: unknown): boolean {
-  return (
-    typeof err === "object" &&
-    err !== null &&
-    "code" in err &&
-    (err as { code?: unknown }).code === 11000
-  );
-}
-
 /**
  * Snapshots `doc` as the next version of `pageId`.
  *
- * Concurrency: two callers (e.g. an autosave and a CLI publish, or two
- * collaborators) can race to read the same "latest" version_number and both
- * try to insert the same next number. A unique index on
- * `(page_id, version_number)` (see scripts/setup-mongodb.mjs /
- * src/lib/db/index-specs.mjs) turns the second insert into a duplicate-key
- * error (11000) instead of silent corruption; we catch that, re-read the
- * current max, and retry with a fresh candidate number — a bounded
- * compare-and-swap-via-retry loop rather than a blind "read old max, write
- * new max" race.
+ * Concurrency: the next number is computed inside the INSERT itself. D1
+ * runs one statement at a time per database, so two callers cannot read
+ * the same maximum. The MongoDB version needed a unique index and a retry
+ * loop for this; the unique index stays as a guard, the loop is gone.
  */
 export async function snapshotPageVersion(
   pageId: string,
   doc: PublishedDoc,
 ): Promise<void> {
-  const db = await getDb();
-  const coll = db.collection<PageVersion>("page_versions");
-
   const json = JSON.stringify(doc);
-  const encoded = new TextEncoder().encode(json);
+  const sizeBytes = new TextEncoder().encode(json).byteLength;
+  const db = getD1();
 
-  let inserted = false;
-  for (let attempt = 0; attempt < MAX_SNAPSHOT_RETRIES && !inserted; attempt++) {
-    const latest = await coll
-      .find({ page_id: pageId })
-      .sort({ version_number: -1 })
-      .limit(1)
-      .toArray();
-    const versionNumber = (latest[0]?.version_number ?? 0) + 1;
-
-    try {
-      await coll.insertOne({
-        id: crypto.randomUUID(),
-        page_id: pageId,
-        version_number: versionNumber,
-        doc_snapshot: json,
-        created_at: new Date().toISOString(),
-        size_bytes: encoded.byteLength,
-      });
-      inserted = true;
-    } catch (err) {
-      if (isDuplicateKeyError(err)) {
-        continue; // another writer took this version_number — re-read and retry
-      }
-      throw err;
-    }
-  }
-
-  if (!inserted) {
-    throw new Error(
-      `snapshotPageVersion: exhausted ${MAX_SNAPSHOT_RETRIES} retries for page ${pageId} — sustained write contention on this page's version_number`,
-    );
-  }
-
-  const stale = await coll
-    .find({ page_id: pageId })
-    .sort({ version_number: -1 })
-    .skip(MAX_VERSIONS_PER_PAGE)
-    .project<{ id: string }>({ id: 1, _id: 0 })
-    .toArray();
-
-  if (stale.length > 0) {
-    await coll.deleteMany({ id: { $in: stale.map((v) => v.id) } });
-  }
+  await db.batch([
+    db
+      .prepare(
+        `INSERT INTO page_versions (id, page_id, version_number, doc_snapshot, created_at, size_bytes)
+         SELECT ?, ?, COALESCE(MAX(version_number), 0) + 1, ?, ?, ? FROM page_versions WHERE page_id = ?`,
+      )
+      .bind(crypto.randomUUID(), pageId, json, new Date().toISOString(), sizeBytes, pageId),
+    db
+      .prepare(
+        `DELETE FROM page_versions WHERE page_id = ? AND version_number <=
+           (SELECT MAX(version_number) FROM page_versions WHERE page_id = ?) - ?`,
+      )
+      .bind(pageId, pageId, MAX_VERSIONS_PER_PAGE),
+  ]);
 }
 
 export async function getPageVersions(pageId: string): Promise<PageVersionListItem[]> {
-  const db = await getDb();
-  return db
-    .collection<PageVersion>("page_versions")
-    .find({ page_id: pageId })
-    .sort({ version_number: -1 })
-    .project<PageVersionListItem>({
-      id: 1,
-      page_id: 1,
-      version_number: 1,
-      created_at: 1,
-      size_bytes: 1,
-      _id: 0,
-    })
-    .toArray();
+  const { results } = await getD1()
+    .prepare(
+      "SELECT id, page_id, version_number, created_at, size_bytes FROM page_versions WHERE page_id = ? ORDER BY version_number DESC",
+    )
+    .bind(pageId)
+    .all<PageVersionListItem>();
+  return results;
 }
 
 export async function getPageVersion(
   pageId: string,
   versionNumber: number,
 ): Promise<PublishedDoc | null> {
-  const db = await getDb();
-  const version = await db
-    .collection<PageVersion>("page_versions")
-    .findOne({ page_id: pageId, version_number: versionNumber });
-
-  if (!version) return null;
-  return JSON.parse(version.doc_snapshot) as PublishedDoc;
+  const row = await getD1()
+    .prepare("SELECT doc_snapshot FROM page_versions WHERE page_id = ? AND version_number = ?")
+    .bind(pageId, versionNumber)
+    .first<{ doc_snapshot: string }>();
+  return row ? (JSON.parse(row.doc_snapshot) as PublishedDoc) : null;
 }
 
 export async function deletePageVersions(pageId: string): Promise<void> {
-  const db = await getDb();
-  await db.collection<PageVersion>("page_versions").deleteMany({ page_id: pageId });
+  await getD1().prepare("DELETE FROM page_versions WHERE page_id = ?").bind(pageId).run();
 }

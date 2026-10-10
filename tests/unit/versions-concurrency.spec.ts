@@ -1,7 +1,6 @@
 import { test, expect } from "@playwright/test";
 import type { PublishedDoc } from "@/lib/blocks";
-import { getDb } from "@/lib/mongodb";
-import { ensureIndexes } from "@/lib/db/index-specs.mjs";
+import { useLocalD1 } from "./helpers/d1";
 import { snapshotPageVersion, getPageVersions, deletePageVersions } from "@/lib/db/versions";
 
 // Regression coverage for the audit finding fixed alongside this suite:
@@ -22,10 +21,7 @@ import { snapshotPageVersion, getPageVersions, deletePageVersions } from "@/lib/
 // loop below would never trigger, silently reproducing the original bug.
 
 test.beforeAll(async () => {
-  process.env.MONGODB_URI ??= "mongodb://localhost:27017/readable?retryWrites=true&w=majority";
-
-  const db = await getDb();
-  await ensureIndexes(db);
+  await useLocalD1();
 });
 
 function makeDoc(n: number): PublishedDoc {

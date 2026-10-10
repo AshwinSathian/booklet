@@ -1,4 +1,4 @@
-import { getDb } from "@/lib/mongodb";
+import { getD1 } from "@/lib/d1";
 import type { PublishEvent } from "./types";
 
 type ContentBucket = PublishEvent["content_length_bucket"];
@@ -19,15 +19,20 @@ export async function recordPublishEvent(opts: {
   source: PublishEvent["source"];
   richBlockKinds?: string[];
 }): Promise<void> {
-  const db = await getDb();
-  await db.collection<PublishEvent>("publish_events").insertOne({
-    id: crypto.randomUUID(),
-    user_id: opts.userId,
-    page_id: opts.pageId,
-    is_update: opts.isUpdate,
-    content_length_bucket: bucketContentLength(opts.contentLength),
-    source: opts.source,
-    created_at: new Date().toISOString(),
-    ...(opts.richBlockKinds?.length ? { rich_block_kinds: opts.richBlockKinds } : {}),
-  });
+  await getD1()
+    .prepare(
+      `INSERT INTO publish_events (id, user_id, page_id, is_update, content_length_bucket, source, created_at, rich_block_kinds)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    )
+    .bind(
+      crypto.randomUUID(),
+      opts.userId,
+      opts.pageId,
+      opts.isUpdate ? 1 : 0,
+      bucketContentLength(opts.contentLength),
+      opts.source,
+      new Date().toISOString(),
+      opts.richBlockKinds?.length ? JSON.stringify(opts.richBlockKinds) : null,
+    )
+    .run();
 }

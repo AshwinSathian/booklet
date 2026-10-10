@@ -2,7 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getClientIp } from "@/lib/request-ip";
 import { SESSION_COOKIE_NAME } from "@/lib/auth/constants";
 import { claimCookieName } from "@/lib/claim-cookie";
-import { goneNoticeHtml, isGoneReason, type GoneReason } from "@/lib/gone-notice";
+import { goneNoticeHtml, type GoneReason } from "@/lib/gone-notice";
+import { getD1 } from "@/lib/d1";
 
 // 'unsafe-eval' is dropped in production: nothing in this codebase calls
 // eval()/new Function() (verified — grepped clean), and Next's dev server
@@ -68,26 +69,32 @@ const API_HOSTNAME = "booklet-api.ashwinsathian.com";
 const SHARE_PATH = /^\/p\/([^/]+)(\/embed)?\/?$/;
 
 /**
- * Asks the app's own Node runtime whether a share page is gone (taken down,
- * or an expired anonymous page). This middleware runs on the Edge runtime,
- * which has no MongoDB driver, and a Server Component cannot return 410 —
- * so the status has to be decided here, with the lookup done by
- * /api/pages/:id/gone over loopback.
+ * Whether a share page is gone (taken down, or an expired anonymous page).
+ * A Server Component cannot return 410, so the status is decided here.
  *
- * Fails open: if the check errors or times out the request continues, and
- * the page's own render guard still refuses to show the content (with a
- * 200 instead of a 410). Availability of every share page must not hinge
- * on this hop.
+ * On Workers the middleware runs in the same isolate as the app and has
+ * the D1 binding, so this is one indexed read. It replaces the loopback
+ * call to /api/pages/:id/gone, which needed a Node process to call.
+ * Same rules as src/server/page-gone.ts: the id wins over a slug, and
+ * expiry never applies to a page that has an owner.
+ *
+ * Fails open: if the read errors the request continues, and the page's own
+ * render guard still refuses to show the content (with a 200, not a 410).
  */
 async function fetchGoneReason(id: string): Promise<GoneReason | null> {
   try {
-    const res = await fetch(`http://127.0.0.1:${process.env.PORT || 3000}/api/pages/${encodeURIComponent(id)}/gone`, {
-      signal: AbortSignal.timeout(2000),
-      cache: "no-store",
-    });
-    if (!res.ok) return null;
-    const body = (await res.json()) as { gone?: unknown };
-    return isGoneReason(body.gone) ? body.gone : null;
+    const row = await getD1()
+      .prepare(
+        `SELECT d.taken_down_at, d.expires_at, EXISTS (SELECT 1 FROM pages p WHERE p.id = d.id) AS owned
+         FROM docs d WHERE d.id = ?1 OR d.id = (SELECT id FROM pages WHERE slug = ?1)
+         ORDER BY d.id = ?1 DESC LIMIT 1`,
+      )
+      .bind(id)
+      .first<{ taken_down_at: string | null; expires_at: number | null; owned: number }>();
+    if (!row) return null;
+    if (row.taken_down_at) return "taken_down";
+    if (row.expires_at !== null && row.expires_at <= Date.now() && !row.owned) return "expired";
+    return null;
   } catch {
     return null;
   }
@@ -141,6 +148,7 @@ export default async function middleware(req: NextRequest) {
   // Embed pages must be iframe-able from any origin.
   const isEmbedRoute = /^\/p\/[^/]+\/embed(\/|$)/.test(req.nextUrl.pathname);
 
+  let goneCheckMs: number | null = null;
   const share = SHARE_PATH.exec(req.nextUrl.pathname);
   if (share && (req.method === "GET" || req.method === "HEAD")) {
     let id = share[1];
@@ -149,7 +157,10 @@ export default async function middleware(req: NextRequest) {
     } catch {
       /* malformed escape: look it up as-is, it will not match anything */
     }
+    const goneStart = performance.now();
     const reason = await fetchGoneReason(id);
+    // Spike only: how long the D1 read took, for the S2 measurement.
+    goneCheckMs = performance.now() - goneStart;
     // An expired page stays reachable from the browser that published it
     // until the purge deletes it, so its author can still claim it. Only
     // the cookie's presence is checked here; the page verifies the token
@@ -170,7 +181,9 @@ export default async function middleware(req: NextRequest) {
     }
   }
 
-  return withSecurityHeaders(NextResponse.next(), isEmbedRoute);
+  const res = withSecurityHeaders(NextResponse.next(), isEmbedRoute);
+  if (goneCheckMs !== null) res.headers.set("Server-Timing", `gone;dur=${goneCheckMs.toFixed(2)}`);
+  return res;
 }
 
 export const config = {

@@ -78,3 +78,7 @@ MARKET_PLAN.md
 
 # Subagent-driven-development scratch workspace (never committed)
 .superpowers/
+
+.open-next
+.dev.vars
+.wrangler

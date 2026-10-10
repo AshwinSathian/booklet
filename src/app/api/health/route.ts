@@ -1,4 +1,4 @@
-import { getDb } from "@/lib/mongodb";
+import { getD1 } from "@/lib/d1";
 import { logError } from "@/lib/logger";
 import { NextResponse } from "next/server";
 
@@ -16,7 +16,7 @@ export async function GET() {
     // The driver waits 30 s for a server by default — far longer than a
     // monitor's probe timeout. Fail in 3 s instead.
     await Promise.race([
-      getDb().then((db) => db.command({ ping: 1 })),
+      getD1().prepare("SELECT 1").first(),
       new Promise((_, reject) => setTimeout(() => reject(new Error("Database ping timed out after 3s")), 3000)),
     ]);
     return NextResponse.json({ ok: true }, { headers: { "cache-control": "no-store" } });

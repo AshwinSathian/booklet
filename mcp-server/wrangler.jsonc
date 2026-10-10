@@ -1,0 +1,10 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "booklet-spike-mcp",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "services": [{ "binding": "APP", "service": "booklet-spike-app" }],
+  "vars": { "BOOKLET_API_BASE": "http://127.0.0.1:8799" },
+  "observability": { "enabled": true }
+}

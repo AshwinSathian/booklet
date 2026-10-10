@@ -1,51 +1,19 @@
 import { getDb } from "@/lib/mongodb";
+import { getD1, type D1Statement } from "@/lib/d1";
 import type { DbApiKey, DbCollection, DbCollectionMember, DbPage, DbUser, DbWebhook, CollectionMemberRole } from "./types";
 
-// ---------------------------------------------------------------------------
-// Internal document shapes (MongoDB _id = our string id)
-// ---------------------------------------------------------------------------
+// Spike state: users, pages, API keys and webhooks read and write D1.
+// Collections and their members are still MongoDB (not ported in the spike).
 
-type UserDoc = Omit<DbUser, "id"> & { _id: string };
-// `slug` is optional here (unlike the public DbPage.slug: string | null
-// contract) because it must be OMITTED, not set to null, when absent — the
-// unique index on `slug` is sparse, which only excludes documents where the
-// field is genuinely missing. A present `slug: null` is still an indexed
-// value, so a second slug-less page would collide with the first. See
-// createPageRecord/updatePageRecord.
-type PageDoc = Omit<DbPage, "id" | "slug"> & { _id: string; slug?: string | null };
-type ApiKeyDoc = Omit<DbApiKey, "id"> & { _id: string };
-// Same sparse-index reasoning as PageDoc — see createCollectionRecord/updateCollectionRecord.
+type PageRow = Omit<DbPage, "frontmatter_meta"> & { frontmatter_meta: string | null };
 type CollectionDoc = Omit<DbCollection, "id" | "slug"> & { _id: string; slug?: string | null };
 type CollectionMemberDoc = Omit<DbCollectionMember, "id"> & { _id: string };
-type WebhookDoc = Omit<DbWebhook, "id"> & { _id: string };
 
-function toUser(doc: UserDoc): DbUser {
-  const { _id, ...rest } = doc;
+function toPage(row: PageRow): DbPage {
   return {
-    id: _id,
-    ...rest,
-    password_hash: rest.password_hash ?? null,
-    display_name: rest.display_name ?? null,
+    ...row,
+    frontmatter_meta: row.frontmatter_meta ? (JSON.parse(row.frontmatter_meta) as Record<string, unknown>) : null,
   };
-}
-
-function toPage(doc: PageDoc): DbPage {
-  const { _id, ...rest } = doc;
-  return {
-    id: _id,
-    ...rest,
-    slug: rest.slug ?? null,
-    collection_id: rest.collection_id ?? null,
-    team_id: rest.team_id ?? null,
-    password_hash: rest.password_hash ?? null,
-    frontmatter_meta: rest.frontmatter_meta ?? null,
-    taken_down_at: rest.taken_down_at ?? null,
-  };
-}
-
-function toApiKey(doc: ApiKeyDoc): DbApiKey {
-  const { _id, ...rest } = doc;
-  return { id: _id, ...rest };
 }
 
 function toCollection(doc: CollectionDoc): DbCollection {
@@ -59,45 +27,47 @@ function toCollection(doc: CollectionDoc): DbCollection {
   };
 }
 
+function tagsOf(meta: Record<string, unknown> | null | undefined): string[] {
+  const tags = meta?.tags;
+  if (!Array.isArray(tags)) return [];
+  return [...new Set(tags.filter((t): t is string => typeof t === "string"))];
+}
+
 // ---------------------------------------------------------------------------
 // Users
 // ---------------------------------------------------------------------------
 
 export async function getUser(id: string): Promise<DbUser | null> {
-  const db = await getDb();
-  const doc = await db.collection<UserDoc>("users").findOne({ _id: id });
-  return doc ? toUser(doc) : null;
+  return getD1().prepare("SELECT * FROM users WHERE id = ?").bind(id).first<DbUser>();
 }
 
 export async function upsertUser(
   id: string,
   email: string | null,
 ): Promise<void> {
-  const db = await getDb();
-  await db.collection<UserDoc>("users").updateOne(
-    { _id: id },
-    {
-      $set: { email },
-      $setOnInsert: {
-        _id: id,
-        plan: "free" as const,
-        created_at: new Date().toISOString(),
-      },
-    },
-    { upsert: true },
-  );
+  await getD1()
+    .prepare(
+      "INSERT INTO users (id, email, plan, created_at) VALUES (?, ?, 'free', ?) ON CONFLICT (id) DO UPDATE SET email = excluded.email",
+    )
+    .bind(id, email, new Date().toISOString())
+    .run();
 }
 
-
 export async function getUserByEmail(email: string): Promise<DbUser | null> {
-  const db = await getDb();
-  const doc = await db.collection<UserDoc>("users").findOne({ email: email.toLowerCase() });
-  return doc ? toUser(doc) : null;
+  return getD1().prepare("SELECT * FROM users WHERE email = ?").bind(email.toLowerCase()).first<DbUser>();
 }
 
 // ---------------------------------------------------------------------------
 // Pages
 // ---------------------------------------------------------------------------
+
+function tagStatements(pageId: string, meta: Record<string, unknown> | null | undefined): D1Statement[] {
+  const db = getD1();
+  return [
+    db.prepare("DELETE FROM page_tags WHERE page_id = ?").bind(pageId),
+    ...tagsOf(meta).map((tag) => db.prepare("INSERT INTO page_tags (page_id, tag) VALUES (?, ?)").bind(pageId, tag)),
+  ];
+}
 
 export async function createPageRecord(
   pageId: string,
@@ -109,96 +79,85 @@ export async function createPageRecord(
   // /explore, tag pages, the sitemap and search engines.
   visibility: DbPage["visibility"] = "unlisted",
 ): Promise<void> {
-  const db = await getDb();
+  const db = getD1();
   const now = new Date().toISOString();
-  await db.collection<PageDoc>("pages").insertOne({
-    _id: pageId,
-    user_id: userId,
-    // slug intentionally omitted — see PageDoc's comment above.
-    title,
-    visibility,
-    collection_id: null,
-    team_id: teamId,
-    view_count: 0,
-    password_hash: null,
-    frontmatter_meta: frontmatterMeta,
-    taken_down_at: null,
-    created_at: now,
-    updated_at: now,
-  });
+  await db.batch([
+    db
+      .prepare(
+        `INSERT INTO pages (id, user_id, title, visibility, team_id, frontmatter_meta, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .bind(pageId, userId, title, visibility, teamId, frontmatterMeta ? JSON.stringify(frontmatterMeta) : null, now, now),
+    ...tagStatements(pageId, frontmatterMeta),
+  ]);
 }
 
 export async function getPageRecord(pageId: string): Promise<DbPage | null> {
-  const db = await getDb();
-  const doc = await db.collection<PageDoc>("pages").findOne({ _id: pageId });
-  return doc ? toPage(doc) : null;
+  const row = await getD1().prepare("SELECT * FROM pages WHERE id = ?").bind(pageId).first<PageRow>();
+  return row ? toPage(row) : null;
 }
 
 export async function getPageBySlug(slug: string): Promise<DbPage | null> {
-  const db = await getDb();
-  const doc = await db.collection<PageDoc>("pages").findOne({ slug });
-  return doc ? toPage(doc) : null;
-}
-
-// Escapes regex metacharacters in a user-supplied query string before it's
-// used to build a MongoDB $regex filter — the query is title-search input,
-// not a pattern the caller should be able to author.
-function escapeRegExp(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const row = await getD1().prepare("SELECT * FROM pages WHERE slug = ?").bind(slug).first<PageRow>();
+  return row ? toPage(row) : null;
 }
 
 // Titles are clamped to 64 chars at creation (see doc-title.ts's clamp()), so
-// nothing legitimate ever needs a longer search query — this is a single
-// choke-point guard against an oversized regex/filter value reaching Mongo,
-// same pattern as the other size guards in this codebase (e.g. blocks.ts's
-// MAX_BLOCK_DEPTH/MAX_BLOCK_COUNT), not a behavior-affecting limit for any
-// real title.
+// nothing legitimate ever needs a longer search query.
 const MAX_SEARCH_FILTER_LENGTH = 200;
 
 export async function getPagesByUser(
   userId: string,
   opts: { limit?: number; offset?: number; query?: string; tag?: string } = {},
 ): Promise<{ pages: DbPage[]; total: number }> {
-  const db = await getDb();
-  const col = db.collection<PageDoc>("pages");
-  const filter: Record<string, unknown> = { user_id: userId };
+  const where = ["p.user_id = ?"];
+  const args: unknown[] = [userId];
   const trimmedQuery = opts.query?.trim().slice(0, MAX_SEARCH_FILTER_LENGTH);
-  if (trimmedQuery) filter.title = { $regex: escapeRegExp(trimmedQuery), $options: "i" };
+  if (trimmedQuery) {
+    // instr, not LIKE: D1 rejects a LIKE pattern over 50 bytes ("LIKE or
+    // GLOB pattern too complex"), and instr needs no wildcard escaping.
+    // lower() folds ASCII only; MongoDB's $regex "i" also folded non-ASCII
+    // letters. Recorded in the ADR as a behavior change.
+    where.push("instr(lower(p.title), lower(?)) > 0");
+    args.push(trimmedQuery);
+  }
   const trimmedTag = opts.tag?.trim().slice(0, MAX_SEARCH_FILTER_LENGTH);
-  if (trimmedTag) filter["frontmatter_meta.tags"] = trimmedTag;
-  const [docs, total] = await Promise.all([
-    col
-      .find(filter)
-      .sort({ created_at: -1 })
-      .skip(opts.offset ?? 0)
-      .limit(opts.limit ?? 0)
-      .toArray(),
-    col.countDocuments(filter),
+  if (trimmedTag) {
+    where.push("EXISTS (SELECT 1 FROM page_tags t WHERE t.page_id = p.id AND t.tag = ?)");
+    args.push(trimmedTag);
+  }
+  const clause = where.join(" AND ");
+  const db = getD1();
+  // limit 0 meant "no limit" to MongoDB; -1 means that to SQLite.
+  const [rows, count] = await db.batch([
+    db
+      .prepare(`SELECT p.* FROM pages p WHERE ${clause} ORDER BY p.created_at DESC LIMIT ? OFFSET ?`)
+      .bind(...args, opts.limit || -1, opts.offset ?? 0),
+    db.prepare(`SELECT COUNT(*) AS n FROM pages p WHERE ${clause}`).bind(...args),
   ]);
-  return { pages: docs.map(toPage), total };
+  return {
+    pages: (rows.results as unknown as PageRow[]).map(toPage),
+    total: (count.results[0] as { n: number }).n,
+  };
 }
+
+const PAGE_PATCH_COLUMNS = ["slug", "title", "visibility", "collection_id", "team_id", "password_hash", "frontmatter_meta", "updated_at"] as const;
 
 export async function updatePageRecord(
   pageId: string,
   patch: Partial<Pick<DbPage, "slug" | "title" | "visibility" | "collection_id" | "team_id" | "password_hash" | "frontmatter_meta" | "updated_at">>,
 ): Promise<void> {
-  if (Object.keys(patch).length === 0) return;
-  const db = await getDb();
-
-  // slug=null means "clear the custom slug" — must $unset, not $set to
-  // null, or the sparse unique index collides (see PageDoc's comment).
-  const { slug, ...rest } = patch;
-  const update: { $set?: typeof patch; $unset?: { slug: "" } } = {};
-  if (Object.keys(rest).length > 0) update.$set = rest;
-  if ("slug" in patch) {
-    if (slug === null) {
-      update.$unset = { slug: "" };
-    } else {
-      update.$set = { ...update.$set, slug };
-    }
-  }
-
-  await db.collection<PageDoc>("pages").updateOne({ _id: pageId }, update);
+  // Column names come from the fixed list above, never from the caller.
+  const columns = PAGE_PATCH_COLUMNS.filter((c) => c in patch);
+  if (columns.length === 0) return;
+  const db = getD1();
+  const values = columns.map((c) =>
+    c === "frontmatter_meta" ? (patch.frontmatter_meta ? JSON.stringify(patch.frontmatter_meta) : null) : (patch[c] ?? null),
+  );
+  await db.batch([
+    db.prepare(`UPDATE pages SET ${columns.map((c) => `${c} = ?`).join(", ")} WHERE id = ?`).bind(...values, pageId),
+    ...("frontmatter_meta" in patch ? tagStatements(pageId, patch.frontmatter_meta) : []),
+  ]);
 }
 
 /**
@@ -208,103 +167,65 @@ export async function updatePageRecord(
  * `visibility: "public"`.
  */
 export async function markPageTakenDown(pageId: string, at: string): Promise<void> {
-  const db = await getDb();
-  await db
-    .collection<PageDoc>("pages")
-    .updateOne({ _id: pageId }, { $set: { taken_down_at: at, visibility: "unlisted" } });
-}
-
-export async function getPublicPagesByUser(userId: string, limit = 100): Promise<ExploreItem[]> {
-  const db = await getDb();
-  const docs = await db
-    .collection<PageDoc>("pages")
-    .find({ user_id: userId, visibility: "public", password_hash: null })
-    .sort({ created_at: -1 })
-    .limit(limit)
-    .project<ExploreProjection>(EXPLORE_PROJECTION)
-    .toArray();
-  return docs.map(toExploreItem);
+  await getD1().prepare("UPDATE pages SET taken_down_at = ?, visibility = 'unlisted' WHERE id = ?").bind(at, pageId).run();
 }
 
 export type ExploreItem = Pick<DbPage, "id" | "slug" | "title" | "view_count" | "created_at"> & {
   tags: string[] | null;
 };
 
-type ExploreProjection = Pick<PageDoc, "_id" | "slug" | "title" | "view_count" | "created_at" | "frontmatter_meta">;
+type ExploreRow = Pick<DbPage, "id" | "slug" | "title" | "view_count" | "created_at"> & { frontmatter_meta: string | null };
 
-function extractTags(meta: Record<string, unknown> | null | undefined): string[] | null {
-  const tags = meta?.tags;
-  if (!Array.isArray(tags) || tags.length === 0) return null;
-  const strings = tags.filter((t): t is string => typeof t === "string");
-  return strings.length > 0 ? strings : null;
+const EXPLORE_COLUMNS = "p.id, p.slug, p.title, p.view_count, p.created_at, p.frontmatter_meta";
+const EXPLORE_FILTER = "p.visibility = 'public' AND p.password_hash IS NULL";
+
+function toExploreItem(r: ExploreRow): ExploreItem {
+  const tags = tagsOf(r.frontmatter_meta ? (JSON.parse(r.frontmatter_meta) as Record<string, unknown>) : null);
+  return { id: r.id, slug: r.slug, title: r.title, view_count: r.view_count, created_at: r.created_at, tags: tags.length ? tags : null };
 }
 
-const EXPLORE_PROJECTION = { _id: 1, slug: 1, title: 1, view_count: 1, created_at: 1, frontmatter_meta: 1 } as const;
+async function explore(sql: string, ...args: unknown[]): Promise<ExploreItem[]> {
+  const { results } = await getD1().prepare(sql).bind(...args).all<ExploreRow>();
+  return results.map(toExploreItem);
+}
 
-function toExploreItem(d: ExploreProjection): ExploreItem {
-  return {
-    id: d._id,
-    slug: d.slug ?? null,
-    title: d.title,
-    view_count: d.view_count,
-    created_at: d.created_at,
-    tags: extractTags(d.frontmatter_meta),
-  };
+export async function getPublicPagesByUser(userId: string, limit = 100): Promise<ExploreItem[]> {
+  return explore(
+    `SELECT ${EXPLORE_COLUMNS} FROM pages p WHERE p.user_id = ? AND ${EXPLORE_FILTER} ORDER BY p.created_at DESC LIMIT ?`,
+    userId,
+    limit,
+  );
 }
 
 export async function getRecentPublicPages(limit = 48): Promise<ExploreItem[]> {
-  const db = await getDb();
-  const docs = await db
-    .collection<PageDoc>("pages")
-    .find({ visibility: "public", password_hash: null })
-    .sort({ created_at: -1 })
-    .limit(limit)
-    .project<ExploreProjection>(EXPLORE_PROJECTION)
-    .toArray();
-  return docs.map(toExploreItem);
+  return explore(`SELECT ${EXPLORE_COLUMNS} FROM pages p WHERE ${EXPLORE_FILTER} ORDER BY p.created_at DESC LIMIT ?`, limit);
 }
 
 export async function getPagesByTag(tag: string, limit = 100): Promise<ExploreItem[]> {
-  const db = await getDb();
-  const docs = await db
-    .collection<PageDoc>("pages")
-    .find({
-      "frontmatter_meta.tags": tag,
-      visibility: "public",
-      password_hash: null,
-    })
-    .sort({ created_at: -1 })
-    .limit(limit)
-    .project<ExploreProjection>(EXPLORE_PROJECTION)
-    .toArray();
-  return docs.map(toExploreItem);
+  return explore(
+    `SELECT ${EXPLORE_COLUMNS} FROM page_tags t JOIN pages p ON p.id = t.page_id
+     WHERE t.tag = ? AND ${EXPLORE_FILTER} ORDER BY p.created_at DESC LIMIT ?`,
+    tag,
+    limit,
+  );
 }
 
 export async function getDistinctTags(limit = 200): Promise<Array<{ tag: string; count: number }>> {
-  const db = await getDb();
-  const result = await db
-    .collection<PageDoc>("pages")
-    .aggregate<{ _id: string; count: number }>([
-      { $match: { visibility: "public", password_hash: null, "frontmatter_meta.tags": { $exists: true, $ne: [] } } },
-      { $unwind: "$frontmatter_meta.tags" },
-      { $group: { _id: "$frontmatter_meta.tags", count: { $sum: 1 } } },
-      { $sort: { count: -1 } },
-      { $limit: limit },
-    ])
-    .toArray();
-  return result.map((r) => ({ tag: String(r._id), count: r.count }));
+  const { results } = await getD1()
+    .prepare(
+      `SELECT t.tag AS tag, COUNT(*) AS count FROM page_tags t JOIN pages p ON p.id = t.page_id
+       WHERE ${EXPLORE_FILTER} GROUP BY t.tag ORDER BY count DESC LIMIT ?`,
+    )
+    .bind(limit)
+    .all<{ tag: string; count: number }>();
+  return results;
 }
 
 export async function getPagesByCollection(collectionId: string): Promise<ExploreItem[]> {
-  const db = await getDb();
-  const docs = await db
-    .collection<PageDoc>("pages")
-    .find({ collection_id: collectionId, visibility: "public" })
-    .sort({ created_at: -1 })
-    .limit(200)
-    .project<ExploreProjection>(EXPLORE_PROJECTION)
-    .toArray();
-  return docs.map(toExploreItem);
+  return explore(
+    `SELECT ${EXPLORE_COLUMNS} FROM pages p WHERE p.collection_id = ? AND p.visibility = 'public' ORDER BY p.created_at DESC LIMIT 200`,
+    collectionId,
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -392,18 +313,21 @@ export async function updateCollectionRecord(
   await db.collection<CollectionDoc>("collections").updateOne({ _id: collectionId }, update);
 }
 
+async function unfilePages(userId: string, collectionId: string): Promise<void> {
+  await getD1()
+    .prepare("UPDATE pages SET collection_id = NULL WHERE user_id = ? AND collection_id = ?")
+    .bind(userId, collectionId)
+    .run();
+}
+
 export async function deleteCollectionRecord(collectionId: string, userId: string): Promise<void> {
   const db = await getDb();
   const children = await getCollectionChildren(collectionId);
   for (const child of children) {
-    await db
-      .collection<PageDoc>("pages")
-      .updateMany({ user_id: userId, collection_id: child.id }, { $set: { collection_id: null } });
+    await unfilePages(userId, child.id);
     await db.collection<CollectionDoc>("collections").deleteOne({ _id: child.id, user_id: userId });
   }
-  await db
-    .collection<PageDoc>("pages")
-    .updateMany({ user_id: userId, collection_id: collectionId }, { $set: { collection_id: null } });
+  await unfilePages(userId, collectionId);
   await db.collection<CollectionDoc>("collections").deleteOne({ _id: collectionId, user_id: userId });
 }
 
@@ -477,63 +401,42 @@ export async function getTeamSpacesByMembership(userId: string): Promise<DbColle
   return docs.map(toCollection);
 }
 
-type ViewDedupeDoc = { session_hash: string; page_id: string; created_at: string; expires_at: Date };
-
 /**
- * Increments view_count at most once per (sessionHash, pageId) — mirroring
- * analytics_events' session-scoped dedupe (same session_hash derivation,
- * see src/lib/session-hash.ts) so a single visitor's reloads, prefetches,
- * or a bot re-fetching the same URL don't keep inflating the counter.
- * Two different visitors (different session hashes) viewing the same page
- * both count, same as before.
+ * Increments view_count at most once per (sessionHash, pageId), so a single
+ * visitor's reloads, prefetches, or a bot re-fetching the same URL don't
+ * keep inflating the counter.
  *
- * `updateOne`'s `upsertedCount` tells us atomically whether this is the
- * first time this session has been recorded against this page — only then
- * do we bump the real counter.
+ * INSERT OR IGNORE reports whether this session was new for the page; only
+ * then is the counter bumped.
  */
 export async function incrementViewCount(pageId: string, sessionHash: string): Promise<void> {
-  const db = await getDb();
+  const db = getD1();
+  const res = await db
+    .prepare("INSERT OR IGNORE INTO view_dedupe (session_hash, page_id, created_at, expires_at) VALUES (?, ?, ?, ?)")
+    .bind(sessionHash, pageId, new Date().toISOString(), Date.now() + 7_776_000_000)
+    .run();
+  if (res.meta.changes === 0) return;
 
-  const dedupeResult = await db.collection<ViewDedupeDoc>("view_dedupe").updateOne(
-    { session_hash: sessionHash, page_id: pageId },
-    {
-      $setOnInsert: {
-        session_hash: sessionHash,
-        page_id: pageId,
-        created_at: new Date().toISOString(),
-        // BSON Date for the TTL index — see the analytics_events write site
-        // (src/app/api/analytics/view/route.ts) for why this is separate
-        // from the string `created_at`.
-        expires_at: new Date(),
-      },
-    },
-    { upsert: true },
-  );
-  if (dedupeResult.upsertedCount === 0) return;
-
-  await db
-    .collection<PageDoc>("pages")
-    .updateOne({ _id: pageId }, { $inc: { view_count: 1 } });
+  await db.prepare("UPDATE pages SET view_count = view_count + 1 WHERE id = ?").bind(pageId).run();
 }
 
 export async function deletePageRecord(pageId: string): Promise<void> {
-  const db = await getDb();
-  await db.collection<PageDoc>("pages").deleteOne({ _id: pageId });
+  const db = getD1();
+  await db.batch([
+    db.prepare("DELETE FROM pages WHERE id = ?").bind(pageId),
+    db.prepare("DELETE FROM page_tags WHERE page_id = ?").bind(pageId),
+  ]);
 }
 
 /**
  * Deletes every record keyed by page_id outside of the page/doc/version
- * collections themselves (analytics, publish
- * events) — call this alongside deletePageRecord/deletePageVersions so a
- * deleted page doesn't leave orphaned rows behind. Best-effort: callers
- * already treat page deletion as complete once the doc/record/versions are
- * gone, so a failure here is logged by the caller, not fatal to the delete.
+ * tables themselves (analytics, publish events).
  */
 export async function deletePageAssociatedRecords(pageId: string): Promise<void> {
-  const db = await getDb();
-  await Promise.all([
-    db.collection("analytics_events").deleteMany({ page_id: pageId }),
-    db.collection("publish_events").deleteMany({ page_id: pageId }),
+  const db = getD1();
+  await db.batch([
+    db.prepare("DELETE FROM analytics_events WHERE page_id = ?").bind(pageId),
+    db.prepare("DELETE FROM publish_events WHERE page_id = ?").bind(pageId),
   ]);
 }
 
@@ -547,68 +450,46 @@ export async function createApiKey(
   keyHash: string,
   label: string | null,
 ): Promise<void> {
-  const db = await getDb();
-  await db.collection<ApiKeyDoc>("api_keys").insertOne({
-    _id: id,
-    user_id: userId,
-    key_hash: keyHash,
-    label,
-    created_at: new Date().toISOString(),
-    last_used_at: null,
-  });
+  await getD1()
+    .prepare("INSERT INTO api_keys (id, user_id, key_hash, label, created_at) VALUES (?, ?, ?, ?, ?)")
+    .bind(id, userId, keyHash, label, new Date().toISOString())
+    .run();
 }
 
 export async function getApiKeysByUser(userId: string): Promise<DbApiKey[]> {
-  const db = await getDb();
-  const docs = await db
-    .collection<ApiKeyDoc>("api_keys")
-    .find({ user_id: userId })
-    .sort({ created_at: -1 })
-    .toArray();
-  return docs.map(toApiKey);
+  const { results } = await getD1()
+    .prepare("SELECT * FROM api_keys WHERE user_id = ? ORDER BY created_at DESC")
+    .bind(userId)
+    .all<DbApiKey>();
+  return results;
 }
 
 export async function findApiKeyByHash(
   keyHash: string,
 ): Promise<DbApiKey | null> {
-  const db = await getDb();
-  const doc = await db
-    .collection<ApiKeyDoc>("api_keys")
-    .findOne({ key_hash: keyHash });
-  return doc ? toApiKey(doc) : null;
+  return getD1().prepare("SELECT * FROM api_keys WHERE key_hash = ?").bind(keyHash).first<DbApiKey>();
 }
 
 export async function touchApiKey(id: string): Promise<void> {
-  const db = await getDb();
-  await db
-    .collection<ApiKeyDoc>("api_keys")
-    .updateOne({ _id: id }, { $set: { last_used_at: new Date().toISOString() } });
+  await getD1().prepare("UPDATE api_keys SET last_used_at = ? WHERE id = ?").bind(new Date().toISOString(), id).run();
 }
 
 export async function deleteApiKey(id: string, userId: string): Promise<void> {
-  const db = await getDb();
-  await db
-    .collection<ApiKeyDoc>("api_keys")
-    .deleteOne({ _id: id, user_id: userId });
+  await getD1().prepare("DELETE FROM api_keys WHERE id = ? AND user_id = ?").bind(id, userId).run();
 }
 
 // ---------------------------------------------------------------------------
 // Webhooks
 // ---------------------------------------------------------------------------
 
-function toWebhook(doc: WebhookDoc): DbWebhook {
-  const { _id, ...rest } = doc;
-  return { id: _id, ...rest, last_triggered_at: rest.last_triggered_at ?? null };
-}
+type WebhookRow = Omit<DbWebhook, "events"> & { events: string };
 
 export async function getWebhooksByUser(userId: string): Promise<DbWebhook[]> {
-  const db = await getDb();
-  const docs = await db
-    .collection<WebhookDoc>("webhooks")
-    .find({ user_id: userId })
-    .sort({ created_at: -1 })
-    .toArray();
-  return docs.map(toWebhook);
+  const { results } = await getD1()
+    .prepare("SELECT * FROM webhooks WHERE user_id = ? ORDER BY created_at DESC")
+    .bind(userId)
+    .all<WebhookRow>();
+  return results.map((r) => ({ ...r, events: JSON.parse(r.events) as DbWebhook["events"] }));
 }
 
 export async function createWebhook(
@@ -618,27 +499,16 @@ export async function createWebhook(
   secret: string,
   events: DbWebhook["events"],
 ): Promise<void> {
-  const db = await getDb();
-  await db.collection<WebhookDoc>("webhooks").insertOne({
-    _id: id,
-    user_id: userId,
-    url,
-    secret,
-    events,
-    created_at: new Date().toISOString(),
-    last_triggered_at: null,
-  });
+  await getD1()
+    .prepare("INSERT INTO webhooks (id, user_id, url, secret, events, created_at) VALUES (?, ?, ?, ?, ?, ?)")
+    .bind(id, userId, url, secret, JSON.stringify(events), new Date().toISOString())
+    .run();
 }
 
 export async function deleteWebhook(id: string, userId: string): Promise<void> {
-  const db = await getDb();
-  await db.collection<WebhookDoc>("webhooks").deleteOne({ _id: id, user_id: userId });
+  await getD1().prepare("DELETE FROM webhooks WHERE id = ? AND user_id = ?").bind(id, userId).run();
 }
 
 export async function touchWebhookTriggered(id: string): Promise<void> {
-  const db = await getDb();
-  await db.collection<WebhookDoc>("webhooks").updateOne(
-    { _id: id },
-    { $set: { last_triggered_at: new Date().toISOString() } },
-  );
+  await getD1().prepare("UPDATE webhooks SET last_triggered_at = ? WHERE id = ?").bind(new Date().toISOString(), id).run();
 }

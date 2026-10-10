@@ -1,6 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { getDb } from "@/lib/mongodb";
-import { ensureIndexes } from "@/lib/db/index-specs.mjs";
+import { useLocalD1 } from "./helpers/d1";
 import { createPageRecord, getPagesByUser } from "@/lib/db";
 
 // Coverage for the agent-native search capability added to make Booklet's
@@ -12,9 +11,7 @@ import { createPageRecord, getPagesByUser } from "@/lib/db";
 // `list_pages` calls) relies on that.
 
 test.beforeAll(async () => {
-  process.env.MONGODB_URI ??= "mongodb://localhost:27017/readable?retryWrites=true&w=majority";
-  const db = await getDb();
-  await ensureIndexes(db);
+  await useLocalD1();
 });
 
 function testId(): string {
@@ -22,8 +19,13 @@ function testId(): string {
 }
 
 async function cleanup(userId: string, pageIds: string[]) {
-  const db = await getDb();
-  await db.collection("pages").deleteMany({ _id: { $in: pageIds } } as never);
+  const db = await useLocalD1();
+  for (const id of pageIds) {
+    await db.batch([
+      db.prepare("DELETE FROM pages WHERE id = ?").bind(id),
+      db.prepare("DELETE FROM page_tags WHERE page_id = ?").bind(id),
+    ]);
+  }
 }
 
 test.describe("getPagesByUser — query/tag filtering", () => {
