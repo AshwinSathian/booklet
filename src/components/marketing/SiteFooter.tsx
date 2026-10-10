@@ -6,6 +6,10 @@ function cn(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
 }
 
+// Public status page of the external uptime monitor. Inlined at build time;
+// the link is left out when it is unset (local dev, CI).
+const STATUS_PAGE_URL = process.env.NEXT_PUBLIC_STATUS_PAGE_URL?.trim() || null;
+
 export interface SiteFooterProps {
   className?: string;
 }
@@ -39,6 +43,16 @@ export function SiteFooter({ className }: SiteFooterProps) {
               <Link href="/about" className="transition hover:text-text-primary">About</Link>
               <Link href="/privacy" className="transition hover:text-text-primary">Privacy</Link>
               <Link href="/terms" className="transition hover:text-text-primary">Terms</Link>
+              {STATUS_PAGE_URL ? (
+                <a
+                  href={STATUS_PAGE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="transition hover:text-text-primary"
+                >
+                  Status
+                </a>
+              ) : null}
             </nav>
           </div>
 
