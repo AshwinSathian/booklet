@@ -1,9 +1,8 @@
 import type { PublishedDoc } from "@/lib/blocks";
 import { DEFAULT_SETTINGS } from "@/lib/blocks";
-import { BLOCKS, ROUTES, STORAGE } from "@/lib/constants";
+import { BLOCKS, ROUTES } from "@/lib/constants";
 import { createPageRecord, updatePageRecord } from "@/lib/db";
 import { createId } from "@/lib/id";
-import { resolveApiKey } from "@/lib/api-key-auth";
 import { extractDocTitle } from "@/lib/doc-title";
 import { snapshotPageVersion } from "@/lib/db/versions";
 import { recordPublishEvent } from "@/lib/db/publish-events";
@@ -14,9 +13,10 @@ import { stripWikilinksFromBlocks } from "@/lib/wikilinks/strip";
 import { validateBlocks } from "@/lib/block-schema";
 import { collectRichBlockKinds } from "@/lib/block-usage";
 import { putDoc } from "@/lib/storage";
-import { checkRateLimit } from "@/lib/rate-limit";
-import { assertRawWithinLimit, assertSlugAvailable } from "@/server/pages";
-import { toErrorResponse } from "@/server/errors";
+import { assertRawWithinLimit, assertSlugAvailable, assertStoredWithinLimit } from "@/server/pages";
+import { problem } from "@/server/errors";
+import { idempotent } from "@/server/idempotency";
+import { v1 } from "@/server/v1";
 import { getSiteOrigin } from "@/lib/site-url";
 import { resolveApiClientSource } from "@/lib/request-source";
 import { logError } from "@/lib/logger";
@@ -31,31 +31,24 @@ type PublishPayload = {
   visibility?: unknown;
 };
 
-export async function POST(req: Request) {
-  const userId = await resolveApiKey(req);
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+export const POST = v1("publish", 60, "pages:write", async (req: Request, userId: string) => {
+  const bodyText = await req.text();
+  return idempotent(req, userId, bodyText, () => publish(req, userId, bodyText));
+});
 
-  const rl = await checkRateLimit(`v1__publish__${userId}`, 60);
-  if (rl) return rl;
-
+async function publish(req: Request, userId: string, bodyText: string): Promise<Response> {
   let payload: PublishPayload | null = null;
   try {
-    payload = (await req.json()) as PublishPayload;
+    payload = JSON.parse(bodyText) as PublishPayload;
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return problem(400, "Invalid JSON");
   }
 
   if (!payload?.raw || typeof payload.raw !== "string" || !payload.raw.trim()) {
-    return NextResponse.json({ error: "Nothing to publish — provide `raw` markdown." }, { status: 400 });
+    return problem(400, "Nothing to publish — provide `raw` markdown.");
   }
 
-  try {
-    assertRawWithinLimit(payload.raw);
-  } catch (e) {
-    return toErrorResponse(e);
-  }
+  assertRawWithinLimit(payload.raw);
 
   // Extract frontmatter metadata before parsing.
   const { meta: frontmatterMeta, body } = parseFrontmatter(payload.raw);
@@ -71,13 +64,13 @@ export async function POST(req: Request) {
   // and drafting-time-only, stripped to plain text before storage.
   const blocks = stripWikilinksFromBlocks(parseToBlocks(body));
   if (!blocks.length) {
-    return NextResponse.json({ error: "Nothing to publish — the document is empty." }, { status: 400 });
+    return problem(400, "Nothing to publish — the document is empty.");
   }
 
   const blocksError = validateBlocks(blocks);
   if (blocksError) {
     logError("v1/publish", "Parser produced an invalid block shape", new Error(blocksError));
-    return NextResponse.json({ error: "Failed to parse document. Please report this." }, { status: 500 });
+    return problem(500, "Failed to parse document. Please report this.");
   }
 
   const fm = frontmatterMeta as import("@/lib/frontmatter").FrontmatterMeta;
@@ -88,21 +81,10 @@ export async function POST(req: Request) {
   let normalizedSlug: string | null = null;
   if (fm.slug) {
     normalizedSlug = fm.slug.trim().toLowerCase();
-    try {
-      await assertSlugAvailable(normalizedSlug, null);
-    } catch (e) {
-      return toErrorResponse(e);
-    }
+    await assertSlugAvailable(normalizedSlug, null);
   }
 
-  try {
-    const bytes = new TextEncoder().encode(JSON.stringify({ blocks, raw: body }));
-    if (bytes.byteLength > STORAGE.maxDocBytes) {
-      return NextResponse.json({ error: "Document too large." }, { status: 413 });
-    }
-  } catch {
-    return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
-  }
+  assertStoredWithinLimit(blocks, body);
 
   const id = createId(10);
   const doc: PublishedDoc = {
@@ -117,7 +99,7 @@ export async function POST(req: Request) {
     await putDoc(id, doc);
   } catch (e: unknown) {
     logError("v1/publish", "Publish failed", e);
-    return NextResponse.json({ error: "Publish failed" }, { status: 500 });
+    return problem(500, "Publish failed");
   }
 
   void recordPublishEvent({

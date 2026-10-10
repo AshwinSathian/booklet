@@ -85,6 +85,11 @@ export const INDEX_SPECS = [
   // schedule via `expiresAt`, so one TTL index covers both bucket shapes.
   { collection: "rate_limits", spec: { expiresAt: 1 }, options: { expireAfterSeconds: 0 } },
 
+  // --- idempotency_keys ---
+  // Stored responses for `Idempotency-Key` on POST /api/v1/publish
+  // (src/server/idempotency.ts). Kept for 24 hours.
+  { collection: "idempotency_keys", spec: { expires_at: 1 }, options: { expireAfterSeconds: 0 } },
+
   // --- analytics_events ---
   { collection: "analytics_events", spec: { page_id: 1, created_at: -1 } },
   {

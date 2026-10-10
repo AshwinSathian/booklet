@@ -157,7 +157,14 @@ const MAX_SEARCH_FILTER_LENGTH = 200;
 
 export async function getPagesByUser(
   userId: string,
-  opts: { limit?: number; offset?: number; query?: string; tag?: string } = {},
+  opts: {
+    limit?: number;
+    offset?: number;
+    query?: string;
+    tag?: string;
+    /** Keyset position: return only pages sorted after this one. */
+    after?: { created_at: string; id: string };
+  } = {},
 ): Promise<{ pages: DbPage[]; total: number }> {
   const db = await getDb();
   const col = db.collection<PageDoc>("pages");
@@ -166,10 +173,20 @@ export async function getPagesByUser(
   if (trimmedQuery) filter.title = { $regex: escapeRegExp(trimmedQuery), $options: "i" };
   const trimmedTag = opts.tag?.trim().slice(0, MAX_SEARCH_FILTER_LENGTH);
   if (trimmedTag) filter["frontmatter_meta.tags"] = trimmedTag;
+  // `total` counts every match; the keyset condition only narrows the page.
+  const pageFilter = opts.after
+    ? {
+        ...filter,
+        $or: [
+          { created_at: { $lt: opts.after.created_at } },
+          { created_at: opts.after.created_at, _id: { $lt: opts.after.id } },
+        ],
+      }
+    : filter;
   const [docs, total] = await Promise.all([
     col
-      .find(filter)
-      .sort({ created_at: -1 })
+      .find(pageFilter)
+      .sort({ created_at: -1, _id: -1 })
       .skip(opts.offset ?? 0)
       .limit(opts.limit ?? 0)
       .toArray(),

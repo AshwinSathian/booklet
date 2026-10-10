@@ -1,6 +1,6 @@
-import { resolveApiKey } from "@/lib/api-key-auth";
 import { getPagesByUser } from "@/lib/db";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { problem } from "@/server/errors";
+import { v1 } from "@/server/v1";
 import { ROUTES } from "@/lib/constants";
 import { getSiteOrigin } from "@/lib/site-url";
 import { NextResponse } from "next/server";
@@ -10,15 +10,24 @@ export const runtime = "nodejs";
 const MAX_LIMIT = 100;
 const DEFAULT_LIMIT = 20;
 
-export async function GET(req: Request) {
-  const userId = await resolveApiKey(req);
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+/** Opaque keyset cursor: the sort key of the last page already returned. */
+function encodeCursor(p: { created_at: string; id: string }): string {
+  return Buffer.from(JSON.stringify([p.created_at, p.id])).toString("base64url");
+}
+
+function decodeCursor(cursor: string): { created_at: string; id: string } | null {
+  try {
+    const v: unknown = JSON.parse(Buffer.from(cursor, "base64url").toString());
+    if (Array.isArray(v) && v.length === 2 && typeof v[0] === "string" && typeof v[1] === "string") {
+      return { created_at: v[0], id: v[1] };
+    }
+  } catch {
+    /* fall through */
   }
+  return null;
+}
 
-  const rl = await checkRateLimit(`v1__pages_list__${userId}`, 60);
-  if (rl) return rl;
-
+export const GET = v1("pages_list", 60, "pages:read", async (req: Request, userId: string) => {
   const url = new URL(req.url);
   const rawLimit = parseInt(url.searchParams.get("limit") ?? String(DEFAULT_LIMIT), 10);
   const rawOffset = parseInt(url.searchParams.get("offset") ?? "0", 10);
@@ -31,7 +40,14 @@ export async function GET(req: Request) {
   const query = url.searchParams.get("q") ?? undefined;
   const tag = url.searchParams.get("tag") ?? undefined;
 
-  const { pages, total } = await getPagesByUser(userId, { limit, offset, query, tag });
+  // `cursor` walks the list by position in the sort order, so pages created
+  // or deleted during the walk never shift it. `offset` still works; when
+  // both are sent the offset counts from the cursor.
+  const cursor = url.searchParams.get("cursor");
+  const after = cursor ? decodeCursor(cursor) : undefined;
+  if (after === null) return problem(400, "Invalid cursor");
+
+  const { pages, total } = await getPagesByUser(userId, { limit, offset, query, tag, after });
 
   const origin = getSiteOrigin(req);
 
@@ -50,7 +66,13 @@ export async function GET(req: Request) {
   });
 
   return NextResponse.json(
-    { pages: items, total, limit, offset },
+    {
+      pages: items,
+      total,
+      limit,
+      offset,
+      next_cursor: pages.length === limit ? encodeCursor(pages[pages.length - 1]) : null,
+    },
     { status: 200 },
   );
-}
+});

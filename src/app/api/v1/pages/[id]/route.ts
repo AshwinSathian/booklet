@@ -1,16 +1,14 @@
 import type { PublishedDoc } from "@/lib/blocks";
 import { DEFAULT_SETTINGS } from "@/lib/blocks";
-import { BLOCKS, STORAGE } from "@/lib/constants";
+import { BLOCKS } from "@/lib/constants";
 import { updatePageRecord, deletePageRecord, deletePageAssociatedRecords } from "@/lib/db";
 import { deletePageVersions, snapshotPageVersion } from "@/lib/db/versions";
 import { recordPublishEvent } from "@/lib/db/publish-events";
-import { resolveApiKey } from "@/lib/api-key-auth";
 import { parseToBlocks } from "@/lib/parse";
 import { stripWikilinksFromBlocks } from "@/lib/wikilinks/strip";
 import { validateBlocks } from "@/lib/block-schema";
 import { collectRichBlockKinds } from "@/lib/block-usage";
 import { getDoc, putDoc, deleteDoc } from "@/lib/storage";
-import { checkRateLimit } from "@/lib/rate-limit";
 import { ROUTES } from "@/lib/constants";
 import { logError } from "@/lib/logger";
 import {
@@ -19,8 +17,13 @@ import {
   assertNotTakenDown,
   assertRawWithinLimit,
   assertSlugAvailable,
+  assertStoredWithinLimit,
+  assertIfMatch,
+  ifNoneMatchHits,
+  pageEtag,
 } from "@/server/pages";
-import { toErrorResponse } from "@/server/errors";
+import { problem } from "@/server/errors";
+import { v1 } from "@/server/v1";
 import { getSiteOrigin } from "@/lib/site-url";
 import { resolveApiClientSource } from "@/lib/request-source";
 import { GONE_MESSAGES } from "@/lib/gone-notice";
@@ -41,38 +44,30 @@ type MetadataPayload = {
 
 type PatchPayload = ContentPayload & MetadataPayload;
 
+type Ctx = { params: Promise<{ id: string }> };
+
 // ─── GET: read page metadata + raw content ────────────────────────────────────
 
-export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const userId = await resolveApiKey(req);
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const rl = await checkRateLimit(`v1__page_get__${userId}`, 120);
-  if (rl) return rl;
+export const GET = v1("page_get", 120, "pages:read", async (req: Request, userId: string, { params }: Ctx) => {
 
   const { id } = await params;
   if (!id?.trim()) {
-    return NextResponse.json({ error: "Missing page id" }, { status: 400 });
+    return problem(400, "Missing page id");
   }
 
   // Accept both page ID and custom slug
-  let record;
-  try {
-    record = await getOwnedPageByIdOrSlug(id, userId);
-  } catch (e) {
-    return toErrorResponse(e);
-  }
+  const record = await getOwnedPageByIdOrSlug(id, userId);
 
   // A taken-down page is not served over the API either. (Its owner can
   // still read their own source in the dashboard; nothing is deleted.
   // Expiry never applies here: this route only serves pages with an owner.)
   if (record.taken_down_at) {
-    return NextResponse.json({ error: GONE_MESSAGES.taken_down }, { status: 410 });
+    return problem(410, GONE_MESSAGES.taken_down);
+  }
+
+  const etag = pageEtag(record);
+  if (ifNoneMatchHits(req, record)) {
+    return new NextResponse(null, { status: 304, headers: { ETag: etag } });
   }
 
   const doc = await getDoc(record.id);
@@ -89,51 +84,34 @@ export async function GET(
     created_at: record.created_at,
     updated_at: record.updated_at,
     raw: doc?.raw ?? null,
-  });
-}
+  }, { headers: { ETag: etag } });
+});
 
 // ─── PATCH: update content, slug, or visibility ───────────────────────────────
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const userId = await resolveApiKey(req);
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const rl = await checkRateLimit(`v1__patch__${userId}`, 60);
-  if (rl) return rl;
+export const PATCH = v1("patch", 60, "pages:write", async (req: Request, userId: string, { params }: Ctx) => {
 
   const { id } = await params;
   if (!id?.trim()) {
-    return NextResponse.json({ error: "Missing page id" }, { status: 400 });
+    return problem(400, "Missing page id");
   }
 
-  let record;
-  try {
-    record = await getOwnedPage(id, userId);
-    assertNotTakenDown(record);
-  } catch (e) {
-    return toErrorResponse(e);
-  }
+  const record = await getOwnedPage(id, userId);
+  assertNotTakenDown(record);
+  assertIfMatch(req, record);
 
   let payload: PatchPayload | null = null;
   try {
     payload = (await req.json()) as PatchPayload;
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return problem(400, "Invalid JSON");
   }
 
   const hasContent = Boolean(payload?.raw && typeof payload.raw === "string" && payload.raw.trim());
   const hasMetadata = payload !== null && ("slug" in payload || "visibility" in payload);
 
   if (!hasContent && !hasMetadata) {
-    return NextResponse.json(
-      { error: "Provide `raw`, `slug`, or `visibility`." },
-      { status: 400 },
-    );
+    return problem(400, "Provide `raw`, `slug`, or `visibility`.");
   }
 
   const metaPatch: Parameters<typeof updatePageRecord>[1] = {};
@@ -143,31 +121,20 @@ export async function PATCH(
       const rawSlug = payload.slug;
       const slug = rawSlug === null ? null : rawSlug?.trim().toLowerCase() ?? null;
       if (slug !== null) {
-        try {
-          await assertSlugAvailable(slug, id);
-        } catch (e) {
-          return toErrorResponse(e);
-        }
+        await assertSlugAvailable(slug, id);
       }
       metaPatch.slug = slug;
     }
     if ("visibility" in payload) {
       if (payload.visibility !== "public" && payload.visibility !== "unlisted") {
-        return NextResponse.json(
-          { error: "visibility must be 'public' or 'unlisted'" },
-          { status: 422 },
-        );
+        return problem(422, "visibility must be 'public' or 'unlisted'");
       }
       metaPatch.visibility = payload.visibility;
     }
   }
 
   if (hasContent && payload?.raw) {
-    try {
-      assertRawWithinLimit(payload.raw);
-    } catch (e) {
-      return toErrorResponse(e);
-    }
+    assertRawWithinLimit(payload.raw);
 
     // `blocks` is always derived server-side from `raw` — see
     // src/lib/block-schema.ts's header for why a client-supplied block tree
@@ -176,26 +143,16 @@ export async function PATCH(
     // and drafting-time-only, stripped to plain text before storage.
     const blocks = stripWikilinksFromBlocks(parseToBlocks(payload.raw));
     if (!blocks.length) {
-      return NextResponse.json(
-        { error: "Nothing to publish — the document is empty." },
-        { status: 400 },
-      );
+      return problem(400, "Nothing to publish — the document is empty.");
     }
 
     const blocksError = validateBlocks(blocks);
     if (blocksError) {
       logError("v1/pages", "Parser produced an invalid block shape", new Error(blocksError));
-      return NextResponse.json({ error: "Failed to parse document. Please report this." }, { status: 500 });
+      return problem(500, "Failed to parse document. Please report this.");
     }
 
-    try {
-      const bytes = new TextEncoder().encode(JSON.stringify({ blocks, raw: payload.raw }));
-      if (bytes.byteLength > STORAGE.maxDocBytes) {
-        return NextResponse.json({ error: "Document too large." }, { status: 413 });
-      }
-    } catch {
-      return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
-    }
+    assertStoredWithinLimit(blocks, payload.raw);
 
     const doc: PublishedDoc = {
       v: BLOCKS.version,
@@ -215,7 +172,7 @@ export async function PATCH(
       // above, so anything reaching here is an unexpected DB/driver
       // failure that could carry internal details (hosts, connection info).
       logError("v1/pages", "Update failed", e);
-      return NextResponse.json({ error: "Update failed" }, { status: 500 });
+      return problem(500, "Update failed");
     }
 
     void recordPublishEvent({
@@ -245,41 +202,29 @@ export async function PATCH(
     id,
     url,
     ...(metaPatch.updated_at ? { updated_at: metaPatch.updated_at } : {}),
-  });
-}
+  }, { headers: { ETag: pageEtag({ ...record, ...metaPatch }) } });
+});
 
 // ─── DELETE ───────────────────────────────────────────────────────────────────
 
-export async function DELETE(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const userId = await resolveApiKey(req);
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const rl = await checkRateLimit(`v1__delete__${userId}`, 60);
-  if (rl) return rl;
+export const DELETE = v1("delete", 60, "pages:write", async (req: Request, userId: string, { params }: Ctx) => {
 
   const { id } = await params;
   if (!id?.trim()) {
-    return NextResponse.json({ error: "Missing page id" }, { status: 400 });
+    return problem(400, "Missing page id");
   }
 
-  try {
-    // Deleting would free the slug for a fresh copy at the same URL and
-    // destroy the record of what was taken down.
-    assertNotTakenDown(await getOwnedPage(id, userId));
-  } catch (e) {
-    return toErrorResponse(e);
-  }
+  // Deleting would free the slug for a fresh copy at the same URL and
+  // destroy the record of what was taken down.
+  const record = await getOwnedPage(id, userId);
+  assertNotTakenDown(record);
+  assertIfMatch(req, record);
 
   try {
     await deleteDoc(id);
   } catch (e: unknown) {
     logError("v1/pages", "Delete failed", e);
-    return NextResponse.json({ error: "Delete failed" }, { status: 500 });
+    return problem(500, "Delete failed");
   }
 
   try {
@@ -291,4 +236,4 @@ export async function DELETE(
   }
 
   return NextResponse.json({ ok: true });
-}
+});
