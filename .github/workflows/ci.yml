@@ -276,3 +276,11 @@ jobs:
       - name: Server log (on failure)
         if: failure()
         run: cat next-start.log
+      # Playwright keeps a trace and a screenshot for each failed test.
+      - name: Traces of failed tests
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: e2e-test-results
+          path: test-results/
+          retention-days: 7
