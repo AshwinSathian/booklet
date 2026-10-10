@@ -59,6 +59,9 @@ export function buildSpaceFeed(space: { name: string; slug: string }, pages: DbP
       "  <entry>",
       `    <id>${xml(`${origin}/p/${p.id}`)}</id>`,
       `    <title>${xml(p.title ?? "Untitled")}</title>`,
+      // Readers show an entry with no text as empty; the description, or
+      // failing that the title again, gives them something.
+      `    <summary>${xml(typeof p.frontmatter_meta?.description === "string" ? p.frontmatter_meta.description : (p.title ?? "Untitled"))}</summary>`,
       `    <link rel="alternate" type="text/html" href="${xml(url)}"/>`,
       `    <published>${xml(p.created_at)}</published>`,
       `    <updated>${xml(p.updated_at)}</updated>`,

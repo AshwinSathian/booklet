@@ -7,6 +7,7 @@ import {
 import { createId } from "@/lib/id";
 import { getSession } from "@/lib/auth/session";
 import { getOwnedCollection } from "@/server/collections";
+import { isVerified } from "@/server/verification";
 import { toErrorResponse } from "@/server/errors";
 import { NextResponse } from "next/server";
 
@@ -64,7 +65,10 @@ export async function POST(
 
   // Look up user by email if they already have an account
   const invitedUser = await getUserByEmail(email).catch(() => null);
-  const invitedUserId = invitedUser?.id ?? `pending:${email}`;
+  // Only an account that has confirmed the address is that person. Adding
+  // an unconfirmed one would hand the space's team-only pages to whoever
+  // signed up with a teammate's address first.
+  const invitedUserId = invitedUser && isVerified(invitedUser) ? invitedUser.id : `pending:${email}`;
 
   const memberId = createId(10);
   await addCollectionMember(memberId, id, invitedUserId, email, role, userId);

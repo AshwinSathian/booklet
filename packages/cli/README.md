@@ -85,7 +85,8 @@ Options:
 | Flag | Description |
 |------|-------------|
 | `--slug <slug>` | Set a custom URL slug (e.g. `my-readme`) |
-| `--visibility <v>` | `unlisted` (default: reachable by link, not listed or indexed) or `public` (listed on Explore) |
+| `--visibility <v>` | `unlisted` (default: reachable by link, not listed or indexed), `public` (listed on Explore) or `team` (members of `--space` only) |
+| `--space <slug>` | Publish into a team space (the slug in `/t/<slug>`). New pages only |
 | `--update <id>` | Update an existing page by ID |
 | `--watch` | Watch file and re-publish on change |
 | `--open` | Open the page in your browser after publishing |
@@ -202,7 +203,11 @@ Supported frontmatter fields:
 |-------|------|-------|
 | `title` | string | Overrides the extracted H1 title (max 200 chars) |
 | `slug` | string | Custom URL slug (max 60 chars) |
-| `visibility` | `"public"` \| `"unlisted"` | Defaults to unlisted |
+| `visibility` | `"public"` \| `"unlisted"` \| `"team"` | Defaults to unlisted. `team` needs `space` |
+| `space` | string | Slug of a team space to publish into |
+| `type` | string | `incident`, `postmortem`, `adr`, `rfc`, `runbook` or `release-notes` |
+| `status`, `severity` | string | Shown in the strip above the page |
+| `owners` | string[] | Shown in the strip above the page |
 | `description` | string | SEO meta description (max 300 chars) |
 | `author` | string | Stored as metadata (max 100 chars) |
 | `date` | string | Stored as metadata, any format |

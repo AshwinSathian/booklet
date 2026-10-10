@@ -950,6 +950,16 @@ export default function McpSetupPage() {
                       desc: "Permanently delete a page",
                       inputs: "id",
                     },
+                    {
+                      name: "create_document",
+                      desc: "Publish an incident report, postmortem, ADR, RFC, runbook or release notes with its fields",
+                      inputs: "type, title, body, status, severity, date, owners, space, visibility",
+                    },
+                    {
+                      name: "search_pages",
+                      desc: "Find pages by title, document type or team space",
+                      inputs: "query, type, space, limit",
+                    },
                   ].map((tool, i, arr) => (
                     <tr
                       key={tool.name}

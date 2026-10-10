@@ -3,6 +3,19 @@
 All notable changes to `booklet-cli` are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [2.1.0] - 2026-10-10
+
+### Added
+- `booklet publish --space <slug>` publishes into a team space, and `--visibility team` restricts
+  the page to that space's members.
+- `booklet pages list --type <type>` and `--space <slug>`. With `--space` the list is every page
+  in the space, not only yours. The table has a Type column.
+- `booklet new` templates start with frontmatter (`type`, `status`, `date`, `owners`), which
+  Booklet shows in the page's header strip.
+
+### Changed
+- `booklet pull` output includes the page's frontmatter (the server now keeps it).
+
 ## [2.0.0] - 2026-10-10
 
 ### Changed

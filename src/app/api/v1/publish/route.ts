@@ -53,7 +53,7 @@ async function publish(req: Request, userId: string, bodyText: string): Promise<
   // which pages its `[[Title]]` links may point at.
   const declared = parseFrontmatter(payload.raw).meta;
   const spaceSlug = payload.space ?? declared.space;
-  const space = spaceSlug === undefined ? null : await getWritableSpace({ slug: spaceSlug }, userId);
+  const space = spaceSlug == null ? null : await getWritableSpace({ slug: spaceSlug }, userId);
   const visibility =
     payload.visibility === "public" || payload.visibility === "unlisted" || payload.visibility === "team"
       ? payload.visibility

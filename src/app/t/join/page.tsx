@@ -2,6 +2,7 @@ import { addCollectionMember, getCollectionRecord } from "@/lib/db";
 import { getUserById } from "@/lib/db/auth";
 import { createId } from "@/lib/id";
 import { verifyInviteToken } from "@/lib/invite-token";
+import { isVerified } from "@/server/verification";
 import { logError } from "@/lib/logger";
 import { getSession } from "@/lib/auth/session";
 import { AuthLayout } from "@/components/auth/AuthLayout";
@@ -21,7 +22,7 @@ export default async function TeamJoinPage({
     return <ErrorPage message="Invalid invite link." />;
   }
 
-  let payload: { teamId: string; invitedEmail: string; invitedBy: string };
+  let payload: Awaited<ReturnType<typeof verifyInviteToken>>;
   try {
     payload = await verifyInviteToken(token);
   } catch (err) {
@@ -41,15 +42,28 @@ export default async function TeamJoinPage({
   const user = await getUserById(userId);
   const userEmail = user?.email?.toLowerCase() ?? null;
 
-  if (userEmail && payload.invitedEmail && userEmail !== payload.invitedEmail.toLowerCase()) {
+  // Membership opens the space's team-only pages, so the invite is for one
+  // address and nobody else: an account with a different address, or none,
+  // does not get in.
+  if (typeof payload.invitedEmail !== "string" || userEmail !== payload.invitedEmail.toLowerCase()) {
     return (
       <ErrorPage message={`This invite was sent to ${payload.invitedEmail}. Please sign in with that account.`} />
     );
   }
+  // Anyone can sign up with the invited address. Until it is confirmed,
+  // holding the account is not proof of being the person invited.
+  if (!isVerified(user)) {
+    return <ErrorPage message="Confirm your email address first: open Account settings and choose “Email me the link”. Then open this invite again." />;
+  }
 
   const team = await getCollectionRecord(payload.teamId);
-  if (!team) {
+  if (!team?.is_team_space) {
     return <ErrorPage message="This team no longer exists." />;
+  }
+  // Removing a member cancels the invites sent before it, or the person
+  // removed could walk back in with the link they joined by.
+  if (team.invites_valid_after && (payload.iat ?? 0) * 1000 < Date.parse(team.invites_valid_after)) {
+    return <ErrorPage message="This invite link has expired or is invalid." />;
   }
 
   await addCollectionMember(

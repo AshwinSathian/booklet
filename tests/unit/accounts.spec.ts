@@ -45,6 +45,9 @@ import { POST as forgotPassword } from "@/app/api/auth/forgot-password/route";
 import { markDocTakenDown } from "@/lib/storage";
 import { markPageTakenDown } from "@/lib/db";
 import { handleCreateDocument } from "../../mcp-server/src/tools.js";
+import { createCollectionRecord, getCollectionMember, removeCollectionMember, updateCollectionRecord } from "@/lib/db";
+import { signInviteToken } from "@/lib/invite-token";
+import JoinPage from "@/app/t/join/page";
 
 // Phase 5a: email verification, provider sign-in linking, Turnstile, and the
 // account page's export, delete and connected-apps actions.
@@ -255,6 +258,45 @@ test.describe("email verification", () => {
       expect((result.content[0] as { text: string }).text).toContain("Confirm your email address first");
     } finally {
       globalThis.fetch = before;
+    }
+  });
+
+  test("a team invite admits only the confirmed owner of the invited address, and not after a removal", async () => {
+    process.env.INVITE_JWT_SECRET ??= "test-only-invite-secret-do-not-use-in-prod";
+    const owner = await newUser();
+    const invited = await newUser();
+    const other = await newUser();
+    await getDb().then((db) => db.collection("users").updateOne({ _id: other.user.id } as never, { $set: { email_verified_at: new Date().toISOString() } }));
+    const teamId = createId(10);
+    await createCollectionRecord(teamId, owner.user.id, `Team ${teamId}`, true);
+    await updateCollectionRecord(teamId, { slug: `team-${teamId.toLowerCase()}` });
+    const token = await signInviteToken({ teamId, invitedEmail: invited.user.email!, invitedBy: owner.user.id });
+    const isMember = async (userId: string) => (await getCollectionMember(teamId, userId)) !== null;
+    const open = (cookie: string) => {
+      const req = withSession(cookie, "/t/join", { method: "GET" });
+      return withRequestScope(req, () => JoinPage({ searchParams: Promise.resolve({ token }) }));
+    };
+    try {
+      // Someone else holding the link.
+      await open(other.cookie);
+      expect(await isMember(other.user.id)).toBe(false);
+
+      // The invited address, registered but not confirmed: anyone could have signed up with it.
+      await open(invited.cookie);
+      expect(await isMember(invited.user.id)).toBe(false);
+
+      await getDb().then((db) => db.collection("users").updateOne({ _id: invited.user.id } as never, { $set: { email_verified_at: new Date().toISOString() } }));
+      await expect(open(invited.cookie)).rejects.toMatchObject({ digest: expect.stringContaining("NEXT_REDIRECT") });
+      expect(await isMember(invited.user.id)).toBe(true);
+
+      // Removed by the owner: the link they joined by does not let them back in.
+      await removeCollectionMember(teamId, invited.user.id);
+      await open(invited.cookie);
+      expect(await isMember(invited.user.id)).toBe(false);
+    } finally {
+      const db = await getDb();
+      await db.collection("collections").deleteOne({ _id: teamId } as never);
+      await db.collection("collection_members").deleteMany({ collection_id: teamId });
     }
   });
 

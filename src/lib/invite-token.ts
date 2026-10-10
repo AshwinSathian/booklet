@@ -34,7 +34,8 @@ export async function signInviteToken(payload: InvitePayload): Promise<string> {
     .sign(getJwtSecret());
 }
 
-export async function verifyInviteToken(token: string): Promise<InvitePayload> {
-  const { payload } = await jwtVerify(token, getJwtSecret());
-  return payload as unknown as InvitePayload;
+/** `iat` is when the invite was issued, in seconds. */
+export async function verifyInviteToken(token: string): Promise<InvitePayload & { iat?: number }> {
+  const { payload } = await jwtVerify(token, getJwtSecret(), { algorithms: ["HS256"] });
+  return payload as unknown as InvitePayload & { iat?: number };
 }

@@ -46,7 +46,8 @@ That's it: you get back a permanent, shareable URL. No account needed to try the
 - **CLI**: publish Markdown from your terminal (`npx booklet-cli`)
 - **GitHub Action**: publish docs in CI via [`AshwinSathian/publish-to-booklet`](https://github.com/AshwinSathian/publish-to-booklet)
 - **MCP server**: expose the API to AI assistants (Claude, Cursor, etc.) via the Model Context Protocol
-- **Frontmatter**: YAML frontmatter sets title, slug, visibility, tags, author, date
+- **Frontmatter**: YAML frontmatter sets title, slug, visibility, tags, author, date, and a document type (incident, postmortem, ADR, RFC, runbook, release notes) with status, severity and owners
+- **Team spaces**: `/t/<slug>` groups a team's pages by type; a page can be visible to the team only; `[[Title]]` links published pages to each other
 
 ---
 
@@ -102,7 +103,7 @@ A plain Node process (`mcp-server/`) that exposes Booklet's API to AI assistants
 
 **Endpoint:** `https://booklet-mcp.ashwinsathian.com/mcp`
 **Auth:** `Authorization: Bearer <bklt_...>` header (same API keys as the REST API)
-**Tools:** `publish_page`, `update_page`, `get_page`, `list_pages`, `delete_page`
+**Tools:** `publish_page`, `update_page`, `get_page`, `list_pages`, `delete_page`, `create_document`, `search_pages`
 **Resources:** published pages are also exposed as browsable/readable MCP resources (`booklet://pages/:id`)
 **Prompts:** five pre-built document templates the assistant can fill in and publish directly — `incident_report`, `adr` (Architecture Decision Record), `release_notes`, `rfc`, and `runbook`
 

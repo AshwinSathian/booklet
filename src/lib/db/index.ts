@@ -474,7 +474,7 @@ export async function getCollectionBySlug(slug: string): Promise<DbCollection | 
 
 export async function updateCollectionRecord(
   collectionId: string,
-  patch: Partial<Pick<DbCollection, "name" | "slug" | "is_team_space" | "parent_id" | "updated_at">>,
+  patch: Partial<Pick<DbCollection, "name" | "slug" | "is_team_space" | "parent_id" | "invites_valid_after" | "updated_at">>,
 ): Promise<void> {
   if (Object.keys(patch).length === 0) return;
   const db = await getDb();
@@ -555,6 +555,16 @@ export async function removeCollectionMember(collectionId: string, userId: strin
   }
   const db = await getDb();
   await db.collection<CollectionMemberDoc>("collection_members").deleteOne({ collection_id: collectionId, user_id: userId });
+  // An invite link works for 72 hours and more than once, so the one this
+  // member joined by would let them straight back in. Removing a member
+  // cancels every invite issued so far. Whole seconds, plus one: a token's
+  // issue time has no finer grain.
+  await db
+    .collection<CollectionDoc>("collections")
+    .updateOne(
+      { _id: collectionId },
+      { $set: { invites_valid_after: new Date((Math.floor(Date.now() / 1000) + 1) * 1000).toISOString() } },
+    );
 }
 
 export async function getCollectionMember(collectionId: string, userId: string): Promise<DbCollectionMember | null> {

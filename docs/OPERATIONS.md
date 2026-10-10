@@ -216,6 +216,50 @@ the call fails or takes over 2 seconds the request continues, and the page
 renders its own notice with status 200 instead. `PORT` must be set to the
 port the app listens on (`ecosystem.config.js` sets 3100).
 
+## Team spaces and team-only pages
+
+A team space is a `collections` row with `is_team_space: true` and a slug.
+A page is in a space when its `collection_id` is the space's id. Members
+are `collection_members` rows; the space's owner is always a member.
+
+`visibility: "team"` on a page means only its owner and the members of its
+space can open it. `canViewPage` in `src/server/access.ts` is the one check,
+and the share page calls `notFound()` when it fails, so a non-member gets
+the same 404 as for a page that does not exist. The Markdown route
+(`/p/<id>.md`) and the embed never serve a team-only page, to anyone.
+
+A team-only page is not on Explore, tag pages, profiles, the sitemap or the
+space's Atom feed: all of those select `visibility: "public"`. "Referenced
+by" on a share page lists a page only to someone who could find it anyway
+(`canListPage`).
+
+If the space is deleted, or stops being a team space, its team-only pages
+can be opened by their owners alone. Nothing makes them unlisted.
+
+To see who can open a page:
+
+```js
+const p = db.pages.findOne({ _id: "<id>" }, { visibility: 1, user_id: 1, collection_id: 1 })
+db.collection_members.find({ collection_id: p.collection_id }, { user_id: 1, email: 1, role: 1 })
+```
+
+**Invites.** `POST /api/teams/:id/invite` returns a link signed with
+`INVITE_JWT_SECRET`, valid for 72 hours. `/t/join` accepts it only from an
+account whose email is the invited address, and, where email is configured,
+only once that address is confirmed. Removing a member sets
+`collections.invites_valid_after`, which cancels every link issued before
+it; people invited and not yet joined need a new link.
+
+**Links between pages.** `page_links` holds one row per `[[Title]]` that
+resolved when the source page was published (`src/server/links.ts`). The
+link is not recomputed when a title or a visibility changes later; it is
+when the source is published again. Deleting a page removes its rows.
+
+**Document types.** Frontmatter `type` is stored as `pages.doc_type`
+(indexed) and the other fields in `pages.frontmatter_meta`. Pages published
+before 2026-10-10 from the editor have neither until they are published
+again; they show no header strip and sit under "Other pages" in a space.
+
 ## Anonymous page expiry
 
 A page published without an account gets `docs.expires_at` = publish time +

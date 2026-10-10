@@ -100,6 +100,8 @@ export type DbCollection = {
   slug: string | null;   // only set for team spaces; used for /t/[slug] routing
   is_team_space: boolean;
   parent_id: string | null;   // null = top-level folder; else id of a top-level collection (2-level cap)
+  /** Team spaces: invite links issued before this ISO time no longer work. Set when a member is removed. */
+  invites_valid_after?: string | null;
   created_at: string;
   updated_at: string;
 };

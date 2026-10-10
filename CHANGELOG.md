@@ -9,6 +9,46 @@ Notable changes to the Booklet app and MCP server. The format follows
 
 ## [Unreleased]
 
+Documents (roadmap Phase 5b). MCP server 3.1.0.
+
+### Added
+
+- **Document types.** Frontmatter `type` (`incident`, `postmortem`, `adr`,
+  `rfc`, `runbook`, `release-notes`) with `status`, `severity`, `date`,
+  `owners` and `supersedes`. A published page shows them in a strip above the
+  content. The 21 editor templates, `booklet new` and the 5 MCP prompts start
+  with this frontmatter.
+- **Links between published pages.** `[[Title]]` becomes a link when a
+  published page with that title exists in the same team space, or among
+  your own pages outside a space. The linked page lists "Referenced by"
+  pages, limited to the ones the reader may see.
+- **Team-only pages.** `visibility: team` on a page in a team space: members
+  of the space can open it, everyone else gets a 404. Set it in the editor's
+  publish menu, on My pages, with `--visibility team --space <slug>` in the
+  CLI, or through the API and MCP.
+- **Team space home.** `/t/<slug>` groups a space's pages by type, with a
+  decision log in ADR-number order and incidents by date. `/t` lists your
+  spaces and creates one; "Spaces" is in the account menu. A space with
+  public pages has an Atom feed at `/t/<slug>/feed.xml`.
+- **API:** `GET /api/v1/pages` takes `type` and `space`; page objects carry
+  `doc_type` and `space`; `POST /api/v1/publish` takes `space`.
+- **MCP tools** `create_document` (type, fields, space, body) and
+  `search_pages` (query, type, space).
+
+### Changed
+
+- **Breaking:** the Markdown the API returns for a page (`raw`) includes the
+  frontmatter it was published with. `POST /api/v1/publish` used to drop it.
+- **Breaking:** updating a page's content also updates its title, type and
+  frontmatter fields from the new document.
+- **Breaking:** a publish whose ownership record cannot be written fails
+  with 500. It used to return 201 for a page nobody owned.
+- A team invite link is accepted only by an account whose confirmed email is
+  the invited address. Removing a member cancels the invite links sent
+  before the removal.
+- Members with the editor role can add their own pages to a team space.
+  Before, only the space's owner could.
+
 Accounts (roadmap Phase 5a).
 
 ### Added
