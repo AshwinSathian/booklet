@@ -57,7 +57,8 @@ export function AccountMenu() {
         style={{
           backgroundColor: `hsl(${hue} 70% 92%)`,
           borderColor: `hsl(${hue} 70% 80%)`,
-          color: `hsl(${hue} 60% 40%)`,
+          // 25% lightness: at 40% the yellow and green hues fall under 4.5:1 on the 92% tint.
+          color: `hsl(${hue} 60% 25%)`,
         }}
       >
         {initials}

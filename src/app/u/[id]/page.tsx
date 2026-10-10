@@ -104,7 +104,7 @@ export default async function UserProfilePage({
               borderColor: `hsl(${avatarHue(user.id)} 70% 80% / 1)`,
             }}
           >
-            <span className="text-xl font-bold" style={{ color: `hsl(${avatarHue(user.id)} 60% 40%)` }}>
+            <span className="text-xl font-bold" style={{ color: `hsl(${avatarHue(user.id)} 60% 25%)` }}>
               {initials}
             </span>
           </div>
