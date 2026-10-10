@@ -47,12 +47,39 @@ export async function POST(req: Request, { params }: { params: Promise<{ probe: 
     return Response.json({ prefix: r.value.slice(0, 31), ms: r.ms });
   }
   if (probe === "pbkdf2-verify") {
-    const r = await timed(() => verifyPassword(PASSWORD, PBKDF2_HASH));
+    let r;
+    try {
+      r = await timed(() => verifyPassword(PASSWORD, PBKDF2_HASH));
+    } catch (e) {
+      return Response.json({ error: e instanceof Error ? `${e.name}: ${e.message}` : String(e) }, { status: 500 });
+    }
     return Response.json({ verified: r.value, ms: r.ms });
   }
   if (probe === "pbkdf2-hash") {
-    const r = await timed(() => hashPassword(PASSWORD));
-    return Response.json({ iterations: r.value.split(":")[0], ms: r.ms });
+    try {
+      const r = await timed(() => hashPassword(PASSWORD));
+      return Response.json({ iterations: r.value.split(":")[0], ms: r.ms });
+    } catch (e) {
+      return Response.json({ error: e instanceof Error ? `${e.name}: ${e.message}` : String(e) }, { status: 500 });
+    }
+  }
+  if (probe === "pbkdf2-node" || probe === "pbkdf2-noble") {
+    // Same derivation as src/lib/password.ts, through two other
+    // implementations, because Workers' WebCrypto refuses more than
+    // 100,000 PBKDF2 iterations.
+    const [iterations, saltHex, wantHex] = PBKDF2_HASH.split(":");
+    const salt = Uint8Array.from(saltHex.match(/../g)!, (h) => parseInt(h, 16));
+    let got: Uint8Array;
+    if (probe === "pbkdf2-node") {
+      const { pbkdf2Sync } = await import("node:crypto");
+      got = new Uint8Array(pbkdf2Sync(PASSWORD, salt, Number(iterations), 32, "sha256"));
+    } else {
+      const { pbkdf2 } = await import("@noble/hashes/pbkdf2.js");
+      const { sha256 } = await import("@noble/hashes/sha2.js");
+      got = pbkdf2(sha256, new TextEncoder().encode(PASSWORD), salt, { c: Number(iterations), dkLen: 32 });
+    }
+    const gotHex = Array.from(got, (b) => b.toString(16).padStart(2, "0")).join("");
+    return Response.json({ iterations: Number(iterations), verified: gotHex === wantHex });
   }
   if (probe === "parse") {
     const raw = await req.text();

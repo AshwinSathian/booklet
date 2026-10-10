@@ -5,6 +5,6 @@
   "compatibility_date": "2026-10-01",
   "compatibility_flags": ["nodejs_compat"],
   "services": [{ "binding": "APP", "service": "booklet-spike-app" }],
-  "vars": { "BOOKLET_API_BASE": "http://127.0.0.1:8799" },
+  "vars": { "BOOKLET_API_BASE": "https://booklet-spike-app.ashwinsathyan19.workers.dev" },
   "observability": { "enabled": true }
 }

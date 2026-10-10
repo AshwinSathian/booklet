@@ -7,10 +7,13 @@
   "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
   "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "booklet-spike-app" }],
   "d1_databases": [
-    { "binding": "DB", "database_name": "booklet-spike", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }
+    { "binding": "DB", "database_name": "booklet-spike", "database_id": "e7f878e2-dbf9-4b7c-87c7-c00d1e3693a5", "migrations_dir": "migrations" }
   ],
   // 17 3 * * *: daily purge of expired anonymous documents.
   // 0 * * * *: hourly delete of expired sessions, reset tokens, rate-limit buckets and dedupe rows.
   "triggers": { "crons": ["17 3 * * *", "0 * * * *"] },
+  // Runs the Worker near the D1 primary instead of near the visitor: a share
+  // page makes several D1 reads one after another.
+  "placement": { "mode": "smart" },
   "observability": { "enabled": true }
 }
