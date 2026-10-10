@@ -11,8 +11,15 @@
 # ─────────────────────────────────────────────────────────────────────────────
 set -euo pipefail
 
-NODE_BIN="$HOME/.nvm/versions/node/v20.19.5/bin"
+# Node 24 runs the apps (ecosystem.config.js names the same install). The
+# pm2 CLI may live under a different nvm version, so look for it.
+NODE_BIN="$HOME/.nvm/versions/node/v24.19.0/bin"
 PM2="$NODE_BIN/pm2"
+if [[ ! -x "$PM2" ]]; then
+  for bin in "$HOME"/.nvm/versions/node/*/bin; do
+    if [[ -x "$bin/pm2" ]]; then PM2="$bin/pm2"; break; fi
+  done
+fi
 ECOSYSTEM="/Users/ashwinsathian/Documents/Personal/booklet/ecosystem.config.js"
 POLL_INTERVAL=15
 PING_TIMEOUT_SEC=5

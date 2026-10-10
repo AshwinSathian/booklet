@@ -28,7 +28,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  NODE_VERSION: "20"
+  NODE_VERSION: "24"
 
 # Every job here only reads the checked-out code — nothing pushes, tags, or
 # writes issues/PRs, so a single repo-wide read-only grant covers all of it.

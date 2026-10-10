@@ -14,6 +14,12 @@
 # having failed to deploy — only the live-traffic outcome changes.
 set -euo pipefail
 
+# Production runs on Node 24 (see .nvmrc). Put that install first on PATH so
+# npm, the build and anything PM2 spawns all use it, whatever Node the
+# calling shell has active.
+NODE_BIN="$HOME/.nvm/versions/node/v24.19.0/bin"
+[[ -x "$NODE_BIN/node" ]] && export PATH="$NODE_BIN:$PATH"
+
 # Make sure `pm2` is resolvable regardless of the caller's active Node
 # version — nvm only puts a version's bin/ on PATH once something has
 # `nvm use`'d it, which a manual invocation's shell (or the pre-push hook's)
