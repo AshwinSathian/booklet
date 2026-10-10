@@ -132,32 +132,51 @@ async function main() {
     const state = parsed.searchParams.get("state");
     ok("auth URL has port + state", Boolean(port && state));
 
-    // ── 3. Simulate the browser: GET /cli-auth with the session cookie ──
+    // ── 3. Simulate the browser: open /cli-auth, then click "Authorize" ──
+    // /cli-auth is a confirmation screen: a bare GET must NOT mint a key or
+    // redirect (that was the CSRF hole closed on 2026-09-05 — see
+    // docs/OPERATIONS.md). The key is only minted by the same-origin POST
+    // the page's button sends.
     const cliAuthRes = await fetch(authUrl, {
       headers: { Cookie: sessionCookie },
       redirect: "manual",
     });
-    const bodyIfNoRedirect = cliAuthRes.status >= 200 && cliAuthRes.status < 300 ? await cliAuthRes.text() : "";
+    const confirmHtml = cliAuthRes.status === 200 ? await cliAuthRes.text() : "";
+    ok("cli-auth renders the confirmation page (200)", cliAuthRes.status === 200, `got ${cliAuthRes.status}`);
+    ok("cli-auth page does NOT show 'Something went wrong'", !confirmHtml.includes("Something went wrong"));
     ok(
-      "cli-auth page does NOT show 'Something went wrong'",
-      !bodyIfNoRedirect.includes("Something went wrong"),
-    );
-    ok(
-      "cli-auth page redirects (307) instead of rendering an error page",
-      cliAuthRes.status === 307 || cliAuthRes.status === 302,
-      `got ${cliAuthRes.status}`,
-    );
-    const location = cliAuthRes.headers.get("location");
-    ok(
-      "redirect target is the CLI's loopback callback server",
-      Boolean(location && location.startsWith(`http://127.0.0.1:${port}/callback`)),
-      location ?? "(no location header)",
+      "a bare GET does not hand out a key or redirect to the callback",
+      !cliAuthRes.headers.get("location") && !/bklt_[A-Za-z0-9]{40}/.test(confirmHtml),
     );
 
-    // ── 4. Browser follows the redirect to 127.0.0.1:port/callback ──────
+    const authorizeRes = await fetch(`${BASE}/api/auth/cli-authorize`, {
+      method: "POST",
+      headers: { Cookie: sessionCookie, Origin: BASE, "Content-Type": "application/json" },
+      body: JSON.stringify({ port, state }),
+    });
+    const authorizeBody = await authorizeRes.json().catch(() => ({}));
+    ok("POST /api/auth/cli-authorize returns 200", authorizeRes.status === 200, `got ${authorizeRes.status}`);
+    const location = typeof authorizeBody.callbackUrl === "string" ? authorizeBody.callbackUrl : null;
+    ok(
+      "callback URL is the CLI's loopback callback server",
+      Boolean(location && location.startsWith(`http://127.0.0.1:${port}/callback`)),
+      location ? "(callback URL withheld: it carries the key)" : "(no callbackUrl in response)",
+    );
+
+    const crossOrigin = await fetch(`${BASE}/api/auth/cli-authorize`, {
+      method: "POST",
+      headers: { Cookie: sessionCookie, Origin: "https://evil.example", "Content-Type": "application/json" },
+      body: JSON.stringify({ port, state }),
+    });
+    ok("cross-origin authorize is rejected (403)", crossOrigin.status === 403, `got ${crossOrigin.status}`);
+
+    // ── 4. Browser navigates to 127.0.0.1:port/callback ─────────────────
     if (location) {
       const callbackRes = await fetch(location);
-      ok("CLI's local callback server accepted the redirect", callbackRes.status === 200);
+      ok("CLI's local callback server accepted the callback", callbackRes.status === 200);
+    } else {
+      // Without a callback the CLI would sit until its own 5-minute timeout.
+      child.kill();
     }
 
     const { code, stdout, stderr } = await new Promise((resolve) => {
@@ -173,7 +192,7 @@ async function main() {
 
     const config = JSON.parse(await readFile(join(home, ".booklet", "config.json"), "utf8"));
     const apiKey = config.apiKey;
-    ok("CLI saved an API key matching rdbl_ prefix", /^rdbl_[0-9A-Za-z]{40}$/.test(apiKey ?? ""));
+    ok("CLI saved an API key with the bklt_ prefix", /^bklt_[0-9A-Za-z]{40}$/.test(apiKey ?? ""));
 
     // ── 5. `booklet whoami` ──────────────────────────────────────────────
     section("CLI commands");
@@ -255,18 +274,35 @@ async function main() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          // Streamable HTTP: the spec requires a client to accept both, and
+          // the server may answer either way.
+          Accept: "application/json, text/event-stream",
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
       });
-      const body = await res.json().catch(() => null);
+      const text = await res.text();
+      // A JSON-RPC response arrives as plain JSON or as one SSE `data:` line.
+      const payload = (res.headers.get("content-type") ?? "").includes("text/event-stream")
+        ? (text.split("\n").find((l) => l.startsWith("data:")) ?? "").slice(5)
+        : text;
+      let body = null;
+      try {
+        body = JSON.parse(payload);
+      } catch {
+        /* leave null: callers report the status */
+      }
       return { status: res.status, body };
     }
 
     const health = await fetch(`${MCP_BASE}/health`);
     ok("MCP /health returns ok", health.status === 200);
 
-    const init = await mcpCall("initialize", {});
+    const init = await mcpCall("initialize", {
+      protocolVersion: "2025-11-25",
+      capabilities: {},
+      clientInfo: { name: "booklet-production-verify", version: "1.0.0" },
+    });
     ok("MCP initialize succeeds", init.status === 200 && init.body?.result?.protocolVersion);
 
     const toolsList = await mcpCall("tools/list", {});
