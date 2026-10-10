@@ -9,7 +9,7 @@ import { extractDocTitle } from "@/lib/doc-title";
 import { GONE_MESSAGES } from "@/lib/gone-notice";
 import { logError } from "@/lib/logger";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { clearDocExpiry, getDoc, getDocState } from "@/lib/storage";
+import { clearClaimToken, clearDocExpiry, getDoc, getDocState } from "@/lib/storage";
 
 export const runtime = "nodejs";
 
@@ -60,6 +60,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       return NextResponse.json({ error: "Page not found" }, { status: 404 });
     }
 
+    // Expiry is cleared BEFORE the owner record is written. The daily purge
+    // deletes a document only while expires_at is still set, so in this
+    // order it can never delete a page in the middle of being claimed. If
+    // the insert below then fails, the page is left ownerless and
+    // non-expiring — recoverable, unlike a deleted document.
+    await clearDocExpiry(id);
     try {
       // `pages._id` is unique, so of two racing claims exactly one insert
       // succeeds — that insert is the ownership decision.
@@ -70,7 +76,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       }
       throw e;
     }
-    await clearDocExpiry(id);
+    await clearClaimToken(id);
     void snapshotPageVersion(id, doc).catch((err) => logError("claim", "Version snapshot failed", err));
 
     const res = NextResponse.json({ ok: true, id });

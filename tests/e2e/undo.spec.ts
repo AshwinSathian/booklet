@@ -57,8 +57,15 @@ test.describe("undo after programmatic edits", () => {
   test("replace-all is undone in one step", async ({ page }) => {
     const textarea = await openEditorWith(page, "cat dog cat");
     await page.getByTitle("Find & replace (⌘F)").click();
-    await page.getByPlaceholder("Find…").fill("cat");
+    // Replacement first, then the search term: typing in "Find…" queues a
+    // requestAnimationFrame that moves focus to the textarea and selects the
+    // first match (FindReplaceBar.jumpToMatch). Filling "Replace with…"
+    // after it raced that focus change about 1 run in 30, and the
+    // replacement text landed in the textarea instead. Waiting for the
+    // focus move makes the order deterministic.
     await page.getByPlaceholder("Replace with…").fill("bird");
+    await page.getByPlaceholder("Find…").fill("cat");
+    await expect(textarea).toBeFocused();
     await page.getByRole("button", { name: "All", exact: true }).click();
     await expect(textarea).toHaveValue("bird dog bird");
 

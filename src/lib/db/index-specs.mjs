@@ -69,7 +69,7 @@ export const INDEX_SPECS = [
   // --- docs ---
   // Anonymous pages carry `expires_at` (publish date + 90 days) and are
   // deleted 30 days after it by purgeExpiredAnonymousDocs
-  // (src/lib/db/expiry.mjs). Deliberately NOT a TTL index: the purge also
+  // (src/lib/db/purge.ts). Deliberately NOT a TTL index: the purge also
   // checks that no `pages` record exists, so a page that was claimed can
   // never be deleted by a stale expires_at. Sparse because owned pages
   // never have the field.

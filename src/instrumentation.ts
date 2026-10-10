@@ -42,11 +42,8 @@ export async function register() {
   // process open.
   const purge = async () => {
     try {
-      const [{ getDb }, { purgeExpiredAnonymousDocs }] = await Promise.all([
-        import("@/lib/mongodb"),
-        import("@/lib/db/expiry.mjs"),
-      ]);
-      const deleted = await purgeExpiredAnonymousDocs(await getDb());
+      const { purgeExpiredAnonymousDocs } = await import("@/lib/db/purge");
+      const deleted = await purgeExpiredAnonymousDocs();
       if (deleted > 0) logInfo("expiry", "Purged expired anonymous pages", { deleted });
     } catch (err) {
       logError("expiry", "Anonymous page purge failed", err);

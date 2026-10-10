@@ -614,6 +614,10 @@ function AppPageContent() {
   // author opts in to Explore each time.
   const [publishVisibility, setPublishVisibility] = useState<PublishVisibility>("unlisted");
 
+  useEffect(() => {
+    setPublishVisibility("unlisted");
+  }, [activeDraftId]);
+
   const onPublish = useCallback(async () => {
     if (!canPublish) {
       toast.info("Nothing to publish", "Write or paste something first.");
@@ -638,6 +642,8 @@ function AppPageContent() {
       }
 
       const data = (await res.json()) as { id: string; url: string; owned?: boolean };
+      // "Public" is a choice about the page just published, not a setting.
+      setPublishVisibility("unlisted");
 
       const createdAt = new Date().toISOString();
 

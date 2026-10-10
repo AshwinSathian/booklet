@@ -83,7 +83,9 @@ in as a user in `ADMIN_USER_IDS`. "Take down" sets `taken_down_at` on the
 document and its page record, makes the page unlisted, and closes every
 open report for that page. "Dismiss" closes the one report. From then on
 `/p/:id`, `/p/:id/embed` and `GET /api/v1/pages/:id` return 410 with a
-one-line notice. The document is kept, not deleted.
+one-line notice. The document is kept, not deleted, and its owner can no
+longer edit, re-list or delete the page (those requests return 410), so a
+custom slug stays attached to the taken-down page.
 
 There is no "restore" button. To reverse a takedown, unset the field by
 hand:

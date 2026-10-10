@@ -15,9 +15,7 @@
 
 export { ANONYMOUS_PAGE_TTL_DAYS, PURGE_GRACE_DAYS } from "@/lib/db/expiry.mjs";
 
-export function claimCookieName(pageId: string): string {
-  return `booklet_claim_${pageId}`;
-}
+export { claimCookieName } from "@/lib/claim-cookie";
 
 function toHex(bytes: Uint8Array): string {
   return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");

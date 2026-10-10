@@ -10,11 +10,14 @@ import { useState } from "react";
 export function KeepPageNotice({
   pageId,
   expiresOn,
+  deletedOn,
   signedIn,
 }: {
   pageId: string;
   /** Already formatted on the server, so server and client render the same text. */
   expiresOn: string;
+  /** Set once the page has expired: readers already get 410, and this is when it is deleted. */
+  deletedOn: string | null;
   signedIn: boolean;
 }) {
   const [busy, setBusy] = useState(false);
@@ -44,8 +47,14 @@ export function KeepPageNotice({
     >
       <div className="mx-auto flex w-full max-w-3xl flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <p className="text-xs text-text-secondary">
-          <span className="font-semibold text-text-primary">This page expires on {expiresOn}.</span>{" "}
-          You published it without an account. Only you can see this notice.
+          <span className="font-semibold text-text-primary">
+            {deletedOn
+              ? `This page expired on ${expiresOn} and will be deleted on ${deletedOn}.`
+              : `This page expires on ${expiresOn}.`}
+          </span>{" "}
+          {deletedOn
+            ? "Nobody else can open it now. Only you can see this notice."
+            : "You published it without an account. Only you can see this notice."}
           {error ? <span className="block text-red-400">{error}</span> : null}
         </p>
         {signedIn ? (

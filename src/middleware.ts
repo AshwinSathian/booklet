@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getClientIp } from "@/lib/request-ip";
 import { SESSION_COOKIE_NAME } from "@/lib/auth/constants";
+import { claimCookieName } from "@/lib/claim-cookie";
 import { goneNoticeHtml, isGoneReason, type GoneReason } from "@/lib/gone-notice";
 
 // 'unsafe-eval' is dropped in production: nothing in this codebase calls
@@ -149,7 +150,12 @@ export default async function middleware(req: NextRequest) {
       /* malformed escape: look it up as-is, it will not match anything */
     }
     const reason = await fetchGoneReason(id);
-    if (reason) {
+    // An expired page stays reachable from the browser that published it
+    // until the purge deletes it, so its author can still claim it. Only
+    // the cookie's presence is checked here; the page verifies the token
+    // and shows everyone else the same notice (see expiryForAuthor there).
+    const mayBeAuthor = reason === "expired" && req.cookies.has(claimCookieName(id));
+    if (reason && !mayBeAuthor) {
       return withSecurityHeaders(
         new Response(req.method === "HEAD" ? null : goneNoticeHtml(reason), {
           status: 410,

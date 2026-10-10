@@ -1,16 +1,19 @@
 import { z } from "zod";
 import { NextResponse } from "next/server";
 import { isSameOriginRequest } from "@/lib/auth/origin-check";
-import { createReport } from "@/lib/db/reports";
+import { countOpenReportsForPage, createReport } from "@/lib/db/reports";
 import { REPORT_REASONS } from "@/lib/db/types";
 import { sendAbuseReportEmail } from "@/lib/email";
 import { logError, logWarn } from "@/lib/logger";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { checkMonthlyQuota, checkRateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/request-ip";
 import { getSiteOrigin } from "@/lib/site-url";
 import { resolvePageId } from "@/server/page-gone";
 
 export const runtime = "nodejs";
+
+const MAX_OPEN_REPORTS_PER_PAGE = 10;
+const MAX_REPORT_EMAILS_PER_MONTH = 200;
 
 const ReportSchema = z.object({
   /** Page id or custom slug, as it appears in the /p/ URL. */
@@ -47,6 +50,16 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Page not found" }, { status: 404 });
     }
 
+    // One page needs one decision, not a queue of duplicates: past 10 open
+    // reports, further ones are acknowledged and dropped. The count also
+    // decides the email — only a page's first open report sends one, so a
+    // script reporting one page in a loop cannot spend the Resend quota
+    // that password-reset mail depends on.
+    const alreadyOpen = await countOpenReportsForPage(pageId);
+    if (alreadyOpen >= MAX_OPEN_REPORTS_PER_PAGE) {
+      return NextResponse.json({ ok: true }, { status: 201 });
+    }
+
     const report = await createReport({
       page_id: pageId,
       reason: parsed.data.reason,
@@ -57,6 +70,13 @@ export async function POST(req: Request) {
     // The stored row is the record; the email is a nudge. A mail failure
     // must not turn a saved report into an error for the reporter.
     const origin = getSiteOrigin(req);
+    // Second cap, across pages: at most 200 report emails a month. Beyond
+    // it reports are still stored and shown in /admin/reports.
+    const overEmailBudget =
+      alreadyOpen > 0 ||
+      (await checkMonthlyQuota("report_email", MAX_REPORT_EMAILS_PER_MONTH, "").catch(() => null)) !== null;
+    if (overEmailBudget) return NextResponse.json({ ok: true }, { status: 201 });
+
     void sendAbuseReportEmail({
       pageUrl: `${origin}/p/${pageId}`,
       adminUrl: `${origin}/admin/reports`,

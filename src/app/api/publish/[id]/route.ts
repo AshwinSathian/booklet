@@ -10,7 +10,7 @@ import { validateBlocks } from "@/lib/block-schema";
 import { putDoc } from "@/lib/storage";
 import { logError } from "@/lib/logger";
 import { getSession } from "@/lib/auth/session";
-import { assertRawWithinLimit, getOwnedPage } from "@/server/pages";
+import { assertNotTakenDown, assertRawWithinLimit, getOwnedPage } from "@/server/pages";
 import { toErrorResponse } from "@/server/errors";
 import { getSiteOrigin } from "@/lib/site-url";
 import { NextResponse } from "next/server";
@@ -40,6 +40,7 @@ export async function PATCH(
     let record;
     try {
       record = await getOwnedPage(id, userId);
+      assertNotTakenDown(record);
     } catch (e) {
       return toErrorResponse(e);
     }

@@ -32,7 +32,7 @@ async function resolveEmbedPage(idOrSlug: string) {
   }
 
   // Same render guard as the share page — see resolveSharePage there.
-  const gone = doc ? await getGoneReason(resolvedId).catch(() => null) : null;
+  const gone = doc ? await getGoneReason(resolvedId) : null;
 
   return { doc, resolvedId, pageRecord, gone };
 }

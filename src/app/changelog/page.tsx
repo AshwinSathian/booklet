@@ -43,7 +43,7 @@ const RELEASES: Release[] = [
       { date: "2026-10-10", tag: "Fixed", text: "Documents over 200,000 characters are rejected with a clear error. They used to publish with the stored Markdown source cut off at 200,000 characters" },
       { date: "2026-10-10", tag: "Fixed", text: "Undo (⌘Z / Ctrl+Z) now reverses toolbar formatting, slash-menu inserts, wikilink completion and replace-all in the editor" },
       { date: "2026-10-10", tag: "Fixed", text: "Links in published pages carry rel=\"nofollow ugc\", so publishing a page passes no search ranking to what it links to" },
-      { date: "2026-10-10", tag: "Fixed", text: "Setup pages showed the old rdbl_ key prefix and READABLE_API_KEY secret name; they now show bklt_ and BOOKLET_API_KEY" },
+      { date: "2026-10-10", tag: "Fixed", text: "Setup pages showed the API key prefix and secret name from before the rename; they now show bklt_ and BOOKLET_API_KEY" },
     ],
   },
   {

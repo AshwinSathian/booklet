@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { sessionCookieFor, withRequestScope } from "./helpers/request-scope";
 import { cleanupPages, seedDoc, seedUserWithKey, throughMiddleware, useTestEnv } from "./helpers/pages";
 import { getDb } from "@/lib/mongodb";
 import { ensureIndexes } from "@/lib/db/index-specs.mjs";
@@ -9,7 +10,9 @@ import { getDoc, putDoc } from "@/lib/storage";
 import { dismissReport, takeDownPage } from "@/server/moderation";
 import { getGoneReason } from "@/server/page-gone";
 import { POST as postReport } from "@/app/api/reports/route";
-import { GET as v1Get } from "@/app/api/v1/pages/[id]/route";
+import { GET as v1Get, PATCH as v1Patch, DELETE as v1Delete } from "@/app/api/v1/pages/[id]/route";
+import { PATCH as sessionPatch, DELETE as sessionDelete } from "@/app/api/pages/[id]/route";
+import { PATCH as publishPatch } from "@/app/api/publish/[id]/route";
 import { generateMetadata } from "@/app/p/[id]/page";
 import { generateMetadata as generateEmbedMetadata } from "@/app/p/[id]/embed/page";
 
@@ -168,6 +171,63 @@ test.describe("takedown", () => {
     expect(record?.taken_down_at).toBeTruthy();
     expect((await getRecentPublicPages(500)).map((p) => p.id)).not.toContain(id);
     expect((await listOpenReports()).filter((r) => r.page_id === id)).toHaveLength(0);
+  });
+
+  test("the owner cannot change a taken-down page: no re-listing, no new content", async () => {
+    const { userId, rawKey } = await seedUserWithKey();
+    userIds.push(userId);
+    const cookie = await sessionCookieFor(userId);
+    const id = await newDoc();
+    await createPageRecord(id, userId, "t", null, null, "public");
+    await takeDownPage(id);
+
+    const json = { "content-type": "application/json" };
+    const ctx = { params: Promise.resolve({ id }) };
+    const viaSession = (handler: typeof sessionPatch, body: unknown) => {
+      const req = new Request(`http://localhost/api/pages/${id}`, {
+        method: "PATCH",
+        headers: { ...json, cookie },
+        body: JSON.stringify(body),
+      });
+      return withRequestScope(req, () => handler(req, ctx));
+    };
+
+    expect((await viaSession(sessionPatch, { visibility: "public" })).status).toBe(410);
+    expect((await viaSession(publishPatch, { raw: "# replaced" })).status).toBe(410);
+    const v1 = await v1Patch(
+      new Request(`http://localhost/api/v1/pages/${id}`, {
+        method: "PATCH",
+        headers: { ...json, authorization: `Bearer ${rawKey}` },
+        body: JSON.stringify({ visibility: "public", raw: "# replaced" }),
+      }),
+      ctx,
+    );
+    expect(v1.status).toBe(410);
+
+    // Nor delete it: that would free its slug for a fresh copy at the same
+    // URL, and destroy the record of what was taken down.
+    const del = new Request(`http://localhost/api/pages/${id}`, { method: "DELETE", headers: { cookie } });
+    expect((await withRequestScope(del, () => sessionDelete(del, ctx))).status).toBe(410);
+    const v1Del = await v1Delete(
+      new Request(`http://localhost/api/v1/pages/${id}`, {
+        method: "DELETE",
+        headers: { authorization: `Bearer ${rawKey}` },
+      }),
+      ctx,
+    );
+    expect(v1Del.status).toBe(410);
+
+    expect((await getPageRecord(id))?.visibility).toBe("unlisted");
+    expect((await getDoc(id))?.raw).toContain("Secret title");
+    expect((await getRecentPublicPages(500)).map((p) => p.id)).not.toContain(id);
+  });
+
+  test("a page keeps at most 10 open reports; further ones are accepted and dropped", async () => {
+    const id = await newDoc();
+    for (let i = 0; i < 12; i++) {
+      expect((await postReport(reportReq({ page_id: id, reason: "spam" }))).status).toBe(201);
+    }
+    expect((await listOpenReports(500)).filter((r) => r.page_id === id)).toHaveLength(10);
   });
 
   test("the owner re-publishing content does not lift a takedown", async () => {

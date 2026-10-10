@@ -53,7 +53,7 @@ export async function cleanupPages(ids: string[], userIds: string[] = []) {
  * /api/pages/:id/gone route over loopback HTTP whether the page is gone;
  * here that one fetch is routed straight into the real route handler.
  */
-export async function throughMiddleware(path: string): Promise<Response> {
+export async function throughMiddleware(path: string, cookie?: string): Promise<Response> {
   const realFetch = globalThis.fetch;
   globalThis.fetch = (async (input: RequestInfo | URL) => {
     const url = new URL(input instanceof Request ? input.url : String(input));
@@ -62,7 +62,7 @@ export async function throughMiddleware(path: string): Promise<Response> {
     return goneStatus(new Request(url), { params: Promise.resolve({ id: decodeURIComponent(m[1]) }) });
   }) as typeof fetch;
   try {
-    return await middleware(new NextRequest(`http://localhost${path}`));
+    return await middleware(new NextRequest(`http://localhost${path}`, cookie ? { headers: { cookie } } : undefined));
   } finally {
     globalThis.fetch = realFetch;
   }

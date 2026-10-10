@@ -41,6 +41,11 @@ export async function listOpenReports(limit = 200): Promise<DbReport[]> {
   return docs.map(toReport);
 }
 
+export async function countOpenReportsForPage(pageId: string): Promise<number> {
+  const db = await getDb();
+  return db.collection<ReportDoc>("reports").countDocuments({ page_id: pageId, status: "open" });
+}
+
 export async function countOpenReports(): Promise<number> {
   const db = await getDb();
   return db.collection<ReportDoc>("reports").countDocuments({ status: "open" });

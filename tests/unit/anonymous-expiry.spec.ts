@@ -3,7 +3,8 @@ import { sessionCookieFor, withRequestScope } from "./helpers/request-scope";
 import { cleanupPages, seedDoc, throughMiddleware, useTestEnv } from "./helpers/pages";
 import { getDb } from "@/lib/mongodb";
 import { ensureIndexes } from "@/lib/db/index-specs.mjs";
-import { backfillAnonymousExpiry, purgeExpiredAnonymousDocs } from "@/lib/db/expiry.mjs";
+import { backfillAnonymousExpiry } from "@/lib/db/expiry.mjs";
+import { purgeExpiredAnonymousDocs } from "@/lib/db/purge";
 import { createPageRecord, getPageRecord } from "@/lib/db";
 import { getDoc, getDocState } from "@/lib/storage";
 import { ANONYMOUS_PAGE_TTL_DAYS, claimCookieName, hashClaimToken } from "@/lib/anonymous-claim";
@@ -16,6 +17,7 @@ import { POST as claimPage } from "@/app/api/pages/[id]/claim/route";
 // with no owner and no way to remove them.
 
 const DAY = 86_400_000;
+const db = () => getDb();
 const ids: string[] = [];
 const userIds: string[] = [];
 
@@ -117,6 +119,23 @@ test.describe("expiry", () => {
     });
   });
 
+  test("in the 30 days after expiry the author's browser still reaches the page, to claim it", async () => {
+    const { id, claimToken } = await publish();
+    const claimCookie = `${claimCookieName(id)}=${claimToken}`;
+
+    await atDaysFromNow(95, async () => {
+      // Created inside the shifted clock: a session minted today would have
+      // expired by then.
+      const { session } = await newUser();
+      expect((await throughMiddleware(`/p/${id}`)).status).toBe(410);
+      // The middleware only sees that a claim cookie is present; the page
+      // itself verifies it before showing anything.
+      expect((await throughMiddleware(`/p/${id}`, claimCookie)).status).toBe(200);
+      expect((await claim(id, [session, claimCookie])).status).toBe(200);
+      expect((await throughMiddleware(`/p/${id}`)).status).toBe(200);
+    });
+  });
+
   test("89 days on, an unclaimed anonymous page is still served", async () => {
     const { id } = await publish();
     await atDaysFromNow(89, async () => {
@@ -208,8 +227,10 @@ test.describe("daily purge", () => {
     await createPageRecord(claimedLate, userId, "owned");
     await createPageRecord(owned, userId, "owned");
 
-    const db = await getDb();
-    await purgeExpiredAnonymousDocs(db);
+    await db().then((d) => d.collection("page_versions").insertOne({ page_id: purged, version_number: 1 } as never));
+    await purgeExpiredAnonymousDocs();
+
+    expect(await db().then((d) => d.collection("page_versions").countDocuments({ page_id: purged }))).toBe(0);
 
     expect(await getDoc(purged)).toBeNull();
     expect(await getDoc(inGrace)).not.toBeNull();

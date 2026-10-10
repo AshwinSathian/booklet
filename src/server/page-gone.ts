@@ -5,17 +5,23 @@
  */
 
 import { getPageBySlug, getPageRecord } from "@/lib/db";
-import { getDocState } from "@/lib/storage";
+import { getDocState, type DocState } from "@/lib/storage";
 import { GONE_MESSAGES, type GoneReason } from "@/lib/gone-notice";
 
 export { GONE_MESSAGES, type GoneReason };
 
+async function resolve(idOrSlug: string): Promise<{ id: string; state: DocState } | null> {
+  if (typeof idOrSlug !== "string" || !idOrSlug) return null;
+  const direct = await getDocState(idOrSlug);
+  if (direct) return { id: idOrSlug, state: direct };
+  const bySlug = await getPageBySlug(idOrSlug);
+  const state = bySlug ? await getDocState(bySlug.id) : null;
+  return bySlug && state ? { id: bySlug.id, state } : null;
+}
+
 /** Resolves a page id or custom slug to the id of a stored document, or null. */
 export async function resolvePageId(idOrSlug: string): Promise<string | null> {
-  if (typeof idOrSlug !== "string" || !idOrSlug) return null;
-  if (await getDocState(idOrSlug)) return idOrSlug;
-  const bySlug = await getPageBySlug(idOrSlug);
-  return bySlug && (await getDocState(bySlug.id)) ? bySlug.id : null;
+  return (await resolve(idOrSlug))?.id ?? null;
 }
 
 /**
@@ -23,10 +29,9 @@ export async function resolvePageId(idOrSlug: string): Promise<string | null> {
  * at all, which is the caller's 404 to give, not a 410.
  */
 export async function getGoneReason(idOrSlug: string): Promise<GoneReason | null> {
-  const id = await resolvePageId(idOrSlug);
-  if (!id) return null;
-  const state = await getDocState(id);
-  if (!state) return null;
+  const page = await resolve(idOrSlug);
+  if (!page) return null;
+  const { id, state } = page;
 
   if (state.takenDownAt) return "taken_down";
 

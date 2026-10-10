@@ -86,10 +86,14 @@ export async function markDocTakenDown(id: string, at: string): Promise<boolean>
   return res.matchedCount === 1;
 }
 
-/** Called when an anonymous page is claimed: it no longer expires. */
+/** First step of a claim: the page no longer expires. */
 export async function clearDocExpiry(id: string): Promise<void> {
   const db = await getDb();
-  await db
-    .collection<DocRecord>("docs")
-    .updateOne({ _id: id }, { $unset: { expires_at: "", claim_token_hash: "" } });
+  await db.collection<DocRecord>("docs").updateOne({ _id: id }, { $unset: { expires_at: "" } });
+}
+
+/** Last step of a claim: the claim cookie is spent. */
+export async function clearClaimToken(id: string): Promise<void> {
+  const db = await getDb();
+  await db.collection<DocRecord>("docs").updateOne({ _id: id }, { $unset: { claim_token_hash: "" } });
 }

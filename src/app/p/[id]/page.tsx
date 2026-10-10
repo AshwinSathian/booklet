@@ -29,7 +29,7 @@ import { ShareButtons } from "@/components/share/ShareButtons";
 import { ScrollCta } from "@/components/share/ScrollCta";
 import { GoneNotice } from "@/components/share/GoneNotice";
 import { KeepPageNotice } from "@/components/share/KeepPageNotice";
-import { claimCookieName, claimTokenMatches } from "@/lib/anonymous-claim";
+import { PURGE_GRACE_DAYS, claimCookieName, claimTokenMatches } from "@/lib/anonymous-claim";
 import { getSession } from "@/lib/auth/session";
 import { GONE_MESSAGES } from "@/lib/gone-notice";
 import { getDocState } from "@/lib/storage";
@@ -63,8 +63,9 @@ async function resolveSharePage(idOrSlug: string) {
   // Taken down, or an expired anonymous page. The middleware normally
   // answers 410 before this renders; checking again here is what keeps the
   // content (and its title, in generateMetadata) hidden if that check ever
-  // fails open.
-  const gone = doc ? await getGoneReason(resolvedId).catch(() => null) : null;
+  // fails open. No catch: if this lookup itself fails, the request errors
+  // rather than rendering content that may have been taken down.
+  const gone = doc ? await getGoneReason(resolvedId) : null;
 
   return { doc, resolvedId, pageRecord, gone };
 }
@@ -73,6 +74,10 @@ async function resolveSharePage(idOrSlug: string) {
  * The expiry date to show the author of an unclaimed anonymous page, or
  * null for everyone else — readers, and any page that has an owner.
  */
+function formatNoticeDate(d: Date): string {
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+}
+
 async function expiryForAuthor(resolvedId: string, hasOwner: boolean): Promise<Date | null> {
   if (hasOwner) return null;
   const state = await getDocState(resolvedId).catch(() => null);
@@ -170,9 +175,12 @@ export default async function SharePage({
   const { doc, resolvedId, pageRecord, gone } = await resolveSharePage(idOrSlug);
 
   if (!doc) return <NotFoundOrExpired />;
-  if (gone) return <GoneNotice reason={gone} />;
-
+  // Null unless this browser published the page and nobody owns it yet.
   const expiresAt = await expiryForAuthor(resolvedId, pageRecord !== null);
+  // An expired page is still shown to its author, with the notice below,
+  // so it can be claimed before the purge deletes it.
+  if (gone && !(gone === "expired" && expiresAt)) return <GoneNotice reason={gone} />;
+
   const viewerSignedIn = expiresAt ? (await getSession()) !== null : false;
 
   // Password gate: check cookie before revealing content.
@@ -223,7 +231,10 @@ export default async function SharePage({
       {expiresAt ? (
         <KeepPageNotice
           pageId={resolvedId}
-          expiresOn={expiresAt.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" })}
+          expiresOn={formatNoticeDate(expiresAt)}
+          deletedOn={
+            gone === "expired" ? formatNoticeDate(new Date(expiresAt.getTime() + PURGE_GRACE_DAYS * 86_400_000)) : null
+          }
           signedIn={viewerSignedIn}
         />
       ) : null}

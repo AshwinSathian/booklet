@@ -153,6 +153,20 @@ test("an anonymous page shows its expiry to its author only, and signing in keep
     `/sign-in?redirect_url=${encodeURIComponent(`/p/${id}`)}`,
   );
 
+  // Past expiry, readers get 410 while the author's browser still reaches
+  // the page and is told when it will be deleted.
+  const db = await getDb();
+  const original = (await db.collection("docs").findOne({ _id: id } as never))!.expires_at as Date;
+  await db.collection("docs").updateOne({ _id: id } as never, { $set: { expires_at: new Date(Date.now() - 86_400_000) } });
+  const reader = await browser.newContext({ extraHTTPHeaders: { "cf-connecting-ip": "127.0.0.1" } });
+  const asReader = await reader.request.get(`/p/${id}`);
+  expect(asReader.status()).toBe(410);
+  expect(await asReader.text()).not.toContain("Anonymous e2e");
+  await reader.close();
+  await page.goto(`/p/${id}`);
+  await expect(notice).toContainText(/This page expired on .+ and will be deleted on .+\./);
+  await db.collection("docs").updateOne({ _id: id } as never, { $set: { expires_at: original } });
+
   // Signed in, the same notice offers to keep the page; keeping it ends the expiry.
   await signUp(page.request);
   await page.goto(`/p/${id}`);
@@ -160,7 +174,6 @@ test("an anonymous page shows its expiry to its author only, and signing in keep
   await expect(notice).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Anonymous e2e" })).toBeVisible();
 
-  const db = await getDb();
   const doc = await db.collection("docs").findOne({ _id: id } as never);
   expect(doc?.expires_at).toBeUndefined();
   expect(await db.collection("pages").findOne({ _id: id } as never)).toMatchObject({ visibility: "unlisted" });
@@ -174,4 +187,16 @@ test("the publish control offers Unlisted, selected, to a signed-in author", asy
   const visibility = page.getByLabel("Who can find this page");
   await expect(visibility).toHaveValue("unlisted");
   await expect(visibility.locator("option:checked")).toHaveText("Unlisted (anyone with the link)");
+
+  // Choosing Public is sent with the publish and stored.
+  await page.locator("textarea").first().fill("# Listed page\n\nBody.");
+  await visibility.selectOption("public");
+  const publish = page.waitForResponse((r) => r.url().endsWith("/api/publish") && r.request().method() === "POST");
+  await page.getByRole("button", { name: "Publish", exact: true }).click();
+  const res = await publish;
+  expect(res.request().postDataJSON()).toMatchObject({ visibility: "public" });
+  const { id } = (await res.json()) as { id: string };
+  expect(await (await getDb()).collection("pages").findOne({ _id: id } as never)).toMatchObject({ visibility: "public" });
+  await (await getDb()).collection("docs").deleteOne({ _id: id } as never);
+  await (await getDb()).collection("pages").deleteOne({ _id: id } as never);
 });

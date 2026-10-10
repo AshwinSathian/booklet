@@ -2,13 +2,13 @@
  * Lifecycle of pages published without an account.
  *
  * Plain JS (not .ts) for the same reason as index-specs.mjs: it is imported
- * both by the app (src/instrumentation.ts runs the purge daily) and by
- * scripts/backfill-anonymous-expiry.mjs, a standalone `node` script with no
- * TypeScript loader.
+ * both by the app and by scripts/backfill-anonymous-expiry.mjs, a
+ * standalone `node` script with no TypeScript loader. The daily purge,
+ * which only the app runs, is in purge.ts.
  *
- * Both functions decide "anonymous" the same way: a document in `docs` with
- * no record in `pages`. Neither trusts `expires_at` alone — a page that has
- * an owner is never deleted and never stamped, whatever its fields say.
+ * "Anonymous" always means a document in `docs` with no record in `pages`.
+ * Nothing trusts `expires_at` alone — a page that has an owner is never
+ * deleted and never stamped, whatever its fields say.
  */
 
 const DAY_MS = 86_400_000;
@@ -20,37 +20,6 @@ export const PURGE_GRACE_DAYS = 30;
 
 async function hasOwner(db, id) {
   return (await db.collection("pages").findOne({ _id: id }, { projection: { _id: 1 } })) !== null;
-}
-
-/**
- * Deletes anonymous documents more than PURGE_GRACE_DAYS past expiry, with
- * the rows keyed to them. Returns how many documents were deleted.
- */
-export async function purgeExpiredAnonymousDocs(db, now = Date.now()) {
-  const cutoff = new Date(now - PURGE_GRACE_DAYS * DAY_MS);
-  const candidates = await db
-    .collection("docs")
-    .find({ expires_at: { $lt: cutoff } }, { projection: { _id: 1 } })
-    // ponytail: 1,000 per run. A backlog larger than that drains over
-    // successive daily runs; raise it if anonymous volume ever gets there.
-    .limit(1000)
-    .toArray();
-
-  let deleted = 0;
-  for (const { _id } of candidates) {
-    if (await hasOwner(db, _id)) continue;
-    // Re-checks expires_at in the delete itself: a claim that lands between
-    // the find above and this line unsets the field, and the page survives.
-    const res = await db.collection("docs").deleteOne({ _id, expires_at: { $lt: cutoff } });
-    if (res.deletedCount !== 1) continue;
-    deleted++;
-    await Promise.all(
-      ["analytics_events", "reactions", "reaction_state", "publish_events", "page_versions"].map((c) =>
-        db.collection(c).deleteMany({ page_id: _id }),
-      ),
-    );
-  }
-  return deleted;
 }
 
 /**
