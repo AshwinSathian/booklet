@@ -1,7 +1,7 @@
 import { Command } from "commander";
-import { getClient, apiErrorMessage, NOT_AUTHENTICATED_ERROR } from "../api.js";
-import { success, error, info, bold, dim, gray, openUrl } from "../fmt.js";
-import { table } from "../fmt.js";
+import { requireClient } from "../api.js";
+import { CliError, EXIT, toCliError } from "../errors.js";
+import { success, info, bold, dim, gray, openUrl, print, emit, isJson, table } from "../fmt.js";
 import { createInterface } from "readline";
 
 function formatDate(iso: string): string {
@@ -17,8 +17,8 @@ function formatDate(iso: string): string {
 }
 
 async function confirm(question: string): Promise<boolean> {
-  if (!process.stdin.isTTY) return false;
-  const rl = createInterface({ input: process.stdin, output: process.stdout });
+  // The prompt goes to stderr: under --json, stdout carries only the result.
+  const rl = createInterface({ input: process.stdin, output: process.stderr });
   return new Promise((resolve) => {
     rl.question(`${question} [y/N] `, (ans) => {
       rl.close();
@@ -37,24 +37,11 @@ export function registerPagesCommand(program: Command) {
     .description("List all your pages")
     .option("--query <text>", "Only show pages whose title contains this text")
     .option("--tag <tag>", "Only show pages with this exact frontmatter tag")
-    .option("--json", "Output raw JSON")
-    .action(async (opts: { query?: string; tag?: string; json?: boolean }) => {
-      const client = await getClient();
-      if (!client) {
-        error(NOT_AUTHENTICATED_ERROR);
-        process.exit(1);
-      }
+    .action(async (opts: { query?: string; tag?: string }) => {
+      const items = await (await requireClient()).listAllPages({ query: opts.query, tag: opts.tag });
 
-      let items;
-      try {
-        items = (await client.listPages({ query: opts.query, tag: opts.tag })).pages;
-      } catch (e) {
-        error(apiErrorMessage(e));
-        process.exit(1);
-      }
-
-      if (opts.json) {
-        console.log(JSON.stringify(items, null, 2));
+      if (isJson()) {
+        emit(items);
         return;
       }
 
@@ -67,7 +54,7 @@ export function registerPagesCommand(program: Command) {
         return;
       }
 
-      console.log();
+      print();
       table(
         ["Title", "ID / Slug", "Visibility", "Views", "Updated"],
         items.map((p) => [
@@ -78,7 +65,7 @@ export function registerPagesCommand(program: Command) {
           formatDate(p.updated_at),
         ]),
       );
-      console.log();
+      print();
       info(`${items.length} page${items.length === 1 ? "" : "s"}`);
     });
 
@@ -86,34 +73,13 @@ export function registerPagesCommand(program: Command) {
     .command("open <id>")
     .description("Open a page in your browser (use --print to just print the URL)")
     .option("--print", "Print the URL instead of opening a browser")
-    .option("--json", "Output raw JSON instead of printing the URL")
-    .action(async (id: string, opts: { print?: boolean; json?: boolean }) => {
-      const client = await getClient();
-      if (!client) {
-        error(NOT_AUTHENTICATED_ERROR);
-        process.exit(1);
-      }
+    .action(async (id: string, opts: { print?: boolean }) => {
+      // GET /pages/:id accepts a page ID or a custom slug.
+      const { raw: _raw, etag: _etag, ...page } = await (await requireClient()).getPage(id);
 
-      let pages;
-      try {
-        pages = (await client.listPages()).pages;
-      } catch (e) {
-        error(apiErrorMessage(e));
-        process.exit(1);
-      }
-      const page = pages.find((p) => p.id === id || p.slug === id);
-      if (!page) {
-        error(`Page not found: ${id}`);
-        process.exit(1);
-      }
-
-      if (opts.json) {
-        console.log(JSON.stringify(page, null, 2));
-        return;
-      }
-
-      console.log(bold(page.url));
-      if (!opts.print) {
+      print(bold(page.url));
+      emit(page);
+      if (!opts.print && !isJson()) {
         openUrl(page.url);
       }
     });
@@ -123,41 +89,29 @@ export function registerPagesCommand(program: Command) {
     .description("Delete a page by ID or slug")
     .option("-y, --yes", "Skip confirmation prompt")
     .action(async (id: string, opts: { yes?: boolean }) => {
-      const client = await getClient();
-      if (!client) {
-        error(NOT_AUTHENTICATED_ERROR);
-        process.exit(1);
-      }
+      const client = await requireClient();
 
-      // Resolve the real page ID (DELETE endpoint does not accept slugs).
-      // This fetch also gives us the title and URL for the confirmation prompt.
-      const page = await client
-        .listPages()
-        .then(({ pages }) => pages.find((p) => p.id === id || p.slug === id))
-        .catch(() => null);
-
-      // Canonical ID to pass to the DELETE endpoint
-      const pageId = page?.id ?? id;
+      // Resolves a slug to the real page ID (DELETE does not accept slugs),
+      // and gives the title and URL for the confirmation prompt.
+      const page = await client.getPage(id);
 
       if (!opts.yes) {
-        const label = page
-          ? `"${page.title ?? "Untitled"}" ${dim(`(${page.url})`)}`
-          : bold(id);
-
-        const ok = await confirm(`Permanently delete ${label}?`);
+        if (!process.stdin.isTTY) {
+          throw new CliError("Refusing to delete without confirmation. Pass --yes when not running in a terminal.", EXIT.USAGE);
+        }
+        const ok = await confirm(`Permanently delete "${page.title ?? "Untitled"}" ${dim(`(${page.url})`)}?`);
         if (!ok) {
           info("Aborted.");
+          emit({ deleted: false, id: page.id });
           return;
         }
       }
 
-      try {
-        await client.deletePage(pageId);
-      } catch (e) {
-        error(`Delete failed: ${apiErrorMessage(e)}`);
-        process.exit(1);
-      }
+      await client.deletePage(page.id).catch((e) => {
+        throw toCliError(e, "Delete failed");
+      });
 
-      success(`Deleted page ${pageId}`);
+      success(`Deleted page ${page.id}`);
+      emit({ deleted: true, id: page.id });
     });
 }

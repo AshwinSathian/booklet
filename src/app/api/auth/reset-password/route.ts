@@ -3,6 +3,7 @@ import { findPasswordResetTokenByHash, deletePasswordResetToken, setUserPassword
 import { hashPasswordResetToken } from "@/lib/auth/password-reset-token";
 import { hashUserPassword } from "@/lib/auth/password";
 import { destroyAllSessions } from "@/lib/auth/session";
+import { revokeAllForUser } from "@/lib/oauth/server";
 import { isSameOriginRequest } from "@/lib/auth/origin-check";
 import { ResetPasswordSchema } from "@/lib/auth/schemas";
 import { checkRateLimit } from "@/lib/rate-limit";
@@ -40,6 +41,9 @@ export async function POST(req: Request) {
   // existing session so a stolen cookie doesn't outlive the password it was
   // issued under.
   await destroyAllSessions(resetToken.user_id);
+  // A password reset is how someone takes an account back; apps connected
+  // through OAuth lose their access along with every browser session.
+  await revokeAllForUser(resetToken.user_id);
 
   return NextResponse.json({ ok: true }, { status: 200 });
 }

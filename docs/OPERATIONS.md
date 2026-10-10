@@ -685,3 +685,59 @@ single Node process OOM-ing or crashing under load — a real, if partial,
 reliability improvement with no new moving parts. Recommended as the
 practical next step unless a Cloudflare Workers (or other managed-host)
 migration is actually imminent.
+
+## OAuth for MCP clients
+
+Added 2026-10. The Booklet app is an OAuth authorization server and the MCP
+server is its one resource server. A Claude.ai custom connector uses it to
+sign in; nothing changes for clients that send an API key.
+
+The flow, by URL:
+
+1. The client calls `https://booklet-mcp.ashwinsathian.com/mcp` with no
+   credential and gets `401` with `WWW-Authenticate: Bearer
+   resource_metadata="…/.well-known/oauth-protected-resource/mcp"`.
+2. That document names the app as the authorization server. The app's own
+   metadata is at `/.well-known/oauth-authorization-server`.
+3. The client identifies itself with a Client ID Metadata Document (its
+   `client_id` is an https URL the app fetches through the SSRF guard) or
+   registers at `POST /api/oauth/register`.
+4. The browser opens `/oauth/authorize`. That page only shows a consent
+   screen. The code is issued by `POST /api/oauth/authorize`, which needs
+   the session cookie and a same-origin `Origin` header.
+5. `POST /api/oauth/token` exchanges the code (with the PKCE verifier) for
+   an access token (`bkat_…`, 1 hour) and a refresh token (`bkrt_…`, 30
+   days, replaced on every use).
+6. The MCP server asks `GET /api/oauth/tokeninfo` whether the token is live
+   and which resource it was issued for, then forwards it to `/api/v1`.
+
+Code: `src/lib/oauth/server.ts` (codes, tokens, PKCE), `src/lib/oauth/clients.ts`
+(client lookup, redirect URI rules), `mcp-server/src/auth.ts` (the resource
+server's check). Collections: `oauth_clients`, `oauth_codes`, `oauth_tokens`.
+Codes and tokens are stored as HMACs under `API_KEY_PEPPER`, so rotating
+that pepper signs every connected app out, as it invalidates every API key.
+
+**Configuration.** Tokens are issued for one resource:
+`MCP_PUBLIC_URL`, default `https://booklet-mcp.ashwinsathian.com/mcp`. The
+MCP server reads the same variable and `BOOKLET_PUBLIC_URL` (default
+`https://booklet.ashwinsathian.com`). Production needs neither set. The
+issuer is `NEXT_PUBLIC_SITE_URL`, which must stay the public https origin.
+
+**Disconnecting an app.** There is no screen for it yet (planned with the
+account page in Phase 5). The user can remove the connector in the client,
+or reset their password, which withdraws every grant. By hand:
+
+```js
+db.oauth_tokens.deleteMany({ user_id: "<user id>" })   // one user
+db.oauth_tokens.deleteMany({ client_id: "<client id>" }) // one app, everyone
+```
+
+**What is deliberately simple.** Registered clients are never pruned. The
+Client ID Metadata Document cache is per process (10 minutes). An access
+token issued for the MCP server is also accepted by `/api/v1` directly,
+because the MCP server forwards it; both are Booklet and the scopes are the
+same.
+
+**Running the MCP server by hand.** Never `pkill -f node-server.ts`: the
+production process matches that pattern too. Stop a test instance by its
+port, `lsof -ti :<port> | xargs kill`.

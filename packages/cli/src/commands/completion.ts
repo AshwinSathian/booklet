@@ -1,11 +1,13 @@
 import { Command } from "commander";
+import { CliError, EXIT } from "../errors.js";
+import { emit, isJson } from "../fmt.js";
 
 // Hand-rolled, not generated from Commander's command tree at runtime —
 // the CLI's surface (5 top-level commands, one subcommand group with 3
 // subcommands, ~15 flags total) is small and stable enough that a
 // generator would be more machinery than the problem needs. Update this
 // list if commands/flags change.
-const TOP_LEVEL = ["login", "logout", "whoami", "publish", "pages", "completion", "help"];
+const TOP_LEVEL = ["login", "logout", "whoami", "publish", "pull", "new", "pages", "completion", "help"];
 const PAGES_SUBCOMMANDS = ["list", "open", "delete"];
 
 const BASH_SCRIPT = `_booklet_completions() {
@@ -61,19 +63,12 @@ export function registerCompletionCommand(program: Command) {
     .command("completion <shell>")
     .description("Print a shell completion script (bash, zsh, or fish)")
     .action((shell: string) => {
-      switch (shell) {
-        case "bash":
-          console.log(BASH_SCRIPT);
-          break;
-        case "zsh":
-          console.log(ZSH_SCRIPT);
-          break;
-        case "fish":
-          console.log(FISH_SCRIPT);
-          break;
-        default:
-          console.error(`Unsupported shell: ${shell}. Supported: bash, zsh, fish.`);
-          process.exit(1);
+      const scripts: Record<string, string> = { bash: BASH_SCRIPT, zsh: ZSH_SCRIPT, fish: FISH_SCRIPT };
+      const script = Object.hasOwn(scripts, shell) ? scripts[shell] : undefined;
+      if (!script) {
+        throw new CliError(`Unsupported shell: ${shell}. Supported: bash, zsh, fish.`, EXIT.USAGE);
       }
+      if (isJson()) emit({ shell, script });
+      else console.log(script);
     });
 }

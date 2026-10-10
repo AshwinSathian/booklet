@@ -14,6 +14,7 @@
  * changing behavior for comparatively little benefit.
  */
 
+import { createHash } from "node:crypto";
 import { getPageBySlug, getPageRecord } from "@/lib/db";
 import type { DbPage } from "@/lib/db/types";
 import { isValidSlug, SLUG_RULES_MESSAGE } from "@/lib/slug";
@@ -59,6 +60,25 @@ export function assertRawWithinLimit(raw: string): void {
       "DOCUMENT_TOO_LARGE",
       `Document is too large. The limit is ${STORAGE.maxInputChars.toLocaleString("en-US")} characters; this one has ${raw.length.toLocaleString("en-US")}.`,
       413,
+      { limit: "characters", max: STORAGE.maxInputChars, actual: raw.length },
+    );
+  }
+}
+
+/**
+ * The second size limit: the stored form (`{blocks, raw}` as JSON) must fit
+ * in STORAGE.maxDocBytes. A document under the character limit can still
+ * exceed it when it is dense with small blocks, so the response says which
+ * of the two limits was hit.
+ */
+export function assertStoredWithinLimit(blocks: unknown, raw: string): void {
+  const actual = new TextEncoder().encode(JSON.stringify({ blocks, raw })).byteLength;
+  if (actual > STORAGE.maxDocBytes) {
+    throw new ServiceError(
+      "DOCUMENT_TOO_LARGE",
+      `Document is too large once parsed. Its stored form is ${actual.toLocaleString("en-US")} bytes and the limit is ${STORAGE.maxDocBytes.toLocaleString("en-US")}. Documents with many small blocks reach this before the ${STORAGE.maxInputChars.toLocaleString("en-US")}-character limit.`,
+      413,
+      { limit: "stored_bytes", max: STORAGE.maxDocBytes, actual },
     );
   }
 }
@@ -72,5 +92,46 @@ export function assertRawWithinLimit(raw: string): void {
 export function assertNotTakenDown(page: DbPage): void {
   if (page.taken_down_at) {
     throw new ServiceError("TAKEN_DOWN", GONE_MESSAGES.taken_down, 410);
+  }
+}
+
+/**
+ * Entity tag for a page as the v1 API returns it. Covers what a write can
+ * change (content through `updated_at`, slug, visibility, title) and leaves
+ * out `view_count`, which changes on every read.
+ */
+export function pageEtag(page: Pick<DbPage, "updated_at" | "slug" | "visibility" | "title">): string {
+  const hash = createHash("sha256")
+    .update(JSON.stringify([page.updated_at, page.slug ?? null, page.visibility, page.title ?? null]))
+    .digest("hex");
+  return `"${hash.slice(0, 32)}"`;
+}
+
+function etagList(header: string): string[] {
+  return header.split(",").map((t) => t.trim().replace(/^W\//, ""));
+}
+
+/** True when `If-None-Match` names the page's current tag (answer 304). */
+export function ifNoneMatchHits(req: Request, page: DbPage): boolean {
+  const header = req.headers.get("if-none-match");
+  return header !== null && (header.trim() === "*" || etagList(header).includes(pageEtag(page)));
+}
+
+/**
+ * Honors `If-Match` on a write: throws 412 when the caller's tag is stale.
+ * No header means no precondition.
+ *
+ * ponytail: check-then-write, so two writers holding the same fresh tag can
+ * both pass. Fold the tag into the update filter if lost updates show up.
+ */
+export function assertIfMatch(req: Request, page: DbPage): void {
+  const header = req.headers.get("if-match");
+  if (header === null || header.trim() === "*") return;
+  if (!etagList(header).includes(pageEtag(page))) {
+    throw new ServiceError(
+      "PRECONDITION_FAILED",
+      "The page changed since you read it. Fetch it again and retry with the new ETag.",
+      412,
+    );
   }
 }

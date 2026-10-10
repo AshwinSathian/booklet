@@ -244,3 +244,22 @@ export async function isUrlSafe(rawUrl: string): Promise<UrlCheckResult> {
   if (!result.safe) return result;
   return { safe: true, url };
 }
+
+type LookupCallback = (err: NodeJS.ErrnoException | null, address: string | { address: string; family: number }[], family?: number) => void;
+
+/**
+ * A `lookup` for node:http(s) that answers every hostname with one address
+ * that already passed the denylist, so the connection cannot be steered by
+ * a second DNS answer.
+ *
+ * Node 20 and later call `lookup` with `{ all: true }` and expect an array
+ * of addresses back; older callers expect one address and its family. A
+ * lookup that only gives the second form fails every request with
+ * ERR_INVALID_IP_ADDRESS.
+ */
+export function pinnedLookup(address: string, family: 4 | 6) {
+  return (_hostname: string, options: { all?: boolean }, callback: LookupCallback): void => {
+    if (options?.all) callback(null, [{ address, family }]);
+    else callback(null, address, family);
+  };
+}

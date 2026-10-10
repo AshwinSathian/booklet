@@ -1,7 +1,7 @@
 import http from "node:http";
 import https from "node:https";
 import { getWebhooksByUser, touchWebhookTriggered } from "@/lib/db";
-import { bareHostname, resolveHostForDelivery } from "@/lib/ssrf-guard";
+import { bareHostname, resolveHostForDelivery, pinnedLookup } from "@/lib/ssrf-guard";
 import type { DbWebhook } from "@/lib/db/types";
 
 type WebhookEvent = DbWebhook["events"][number];
@@ -71,9 +71,7 @@ function requestPinned(
         timeout: init.timeoutMs,
         // Pin the connection to the pre-validated address instead of letting
         // Node re-resolve `url.hostname` itself.
-        lookup: (_hostname, _options, callback) => {
-          callback(null, address, family);
-        },
+        lookup: pinnedLookup(address, family),
         ...(isHttps ? { servername: url.hostname } : {}),
       },
       (res) => {

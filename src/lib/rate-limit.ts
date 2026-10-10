@@ -7,18 +7,24 @@ type RateLimitDoc = {
   expiresAt: Date;
 };
 
+export type RateLimitState = {
+  limit: number;
+  remaining: number;
+  /** Seconds until the current window ends. */
+  reset: number;
+  limited: boolean;
+};
+
 /**
- * MongoDB-backed sliding-window rate limiter (60-second buckets).
+ * MongoDB-backed fixed-window rate limiter (60-second buckets). Counts this
+ * call and reports where the caller stands.
  *
  * @param discriminator  Unique string identifying the bucket, e.g. `publish__ip__1.2.3.4`
  * @param limitPerMin    Max allowed calls within the current 60-second window
- * @returns              A 429 NextResponse if the call should be blocked, otherwise null
  */
-export async function checkRateLimit(
-  discriminator: string,
-  limitPerMin: number,
-): Promise<NextResponse | null> {
-  const bucket = Math.floor(Date.now() / 60_000);
+export async function consumeRateLimit(discriminator: string, limitPerMin: number): Promise<RateLimitState> {
+  const now = Date.now();
+  const bucket = Math.floor(now / 60_000);
   const key = `__rl__${discriminator}__${bucket}`;
   const expiresAt = new Date((bucket + 2) * 60_000); // expires after two bucket windows
 
@@ -35,15 +41,39 @@ export async function checkRateLimit(
     );
 
   const count = result?.count ?? 1;
+  return {
+    limit: limitPerMin,
+    remaining: Math.max(0, limitPerMin - count),
+    reset: Math.max(1, Math.ceil(((bucket + 1) * 60_000 - now) / 1000)),
+    limited: count > limitPerMin,
+  };
+}
 
-  if (count > limitPerMin) {
-    return NextResponse.json(
-      { error: "Too many requests. Please slow down and try again." },
-      { status: 429 },
-    );
-  }
+/**
+ * `RateLimit` and `RateLimit-Policy` in the syntax of
+ * draft-ietf-httpapi-ratelimit-headers-11, plus `Retry-After` (RFC 9110)
+ * once the limit is hit. The draft can still change; `Retry-After` is the
+ * header clients should act on. This is the only place the syntax lives.
+ */
+export function rateLimitHeaders(s: RateLimitState): Record<string, string> {
+  return {
+    "RateLimit-Policy": `"default";q=${s.limit};w=60`,
+    RateLimit: `"default";r=${s.remaining};t=${s.reset}`,
+    ...(s.limited ? { "Retry-After": String(s.reset) } : {}),
+  };
+}
 
-  return null;
+/** @returns A 429 response if the call should be blocked, otherwise null */
+export async function checkRateLimit(
+  discriminator: string,
+  limitPerMin: number,
+): Promise<NextResponse | null> {
+  const state = await consumeRateLimit(discriminator, limitPerMin);
+  if (!state.limited) return null;
+  return NextResponse.json(
+    { error: "Too many requests. Please slow down and try again." },
+    { status: 429, headers: rateLimitHeaders(state) },
+  );
 }
 
 /**

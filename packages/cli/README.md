@@ -8,8 +8,8 @@ Publish Markdown from your terminal, a CI pipeline, or a script — as [Booklet]
 with a permanent, shareable URL.
 
 Built for automation first: `--key`/`BOOKLET_API_KEY` for non-interactive auth, `--update <id>` to
-republish in place instead of minting a new URL every run, and `--json` on every read command for
-scripting. The most common use is a CI job that keeps a changelog or release-notes page current —
+republish in place instead of minting a new URL every run, `--json` on every command, and
+[exit codes](#exit-codes) a script can branch on. The most common use is a CI job that keeps a changelog or release-notes page current —
 see [CI / GitHub Actions](#ci--github-actions) below. It works the same way from a terminal, of
 course; `booklet publish README.md` is still the whole command.
 
@@ -92,6 +92,31 @@ Options:
 
 ---
 
+### `booklet pull <id>`
+
+Download a page's Markdown, by ID or slug. It goes to stdout unless you pass `-o`.
+
+```bash
+booklet pull abc123                  # prints the Markdown
+booklet pull abc123 -o page.md       # writes it to a file
+booklet pull my-custom-slug --json   # the page object, including `raw`
+```
+
+Edit the file and send it back with `booklet publish page.md --update abc123`.
+
+### `booklet new <template>`
+
+Write a starting document to `<template>.md` in the current directory. Templates: `incident`,
+`adr`, `rfc`, `runbook`, `release-notes`. It does not need an API key.
+
+```bash
+booklet new adr                      # writes adr.md
+booklet new incident -o 2026-10-outage.md
+booklet publish adr.md
+```
+
+An existing file is left alone unless you pass `--force`.
+
 ### `booklet pages list`
 
 List all your published pages. Useful in a script to find the right page ID before calling
@@ -125,10 +150,13 @@ booklet pages delete abc123
 booklet pages delete abc123 --yes   # skip confirmation prompt
 ```
 
+Outside a terminal (a script, a CI job) there is nobody to answer the prompt, so `--yes` is
+required there; without it the command exits with code 2 and deletes nothing.
+
 ### `booklet whoami`
 
 Show the active API key, base URL, and where the key was loaded from (env var, OS keychain, or
-config file). Pass `--json` for machine-readable output.
+config file).
 
 ### `booklet logout`
 
@@ -181,12 +209,51 @@ Supported frontmatter fields:
 
 ---
 
+## JSON output
+
+Every command takes `--json`. The result is then one JSON value on stdout and nothing else, so it
+can be piped straight into `jq`:
+
+```bash
+URL=$(booklet publish notes.md --json | jq -r .url)
+```
+
+| Command | JSON on stdout |
+|---------|----------------|
+| `publish` | `{ "id", "url", "updated" }` |
+| `pull <id>` | the page, including `raw`; with `-o`: `{ "id", "url", "file" }` |
+| `new <template>` | `{ "template", "file" }` |
+| `pages list` | an array of pages |
+| `pages open <id>` | the page (the browser is not opened) |
+| `pages delete <id>` | `{ "deleted", "id" }` |
+| `whoami` | `{ "authenticated", "key", "base", "source" }` |
+| `login`, `logout` | `{ "authenticated", "base", "pages" }`, `{ "logged_out" }` |
+
+On failure stdout stays empty and stderr gets `{ "error", "exit_code", "status" }`.
+
+## Exit codes
+
+| Code | Meaning |
+|------|---------|
+| 0 | Success |
+| 1 | Failure: network error, server error, or a request the server rejected |
+| 2 | Usage error: unknown command or option, missing argument |
+| 3 | Not authenticated, or not allowed |
+| 4 | Page not found |
+| 5 | Rate limited |
+
+When the API answers 429 the CLI waits for the server's `Retry-After` (up to 60 seconds) and tries
+once more. Exit code 5 means the second attempt was limited too.
+
+---
+
 ## Environment variables
 
 | Variable | Description |
 |----------|-------------|
 | `BOOKLET_API_KEY` | API key, overrides `~/.booklet/config.json` |
 | `BOOKLET_API_URL` | Override API base URL (default: production) |
+| `BOOKLET_NO_KEYCHAIN` | Set to any value to skip the OS keychain and keep the key in `~/.booklet/config.json` (containers, CI) |
 | `NO_COLOR` | Set to any value to disable ANSI colour output (or pass `--no-color`) |
 
 ---

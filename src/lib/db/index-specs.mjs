@@ -43,7 +43,11 @@ export const INDEX_SPECS = [
   { collection: "password_reset_tokens", spec: { expires_at: 1 }, options: { expireAfterSeconds: 0 } },
 
   // --- pages ---
-  { collection: "pages", spec: { user_id: 1, created_at: -1 } },
+  // _id is the tie-breaker of the listing sort (getPagesByUser) and of its
+  // keyset cursor, so it is part of the index. The index this replaced,
+  // { user_id: 1, created_at: -1 }, may still exist in an older database;
+  // it is harmless and can be dropped.
+  { collection: "pages", spec: { user_id: 1, created_at: -1, _id: -1 } },
   { collection: "pages", spec: { collection_id: 1, user_id: 1 } },
   {
     collection: "pages",
@@ -84,6 +88,20 @@ export const INDEX_SPECS = [
   // publish quota (src/lib/rate-limit.ts) — bucket keys expire on their own
   // schedule via `expiresAt`, so one TTL index covers both bucket shapes.
   { collection: "rate_limits", spec: { expiresAt: 1 }, options: { expireAfterSeconds: 0 } },
+
+  // --- OAuth authorization server (src/lib/oauth/server.ts) ---
+  // Codes and tokens are keyed by their hash (_id). TTL indexes remove them
+  // once expired; grant_id backs "revoke everything from this consent".
+  { collection: "oauth_codes", spec: { purge_at: 1 }, options: { expireAfterSeconds: 0 } },
+  { collection: "oauth_codes", spec: { grant_id: 1 } },
+  { collection: "oauth_tokens", spec: { expires_at: 1 }, options: { expireAfterSeconds: 0 } },
+  { collection: "oauth_tokens", spec: { grant_id: 1 } },
+  { collection: "oauth_tokens", spec: { user_id: 1 } },
+
+  // --- idempotency_keys ---
+  // Stored responses for `Idempotency-Key` on POST /api/v1/publish
+  // (src/server/idempotency.ts). Kept for 24 hours.
+  { collection: "idempotency_keys", spec: { expires_at: 1 }, options: { expireAfterSeconds: 0 } },
 
   // --- analytics_events ---
   { collection: "analytics_events", spec: { page_id: 1, created_at: -1 } },
