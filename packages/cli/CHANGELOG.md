@@ -10,8 +10,8 @@ Needs a Booklet server at 2.0.0 or later. Commands, flags and exit codes are unc
 ### Changed
 - **Breaking:** built on `booklet-api-client` 3.0.0. The server's error body no longer has an
   `error` member and page lists are walked by cursor only, so this version does not work against
-  a self-hosted Booklet older than 2.0.0, and CLI 2.x does not show error messages from a 2.0.0
-  server (it prints `HTTP <status>`).
+  a self-hosted Booklet older than 2.0.0. CLI 2.x cannot list pages against a 2.0.0 server, and
+  prints `HTTP <status>` in place of its error messages.
 - **Breaking:** API keys that start with `rdbl_` are no longer accepted by the server. Run
   `booklet login --force` to get a new key.
 

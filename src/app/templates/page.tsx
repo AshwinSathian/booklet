@@ -10,7 +10,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = buildMetadata({
   title: "Free Document Templates",
   description:
-    "Free templates for incident reports, ADRs, runbooks, meeting notes, changelogs, and more. Open any template in the Booklet editor and share a clean page in seconds.",
+    "Free templates for incident reports, ADRs, runbooks, meeting notes, changelogs, and more. Open one in the Booklet editor, fill it in and publish it as a page.",
   pathname: "/templates",
 });
 
@@ -51,7 +51,7 @@ export default function TemplatesPage() {
             Free document templates
           </h1>
           <p className="mt-3 text-base text-text-secondary max-w-md mx-auto leading-relaxed">
-            Click any template to open it in the editor, fill in your details, and share a clean page in seconds.
+            Pick a template and the editor opens with it loaded. Fill it in and publish.
           </p>
         </div>
 

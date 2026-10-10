@@ -1,7 +1,7 @@
 {
   "name": "booklet",
   "version": "2.0.0",
-  "description": "Write Markdown, get a beautifully formatted page with one shareable link.",
+  "description": "Publish Markdown incident reports, ADRs, RFCs and runbooks as web pages, with team spaces.",
   "private": true,
   "license": "AGPL-3.0-only",
   "author": {

@@ -20,7 +20,7 @@ const SERVER_MANIFEST = {
   name: "booklet",
   version: SERVER_VERSION,
   description:
-    "Publish, update, read, list, and delete Booklet pages from your AI conversation. Includes pre-built templates for incident reports, ADRs, release notes, RFCs, and runbooks.",
+    "Publish Markdown incident reports, ADRs, RFCs and runbooks as web pages, with team spaces.",
 };
 
 function corsHeaders(origin: string | null): Record<string, string> {

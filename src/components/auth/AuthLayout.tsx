@@ -28,7 +28,7 @@ export function AuthLayout({ children }: { children: ReactNode }) {
         <div aria-hidden className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-accent opacity-[0.07] blur-[100px]" />
 
         <h2 className="relative max-w-md text-balance text-[clamp(28px,3vw,40px)] font-semibold leading-tight text-text-primary">
-          Written in Markdown. Read by everyone else.
+          Engineering documents, published as pages.
         </h2>
 
         <div className="relative mt-8 max-w-sm rounded-2xl border border-border-default bg-bg-elevated p-6 shadow-card">

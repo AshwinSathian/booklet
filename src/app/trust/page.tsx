@@ -59,7 +59,7 @@ export default function TrustPage() {
             <p>
               On one Mac, behind a Cloudflare Tunnel. The app and its MongoDB database are on that same
               machine. If the Mac loses power or its internet connection, every page is unreachable until
-              it comes back, and after a restart someone has to unlock it by hand.
+              it comes back, and after a restart someone has to sign in to it by hand.
             </p>
             <p>
               A move to hosted infrastructure was looked at in October 2026 and put off. The measurements

@@ -12,7 +12,7 @@ import { AuthForm } from "./AuthForm";
 export const metadata: Metadata = buildMetadata({
   title: "Sign in",
   description:
-    "Sign in to Booklet. Edit pages in place, unlock analytics, version history, custom slugs, and the REST API.",
+    "Sign in to Booklet to edit your pages in place and reach your team spaces, version history, analytics and API keys.",
   pathname: "/sign-in",
   noIndex: true,
 });
@@ -61,7 +61,7 @@ export default async function SignInPage({
         </Link>{" "}
         or{" "}
         <Link href={ROUTES.app} className="text-accent underline underline-offset-2 hover:text-accent-soft transition-colors">
-          just write and publish — no sign-in needed
+          write and publish without signing in
         </Link>.
       </p>
     </AuthLayout>

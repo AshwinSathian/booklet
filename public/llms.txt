@@ -1,21 +1,21 @@
 # Booklet
 
-> Publish clean, readable pages from Markdown — by hand, by script, or by your AI assistant.
+> Publish Markdown incident reports, ADRs, RFCs and runbooks as web pages, with team spaces.
 
-Booklet turns Markdown into a shareable page with one link. Paste or write Markdown, watch it render live, hit Publish, get a URL back. No account required to try it.
+Booklet publishes Markdown as a web page with a link. It is built for engineering documents: a page can carry a type, status and owners, link to other pages, and live in a team space. Publishing works from the web editor, a REST API, a CLI, a GitHub Action and an MCP server. It can be tried without an account.
 
 ## What Booklet does
 
-- Converts Markdown into a formatted, readable web page with a shareable URL
+- Converts Markdown into a formatted web page with a URL
 - Renders GitHub-Flavored Markdown — headings, code blocks, tables, lists, task lists, blockquotes — plus KaTeX math, Mermaid and Graphviz diagrams, callouts (`> [!NOTE]`, `[!TIP]`, `[!WARNING]`, `[!IMPORTANT]`, `[!CAUTION]`), collapsible toggle sections, and multi-column layouts
 - Auto-generates a table of contents once a document has enough headings
 - Reads YAML frontmatter: `title`, `slug`, `visibility`, `description`, `author`, `date`, `tags`, and for engineering documents `type` (`incident`, `postmortem`, `adr`, `rfc`, `runbook`, `release-notes`), `status`, `severity`, `owners`, `supersedes`, shown in a strip above the page
 - Live preview in the browser editor as you type
-- Multiple named drafts, autosaved locally in the browser
+- Multiple named drafts, saved in the browser and synced to the account when signed in
 - 21 built-in templates (incident report, ADR, runbook, release notes, postmortem, and more — full list below)
-- Export a published page to Markdown, HTML, or PDF
+- Export a published page to Markdown or self-contained HTML; PDF through the browser's print dialog
 - Per-page analytics: views, read depth, referrers (signed-in only)
-- Version history: restore any of the last 50 versions of a page (signed-in only)
+- Version history: the last 50 versions of a page, with a line diff and restore (signed-in only)
 - Password-protected pages (signed-in only)
 - Custom URL slugs (signed-in only)
 - Team spaces: a shared collection of pages under one URL (`/t/<slug>`), grouped by document type, with invited members. A page can be team-only: members can open it, everyone else gets a 404
@@ -29,24 +29,24 @@ All endpoints are under `/api/v1/`, authenticated with `Authorization: Bearer <b
 
 - `POST /api/v1/publish` — create a new page, returns `{ id, url }`
 - `PATCH /api/v1/pages/{id}` — update an existing page in place (same URL)
-- `GET /api/v1/pages` — list pages owned by the authenticated account, with `q`/`tag` filters
+- `GET /api/v1/pages` — list pages owned by the authenticated account, with `q`, `tag`, `type` and `space` filters, paged by `cursor`
 - `GET /api/v1/pages/{id}` — read a page's metadata and raw Markdown
 - `DELETE /api/v1/pages/{id}` — delete a page permanently
 
-API keys are generated at /settings/api-keys after signing in (free).
+API keys are generated at /settings/api-keys after signing in (free). Errors are RFC 9457 problem details (`application/problem+json`). The OpenAPI 3.1 document is at /api/v1/openapi.json.
 
 Full reference: https://booklet.ashwinsathian.com/api-docs
 
 ## MCP (Model Context Protocol)
 
-Booklet runs a native MCP server so Claude and other MCP-compatible AI assistants can publish and manage pages directly, in the same conversation.
+Booklet runs an MCP server, so Claude and other MCP clients can publish and manage pages from a conversation.
 
-MCP endpoint: `https://booklet-mcp.ashwinsathian.com/mcp` (remote, Streamable HTTP — nothing to install)
+MCP endpoint: `https://booklet-mcp.ashwinsathian.com/mcp` (remote, Streamable HTTP, protocol 2026-07-28; nothing to install)
 Auth: OAuth sign-in (Claude.ai custom connectors and other clients that support it: add the URL, sign in, no key), or an `Authorization: Bearer <bklt_...>` header with the same API key as the REST API
 
 **Tools:** `publish_page`, `update_page`, `get_page`, `list_pages`, `delete_page`, `create_document`, `search_pages`
-**Resources:** published pages, browsable and readable as `booklet://pages/:id`
-**Prompts:** five pre-built document templates the assistant can fill in and publish directly — `incident_report`, `adr`, `release_notes`, `rfc`, `runbook`
+**Resources:** the account's published pages, as `booklet://pages/:id`
+**Prompts:** five document templates the assistant can fill in and publish: `incident_report`, `adr`, `release_notes`, `rfc`, `runbook`
 
 Setup instructions (Claude Desktop, Claude.ai, Cursor, Windsurf, VS Code, Zed): https://booklet.ashwinsathian.com/mcp-setup
 
@@ -75,7 +75,7 @@ npm: https://www.npmjs.com/package/booklet-cli
 `AshwinSathian/publish-to-booklet` publishes a Markdown file to Booklet from a CI workflow and returns the URL as a step output:
 
 ```yaml
-- uses: AshwinSathian/publish-to-booklet@v1
+- uses: AshwinSathian/publish-to-booklet@v2
   with:
     file: CHANGELOG.md
     api-key: ${{ secrets.BOOKLET_API_KEY }}
@@ -90,16 +90,17 @@ Repository: https://github.com/AshwinSathian/publish-to-booklet
 - API docs: https://booklet.ashwinsathian.com/api-docs
 - MCP setup: https://booklet.ashwinsathian.com/mcp-setup
 - Explore public pages: https://booklet.ashwinsathian.com/explore
+- Trust (who runs it, hosting, backups, export): https://booklet.ashwinsathian.com/trust
 - Source code: https://github.com/AshwinSathian/booklet
 
 ## Pricing
 
-Free, permanently — there is no paid tier. Anonymous publishing needs no account and is capped at 10 pages per month per IP address. Those pages are kept for 90 days unless the author signs in and claims them; pages published from an account do not expire and are unlisted (not indexed) unless the author makes them public. Signing in is also free and removes that cap entirely, while unlocking custom slugs, analytics, version history, password protection, API access, and webhooks. Every published page carries a small "Published via Booklet" attribution that stays on regardless of plan — there's no option to remove it.
+Free. There is no paid tier. Publishing without an account is capped at 10 pages per month per IP address, and those pages are kept for 90 days unless the author signs in and claims them. An account is also free: it removes the cap, its pages do not expire, and it adds custom slugs, analytics, version history, password protection, team spaces, API keys and webhooks. Every published page carries a small Booklet mark in its footer, and there is no option to remove it.
 
 ## Technical details
 
 - Next.js 16 (App Router), TypeScript, Tailwind CSS
-- Self-hosted MongoDB; the app runs as a single process behind a Cloudflare Tunnel
+- Self-hosted MongoDB; the app runs as a single process on one machine behind a Cloudflare Tunnel
 - No user content is used for training or resold
 - No third-party analytics or tracking scripts
 - Open source: the app is AGPL-3.0-only; the CLI, API client, MCP server and GitHub Action are MIT

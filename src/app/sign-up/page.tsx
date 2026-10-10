@@ -12,7 +12,7 @@ import { AuthForm } from "../sign-in/AuthForm";
 export const metadata: Metadata = buildMetadata({
   title: "Create free account",
   description:
-    "Create a free Booklet account. Publish without a monthly cap, edit pages in place, get analytics, version history, and full API access. No credit card required.",
+    "Create a free Booklet account: no monthly cap, editing in place, team spaces, version history, analytics and the API. There is no paid plan.",
   pathname: "/sign-up",
   noIndex: true,
 });

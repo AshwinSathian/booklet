@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = buildMetadata({
   title: "Editor",
   description:
-    "Write Markdown, preview a clean formatted page, and publish a shareable link — in seconds.",
+    "Write Markdown, check the preview and publish it as a page with a link.",
   pathname: "/app",
   noIndex: true, // product UI; keep marketing page indexed instead
 });

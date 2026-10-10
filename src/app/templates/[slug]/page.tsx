@@ -73,7 +73,7 @@ export default async function TemplatePage({
         "@type": "HowToStep",
         position: 3,
         name: "Publish and share",
-        text: "Hit Publish and get a clean, shareable link in seconds. No account needed.",
+        text: "Publish and you get a link to send. You don't need an account.",
       },
     ],
   };
@@ -180,7 +180,7 @@ export default async function TemplatePage({
               {
                 step: "3",
                 title: "Publish and share",
-                body: "Hit Publish and get a clean, shareable link in seconds. No account needed.",
+                body: "Publish and you get a link to send. You don't need an account.",
               },
             ].map(({ step, title, body }) => (
               <div key={step} className="rounded-xl border border-border-subtle p-5 bg-bg">
@@ -241,7 +241,7 @@ export default async function TemplatePage({
         <div className="mx-auto w-full max-w-3xl px-4 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-text-muted">
           <div className="flex items-center gap-2">
           <AppLogo onlyIcon={true} />
-            <span>{APP_NAME} — Beautiful markdown pages, instantly.</span>
+            <span>{APP_NAME}: Markdown, published as a page.</span>
           </div>
           <div className="flex items-center gap-4">
             <Link href="/templates" className="hover:text-text-primary transition">Templates</Link>

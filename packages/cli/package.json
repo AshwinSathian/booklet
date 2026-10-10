@@ -1,7 +1,7 @@
 {
   "name": "booklet-cli",
   "version": "3.0.0",
-  "description": "Publish Markdown to a shareable URL from your terminal or CI pipeline",
+  "description": "Publish Markdown incident reports, ADRs, RFCs and runbooks as web pages, with team spaces.",
   "bin": {
     "booklet": "dist/index.js"
   },

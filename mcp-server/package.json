@@ -1,7 +1,7 @@
 {
   "name": "@booklet/mcp-server",
   "version": "4.0.0",
-  "description": "MCP server for publishing Markdown to Booklet from AI assistants and agents",
+  "description": "Publish Markdown incident reports, ADRs, RFCs and runbooks as web pages, with team spaces.",
   "private": true,
   "license": "MIT",
   "scripts": {

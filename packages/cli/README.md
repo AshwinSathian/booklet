@@ -4,14 +4,15 @@
 [![npm downloads](https://img.shields.io/npm/dw/booklet-cli)](https://www.npmjs.com/package/booklet-cli)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](https://github.com/AshwinSathian/booklet/blob/main/packages/cli/LICENSE)
 
-Publish Markdown from your terminal, a CI pipeline, or a script — as [Booklet](https://booklet.ashwinsathian.com) pages
-with a permanent, shareable URL.
+Publish Markdown files as [Booklet](https://booklet.ashwinsathian.com) pages from a terminal, a
+script or a CI job. `booklet publish README.md` is the whole command, and it prints the page's URL.
 
-Built for automation first: `--key`/`BOOKLET_API_KEY` for non-interactive auth, `--update <id>` to
-republish in place instead of minting a new URL every run, `--json` on every command, and
-[exit codes](#exit-codes) a script can branch on. The most common use is a CI job that keeps a changelog or release-notes page current —
-see [CI / GitHub Actions](#ci--github-actions) below. It works the same way from a terminal, of
-course; `booklet publish README.md` is still the whole command.
+For scripts there is `--key` or `BOOKLET_API_KEY` for auth without a browser, `--update <id>` to
+republish to the same URL, `--json` on every command, and [exit codes](#exit-codes) that say why a
+command failed. The usual CI job keeps a changelog or release-notes page current; see
+[CI / GitHub Actions](#ci--github-actions).
+
+This is version 3. It needs a Booklet server at 2.0.0 or later, which the hosted one is.
 
 ## Install
 

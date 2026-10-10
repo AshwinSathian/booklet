@@ -36,10 +36,10 @@ export default async function ExplorePage() {
 
         <div className="mt-16 rounded-2xl border border-border-subtle bg-bg-elevated px-6 py-10 text-center">
           <p className="text-base font-semibold text-text-primary mb-1.5">
-            Share something worth reading
+            Add a page of your own
           </p>
           <p className="text-sm text-text-muted mb-5 max-w-xs mx-auto">
-            Write Markdown, hit Publish — your page appears here instantly.
+            Publish a page, choose Public, and it is listed here.
           </p>
           <Button variant="primary" size="lg" href={ROUTES.app}>
             Start writing
