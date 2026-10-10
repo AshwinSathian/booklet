@@ -779,6 +779,16 @@ export default function McpSetupPage() {
                 </div>
               ))}
             </div>
+
+            <p className="mt-6 text-sm text-text-secondary max-w-prose">
+              A published page has its own URL, so it is not locked in a chat thread, and the
+              server works with any MCP client rather than one vendor&apos;s.
+            </p>
+            <p className="mt-3 text-sm text-text-secondary max-w-prose">
+              Typical uses: paste an alert timeline and ask for a published post-mortem, turn a
+              diff into an ADR, draft release notes from a git log, or document a module&apos;s
+              public API from its source.
+            </p>
           </section>
 
           {/* Step 1 — API Key */}

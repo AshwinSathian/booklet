@@ -312,17 +312,9 @@ jobs:
               ))}
             </div>
 
-            <div className="flex items-center gap-3">
-              <Button variant="primary" size="md" href="/mcp-setup">
-                Setup guide
-              </Button>
-              <Link
-                href="/mcp"
-                className="text-sm text-text-muted transition hover:text-text-primary"
-              >
-                Learn more →
-              </Link>
-            </div>
+            <Button variant="primary" size="md" href="/mcp-setup">
+              Setup guide
+            </Button>
           </div>
 
           <div className="flex flex-col gap-4">

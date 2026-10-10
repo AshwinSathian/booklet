@@ -43,7 +43,6 @@ const ROUTES = [
   "/reset-password",
   "/privacy",
   "/terms",
-  "/mcp",
   "/mcp-setup",
   "/cli-auth",
 ];
