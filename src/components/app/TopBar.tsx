@@ -1281,13 +1281,17 @@ export function TopBar({
             active={visibleMoreActions}
           />
 
+          {/* Not in the bar on a phone: one pane shows at a time there anyway, the draft's
+              title needs the room, and the command palette still has it. */}
           {onToggleFocusMode && (
-            <IconBtn
-              label={focusMode ? "Exit focus mode (⌘.)" : "Focus mode (⌘.)"}
-              icon={focusMode ? "eye" : "eye-off"}
-              onClick={onToggleFocusMode}
-              active={focusMode}
-            />
+            <span className="max-sm:hidden">
+              <IconBtn
+                label={focusMode ? "Exit focus mode (⌘.)" : "Focus mode (⌘.)"}
+                icon={focusMode ? "eye" : "eye-off"}
+                onClick={onToggleFocusMode}
+                active={focusMode}
+              />
+            </span>
           )}
 
           {/* Below sm the panel hangs from the header: the gear sits mid-bar, and a

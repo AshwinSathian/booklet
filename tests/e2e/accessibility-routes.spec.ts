@@ -34,7 +34,8 @@ const ROUTES: Record<string, { as: Who; url: (f: Fixtures) => string }> = {
   "/app": { as: "anon", url: () => "/app" },
   "/c/[id]": { as: "anon", url: (f) => `/c/${f.collectionId}` },
   "/changelog": { as: "anon", url: () => "/changelog" },
-  "/cli-auth": { as: "owner", url: () => "/cli-auth?port=53123&state=a11y" },
+  // A state of the CLI's shape: anything else renders "Invalid request", not the page.
+  "/cli-auth": { as: "owner", url: () => "/cli-auth?port=53123&state=0123456789abcdef0123456789abcdef01234567" },
   "/docs": { as: "anon", url: () => "/docs" },
   // The MCP guide: the one docs page with an embedded component.
   "/docs/[...slug]": { as: "anon", url: () => "/docs/guides/mcp" },

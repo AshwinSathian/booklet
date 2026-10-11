@@ -386,7 +386,7 @@ test("on a phone, the draft's title is on screen before publishing", async ({ br
   await page.getByRole("textbox", { name: "Write or paste Markdown…" }).fill("# Quarterly review\n\nBody.");
   const title = page.locator("button[title='Click to rename']");
   await expect(title).toContainText("Quarterly");
-  expect((await title.boundingBox())!.width).toBeGreaterThan(40);
+  expect((await title.boundingBox())!.width).toBeGreaterThan(60);
   // The visibility control still says what it is to a screen reader.
   await expect(page.getByLabel(/Who can find this page: /)).toBeVisible();
 });

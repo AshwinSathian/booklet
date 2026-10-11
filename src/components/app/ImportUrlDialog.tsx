@@ -70,7 +70,8 @@ export function ImportUrlDialog({
       ref={dialogRef}
       onClose={onClose}
       aria-labelledby="import-url-title"
-      className="w-[min(32rem,calc(100vw-2rem))] rounded-xl border border-border-default bg-bg-elevated p-5 text-text-primary shadow-glass backdrop:bg-black/45"
+      // m-auto: the reset takes a dialog's own centring margin away, which left it in the top corner.
+      className="m-auto w-[min(32rem,calc(100vw-2rem))] rounded-xl border border-border-default bg-bg-elevated p-5 text-text-primary shadow-glass backdrop:bg-black/45"
     >
       <form onSubmit={(e) => void submit(e)} className="flex flex-col gap-3">
         <h2 id="import-url-title" className="text-base font-semibold">Import from URL</h2>

@@ -193,7 +193,7 @@ const ROUTES = [
   ["c", `/c/${colId}`],
   ["u", `/u/${me.userId}`],
   ["oauth-authorize", "/oauth/authorize"],
-  ["cli-auth", "/cli-auth?port=53123&state=sweep"],
+  ["cli-auth", "/cli-auth?port=53123&state=0123456789abcdef0123456789abcdef01234567"],
   ["cli-auth-invalid", "/cli-auth"],
   ["report", `/report?page=${pages[1]}`],
   ["verify-email", "/verify-email"],
