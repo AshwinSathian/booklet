@@ -14,13 +14,10 @@ function build(step = 2): ShotData {
     // A table's header row alone parses as a paragraph of pipes: no frame stops between it and its delimiter row.
     const beforeDelimiterRow = (end: number) => /^\s*\|?\s*:?-{3,}/.test(sample.source.slice(end, end + 12));
     const frames = lineEnds
-      .filter((end, i) => (i % step === step - 1 || end === sample.source.length) && !beforeDelimiterRow(end))
-      .map((chars) => ({
-        chars,
-        // Until the frontmatter is closed there is no page yet.
-        strip: chars >= bodyStart,
-        blocks: chars >= bodyStart ? parseToBlocks(sample.source.slice(bodyStart, chars)) : [],
-      }));
+      // The first frame has the frontmatter already written: the editor's
+      // preview shows a half-typed block as text, which the shot never drew.
+      .filter((end, i) => end >= bodyStart && (i % step === step - 1 || end === sample.source.length) && !beforeDelimiterRow(end))
+      .map((chars) => ({ chars, strip: true, blocks: parseToBlocks(sample.source.slice(bodyStart, chars)) }));
     return { ...sample, meta: meta as Record<string, unknown>, frames };
   });
 }

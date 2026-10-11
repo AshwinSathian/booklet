@@ -2,6 +2,7 @@
 
 import { BlockRenderer } from "@/components/blocks/BlockRenderer";
 import { Button } from "@/components/ui/Button";
+import { DocHeaderStrip } from "@/components/share/DocHeaderStrip";
 import type { Block, DocSettings } from "@/lib/blocks";
 import { SAMPLE_MARKDOWN } from "@/lib/sample";
 import type { WikilinkRenderCtx } from "@/lib/wikilinks/render-context";
@@ -9,6 +10,7 @@ import { useState } from "react";
 
 export function PreviewPane({
   blocks,
+  meta = null,
   settings,
   isEmpty,
   isBusy,
@@ -19,6 +21,8 @@ export function PreviewPane({
   onOpenGraph,
 }: {
   blocks: Block[];
+  /** The draft's frontmatter, for the header strip. */
+  meta?: Record<string, unknown> | null;
   settings: DocSettings;
   isEmpty: boolean;
   isBusy: boolean;
@@ -87,6 +91,8 @@ export function PreviewPane({
           <EmptyState onInsertSample={onInsertSample} onCopySample={onCopySample} copyState={copyState} />
         ) : (
           <div className="h-full w-full overflow-y-auto px-4 py-5">
+            {/* The strip the published page opens with, from the draft's frontmatter. */}
+            <DocHeaderStrip meta={meta} userId={null} />
             <BlockRenderer blocks={blocks} settings={settings} wikilinkCtx={wikilinkCtx} />
           </div>
         )}

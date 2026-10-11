@@ -96,6 +96,32 @@ export async function sendEmailChangedNotice(oldAddress: string, newAddress: str
 }
 
 /**
+ * An invite to a team space, to the address it was made for. Plain text: the
+ * space's name and the inviter's address are both written by a user.
+ *
+ * Returns false, and sends nothing, when RESEND_API_KEY is unset: the
+ * owner is shown the link either way and can send it themselves.
+ */
+export async function sendTeamInviteEmail(to: string, invite: { spaceName: string; invitedBy: string | null; joinUrl: string }): Promise<boolean> {
+  if (!process.env.RESEND_API_KEY) return false;
+  const { error } = await getResendClient().emails.send({
+    from: FROM_ADDRESS,
+    to,
+    subject: `Join the ${invite.spaceName} space on Booklet`.slice(0, 180),
+    text: [
+      `${invite.invitedBy ?? "The owner"} invited you to the ${invite.spaceName} team space on Booklet.`,
+      "",
+      `Join: ${invite.joinUrl}`,
+      "",
+      "The link works for 72 hours, and only for an account with this email address. Sign in or create that account when asked.",
+      "If you were not expecting this, ignore this email: nothing happens unless you open the link.",
+    ].join("\n"),
+  });
+  if (error) throw new Error(`Resend rejected the team invite: ${error.message}`);
+  return true;
+}
+
+/**
  * Notifies the abuse inbox of a new report. Plain text on purpose: every
  * field below except the URL is written by an anonymous reporter, and a
  * text body cannot carry markup.

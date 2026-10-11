@@ -1,5 +1,12 @@
+import { BlockRenderer } from "@/components/blocks/BlockRenderer";
 import { Card, Section } from "@/components/marketing/primitives";
-import { DocHeaderStrip, StatusChip } from "@/components/share/DocHeaderStrip";
+import { DocHeaderStrip } from "@/components/share/DocHeaderStrip";
+import { ReferencedByList } from "@/components/share/ReferencedByList";
+import { SpaceGroups } from "@/components/share/SpaceGroups";
+import { DEFAULT_SETTINGS } from "@/lib/blocks";
+import type { DbPage } from "@/lib/db/types";
+import { parseToBlocks } from "@/lib/parse";
+import { groupSpacePages } from "@/lib/space-groups";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -19,14 +26,50 @@ function Row({ title, body, href, link, visual, flip }: { title: string; body: R
 }
 
 const code = "rounded bg-bg-soft px-1.5 py-0.5 font-mono text-[0.9em] text-text-primary";
+const caption = "mb-3 text-xs font-medium text-text-muted";
 
-/** Three things a plain Markdown page does not have, each shown with the component the product uses. */
+// The sample pages of a team space. They are the documents the product shot
+// above plays, plus two more, so every title on this page names the same
+// few documents. Grouped and ordered by groupSpacePages, as a real space is.
+const page = (id: string, title: string, doc_type: DbPage["doc_type"], status: string, date: string, visibility: DbPage["visibility"] = "public"): DbPage => ({
+  id,
+  slug: id,
+  title,
+  doc_type,
+  visibility,
+  user_id: "sample",
+  collection_id: "sample",
+  team_id: null,
+  view_count: 0,
+  password_hash: null,
+  taken_down_at: null,
+  frontmatter_meta: { status, date },
+  created_at: `${date}T00:00:00.000Z`,
+  updated_at: `${date}T00:00:00.000Z`,
+});
+const SPACE_PAGES: DbPage[] = [
+  page("adr-012-queue-retries", "ADR-012 Queue retries", "adr", "Accepted", "2026-08-02"),
+  page("adr-007-retry-in-the-client", "ADR-007 Retry in the client", "adr", "Superseded", "2026-03-11"),
+  page("checkout-incident-07-18", "Checkout API errors, 18 July", "incident", "Resolved", "2026-07-18"),
+  page("delayed-payouts-06-02", "Delayed payouts, 2 June", "incident", "Resolved", "2026-06-02"),
+  page("runbook-db-failover", "Runbook: Database failover", "runbook", "Current", "2026-06-30", "team"),
+];
+
+// One sentence of ADR-012, with its link as the published page has it.
+const LINKING_SENTENCE = parseToBlocks("One caller has no limit: see [Delayed payouts, 2 June](/p/delayed-payouts-06-02).");
+
+/**
+ * Three things a page carries besides its text. Each is drawn by the
+ * component the published site uses (the header strip, the renderer and the
+ * "Referenced by" list, a team space's page list) from sample data, so what
+ * a visitor sees here is what the product draws.
+ */
 export function DocumentSystem() {
   return (
     <Section
       eyebrow="For engineering teams"
-      title="More than a rendered file."
-      lede="A document knows what it is, what it refers to and who may read it."
+      title="What a page carries besides the text"
+      lede="A page shows its type and status, links to the documents it names, and can be limited to a team."
     >
       <Row
         title="A document says what it is"
@@ -34,7 +77,7 @@ export function DocumentSystem() {
           <p>
             Put <code className={code}>type: incident</code> in the frontmatter, or <code className={code}>adr</code>,{" "}
             <code className={code}>rfc</code>, <code className={code}>runbook</code>. The page shows its status, severity,
-            date and owners under the title, so a reader knows in one line whether it is still open.
+            date and owners in a strip above the title, so a reader knows in one line whether it is still open.
           </p>
         }
         href="/docs/guides/document-types"
@@ -46,8 +89,11 @@ export function DocumentSystem() {
                 userId={null}
                 meta={{ type: "incident", status: "Resolved", severity: "P1", date: "2026-07-18", owners: ["payments-oncall"] }}
               />
-              <p className="font-display text-2xl font-medium">Checkout API errors, 18 July</p>
-              <p className="mt-2 text-text-secondary">About 8% of checkout requests failed for 32 minutes.</p>
+              <BlockRenderer
+                blocks={parseToBlocks("# Checkout API errors, 18 July\n\nAbout 8% of checkout requests failed for 32 minutes.")}
+                settings={DEFAULT_SETTINGS}
+                headingOffset={2}
+              />
             </div>
           </Card>
         }
@@ -57,25 +103,21 @@ export function DocumentSystem() {
         title="Documents link to each other"
         body={
           <p>
-            Write <code className={code}>[[ADR-012 Queue retries]]</code> in an incident report and it becomes a link to
-            that ADR when you publish. The ADR, in turn, lists every document that refers to it.
+            Write <code className={code}>[[Delayed payouts, 2 June]]</code> in an ADR and it becomes a link to that
+            incident report when you publish. The incident report then lists the ADR under &ldquo;Referenced by&rdquo;, for
+            readers who are allowed to find it.
           </p>
         }
         href="/docs/guides/linking"
         link="Linking documents"
         visual={
           <Card className="p-6 sm:p-7">
-            <div aria-hidden data-sample>
-              <p className="text-[15px] leading-relaxed">
-                The retry storm was possible because of the policy in{" "}
-                <span className="font-medium underline decoration-highlight decoration-[3px] underline-offset-4">ADR-012 Queue retries</span>.
-              </p>
-              <div className="mt-6 border-t border-border-default pt-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-text-muted">On ADR-012 · Referenced by</p>
-                <ul className="mt-3 flex flex-col gap-2 text-[15px]">
-                  <li className="underline underline-offset-4">Checkout API errors, 18 July</li>
-                  <li className="underline underline-offset-4">Runbook: Queue backlog</li>
-                </ul>
+            <div inert data-sample>
+              <p className={caption}>In ADR-012 Queue retries</p>
+              <BlockRenderer blocks={LINKING_SENTENCE} settings={DEFAULT_SETTINGS} />
+              <p className={`${caption} mt-8`}>At the foot of Delayed payouts, 2 June</p>
+              <div className="[&>nav]:mt-0">
+                <ReferencedByList pages={[{ id: "adr-012", slug: "adr-012-queue-retries", title: "ADR-012 Queue retries" }]} />
               </div>
             </div>
           </Card>
@@ -85,48 +127,17 @@ export function DocumentSystem() {
         title="A team keeps them in one space"
         body={
           <p>
-            A team space lists its pages by type: a decision log in ADR-number order, incidents by date, then RFCs and
-            runbooks. Invite people by email. A page set to Team opens for members and answers 404 for everyone else.
+            A team space lists its pages by type: incidents by date, a decision log in ADR-number order, then RFCs and
+            runbooks. Invite a colleague by email address. A page set to Team only opens for members and answers 404 for
+            everyone else.
           </p>
         }
         href="/docs/guides/team-spaces"
         link="Team spaces"
         visual={
-          <Card className="overflow-hidden">
-            <div aria-hidden data-sample>
-              <div className="flex items-center justify-between border-b border-border-default px-5 py-3">
-                <span className="font-display text-lg font-medium">Payments</span>
-                <span className="font-mono text-xs text-text-muted">/t/payments</span>
-              </div>
-              {[
-                {
-                  group: "Decision log",
-                  rows: [
-                    ["ADR-007 Retry in the client", "Superseded"],
-                    ["ADR-011 One ledger per region", "Accepted"],
-                    ["ADR-012 Queue retries", "Accepted"],
-                  ],
-                },
-                {
-                  group: "Incidents",
-                  rows: [
-                    ["Checkout API errors, 18 July", "Resolved"],
-                    ["Delayed payouts, 2 June", "Resolved"],
-                  ],
-                },
-              ].map(({ group, rows }) => (
-                <div key={group} className="px-5 py-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-text-muted">{group}</p>
-                  <ul className="mt-2 divide-y divide-border-subtle">
-                    {rows.map(([title, status]) => (
-                      <li key={title} className="flex items-center justify-between gap-4 py-2 text-[15px]">
-                        <span className="truncate">{title}</span>
-                        <StatusChip status={status} />
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
+          <Card className="p-6 sm:p-7">
+            <div inert data-sample>
+              <SpaceGroups groups={groupSpacePages(SPACE_PAGES)} />
             </div>
           </Card>
         }

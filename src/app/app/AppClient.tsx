@@ -37,7 +37,7 @@ import type { WikilinkRenderCtx } from "@/lib/wikilinks/render-context";
 import { SAMPLE_MARKDOWN } from "@/lib/sample";
 import { normalizeInput } from "@/lib/sanitize";
 import { getTemplateBySlug, templateMarkdown } from "@/lib/templates";
-import { stripFrontmatter } from "@/lib/frontmatter";
+import { parseFrontmatter, stripFrontmatter } from "@/lib/frontmatter";
 import { formatTimeHHMM } from "@/lib/ui/time";
 import { AppLoader } from "@/components/ui/AppLoader";
 import { useSession } from "@/components/auth/SessionProvider";
@@ -339,6 +339,9 @@ function AppPageContent() {
     () => normalizeInput(stripFrontmatter(raw)),
     [raw],
   );
+
+  // The frontmatter itself, for the header strip the preview shows above the text.
+  const frontmatterMeta = useMemo(() => parseFrontmatter(raw).meta as Record<string, unknown>, [raw]);
 
   // Debounce parsing (perf): smoother typing on slower devices.
   const [debouncedNormalized, setDebouncedNormalized] = useState(normalized);
@@ -865,6 +868,7 @@ function AppPageContent() {
           right={
             <PreviewPane
               blocks={blocks}
+              meta={frontmatterMeta}
               settings={settings}
               isBusy={isBusy}
               isEmpty={isEmpty}

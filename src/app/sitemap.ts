@@ -40,7 +40,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...getDocsTree()
       .flatMap((section) => section.pages)
       .map((page) => ({ url: absoluteUrl(page.href), changeFrequency: "monthly" as const, priority: 0.7 })),
-    ...TEMPLATES.filter((t) => t.slug).map((t) => ({
+    ...TEMPLATES.map((t) => ({
       url: absoluteUrl(`/templates/${t.slug}`),
       changeFrequency: "monthly" as const,
       priority: 0.6,

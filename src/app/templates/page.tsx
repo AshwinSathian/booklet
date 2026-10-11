@@ -1,18 +1,18 @@
 import { ENGINEERING_TEMPLATE_SLUGS, TemplateCard } from "@/components/marketing/home/TemplateShelf";
 import { Container, PageShell, PageTitle } from "@/components/marketing/primitives";
 import { absoluteUrl, buildMetadata } from "@/lib/seo";
-import { TEMPLATES, type Template } from "@/lib/templates";
+import { TEMPLATES } from "@/lib/templates";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = buildMetadata({
   title: "Templates for engineering documents",
   description:
-    "Free templates for incident reports, postmortems, ADRs, runbooks, release notes and more. Open one in the Booklet editor, fill it in and publish it as a page.",
+    "Markdown templates for incident reports, postmortems, ADRs, RFCs, runbooks and release notes. Open one in the Booklet editor, fill it in and publish it as a page.",
   pathname: "/templates",
 });
 
 export default function TemplatesPage() {
-  const all = TEMPLATES.filter((t): t is Template & { slug: string } => Boolean(t.slug));
+  const all = TEMPLATES;
   const engineering = ENGINEERING_TEMPLATE_SLUGS.map((slug) => all.find((t) => t.slug === slug)).filter((t) => !!t);
   const other = all.filter((t) => !ENGINEERING_TEMPLATE_SLUGS.includes(t.slug));
 
@@ -27,18 +27,18 @@ export default function TemplatesPage() {
       position: i + 1,
       name: t.name,
       url: absoluteUrl(`/templates/${t.slug}`),
-      description: t.metaDescription ?? t.description,
+      description: t.metaDescription,
     })),
   };
 
   return (
     <PageShell>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
       <Container className="py-14 sm:py-20">
         <PageTitle
           eyebrow="Templates"
-          title="Start from the structure."
-          lede="Pick a template and the editor opens with its sections and frontmatter in place. Fill it in and publish. No account needed."
+          title="Templates"
+          lede="Each one is a Markdown document with its sections and frontmatter in place. Open a template to see it rendered, then use it in the editor. No account needed."
         />
 
         <section className="mt-14">
@@ -51,7 +51,7 @@ export default function TemplatesPage() {
         </section>
 
         <section className="mt-16">
-          <h2 className="font-display text-2xl font-medium">Other templates</h2>
+          <h2 className="font-display text-2xl font-medium">Other documents a team writes</h2>
           <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {other.map((t) => (
               <TemplateCard key={t.slug} template={t} />

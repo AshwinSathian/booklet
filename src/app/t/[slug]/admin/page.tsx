@@ -2,6 +2,7 @@
 
 import { AppPage, AppPageTitle } from "@/components/app/AppPage";
 import { Button } from "@/components/ui/Button";
+import { CopyButton } from "@/components/marketing/CopyButton";
 import { useRouter } from "next/navigation";
 import { use, useCallback, useEffect, useState } from "react";
 import { useSession } from "@/components/auth/SessionProvider";
@@ -32,7 +33,7 @@ function AdminPageInner({ slug }: { slug: string }) {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviting, setInviting] = useState(false);
-  const [inviteResult, setInviteResult] = useState<{ ok: boolean; message: string } | null>(null);
+  const [inviteResult, setInviteResult] = useState<{ ok: boolean; message: string; link?: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
@@ -96,12 +97,19 @@ function AdminPageInner({ slug }: { slug: string }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ email: inviteEmail.trim() }),
       });
-      const data = (await res.json()) as { ok?: boolean; detail?: string };
-      if (res.ok) {
-        setInviteResult({ ok: true, message: `Invite sent to ${inviteEmail.trim()}.` });
+      const data = (await res.json()) as { ok?: boolean; detail?: string; inviteUrl?: string; emailed?: boolean };
+      if (res.ok && data.inviteUrl) {
+        const to = inviteEmail.trim();
+        setInviteResult({
+          ok: true,
+          link: data.inviteUrl,
+          message: data.emailed
+            ? `The invite was emailed to ${to}. This is the same link, if you would rather send it yourself.`
+            : `Invite link for ${to}. Send it to them yourself.`,
+        });
         setInviteEmail("");
       } else {
-        setInviteResult({ ok: false, message: data.detail ?? "Failed to send invite." });
+        setInviteResult({ ok: false, message: data.detail ?? "The invite was not created. Try again." });
       }
     } finally {
       setInviting(false);
@@ -262,13 +270,22 @@ function AdminPageInner({ slug }: { slug: string }) {
               disabled={inviting || !inviteEmail.trim()}
               className="shrink-0"
             >
-              {inviting ? "Sending…" : "Send invite"}
+              {inviting ? "Inviting…" : "Invite"}
             </Button>
           </div>
+          <p className="mt-2 text-xs text-text-muted">
+            An invite works for 72 hours, and only for an account with that email address. The person joins as an editor.
+          </p>
           {inviteResult && (
-            <p className={`mt-1.5 text-xs ${inviteResult.ok ? "text-text-secondary" : "text-danger"}`}>
-              {inviteResult.message}
-            </p>
+            <div role="status" className="mt-3">
+              <p className={`text-sm ${inviteResult.ok ? "text-text-secondary" : "text-danger"}`}>{inviteResult.message}</p>
+              {inviteResult.link ? (
+                <div className="mt-2 flex items-center gap-2">
+                  <input readOnly value={inviteResult.link} aria-label="Invite link" onFocus={(e) => e.currentTarget.select()} className="min-w-0 flex-1 field font-mono text-xs" />
+                  <CopyButton text={inviteResult.link} label="Copy link" className="shrink-0" />
+                </div>
+              ) : null}
+            </div>
           )}
         </section>
 

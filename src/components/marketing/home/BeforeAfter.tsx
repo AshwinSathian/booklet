@@ -3,17 +3,17 @@ import { Section } from "@/components/marketing/primitives";
 import { DEFAULT_SETTINGS } from "@/lib/blocks";
 import { parseToBlocks } from "@/lib/parse";
 
-const SUMMARY = `## Checkout errors, 18 July
+const SUMMARY = `## Checkout API errors, 18 July
 
 **Severity:** P1 · **Status:** Resolved
 
 | UTC   | Event                    |
 | ----- | ------------------------ |
-| 14:32 | Alert: error rate over 5% |
-| 14:45 | Pool found exhausted     |
-| 15:01 | Fix deployed             |
+| 14:32 | Alert: error rate above 5% |
+| 14:45 | Connection pool found exhausted |
+| 15:01 | Pool size reverted, deploy rolled out |
 
-Root cause: \`pool_size\` went from 50 to 5 in Tuesday's deploy.
+Root cause: the deploy on 14 July cut \`pool_size\` from 50 to 5.
 `;
 
 /** The same summary twice: as it lands in a chat message, and as the page Booklet makes of it. */
@@ -21,7 +21,7 @@ export function BeforeAfter() {
   return (
     <Section
       eyebrow="The problem"
-      title="Markdown does not survive being pasted."
+      title="Pasted Markdown arrives as raw syntax"
       lede="Paste a report into chat, email or a ticket and the reader gets pound signs, asterisks and a table made of pipes. Send a link instead and they get the document."
     >
       <div className="grid gap-6 lg:grid-cols-2">

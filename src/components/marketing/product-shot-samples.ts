@@ -1,7 +1,9 @@
 /**
  * The four documents the homepage plays: Markdown on the left, the page on
  * the right. Written out by hand as finished documents, the way a team
- * would write them. The frontmatter drives the header strip.
+ * would write them. The frontmatter drives the header strip. Each is
+ * published on the live site at its \`url\`, so the address the frame ends
+ * on is a real page with this content.
  */
 export type ShotSample = {
   id: "incident" | "adr" | "rfc" | "runbook";
@@ -42,7 +44,7 @@ No payment was taken twice.
 
 ## Root cause
 
-Tuesday's deploy cut the pool from 50 connections to 5.
+The deploy on 14 July cut the pool from 50 connections to 5.
 
 \`\`\`yaml
 pool_size: 5 # was 50
@@ -70,7 +72,8 @@ supersedes: ADR-007 Retry in the client
 ## Context
 
 A failed job is retried by whoever called it. Three
-callers do it three ways, and one has no limit.
+callers do it three ways, and one has no limit: see
+[Delayed payouts, 2 June](/p/delayed-payouts-06-02).
 
 ## Decision
 

@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { INSERT_ITEMS, filterInsertItems, normalizeBlockInsertion } from "@/lib/editor/insertItems";
 import { CALLOUT_KINDS } from "@/lib/blocks";
+import { parseToBlocks } from "@/lib/parse";
 
 test.describe("insert items", () => {
   test("includes one item per callout kind, each producing a > [!kind] snippet", () => {
@@ -14,17 +15,23 @@ test.describe("insert items", () => {
   test("toggle snippet is a valid :::toggle directive with the Summary placeholder selected", () => {
     const item = INSERT_ITEMS.find((i) => i.id === "toggle");
     expect(item).toBeDefined();
-    expect(item!.snippet.text).toBe(":::toggle Summary\n\n:::\n");
     const { text, selectFrom, selectTo } = item!.snippet;
     expect(text.slice(selectFrom, selectTo)).toBe("Summary");
+    // It has to parse as a toggle, not print as three paragraphs.
+    const [block] = parseToBlocks(text.replace("\n\n:::", "\n\nBody\n\n:::"));
+    expect(block).toMatchObject({ t: "toggle" });
   });
 
   test("columns snippet places the cursor inside the first column body", () => {
     const item = INSERT_ITEMS.find((i) => i.id === "columns");
     expect(item).toBeDefined();
-    expect(item!.snippet.text).toBe(":::columns\n\n---\n\n:::\n");
-    expect(item!.snippet.selectFrom).toBe(item!.snippet.selectTo);
-    expect(item!.snippet.text.slice(0, item!.snippet.selectFrom)).toBe(":::columns\n");
+    const { text, selectFrom, selectTo } = item!.snippet;
+    expect(selectFrom).toBe(selectTo);
+    // Typing at the caret, and again after the break, gives two columns.
+    const typed = `${text.slice(0, selectFrom)}Left${text.slice(selectFrom)}`.replace("---\n\n", "---\n\nRight");
+    const [block] = parseToBlocks(typed);
+    expect(block).toMatchObject({ t: "columns" });
+    expect((block as { columns: unknown[] }).columns).toHaveLength(2);
   });
 
   test("table snippet selects the 'Column 1' placeholder, matching the toolbar's insertTable behavior", () => {

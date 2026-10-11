@@ -284,8 +284,8 @@ test.describe("document types", () => {
     expect((await getPageRecord(id))?.frontmatter_meta?.status).toBe("Retired");
   });
 
-  test("all 21 editor templates open with frontmatter that parses to a status and a date", () => {
-    expect(TEMPLATES).toHaveLength(21);
+  test("all 22 editor templates open with frontmatter that parses to a status and a date", () => {
+    expect(TEMPLATES).toHaveLength(22);
     for (const t of TEMPLATES) {
       const { meta, body } = parseFrontmatter(templateMarkdown(t, "2026-10-10"));
       expect(meta.status, t.name).toBeTruthy();
@@ -294,12 +294,23 @@ test.describe("document types", () => {
       expect(body.startsWith("#"), t.name).toBe(true);
     }
     expect(TEMPLATES.filter((t) => t.doc).map((t) => t.doc!.type).sort()).toEqual(
-      ["adr", "incident", "postmortem", "release-notes", "release-notes", "runbook"],
+      ["adr", "incident", "postmortem", "release-notes", "release-notes", "rfc", "runbook"],
     );
   });
 
-  test("the 5 MCP prompts and the 5 CLI templates emit a document type", () => {
-    expect(PROMPT_NAMES).toHaveLength(5);
+  test("the editor, the CLI and the MCP prompts start each document type from the same sections", () => {
+    const sections = (markdown: string) => parseFrontmatter(markdown).body.split("\n").filter((line) => line.startsWith("## "));
+    for (const [key, prompt] of [["incident", "incident_report"], ["postmortem", "postmortem"], ["adr", "adr"], ["rfc", "rfc"], ["runbook", "runbook"], ["release-notes", "release_notes"]] as const) {
+      const cli = sections(CLI_TEMPLATES[key].body());
+      expect(cli.length, key).toBeGreaterThan(2);
+      expect(sections(renderPrompt(prompt, { title: "T", product: "P", version: "1", service: "S" }) ?? ""), key).toEqual(cli);
+      const editor = TEMPLATES.find((t) => t.doc?.type === key && t.slug !== "api-changelog")!;
+      expect(sections(templateMarkdown(editor)), key).toEqual(cli);
+    }
+  });
+
+  test("the 6 MCP prompts and the 6 CLI templates emit a document type", () => {
+    expect(PROMPT_NAMES).toHaveLength(6);
     for (const name of PROMPT_NAMES) {
       const { meta } = parseFrontmatter(renderPrompt(name, { title: 'A "quoted": title', date: "2026-10-10" }) ?? "");
       expect(meta.type, name).toBeTruthy();
@@ -307,7 +318,7 @@ test.describe("document types", () => {
       // compared against one fixed day and passed only on that day.
       expect(meta.date, name).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     }
-    for (const name of ["incident_report", "release_notes"]) {
+    for (const name of ["incident_report", "postmortem", "release_notes"]) {
       expect(parseFrontmatter(renderPrompt(name, { title: "T", date: "2026-10-10" }) ?? "").meta.date, name).toBe("2026-10-10");
     }
     for (const [name, t] of Object.entries(CLI_TEMPLATES)) {

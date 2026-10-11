@@ -6,18 +6,12 @@ import { TEMPLATES, type Template } from "@/lib/templates";
 import Link from "next/link";
 
 /** The templates the homepage leads with: the six made for engineering documents. */
-export const ENGINEERING_TEMPLATE_SLUGS = [
-  "incident-report",
-  "postmortem",
-  "architecture-decision-record",
-  "runbook",
-  "release-notes",
-  "technical-investigation",
-];
+// The six document types Booklet is built for, in the order a team meets them.
+export const ENGINEERING_TEMPLATE_SLUGS = ["incident-report", "postmortem", "architecture-decision-record", "rfc", "runbook", "release-notes"];
 
 /**
- * A template as a small page: the top of its real rendered output, with its
- * name under it. The whole card is one link, made by stretching the title's
+ * A template as a small page: the top of its body as the real renderer draws
+ * it, with its name under it. The whole card is one link, made by stretching the title's
  * link over the card: the preview can contain links of its own, and a link
  * cannot sit inside another.
  */
@@ -47,8 +41,8 @@ export function TemplateShelf() {
   return (
     <Section
       eyebrow="Templates"
-      title="Start from the structure, not a blank page."
-      lede="Each template opens in the editor with its sections and frontmatter in place."
+      title="Start from a template"
+      lede="A template opens in the editor with its sections and frontmatter in place. These six are the same ones the CLI and the MCP prompts use."
     >
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {templates.map((t) => (
@@ -57,7 +51,7 @@ export function TemplateShelf() {
       </div>
       <p className="mt-8 text-sm">
         <Link href="/templates" className="font-semibold underline decoration-highlight decoration-[3px] underline-offset-[5px] hover:decoration-accent">
-          All {TEMPLATES.filter((t) => t.slug).length} templates
+          All {TEMPLATES.length} templates
         </Link>
       </p>
     </Section>

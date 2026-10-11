@@ -31,6 +31,7 @@ import { EmbedButton } from "@/components/share/EmbedButton";
 import { StickyHeader } from "@/components/share/StickyHeader";
 import { ShareButtons } from "@/components/share/ShareButtons";
 import { GoneNotice } from "@/components/share/GoneNotice";
+import { ReferencedByList } from "@/components/share/ReferencedByList";
 import { KeepPageNotice } from "@/components/share/KeepPageNotice";
 import { PURGE_GRACE_DAYS, claimCookieName, claimTokenMatches } from "@/lib/anonymous-claim";
 import { getSession } from "@/lib/auth/session";
@@ -428,25 +429,7 @@ async function ReferencedBy({ pageId }: { pageId: string }) {
   const visible = await listablePages(sources, viewerId);
   if (visible.length === 0) return null;
 
-  return (
-    <nav aria-labelledby="referenced-by" className="mt-10 border-t border-border-subtle pt-6 print:hidden">
-      <h2 id="referenced-by" className="text-xs font-semibold uppercase tracking-wide text-text-muted">
-        Referenced by
-      </h2>
-      <ul className="mt-3 space-y-1.5">
-        {visible.map((page) => (
-          <li key={page.id}>
-            <Link
-              href={ROUTES.publish(page.slug ?? page.id)}
-              className="text-sm text-accent-soft underline decoration-1 underline-offset-3"
-            >
-              {page.title ?? "Untitled"}
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </nav>
-  );
+  return <ReferencedByList pages={visible} />;
 }
 
 // ---------------------------------------------------------------------------

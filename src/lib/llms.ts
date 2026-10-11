@@ -33,7 +33,7 @@ ${docs}
 ## Other pages
 
 - [Editor](${origin}/app)
-- [Templates](${origin}/templates): ${TEMPLATES.filter((t) => t.slug).map((t) => t.name).join(", ")}
+- [Templates](${origin}/templates): ${TEMPLATES.map((t) => t.name).join(", ")}
 - [Pricing](${origin}/pricing): free, with and without an account
 - [Trust](${origin}/trust): who runs it, where it is hosted, backups, export and deletion
 - [Changelog](${origin}/changelog)
