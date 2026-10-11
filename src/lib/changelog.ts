@@ -15,6 +15,23 @@ export type Release = {
 
 export const RELEASES: Release[] = [
   {
+    version: "v3.1.1",
+    date: "2026-10-11",
+    summary: "A last pass over the new design: faults found by looking at every screen at three widths, and by using the editor without a mouse.",
+    entries: [
+      { date: "2026-10-11", tag: "Fixed", text: "A collection page no longer lists a public page that has a password" },
+      { date: "2026-10-11", tag: "Fixed", text: "After publishing, the custom URL bar sits under the top bar and moves the editor down. It used to lie over the Write and Preview tabs and the formatting buttons" },
+      { date: "2026-10-11", tag: "Fixed", text: "On a phone the drafts list and Import from URL were cut off by the top bar. They open in the middle of the screen" },
+      { date: "2026-10-11", tag: "Fixed", text: "The / menu and link suggestions open at the cursor. They opened lower down, and near the end of a long draft ran off the screen" },
+      { date: "2026-10-11", tag: "Fixed", text: "Numbered steps keep their numbers after a code block. Every step used to be 1" },
+      { date: "2026-10-11", tag: "Improved", text: "The editor works from the keyboard alone: Escape then Tab leaves the text, the formatting buttons answer to Enter, and closing the command palette puts the cursor back" },
+      { date: "2026-10-11", tag: "Improved", text: "On a phone the formatting bar shows a shade on the side it scrolls to, and the draft's title has room before publishing" },
+      { date: "2026-10-11", tag: "Improved", text: "A page that was taken down or has expired says so under a heading, in the dark theme too. A page with a password asks for it on the same card as sign-in" },
+      { date: "2026-10-11", tag: "Improved", text: "Times read 11 Oct 2026, 18:53, like the dates beside them" },
+      { date: "2026-10-11", tag: "Improved", text: "Team settings keeps its header while loading, and says under a heading when a team is not found or is someone else's to manage" },
+    ],
+  },
+  {
     version: "v3.1.0",
     date: "2026-10-11",
     summary: "The new design reaches the app: My pages, analytics, version history, Settings, Spaces and the sign-in pages.",

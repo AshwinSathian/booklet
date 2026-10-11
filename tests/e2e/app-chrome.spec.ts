@@ -388,9 +388,21 @@ test("the slash menu opens at the caret and stays on screen, and the editor's di
     const { page } = await seeded(browser, viewport);
     await page.goto("/app", { waitUntil: "networkidle" });
     const editor = page.getByRole("textbox", { name: "Write or paste Markdown…" });
+    // The drafts dialog covers the screen and sits in the middle of it, not on the top bar.
+    // Control, as in the other specs: the project's browser reports itself as Windows.
+    await editor.focus();
+    await page.keyboard.press("Control+d");
+    const dialog = page.getByRole("dialog", { name: "My drafts" });
+    await expect(dialog, `${viewport.width}`).toBeVisible();
+    const d = (await dialog.boundingBox())!;
+    expect(d.y, `${viewport.width}`).toBeGreaterThanOrEqual(0);
+    expect(d.y + d.height, `${viewport.width}`).toBeLessThanOrEqual(viewport.height);
+    expect(Math.abs(d.x + d.width / 2 - viewport.width / 2), `${viewport.width}`).toBeLessThan(4);
+    await page.keyboard.press("Escape");
+
     // Enough lines that the caret is near the bottom of the editor.
     await editor.fill(`# Title\n${"\nline".repeat(40)}\n`);
-    await editor.press("ControlOrMeta+End");
+    await editor.focus();
     await page.keyboard.type("/");
     const menu = page.getByRole("button", { name: "Heading 1" }).locator("xpath=..");
     await expect(menu, `${viewport.width}`).toBeVisible();
@@ -398,17 +410,6 @@ test("the slash menu opens at the caret and stays on screen, and the editor's di
     expect(box.y, `${viewport.width}`).toBeGreaterThanOrEqual(0);
     expect(box.y + box.height, `${viewport.width}`).toBeLessThanOrEqual(viewport.height);
     expect(box.x + box.width, `${viewport.width}`).toBeLessThanOrEqual(viewport.width);
-    await page.keyboard.press("Escape");
-    await page.keyboard.press("Backspace");
-
-    // The drafts dialog covers the screen and sits in the middle of it, not on the top bar.
-    await page.keyboard.press("ControlOrMeta+d");
-    const dialog = page.getByRole("dialog", { name: "My drafts" });
-    await expect(dialog, `${viewport.width}`).toBeVisible();
-    const d = (await dialog.boundingBox())!;
-    expect(d.y, `${viewport.width}`).toBeGreaterThanOrEqual(0);
-    expect(d.y + d.height, `${viewport.width}`).toBeLessThanOrEqual(viewport.height);
-    expect(Math.abs(d.x + d.width / 2 - viewport.width / 2), `${viewport.width}`).toBeLessThan(4);
     await page.keyboard.press("Escape");
     await page.context().close();
   }
