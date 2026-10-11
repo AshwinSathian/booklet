@@ -15,6 +15,20 @@ export type Release = {
 
 export const RELEASES: Release[] = [
   {
+    version: "v3.3.0",
+    date: "2026-10-12",
+    summary: "Settings has a section list down the side, the account page is split in two, and its forms open in dialogs.",
+    entries: [
+      { date: "2026-10-12", tag: "Improved", text: "Settings lists its sections down the left: Account, Sign-in and security, API keys and Webhooks. On a phone they are a row above the page" },
+      { date: "2026-10-12", tag: "Improved", text: "The account page was one long column of eight sections. Account now has your email address, the download of your pages and deleting the account. Sign-in and security has the password, sign-in accounts, passkeys, browsers and connected apps" },
+      { date: "2026-10-12", tag: "Improved", text: "Changing your email address or password, and deleting the account, each open in a dialog with labelled fields. They used to be forms that were always open on the page, with the label inside the field" },
+      { date: "2026-10-12", tag: "New", text: "Sign-in and security shows how many browsers you are signed in on, and signs out the others without changing your password" },
+      { date: "2026-10-12", tag: "Fixed", text: "The result of an action on the account page was printed at the top of the page, off screen if you had scrolled down. It is now a notice in the corner, and an error stays in the dialog it belongs to" },
+      { date: "2026-10-12", tag: "Fixed", text: "Buttons across the site and the app showed the arrow cursor. Whatever can be clicked now shows the pointer" },
+      { date: "2026-10-12", tag: "Improved", text: "API keys and Webhooks say so when there are none yet" },
+    ],
+  },
+  {
     version: "v3.2.1",
     date: "2026-10-11",
     summary: "New pages are set in the serif reading face wherever they are published from, and the site closes for the rest of the day when it nears its daily request limit.",

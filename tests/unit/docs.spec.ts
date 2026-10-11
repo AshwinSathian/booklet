@@ -56,7 +56,7 @@ const anchorsOf = (href: string) => {
 };
 
 const APP_ROUTES = ["/", "/app", "/pricing", "/templates", "/trust", "/changelog", "/sign-in", "/sign-up", "/my-pages", "/t",
-  "/settings/api-keys", "/settings/webhooks", "/settings/account", "/api/v1/openapi.json"];
+  "/settings/api-keys", "/settings/webhooks", "/settings/account", "/settings/security", "/api/v1/openapi.json"];
 
 test("every internal link in the docs points at a page, and a fragment at a heading on it", () => {
   for (const page of pages()) {

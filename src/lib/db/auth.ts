@@ -97,6 +97,19 @@ export async function deleteSessionByHash(tokenHash: string): Promise<void> {
   await db.collection<SessionDoc>("sessions").deleteOne({ token_hash: tokenHash });
 }
 
+/** Revokes every session of a user but the one with this token hash. Returns how many went. */
+export async function deleteOtherUserSessions(userId: string, keepTokenHash: string): Promise<number> {
+  const db = await getDb();
+  const res = await db.collection<SessionDoc>("sessions").deleteMany({ user_id: userId, token_hash: { $ne: keepTokenHash } });
+  return res.deletedCount;
+}
+
+/** How many sessions of a user have not expired: the browsers still signed in. */
+export async function countUserSessions(userId: string): Promise<number> {
+  const db = await getDb();
+  return db.collection<SessionDoc>("sessions").countDocuments({ user_id: userId, expires_at: { $gt: new Date() } });
+}
+
 /** Logout-everywhere: revokes every session for a user. */
 export async function deleteAllUserSessions(userId: string): Promise<void> {
   const db = await getDb();

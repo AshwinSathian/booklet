@@ -9,6 +9,38 @@ Notable changes to the Booklet app and MCP server. The format follows
 
 ## [Unreleased]
 
+## [3.3.0] - 2026-10-12
+
+### Changed
+
+- **Settings layout.** `SettingsShell` is a section list beside the page
+  (a wrapping row below `md`) in place of three tabs over a narrow column.
+  `SettingsSection`, `SettingsRow` and `StatusChip` are the parts every
+  settings page is built from.
+- **The account page is two pages.** `/settings/account` keeps the email
+  address, the ZIP download and account deletion. `/settings/security` (new)
+  has the password, sign-in accounts, passkeys, browsers and connected apps.
+  A provider's callback returns to `/settings/security`.
+- Change email, change password and delete account open in a `Dialog`
+  (`src/components/ui/Dialog.tsx`, a native `<dialog>`) with visible
+  labels. Results are toasts; an error stays in its dialog.
+
+### Added
+
+- `POST /api/auth/logout-others` signs out every browser but the caller's.
+  Apps and API keys are not touched. The security page shows the count.
+- Empty states on API keys and Webhooks.
+- A test that every clickable element on 21 routes has `cursor: pointer`.
+
+### Fixed
+
+- Tailwind's reset leaves `<button>` with the default cursor, and nothing
+  set it back. `globals.css` now gives links, buttons, tabs, menu items,
+  `summary`, `select` and tick boxes the pointer, and disabled ones
+  `not-allowed`.
+- The account page's result line was rendered once, at the top of a page
+  about 1,700px tall.
+
 ## [3.2.1] - 2026-10-11
 
 ### Changed

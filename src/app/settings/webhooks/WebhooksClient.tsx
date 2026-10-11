@@ -337,6 +337,12 @@ export function WebhooksSection({ initialWebhooks }: { initialWebhooks: WebhookR
         </div>
       )}
 
+      {webhooks.length === 0 && !secretReveal && (
+        <p className="mb-3 rounded-xl border border-dashed border-border-default px-4 py-5 text-sm text-text-secondary">
+          No webhooks yet. Add an HTTPS address and Booklet sends it a signed request when one of your pages is published or updated.
+        </p>
+      )}
+
       <div className="flex flex-col gap-2">
         {webhooks.map((wh) => (
           <WebhookCard key={wh.id} wh={wh} onDeleted={handleDeleted} />

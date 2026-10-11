@@ -95,6 +95,7 @@ try {
     ["analytics", `/my-pages/analytics/${pageIds[0]}`],
     ["versions", `/my-pages/versions/${pageIds[0]}`],
     ["settings-account", "/settings/account"],
+    ["settings-security", "/settings/security"],
     ["settings-api-keys", "/settings/api-keys"],
     ["settings-webhooks", "/settings/webhooks"],
     ["t", "/t"],

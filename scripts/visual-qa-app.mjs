@@ -183,6 +183,7 @@ const ROUTES = [
   ["analytics", `/my-pages/analytics/${first}`],
   ["versions", `/my-pages/versions/${first}`],
   ["settings-account", "/settings/account"],
+  ["settings-security", "/settings/security"],
   ["settings-api-keys", "/settings/api-keys"],
   ["settings-webhooks", "/settings/webhooks"],
   ["t", "/t"],

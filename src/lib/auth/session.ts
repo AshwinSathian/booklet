@@ -13,6 +13,7 @@ import { cookies, headers } from "next/headers";
 import {
   createSessionRecord,
   deleteAllUserSessions,
+  deleteOtherUserSessions,
   deleteSessionByHash,
   findSessionByHash,
   touchSessionExpiry,
@@ -87,6 +88,13 @@ export async function destroySession(): Promise<void> {
     await deleteSessionByHash(tokenHash);
   }
   store.delete(SESSION_COOKIE_NAME);
+}
+
+/** Signs out every browser but the one making this request. Returns how many were signed out. */
+export async function destroyOtherSessions(userId: string): Promise<number> {
+  const raw = (await cookies()).get(SESSION_COOKIE_NAME)?.value;
+  if (!raw) return 0;
+  return deleteOtherUserSessions(userId, await hashSessionToken(raw));
 }
 
 /** Logout-everywhere — revokes every session for a user, including the caller's own. */

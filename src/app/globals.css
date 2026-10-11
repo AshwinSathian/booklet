@@ -244,6 +244,25 @@ body {
 /* ── Global type defaults (central control — override per-element with
    Tailwind weight/tracking utilities only where intentionally different) ── */
 @layer base {
+  /* Whatever can be clicked shows the hand. Tailwind's reset leaves buttons with the arrow. */
+  a[href],
+  button:not(:disabled),
+  summary,
+  select:not(:disabled),
+  label:has(input:is([type="checkbox"], [type="radio"]):not(:disabled)),
+  input:is([type="checkbox"], [type="radio"], [type="file"], [type="submit"], [type="button"], [type="range"], [type="color"]):not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [role="tab"]:not([aria-disabled="true"]),
+  [role="menuitem"]:not([aria-disabled="true"]),
+  [role="menuitemradio"]:not([aria-disabled="true"]),
+  [role="option"]:not([aria-disabled="true"]),
+  [role="switch"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+  :disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
   h1 {
     font-weight: var(--type-weight-h1);
     letter-spacing: var(--type-tracking-h1);

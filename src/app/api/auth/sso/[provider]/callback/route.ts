@@ -51,7 +51,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ provider
 
   const back = (path: string, error?: string) =>
     NextResponse.redirect(`${origin}${path}${error ? `${path.includes("?") ? "&" : "?"}error=${error}` : ""}`);
-  const failPath = flow?.connect ? ROUTES.account : ROUTES.signIn;
+  const failPath = flow?.connect ? ROUTES.security : ROUTES.signIn;
 
   const provider = getSsoProvider((await params).provider);
   if (!provider) return new Response("Not found", { status: 404 });
@@ -77,7 +77,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ provider
       const session = await getSession();
       if (session?.userId !== flow.connect) return back(ROUTES.signIn, "sso_state");
       await linkIdentity(session.userId, provider.id, profile);
-      return back(ROUTES.account);
+      return back(ROUTES.security);
     }
 
     await createSession(await resolveSsoUser(provider.id, profile));

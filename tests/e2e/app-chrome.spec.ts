@@ -49,6 +49,7 @@ test("every page behind the editor has the one header, with the current section 
     [`/my-pages/analytics/${pageId}`, "My pages"],
     [`/my-pages/versions/${pageId}`, "My pages"],
     ["/settings/account", "Settings"],
+    ["/settings/security", "Settings"],
     ["/settings/api-keys", "Settings"],
     ["/settings/webhooks", "Settings"],
     ["/t", "Spaces"],
@@ -173,7 +174,7 @@ test("the analytics chart labels its axes in text that does not shrink with the 
 
 test("no page behind the editor uses a pill for a button", async ({ browser }) => {
   const { page, pageId, spaceSlug } = await seeded(browser);
-  for (const route of ["/my-pages", `/my-pages/versions/${pageId}`, "/settings/account", "/t", `/t/${spaceSlug}/admin`]) {
+  for (const route of ["/my-pages", `/my-pages/versions/${pageId}`, "/settings/account", "/settings/security", "/t", `/t/${spaceSlug}/admin`]) {
     await page.goto(route, { waitUntil: "networkidle" });
     const pills = await page.evaluate(() =>
       [...document.querySelectorAll("main button, main a[class*='inline-flex']")]
@@ -494,4 +495,32 @@ test("the editor's text shows that it has focus", async ({ browser }) => {
   const resting = await shadow();
   await editor.focus();
   expect(await shadow()).not.toBe(resting);
+});
+
+test("whatever can be clicked shows the pointer cursor, on the site, in the editor and behind it", async ({ browser }) => {
+  const { page, pageId, spaceSlug } = await seeded(browser);
+  const routes = [
+    "/", "/docs", "/docs/quickstart", "/templates", "/templates/incident-report", "/pricing", "/changelog", "/trust", "/explore",
+    "/app", "/my-pages", `/my-pages/versions/${pageId}`, `/my-pages/analytics/${pageId}`,
+    "/settings/account", "/settings/security", "/settings/api-keys", "/settings/webhooks",
+    "/t", `/t/${spaceSlug}`, `/t/${spaceSlug}/admin`, `/p/${pageId}`,
+  ];
+  for (const route of routes) {
+    await page.goto(route, { waitUntil: "networkidle" });
+    const wrong = await page.evaluate(() => {
+      const clickable =
+        'a[href], button, summary, select, [role="button"], [role="tab"], [role="menuitem"], [role="option"], [role="switch"], input[type="checkbox"], input[type="radio"], input[type="submit"]';
+      const out: string[] = [];
+      for (const el of document.querySelectorAll<HTMLElement>(clickable)) {
+        // Something inert or not on screen has no cursor to show.
+        // Nor is a read-only tick in a document's task list something to click.
+        if (!el.checkVisibility() || el.closest("[inert]") || el.matches("[readonly]")) continue;
+        const off = el.matches(":disabled") || el.getAttribute("aria-disabled") === "true";
+        const cursor = getComputedStyle(el).cursor;
+        if (cursor !== (off ? "not-allowed" : "pointer")) out.push(`${el.tagName.toLowerCase()} "${(el.getAttribute("aria-label") ?? el.textContent ?? "").trim().slice(0, 40)}" has ${cursor}`);
+      }
+      return out;
+    });
+    expect(wrong, route).toEqual([]);
+  }
 });

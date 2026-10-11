@@ -81,7 +81,7 @@ test("GitHub creates an account, and Google with the same verified email signs i
   expect((await whoAmI(page)).userId).toBe(first.userId);
 
   // Both show as connected, and one can be disconnected because the other remains.
-  await page.goto("/settings/account");
+  await page.goto("/settings/security");
   await expect(page.getByRole("button", { name: "Disconnect" })).toHaveCount(2);
   await page.getByRole("button", { name: "Disconnect" }).first().click();
   await expect(page.getByRole("status")).toContainText("disconnected");
@@ -134,7 +134,7 @@ test("a passkey added in Account settings signs in without a password", async ({
   await signUp(page, "passkey");
   const { userId } = await whoAmI(page);
 
-  await page.goto("/settings/account");
+  await page.goto("/settings/security");
   await page.getByRole("button", { name: "Add a passkey" }).click();
   await expect(page.getByRole("status")).toContainText("Passkey added");
   await expect(page.getByText("Not used yet")).toBeVisible();
@@ -153,20 +153,43 @@ test("account page: change password, download pages, delete the account", async 
   const { id } = (await published.json()) as { id: string };
   expect((await page.request.get(`/p/${id}`)).status()).toBe(200);
 
-  await page.goto("/settings/account");
-  await expect(page.getByRole("heading", { name: "Account", exact: true })).toBeVisible();
-
-  // Change password: the old one stops working, this browser stays signed in.
+  // Change password, in its dialog: the old one stops working, this browser stays signed in.
+  await page.goto("/settings/security", { waitUntil: "networkidle" });
+  await expect(page.getByRole("heading", { name: "Sign-in and security", exact: true })).toBeVisible();
   const NEW_PASSWORD = `${PASSWORD}-changed`;
-  await page.getByLabel("Current password").fill(PASSWORD);
-  await page.getByLabel("New password").fill(NEW_PASSWORD);
   await page.getByRole("button", { name: "Change password" }).click();
+  const passwordDialog = page.getByRole("dialog", { name: "Change password" });
+  // A wrong current password is refused inside the dialog, which stays open.
+  await passwordDialog.getByLabel("Current password").fill("not-the-password");
+  await passwordDialog.getByLabel("New password").fill(NEW_PASSWORD);
+  await passwordDialog.getByRole("button", { name: "Change password" }).click();
+  await expect(passwordDialog.getByRole("alert")).toContainText("not correct");
+  await passwordDialog.getByLabel("Current password").fill(PASSWORD);
+  await passwordDialog.getByRole("button", { name: "Change password" }).click();
   await expect(page.getByRole("status")).toContainText("Password saved");
+  await expect(passwordDialog).toBeHidden();
   expect((await whoAmI(page)).email).toBe(email);
   const anon = await page.context().browser()!.newContext();
   expect((await anon.request.post("/api/auth/login", { data: { email, password: PASSWORD } })).status()).toBe(401);
   expect((await anon.request.post("/api/auth/login", { data: { email, password: NEW_PASSWORD } })).status()).toBe(200);
+
+  // That second browser is listed, and can be signed out from here without touching this one.
+  await page.reload({ waitUntil: "networkidle" });
+  await expect(page.getByText("Signed in on this browser and 1 other")).toBeVisible();
+  await page.getByRole("button", { name: "Sign out the others" }).click();
+  await expect(page.getByText("Signed in on this browser", { exact: true })).toBeVisible();
+  expect((await (await anon.request.get("/api/auth/me")).json()).userId).toBeNull();
+  expect((await whoAmI(page)).email).toBe(email);
   await anon.close();
+
+  await page.goto("/settings/account", { waitUntil: "networkidle" });
+  await expect(page.getByRole("heading", { name: "Account", exact: true })).toBeVisible();
+  // The section list marks where you are, and Escape closes a dialog without doing anything.
+  await expect(page.getByRole("navigation", { name: "Settings" }).getByRole("link", { name: "Account" })).toHaveAttribute("aria-current", "page");
+  await page.getByRole("button", { name: "Change email" }).click();
+  await expect(page.getByRole("dialog", { name: "Change email address" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
 
   // Export: a ZIP that names the page's file.
   const zip = await page.request.get("/api/account/export");
@@ -178,11 +201,12 @@ test("account page: change password, download pages, delete the account", async 
 
   // Delete: wrong password is refused, the right one removes the account and its page.
   await page.getByRole("button", { name: "Delete account" }).click();
-  await page.getByLabel("Password", { exact: true }).fill("not-the-password");
-  await page.getByRole("button", { name: "Delete my account and pages" }).click();
-  await expect(page.locator('p[role="alert"]')).toContainText("not correct");
-  await page.getByLabel("Password", { exact: true }).fill(NEW_PASSWORD);
-  await page.getByRole("button", { name: "Delete my account and pages" }).click();
+  const deleteDialog = page.getByRole("dialog", { name: "Delete account" });
+  await deleteDialog.getByLabel("Your password").fill("not-the-password");
+  await deleteDialog.getByRole("button", { name: "Delete my account and pages" }).click();
+  await expect(deleteDialog.getByRole("alert")).toContainText("not correct");
+  await deleteDialog.getByLabel("Your password").fill(NEW_PASSWORD);
+  await deleteDialog.getByRole("button", { name: "Delete my account and pages" }).click();
   await expect(page).toHaveURL(/\/$/);
 
   expect((await whoAmI(page)).userId).toBeNull();
