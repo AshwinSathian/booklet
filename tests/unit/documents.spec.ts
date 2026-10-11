@@ -303,7 +303,12 @@ test.describe("document types", () => {
     for (const name of PROMPT_NAMES) {
       const { meta } = parseFrontmatter(renderPrompt(name, { title: 'A "quoted": title', date: "2026-10-10" }) ?? "");
       expect(meta.type, name).toBeTruthy();
-      expect(meta.date, name).toBe("2026-10-10");
+      // The prompts that take a date use it; the rest use today's. This
+      // compared against one fixed day and passed only on that day.
+      expect(meta.date, name).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    }
+    for (const name of ["incident_report", "release_notes"]) {
+      expect(parseFrontmatter(renderPrompt(name, { title: "T", date: "2026-10-10" }) ?? "").meta.date, name).toBe("2026-10-10");
     }
     for (const [name, t] of Object.entries(CLI_TEMPLATES)) {
       const { meta } = parseFrontmatter(t.body());
