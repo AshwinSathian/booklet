@@ -67,4 +67,4 @@ Seven tools, the account's pages as resources, and six prompts that start a docu
 
 An API key acts as you, on your pages and the team spaces you belong to. The MCP server passes it to Booklet's API on each call and does not store it. Deleting the key under [Settings, API keys](/settings/api-keys) cuts off every client that uses it at once.
 
-A client that signed in instead (Claude.ai) holds a token that expires after an hour and is renewed while the connector stays installed. Booklet stores only a hash of it. You can disconnect it under [Account settings](/settings/account), "Connected apps".
+A client that signed in instead (Claude.ai) holds a token that expires after an hour and is renewed while the connector stays installed. Booklet stores only a hash of it. You can disconnect it under [Settings, Sign-in and security](/settings/security), "Connected apps".

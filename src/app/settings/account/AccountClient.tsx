@@ -1,158 +1,225 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent, type ReactNode } from "react";
-import { browserSupportsWebAuthn, startRegistration } from "@simplewebauthn/browser";
-import { Button, buttonClass } from "@/components/ui/Button";
+import { useState, type FormEvent } from "react";
 import { useSession } from "@/components/auth/SessionProvider";
-import { useHydrated } from "@/lib/ui/hydration";
-
-const INPUT =
-  "w-full field";
-const ROW = "flex items-center justify-between gap-3 rounded-lg border border-border-subtle px-3 py-2.5";
-
-const LINK_ERRORS: Record<string, string> = {
-  sso_identity_taken: "That account already signs in to a different Booklet account.",
-  sso_provider_already_linked: "This Booklet account is already connected to another account at that provider. Disconnect it first.",
-  sso_no_email: "That account has no verified email address, so it cannot be connected.",
-  sso_email_unverified: "Confirm this account's email address first. Until then you can only connect an account that uses the same address.",
-  sso_cancelled: "Connecting was cancelled.",
-};
-
-const SCOPE_LABELS: Record<string, string> = { "pages:read": "read your pages", "pages:write": "publish, update and delete pages" };
+import { Button, buttonClass } from "@/components/ui/Button";
+import { Dialog } from "@/components/ui/Dialog";
+import { useToast } from "@/components/ui/ToastProvider";
+import { ROUTES } from "@/lib/constants";
+import { SettingsRow, SettingsSection, StatusChip } from "../SettingsShell";
+import { send } from "../request";
 
 type Props = {
   email: string;
-  needsVerification: boolean;
+  emailState: "confirmed" | "unconfirmed" | null;
   hasPassword: boolean;
-  providers: Array<{ id: string; label: string; connected: boolean }>;
-  passkeys: Array<{ id: string; name: string; created_at: string; last_used_at: string | null }>;
-  apps: Array<{ clientId: string; name: string; scope: string[] }>;
-  errorCode?: string;
+  memberSince: string;
+  signInSummary: string;
 };
 
-function Section({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
-  return (
-    <section className="mt-10 border-t border-border-default pt-8">
-      <h2 className="text-[0.9375rem] font-semibold text-text-primary">{title}</h2>
-      {hint && <p className="mt-1 text-sm text-text-secondary">{hint}</p>}
-      <div className="mt-3 space-y-2">{children}</div>
-    </section>
-  );
-}
+const LABEL = "flex flex-col gap-1.5 text-sm font-medium text-text-primary";
 
-/** Sends a JSON request and returns an error message, or null when it worked. */
-async function send(url: string, method: string, body?: unknown): Promise<string | null> {
-  try {
-    const res = await fetch(url, {
-      method,
-      ...(body === undefined ? {} : { headers: { "content-type": "application/json" }, body: JSON.stringify(body) }),
-    });
-    if (res.ok) return null;
-    return ((await res.json().catch(() => ({}))) as { detail?: string }).detail ?? "Something went wrong. Try again.";
-  } catch {
-    return "Network error. Try again.";
-  }
-}
-
-const day = (iso: string) => iso.slice(0, 10);
-
-export function AccountClient({ email, needsVerification, hasPassword, providers, passkeys, apps, errorCode }: Props) {
+export function AccountClient({ email, emailState, hasPassword, memberSince, signInSummary }: Props) {
   const router = useRouter();
-  const { refetch } = useSession();
-  const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState<{ kind: "ok" | "error"; text: string } | null>(
-    errorCode ? { kind: "error", text: LINK_ERRORS[errorCode] ?? "Could not connect that account. Try again." } : null,
+  const toast = useToast();
+  const [dialog, setDialog] = useState<"email" | "delete" | null>(null);
+  const [sending, setSending] = useState(false);
+
+  async function sendLink() {
+    setSending(true);
+    const error = await send("/api/auth/verify-email/send", "POST");
+    setSending(false);
+    if (error) toast.error("The link was not sent", error);
+    else toast.success("Sent. Check your inbox.");
+  }
+
+  return (
+    <>
+      {emailState === "unconfirmed" && (
+        <div className="mb-8 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 rounded-xl border border-border-strong bg-fill-1 px-4 py-3.5 sm:px-5">
+          <div className="min-w-0 flex-1 basis-56">
+            <p className="text-sm font-semibold">Confirm your email address</p>
+            <p className="mt-0.5 text-sm leading-relaxed text-text-secondary">
+              You can write drafts now. Publishing starts once you open the link we email to {email}.
+            </p>
+          </div>
+          <Button variant="primary" size="md" disabled={sending} onClick={() => void sendLink()}>
+            Email me the link
+          </Button>
+        </div>
+      )}
+
+      <SettingsSection title="Profile">
+        <SettingsRow
+          label="Email address"
+          detail={
+            <>
+              <span className="break-all">{email}</span>
+              {emailState === "confirmed" && <StatusChip>Confirmed</StatusChip>}
+              {emailState === "unconfirmed" && <StatusChip tone="warn">Not confirmed</StatusChip>}
+            </>
+          }
+          action={
+            <Button variant="secondary" size="md" onClick={() => setDialog("email")}>
+              Change email
+            </Button>
+          }
+        />
+        <SettingsRow
+          label="Signing in"
+          detail={signInSummary}
+          action={
+            <Link href={ROUTES.security} className={buttonClass("secondary", "md")}>
+              Manage
+            </Link>
+          }
+        />
+        <SettingsRow label="Member since" detail={memberSince} />
+      </SettingsSection>
+
+      <SettingsSection title="Your data">
+        <SettingsRow
+          label="Download all pages"
+          detail="A ZIP file with one Markdown file per page, each with its title, link and visibility as frontmatter."
+          action={
+            <a href="/api/account/export" className={buttonClass("secondary", "md")}>
+              Download ZIP
+            </a>
+          }
+        />
+      </SettingsSection>
+
+      <SettingsSection title="Danger zone" tone="danger">
+        <SettingsRow
+          label="Delete this account and its pages"
+          detail="Every page you published, their version history, your drafts, API keys and webhooks are deleted. Links to your pages stop working. This cannot be undone."
+          action={
+            <Button variant="danger" size="md" onClick={() => setDialog("delete")}>
+              Delete account
+            </Button>
+          }
+        />
+      </SettingsSection>
+
+      <Dialog
+        open={dialog === "email"}
+        onClose={() => setDialog(null)}
+        title="Change email address"
+        description={`This account's address is ${email}. Sign-in, password resets and team invites all go by it.`}
+      >
+        <ChangeEmailForm
+          hasPassword={hasPassword}
+          unconfirmed={emailState === "unconfirmed"}
+          onClose={() => setDialog(null)}
+          onChanged={() => router.refresh()}
+        />
+      </Dialog>
+
+      <Dialog
+        open={dialog === "delete"}
+        onClose={() => setDialog(null)}
+        title="Delete account"
+        description="This deletes your account, every page you published, their version history, your drafts, API keys and webhooks. It cannot be undone."
+      >
+        <DeleteAccountForm email={email} hasPassword={hasPassword} onClose={() => setDialog(null)} />
+      </Dialog>
+    </>
   );
-  // Decided after hydration: the server cannot know what the browser supports.
-  const canUsePasskeys = useHydrated() && browserSupportsWebAuthn();
+}
 
-  const [newEmail, setNewEmail] = useState("");
-  const [emailPassword, setEmailPassword] = useState("");
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [deleting, setDeleting] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState("");
+function ChangeEmailForm({ hasPassword, unconfirmed, onClose, onChanged }: { hasPassword: boolean; unconfirmed: boolean; onClose: () => void; onChanged: () => void }) {
+  const [address, setAddress] = useState("");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState<string | null>(null);
 
-  /** Runs one action, reports its result, and reloads the server-rendered lists. */
-  async function run(action: () => Promise<string | null>, done: string) {
+  async function submit(e: FormEvent) {
+    e.preventDefault();
     setBusy(true);
-    setNotice(null);
-    const error = await action();
-    setNotice(error ? { kind: "error", text: error } : { kind: "ok", text: done });
-    setBusy(false);
-    if (!error) router.refresh();
-    return !error;
-  }
-
-  async function changeEmail(e: FormEvent) {
-    e.preventDefault();
-    const address = newEmail.trim();
-    // Where mail is set up a link goes out and nothing changes yet. Where it
-    // is not, the address has already changed: the answer says which.
-    let changedNow = false;
-    const ok = await run(async () => {
-      try {
-        const res = await fetch("/api/account/email", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ email: address, password: emailPassword }),
-        });
-        const data = (await res.json().catch(() => ({}))) as { changed?: boolean; detail?: string };
-        if (!res.ok) return data.detail ?? "Something went wrong. Try again.";
-        changedNow = data.changed === true;
-        return null;
-      } catch {
-        return "Network error. Try again.";
+    setError(null);
+    const next = address.trim();
+    try {
+      const res = await fetch("/api/account/email", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email: next, password }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { changed?: boolean; detail?: string };
+      if (!res.ok) {
+        setError(data.detail ?? "Something went wrong. Try again.");
+        return;
       }
-    }, "");
-    if (!ok) return;
-    setNotice({
-      kind: "ok",
-      text: changedNow
-        ? `This account's email address is now ${address}.${needsVerification ? " Use \"Email me the link\" above to confirm it." : ""}`
-        : // The same words whether or not a link went out: see the route.
-          `If ${address} can be used, we sent it a link. Open it while signed in here and this account moves to that address.`,
-    });
-    setNewEmail("");
-    setEmailPassword("");
-    router.refresh();
-  }
-
-  async function changePassword(e: FormEvent) {
-    e.preventDefault();
-    const ok = await run(
-      () => send("/api/auth/change-password", "POST", { current_password: currentPassword, new_password: newPassword }),
-      "Password saved. Other browsers were signed out and connected apps were disconnected.",
-    );
-    if (ok) {
-      setCurrentPassword("");
-      setNewPassword("");
+      // Where mail is set up a link goes out and nothing changes yet. Where it
+      // is not, the address has already changed: the answer says which.
+      setDone(
+        data.changed === true
+          ? `This account's email address is now ${next}.${unconfirmed ? " Use “Email me the link” to confirm it." : ""}`
+          : // The same words whether or not a link went out: see the route.
+            `If ${next} can be used, we sent it a link. Open it while signed in here and this account moves to that address.`,
+      );
+      onChanged();
+    } catch {
+      setError("Network error. Try again.");
+    } finally {
+      setBusy(false);
     }
   }
 
-  async function addPasskey() {
-    await run(async () => {
-      try {
-        const options = await fetch("/api/auth/passkey/register", { method: "POST", headers: { "content-type": "application/json" }, body: "{}" });
-        if (!options.ok) return ((await options.json().catch(() => ({}))) as { detail?: string }).detail ?? "Could not start. Try again.";
-        const response = await startRegistration({ optionsJSON: await options.json() });
-        return await send("/api/auth/passkey/register", "POST", { response, name: `Passkey added ${day(new Date().toISOString())}` });
-      } catch (e) {
-        if (e instanceof Error && e.name === "InvalidStateError") return "This device already has a passkey for this account.";
-        if (e instanceof Error && e.name === "NotAllowedError") return "Adding the passkey was cancelled.";
-        return "Could not add a passkey on this device.";
-      }
-    }, "Passkey added. You can sign in with it from now on.");
+  if (done) {
+    return (
+      <>
+        <p role="status" className="text-sm leading-relaxed text-text-primary">{done}</p>
+        <div className="flex justify-end">
+          <Button variant="primary" size="md" onClick={onClose}>
+            Done
+          </Button>
+        </div>
+      </>
+    );
   }
 
-  async function deleteAccount(e: FormEvent) {
+  return (
+    <form onSubmit={(e) => void submit(e)} className="flex flex-col gap-4">
+      <label className={LABEL}>
+        New email address
+        <input type="email" autoFocus autoComplete="email" required maxLength={254} value={address} onChange={(e) => setAddress(e.target.value)} className="field font-normal" />
+      </label>
+      {hasPassword && (
+        <label className={LABEL}>
+          Your password
+          <input type="password" autoComplete="current-password" required maxLength={256} value={password} onChange={(e) => setPassword(e.target.value)} className="field font-normal" />
+        </label>
+      )}
+      {error ? <p role="alert" className="text-sm text-danger">{error}</p> : null}
+      <div className="flex justify-end gap-2">
+        <Button type="button" variant="secondary" size="md" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button type="submit" variant="primary" size="md" disabled={busy}>
+          {busy ? "Changing…" : "Change email"}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+function DeleteAccountForm({ email, hasPassword, onClose }: { email: string; hasPassword: boolean; onClose: () => void }) {
+  const router = useRouter();
+  const { refetch } = useSession();
+  const [confirm, setConfirm] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function submit(e: FormEvent) {
     e.preventDefault();
     setBusy(true);
-    setNotice(null);
-    const error = await send("/api/account/delete", "POST", hasPassword ? { password: deleteConfirm } : { confirm_email: deleteConfirm });
-    if (error) {
-      setNotice({ kind: "error", text: error });
+    setError(null);
+    const failed = await send("/api/account/delete", "POST", hasPassword ? { password: confirm } : { confirm_email: confirm });
+    if (failed) {
+      setError(failed);
       setBusy(false);
       return;
     }
@@ -162,202 +229,28 @@ export function AccountClient({ email, needsVerification, hasPassword, providers
   }
 
   return (
-    <>
-      {notice && (
-        <p role={notice.kind === "error" ? "alert" : "status"} className={`mt-6 text-sm ${notice.kind === "error" ? "text-danger" : "text-text-secondary"}`}>
-          {notice.text}
-        </p>
-      )}
-
-      {needsVerification && (
-        <Section title="Confirm your email" hint={`You can write drafts now. Publishing starts once you open the link we email to ${email}.`}>
-          <Button variant="secondary" size="lg" disabled={busy} onClick={() => void run(() => send("/api/auth/verify-email/send", "POST"), "Sent. Check your inbox.")}>
-            Email me the link
-          </Button>
-        </Section>
-      )}
-
-      <Section
-        title="Email address"
-        hint={`This account's address is ${email}. Sign-in, password resets and team invites all go by it.`}
-      >
-        <form onSubmit={(e) => void changeEmail(e)} className="max-w-xs space-y-2">
-          <input
-            type="email"
-            aria-label="New email address"
-            placeholder="New email address"
-            autoComplete="email"
-            required
-            maxLength={254}
-            value={newEmail}
-            onChange={(e) => setNewEmail(e.target.value)}
-            className={INPUT}
-          />
-          {hasPassword && (
-            <input
-              type="password"
-              aria-label="Password, to change the email address"
-              placeholder="Your password"
-              autoComplete="current-password"
-              required
-              maxLength={256}
-              value={emailPassword}
-              onChange={(e) => setEmailPassword(e.target.value)}
-              className={INPUT}
-            />
-          )}
-          <Button type="submit" variant="secondary" size="lg" disabled={busy}>
-            Change email
-          </Button>
-        </form>
-      </Section>
-
-      <Section
-        title={hasPassword ? "Change password" : "Set a password"}
-        hint="Saving a password signs out your other browsers and disconnects connected apps."
-      >
-        <form onSubmit={(e) => void changePassword(e)} className="max-w-xs space-y-2">
-          {hasPassword && (
-            <input
-              type="password"
-              aria-label="Current password"
-              placeholder="Current password"
-              autoComplete="current-password"
-              required
-              maxLength={256}
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              className={INPUT}
-            />
-          )}
-          <input
-            type="password"
-            aria-label="New password"
-            placeholder="New password, at least 8 characters"
-            autoComplete="new-password"
-            required
-            minLength={8}
-            maxLength={256}
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            className={INPUT}
-          />
-          <Button type="submit" variant="secondary" size="lg" disabled={busy}>
-            {hasPassword ? "Change password" : "Set password"}
-          </Button>
-        </form>
-      </Section>
-
-      {providers.length > 0 && (
-        <Section title="Sign-in accounts">
-          {providers.map((p) => (
-            <div key={p.id} className={ROW}>
-              <span className="text-sm">{p.label}</span>
-              {p.connected ? (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  disabled={busy}
-                  onClick={() => void run(() => send(`/api/auth/sso/${p.id}`, "DELETE"), `${p.label} disconnected.`)}
-                >
-                  Disconnect
-                </Button>
-              ) : (
-                <a href={`/api/auth/sso/${p.id}?connect=1`} className={buttonClass("secondary", "sm")}>
-                  Connect
-                </a>
-              )}
-            </div>
-          ))}
-        </Section>
-      )}
-
-      <Section title="Passkeys" hint="Sign in with your fingerprint, face or device PIN, with no password to type.">
-        {passkeys.map((p) => (
-          <div key={p.id} className={ROW}>
-            <span className="min-w-0">
-              <span className="block truncate text-sm">{p.name}</span>
-              <span className="block text-xs text-text-muted">{p.last_used_at ? `Last used ${day(p.last_used_at)}` : "Not used yet"}</span>
-            </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              disabled={busy}
-              onClick={() => void run(() => send(`/api/auth/passkey/${encodeURIComponent(p.id)}`, "DELETE"), "Passkey removed.")}
-            >
-              Remove
-            </Button>
-          </div>
-        ))}
-        {canUsePasskeys ? (
-          <Button variant="secondary" size="lg" disabled={busy} onClick={() => void addPasskey()}>
-            Add a passkey
-          </Button>
-        ) : (
-          <p className="text-sm text-text-secondary">This browser does not support passkeys.</p>
-        )}
-      </Section>
-
-      <Section title="Connected apps" hint="Apps you signed in to with Booklet, such as an AI assistant using the MCP server.">
-        {apps.length === 0 && <p className="text-sm text-text-secondary">No apps are connected.</p>}
-        {apps.map((app) => (
-          <div key={app.clientId} className={ROW}>
-            <span className="min-w-0">
-              <span className="block truncate text-sm">{app.name}</span>
-              <span className="block text-xs text-text-muted">Can {app.scope.map((s) => SCOPE_LABELS[s] ?? s).join("; ")}</span>
-            </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              disabled={busy}
-              onClick={() => void run(() => send("/api/account/apps", "DELETE", { client_id: app.clientId }), `${app.name} disconnected.`)}
-            >
-              Disconnect
-            </Button>
-          </div>
-        ))}
-      </Section>
-
-      <Section title="Your data" hint="A ZIP file with one Markdown file per page, each with its title, link and visibility as frontmatter.">
-        <a
-          href="/api/account/export"
-          className={buttonClass("secondary", "lg")}
-        >
-          Download all pages
-        </a>
-      </Section>
-
-      <Section
-        title="Delete account"
-        hint="Deletes your account, every page you published, their version history, your drafts, API keys and webhooks. Links to your pages stop working. This cannot be undone."
-      >
-        {deleting ? (
-          <form onSubmit={(e) => void deleteAccount(e)} className="max-w-xs space-y-2">
-            <input
-              type={hasPassword ? "password" : "email"}
-              aria-label={hasPassword ? "Password" : "Email address"}
-              placeholder={hasPassword ? "Your password" : `Type ${email} to confirm`}
-              autoComplete={hasPassword ? "current-password" : "off"}
-              required
-              value={deleteConfirm}
-              onChange={(e) => setDeleteConfirm(e.target.value)}
-              className={INPUT}
-            />
-            <div className="flex gap-2">
-              <Button type="submit" variant="danger" size="lg" disabled={busy}>
-                Delete my account and pages
-              </Button>
-              <Button type="button" variant="ghost" size="md" onClick={() => setDeleting(false)}>
-                Cancel
-              </Button>
-            </div>
-          </form>
-        ) : (
-          <Button variant="danger" size="lg" onClick={() => setDeleting(true)}>
-            Delete account
-          </Button>
-        )}
-      </Section>
-    </>
+    <form onSubmit={(e) => void submit(e)} className="flex flex-col gap-4">
+      <label className={LABEL}>
+        {hasPassword ? "Your password" : `Type ${email} to confirm`}
+        <input
+          type={hasPassword ? "password" : "email"}
+          autoFocus
+          autoComplete={hasPassword ? "current-password" : "off"}
+          required
+          value={confirm}
+          onChange={(e) => setConfirm(e.target.value)}
+          className="field font-normal"
+        />
+      </label>
+      {error ? <p role="alert" className="text-sm text-danger">{error}</p> : null}
+      <div className="flex justify-end gap-2">
+        <Button type="button" variant="secondary" size="md" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button type="submit" variant="danger" size="md" disabled={busy}>
+          {busy ? "Deleting…" : "Delete my account and pages"}
+        </Button>
+      </div>
+    </form>
   );
 }

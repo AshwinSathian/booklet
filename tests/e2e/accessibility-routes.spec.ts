@@ -52,6 +52,7 @@ const ROUTES: Record<string, { as: Who; url: (f: Fixtures) => string }> = {
   "/report": { as: "anon", url: (f) => `/report?page=${f.pageId}` },
   "/reset-password": { as: "anon", url: () => "/reset-password?token=a11y" },
   "/settings/account": { as: "owner", url: () => "/settings/account" },
+  "/settings/security": { as: "owner", url: () => "/settings/security" },
   "/settings/api-keys": { as: "owner", url: () => "/settings/api-keys" },
   "/settings/webhooks": { as: "owner", url: () => "/settings/webhooks" },
   "/sign-in": { as: "anon", url: () => "/sign-in" },

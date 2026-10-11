@@ -16,6 +16,7 @@ export const ROUTES = {
   resetPassword: "/reset-password",
   myPages: "/my-pages",
   account: "/settings/account",
+  security: "/settings/security",
   apiKeys: "/settings/api-keys",
   webhooks: "/settings/webhooks",
   spaces: "/t",

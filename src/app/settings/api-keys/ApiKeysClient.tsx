@@ -176,6 +176,12 @@ export function ApiKeysSection({ initialKeys }: { initialKeys: KeyRow[] }) {
         </div>
       )}
 
+      {keys.length === 0 && !newRaw && (
+        <p className="mb-3 rounded-xl border border-dashed border-border-default px-4 py-5 text-sm text-text-secondary">
+          No API keys yet. Create one to publish from the CLI, the API, a GitHub workflow or an MCP client.
+        </p>
+      )}
+
       <div className="flex flex-col gap-2">
         {keys.map((k) => (
           <KeyCard key={k.id} k={k} onRevoked={handleRevoked} />

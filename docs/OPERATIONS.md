@@ -378,7 +378,7 @@ ever verified, so providers are always connected from Account settings.
 An unverified account cannot add a passkey or a webhook, and can only
 connect a provider account that has its own email address.
 
-**Passkeys.** Added from `/settings/account`, used from the sign-in page.
+**Passkeys.** Added from `/settings/security`, used from the sign-in page.
 The relying-party ID is the hostname in `NEXT_PUBLIC_SITE_URL`, so passkeys
 stop working if the site moves to another hostname. Stored in `passkeys`
 (public key and counter only).
@@ -396,10 +396,13 @@ live site and cannot solve a challenge: set `TURNSTILE_BYPASS_TOKEN` in
 `.env.local` (`openssl rand -hex 32`) and they send it in place of a solved
 one. Without it, a deploy with Turnstile on ends with exit 2.
 
-**Account page.** `/settings/account`: change or set a password (signs out
-other browsers and disconnects apps), connect or disconnect providers, add
-or remove passkeys, disconnect an app that signed in through OAuth, download
-every page as a ZIP of Markdown files, and delete the account. Deletion
+**Settings pages.** `/settings/account`: change the email address, download
+every page as a ZIP of Markdown files, and delete the account.
+`/settings/security`: change or set a password (signs out other browsers and
+disconnects apps), connect or disconnect providers, add or remove passkeys,
+sign out the other browsers (`POST /api/auth/logout-others`, which leaves
+apps and API keys alone), and disconnect an app that signed in through
+OAuth. Deletion
 removes the user's pages, versions, drafts, API keys, webhooks, sessions,
 identities and passkeys, and the team spaces they own; other people's pages
 in those spaces stay with their owners. A page that was taken down is kept,

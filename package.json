@@ -1,6 +1,6 @@
 {
   "name": "booklet",
-  "version": "3.2.1",
+  "version": "3.3.0",
   "description": "Publish Markdown incident reports, ADRs, RFCs and runbooks as web pages, with team spaces.",
   "private": true,
   "license": "AGPL-3.0-only",
