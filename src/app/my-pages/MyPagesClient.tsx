@@ -92,6 +92,7 @@ function SlugEditor({
     if (!editing) return;
     const value = draft.trim().toLowerCase();
     if (!value || value === slug || !isValidSlug(value)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- an empty or invalid slug resets the check at once; the debounced request is for a valid one
       setAvailability("idle");
       return;
     }
@@ -910,9 +911,10 @@ export function MyPagesList({
     return result;
   }, [pages, selectedCollection, searchQuery, sort]);
 
-  const currentFolderChildren = selectedCollection !== "all" && selectedCollection !== "uncollected"
-    ? getChildren(collections, selectedCollection)
-    : [];
+  const currentFolderChildren = useMemo(
+    () => (selectedCollection !== "all" && selectedCollection !== "uncollected" ? getChildren(collections, selectedCollection) : []),
+    [collections, selectedCollection],
+  );
 
   const handleSelect = useCallback((id: string, e: React.MouseEvent) => {
     const selectableOrder = [...currentFolderChildren.map((f) => f.id), ...filteredAndSorted.map((p) => p.id)];

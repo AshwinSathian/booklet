@@ -47,6 +47,7 @@ export function AppShell({
   useEffect(() => {
     if (!isReady || didSetDefaultPaneRef.current) return;
     didSetDefaultPaneRef.current = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- a one-shot default, chosen once the editor has loaded its draft
     if (isEmpty) setPane("preview");
   }, [isReady, isEmpty]);
 

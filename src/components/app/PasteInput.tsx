@@ -309,6 +309,7 @@ function FindReplaceBar({
 
   useEffect(() => {
     if (matches.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- a new set of matches starts again from the first one
       setMatchIdx(0);
       jumpToMatch(0, matches, false);
     }

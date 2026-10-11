@@ -66,6 +66,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     mountedRef.current = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- the session is fetched on mount; the state update happens when the request answers
     void refetch();
     return () => {
       mountedRef.current = false;

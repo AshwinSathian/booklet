@@ -3,7 +3,8 @@
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { formatUpdatedAtLong, formatUpdatedAtLongUTC } from "@/lib/ui/time";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
+import { useHydrated } from "@/lib/ui/hydration";
 
 type DeliveryRow = {
   id: string;
@@ -35,8 +36,7 @@ function DeliveryLog({ webhookId, initial }: { webhookId: string; initial: Deliv
   const [resending, setResending] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   // Server and browser may format a time differently: see formatUpdatedAtLongUTC.
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const mounted = useHydrated();
 
   const resend = async (deliveryId: string) => {
     setResending(deliveryId);

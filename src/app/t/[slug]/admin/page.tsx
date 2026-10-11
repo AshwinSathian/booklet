@@ -3,6 +3,7 @@
 import { AppLogo } from "@/components/ui/AppLogo";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { use, useCallback, useEffect, useState } from "react";
 import { useSession } from "@/components/auth/SessionProvider";
 
@@ -23,6 +24,7 @@ type TeamData = {
 
 function AdminPageInner({ slug }: { slug: string }) {
   const { userId, email, isLoaded } = useSession();
+  const router = useRouter();
   const [team, setTeam] = useState<TeamData | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
@@ -129,12 +131,12 @@ function AdminPageInner({ slug }: { slug: string }) {
     setDeleting(true);
     try {
       await fetch(`/api/teams/${team.id}`, { method: "DELETE" });
-      window.location.href = "/my-pages";
+      router.push("/my-pages");
     } catch {
       setDeleting(false);
       setConfirmDelete(false);
     }
-  }, [team]);
+  }, [team, router]);
 
   if (loading || !isLoaded) {
     return (

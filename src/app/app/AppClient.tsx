@@ -94,7 +94,7 @@ function AppPageContent() {
   // resetting cloud sync's 1.5-second debounce, so a signed-in user's
   // drafts were never uploaded.
   const saveStateRef = useRef<SaveState>("saved");
-  const saveUiLastChangedAtRef = useRef<number>(Date.now());
+  const saveUiLastChangedAtRef = useRef<number>(0);
 
   const saveWarningWasShownRef = useRef(false);
 
@@ -105,6 +105,7 @@ function AppPageContent() {
   // getEditorPrefs() on mount, and both TopBar's SettingsPanel toggle and
   // PasteInput's SyntaxOverlay read the same `paragraphDimming` state.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- editor preferences live in localStorage, read once after hydration so the first render matches the server's
     setParagraphDimming(getEditorPrefs().paragraphDimming);
   }, []);
 
@@ -247,6 +248,7 @@ function AppPageContent() {
       createDraft({ raw: templateContent ?? "", settings: DEFAULT_SETTINGS });
 
     setActiveDraftId(draft.id);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- the one-time load of the active draft from localStorage when the editor mounts
     setActiveDraftIdState(draft.id);
 
     setRaw(draft.raw);
@@ -399,6 +401,7 @@ function AppPageContent() {
 
   useEffect(() => {
     if (!raw.trim()) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- an emptied editor is idle at once; the debounce below is for parsing content
       setStatus("idle");
       return;
     }
@@ -562,11 +565,17 @@ function AppPageContent() {
 
   // Per publish, not per draft: every new page starts unlisted and the
   // author opts in to Explore each time.
-  const [publishVisibility, setPublishVisibility] = useState<PublishVisibility>("unlisted");
-
-  useEffect(() => {
-    setPublishVisibility("unlisted");
-  }, [activeDraftId]);
+  // The choice belongs to one draft: switching drafts is back to Unlisted.
+  // Kept with the draft's id, so there is nothing to reset in an effect.
+  const [visibilityChoice, setVisibilityChoice] = useState<{ draftId: string | null; value: PublishVisibility }>({
+    draftId: null,
+    value: "unlisted",
+  });
+  const publishVisibility: PublishVisibility = visibilityChoice.draftId === activeDraftId ? visibilityChoice.value : "unlisted";
+  const setPublishVisibility = useCallback(
+    (value: PublishVisibility) => setVisibilityChoice({ draftId: activeDraftId, value }),
+    [activeDraftId],
+  );
 
   const onPublish = useCallback(async () => {
     if (!canPublish) {
@@ -633,7 +642,7 @@ function AppPageContent() {
       setStatus("error");
       toast.error("Publish failed", toErrorMessage(e));
     }
-  }, [activeDraftId, settings, toast, canPublish, raw, publishVisibility, isSignedIn]);
+  }, [activeDraftId, settings, toast, canPublish, raw, publishVisibility, setPublishVisibility, isSignedIn]);
 
   const onUpdatePage = useCallback(async () => {
     if (!canPublish) {

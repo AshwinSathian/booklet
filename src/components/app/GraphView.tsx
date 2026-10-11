@@ -28,6 +28,7 @@ export function GraphView({
   // only the state of the vault at the moment someone opens it.
   useEffect(() => {
     if (!visible) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- a snapshot of localStorage drafts, taken each time the graph opens
     setDrafts(listDrafts());
     setEdges(buildWikilinkIndex().edges);
   }, [visible]);

@@ -1,10 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { browserSupportsWebAuthn, startRegistration } from "@simplewebauthn/browser";
 import { Button } from "@/components/ui/Button";
 import { useSession } from "@/components/auth/SessionProvider";
+import { useHydrated } from "@/lib/ui/hydration";
 
 const INPUT =
   "w-full rounded-lg border border-border-default bg-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft";
@@ -63,8 +64,8 @@ export function AccountClient({ email, needsVerification, hasPassword, providers
   const [notice, setNotice] = useState<{ kind: "ok" | "error"; text: string } | null>(
     errorCode ? { kind: "error", text: LINK_ERRORS[errorCode] ?? "Could not connect that account. Try again." } : null,
   );
-  const [canUsePasskeys, setCanUsePasskeys] = useState(false);
-  useEffect(() => setCanUsePasskeys(browserSupportsWebAuthn()), []);
+  // Decided after hydration: the server cannot know what the browser supports.
+  const canUsePasskeys = useHydrated() && browserSupportsWebAuthn();
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");

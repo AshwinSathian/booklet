@@ -32,6 +32,7 @@ export function ImportUrlDialog({
     if (!open) {
       // Closed while a fetch was out: its answer must not open a draft later.
       request.current?.abort();
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- closing the dialog, by any route, clears the last error with the aborted request
       setError(null);
     }
   }, [open]);

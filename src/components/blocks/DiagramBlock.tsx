@@ -58,6 +58,7 @@ export function DiagramBlock({ lang, code }: { lang: string; code: string }) {
 
   useEffect(() => {
     let stale = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- a new diagram source clears the last result before the async render starts
     setErrMsg(null);
     setReady(false);
     if (containerRef.current) containerRef.current.innerHTML = "";

@@ -1,11 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { browserSupportsWebAuthn, startAuthentication } from "@simplewebauthn/browser";
 import { getTurnstileToken } from "@/lib/turnstile-client";
 import { Button } from "@/components/ui/Button";
 import { useSession } from "@/components/auth/SessionProvider";
+import { useHydrated } from "@/lib/ui/hydration";
 
 const INPUT_CLASS =
   "w-full rounded-lg border border-border-default bg-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft";
@@ -42,8 +43,7 @@ export function AuthForm({
   const [error, setError] = useState<string | null>(errorCode ? (SSO_ERRORS[errorCode] ?? SSO_ERRORS.sso_failed) : null);
   const [submitting, setSubmitting] = useState(false);
   // Decided after mount: the server cannot know what the browser supports.
-  const [passkeys, setPasskeys] = useState(false);
-  useEffect(() => setPasskeys(mode === "sign-in" && browserSupportsWebAuthn()), [mode]);
+  const passkeys = useHydrated() && mode === "sign-in" && browserSupportsWebAuthn();
 
   async function finish() {
     await refetch();

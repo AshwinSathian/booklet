@@ -47,6 +47,7 @@ export function Sheet({
         window.clearTimeout(closeTimerRef.current);
         closeTimerRef.current = null;
       }
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- mount and closing phases follow the open prop, with a timer for the exit animation
       setShouldRender(true);
       setIsClosing(false);
       return;
