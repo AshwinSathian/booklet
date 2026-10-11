@@ -171,6 +171,29 @@ test.describe("sanitizeRenderedSvg (Mermaid on the page)", () => {
     expect(hrefs).toEqual(["/p/example-adr", "../runbook", "https://example.com", "tel:+15550100", null, null]);
   });
 
+  test("a label cannot restyle the page, hide a fragment, or point <use> at data", () => {
+    const root = sanitizeRenderedSvg(
+      mermaid('<style>body{display:none}</style><template><img src="https://evil.example/t.png"></template>').replace(
+        "<g class=",
+        '<use href="data:image/svg+xml;base64,AAAA"></use><rect fill="url(https://evil.example/f.png)" mask="url(#m)"></rect><g class=',
+      ),
+    );
+    const html = root?.outerHTML ?? "";
+    expect(html).not.toContain("evil.example");
+    expect(html).not.toContain("display:none");
+    expect(html).not.toContain("<template");
+    expect(root?.querySelector("use")?.hasAttribute("href")).toBe(false);
+    expect(html).toContain('mask="url(#m)"');
+    // The diagram's own stylesheet, outside any label, is kept.
+    expect(root?.querySelector("style")?.textContent).toContain(".node rect");
+  });
+
+  test("image() and src() are refused like url()", () => {
+    expect(inertCss('.a{background:image("https://evil.example/a.png")}')).not.toContain("evil.example");
+    expect(inertCss('.a{background:src("https://evil.example/a.png")}')).not.toContain("evil.example");
+    expect(inertCss(".a{background-image:none;transform:translate(1px)}")).toBe(".a{background-image:none;transform:translate(1px)}");
+  });
+
   test("anything that is not exactly one <svg> is refused", () => {
     expect(sanitizeRenderedSvg("<div>not a diagram</div>")).toBeNull();
     expect(sanitizeRenderedSvg(`${mermaid()}<script>alert(1)</script>`)).toBeNull();
@@ -183,4 +206,15 @@ test("sanitizeCompiledSvgElement returns the cleaned tree, and null for what is 
   expect(root?.querySelector("script")).toBeNull();
   expect(root?.querySelector("a")?.getAttribute("href")).toBe("/p/x");
   expect(sanitizeCompiledSvgElement("<div/>")).toBeNull();
+});
+
+test("a namespace prefix does not hide a script element or an xlink href", () => {
+  const svg =
+    `<svg ${SVG_NS} xmlns:s="http://www.w3.org/2000/svg" xmlns:x="http://www.w3.org/1999/xlink">` +
+    `<s:script>alert(1)</s:script><a x:href="javascript:alert(1)"><text>node</text></a><image x:href="https://evil.example/i.png"/></svg>`;
+  const out = sanitizeCompiledSvg(svg);
+  expect(out).not.toContain("alert(1)");
+  expect(out).not.toContain("javascript:");
+  expect(out).not.toContain("evil.example");
+  expect(out).toContain("node");
 });

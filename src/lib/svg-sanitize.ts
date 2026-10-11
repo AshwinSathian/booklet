@@ -50,11 +50,15 @@ function isSafeHref(value: string): boolean {
  * a diagram. (Markdown images in the page body are a separate, deliberate
  * feature and are not affected.)
  */
-function isInertSource(value: string): boolean {
+function isInertSource(value: string, tag: string): boolean {
   const v = value.trim().toLowerCase();
-  return !v || v.startsWith("#") || v.startsWith("data:image/");
+  if (!v || v.startsWith("#")) return true;
+  // Inline image data, and only where it is drawn as an image. <use> with a
+  // data: SVG would instantiate that SVG's elements into the page.
+  return DRAWS_AN_IMAGE.has(tag) && v.startsWith("data:image/");
 }
 
+const DRAWS_AN_IMAGE = new Set(["image", "feimage", "img"]);
 // Elements whose href is fetched on render, not followed on click.
 const LOADS_ITS_HREF = new Set(["image", "use", "feimage", "script", "pattern", "filter", "lineargradient", "radialgradient", "textpath", "mpath"]);
 // Attributes that are fetched on render wherever they appear.
@@ -94,6 +98,9 @@ export function inertCss(css: string): string {
     out = (out.includes("\\") || out.includes("/*") ? decodeCss(out) : out)
       .replace(/@import[^;]*;?/gi, "")
       .replace(/(?:-webkit-)?image-set\([^)]*(?:\)|$)/gi, "none")
+      // image() and src() take a URL as a plain string. No browser fetches
+      // from them today; they are refused so that one starting to does not matter.
+      .replace(/(?<![\w-])(?:image|src)\([^)]*(?:\)|$)/gi, "none")
       .replace(/url\(([^)]*)(?:\)|$)/gi, (whole, arg: string) => {
         const target = arg.trim().replace(/^['"]|['"]$/g, "").trim().toLowerCase();
         return target.startsWith("#") || target.startsWith("data:") ? whole : "none";
@@ -105,32 +112,54 @@ export function inertCss(css: string): string {
 // HTML that has no business inside a diagram label. Mermaid draws labels as
 // HTML in a <foreignObject>; its own DOMPurify pass lets form controls
 // through, and a published page must not be able to show a sign-in form.
-const DISALLOWED_IN_LABELS = new Set(["form", "input", "button", "textarea", "select", "option", "link", "meta", "base", "frame", "frameset", "portal"]);
+// <template> too: its content is a separate fragment the walk below never
+// enters, and it would be cloned into the page unchecked.
+const DISALLOWED_IN_LABELS = new Set(["form", "input", "button", "textarea", "select", "option", "link", "meta", "base", "frame", "frameset", "portal", "template"]);
+
+/** Whether `el` is inside a <foreignObject>, that is, inside a label's HTML. */
+function inLabel(el: Element): boolean {
+  for (let p = el.parentElement; p; p = p.parentElement) {
+    if (p.localName.toLowerCase() === "foreignobject") return true;
+  }
+  return false;
+}
 
 /** Removes, in place, everything under `root` (and on it) that could run script or load something. */
 function clean(root: Element, opts: { labels: boolean }): void {
   // The root too: `<svg onload=...>` is an event handler like any other.
   for (const el of [root, ...Array.from(root.querySelectorAll("*"))]) {
-    const tag = el.nodeName.toLowerCase();
+    // Local names throughout: in an XML parse, `svg:script` and `x:href` are
+    // a script element and an xlink href under another prefix.
+    const tag = el.localName.toLowerCase();
     const allowedLabel = opts.labels && tag === "foreignobject";
     if ((DISALLOWED_TAGS.has(tag) && !allowedLabel) || (opts.labels && DISALLOWED_IN_LABELS.has(tag))) {
       el.remove();
       continue;
     }
-    // Mermaid ships its own <style>. Nothing in it needs to load anything.
-    if (tag === "style") el.textContent = inertCss(el.textContent ?? "");
+    if (tag === "style") {
+      // The diagram's own stylesheet stays, with nothing in it that loads.
+      // A <style> inside a label is the author's, and would restyle the page.
+      if (inLabel(el)) {
+        el.remove();
+        continue;
+      }
+      el.textContent = inertCss(el.textContent ?? "");
+    }
     for (const attr of Array.from(el.attributes)) {
-      const name = attr.name.toLowerCase();
+      const name = attr.localName.toLowerCase();
+      const isHref = HREF_ATTRS.has(name);
       if (name.startsWith("on")) {
-        el.removeAttribute(attr.name);
-      } else if (HREF_ATTRS.has(name) && LOADS_ITS_HREF.has(tag) && !isInertSource(attr.value)) {
-        el.removeAttribute(attr.name);
-      } else if (SOURCE_ATTRS.has(name) && !isInertSource(attr.value)) {
-        el.removeAttribute(attr.name);
-      } else if ((HREF_ATTRS.has(name) || name === "action" || name === "formaction") && !isSafeHref(attr.value)) {
-        el.removeAttribute(attr.name);
-      } else if (name === "style") {
-        el.setAttribute(attr.name, inertCss(attr.value));
+        el.removeAttributeNode(attr);
+      } else if (isHref && LOADS_ITS_HREF.has(tag) && !isInertSource(attr.value, tag)) {
+        el.removeAttributeNode(attr);
+      } else if (SOURCE_ATTRS.has(name) && !isInertSource(attr.value, tag)) {
+        el.removeAttributeNode(attr);
+      } else if ((isHref || name === "action" || name === "formaction") && !isSafeHref(attr.value)) {
+        el.removeAttributeNode(attr);
+      } else if (name === "style" || (!isHref && /url\(|\\/i.test(attr.value))) {
+        // `style`, and presentation attributes that take CSS values:
+        // fill, filter, mask, clip-path, marker-*, cursor.
+        attr.value = inertCss(attr.value);
       }
     }
   }
