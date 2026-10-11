@@ -1,6 +1,6 @@
 {
   "name": "@booklet/mcp-server",
-  "version": "4.1.0",
+  "version": "4.2.0",
   "description": "Publish Markdown incident reports, ADRs, RFCs and runbooks as web pages, with team spaces.",
   "private": true,
   "license": "MIT",

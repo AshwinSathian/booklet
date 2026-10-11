@@ -7,7 +7,8 @@ import type { DocEmbed } from "@/lib/docs-nav";
 import type { ReactNode } from "react";
 
 // Long code blocks are shown whole: a docs reader is there for the code.
-const SETTINGS = { ...DEFAULT_SETTINGS, code: "show" as const };
+// The docs are part of the site, not a published page: they stay in the UI face.
+const SETTINGS = { ...DEFAULT_SETTINGS, code: "show" as const, typeface: "sans" as const };
 
 const EMBEDS: Record<DocEmbed, () => ReactNode> = {
   "mcp-client-picker": () => <McpClientPicker />,

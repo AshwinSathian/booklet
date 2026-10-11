@@ -6,7 +6,7 @@ import Link from "next/link";
 
 export const metadata: Metadata = buildMetadata({
   title: "Trust",
-  description: `Who runs ${APP_NAME}, where it is hosted, how it is backed up, and how to take your pages out or delete your account.`,
+  description: `Who runs ${APP_NAME}, how it is backed up, and how to take your pages out or delete your account.`,
   pathname: "/trust",
 });
 
@@ -28,7 +28,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 export default function TrustPage() {
   return (
-    <ProsePage eyebrow="Trust" title="What you are trusting when you publish here" lede={`Who runs ${APP_NAME}, where your pages live, what is stored and how you get your pages out.`}>
+    <ProsePage eyebrow="Trust" title="What you are trusting when you publish here" lede={`Who runs ${APP_NAME}, what is stored and how you get your pages out.`}>
           <Section title="Public beta">
             <p>
               Features can change, and there is no promise about how long {APP_NAME} runs or
@@ -47,36 +47,19 @@ export default function TrustPage() {
             </p>
           </Section>
 
-          <Section title="Where it is hosted">
-            <p>
-              On one Mac, behind a Cloudflare Tunnel. The app and its MongoDB database are on that same
-              machine. If the Mac loses power or its internet connection, every page is unreachable until
-              it comes back, and after a restart the maintainer has to sign in to it by hand.
-            </p>
-            <p>
-              A move to hosted infrastructure was looked at in October 2026 and put off. The measurements
-              and the reasons are in{" "}
-              <a href={`${REPO_URL}/blob/main/docs/adr/0001-hosting-platform.md`} target="_blank" rel="noopener noreferrer" className={link}>
-                ADR 0001
-              </a>
-              .
-            </p>
-          </Section>
-
           <Section title="Backups">
             <p>
-              The database is dumped every night at 03:30, the machine&apos;s local time, and the last 30 archives are kept.
-              Restoring from one has been tested. The archives are on the same disk as the database, so they
-              cover a bad change or an accidental delete, and they do not cover losing the disk. A page or an
-              account you delete stays in those archives until 30 newer ones have replaced them, which is 30 nights when
-              no backup is missed.
+              The database is backed up every night and the last 30 backups are kept. Restoring from one has
+              been tested. The backups guard against a bad change or an accidental delete; they are not a promise
+              that nothing can be lost. A page or an account you delete stays in them until 30 newer ones have
+              replaced them, which is 30 nights when no backup is missed.
             </p>
           </Section>
 
           <Section title="Uptime">
             <p>
-              A scheduled job on GitHub checks the site, the API and the MCP server every 10 minutes and
-              emails the maintainer when one stops answering.{" "}
+              The site, the API and the MCP server are checked every 10 minutes, and the maintainer is
+              emailed when one stops answering.{" "}
               {STATUS_PAGE_URL ? (
                 <>
                   Current status is on the{" "}

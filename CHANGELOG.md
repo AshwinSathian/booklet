@@ -9,6 +9,29 @@ Notable changes to the Booklet app and MCP server. The format follows
 
 ## [Unreleased]
 
+## [3.2.1] - 2026-10-11
+
+### Changed
+
+- `DEFAULT_SETTINGS.typeface` is `serif`. It was `sans`, while a page with no
+  stored typeface rendered as serif and the editor's control showed serif for
+  one: three defaults that did not agree. The docs keep the UI face.
+- The Trust, Privacy and About pages no longer describe how or where the
+  service is hosted.
+- `mcp-server` is 4.2.0 (the prompts changed in 3.2.0).
+
+### Added
+
+- `infra/fallback-worker` counts the day's requests in a Durable Object and,
+  from 95% of the free plan's 100,000, answers with a "closed until midnight
+  UTC" page (503, `Retry-After`) and sends nothing to the origin. It also
+  redirects `http://` to `https://`.
+
+### Fixed
+
+- A draft's typeface and theme were dropped when drafts were read back from
+  storage.
+
 ## [3.2.0] - 2026-10-11
 
 Three audits of the site (what it claims against what the code does, its

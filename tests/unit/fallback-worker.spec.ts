@@ -36,3 +36,38 @@ test("an unreachable origin gives a browser a page and an API client a problem d
   const post = await worker.fetch(new Request("https://booklet.test/api/publish", { method: "POST", body: "{}", headers: { accept: "text/html" } }), env);
   expect(post.headers.get("content-type")).toBe("application/problem+json");
 });
+
+test("the day's count starts again at midnight UTC and is over from 95% of the limit", async () => {
+  const { tally } = await import("../../infra/fallback-worker/src/index.js");
+  expect(tally(undefined, "2026-10-11", 10)).toEqual({ day: "2026-10-11", total: 10, over: false });
+  expect(tally({ day: "2026-10-11", total: 94_985 }, "2026-10-11", 10).over).toBe(false);
+  expect(tally({ day: "2026-10-11", total: 94_990 }, "2026-10-11", 10)).toEqual({ day: "2026-10-11", total: 95_000, over: true });
+  // Yesterday's total does not carry over.
+  expect(tally({ day: "2026-10-11", total: 99_000 }, "2026-10-12", 1)).toEqual({ day: "2026-10-12", total: 1, over: false });
+});
+
+test("once the counter says the day is over, the Worker answers itself and sends nothing to the origin", async () => {
+  // A counter that is already over. The origin is a port nothing listens on: reaching it would give the other page.
+  const counter = { idFromName: () => "id", get: () => ({ fetch: async () => Response.json({ day: new Date().toISOString().slice(0, 10), total: 95_000, over: true }) }) };
+  const env = { ORIGIN: "http://127.0.0.1:9", COUNTER: counter };
+  const waits: Promise<unknown>[] = [];
+  const ctx = { waitUntil: (p: Promise<unknown>) => waits.push(p) };
+  const get = () => worker.fetch(new Request("https://booklet.test/", { headers: { accept: "text/html" } }), env, ctx);
+  // The first request is how this isolate learns it.
+  expect(await (await get()).text()).toContain("not reachable");
+  await Promise.all(waits);
+  const page = await get();
+  expect(page.status).toBe(503);
+  expect(await page.text()).toContain("closed until midnight UTC");
+  const retry = Number(page.headers.get("retry-after"));
+  expect(retry).toBeGreaterThan(0);
+  expect(retry).toBeLessThanOrEqual(86400);
+  const api = await worker.fetch(new Request("https://booklet.test/api/v1/pages"), env, ctx);
+  expect(await api.json()).toMatchObject({ status: 503, detail: expect.stringContaining("00:00 UTC") });
+});
+
+test("plain HTTP is redirected to HTTPS before anything is fetched", async () => {
+  const res = await worker.fetch(new Request("http://booklet.test/p/a?b=1"), {});
+  expect(res.status).toBe(301);
+  expect(res.headers.get("location")).toBe("https://booklet.test/p/a?b=1");
+});
