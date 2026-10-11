@@ -277,6 +277,19 @@ export async function getRecentPublicPages(limit = 48): Promise<ExploreItem[]> {
   return docs.map(toExploreItem);
 }
 
+/** Every page its author made public and left open: what a search engine may be told about. */
+export async function getPublicPagesForSitemap(limit = 5000): Promise<Array<{ key: string; updated_at: string }>> {
+  const db = await getDb();
+  const docs = await db
+    .collection<PageDoc>("pages")
+    .find({ visibility: "public", password_hash: null, taken_down_at: null })
+    .sort({ updated_at: -1 })
+    .limit(limit)
+    .project<Pick<PageDoc, "_id" | "slug" | "updated_at">>({ _id: 1, slug: 1, updated_at: 1 })
+    .toArray();
+  return docs.map((d) => ({ key: d.slug ?? d._id, updated_at: d.updated_at }));
+}
+
 export async function getPagesByTag(tag: string, limit = 100): Promise<ExploreItem[]> {
   const db = await getDb();
   const docs = await db

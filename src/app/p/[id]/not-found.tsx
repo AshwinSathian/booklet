@@ -1,5 +1,6 @@
 import { Container, PageShell } from "@/components/marketing/primitives";
 import { Button } from "@/components/ui/Button";
+import { buildMetadata } from "@/lib/seo";
 import { EXAMPLES_ORIGIN, ROUTES } from "@/lib/constants";
 
 const EXAMPLES = [
@@ -9,6 +10,8 @@ const EXAMPLES = [
 ];
 
 /** Shown, with status 404, when a share page does not exist. */
+export const metadata = buildMetadata({ title: "Page not found", noIndex: true });
+
 export default function SharePageNotFound() {
   return (
     <PageShell>

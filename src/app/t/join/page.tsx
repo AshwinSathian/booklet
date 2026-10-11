@@ -8,9 +8,11 @@ import { getSession } from "@/lib/auth/session";
 import { Button } from "@/components/ui/Button";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { redirect } from "next/navigation";
+import { buildMetadata } from "@/lib/seo";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const metadata = buildMetadata({ title: "Join a space", pathname: "/t/join", noIndex: true });
 
 export default async function TeamJoinPage({
   searchParams,

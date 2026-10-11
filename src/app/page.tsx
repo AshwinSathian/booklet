@@ -1,6 +1,6 @@
 import { Landing } from "@/components/marketing/Landing";
 import { APP_NAME } from "@/lib/constants";
-import { absoluteUrl, buildMetadata } from "@/lib/seo";
+import { DEFAULT_TITLE, buildMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = buildMetadata({ pathname: "/" });
@@ -20,7 +20,6 @@ const jsonLd = {
         "Publish Markdown incident reports, ADRs, RFCs and runbooks as web pages, with team spaces. Publish from the editor, the CLI, the REST API, a GitHub Action or an MCP client.",
       applicationCategory: "DeveloperApplication",
       operatingSystem: "Web Browser",
-      screenshot: absoluteUrl("/opengraph-image"),
       offers: {
         "@type": "Offer",
         price: "0",
@@ -43,16 +42,20 @@ const jsonLd = {
         "GitHub Action for publishing docs in CI",
         "MCP server for Claude and other MCP clients",
       ],
-      creator: {
-        "@type": "Person",
-        name: "Ashwin Sathian",
-      },
+      author: { "@id": `${SITE_URL}/#maintainer` },
+    },
+    {
+      "@type": "Person",
+      "@id": `${SITE_URL}/#maintainer`,
+      name: "Ashwin Sathian",
+      url: "https://ashwinsathian.com",
     },
     {
       "@type": "WebSite",
       "@id": `${SITE_URL}/#website`,
       url: SITE_URL,
       name: APP_NAME,
+      publisher: { "@id": `${SITE_URL}/#maintainer` },
       description:
         "Publish Markdown incident reports, ADRs, RFCs and runbooks as web pages, with team spaces.",
       inLanguage: "en-US",
@@ -61,7 +64,7 @@ const jsonLd = {
       "@type": "WebPage",
       "@id": `${SITE_URL}/#webpage`,
       url: SITE_URL,
-      name: `${APP_NAME}: Markdown incident reports, ADRs, RFCs and runbooks, published as pages`,
+      name: DEFAULT_TITLE,
       isPartOf: { "@id": `${SITE_URL}/#website` },
       about: { "@id": `${SITE_URL}/#app` },
       description:

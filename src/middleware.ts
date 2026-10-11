@@ -115,6 +115,11 @@ function withSecurityHeaders(res: Response, isEmbedRoute: boolean, csp: string):
 // any published page with an address in it, and only through the CDN.
 const PAGE_CACHE_CONTROL = "private, no-cache, no-store, max-age=0, must-revalidate, no-transform";
 
+// Not pages: the API, and the files a crawler or a chat app fetches on its
+// own, which set their own caching and should be cacheable.
+const NOT_A_PAGE = /^\/(api\/|og\/|robots\.txt$|sitemap\.xml$|manifest\.json$|llms(-full)?\.txt$|docs\/search-index|docs\/raw\/)|\/feed\.xml$|\.md$/;
+const isPagePath = (pathname: string) => !NOT_A_PAGE.test(pathname);
+
 /** Hands the request on to the app with this request's nonce and policy. */
 function passOn(req: NextRequest, nonce: string, csp: string, rewriteTo?: URL): NextResponse {
   const requestHeaders = new Headers(req.headers);
@@ -132,10 +137,21 @@ function notFoundPage(req: NextRequest, nonce: string, csp: string): Response {
 }
 
 export default async function middleware(req: NextRequest) {
+  // A path with a broken percent-escape matches nothing. Without this the
+  // router fails on it later and answers 500.
+  try {
+    decodeURIComponent(req.nextUrl.pathname);
+  } catch {
+    return new Response("Bad request", { status: 400, headers: { "x-robots-tag": "noindex" } });
+  }
   const host = req.headers.get("host") ?? "";
   if (host === API_HOSTNAME || host.startsWith(`${API_HOSTNAME}:`)) {
+    // Nothing on the API's hostname belongs in a search index.
+    if (req.nextUrl.pathname === "/robots.txt") {
+      return new Response("User-agent: *\nDisallow: /\n", { headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "public, max-age=86400" } });
+    }
     if (!req.nextUrl.pathname.startsWith("/api/")) {
-      return new Response("Not found", { status: 404 });
+      return new Response("Not found", { status: 404, headers: { "x-robots-tag": "noindex" } });
     }
   }
 
@@ -228,7 +244,11 @@ export default async function middleware(req: NextRequest) {
   }
 
   const res = passOn(req, nonce, csp);
-  if (!req.nextUrl.pathname.startsWith("/api/")) res.headers.set("Cache-Control", PAGE_CACHE_CONTROL);
+  if (isPagePath(req.nextUrl.pathname)) res.headers.set("Cache-Control", PAGE_CACHE_CONTROL);
+  if (host === API_HOSTNAME || host.startsWith(`${API_HOSTNAME}:`)) res.headers.set("X-Robots-Tag", "noindex");
+  // An embed is indexed as the page it frames, if at all. A header reaches
+  // crawlers that robots.txt would have kept from seeing the page's own tag.
+  if (isEmbedRoute) res.headers.set("X-Robots-Tag", "noindex");
   if (share && !share[2]) {
     res.headers.set("Link", `</p/${share[1]}.md>; rel="alternate"; type="text/markdown"`);
     res.headers.set("Vary", "Accept");

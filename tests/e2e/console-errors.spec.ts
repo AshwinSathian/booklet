@@ -24,7 +24,6 @@ const PUBLIC_ROUTES = [
   "/sign-in",
   "/sign-up",
   "/templates",
-  "/templates/adr",
   "/terms",
   "/tags",
   "/templates/incident-report",

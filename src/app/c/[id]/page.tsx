@@ -21,9 +21,11 @@ export async function generateMetadata({
     return buildMetadata({ title: "Collection not found", noIndex: true });
   }
   return buildMetadata({
-    title: `${collection.name} — ${APP_NAME}`,
-    description: `A collection of pages on ${APP_NAME}.`,
+    title: collection.name,
+    description: `Public pages in the ${collection.name} collection on ${APP_NAME}.`,
     pathname: `/c/${id}`,
+    // An empty list is not worth a place in a search index.
+    noIndex: !(await getPagesByCollection(id).catch(() => [])).length,
   });
 }
 

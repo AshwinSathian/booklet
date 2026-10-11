@@ -19,11 +19,12 @@ const PAPER = "#fbfaf7";
 const MARKER = "#ffd84d";
 
 /**
- * The link-preview image: paper, ink, a serif headline with the marker under
- * its second line. An SVG has no web fonts, so the headline names Georgia,
- * which every consumer that draws this has or substitutes with a serif.
+ * The link-preview image as SVG: paper, ink, a serif headline. It is drawn
+ * to a PNG by src/app/og/[...key]/route.ts, because no chat app or social
+ * network shows an SVG preview. The server that draws it has no web fonts,
+ * so the headline names Georgia, which it has or replaces with a serif.
  */
-export function buildOgSvg(title?: string): string {
+export function buildOgSvg(title?: string, kicker?: string, footer = "Published with Booklet"): string {
   // Mark: an ink tile, a paper page with a folded corner, one highlighted line.
   const logo = `
   <rect x="80" y="72" width="64" height="64" rx="14" fill="${INK}"/>
@@ -36,12 +37,13 @@ export function buildOgSvg(title?: string): string {
   if (title) {
     const [line1, line2] = wrapTitle(escXml(title));
     const fontSize = line2 ? 64 : 72;
-    const y1 = line2 ? 300 : 340;
+    const y1 = line2 ? 310 : 350;
     const y2 = y1 + fontSize + 14;
     content = `
+  ${kicker ? `<text x="80" y="${y1 - fontSize - 22}" font-family="${SANS}" font-size="24" font-weight="600" fill="#66635a" letter-spacing="3">${escXml(kicker.toUpperCase())}</text>` : ""}
   <text x="80" y="${y1}" font-family="${SERIF}" font-size="${fontSize}" fill="${INK}" letter-spacing="-1">${line1}</text>
   ${line2 ? `<text x="80" y="${y2}" font-family="${SERIF}" font-size="${fontSize}" fill="${INK}" letter-spacing="-1">${line2}</text>` : ""}
-  <text x="80" y="548" font-family="${SANS}" font-size="24" fill="#66635a">Published with Booklet</text>`;
+  <text x="80" y="548" font-family="${SANS}" font-size="24" fill="#66635a">${escXml(footer)}</text>`;
   } else {
     content = `
   <text x="80" y="300" font-family="${SERIF}" font-size="84" fill="${INK}" letter-spacing="-2">Write it in Markdown.</text>

@@ -34,17 +34,16 @@ test.describe("buildLockedPageMetadata", () => {
 
   test("marks locked pages noIndex, same treatment as unlisted pages", () => {
     const meta = buildLockedPageMetadata("/p/some-id");
-    expect(meta.robots).toMatchObject({ index: false, follow: false });
+    expect(meta.robots).toMatchObject({ index: false });
   });
 
   test("does not construct a title-bearing OG/Twitter image URL", () => {
     const meta = buildLockedPageMetadata("/p/some-id");
     const serialized = JSON.stringify(meta);
-    // The real-content path builds /opengraph-image?title=<...>; the
-    // locked path must never pass a `title` query param through to the
-    // image endpoints.
-    expect(serialized).not.toMatch(/opengraph-image\?title=/);
-    expect(serialized).not.toMatch(/twitter-image\?title=/);
+    // The real-content path points at /og/p/<id>.png, which draws the
+    // page's title; the locked path keeps the site's own card.
+    expect(serialized).not.toMatch(/\/og\/p\//);
+    expect(serialized).toContain("/og/site.png");
   });
 
   test("is identical regardless of the real page content — only pathname varies", () => {

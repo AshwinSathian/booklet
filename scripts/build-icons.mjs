@@ -1,18 +1,18 @@
-// Rebuilds the static icons in public/ from the one mark the app serves at
-// /icon (src/app/icon/route.ts), so the browser tab, the PWA manifest and
-// the MCP host all show the same thing.
+// Rebuilds the static icons in public/ from the one mark, public/favicon.svg,
+// so the browser tab, the home screen, the PWA manifest and the MCP host all
+// show the same thing.
 //
 //   node scripts/build-icons.mjs
 //
-// Writes public/favicon.svg, public/favicon.ico (16, 32 and 48 pixels) and
-// public/icons/icon-{192,512}.png. Run it after changing the mark.
+// Writes public/favicon.ico (16, 32 and 48 pixels), public/icons/icon-{192,512}.png
+// and public/icons/apple-touch-icon.png (180 pixels, no transparency: iOS
+// paints a transparent corner black). Run it after changing the mark.
 import { chromium } from "playwright";
 import { readFileSync, writeFileSync } from "node:fs";
 
 const root = new URL("..", import.meta.url);
-const route = readFileSync(new URL("src/app/icon/route.ts", root), "utf8");
-const svg = /const SVG = `([\s\S]*?)`;/.exec(route)?.[1];
-if (!svg) throw new Error("No SVG found in src/app/icon/route.ts");
+// public/favicon.svg is the mark. Everything else is drawn from it.
+const svg = readFileSync(new URL("public/favicon.svg", root), "utf8").trim();
 
 const browser = await chromium.launch();
 async function png(size) {
@@ -23,9 +23,15 @@ async function png(size) {
   return buffer;
 }
 
-writeFileSync(new URL("public/favicon.svg", root), `${svg}\n`);
 writeFileSync(new URL("public/icons/icon-192.png", root), await png(192));
 writeFileSync(new URL("public/icons/icon-512.png", root), await png(512));
+// The tile's own ink behind it, so the rounded corners are not transparent.
+{
+  const page = await browser.newPage({ viewport: { width: 180, height: 180 } });
+  await page.setContent(`<style>html,body{margin:0;background:#16150f}svg{display:block;width:180px;height:180px}</style>${svg}`);
+  writeFileSync(new URL("public/icons/apple-touch-icon.png", root), await page.screenshot());
+  await page.close();
+}
 
 // An .ico file is a 6-byte header, one 16-byte entry per image, then the
 // images, which may be PNG files as they are.

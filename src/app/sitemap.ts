@@ -1,15 +1,19 @@
-import { getDocsTree } from "@/lib/docs";
+import { RELEASES } from "@/lib/changelog";
 import { ROUTES } from "@/lib/constants";
+import { getPublicPagesForSitemap } from "@/lib/db";
+import { getDocsTree } from "@/lib/docs";
 import { absoluteUrl } from "@/lib/seo";
 import { TEMPLATES } from "@/lib/templates";
 import type { MetadataRoute } from "next";
 
-// The site's own pages. Published pages (/p/...) are left out: they are
-// their authors', and most are unlisted. Explore and the tag pages are
-// left out too: they are not indexed.
+export const dynamic = "force-dynamic";
+
+// The site's own pages, then the pages their authors made public. Not here:
+// the editor and anything else that is not indexed (Explore and the tag
+// pages are followed, not indexed), and pages that are unlisted, behind a
+// password or for a team.
 const PAGES: Array<[path: string, priority: number, changeFrequency: "weekly" | "monthly"]> = [
   [ROUTES.home, 1, "weekly"],
-  [ROUTES.app, 0.9, "monthly"],
   [ROUTES.docs, 0.9, "weekly"],
   [ROUTES.templates, 0.8, "monthly"],
   [ROUTES.pricing, 0.6, "monthly"],
@@ -20,18 +24,32 @@ const PAGES: Array<[path: string, priority: number, changeFrequency: "weekly" | 
   ["/terms", 0.3, "monthly"],
 ];
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const lastModified = new Date();
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  // A date is given only where one is known: the changelog's newest release,
+  // and a published page's last update. "Now" on every URL teaches a crawler
+  // to ignore the field.
+  const released = new Date(`${RELEASES[0].date}T00:00:00Z`);
+  const published = await getPublicPagesForSitemap().catch(() => []);
   return [
-    ...PAGES.map(([path, priority, changeFrequency]) => ({ url: absoluteUrl(path), lastModified, changeFrequency, priority })),
+    ...PAGES.map(([path, priority, changeFrequency]) => ({
+      url: absoluteUrl(path),
+      changeFrequency,
+      priority,
+      ...(path === ROUTES.changelog || path === ROUTES.home ? { lastModified: released } : {}),
+    })),
     ...getDocsTree()
       .flatMap((section) => section.pages)
-      .map((page) => ({ url: absoluteUrl(page.href), lastModified, changeFrequency: "monthly" as const, priority: 0.7 })),
+      .map((page) => ({ url: absoluteUrl(page.href), changeFrequency: "monthly" as const, priority: 0.7 })),
     ...TEMPLATES.filter((t) => t.slug).map((t) => ({
       url: absoluteUrl(`/templates/${t.slug}`),
-      lastModified,
       changeFrequency: "monthly" as const,
       priority: 0.6,
+    })),
+    ...published.map((page) => ({
+      url: absoluteUrl(`/p/${page.key}`),
+      lastModified: new Date(page.updated_at),
+      changeFrequency: "monthly" as const,
+      priority: 0.4,
     })),
   ];
 }

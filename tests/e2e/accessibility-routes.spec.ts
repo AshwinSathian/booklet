@@ -64,7 +64,6 @@ const ROUTES: Record<string, { as: Who; url: (f: Fixtures) => string }> = {
   "/tags/[tag]": { as: "anon", url: () => "/tags/a11y-check" },
   "/templates": { as: "anon", url: () => "/templates" },
   "/templates/[slug]": { as: "anon", url: () => "/templates/incident-report" },
-  "/templates/adr": { as: "anon", url: () => "/templates/adr" },
   "/terms": { as: "anon", url: () => "/terms" },
   "/trust": { as: "anon", url: () => "/trust" },
   "/u/[id]": { as: "anon", url: (f) => `/u/${f.userId}` },

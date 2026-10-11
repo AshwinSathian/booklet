@@ -1,5 +1,5 @@
-import { APP_NAME } from "@/lib/constants";
 import { SessionProvider } from "@/components/auth/SessionProvider";
+import { buildMetadata } from "@/lib/seo";
 import type { Metadata, Viewport } from "next";
 import { Source_Serif_4 } from "next/font/google";
 import { GeistSans } from "geist/font/sans";
@@ -26,75 +26,22 @@ const sourceSerif4 = Source_Serif_4({
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://booklet.ashwinsathian.com";
 
+// The site's own title, description, canonical and link preview, which a
+// page replaces through buildMetadata(). No author or keywords here: they
+// would be inherited by every page, and a page someone published is theirs.
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-
-  title: `${APP_NAME}: incident reports, ADRs, RFCs and runbooks, published as pages`,
-
-  description:
-    "Publish Markdown incident reports, ADRs, RFCs and runbooks as web pages, with team spaces. Free, and you can try it without an account.",
-
-  applicationName: APP_NAME,
-
+  ...buildMetadata({
+    description:
+      "Publish Markdown incident reports, ADRs, RFCs and runbooks as web pages, with team spaces. Free, and you can try it without an account.",
+  }),
   manifest: "/manifest.json",
-
-  keywords: [
-    "incident report",
-    "postmortem",
-    "architecture decision record",
-    "ADR",
-    "RFC",
-    "runbook",
-    "release notes",
-    "Markdown publishing",
-    "engineering documentation",
-    "MCP server",
-  ],
-
-  authors: [{ name: "Ashwin Sathian" }],
-  creator: "Ashwin Sathian",
-
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-    },
-  },
-
-  openGraph: {
-    type: "website",
-    siteName: APP_NAME,
-    title: `${APP_NAME}: incident reports, ADRs, RFCs and runbooks, published as pages`,
-    description:
-      "Publish Markdown incident reports, ADRs, RFCs and runbooks as web pages, with team spaces.",
-    url: SITE_URL,
-    images: [
-      {
-        url: "/opengraph-image",
-        width: 1200,
-        height: 630,
-        alt: `${APP_NAME}: write it in Markdown, publish it as a page.`,
-      },
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "48x48" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
     ],
-  },
-
-  twitter: {
-    card: "summary_large_image",
-    title: `${APP_NAME}: incident reports, ADRs, RFCs and runbooks, published as pages`,
-    description:
-      "Publish Markdown incident reports, ADRs, RFCs and runbooks as web pages, with team spaces.",
-    images: [
-      {
-        url: "/twitter-image",
-        width: 1200,
-        height: 630,
-        alt: `${APP_NAME}: write it in Markdown, publish it as a page.`,
-      },
-    ],
+    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
 };
 

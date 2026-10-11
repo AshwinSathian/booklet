@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { DEFAULT_SETTINGS } from "@/lib/blocks";
 import { ROUTES } from "@/lib/constants";
 import { parseToBlocks } from "@/lib/parse";
-import { absoluteUrl, buildMetadata } from "@/lib/seo";
+import { breadcrumbJsonLd, buildMetadata, jsonLdScript } from "@/lib/seo";
 import { TEMPLATES, getTemplateBySlug } from "@/lib/templates";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -20,9 +20,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const template = getTemplateBySlug(slug);
   if (!template) return buildMetadata({ title: "Not found", noIndex: true });
   return buildMetadata({
-    title: template.headline ?? template.name,
+    title: template.headline ?? `${template.name} template`,
     description: template.metaDescription ?? template.description,
     pathname: `/templates/${slug}`,
+    image: `/og/templates/${slug}.png`,
+    imageAlt: `${template.name} template`,
   });
 }
 
@@ -36,24 +38,13 @@ export default async function TemplatePage({ params }: Props) {
   // Drawn by the real renderer, so the preview is the page a reader would get.
   const blocks = parseToBlocks(template.content.trim());
 
-  const steps = [
-    { name: "Open the template", text: `Choose "Use this template". The editor opens with the ${template.name} loaded.` },
-    { name: "Fill it in", text: "Edit the Markdown. The preview beside it updates as you type." },
-    { name: "Publish", text: "Publish and you get a link to send. You do not need an account." },
-  ];
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "HowTo",
-    name: template.headline ?? template.name,
-    description: template.metaDescription ?? template.description,
-    url: absoluteUrl(`/templates/${slug}`),
-    tool: [{ "@type": "HowToTool", name: "Booklet editor" }],
-    step: steps.map((step, i) => ({ "@type": "HowToStep", position: i + 1, ...step })),
-  };
+  const title = template.headline ?? `${template.name} template`;
+  // The trail a reader sees above the title, for a search result to show too.
+  const jsonLd = jsonLdScript([breadcrumbJsonLd([["Templates", "/templates"], [title, `/templates/${slug}`]])]);
 
   return (
     <PageShell>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd }} />
       <Container className="py-12 sm:py-16">
         <nav aria-label="Breadcrumb" className="text-sm text-text-muted">
           <Link href="/templates" className="hover:text-text-primary hover:underline">

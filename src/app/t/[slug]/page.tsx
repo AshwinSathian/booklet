@@ -7,6 +7,7 @@ import { getSession } from "@/lib/auth/session";
 import { groupSpacePages } from "@/lib/space-groups";
 import { spaceRole } from "@/server/access";
 import { notFound } from "next/navigation";
+import { buildMetadata } from "@/lib/seo";
 import Link from "next/link";
 import type { Metadata } from "next";
 
@@ -20,13 +21,17 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const team = await getCollectionBySlug(slug);
-  if (!team) return { title: "Team not found" };
+  if (!team) return buildMetadata({ title: "Team not found", noIndex: true });
   // The feed link is only advertised when there is a feed (see feed.xml/route.ts).
+  // A space with nothing public in it has nothing for a search engine either.
   const hasFeed = await hasPublicSpacePage(team.id);
-  return {
-    title: `${team.name} — Booklet`,
-    ...(hasFeed ? { alternates: { types: { "application/atom+xml": `/t/${slug}/feed.xml` } } } : {}),
-  };
+  const base = buildMetadata({
+    title: team.name,
+    description: `Pages published in the ${team.name} team space on Booklet.`,
+    pathname: `/t/${slug}`,
+    noIndex: !hasFeed,
+  });
+  return hasFeed ? { ...base, alternates: { ...base.alternates, types: { "application/atom+xml": `/t/${slug}/feed.xml` } } } : base;
 }
 
 export default async function TeamPage({

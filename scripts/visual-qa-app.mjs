@@ -224,7 +224,6 @@ const ANON_ROUTES = [
   ["p-password-gate", `/p/${seed.locked}`],
   ["p-embed", `/p/${seed.themed.default}/embed`],
   ["tag", "/tags/sweep"],
-  ["templates-adr", "/templates/adr"],
   ...DOC_THEMES.map((theme) => [`p-theme-${theme}`, `/p/${seed.themed[theme]}`]),
 ];
 // Answered with a status that says what they are.

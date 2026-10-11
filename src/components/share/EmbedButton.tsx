@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
+import { embedIframe } from "@/lib/embed-code";
 import { useState } from "react";
 
 export function EmbedButton({
@@ -15,9 +16,7 @@ export function EmbedButton({
   const [state, setState] = useState<"idle" | "copied">("idle");
 
   function copyEmbed() {
-    const src = `${baseUrl}/p/${pageId}/embed`;
-    const safeTitle = title.replace(/"/g, "&quot;");
-    const code = `<iframe\n  src="${src}"\n  style="width:100%;min-height:400px;border:none;border-radius:8px;"\n  title="${safeTitle}"\n  loading="lazy"\n></iframe>`;
+    const code = embedIframe(`${baseUrl}/p/${pageId}/embed`, title);
 
     if (typeof navigator !== "undefined" && "clipboard" in navigator) {
       void navigator.clipboard.writeText(code).then(() => {
