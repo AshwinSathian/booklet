@@ -74,6 +74,15 @@ test("every internal link in the docs points at a page, and a fragment at a head
   }
 });
 
+test("no old fragment that now lives on another page is also a heading on the pages that resolve them", () => {
+  // /docs/reference/api resolves old fragments on arrival. One that named
+  // a heading still on that page would take a reader away from it.
+  const here = anchorsOf("/docs/reference/api")!;
+  for (const [old, target] of Object.entries(LEGACY_HASHES)) {
+    if (!target.startsWith("/docs/reference/api#")) expect(here.has(old), `#${old}`).toBe(false);
+  }
+});
+
 test("every old fragment from the pages /docs replaced lands on a page and heading that exist", () => {
   for (const [old, target] of Object.entries(LEGACY_HASHES)) {
     const [path, hash] = target.split("#");

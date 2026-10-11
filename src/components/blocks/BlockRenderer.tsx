@@ -354,6 +354,8 @@ export function BlockRenderer({
                   key={idx}
                   // A wide table scrolls sideways inside this box, so the box has to be reachable by keyboard.
                   tabIndex={0}
+                  role="region"
+                  aria-label="Table"
                   className="overflow-x-auto rounded-xl border border-border-default [-webkit-overflow-scrolling:touch]"
                 >
                   <table className="w-full min-w-max text-[14px]">

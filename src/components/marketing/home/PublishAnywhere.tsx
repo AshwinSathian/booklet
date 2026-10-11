@@ -3,6 +3,7 @@
 import { CopyButton } from "@/components/marketing/CopyButton";
 import { Section } from "@/components/marketing/primitives";
 import Link from "next/link";
+import { onTablistKeyDown } from "@/lib/ui/tablist";
 import { useState } from "react";
 
 const WAYS = [
@@ -65,7 +66,7 @@ export function PublishAnywhere() {
     >
       <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:gap-12">
         <div>
-          <div role="tablist" aria-label="Ways to publish" aria-orientation="vertical" className="flex flex-wrap gap-1.5 lg:flex-col lg:gap-0">
+          <div role="tablist" aria-label="Ways to publish" onKeyDown={onTablistKeyDown} className="flex flex-wrap gap-1.5 lg:flex-col lg:gap-0">
             {WAYS.map((w, i) => (
               <button
                 key={w.id}
@@ -73,6 +74,7 @@ export function PublishAnywhere() {
                 role="tab"
                 id={`way-tab-${w.id}`}
                 aria-selected={i === active}
+                tabIndex={i === active ? 0 : -1}
                 aria-controls="way-panel"
                 onClick={() => setActive(i)}
                 className={

@@ -12,6 +12,7 @@ order: 6
 | How long a page is kept | 90 days | Until you delete it |
 | Edit a page after publishing | No | Yes, at the same link |
 | Custom slug, password, version history, analytics | No | Yes |
+| Links between documents | No | Yes |
 | Team spaces, API, CLI, MCP, webhooks | No | Yes |
 
 A page published without an account can be kept: open it in the browser you published it from, sign in, and choose **Keep this page**.

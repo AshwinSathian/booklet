@@ -2,6 +2,7 @@
 
 import { ROUTES } from "@/lib/constants";
 import Link from "next/link";
+import { onTablistKeyDown } from "@/lib/ui/tablist";
 import { useState, useCallback, type ReactNode } from "react";
 
 // ─── Shared primitives ────────────────────────────────────────────────────────
@@ -603,9 +604,7 @@ function Field({
   );
 }
 
-// ─── Prompt chip ──────────────────────────────────────────────────────────────
 
-// ─── Main page ────────────────────────────────────────────────────────────────
 
 // ─── The picker ───────────────────────────────────────────────────────────────
 
@@ -630,13 +629,15 @@ export function McpClientPicker() {
 
   return (
     <div className="my-2 rounded-xl border border-border-default bg-bg-elevated p-5 sm:p-6">
-      <div role="tablist" aria-label="MCP client" className="mb-6 flex flex-wrap gap-1.5">
+      <div role="tablist" aria-label="MCP client" onKeyDown={onTablistKeyDown} className="mb-6 flex flex-wrap gap-1.5">
         {PLATFORMS.map((p) => (
           <button
             key={p.id}
             type="button"
             role="tab"
             aria-selected={platform === p.id}
+            tabIndex={platform === p.id ? 0 : -1}
+            aria-controls="mcp-client-panel"
             onClick={() => setPlatform(p.id)}
             className={cn(
               "inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium",
@@ -667,6 +668,7 @@ export function McpClientPicker() {
           <input
             id="mcp-api-key"
             type="text"
+            value={apiKey === "bklt_YOUR_API_KEY" ? "" : apiKey}
             onChange={(e) => setApiKey(e.target.value.trim() || "bklt_YOUR_API_KEY")}
             placeholder="bklt_YOUR_API_KEY"
             spellCheck={false}
@@ -677,7 +679,9 @@ export function McpClientPicker() {
         </div>
       )}
 
-      {platformContent[platform]}
+      <div id="mcp-client-panel" role="tabpanel" aria-label={`Setup for ${label}`}>
+        {platformContent[platform]}
+      </div>
     </div>
   );
 }

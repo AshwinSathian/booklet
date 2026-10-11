@@ -19,6 +19,25 @@ Claude.ai signs in with your Booklet account, so there is no key to create. Ever
 mcp-client-picker
 ```
 
+The picker above is interactive. In short:
+
+- **Claude.ai**: Settings, Connectors, Add custom connector. Name it Booklet, give it the endpoint above, and sign in when asked.
+- **Claude Desktop and Cursor**: add a server with the endpoint as its URL and your key in an `Authorization` header. Windsurf has fields for the same two values.
+
+```json
+{
+  "mcpServers": {
+    "booklet": {
+      "url": "https://booklet-mcp.ashwinsathian.com/mcp",
+      "headers": { "Authorization": "Bearer bklt_YOUR_API_KEY" }
+    }
+  }
+}
+```
+
+- **VS Code**: the same server in `.vscode/mcp.json`, under `servers`, with `"type": "http"`.
+- **Zed**: a custom context server that runs `npx -y mcp-remote@latest` with the endpoint and the same header.
+
 ## Try it
 
 Ask in plain words. These work as written:

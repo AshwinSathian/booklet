@@ -10,6 +10,8 @@ test("the product shot is in the first screen and plays through to a published p
   const box = (await shot.boundingBox())!;
   // At least 300px of it shows without scrolling.
   expect(box.y + 300).toBeLessThan(900);
+  // The server sends the finished page, so "done" alone would pass with no playback at all.
+  await expect(shot).toHaveAttribute("data-state", "playing");
   await expect(shot).toHaveAttribute("data-state", "done", { timeout: 20_000 });
   await expect(shot.getByTestId("shot-url")).toContainText("/p/checkout-incident");
   await expect(shot.getByTestId("shot-page")).toContainText("Root cause");
@@ -60,8 +62,11 @@ test("without JavaScript the copy, the finished shot and the questions are all t
 test("the example tabs work from the keyboard and switch the document", async ({ page }) => {
   await page.goto("/");
   const shot = page.getByTestId("product-shot");
-  await shot.getByRole("tab", { name: "Runbook" }).focus();
-  await page.keyboard.press("Enter");
+  await expect(page.getByRole("button", { name: /Switch to (light|dark) mode/ })).toBeVisible();
+  await shot.getByRole("tab", { name: "Incident" }).focus();
+  // Arrow keys move along the tabs: Incident, ADR, RFC, Runbook.
+  for (let i = 0; i < 3; i++) await page.keyboard.press("ArrowRight");
+  await expect(shot.getByRole("tab", { name: "Runbook" })).toBeFocused();
   await expect(shot.getByRole("tab", { name: "Runbook" })).toHaveAttribute("aria-selected", "true");
   await expect(shot).toHaveAttribute("data-state", "done", { timeout: 20_000 });
   await expect(shot.getByTestId("shot-page")).toContainText("Database failover");
@@ -69,17 +74,21 @@ test("the example tabs work from the keyboard and switch the document", async ({
 
 test("nothing inside an example document can take focus", async ({ page }) => {
   await page.goto("/");
-  const focusable = await page.evaluate(
-    () => [...document.querySelectorAll("[inert] a, [inert] button, [inert] [tabindex]")].filter((el) => (el as HTMLElement).matches(":focus-within, :not([inert] *)")).length,
-  );
-  expect(focusable).toBe(0);
-  // The page pane is inert, so the copy and expand buttons of its code blocks are skipped by Tab.
-  await expect(page.getByTestId("shot-page")).toHaveAttribute("inert", "");
+  // The page pane has links and copy buttons in it. It is inert, so none of them is a Tab stop.
+  const pane = page.getByTestId("shot-page");
+  await expect(pane).toHaveAttribute("inert", "");
+  expect(await pane.locator("button, a").count()).toBeGreaterThan(0);
+  await page.getByRole("tab", { name: "Incident" }).focus();
+  for (let i = 0; i < 4; i++) {
+    await page.keyboard.press("Tab");
+    expect(await page.evaluate(() => !!document.activeElement?.closest("[data-testid=shot-page]"))).toBe(false);
+  }
 });
 
 test("the five ways to publish are tabs, each with a snippet that can be copied", async ({ page, context }) => {
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   await page.goto("/");
+  await expect(page.getByRole("button", { name: /Switch to (light|dark) mode/ })).toBeVisible();
   await page.getByRole("tab", { name: "CLI" }).click();
   const panel = page.locator("#way-panel");
   await expect(panel).toContainText("npx booklet-cli publish");

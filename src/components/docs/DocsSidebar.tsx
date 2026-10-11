@@ -6,10 +6,10 @@ import { usePathname } from "next/navigation";
 export type SidebarSection = { id: string; title: string; pages: Array<{ href: string; nav: string }> };
 
 /** The docs navigation. Rendered twice by the layout: as a column on wide screens, inside a <details> on narrow ones. */
-export function DocsSidebar({ sections }: { sections: SidebarSection[] }) {
+export function DocsSidebar({ sections, label = "Docs" }: { sections: SidebarSection[]; label?: string }) {
   const pathname = usePathname();
   return (
-    <nav aria-label="Docs" className="flex flex-col gap-7 text-sm">
+    <nav aria-label={label} className="flex flex-col gap-7 text-sm">
       {sections.map((section) => (
         <div key={section.id}>
           <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-text-muted">{section.title}</h2>

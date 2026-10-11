@@ -42,18 +42,18 @@ Response, 201:
 
 | Status | Meaning |
 | --- | --- |
-| 400 | Invalid JSON, an empty document, or no `raw` |
+| 400 | Invalid JSON, an empty document, no `raw`, or an `Idempotency-Key` that is empty or over 255 characters |
 | 401 | Missing or invalid API key |
-| 403 | You can read the team space but not publish to it |
+| 403 | You can read the team space but not publish to it, or the account's email address is not confirmed yet |
 | 404 | No team space with that slug, or you are not in it |
-| 409 | The slug in the frontmatter is taken |
+| 409 | The slug in the frontmatter is taken, or a request with the same `Idempotency-Key` is still running |
 | 413 | Over 200,000 characters, or over 600,000 bytes once parsed |
 | 422 | Invalid slug, `team` without a space, or an `Idempotency-Key` reused with a different body |
 | 429 | Rate limit reached |
 
 ## Update a page
 
-`PATCH /api/v1/pages/{id}` changes a page in place. The URL stays the same, and only the owner can do it. `id` is the page ID or its slug.
+`PATCH /api/v1/pages/{id}` changes a page in place. The URL stays the same, and only the owner can do it. `id` is the page ID. A slug works for reading a page, not for changing or deleting it.
 
 Replace the content:
 
@@ -87,11 +87,14 @@ Response, 200:
 
 | Status | Meaning |
 | --- | --- |
+| 400 | Invalid JSON |
 | 401 | Missing or invalid API key |
 | 403 | The page belongs to another account |
 | 404 | No such page |
+| 409 | The slug is taken |
 | 412 | `If-Match` did not match the page's current `ETag` |
 | 413 | Document too large |
+| 422 | Invalid slug or visibility |
 
 ## List pages
 
@@ -114,7 +117,7 @@ To read every page, pass each response's `next_cursor` as `cursor` until it is `
 
 ## Read a page
 
-`GET /api/v1/pages/{id}` returns one page with its Markdown.
+`GET /api/v1/pages/{id}` returns one page with its Markdown. `id` is the page ID or its slug.
 
 ```json
 {{example:PageDetail}}
@@ -122,7 +125,7 @@ To read every page, pass each response's `next_cursor` as `cursor` until it is `
 
 ## Delete a page
 
-`DELETE /api/v1/pages/{id}` deletes a page for good.
+`DELETE /api/v1/pages/{id}` deletes a page for good. `id` is the page ID.
 
 ```json
 {{example:DeletePageResponse}}
@@ -156,6 +159,6 @@ Errors are RFC 9457 problem details, sent as `application/problem+json`. `detail
 
 A 413 also says which limit was hit: `limit` is `characters` or `stored_bytes`, with `max` and `actual`.
 
-## Rate limits
+## Request limits
 
 Each endpoint has its own count per account, per minute. [Limits](/docs/reference/limits#api-rate-limits) has the numbers and the headers that report them.

@@ -84,7 +84,7 @@ export function MobileTocClient({ toc }: { toc: TocItem[] }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="lg:hidden mb-6">
+    <div className="lg:hidden mb-6 print:hidden">
       <div className="rounded-xl border border-border-default bg-bg-elevated overflow-hidden">
         <button
           type="button"

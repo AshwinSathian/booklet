@@ -32,7 +32,7 @@ export const LEGACY_HASHES: Record<string, string> = {
   conditional: "/docs/reference/api#conditional-requests",
   webhooks: "/docs/guides/webhooks",
   errors: "/docs/reference/api#errors",
-  "rate-limits": "/docs/reference/limits",
+  "rate-limits": "/docs/reference/limits#api-rate-limits",
   "github-actions": "/docs/guides/github-action",
   mcp: "/docs/guides/mcp",
   // /integrations

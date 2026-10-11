@@ -76,5 +76,8 @@ booklet pages delete Ab3k91QxZp --yes
 `--json` prints the result as JSON on stdout and errors as JSON on stderr. Exit codes are fixed: see [CLI commands](/docs/reference/cli).
 
 ```bash
-URL=$(booklet --json publish CHANGELOG.md | jq -r .url)
+set -o pipefail
+URL=$(booklet --json publish CHANGELOG.md | jq -er .url)
 ```
+
+With `--json` an error goes to stderr and nothing to stdout. `pipefail` and `jq -e` make the line fail in that case, instead of leaving `URL` empty.

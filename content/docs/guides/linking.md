@@ -23,9 +23,17 @@ In the editor, typing `[[` opens a list of titles to pick from.
 Matching ignores case and surrounding spaces. Booklet looks for the title:
 
 1. among the pages of the team space the page is published into, if any;
-2. otherwise among your own published pages.
+2. otherwise among your own published pages that are not in a team space.
 
-If nothing matches, the text is left as plain text, without the brackets. Nothing is published as a broken link.
+A link also has to be one its readers can follow:
+
+- A public page links to public pages.
+- An unlisted page links to public and unlisted pages.
+- A team page links to any page in its space.
+
+So a public incident report that names an unlisted ADR does not link to it. Make the ADR public, or the incident unlisted.
+
+If nothing matches, the text is left as plain text, without the brackets. Nothing is published as a broken link. Links need an account: a page published without one keeps its text and links nothing.
 
 ## Referenced by
 

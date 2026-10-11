@@ -24,7 +24,8 @@ const ROWS: Array<[string, string, string]> = [
   ["API, CLI and GitHub workflows", "No", "Yes"],
   ["Claude and other MCP clients", "No", "Yes"],
   ["Webhooks", "No", "Yes, five"],
-  ["Document types, links, export, themes", "Yes", "Yes"],
+  ["Links between documents", "No", "Yes"],
+  ["Document types, export, themes", "Yes", "Yes"],
 ];
 
 export default function PricingPage() {

@@ -8,7 +8,7 @@ There are two ways to publish from a workflow. Both need an API key stored as a 
 
 ## With the CLI
 
-This is the version our own tests run.
+The CLI commands in this workflow are run against a test instance. The workflow file itself is not run in our tests.
 
 ```yaml
 name: Publish to Booklet

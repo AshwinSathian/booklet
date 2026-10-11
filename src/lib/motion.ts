@@ -1,5 +1,5 @@
 /**
- * Shared motion primitives for the Precision identity. One easing curve and
+ * Shared motion primitives. One easing curve and
  * a small fixed set of durations, so every animated component feels like one
  * system instead of per-component guesses — mirrors the CSS-side
  * --duration-* and --ease-spring tokens in globals.css; this is the JS-side

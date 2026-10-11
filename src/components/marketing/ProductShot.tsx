@@ -5,6 +5,7 @@ import { DocHeaderStrip } from "@/components/share/DocHeaderStrip";
 import { DEFAULT_SETTINGS, type Block } from "@/lib/blocks";
 import { useHydrated } from "@/lib/ui/hydration";
 import { usePrefersReducedMotion } from "@/lib/motion";
+import { onTablistKeyDown } from "@/lib/ui/tablist";
 import { useEffect, useRef, useState } from "react";
 
 /** The parser's output after the first `chars` characters of the source. */
@@ -43,7 +44,11 @@ export function ProductShot({ data }: { data: ShotData }) {
   const root = useRef<HTMLDivElement>(null);
   const sourcePane = useRef<HTMLPreElement>(null);
   const pagePane = useRef<HTMLDivElement>(null);
-  const done = frame >= last;
+  // Whether the visitor has chosen a tab: from then on the shot is theirs, and scrolling it into view restarts nothing.
+  const touched = useRef(false);
+  // Without playback (before hydration, or under reduced motion) the finished page is what shows.
+  const shown = canPlay ? Math.min(frame, last) : last;
+  const done = shown >= last;
 
   // Start the first play when the shot is on screen.
   useEffect(() => {
@@ -51,7 +56,7 @@ export function ProductShot({ data }: { data: ShotData }) {
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (!entry.isIntersecting) return;
-        setFrame(0);
+        if (!touched.current) setFrame(0);
         observer.disconnect();
       },
       { threshold: 0.35 },
@@ -74,17 +79,18 @@ export function ProductShot({ data }: { data: ShotData }) {
   }, [frame, done]);
 
   function select(index: number) {
+    touched.current = true;
     setTab(index);
     setPaused(false);
     setFrame(canPlay ? 0 : data[index].frames.length - 1);
   }
 
-  const current = sample.frames[Math.min(frame, last)];
+  const current = sample.frames[shown];
 
   return (
     <div ref={root} data-testid="product-shot" data-state={done ? "done" : "playing"} className="mx-auto w-full max-w-[68rem]">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div role="tablist" aria-label="Example document" className="flex flex-wrap gap-1.5">
+        <div role="tablist" aria-label="Example document" onKeyDown={onTablistKeyDown} className="flex flex-wrap gap-1.5">
           {data.map((s, i) => (
             <button
               key={s.id}
@@ -92,6 +98,7 @@ export function ProductShot({ data }: { data: ShotData }) {
               role="tab"
               id={`shot-tab-${s.id}`}
               aria-selected={i === tab}
+              tabIndex={i === tab ? 0 : -1}
               aria-controls="shot-panel"
               onClick={() => select(i)}
               className={
@@ -108,11 +115,14 @@ export function ProductShot({ data }: { data: ShotData }) {
           <button
             type="button"
             onClick={() => (done ? (setPaused(false), setFrame(0)) : setPaused((p) => !p))}
-            className="rounded-lg px-3 py-1.5 text-sm font-medium text-text-secondary hover:bg-fill-2 hover:text-text-primary"
+            className="h-8 w-[4.5rem] rounded-lg text-sm font-medium text-text-secondary hover:bg-fill-2 hover:text-text-primary"
           >
             {done ? "Replay" : paused ? "Play" : "Pause"}
           </button>
-        ) : null}
+        ) : (
+          // Holds the button's place, so nothing moves when it appears after hydration.
+          <span aria-hidden className="h-8 w-[4.5rem]" />
+        )}
       </div>
 
       <div
@@ -122,8 +132,7 @@ export function ProductShot({ data }: { data: ShotData }) {
         className="grid overflow-hidden rounded-2xl border border-border-strong bg-bg-elevated shadow-[0_24px_60px_-28px_rgba(22,21,15,0.35)] md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]"
       >
         <p className="sr-only">
-          A {sample.label} written in Markdown, shown as its source and as the page Booklet publishes from it. The page is
-          at {sample.url}.
+          An example {sample.label} written in Markdown, shown as its source and as the page Booklet publishes from it.
         </p>
 
         {/* Source */}

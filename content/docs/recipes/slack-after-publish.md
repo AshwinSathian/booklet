@@ -15,15 +15,18 @@ A Booklet webhook sends a fixed JSON body (`event`, `page_id`, `page_url`, `titl
 
 ## Steps
 
-Capture the URL the CLI prints, then post it. The publish step is run in our tests; the request to Slack is not.
+Capture the URL the CLI prints, then post it. The CLI command is run against a test instance; the workflow as a whole and the request to Slack are not.
 
 ```yaml
       - name: Publish
         id: publish
         env:
           BOOKLET_API_KEY: ${{ secrets.BOOKLET_API_KEY }}
+          PAGE_ID: ${{ vars.RUNBOOK_PAGE_ID }}
         run: |
-          URL=$(npx booklet-cli --json publish docs/runbooks/payments.md --update "${{ vars.RUNBOOK_PAGE_ID }}" | jq -r .url)
+          set -o pipefail
+          : "${PAGE_ID:?Set the RUNBOOK_PAGE_ID repository variable}"
+          URL=$(npx booklet-cli --json publish docs/runbooks/payments.md --update "$PAGE_ID" | jq -er .url)
           echo "url=$URL" >> "$GITHUB_OUTPUT"
 
       - name: Tell Slack
@@ -37,9 +40,9 @@ Capture the URL the CLI prints, then post it. The publish step is run in our tes
 
 ## Check it worked
 
-The channel gets the message. If the Publish step fails, the Slack step does not run, so nobody is sent a link to a page that was not updated.
+The channel gets the message. `set -o pipefail` and `jq -e` make the Publish step fail when the CLI fails or prints no URL, so the Slack step does not run and nobody is sent a link to a page that was not updated. Without those two, a failed publish would go unnoticed: with `--json` the CLI writes its error to stderr, and `jq` exits 0 on empty input.
 
 ## If it does not
 
-- **`jq: error` in the Publish step.** The CLI failed and printed an error instead of a result. Its exit code says why: see [CLI commands](/docs/reference/cli#exit-codes).
+- **The Publish step fails.** The CLI's error is in the step's log, as JSON, with an `exit_code`: see [CLI commands](/docs/reference/cli#exit-codes).
 - **Slack answers `invalid_payload`.** The body is not `{"text": "..."}`. Building it with `jq`, as above, keeps quotes in titles from breaking it.

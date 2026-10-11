@@ -12,7 +12,9 @@ import { useEffect } from "react";
 export function LegacyHashRedirect() {
   const router = useRouter();
   useEffect(() => {
-    const target = LEGACY_HASHES[window.location.hash.slice(1)];
+    const key = window.location.hash.slice(1);
+    // Own keys only: "#constructor" is not a section.
+    const target = Object.hasOwn(LEGACY_HASHES, key) ? LEGACY_HASHES[key] : undefined;
     if (target && target !== window.location.pathname + window.location.hash) router.replace(target);
   }, [router]);
   return null;

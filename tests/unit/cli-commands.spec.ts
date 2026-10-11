@@ -117,6 +117,14 @@ test("publish --json: {id, url, updated}, exit 0", async () => {
   expect(r.json()).toEqual({ id: "NewPage001", url: "https://example.test/p/NewPage001", updated: false });
 });
 
+test("publish --update with an empty ID is a usage error, not a new page", async () => {
+  // `--update "$PAGE_ID"` in a script whose variable is unset.
+  const r = await cli(["publish", "-", "--update", "", "--json"], { stdin: "# Hello" });
+  expect(r.code).toBe(2);
+  expect(r.stdout).toBe("");
+  expect(JSON.parse(r.stderr).error).toContain("--update needs a page ID");
+});
+
 test("publish --update and --slug --json", async () => {
   const updated = await cli(["publish", "-", "--update", "Ab3k91QxZp", "--json"], { stdin: "# Hello" });
   expect(updated.code).toBe(0);

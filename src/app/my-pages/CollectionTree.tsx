@@ -114,7 +114,7 @@ function Row({
           onClick={onSelect}
           className={[
             "flex min-w-0 flex-1 items-center justify-between gap-2 rounded-lg px-2 py-2 text-left text-sm transition",
-            active ? "bg-accent-dim text-accent font-medium" : "text-text-secondary hover:bg-fill-2 hover:text-text-primary",
+            active ? "bg-accent-dim text-accent font-semibold shadow-[inset_2px_0_0_var(--color-accent)]" : "text-text-secondary hover:bg-fill-2 hover:text-text-primary",
           ].join(" ")}
         >
           <span className="flex items-center gap-1.5 truncate">

@@ -39,21 +39,25 @@ test("an unknown docs page is a 404, and so is a path that tries to leave the do
 
 test("search opens with the slash key and takes you to a page", async ({ page }) => {
   await page.goto("/docs");
+  await expect(page.getByRole("button", { name: /Switch to (light|dark) mode/ })).toBeVisible();
   await page.getByRole("heading", { level: 1 }).click();
   await page.keyboard.press("/");
-  const input = page.getByPlaceholder("Search the docs").last();
+  await expect(page.getByRole("dialog")).toHaveCount(1);
+  const input = page.getByPlaceholder("Search the docs");
   await expect(input).toBeFocused();
   await input.fill("REST API safe retries");
   await expect(page.getByRole("option").first()).toContainText("REST API: Safe retries");
   await page.keyboard.press("Enter");
   await expect(page).toHaveURL(/\/docs\/reference\/api#safe-retries$/);
+  // One dialog, and it is gone: nothing is left covering the page.
+  await expect(page.getByRole("dialog")).toHaveCount(0);
 });
 
 test("on a phone the docs menu and the page's contents are reachable without the sidebar", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/docs/guides/cli");
   await page.getByText("Docs menu").click();
-  await expect(page.getByRole("navigation", { name: "Docs" }).getByRole("link", { name: "Webhooks" }).last()).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Docs menu" }).getByRole("link", { name: "Webhooks" })).toBeVisible();
   await page.locator("summary", { hasText: "On this page" }).click();
   await expect(page.getByRole("link", { name: "Update a page in place" })).toBeVisible();
 });
@@ -72,6 +76,6 @@ test("without JavaScript a reference page still shows its headings, tables and c
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("REST API");
   await expect(page.getByRole("heading", { name: "Safe retries" })).toBeVisible();
   await expect(page.locator("pre").filter({ hasText: "Idempotency-Key" })).toBeVisible();
-  await expect(page.getByRole("navigation", { name: "Docs" }).first()).toContainText("Quickstart");
+  await expect(page.getByRole("navigation", { name: "Docs", exact: true })).toContainText("Quickstart");
   await context.close();
 });

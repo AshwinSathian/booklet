@@ -36,17 +36,21 @@ jobs:
       - name: Update the page
         env:
           BOOKLET_API_KEY: ${{ secrets.BOOKLET_API_KEY }}
-        run: npx booklet-cli publish docs/runbooks/payments.md --update "${{ vars.RUNBOOK_PAGE_ID }}"
+          PAGE_ID: ${{ vars.RUNBOOK_PAGE_ID }}
+        run: |
+          : "${PAGE_ID:?Set the RUNBOOK_PAGE_ID repository variable}"
+          npx booklet-cli publish docs/runbooks/payments.md --update "$PAGE_ID"
 ```
 
 4. Merge a change to the runbook.
 
 ## Check it worked
 
-The job log prints the same URL as before. The page shows the new text, and its version history has one more version. Because the update is by page ID, running the job again changes nothing.
+The job log prints the same URL as before. The page shows the new text, and its version history has one more version. Running the job again is safe: the link stays the same, and the same text is saved as one more version.
 
 ## If it does not
 
-- **Exit code 4.** `RUNBOOK_PAGE_ID` is empty or names a page that was deleted.
+- **"Set the RUNBOOK_PAGE_ID repository variable".** The variable is empty. The first line of the step stops the job there: an empty `--update` would publish a new page on every run.
+- **Exit code 4.** `RUNBOOK_PAGE_ID` names a page that was deleted.
 - **Exit code 3.** The key belongs to an account that does not own the page.
 - **The job never runs.** The `paths` filter does not match the file that changed.
