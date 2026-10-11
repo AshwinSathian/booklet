@@ -198,6 +198,9 @@ if [[ "$HEALTH_OK" == "true" ]]; then
   # themselves. They default to this Mac's; a caller's MONGODB_URI wins.
   VERIFY_OK=true
   export MONGODB_URI="${MONGODB_URI:-mongodb://127.0.0.1:27017/booklet?directConnection=true}"
+  # With Turnstile on, the suites sign up with this in place of a solved challenge.
+  TURNSTILE_BYPASS_TOKEN="${TURNSTILE_BYPASS_TOKEN:-$(grep -E '^TURNSTILE_BYPASS_TOKEN=' .env.local 2>/dev/null | cut -d= -f2-)}"
+  export TURNSTILE_BYPASS_TOKEN
   if ! TEST_BASE_URL=https://booklet.ashwinsathian.com TEST_API_BASE_URL=https://booklet-api.ashwinsathian.com \
       npx playwright test --config=scripts/production-verify/playwright.config.ts 2>&1 | tee -a "$LOG"; then
     VERIFY_OK=false

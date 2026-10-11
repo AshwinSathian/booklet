@@ -82,6 +82,18 @@ async function markVerified() {
 
 test.describe("Production verification — signup, publish, session lifecycle", () => {
   test("sign up, publish via the editor, reach my-pages, log out, log back in", async ({ page }) => {
+    // With Turnstile on, the form waits for Cloudflare's script to hand it a token, and a headless
+    // browser may not get one. Stand in for that script and hand over the token the site accepts
+    // from its own checks (src/lib/turnstile.ts).
+    const bypass = process.env.TURNSTILE_BYPASS_TOKEN;
+    if (bypass) {
+      await page.route("https://challenges.cloudflare.com/turnstile/**", (route) =>
+        route.fulfill({
+          contentType: "application/javascript",
+          body: `window.turnstile={render:(el,o)=>{setTimeout(()=>o.callback(${JSON.stringify(bypass)}),0);return "stub"},remove(){}};`,
+        }),
+      );
+    }
     await page.goto(`${BASE}/sign-up`);
     await page.locator("#email").fill(EMAIL);
     await page.locator("#password").fill(PASSWORD);

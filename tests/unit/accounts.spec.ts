@@ -422,6 +422,24 @@ test.describe("Turnstile", () => {
     pageIds.push((await res.json()).id);
   });
 
+  test("the deploy checks' token passes when it is set and long enough, and only as an exact match", async () => {
+    const secret = "b".repeat(64);
+    try {
+      // Not set: it is an ordinary unsolved token.
+      expect((await anonymousPublish({ turnstile_token: secret })).status).toBe(403);
+      process.env.TURNSTILE_BYPASS_TOKEN = secret;
+      expect((await anonymousPublish({ turnstile_token: secret.slice(1) })).status).toBe(403);
+      const res = await anonymousPublish({ turnstile_token: secret });
+      expect(res.status).toBe(200);
+      pageIds.push((await res.json()).id);
+      // Too short to be a secret: ignored.
+      process.env.TURNSTILE_BYPASS_TOKEN = "short";
+      expect((await anonymousPublish({ turnstile_token: "short" })).status).toBe(403);
+    } finally {
+      delete process.env.TURNSTILE_BYPASS_TOKEN;
+    }
+  });
+
   test("a signed-in publish needs no token", async () => {
     const { cookie } = await newUser({ verified: true });
     const req = withSession(cookie, "/api/publish", { body: { raw: "# Mine\n\nBody." } });
