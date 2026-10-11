@@ -14,13 +14,13 @@ export const metadata: Metadata = buildMetadata({
 
 export default function ForgotPasswordPage() {
   return (
-    <AuthLayout>
+    <AuthLayout title="Reset your password">
       <div className="text-center">
         <p className="text-sm text-text-secondary">Enter your email and we&apos;ll send you a reset link.</p>
       </div>
       <ForgotPasswordForm />
-      <p className="text-xs text-text-muted text-center">
-        <Link href={ROUTES.signIn} className="text-accent hover:text-accent-soft transition-colors">
+      <p className="text-center text-sm text-text-secondary">
+        <Link href={ROUTES.signIn} className="link">
           Back to sign in
         </Link>
       </p>

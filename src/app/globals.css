@@ -191,8 +191,8 @@ html.dark {
   /* ── Type scale ──────────────────────────────────────────────────────────
      Dense-but-coherent small-size scale. Tailwind defaults for base/lg/xl/2xl/3xl remain.
   ──────────────────────────────────────────────────────────────────────── */
-  --text-2xs: 0.625rem;     /* 10px — kbd hints, eyebrow labels, tab names   */
-  --text-xs:  0.6875rem;    /* 11px — secondary chrome, save indicator       */
+  --text-2xs: 0.6875rem;    /* 11px — kbd hints and uppercase eyebrows only  */
+  --text-xs:  0.75rem;      /* 12px — the smallest chrome text               */
   --text-sm:  0.8125rem;    /* 13px — body-small, menu items, captions       */
   /* Marketing and docs display scale. */
   --text-display: clamp(2.5rem, 5.6vw, 4.25rem);
@@ -314,6 +314,35 @@ button {
   white-space: nowrap;
 }
 
+/* A text link outside running prose: ink, underlined, heavier on hover. */
+@utility link {
+  color: var(--color-text-primary);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  &:hover {
+    text-decoration-thickness: 2px;
+  }
+}
+
+/* A text input, select or textarea in the app and on forms. */
+@utility field {
+  min-height: 2.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-bg-elevated);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: var(--color-text-primary);
+  &::placeholder {
+    color: var(--color-text-muted);
+  }
+  &:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 1px;
+  }
+}
+
 /* The highlighter mark. */
 .mark {
   /* Drawn across the lower part of the line, the way a marker is. */
@@ -325,22 +354,6 @@ button {
 /* On a dark page the marker sits behind light text, so it is thinned to a rule under it. */
 html.dark .mark {
   background: linear-gradient(transparent 84%, var(--color-highlight) 84%, var(--color-highlight) 94%, transparent 94%);
-}
-
-/* ponytail: bridge for app surfaces that still use the accent as a colour
-   cue. The accent is ink now, so these two rules keep links and hover
-   distinguishable until the app pass (PR 2) restyles each one
-   directly; delete this block then. */
-a.text-accent,
-a.text-accent-soft {
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 3px;
-}
-.hover\:text-accent:hover,
-.hover\:text-accent-soft:hover {
-  text-decoration: underline;
-  text-underline-offset: 3px;
 }
 
 /* ── Keyframes ───────────────────────────────────────────────────────────── */

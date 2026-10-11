@@ -4,6 +4,7 @@
 // Usage: node scripts/visual-qa.mjs <base-url> [output-dir] [published-page-route]
 // QA_PUBLIC_ONLY=1 skips the signed-in /my-pages shots, which create an
 // account: set it when pointing this at production.
+// The signed-in app has its own sweep, scripts/visual-qa-app.mjs (local only).
 import { chromium } from "playwright";
 import { mkdirSync } from "node:fs";
 
@@ -17,8 +18,7 @@ if (!BASE_URL) {
 // 7's share/TOC chrome, an existing published page reused here
 // specifically to avoid burning the local dev DB's anonymous publish quota)
 // round out every surface Tasks 1-10 actually touched.
-// Task 29 (Precision redesign) adds the routes below that the prior "The
-// Reveal" sweep never covered, plus surfaces this redesign introduced.
+// The routes below complete the public site.
 // `/admin` will likely redirect/404 without admin access in most
 // environments — acceptable, since this still confirms the route doesn't
 // crash. `/reset-password` renders its "missing token" state since no

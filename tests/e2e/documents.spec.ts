@@ -194,7 +194,8 @@ test("Spaces is in the account menu, and a space can be created from it", async 
   const page = await owner.context.newPage();
   await page.goto("/my-pages");
   await page.getByRole("button", { name: "Account menu" }).click();
-  await page.getByRole("link", { name: "Spaces" }).click();
+  // The header has a Spaces link of its own.
+  await page.locator("[data-account-menu]").getByRole("link", { name: "Spaces" }).click();
   await expect(page).toHaveURL(/\/t$/);
 
   const name = `Docs ${Date.now()}`;

@@ -54,9 +54,8 @@ export function OAuthConsent({
 
   return (
     <div className="text-center space-y-4">
-      <p className="text-3xl">🔗</p>
       <div className="space-y-1.5">
-        <h1 className="text-base font-semibold">Connect {name} to Booklet?</h1>
+        <h1 className="font-display text-2xl font-medium leading-tight tracking-[-0.02em]">Connect {name} to Booklet?</h1>
         <p className="text-sm text-text-secondary leading-relaxed">
           {clientHost && clientName ? (
             <>

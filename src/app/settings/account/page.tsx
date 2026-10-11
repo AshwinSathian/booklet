@@ -31,8 +31,8 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
 
   return (
     <SettingsShell current={ROUTES.account}>
-      <h1 className="text-xl font-medium">Account</h1>
-      <p className="mt-0.5 text-sm text-text-secondary">{user.email}</p>
+      <h1 className="font-display text-2xl font-medium tracking-[-0.02em] sm:text-[1.75rem]">Account</h1>
+      <p className="mt-2 text-sm text-text-secondary">{user.email}</p>
 
       <AccountClient
         email={user.email}

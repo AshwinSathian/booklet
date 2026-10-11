@@ -44,15 +44,15 @@ export function PreviewPane({
   return (
     <div className="flex h-full max-h-full min-h-0 flex-col w-full overflow-hidden">
       {/* Pane label */}
-      <div className="shrink-0 flex items-center justify-between px-3 py-2 border-b border-border-subtle bg-bg-soft/50">
-        <span className="text-2xs font-medium text-text-muted tracking-wide">Preview</span>
+      <div className="shrink-0 flex items-center justify-between px-3 py-2 border-b border-border-default bg-bg">
+        <span className="text-xs font-medium text-text-muted">Preview</span>
         <div className="flex items-center gap-3">
           {onOpenBacklinks && (
             <button
               type="button"
               onClick={onOpenBacklinks}
               title="Linked mentions — drafts that reference this one via [[wikilinks]]"
-              className="text-2xs text-text-muted transition hover:text-text-primary"
+              className="text-xs text-text-muted transition hover:text-text-primary"
             >
               {backlinksCount > 0 ? `${backlinksCount} linked mention${backlinksCount === 1 ? "" : "s"}` : "Backlinks"}
             </button>
@@ -62,23 +62,23 @@ export function PreviewPane({
               type="button"
               onClick={onOpenGraph}
               title="Graph — private visualization of your linked drafts"
-              className="text-2xs text-text-muted transition hover:text-text-primary"
+              className="text-xs text-text-muted transition hover:text-text-primary"
             >
               Graph
             </button>
           )}
-          <span className="flex items-center gap-1 text-2xs text-text-muted">
+          <span className="flex items-center gap-1 text-xs text-text-muted">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-success/70 animate-dot-pulse" aria-hidden />
             Live
           </span>
         </div>
       </div>
 
-      {/* Preview surface — bg-bg-soft differentiates it from the editor pane */}
-      <div className="flex-1 min-h-0 overflow-y-auto bg-bg-soft border-l border-border-subtle">
+      {/* Preview surface: paper, as the published page is */}
+      <div className="flex-1 min-h-0 overflow-y-auto bg-bg">
         {isBusy ? (
           <div className="flex h-full items-start p-4 animate-fade-in">
-            <span className="flex items-center gap-2 text-2xs font-medium uppercase tracking-widest text-text-muted">
+            <span className="flex items-center gap-2 text-2xs font-medium uppercase tracking-[0.16em] text-text-muted">
               <span className="h-1 w-12 rounded-full bg-text-muted/20 animate-shimmer bg-linear-to-r from-transparent via-text-muted/15 to-transparent bg-size-[200%_100%]" aria-hidden />
               Updating
             </span>
@@ -95,15 +95,6 @@ export function PreviewPane({
   );
 }
 
-function PageIcon() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <rect x="4" y="2" width="16" height="20" rx="2" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  );
-}
-
 function EmptyState({
   onInsertSample,
   onCopySample,
@@ -116,22 +107,16 @@ function EmptyState({
   return (
     <div className="flex h-full items-center justify-center p-6">
       <div className="w-full max-w-sm text-center">
-        <div className="mb-4 flex justify-center">
-          <div className="flex h-11 w-11 items-center justify-center rounded-card bg-accent-dim text-accent-soft">
-            <PageIcon />
-          </div>
-        </div>
-        <div className="text-[15px] font-semibold tracking-tight">
-          Write. Preview. Publish.
-        </div>
+        <div className="font-display text-xl font-medium">Write. Preview. Publish.</div>
         <div className="mt-2 text-sm leading-[1.7] text-text-secondary">
-          Type or paste Markdown on the left. Your formatted page appears here live.
+          Type or paste Markdown <span className="lg:hidden">in the Write tab</span>
+          <span className="max-lg:hidden">on the left</span>. Your formatted page appears here live.
         </div>
 
         {/* Sample Markdown teaser */}
         <div className="mt-5 rounded-xl border border-border-default bg-bg-elevated text-left overflow-hidden">
           <div className="flex items-center justify-between px-3 py-2 border-b border-border-default">
-            <span className="text-2xs font-semibold uppercase tracking-widest text-text-muted">
+            <span className="text-2xs font-semibold uppercase tracking-[0.16em] text-text-muted">
               Sample
             </span>
             <div className="flex items-center gap-1">
@@ -141,14 +126,11 @@ function EmptyState({
                 </Button>
               ) : null}
               <Button
-                variant={copyState === "copied" ? "primary" : "secondary"}
+                variant="secondary"
                 size="sm"
                 onClick={onCopySample}
                 title="Copy sample"
-                className={
-                  copyState === "copied" ? "bg-accent-dim text-accent border-accent/40 hover:bg-accent-dim hover:border-accent/40 hover:text-accent shadow-none" :
-                  copyState === "failed" ? "border-danger/40 text-danger" : ""
-                }
+                className={copyState === "failed" ? "border-danger/40 text-danger" : ""}
               >
                 {copyState === "copied" ? "Copied!" : copyState === "failed" ? "Failed" : "Copy"}
               </Button>

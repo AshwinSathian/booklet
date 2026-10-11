@@ -46,8 +46,8 @@ export function FolderRow({
     <div
       className={[
         "group flex items-center gap-2.5 rounded-xl border px-3 py-2.5 transition cursor-default",
-        selected ? "border-accent-soft/40 bg-accent-dim" : "border-border-default bg-bg-elevated",
-        isDropTarget ? "ring-1 ring-accent/50 bg-accent-dim" : "",
+        selected ? "border-border-strong bg-fill-2" : "border-border-default bg-bg-elevated",
+        isDropTarget ? "ring-1 ring-accent/50 bg-fill-2" : "",
       ].join(" ")}
       draggable={draggable}
       onDragStart={onDragStartFolder}
@@ -58,7 +58,7 @@ export function FolderRow({
       onDoubleClick={onOpen}
       onContextMenu={onContextMenu}
     >
-      <Icon name="folder" size={16} className="shrink-0 text-accent" />
+      <Icon name="folder" size={16} className="shrink-0 text-text-primary" />
       {renaming ? (
         <input
           autoFocus
@@ -70,7 +70,7 @@ export function FolderRow({
             if (e.key === "Escape") { e.preventDefault(); setDraft(folder.name); onCancelRename(); }
           }}
           onBlur={() => onCommitRename(draft.trim() || folder.name)}
-          className="min-w-0 flex-1 rounded-md border border-accent/40 bg-bg px-1.5 py-0.5 text-sm text-text-primary focus-visible:outline-none"
+          className="min-w-0 flex-1 rounded-md border border-border-strong bg-bg px-1.5 py-0.5 text-sm text-text-primary focus-visible:outline-none"
         />
       ) : (
         <span className="min-w-0 flex-1 truncate text-sm font-medium text-text-primary">{folder.name}</span>

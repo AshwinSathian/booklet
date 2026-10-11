@@ -77,7 +77,7 @@ export function SiteHeader() {
               Sign in
             </Link>
           )}
-          <Button variant="primary" size="lg" href={ROUTES.app} className="hidden sm:inline-flex">
+          <Button variant="primary" size="lg" href={ROUTES.app} className="max-sm:hidden">
             Write a page
           </Button>
           <button

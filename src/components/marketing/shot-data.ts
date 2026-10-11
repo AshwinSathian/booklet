@@ -11,8 +11,10 @@ function build(step = 2): ShotData {
     const lineEnds: number[] = [];
     for (let i = 0; i < sample.source.length; i++) if (sample.source[i] === "\n") lineEnds.push(i + 1);
 
+    // A table's header row alone parses as a paragraph of pipes: no frame stops between it and its delimiter row.
+    const beforeDelimiterRow = (end: number) => /^\s*\|?\s*:?-{3,}/.test(sample.source.slice(end, end + 12));
     const frames = lineEnds
-      .filter((end, i) => i % step === step - 1 || end === sample.source.length)
+      .filter((end, i) => (i % step === step - 1 || end === sample.source.length) && !beforeDelimiterRow(end))
       .map((chars) => ({
         chars,
         // Until the frontmatter is closed there is no page yet.

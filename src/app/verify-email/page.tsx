@@ -13,7 +13,7 @@ export const metadata: Metadata = buildMetadata({
 export default async function VerifyEmailPage({ searchParams }: { searchParams: Promise<{ token?: string }> }) {
   const { token } = await searchParams;
   return (
-    <AuthLayout>
+    <AuthLayout title="Confirm your email">
       <VerifyEmailConfirm token={token ?? ""} />
     </AuthLayout>
   );

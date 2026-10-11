@@ -15,6 +15,23 @@ export type Release = {
 
 export const RELEASES: Release[] = [
   {
+    version: "v3.1.0",
+    date: "2026-10-11",
+    summary: "The new design reaches the app: My pages, analytics, version history, Settings, Spaces and the sign-in pages.",
+    entries: [
+      { date: "2026-10-11", tag: "Improved", text: "One header on every page behind the editor, with links to My pages, Spaces and Settings. There were six different ones" },
+      { date: "2026-10-11", tag: "Improved", text: "Serif page titles, rectangular buttons and one style of text field across the app and the sign-in pages. The smallest text is larger" },
+      { date: "2026-10-11", tag: "Improved", text: "Collection and author pages use the same header and footer as the rest of the site" },
+      { date: "2026-10-11", tag: "Improved", text: "On My pages, Unlisted is plain text and only Public and Team only are marked. Dates read 11 Oct 2026" },
+      { date: "2026-10-11", tag: "Improved", text: "On a phone or tablet a new draft opens on Write, not Preview" },
+      { date: "2026-10-11", tag: "Fixed", text: "My pages was wider than a phone screen, and its page menu opened off-screen" },
+      { date: "2026-10-11", tag: "Fixed", text: "On a phone the editor's settings panel and account menu ran off the left edge, and the draft title covered the button beside it" },
+      { date: "2026-10-11", tag: "Fixed", text: "The analytics chart cut off its last date and drew its labels too small to read on a phone" },
+      { date: "2026-10-11", tag: "Fixed", text: "Command palette items were in capitals" },
+      { date: "2026-10-11", tag: "Fixed", text: "The docs menu on a phone closes when you follow a link in it" },
+    ],
+  },
+  {
     version: "v3.0.0",
     date: "2026-10-11",
     summary: "A new look for every page, documentation in one place at /docs, and a homepage that shows a document being published.",

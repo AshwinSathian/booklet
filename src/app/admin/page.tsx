@@ -2,7 +2,8 @@ import { getAdminMetrics } from "@/lib/db/admin-metrics";
 import { countOpenReports } from "@/lib/db/reports";
 import { listErrorEvents } from "@/lib/db/error-events";
 import { logError } from "@/lib/logger";
-import Link from "next/link";
+import { AppPage, AppPageTitle } from "@/components/app/AppPage";
+import { Button } from "@/components/ui/Button";
 import { notFound } from "next/navigation";
 import { isAdminRequest } from "@/server/admin";
 
@@ -26,7 +27,7 @@ function Row({ label, value, sub }: { label: string; value: string | number; sub
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="mb-10">
-      <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-text-muted">{title}</h2>
+      <h2 className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-text-muted">{title}</h2>
       <table className="w-full border-collapse">
         <tbody>{children}</tbody>
       </table>
@@ -48,22 +49,25 @@ export default async function AdminPage() {
   } catch (err) {
     logError("admin", "Failed to load metrics", err);
     return (
-      <div className="min-h-screen bg-bg p-12 text-text-primary">
-        <h1 className="text-xl font-bold font-display mb-4">Admin — Error</h1>
+      <AppPage width="medium">
+        <AppPageTitle eyebrow="Admin" title="Admin — Error" />
         <p className="text-sm text-danger">Something went wrong loading metrics.</p>
-      </div>
+      </AppPage>
     );
   }
 
   return (
-    <div className="min-h-screen bg-bg p-10 text-text-primary max-w-2xl">
-      <div className="mb-8 flex items-baseline gap-4">
-        <h1 className="text-xl font-bold font-display">Booklet — Internal Metrics</h1>
-        <span className="text-xs text-text-muted">{new Date().toUTCString()}</span>
-        <Link href="/admin/reports" className="ml-auto text-xs text-accent underline underline-offset-2">
-          Abuse reports ({openReports} open)
-        </Link>
-      </div>
+    <AppPage width="medium">
+      <AppPageTitle
+        eyebrow="Admin"
+        title="Booklet — Internal Metrics"
+        lede={new Date().toUTCString()}
+        action={
+          <Button variant="secondary" size="lg" href="/admin/reports">
+            Abuse reports ({openReports} open)
+          </Button>
+        }
+      />
 
       <Section title="Publish funnel — last 7 days">
         <Row label="New pages published" value={m.weeklyNewPages} />
@@ -115,7 +119,7 @@ export default async function AdminPage() {
       </Section>
 
       <section className="mb-10">
-        <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-text-muted">
+        <h2 className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-text-muted">
           Errors — last seen in the past 30 days
         </h2>
         {errors.length === 0 ? (
@@ -141,9 +145,9 @@ export default async function AdminPage() {
         )}
       </section>
 
-      <p className="mt-8 text-2xs text-text-muted">
+      <p className="mt-8 text-xs text-text-muted">
         IP-restricted. Not indexed. Refresh for latest numbers.
       </p>
-    </div>
+    </AppPage>
   );
 }

@@ -223,12 +223,12 @@ export function ContextMenuItem({
       : danger
         ? "text-danger hover:bg-danger/8 focus-visible:bg-danger/8"
         : active || checked
-          ? "text-accent bg-accent-dim hover:bg-accent-dim focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-accent"
+          ? "text-text-primary bg-fill-2 hover:bg-fill-2 focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-accent"
           : "text-text-secondary hover:bg-fill-2 hover:text-text-primary focus-visible:bg-fill-2 focus-visible:text-text-primary",
     "focus-visible:outline-none",
   ].join(" ");
 
-  const iconCls = danger ? "text-danger/70" : active || checked ? "text-accent" : "text-text-muted";
+  const iconCls = danger ? "text-danger/70" : active || checked ? "text-text-primary" : "text-text-muted";
 
   const inner = (
     <>
@@ -240,13 +240,13 @@ export function ContextMenuItem({
         {description ? <span className="mt-0.5 block text-xs text-text-muted">{description}</span> : null}
       </span>
       {locked ? (
-        <span className="shrink-0 rounded-pill border border-accent/40 bg-accent/10 px-2 py-0.5 text-2xs font-semibold text-accent">
+        <span className="shrink-0 rounded-pill border border-border-strong bg-fill-2 px-2 py-0.5 text-xs font-semibold text-text-primary">
           Pro
         </span>
       ) : active && activeLabel ? (
-        <span className="shrink-0 text-xs font-medium text-accent">{activeLabel}</span>
+        <span className="shrink-0 text-xs font-medium text-text-primary">{activeLabel}</span>
       ) : checked ? (
-        <span className="shrink-0 text-accent">
+        <span className="shrink-0 text-text-primary">
           <Icon name="check" size={14} />
         </span>
       ) : null}

@@ -86,7 +86,7 @@ export function ImportUrlDialog({
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder="https://github.com/owner/repo/blob/main/README.md"
-            className="rounded-lg border border-border-default bg-bg px-3 py-2 text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft"
+            className="field"
           />
         </label>
         {error ? <p role="alert" className="text-xs text-danger">{error}</p> : null}

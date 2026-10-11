@@ -71,7 +71,7 @@ export function DraftRow({
       className={[
         isDialog ? "group rounded-xl" : "rounded-lg",
         "border p-3 transition flex flex-col gap-2",
-        isActive ? "border-accent-soft/40 bg-accent/5" : isDialog ? "border-border-default hover:border-border-default/80" : "border-border-subtle bg-bg-elevated",
+        isActive ? "border-border-strong bg-accent/5" : isDialog ? "border-border-default hover:border-border-default/80" : "border-border-subtle bg-bg-elevated",
       ].join(" ")}
     >
       <div className="flex items-start justify-between gap-3">

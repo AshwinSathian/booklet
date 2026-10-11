@@ -407,7 +407,7 @@ async function ReferencedBy({ pageId }: { pageId: string }) {
           <li key={page.id}>
             <Link
               href={ROUTES.publish(page.slug ?? page.id)}
-              className="text-sm text-accent-soft underline decoration-accent/40 underline-offset-4 transition hover:decoration-accent-soft"
+              className="text-sm text-accent-soft underline decoration-1 underline-offset-3"
             >
               {page.title ?? "Untitled"}
             </Link>

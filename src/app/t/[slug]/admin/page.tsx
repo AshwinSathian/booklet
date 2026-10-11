@@ -1,8 +1,7 @@
 "use client";
 
-import { AppLogo } from "@/components/ui/AppLogo";
+import { AppPage, AppPageTitle, EmptyState } from "@/components/app/AppPage";
 import { Button } from "@/components/ui/Button";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { use, useCallback, useEffect, useState } from "react";
 import { useSession } from "@/components/auth/SessionProvider";
@@ -150,17 +149,20 @@ function AdminPageInner({ slug }: { slug: string }) {
 
   if (!team) {
     return (
-      <div className="min-h-screen bg-bg flex items-center justify-center">
-        <p className="text-sm text-text-muted">Team not found.</p>
-      </div>
+      <AppPage>
+        <EmptyState title="Team not found" action={<Button variant="secondary" size="lg" href="/t">All spaces</Button>} />
+      </AppPage>
     );
   }
 
   if (team.user_id !== userId) {
     return (
-      <div className="min-h-screen bg-bg flex items-center justify-center">
-        <p className="text-sm text-text-muted">Only the team owner can access settings.</p>
-      </div>
+      <AppPage>
+        <EmptyState
+          title="Only the owner can change this team"
+          action={<Button variant="secondary" size="lg" href={`/t/${slug}`}>Back to the space</Button>}
+        />
+      </AppPage>
     );
   }
 
@@ -168,24 +170,14 @@ function AdminPageInner({ slug }: { slug: string }) {
   const memberRows = members.filter((m) => m.user_id !== team.user_id);
 
   return (
-    <div className="min-h-screen bg-bg text-text-primary">
-      <header className="border-b border-border-subtle bg-bg/85 backdrop-blur-xl sticky top-0 z-20">
-        <div className="mx-auto w-full max-w-2xl px-4 h-12 flex items-center justify-between gap-4">
-          <AppLogo onlyIcon={false} />
-          <Link href={`/t/${slug}`} className="text-xs text-text-muted hover:text-text-primary transition">
-            ← Back to team
-          </Link>
-        </div>
-      </header>
-
-      <main className="mx-auto w-full max-w-2xl px-4 py-10">
-        <h1 className="text-xl font-medium mb-8">Team settings</h1>
+    <AppPage>
+        <AppPageTitle back={{ href: `/t/${slug}`, label: team.name }} eyebrow="Space" title="Team settings" />
 
         {error && <p className="text-sm text-danger mb-4">{error}</p>}
 
         {/* Rename */}
-        <section className="mb-8">
-          <h2 className="text-sm font-medium mb-3">Team name</h2>
+        <section className="mb-10">
+          <h2 className="mb-3 text-[0.9375rem] font-semibold">Team name</h2>
           <div className="flex items-center gap-2">
             <input
               value={teamName}
@@ -193,14 +185,13 @@ function AdminPageInner({ slug }: { slug: string }) {
               maxLength={80}
               aria-label="Team space name"
               onKeyDown={(e) => { if (e.key === "Enter") void handleRename(); }}
-              className="min-w-0 flex-1 rounded-lg border border-border-default bg-bg px-3 py-2 text-sm text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft"
+              className="min-w-0 flex-1 field"
             />
             <Button
-              variant={saveSuccess ? "ghost" : "primary"}
-              size="md"
+              variant={saveSuccess ? "secondary" : "primary"}
+              size="lg"
               onClick={() => void handleRename()}
               disabled={saving || teamName === team.name}
-              className={saveSuccess ? "text-accent" : ""}
             >
               {saveSuccess ? "Saved" : saving ? "Saving…" : "Save"}
             </Button>
@@ -208,8 +199,8 @@ function AdminPageInner({ slug }: { slug: string }) {
         </section>
 
         {/* Members */}
-        <section className="mb-8">
-          <h2 className="text-sm font-medium mb-3">Members</h2>
+        <section className="mb-10">
+          <h2 className="mb-3 text-[0.9375rem] font-semibold">Members</h2>
           <div className="flex flex-col gap-2 mb-4">
             {/* Owner row — always first */}
             <div className="flex items-center justify-between rounded-xl border border-border-default bg-bg-elevated px-4 py-2.5 gap-3">
@@ -238,7 +229,7 @@ function AdminPageInner({ slug }: { slug: string }) {
               </div>
             ))}
             {memberRows.length === 0 && (
-              <p className="text-xs text-text-muted">No other members yet. Invite someone below.</p>
+              <p className="text-sm text-text-secondary">No other members yet. Invite someone below.</p>
             )}
           </div>
 
@@ -249,12 +240,12 @@ function AdminPageInner({ slug }: { slug: string }) {
               placeholder="colleague@example.com"
               value={inviteEmail}
               onChange={(e) => setInviteEmail(e.target.value)}
-              className="min-w-0 flex-1 rounded-lg border border-border-default bg-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft"
+              className="min-w-0 flex-1 field"
               onKeyDown={(e) => { if (e.key === "Enter") void handleInvite(); }}
             />
             <Button
               variant="primary"
-              size="md"
+              size="lg"
               onClick={() => void handleInvite()}
               disabled={inviting || !inviteEmail.trim()}
               className="shrink-0"
@@ -270,33 +261,27 @@ function AdminPageInner({ slug }: { slug: string }) {
         </section>
 
         {/* Danger zone */}
-        <section className="rounded-xl border border-danger/20 p-5">
-          <h2 className="text-sm font-medium text-danger mb-1">Danger zone</h2>
-          <p className="text-xs text-text-muted mb-4">
+        <section className="border-t border-border-default pt-8">
+          <h2 className="mb-1 text-[0.9375rem] font-semibold">Delete this team</h2>
+          <p className="mb-4 text-sm text-text-secondary">
             Deleting a team is permanent. Pages are kept but removed from this team.
           </p>
           {confirmDelete ? (
             <div className="flex items-center gap-2">
-              <Button variant="danger" size="md" onClick={() => void handleDelete()} disabled={deleting}>
+              <Button variant="danger" size="lg" onClick={() => void handleDelete()} disabled={deleting}>
                 {deleting ? "Deleting…" : "Yes, delete team"}
               </Button>
-              <Button variant="ghost" size="md" onClick={() => setConfirmDelete(false)}>
+              <Button variant="ghost" size="lg" onClick={() => setConfirmDelete(false)}>
                 Cancel
               </Button>
             </div>
           ) : (
-            <Button
-              variant="ghost"
-              size="md"
-              onClick={() => setConfirmDelete(true)}
-              className="text-danger hover:bg-danger/8 hover:text-danger"
-            >
+            <Button variant="danger" size="lg" onClick={() => setConfirmDelete(true)}>
               Delete team
             </Button>
           )}
         </section>
-      </main>
-    </div>
+    </AppPage>
   );
 }
 

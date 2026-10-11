@@ -70,7 +70,7 @@ const ICONS: Record<ToastKind, React.ReactNode> = {
 
 const COLORS: Record<ToastKind, { icon: string; border: string; bg: string }> = {
   success: { icon: "text-success",   border: "border-success/25", bg: "bg-success/8" },
-  info:    { icon: "text-accent-soft",   border: "border-accent/25",      bg: "bg-accent/8" },
+  info:    { icon: "text-text-primary",   border: "border-border-strong",      bg: "bg-fill-2" },
   warn:    { icon: "text-info",       border: "border-info/30",     bg: "bg-info/8" },
   error:   { icon: "text-danger",       border: "border-danger/30",     bg: "bg-danger/8" },
 };

@@ -169,7 +169,7 @@ export default async function EmbedPage({
             href={`/p/${idOrSlug}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-2xs text-accent hover:text-accent-soft transition"
+            className="text-2xs text-accent underline decoration-1 underline-offset-3"
           >
             Open full page →
           </Link>

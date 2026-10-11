@@ -199,7 +199,7 @@ function DrawerTemplatesView({
             key={template.name}
             type="button"
             onClick={() => onSelect(template)}
-            className="flex min-h-24 flex-col items-start gap-1 rounded-lg border border-border-subtle bg-bg-elevated px-4 py-3.5 text-left transition hover:border-accent-soft/40 hover:bg-accent/4 active:scale-[0.99]"
+            className="flex min-h-24 flex-col items-start gap-1 rounded-lg border border-border-subtle bg-bg-elevated px-4 py-3.5 text-left transition hover:border-border-strong hover:bg-accent/4 active:scale-[0.99]"
           >
             <span className="text-sm font-medium text-text-primary">{template.name}</span>
             <span className="text-xs leading-relaxed text-text-muted">{template.description}</span>
@@ -327,7 +327,8 @@ function SettingsPanel({
   return (
     <div
       ref={ref}
-      className="absolute right-0 top-full mt-1.5 z-(--z-dropdown,20) w-72 rounded-card border border-border-default bg-bg-elevated shadow-glass p-4 animate-dropdown-in"
+      data-settings-panel
+      className="absolute right-3 top-full z-(--z-dropdown,20) mt-1.5 w-72 max-w-[calc(100vw-1.5rem)] rounded-xl border border-border-default bg-bg-elevated p-4 shadow-glass animate-dropdown-in sm:right-0"
     >
       <div className="flex items-center justify-between mb-4">
         <div className="text-sm font-semibold">Settings</div>
@@ -407,7 +408,7 @@ function SettingsPanel({
 
         <div>
           <div className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-text-muted">
-            Theme
+            Page colour
           </div>
           <div className="flex items-center gap-2">
             {THEMES.map((t) => {
@@ -526,7 +527,7 @@ function DraftTitle({
 // ---------------------------------------------------------------------------
 // Publish reveal — a brief, terminal-native flash that plays once,
 // full-viewport, the moment a draft becomes published: a compact
-// "compiling" pulse followed by a success tint, then a fade. Precision's
+// "compiling" pulse followed by a success tint, then a fade. The system's
 // motion identity is restraint + precision, not a color-mode transformation
 // (the "Reveal"-era dark→paper crossfade this replaces) — this keeps the
 // same trigger and timing shape, just repainted.
@@ -577,7 +578,7 @@ function PublishReveal({ onDone }: { onDone: () => void }) {
       }}
     >
       {phase !== "fading" && (
-        <span className="font-mono text-sm text-accent">
+        <span className="font-mono text-sm text-text-primary">
           {phase === "compiling" ? "Publishing…" : "Published ✓"}
         </span>
       )}
@@ -637,7 +638,7 @@ function VisibilityPicker({
         data-value={current.value}
         disabled={disabled}
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex h-8 max-w-[7.5rem] sm:max-w-[13rem] items-center gap-1.5 rounded-pill border border-border-default bg-bg px-3 text-xs font-medium text-text-secondary transition hover:border-border-strong hover:text-text-primary disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+        className="inline-flex h-8 max-w-[7.5rem] sm:max-w-[13rem] items-center gap-1.5 rounded-lg border border-border-default bg-bg px-3 text-xs font-medium text-text-secondary transition hover:border-border-strong hover:text-text-primary disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
       >
         <span className="shrink-0 text-text-muted">
           <Icon name={current.icon} size={12} />
@@ -740,12 +741,13 @@ function PublishArea({
           type="button"
           onClick={onCopyLink}
           title="Copy share link"
+          aria-label={publishedOwned ? "Your page · Copy link" : "Copy link"}
           className={[
-            "inline-flex items-center gap-1.5 rounded-pill font-semibold transition h-8 px-3.5 text-xs",
+            "inline-flex items-center gap-1.5 rounded-lg font-semibold transition h-8 px-3.5 text-xs",
             "active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
             publishedOwned
-              ? "border border-accent/40 text-accent bg-accent-dim hover:border-accent hover:bg-accent/10"
-              : "border border-border-default text-text-secondary hover:border-accent-soft/50 hover:text-text-primary",
+              ? "border border-border-strong text-text-primary bg-fill-2 hover:border-accent hover:bg-fill-2"
+              : "border border-border-default text-text-secondary hover:border-border-strong hover:text-text-primary",
             copyLinkPulse ? "ring-2 ring-accent-soft ring-offset-1 ring-offset-bg" : "",
           ].join(" ")}
         >
@@ -765,7 +767,7 @@ function PublishArea({
         {publishedOwned && (
           <a
             href="/my-pages"
-            className="flex items-center gap-1 text-xs text-text-muted hover:text-accent transition ml-0.5"
+            className="flex items-center gap-1 text-xs text-text-muted hover:text-text-primary hover:underline underline-offset-3 transition ml-0.5"
           >
             <Icon name="list" size={12} />
             <span className="hidden sm:inline">My pages</span>
@@ -773,7 +775,7 @@ function PublishArea({
         )}
         {/* The step after a first publish: somewhere for the team's pages to live. */}
         {publishedOwned && spaces?.length === 0 && (
-          <a href={ROUTES.spaces} className="hidden sm:inline text-xs text-text-muted hover:text-accent transition ml-1.5">
+          <a href={ROUTES.spaces} className="hidden sm:inline text-xs text-text-muted hover:text-text-primary hover:underline underline-offset-3 transition ml-1.5">
             Create a space
           </a>
         )}
@@ -791,7 +793,8 @@ function PublishArea({
             onClick={onUpdatePage}
             disabled={!canPublish || isPublishing}
             title="Update published page in place"
-            className="inline-flex items-center gap-1.5 rounded-l-pill h-8 px-3.5 text-xs font-semibold bg-accent text-accent-contrast hover:bg-accent-hover transition active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+            aria-label="Update page"
+            className="inline-flex items-center gap-1.5 rounded-l-lg h-8 px-3.5 text-xs font-semibold bg-accent text-accent-contrast hover:bg-accent-hover transition active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
           >
             {isPublishing ? (
               <svg width="13" height="13" viewBox="0 0 13 13" fill="none" className="animate-spin" aria-hidden>
@@ -808,7 +811,7 @@ function PublishArea({
             title="More publish options"
             disabled={isPublishing}
             onClick={() => setShowPublishOptions((v) => !v)}
-            className="flex h-8 w-8 items-center justify-center rounded-r-pill bg-accent text-accent-contrast border-l border-accent-contrast/25 hover:bg-accent-hover transition active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+            className="flex h-8 w-8 items-center justify-center rounded-r-lg bg-accent text-accent-contrast border-l border-accent-contrast/25 hover:bg-accent-hover transition active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
           >
             <Icon name="chevron-down" size={11} />
           </button>
@@ -846,7 +849,7 @@ function PublishArea({
           disabled={isPublishing}
         />
       ) : null}
-      <Button variant="primary" size="md" onClick={onPublish} disabled={!canPublish || isPublishing}>
+      <Button variant="primary" size="md" onClick={onPublish} disabled={!canPublish || isPublishing} aria-label={label}>
         {isPublishing ? (
           <svg width="13" height="13" viewBox="0 0 13 13" fill="none" className="animate-spin" aria-hidden>
             <path d="M6.5 1a5.5 5.5 0 1 0 5.5 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -1242,14 +1245,18 @@ export function TopBar({
   ];
 
   return (
-    <header id="header" className="sticky top-0 z-20 border-b border-border-default/70 bg-bg/85 backdrop-blur-xl">
-      <div className="mx-auto flex h-12 w-full max-w-7xl items-center gap-2 px-3">
+    <header id="header" className="sticky top-0 z-20 border-b border-border-default bg-bg-glass backdrop-blur-md">
+      <div className="flex h-12 w-full items-center gap-2 px-3">
 
         {/* ── Left zone ── */}
-        <div className="flex items-center gap-2 min-w-0 flex-1">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
           <AppLogo onlyIcon={true} />
           <div className="h-4 w-px bg-fill-2 shrink-0" />
-          <DraftTitle title={draftTitle} onRename={onRenameCurrentDraft} />
+          {/* Clipped: on a phone the title has almost no room, and its rename icon
+              must not spill over the buttons to its right. */}
+          <div className="min-w-0 overflow-hidden">
+            <DraftTitle title={draftTitle} onRename={onRenameCurrentDraft} />
+          </div>
         </div>
 
         {/* ── Right zone ── */}
@@ -1279,7 +1286,9 @@ export function TopBar({
             />
           )}
 
-          <div className="relative">
+          {/* Below sm the panel hangs from the header: the gear sits mid-bar, and a
+              panel anchored to it runs off the left edge of a phone. */}
+          <div className="sm:relative">
             <IconBtn
               label="Settings"
               icon="gear"
@@ -1348,8 +1357,8 @@ export function TopBar({
 
       {/* Post-publish sign-in nudge — shown for anonymous publishes */}
       {status === "published" && !publishedOwned && !isSignedIn ? (
-        <div className="border-t border-accent/20 bg-accent-dim/60 backdrop-blur-xl px-3 py-2">
-          <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3">
+        <div className="border-t border-border-strong bg-fill-2/60 backdrop-blur-xl px-3 py-2">
+          <div className="flex w-full items-center justify-between gap-3">
             <p className="text-xs text-text-secondary">
               <span className="font-semibold text-text-primary">This page is kept for 90 days.</span>
               {" "}Sign in (free) and claim it to keep it, edit it in place and track views.

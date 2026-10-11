@@ -21,6 +21,8 @@ export function DocsSidebar({ sections, label = "Docs" }: { sections: SidebarSec
                   <Link
                     href={page.href}
                     aria-current={current ? "page" : undefined}
+                    // On a phone this nav sits in a <details>; close it, or it covers the page just opened.
+                    onClick={(e) => e.currentTarget.closest("details")?.removeAttribute("open")}
                     className={
                       current
                         ? "-ml-px block border-l-2 border-accent py-1.5 pl-4 font-semibold text-text-primary"

@@ -70,3 +70,36 @@ test.describe("formatUpdatedAtLongUTC — deterministic SSR-safe fallback", () =
     expect(formatUpdatedAtLongUTC("not-a-date")).toBe("");
   });
 });
+
+test.describe("formatDate / formatDateUTC", () => {
+  // 20:00 UTC is already the next day in Kolkata.
+  const LATE_ISO = "2026-10-11T20:00:00.000Z";
+
+  test("the UTC form does not move with the ambient timezone, so server and first paint agree", async () => {
+    const { formatDateUTC } = await import("@/lib/ui/time");
+    process.env.TZ = "Asia/Kolkata";
+    const inIst = formatDateUTC(LATE_ISO);
+    process.env.TZ = "America/Los_Angeles";
+    expect(formatDateUTC(LATE_ISO)).toBe(inIst);
+    expect(inIst).toBe("11 Oct 2026");
+  });
+
+  test("the local form shows the visitor's own day", async () => {
+    const { formatDate } = await import("@/lib/ui/time");
+    process.env.TZ = "Asia/Kolkata";
+    expect(formatDate(LATE_ISO)).toBe("12 Oct 2026");
+  });
+
+  test("September is three letters, whatever the runtime's own abbreviation is", async () => {
+    const { formatDate, formatDateUTC } = await import("@/lib/ui/time");
+    process.env.TZ = "UTC";
+    expect(formatDateUTC("2026-09-11T12:00:00.000Z")).toBe("11 Sep 2026");
+    expect(formatDate("2026-09-11T12:00:00.000Z")).toBe("11 Sep 2026");
+  });
+
+  test("an unreadable date renders as nothing", async () => {
+    const { formatDate, formatDateUTC } = await import("@/lib/ui/time");
+    expect(formatDate("nope")).toBe("");
+    expect(formatDateUTC("nope")).toBe("");
+  });
+});

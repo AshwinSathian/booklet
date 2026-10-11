@@ -3,12 +3,12 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { browserSupportsWebAuthn, startRegistration } from "@simplewebauthn/browser";
-import { Button } from "@/components/ui/Button";
+import { Button, buttonClass } from "@/components/ui/Button";
 import { useSession } from "@/components/auth/SessionProvider";
 import { useHydrated } from "@/lib/ui/hydration";
 
 const INPUT =
-  "w-full rounded-lg border border-border-default bg-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft";
+  "w-full field";
 const ROW = "flex items-center justify-between gap-3 rounded-lg border border-border-subtle px-3 py-2.5";
 
 const LINK_ERRORS: Record<string, string> = {
@@ -33,9 +33,9 @@ type Props = {
 
 function Section({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
   return (
-    <section className="mt-10">
-      <h2 className="text-sm font-semibold text-text-primary">{title}</h2>
-      {hint && <p className="mt-1 text-xs text-text-secondary">{hint}</p>}
+    <section className="mt-10 border-t border-border-default pt-8">
+      <h2 className="text-[0.9375rem] font-semibold text-text-primary">{title}</h2>
+      {hint && <p className="mt-1 text-sm text-text-secondary">{hint}</p>}
       <div className="mt-3 space-y-2">{children}</div>
     </section>
   );
@@ -171,7 +171,7 @@ export function AccountClient({ email, needsVerification, hasPassword, providers
 
       {needsVerification && (
         <Section title="Confirm your email" hint={`You can write drafts now. Publishing starts once you open the link we email to ${email}.`}>
-          <Button variant="secondary" size="md" disabled={busy} onClick={() => void run(() => send("/api/auth/verify-email/send", "POST"), "Sent. Check your inbox.")}>
+          <Button variant="secondary" size="lg" disabled={busy} onClick={() => void run(() => send("/api/auth/verify-email/send", "POST"), "Sent. Check your inbox.")}>
             Email me the link
           </Button>
         </Section>
@@ -206,7 +206,7 @@ export function AccountClient({ email, needsVerification, hasPassword, providers
               className={INPUT}
             />
           )}
-          <Button type="submit" variant="secondary" size="md" disabled={busy}>
+          <Button type="submit" variant="secondary" size="lg" disabled={busy}>
             Change email
           </Button>
         </form>
@@ -242,7 +242,7 @@ export function AccountClient({ email, needsVerification, hasPassword, providers
             onChange={(e) => setNewPassword(e.target.value)}
             className={INPUT}
           />
-          <Button type="submit" variant="secondary" size="md" disabled={busy}>
+          <Button type="submit" variant="secondary" size="lg" disabled={busy}>
             {hasPassword ? "Change password" : "Set password"}
           </Button>
         </form>
@@ -263,7 +263,7 @@ export function AccountClient({ email, needsVerification, hasPassword, providers
                   Disconnect
                 </Button>
               ) : (
-                <a href={`/api/auth/sso/${p.id}?connect=1`} className="text-xs font-semibold text-accent transition-colors hover:text-accent-soft">
+                <a href={`/api/auth/sso/${p.id}?connect=1`} className={buttonClass("secondary", "sm")}>
                   Connect
                 </a>
               )}
@@ -290,16 +290,16 @@ export function AccountClient({ email, needsVerification, hasPassword, providers
           </div>
         ))}
         {canUsePasskeys ? (
-          <Button variant="secondary" size="md" disabled={busy} onClick={() => void addPasskey()}>
+          <Button variant="secondary" size="lg" disabled={busy} onClick={() => void addPasskey()}>
             Add a passkey
           </Button>
         ) : (
-          <p className="text-xs text-text-muted">This browser does not support passkeys.</p>
+          <p className="text-sm text-text-secondary">This browser does not support passkeys.</p>
         )}
       </Section>
 
       <Section title="Connected apps" hint="Apps you signed in to with Booklet, such as an AI assistant using the MCP server.">
-        {apps.length === 0 && <p className="text-xs text-text-muted">No apps are connected.</p>}
+        {apps.length === 0 && <p className="text-sm text-text-secondary">No apps are connected.</p>}
         {apps.map((app) => (
           <div key={app.clientId} className={ROW}>
             <span className="min-w-0">
@@ -321,7 +321,7 @@ export function AccountClient({ email, needsVerification, hasPassword, providers
       <Section title="Your data" hint="A ZIP file with one Markdown file per page, each with its title, link and visibility as frontmatter.">
         <a
           href="/api/account/export"
-          className="inline-flex h-8 items-center rounded-pill border border-border-default px-3.5 text-xs font-semibold text-text-secondary transition hover:border-accent-soft/50 hover:text-text-primary"
+          className={buttonClass("secondary", "lg")}
         >
           Download all pages
         </a>
@@ -344,7 +344,7 @@ export function AccountClient({ email, needsVerification, hasPassword, providers
               className={INPUT}
             />
             <div className="flex gap-2">
-              <Button type="submit" variant="danger" size="md" disabled={busy}>
+              <Button type="submit" variant="danger" size="lg" disabled={busy}>
                 Delete my account and pages
               </Button>
               <Button type="button" variant="ghost" size="md" onClick={() => setDeleting(false)}>
@@ -353,7 +353,7 @@ export function AccountClient({ email, needsVerification, hasPassword, providers
             </div>
           </form>
         ) : (
-          <Button variant="danger" size="md" onClick={() => setDeleting(true)}>
+          <Button variant="danger" size="lg" onClick={() => setDeleting(true)}>
             Delete account
           </Button>
         )}

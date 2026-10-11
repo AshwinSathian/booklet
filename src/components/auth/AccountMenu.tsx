@@ -6,19 +6,29 @@ import { useRouter } from "next/navigation";
 import { ROUTES } from "@/lib/constants";
 import { useSession } from "./SessionProvider";
 
-// Deterministic hue from the user id — same scheme as src/app/u/[id]/page.tsx's
-// public-profile avatar, so an account's own menu avatar and its public
-// author-page avatar always match.
-function avatarHue(userId: string): number {
-  let hash = 0;
-  for (let i = 0; i < userId.length; i++) {
-    hash = (hash * 31 + userId.charCodeAt(i)) >>> 0;
-  }
-  return hash % 360;
+const LINKS = [
+  { href: ROUTES.myPages, label: "My pages" },
+  { href: ROUTES.spaces, label: "Spaces" },
+  { href: ROUTES.account, label: "Account" },
+  { href: ROUTES.apiKeys, label: "API keys" },
+  { href: ROUTES.webhooks, label: "Webhooks" },
+] as const;
+
+const ITEM = "block w-full px-3 py-2 text-left text-sm text-text-secondary transition hover:bg-fill-2 hover:text-text-primary";
+
+/** An account's initial: ink on a soft tile. Shared with the public author page. */
+export function Avatar({ initials, className = "" }: { initials: string; className?: string }) {
+  return (
+    <span
+      className={`flex shrink-0 items-center justify-center rounded-full border border-border-default bg-bg-soft font-semibold text-text-primary ${className}`}
+    >
+      {initials}
+    </span>
+  );
 }
 
-// A minimal avatar-triggered dropdown with
-// the account's email, links to My Pages, Spaces, Account, API keys and Webhooks, and sign out.
+// An avatar-triggered dropdown with the account's email, links to My pages,
+// Spaces, Account, API keys and Webhooks, and sign out.
 export function AccountMenu() {
   const { userId, email, refetch } = useSession();
   const [open, setOpen] = useState(false);
@@ -29,14 +39,18 @@ export function AccountMenu() {
     function onPointerDown(e: PointerEvent) {
       if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
     }
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
     document.addEventListener("pointerdown", onPointerDown);
-    return () => document.removeEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
   }, []);
 
   if (!userId) return null;
-
-  const initials = (email?.trim()[0] ?? "?").toUpperCase();
-  const hue = avatarHue(userId);
 
   async function handleSignOut() {
     setOpen(false);
@@ -47,70 +61,31 @@ export function AccountMenu() {
   }
 
   return (
-    <div ref={rootRef} className="relative">
+    // Below sm the menu hangs from the header, not the avatar: the avatar can
+    // sit mid-bar, where a menu anchored to it runs off the screen.
+    <div ref={rootRef} className="sm:relative">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-label="Account menu"
         aria-expanded={open}
-        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-2xs font-semibold transition"
-        style={{
-          backgroundColor: `hsl(${hue} 70% 92%)`,
-          borderColor: `hsl(${hue} 70% 80%)`,
-          // 25% lightness: at 40% the yellow and green hues fall under 4.5:1 on the 92% tint.
-          color: `hsl(${hue} 60% 25%)`,
-        }}
+        className="flex rounded-full transition hover:opacity-80"
       >
-        {initials}
+        <Avatar initials={(email?.trim()[0] ?? "?").toUpperCase()} className="h-8 w-8 text-xs" />
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-30 mt-2 w-48 rounded-lg border border-border-default bg-bg-elevated py-1 shadow-lg">
-          {email && (
-            <div className="mb-1 truncate border-b border-border-subtle px-3 py-1.5 text-xs text-text-muted">
-              {email}
-            </div>
-          )}
-          <Link
-            href={ROUTES.myPages}
-            onClick={() => setOpen(false)}
-            className="block px-3 py-1.5 text-sm text-text-secondary transition hover:bg-fill-1 hover:text-text-primary"
-          >
-            My pages
-          </Link>
-          <Link
-            href={ROUTES.spaces}
-            onClick={() => setOpen(false)}
-            className="block px-3 py-1.5 text-sm text-text-secondary transition hover:bg-fill-1 hover:text-text-primary"
-          >
-            Spaces
-          </Link>
-          <Link
-            href={ROUTES.account}
-            onClick={() => setOpen(false)}
-            className="block px-3 py-1.5 text-sm text-text-secondary transition hover:bg-fill-1 hover:text-text-primary"
-          >
-            Account
-          </Link>
-          <Link
-            href={ROUTES.apiKeys}
-            onClick={() => setOpen(false)}
-            className="block px-3 py-1.5 text-sm text-text-secondary transition hover:bg-fill-1 hover:text-text-primary"
-          >
-            API keys
-          </Link>
-          <Link
-            href={ROUTES.webhooks}
-            onClick={() => setOpen(false)}
-            className="block px-3 py-1.5 text-sm text-text-secondary transition hover:bg-fill-1 hover:text-text-primary"
-          >
-            Webhooks
-          </Link>
-          <button
-            type="button"
-            onClick={() => void handleSignOut()}
-            className="block w-full px-3 py-1.5 text-left text-sm text-text-secondary transition hover:bg-fill-1 hover:text-text-primary"
-          >
+        <div
+          data-account-menu
+          className="absolute right-3 top-full z-30 mt-2 w-52 max-w-[calc(100vw-1.5rem)] rounded-xl border border-border-default bg-bg-elevated py-1 shadow-glass sm:right-0"
+        >
+          {email && <div className="mb-1 truncate border-b border-border-subtle px-3 py-2 text-xs text-text-muted">{email}</div>}
+          {LINKS.map((link) => (
+            <Link key={link.href} href={link.href} onClick={() => setOpen(false)} className={ITEM}>
+              {link.label}
+            </Link>
+          ))}
+          <button type="button" onClick={() => void handleSignOut()} className={`${ITEM} mt-1 border-t border-border-subtle`}>
             Sign out
           </button>
         </div>

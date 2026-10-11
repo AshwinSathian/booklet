@@ -89,3 +89,20 @@ export function formatRelativeTimeFromIso(iso: string, nowMs?: number): string {
   const dayLabel = diffDay === 1 ? TIME_LABELS.day : TIME_LABELS.days;
   return `${diffDay} ${dayLabel} ${TIME_LABELS.ago}`;
 }
+
+// Month names come from this list, not from Intl: ICU versions disagree on
+// some abbreviations ("Sep" and "Sept"), and the server and a browser must
+// render the same text.
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** "11 Oct 2026" in the visitor's time zone. Client-only: see formatDateUTC. */
+export function formatDate(iso: string): string {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? "" : `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+/** The same date pinned to UTC: what the server and the first client paint both render. */
+export function formatDateUTC(iso: string): string {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? "" : `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+}

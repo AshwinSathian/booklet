@@ -1,5 +1,6 @@
 "use client";
 
+import { formatDateUTC } from "@/lib/ui/time";
 import type { ExploreItem } from "@/lib/db";
 import Link from "next/link";
 import { useMemo, useState } from "react";
@@ -10,7 +11,7 @@ function timeAgo(iso: string): string {
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
   if (diff < 86400 * 30) return `${Math.floor(diff / 86400)}d ago`;
-  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  return formatDateUTC(iso);
 }
 
 /** One public page, as listed on Explore and on a tag's page. */

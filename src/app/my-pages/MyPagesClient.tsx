@@ -1,8 +1,10 @@
 "use client";
 
+import { EmptyState } from "@/components/app/AppPage";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { ROUTES } from "@/lib/constants";
+import { useDateFormat } from "@/lib/ui/hydration";
 import { createDraft, setActiveDraftId } from "@/lib/drafts";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -57,10 +59,6 @@ function pageUrl(page: PageRow) {
   return `${page.baseUrl}${path}`;
 }
 
-function formatDate(iso: string) {
-  const d = new Date(iso);
-  return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
-}
 
 // ---------------------------------------------------------------------------
 // Slug editor
@@ -162,7 +160,7 @@ function SlugEditor({
         {slug ? (
           <span className="flex items-center gap-1 text-xs text-text-muted">
             <span className="text-text-muted">{hostLabel}/p/</span>
-            <span className="font-medium text-accent">{slug}</span>
+            <span className="font-medium text-text-primary">{slug}</span>
           </span>
         ) : (
           <span className="text-xs text-text-muted italic">No custom URL</span>
@@ -279,6 +277,7 @@ function PageCard({
   onDragStart: (pageId: string) => string[];
   onDragEnd: () => void;
 }) {
+  const formatDate = useDateFormat();
   const router = useRouter();
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
   const [copying, setCopying] = useState(false);
@@ -383,9 +382,10 @@ function PageCard({
     <>
       <div
         className={[
-          "group flex flex-col gap-0 rounded-xl border bg-bg-elevated transition hover:shadow-hard cursor-grab active:cursor-grabbing animate-fade-up",
-          selected ? "border-accent-soft/50 bg-accent-dim" : "border-border-default hover:border-accent-soft/30",
+          "group flex flex-col gap-0 rounded-xl border bg-bg-elevated transition cursor-grab active:cursor-grabbing animate-fade-up",
+          selected ? "border-accent bg-fill-2" : "border-border-default hover:border-border-strong",
         ].join(" ")}
+        data-testid="page-card"
         style={{ animationDelay: `${Math.min(index * 40, 300)}ms` }}
         draggable
         onClick={onSelectClick}
@@ -405,7 +405,7 @@ function PageCard({
               href={url}
               target="_blank"
               rel="noopener noreferrer"
-              className="block text-sm font-semibold text-text-primary hover:text-accent transition truncate"
+              className="block truncate text-[0.9375rem] font-semibold text-text-primary underline-offset-3 hover:underline"
             >
               {page.title ?? <span className="text-text-muted font-normal italic">Untitled</span>}
             </a>
@@ -429,13 +429,13 @@ function PageCard({
                   </span>
                 </>
               )}
-              {page.visibility !== "public" && (
-                <>
-                  <span className="opacity-30" aria-hidden>·</span>
-                  <span className="text-warning/80 font-medium">
-                    {page.visibility === "team" ? "Team only" : "Unlisted"}
-                  </span>
-                </>
+              <span className="opacity-30" aria-hidden>·</span>
+              {page.visibility === "unlisted" ? (
+                <span>Unlisted</span>
+              ) : (
+                <span className="rounded-pill bg-fill-2 px-2 py-px font-medium text-text-secondary">
+                  {page.visibility === "team" ? "Team only" : "Public"}
+                </span>
               )}
             </div>
 
@@ -450,12 +450,11 @@ function PageCard({
           {/* ── Actions ── */}
           <div className="flex items-center gap-1 shrink-0">
             <Button
-              variant={copying ? "primary" : "secondary"}
+              variant="secondary"
               size="md"
               onClick={() => void handleCopy()}
               title="Copy link"
               aria-label="Copy share link"
-              className={copying ? "bg-accent-dim text-accent border-accent/40 hover:bg-accent-dim hover:border-accent/40 hover:text-accent shadow-none" : ""}
             >
               <Icon name={copying ? "check" : "copy"} size={13} />
               <span className="hidden sm:inline">{copying ? "Copied" : "Copy"}</span>
@@ -570,7 +569,7 @@ function PageCard({
               onChange={(e) => setPasswordDraft(e.target.value)}
               placeholder="Set a password (min. 6 chars)"
               autoFocus
-              className="w-full rounded-lg border border-border-default bg-bg px-3 py-2 text-sm outline-none focus:border-accent/50 focus:ring-2 focus:ring-accent/15 transition"
+              className="w-full field"
             />
             <div className="flex gap-2">
               <Button
@@ -678,7 +677,7 @@ function SearchSortBar({
           value={sort}
           onChange={(e) => onSort(e.target.value as SortKey)}
           className="rounded-lg border border-border-default bg-bg px-2.5 py-1.5 text-sm text-text-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft appearance-none pr-7 bg-no-repeat"
-          style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%2398989f' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")", backgroundPosition: "right 8px center" }}
+          style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' fill='none'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23808080' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")", backgroundPosition: "right 8px center" }}
         >
           {SORTS.map((s) => (
             <option key={s.key} value={s.key}>{s.label}</option>
@@ -963,34 +962,22 @@ export function MyPagesList({
 
   if (pages.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-fill-2 text-text-muted">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden>
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            <polyline points="14 2 14 8 20 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            <line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            <line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-          </svg>
-        </div>
-        <div>
-          <p className="text-base font-semibold text-text-primary">No pages yet</p>
-          <p className="mt-1 text-sm text-text-secondary">Publish your first page to see it here.</p>
-        </div>
-        <div className="flex items-center gap-3 text-sm mt-1">
+      <EmptyState
+        title="No pages yet"
+        action={
           <Button variant="primary" size="lg" href={ROUTES.app}>
-            Open editor
-            <svg width="11" height="11" fill="none" viewBox="0 0 12 12" aria-hidden>
-              <path d="M2.5 9.5 9.5 2.5M9.5 2.5H4M9.5 2.5V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            Open the editor
           </Button>
-        </div>
-      </div>
+        }
+      >
+        A page you publish from the editor, the CLI or an AI assistant is listed here.
+      </EmptyState>
     );
   }
 
   return (
     <>
-    <div className="grid gap-5 lg:grid-cols-[220px_minmax(0,1fr)]">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
       <CollectionTree
         collections={collections}
         pages={pages}
@@ -1131,7 +1118,7 @@ export function MyPagesList({
             ))}
           </div>
         ) : (
-          <div className="rounded-xl border border-dashed border-border-subtle px-4 py-12 text-center text-sm text-text-muted">
+          <div className="rounded-xl border border-dashed border-border-default px-4 py-12 text-center text-sm text-text-secondary">
             {searchQuery ? `No pages match "${searchQuery}"` : "No pages in this collection."}
           </div>
         )}

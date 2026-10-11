@@ -11,19 +11,20 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
 const BASE =
   "inline-flex items-center justify-center font-semibold rounded-lg " +
   "transition-[color,background-color,border-color,box-shadow,opacity,transform] " +
-  "active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 " +
+  "active:scale-[0.97] disabled:cursor-not-allowed disabled:active:scale-100 " +
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent " +
   "focus-visible:ring-offset-2 focus-visible:ring-offset-highlight select-none";
 
 const VARIANTS = {
-  primary: "bg-accent text-accent-contrast hover:bg-accent-hover",
-  secondary: "border border-border-strong bg-bg-elevated text-text-primary hover:border-accent",
-  danger: "border border-danger/40 text-danger hover:bg-danger/10",
-  ghost: "text-text-muted hover:text-text-primary hover:bg-fill-2",
+  // Disabled primary is a quiet tile, not a grey slab of faded ink.
+  primary: "bg-accent text-accent-contrast hover:bg-accent-hover disabled:bg-fill-2 disabled:text-text-muted",
+  secondary: "border border-border-strong bg-bg-elevated text-text-primary hover:border-accent disabled:opacity-50 disabled:hover:border-border-strong",
+  danger: "border border-danger/40 text-danger hover:bg-danger/10 disabled:opacity-50",
+  ghost: "text-text-muted hover:text-text-primary hover:bg-fill-2 disabled:opacity-50",
 } as const;
 
 const SIZES_TEXT = {
-  sm: "h-7 gap-1 px-3 text-2xs",
+  sm: "h-7 gap-1 px-3 text-xs",
   md: "h-8 gap-1.5 px-3.5 text-xs",
   lg: "h-10 gap-2 px-5 text-sm",
   xl: "h-12 gap-2 px-7 text-[15px]",
@@ -39,10 +40,11 @@ const SIZES_ICON = {
 export type ButtonVariant = keyof typeof VARIANTS;
 export type ButtonSize = keyof typeof SIZES_TEXT;
 
-function cls(
-  variant: ButtonVariant,
-  size: ButtonSize,
-  iconOnly: boolean,
+/** The classes of a Button, for an anchor that must stay a plain `<a>` (an API route must not be prefetched). */
+export function buttonClass(
+  variant: ButtonVariant = "secondary",
+  size: ButtonSize = "md",
+  iconOnly = false,
   extra?: string,
 ) {
   return [
@@ -74,7 +76,7 @@ export const Button = React.forwardRef<HTMLButtonElement | HTMLAnchorElement, Bu
     { variant = "secondary", size = "md", iconOnly = false, href, external, className, children, ...rest },
     ref,
   ) {
-    const computed = cls(variant, size, iconOnly, className);
+    const computed = buttonClass(variant, size, iconOnly, className);
 
     if (href && external) {
       return (

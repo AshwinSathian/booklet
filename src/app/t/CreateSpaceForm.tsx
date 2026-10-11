@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/Button";
 import { ROUTES } from "@/lib/constants";
 
 export function CreateSpaceForm() {
@@ -47,7 +48,7 @@ export function CreateSpaceForm() {
           required
           placeholder="Platform team"
           aria-describedby={error ? "space-error" : undefined}
-          className="h-9 w-full rounded-lg border border-border-default bg-bg-soft px-3 text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft"
+          className="h-10 w-full rounded-lg border border-border-strong bg-bg-elevated px-3 text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft"
         />
         {error && (
           <p id="space-error" role="alert" className="mt-2 text-xs text-danger">
@@ -55,13 +56,9 @@ export function CreateSpaceForm() {
           </p>
         )}
       </div>
-      <button
-        type="submit"
-        disabled={busy || !name.trim()}
-        className="h-9 rounded-pill bg-accent px-4 text-sm font-semibold text-accent-contrast transition hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-40"
-      >
+      <Button type="submit" variant="primary" size="lg" disabled={busy || !name.trim()}>
         {busy ? "Creating…" : "Create space"}
-      </button>
+      </Button>
     </form>
   );
 }

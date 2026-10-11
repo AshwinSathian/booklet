@@ -117,7 +117,7 @@ export function VersionsClient({
       ) : null}
 
       {versions.length > 1 ? (
-        <section aria-label="Compare versions" className="mb-5 rounded-lg border border-border-default bg-bg-elevated px-4 py-3">
+        <section aria-label="Compare versions" className="mb-6 rounded-xl border border-border-default bg-bg-elevated px-5 py-4">
           <div className="flex flex-wrap items-end gap-3">
             <div className="flex flex-col gap-1 text-xs text-text-secondary">
               <label htmlFor="diff-from">From</label>
@@ -125,7 +125,7 @@ export function VersionsClient({
                 id="diff-from"
                 value={fromVersion}
                 onChange={(e) => setFromVersion(Number(e.target.value))}
-                className="rounded-lg border border-border-default bg-bg px-2.5 py-1.5 text-sm text-text-primary"
+                className="field"
               >
                 {versions.map((v) => (
                   <option key={v.version_number} value={v.version_number}>v{v.version_number}</option>
@@ -138,14 +138,14 @@ export function VersionsClient({
                 id="diff-to"
                 value={toVersion}
                 onChange={(e) => setToVersion(Number(e.target.value))}
-                className="rounded-lg border border-border-default bg-bg px-2.5 py-1.5 text-sm text-text-primary"
+                className="field"
               >
                 {versions.map((v) => (
                   <option key={v.version_number} value={v.version_number}>v{v.version_number}</option>
                 ))}
               </select>
             </div>
-            <Button variant="secondary" size="md" onClick={() => void compareVersions()} disabled={comparing || fromVersion === toVersion}>
+            <Button variant="primary" size="lg" onClick={() => void compareVersions()} disabled={comparing || fromVersion === toVersion}>
               {comparing ? "Comparing…" : "Compare"}
             </Button>
           </div>
@@ -154,14 +154,14 @@ export function VersionsClient({
         </section>
       ) : null}
 
-      <div className="overflow-hidden rounded-lg border border-border-default bg-bg-elevated">
+      <div className="overflow-hidden rounded-xl border border-border-default bg-bg-elevated">
         {versions.length > 0 ? (
           versions.map((version, index) => (
             <div
               key={version.version_number}
               data-testid={`version-${version.version_number}`}
               className={[
-                "flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between",
+                "flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between",
                 index > 0 ? "border-t border-border-default" : "",
               ].join(" ")}
             >
@@ -204,7 +204,7 @@ export function VersionsClient({
                   Preview
                 </Button>
                 <Button
-                  variant="primary"
+                  variant="secondary"
                   size="md"
                   onClick={() => setConfirmingVersion(version.version_number)}
                   disabled={restoringVersion !== null}
