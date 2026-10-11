@@ -512,7 +512,7 @@ function DraftTitle({
       type="button"
       onClick={begin}
       title="Click to rename"
-      className="group flex items-center gap-1.5 min-w-0 max-w-52 rounded-md px-1.5 py-0.5 transition hover:bg-fill-2/30"
+      className="group flex w-full min-w-0 max-w-52 items-center gap-1.5 rounded-md px-1.5 py-0.5 transition hover:bg-fill-2/30"
     >
       <span className="truncate text-sm font-medium text-text-secondary group-hover:text-text-primary transition">
         {title || "Untitled"}
@@ -1024,19 +1024,20 @@ function PostPublishSlugBar({
             aria-label="Custom URL slug"
           />
         </div>
-        <div className="flex items-center gap-1.5 shrink-0">
+        {/* On a phone a message has its own line; it used to squeeze "Save URL" onto two. */}
+        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1.5 sm:shrink-0 sm:flex-nowrap">
           {/* Availability indicator */}
           {availability === "checking" && (
-            <span key="checking" className="text-xs text-text-muted animate-fade-in">Checking…</span>
+            <span key="checking" className="max-sm:basis-full text-xs text-text-muted animate-fade-in">Checking…</span>
           )}
           {availability === "available" && !error && (
-            <span key="available" className="text-xs text-success animate-fade-in">✓ Available</span>
+            <span key="available" className="max-sm:basis-full text-xs text-success animate-fade-in">✓ Available</span>
           )}
           {availability === "taken" && !error && (
-            <span key="taken" className="text-xs text-danger animate-fade-in">✗ Taken</span>
+            <span key="taken" className="max-sm:basis-full text-xs text-danger animate-fade-in">✗ Taken</span>
           )}
-          {error && <span key="error" className="text-xs text-danger animate-fade-in">{error}</span>}
-          <Button variant="primary" size="sm" onClick={() => void save()} disabled={!canSave}>
+          {error && <span key="error" role="alert" className="max-sm:basis-full text-xs text-danger animate-fade-in">{error}</span>}
+          <Button variant="primary" size="sm" onClick={() => void save()} disabled={!canSave} className="shrink-0 whitespace-nowrap">
             {saving ? (
               <svg width="11" height="11" viewBox="0 0 13 13" fill="none" className="animate-spin" aria-hidden>
                 <path d="M6.5 1a5.5 5.5 0 1 0 5.5 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -1345,7 +1346,6 @@ export function TopBar({
         onChange={(e) => { void onFilePicked(e.target.files?.[0] ?? null); }}
       />
 
-      <ImportUrlDialog open={importUrlOpen} onClose={() => setImportUrlOpen(false)} onImported={onUrlImported} />
 
       <MoreActionsDrawer
         open={visibleMoreActions}
@@ -1398,6 +1398,11 @@ export function TopBar({
         </div>
       ) : null}
 
+    </header>
+
+      {/* Outside the header: its backdrop-filter makes it the containing block of anything
+          fixed inside it, which pinned these two dialogs to the bar instead of the screen. */}
+      <ImportUrlDialog open={importUrlOpen} onClose={() => setImportUrlOpen(false)} onImported={onUrlImported} />
       <DraftsDialog
         visible={visibleDrafts}
         activeDraftId={activeDraftId}
@@ -1409,8 +1414,6 @@ export function TopBar({
         }}
         onHide={() => setVisibleDrafts(false)}
       />
-
-    </header>
 
       {/* Post-publish slug bar — shown once for owned pages until dismissed or slug saved.
           After the header, not in it: the settings panel and the account menu hang from the header's lower edge. */}

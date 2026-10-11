@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/Button";
 import { useState } from "react";
 
 /**
@@ -58,21 +59,13 @@ export function KeepPageNotice({
           {error ? <span className="block text-danger">{error}</span> : null}
         </p>
         {signedIn ? (
-          <button
-            type="button"
-            onClick={keep}
-            disabled={busy}
-            className="shrink-0 rounded-pill bg-accent px-3.5 py-1.5 text-xs font-semibold text-accent-contrast transition hover:bg-accent-hover disabled:opacity-50"
-          >
+          <Button variant="primary" size="md" onClick={keep} disabled={busy} className="shrink-0">
             {busy ? "Keeping…" : "Keep this page"}
-          </button>
+          </Button>
         ) : (
-          <a
-            href={`/sign-in?redirect_url=${encodeURIComponent(`/p/${pageId}`)}`}
-            className="shrink-0 rounded-pill bg-accent px-3.5 py-1.5 text-xs font-semibold text-accent-contrast transition hover:bg-accent-hover"
-          >
+          <Button variant="primary" size="md" href={`/sign-in?redirect_url=${encodeURIComponent(`/p/${pageId}`)}`} className="shrink-0">
             Sign in to keep this page
-          </a>
+          </Button>
         )}
       </div>
     </div>

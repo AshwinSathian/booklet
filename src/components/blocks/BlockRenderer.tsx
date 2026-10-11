@@ -254,6 +254,7 @@ export function BlockRenderer({
               return b.ordered ? (
                 <ol
                   key={idx}
+                  start={b.start}
                   className={["list-decimal pl-6 space-y-1 text-text-primary", proseTextClass(settings)].join(" ")}
                 >
                   {b.items.map(renderItem)}

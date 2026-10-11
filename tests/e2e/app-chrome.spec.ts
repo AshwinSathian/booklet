@@ -382,3 +382,34 @@ test("on a phone, the draft's title is on screen before publishing", async ({ br
   // The visibility control still says what it is to a screen reader.
   await expect(page.getByLabel(/Who can find this page: /)).toBeVisible();
 });
+
+test("the slash menu opens at the caret and stays on screen, and the editor's dialogs are centred on it", async ({ browser }) => {
+  for (const viewport of [PHONE, { width: 1440, height: 900 }]) {
+    const { page } = await seeded(browser, viewport);
+    await page.goto("/app", { waitUntil: "networkidle" });
+    const editor = page.getByRole("textbox", { name: "Write or paste Markdown…" });
+    // Enough lines that the caret is near the bottom of the editor.
+    await editor.fill(`# Title\n${"\nline".repeat(40)}\n`);
+    await editor.press("ControlOrMeta+End");
+    await page.keyboard.type("/");
+    const menu = page.getByRole("button", { name: "Heading 1" }).locator("xpath=..");
+    await expect(menu, `${viewport.width}`).toBeVisible();
+    const box = (await menu.boundingBox())!;
+    expect(box.y, `${viewport.width}`).toBeGreaterThanOrEqual(0);
+    expect(box.y + box.height, `${viewport.width}`).toBeLessThanOrEqual(viewport.height);
+    expect(box.x + box.width, `${viewport.width}`).toBeLessThanOrEqual(viewport.width);
+    await page.keyboard.press("Escape");
+    await page.keyboard.press("Backspace");
+
+    // The drafts dialog covers the screen and sits in the middle of it, not on the top bar.
+    await page.keyboard.press("ControlOrMeta+d");
+    const dialog = page.getByRole("dialog", { name: "My drafts" });
+    await expect(dialog, `${viewport.width}`).toBeVisible();
+    const d = (await dialog.boundingBox())!;
+    expect(d.y, `${viewport.width}`).toBeGreaterThanOrEqual(0);
+    expect(d.y + d.height, `${viewport.width}`).toBeLessThanOrEqual(viewport.height);
+    expect(Math.abs(d.x + d.width / 2 - viewport.width / 2), `${viewport.width}`).toBeLessThan(4);
+    await page.keyboard.press("Escape");
+    await page.context().close();
+  }
+});

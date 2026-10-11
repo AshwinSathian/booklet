@@ -18,54 +18,25 @@ export function formatTimeHHMM(d: Date): string {
   return `${pad2(hours)}:${pad2(minutes)}`;
 }
 
+/**
+ * "11 Oct 2026, 18:53" in the visitor's time zone: the date as formatDate
+ * writes it, then a 24-hour time. Built by hand, not by Intl, so the server
+ * and every browser write the same shape. The clock value is local, so a
+ * caller that is server-rendered and then hydrated must paint
+ * formatUpdatedAtLongUTC first and swap to this after mount (see
+ * VersionsClient.tsx).
+ */
 export function formatUpdatedAtLong(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
-  // Locale pinned to "en-US" (and hour12 made explicit) so the *format*
-  // (12h vs 24h, month-name style, field order) can never differ between
-  // Node's ICU default locale and the visitor's browser locale — that
-  // divergence is what caused a hydration mismatch on /my-pages/versions/[id]
-  // (see VersionsClient.tsx, the one call site of this function that's
-  // genuinely server-rendered then hydrated). timeZone is deliberately left
-  // unpinned: this still resolves to each environment's local timezone,
-  // which is correct once a caller is client-only (this codebase's other
-  // three call sites — TopBar, DraftsDialog — never render this value until
-  // after mount, so there's no second, server-side evaluation to disagree
-  // with). Callers that ARE server-rendered-then-hydrated must defer this
-  // call to a client-only render pass instead (see VersionsClient.tsx).
-  return d.toLocaleString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-  });
+  return `${formatDate(iso)}, ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 }
 
-/**
- * A deterministic stand-in for formatUpdatedAtLong's output, safe to use
- * during server rendering (and a client's very first, pre-hydration paint)
- * because timeZone is pinned rather than left to the ambient environment.
- * Callers that render this value from server-fetched data (e.g.
- * VersionsClient.tsx) must show THIS during the initial render and only
- * swap to the richer, local-timezone formatUpdatedAtLong() after mount —
- * otherwise the server's timezone and the visitor's browser timezone can
- * legitimately disagree, producing a React hydration mismatch even with
- * formatUpdatedAtLong's locale/hour12 already pinned.
- */
+/** The same, pinned to UTC: what the server and the first client paint both render. */
 export function formatUpdatedAtLongUTC(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-    timeZone: "UTC",
-  });
+  return `${formatDateUTC(iso)}, ${pad2(d.getUTCHours())}:${pad2(d.getUTCMinutes())}`;
 }
 
 export function formatRelativeTimeFromIso(iso: string, nowMs?: number): string {

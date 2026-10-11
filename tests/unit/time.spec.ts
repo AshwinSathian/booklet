@@ -23,13 +23,13 @@ test.afterEach(() => {
 });
 
 test.describe("formatUpdatedAtLong — locale pinned", () => {
-  test("always uses en-US 12h format shape (Month DD, YYYY, HH:MM AM/PM), regardless of ambient timezone", () => {
+  test("always has the shape D Mon YYYY, HH:MM (24-hour), regardless of ambient timezone", () => {
     process.env.TZ = "Asia/Kolkata";
     const inIst = formatUpdatedAtLong(FIXED_ISO);
     process.env.TZ = "America/Los_Angeles";
     const inLa = formatUpdatedAtLong(FIXED_ISO);
 
-    const shape = /^[A-Z][a-z]{2} \d{2}, \d{4}, \d{2}:\d{2} (AM|PM)$/;
+    const shape = /^\d{1,2} [A-Z][a-z]{2} \d{4}, \d{2}:\d{2}$/;
     expect(inIst).toMatch(shape);
     expect(inLa).toMatch(shape);
   });
@@ -63,7 +63,7 @@ test.describe("formatUpdatedAtLongUTC — deterministic SSR-safe fallback", () =
 
     expect(inIst).toBe(inLa);
     expect(inIst).toBe(inUtc);
-    expect(inIst).toBe("Jan 15, 2026, 10:30 AM");
+    expect(inIst).toBe("15 Jan 2026, 10:30");
   });
 
   test("returns an empty string for an invalid ISO string instead of 'Invalid Date'", () => {

@@ -414,3 +414,20 @@ test.describe("inline text-directive syntax is not silently eaten", () => {
     }
   });
 });
+
+// Numbered steps with a code block between them are separate lists in
+// Markdown. Each used to render from 1.
+test.describe("ordered list numbering", () => {
+  test("a list that continues after a code block keeps its number", () => {
+    const blocks = parseToBlocks("1. First\n\n```bash\nrun\n```\n\n2. Second\n\n```bash\nrun\n```\n\n3. Third\n");
+    const lists = blocks.filter((b) => b.t === "list");
+    expect(lists.map((b) => (b.t === "list" ? b.start : null))).toEqual([undefined, 2, 3]);
+  });
+
+  test("a list that begins at 1, and a bullet list, carry no start", () => {
+    for (const md of ["1. One\n2. Two\n", "- One\n- Two\n"]) {
+      const b = firstBlock(md);
+      expect(b.t === "list" && "start" in b).toBe(false);
+    }
+  });
+});

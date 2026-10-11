@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/Button";
 import { useState } from "react";
 
 export function EmbedButton({
@@ -27,13 +28,7 @@ export function EmbedButton({
   }
 
   return (
-    <button
-      type="button"
-      onClick={copyEmbed}
-      title="Copy embed code"
-      aria-label="Copy embed code"
-      className="inline-flex items-center gap-1.5 rounded-lg border border-border-default bg-bg-elevated px-2.5 py-1.5 text-xs font-medium text-text-muted transition hover:border-border-strong hover:text-text-primary"
-    >
+    <Button variant="secondary" size="md" onClick={copyEmbed} title="Copy embed code" aria-label="Copy embed code">
       {state === "copied" ? (
         <>
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
@@ -50,6 +45,6 @@ export function EmbedButton({
           <span className="hidden sm:inline">Embed</span>
         </>
       )}
-    </button>
+    </Button>
   );
 }

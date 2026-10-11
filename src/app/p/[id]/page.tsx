@@ -10,6 +10,7 @@ import { DocHeaderStrip } from "@/components/share/DocHeaderStrip";
 import { absoluteUrl, buildMetadata } from "@/lib/seo";
 import { buildLockedPageMetadata } from "@/lib/locked-page-metadata";
 import { getDoc } from "@/lib/storage";
+import { formatDateUTC } from "@/lib/ui/time";
 import { readingTimeMinutes } from "@/lib/reading-time";
 import { buildToc, MIN_TOC_HEADINGS } from "@/lib/toc";
 import { verifyUnlockToken } from "@/lib/unlock-token";
@@ -354,7 +355,7 @@ export default async function SharePage({
               <div>
                 <div className="text-xs font-semibold text-text-primary">{APP_NAME}</div>
                 <div className="text-xs text-text-muted">
-                  Published {createdAt.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
+                  Published {formatDateUTC(createdAt.toISOString())}
                   {readMins > 0 && <> · ~{readMins} min read</>}
                 </div>
               </div>

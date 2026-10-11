@@ -143,9 +143,7 @@ function WebhookCard({
               </span>
             ))}
           </div>
-          <span className="h-3 w-px bg-fill-2" aria-hidden />
           <span>Created {formatDate(wh.created_at)}</span>
-          <span className="h-3 w-px bg-fill-2" aria-hidden />
           <span>Last fired {formatDate(wh.last_triggered_at)}</span>
         </div>
         <DeliveryLog webhookId={wh.id} initial={wh.deliveries} />

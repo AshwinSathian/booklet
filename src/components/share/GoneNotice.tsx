@@ -22,8 +22,9 @@ export function GoneNotice({ reason, embed = false }: { reason: GoneReason; embe
           <AppLogo onlyIcon={false} />
         </div>
       </header>
-      <main className="flex-1 px-4 py-16">
-        <p className="mx-auto max-w-xl text-sm text-text-secondary leading-relaxed">{GONE_MESSAGES[reason]}</p>
+      <main className="mx-auto w-full max-w-xl flex-1 px-4 py-16">
+        <h1 className="font-display text-[2rem] font-medium leading-tight tracking-[-0.02em]">This page is not available</h1>
+        <p className="mt-3 leading-relaxed text-text-secondary">{GONE_MESSAGES[reason]}</p>
       </main>
     </div>
   );

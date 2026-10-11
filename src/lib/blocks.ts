@@ -40,7 +40,9 @@ export type FootnoteItem = { id: string; n: number; blocks: Block[] };
 export type Block =
   | { t: "heading"; level: 1 | 2 | 3 | 4; inl: Inline[] }
   | { t: "paragraph"; inl: Inline[] }
-  | { t: "list"; ordered: boolean; items: ListItem[] }
+  // `start` is set only for an ordered list that does not begin at 1: steps
+  // with a code block between them are separate lists in Markdown.
+  | { t: "list"; ordered: boolean; start?: number; items: ListItem[] }
   | { t: "quote"; blocks: Block[] }
   | { t: "callout"; kind: CalloutKind; blocks: Block[] }
   | { t: "toggle"; summary: string; blocks: Block[] }

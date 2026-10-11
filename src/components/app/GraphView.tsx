@@ -100,6 +100,8 @@ export function GraphView({
               viewBox={`0 0 ${SIZE} ${SIZE}`}
               role="img"
               aria-label="Graph of linked drafts"
+              // Its own size on a phone too, where the panel scrolls: scaled to fit, the labels were 6px.
+              className="max-w-none shrink-0"
             >
               <g>
                 {edges.map((e, i) => {
@@ -145,9 +147,11 @@ export function GraphView({
                         }
                         strokeWidth={1.5}
                       />
+                      {/* On the right half the label goes to the left of its node, so it stays inside the drawing. */}
                       <text
-                        x={r + 4}
+                        x={p.x > SIZE / 2 ? -(r + 4) : r + 4}
                         y={4}
+                        textAnchor={p.x > SIZE / 2 ? "end" : "start"}
                         className="fill-text-secondary text-xs select-none"
                       >
                         {(d.title || "Untitled").slice(0, 28)}

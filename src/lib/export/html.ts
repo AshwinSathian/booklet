@@ -141,7 +141,8 @@ async function renderBlock(b: Block, diagrams: RenderedDiagrams): Promise<string
           return `<li>${checkbox}${text}${nested}</li>`;
         }),
       );
-      return `<${tag}>${items.join("")}</${tag}>`;
+      const start = b.ordered && b.start !== undefined ? ` start="${b.start}"` : "";
+      return `<${tag}${start}>${items.join("")}</${tag}>`;
     }
     case "quote": {
       const inner = await joinBlocks(b.blocks, diagrams);
