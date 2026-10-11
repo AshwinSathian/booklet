@@ -46,6 +46,12 @@ list block may now carry `start`.
   the end of a line when they wrapped.
 - The MCP client picker's plan notice laid each bold word out as a column.
 - `ViewsChart` indexed an empty array when given no days.
+- Import from URL opened in the top corner of the screen: the CSS reset
+  removes a dialog's own centring margin.
+- The graph of drafts could not be scrolled to its left edge on a phone, and
+  its labels were scaled down to 6px.
+- A footnote's link back dropped to a line of its own. Site header labels
+  wrapped at tablet width when signed in.
 
 ### Changed
 
@@ -57,6 +63,9 @@ list block may now carry `start`.
 - The formatting toolbar shows an edge shade where it scrolls. The find
   bar's case toggle is inverted when on and has `aria-pressed`. An active
   menu item with no label of its own shows a tick.
+- On a phone the focus-mode button is not in the editor's top bar, which
+  leaves room for the draft's title. The command palette and its shortcut
+  still switch it.
 - Team settings renders its header while loading, and its two refusals
   have an `h1`.
 - The preview's live dot pulses twice instead of forever. The glow behind
