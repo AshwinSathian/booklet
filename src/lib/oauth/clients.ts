@@ -11,8 +11,7 @@
  * is going.
  */
 
-import https from "node:https";
-import { bareHostname, pinnedLookup, resolveHostForDelivery } from "@/lib/ssrf-guard";
+import { bareHostname, pinnedRequest, resolveHostForDelivery } from "@/lib/ssrf-guard";
 
 export type OAuthClient = {
   client_id: string;
@@ -111,60 +110,22 @@ function isMetadataUrl(clientId: string): URL | null {
 }
 
 /**
- * GETs a JSON document over https, connecting only to an address that
- * passed the SSRF denylist (the connection is pinned to it, so DNS cannot
- * answer differently at connect time). No redirects are followed.
+ * GETs a JSON document over a pinned connection (see pinnedRequest). Null
+ * for anything but a 200 with a JSON body under the size cap; a redirect is
+ * not followed.
  */
-function fetchJsonPinned(url: URL, address: string, family: 4 | 6): Promise<unknown> {
-  return new Promise((done) => {
-    // `timeout` below only fires when the socket goes idle. This is the
-    // deadline for the whole exchange, so a server that drips bytes cannot
-    // hold the request open.
-    const deadline = setTimeout(() => req.destroy(), METADATA_TIMEOUT_MS);
-    const resolve = (value: unknown) => {
-      clearTimeout(deadline);
-      done(value);
-    };
-    const req = https.request(
-      {
-        hostname: url.hostname,
-        port: url.port || 443,
-        path: `${url.pathname}${url.search}`,
-        method: "GET",
-        headers: { Host: url.host, Accept: "application/json", "User-Agent": "Booklet-OAuth/1.0" },
-        timeout: METADATA_TIMEOUT_MS,
-        lookup: pinnedLookup(address, family),
-        servername: url.hostname,
-      },
-      (res) => {
-        if (res.statusCode !== 200) {
-          res.resume();
-          return resolve(null);
-        }
-        const chunks: Buffer[] = [];
-        let size = 0;
-        res.on("data", (c: Buffer) => {
-          size += c.length;
-          if (size > METADATA_MAX_BYTES) {
-            req.destroy();
-            return resolve(null);
-          }
-          chunks.push(c);
-        });
-        res.on("end", () => {
-          try {
-            resolve(JSON.parse(Buffer.concat(chunks).toString("utf8")));
-          } catch {
-            resolve(null);
-          }
-        });
-        res.on("error", () => resolve(null));
-      },
-    );
-    req.on("timeout", () => req.destroy());
-    req.on("error", () => resolve(null));
-    req.end();
-  });
+async function fetchJsonPinned(url: URL, address: string, family: 4 | 6): Promise<unknown> {
+  try {
+    const res = await pinnedRequest(url, address, family, {
+      headers: { Accept: "application/json", "User-Agent": "Booklet-OAuth/1.0" },
+      timeoutMs: METADATA_TIMEOUT_MS,
+      maxBytes: METADATA_MAX_BYTES,
+    });
+    if (res.status !== 200 || res.truncated) return null;
+    return JSON.parse(res.body.toString("utf8"));
+  } catch {
+    return null;
+  }
 }
 
 async function fetchMetadataClient(url: URL): Promise<OAuthClient | null> {
@@ -179,6 +140,39 @@ async function fetchMetadataClient(url: URL): Promise<OAuthClient | null> {
   return meta ? { client_id: url.href, ...meta } : null;
 }
 
+let staticSource: string | undefined;
+let staticParsed = new Map<string, OAuthClient>();
+
+/**
+ * Clients the operator has written into `OAUTH_STATIC_CLIENTS`: a JSON array
+ * of metadata documents (`client_id`, `client_name`, `redirect_uris`). One
+ * of these is used as written and its URL is never fetched.
+ *
+ * For an install that cannot reach a client's host, or that would rather
+ * not depend on it being up at sign-in; and for the end-to-end tests, whose
+ * server has no test seam to swap the fetch through. Each entry passes the
+ * same checks a fetched document does. An entry that fails them is dropped.
+ */
+function staticClients(): Map<string, OAuthClient> {
+  const source = process.env.OAUTH_STATIC_CLIENTS;
+  if (source === staticSource) return staticParsed;
+  staticSource = source;
+  staticParsed = new Map();
+  if (!source?.trim()) return staticParsed;
+  let list: unknown;
+  try {
+    list = JSON.parse(source);
+  } catch {
+    return staticParsed;
+  }
+  for (const entry of Array.isArray(list) ? list : []) {
+    const id = entry && typeof entry === "object" ? (entry as Record<string, unknown>).client_id : null;
+    const meta = cleanMetadata(entry);
+    if (typeof id === "string" && isMetadataUrl(id) && meta) staticParsed.set(id, { client_id: id, ...meta });
+  }
+  return staticParsed;
+}
+
 /** Test seam: replaces the metadata fetch. */
 export const metadataFetcher = { fetch: fetchMetadataClient };
 
@@ -188,6 +182,9 @@ export async function getClient(clientId: unknown): Promise<OAuthClient | null> 
 
   const url = isMetadataUrl(clientId);
   if (!url) return null;
+
+  const pinned = staticClients().get(clientId);
+  if (pinned) return pinned;
 
   const cached = metadataCache.get(clientId);
   if (cached && Date.now() - cached.at < CACHE_TTL_MS) return cached.client;

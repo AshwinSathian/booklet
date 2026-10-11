@@ -10,6 +10,7 @@ import { getClientIp } from "@/lib/request-ip";
 import { isSafeRedirect } from "@/lib/safe-redirect";
 import { getSiteOrigin } from "@/lib/site-url";
 import { countSignInMethods } from "@/server/sso";
+import { problem } from "@/server/errors";
 
 export const runtime = "nodejs";
 
@@ -64,18 +65,18 @@ export async function GET(req: Request, { params }: Ctx) {
 /** Disconnects a provider from the signed-in account, unless it is the only way left to sign in. */
 export async function DELETE(req: Request, { params }: Ctx) {
   if (!isSameOriginRequest(req) || !req.headers.get("origin")) {
-    return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
+    return problem(403, "Invalid request origin");
   }
   const session = await getSession();
-  if (!session) return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+  if (!session) return problem(401, "Not signed in");
 
   const { provider } = await params;
-  if (!(SSO_PROVIDERS as readonly string[]).includes(provider)) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (!(SSO_PROVIDERS as readonly string[]).includes(provider)) return problem(404, "Not found");
 
   // ponytail: count-then-delete, so two simultaneous removals of the last
   // two methods can both pass. Recovery is the password-reset email.
   if ((await countSignInMethods(session.userId)) <= 1) {
-    return NextResponse.json({ error: "This is the only way to sign in to this account. Set a password or add a passkey first." }, { status: 409 });
+    return problem(409, "This is the only way to sign in to this account. Set a password or add a passkey first.");
   }
   await deleteIdentity(session.userId, provider as SsoProvider);
   return NextResponse.json({ ok: true });

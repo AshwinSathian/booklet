@@ -30,7 +30,7 @@ import { PROMPT_DEFINITIONS, renderPrompt } from "./prompts.js";
 
 // Must match mcp-server/package.json and mcp-server/server.json (the MCP
 // registry entry); tests/unit/mcp-version.spec.ts checks all three.
-export const SERVER_VERSION = "4.0.0";
+export const SERVER_VERSION = "4.1.0";
 
 // Tools are registered, and so listed, in this order. Keep it fixed: a
 // client caches tools/list, and a reordered list is a changed list.
@@ -96,7 +96,7 @@ export function createMcpServer(apiBase: string, apiKey: string, siteUrl = "http
     {
       title: "Update Page",
       description:
-        "Update an existing Booklet page's content or metadata. The URL stays the same. Use list_pages to find page IDs.",
+        "Update an existing Booklet page's content, slug or visibility, or move it into or out of a team space. The URL stays the same. Use list_pages to find page IDs.",
       inputSchema: UpdatePageInputSchema,
       outputSchema: UpdatePageOutputSchema,
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },

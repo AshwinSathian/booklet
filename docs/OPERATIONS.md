@@ -128,11 +128,13 @@ when one is down twice a minute apart. GitHub emails the person who last
 edited the schedule. It has no status page and can start late; a real
 monitor (see "Monitoring") is still the better answer. GitHub switches a
 scheduled workflow off after 60 days with no commits to a public
-repository, and sends an email when it does: re-enable it from the Actions
-tab, or the probes stop.
+repository; `.github/workflows/keepalive.yml` re-enables `uptime.yml` and
+itself every Monday through the API, which also resets that clock.
 
-**Logs.** PM2 does not rotate its logs. `pm2 install pm2-logrotate` does it
-for every app on this Mac's PM2 daemon, not only Booklet's.
+**Logs.** The nightly job (`scripts/backup-mongo.sh`) rotates Booklet's two
+PM2 logs: one over 5 MB is moved aside with the date, `pm2 reloadLogs`
+makes PM2 reopen its files, and rotated copies older than 14 days are
+deleted. Other apps on this Mac's PM2 daemon are not touched.
 
 **After a restart**, once logged in:
 
@@ -402,6 +404,19 @@ taken. The export leaves taken-down pages out.
 `/p/<id>` for a page that does not exist now answers 404. It used to answer
 200 with a "doesn't exist" notice.
 
+**Changing an email address.** Account settings, "Email address". A link
+goes to the new address (`email_verification_tokens`, with `change: true`)
+and the account moves when it is confirmed from that account's session; the
+address it left is told by mail. An account with a password must type it.
+An address that is another account's gets the same answer and no mail.
+Without `RESEND_API_KEY` the address changes at once. Team invites are
+bound to the address they were sent to, so one sent to the old address no
+longer admits the account.
+
+**Pinned OAuth clients.** `OAUTH_STATIC_CLIENTS` is a JSON array of Client
+ID Metadata Documents. A client listed there is used as written and its URL
+is never fetched. Unset in production: Claude.ai's document is fetched.
+
 ## Auth: in-house (Clerk removed)
 
 **Current state:** Email + password, with optional GitHub and Google
@@ -538,11 +553,9 @@ bypassed by re-parse" bug class).
   reason (nothing in the codebase calls `eval`/`new Function`) and had no
   `Strict-Transport-Security` header at all. Dropped `unsafe-eval` (kept
   `wasm-unsafe-eval` for `@viz-js/viz`'s WASM Graphviz renderer) and added
-  HSTS. `'unsafe-inline'` on `script-src` deliberately stays — closing that
-  needs a per-request nonce, which per Next's own CSP guide forces dynamic
-  rendering on every page that reads it, a real caching cost for the public
-  `/p/[id]` share pages this app's value prop depends on. Flagged, not
-  changed unilaterally.
+  HSTS. `'unsafe-inline'` on `script-src` stayed until 2026-10-11, when the
+  policy moved to a per-request nonce with `'strict-dynamic'` (see "Content
+  Security Policy" below).
 - Raw DB/driver error messages (`e.message`) were forwarded straight to API
   clients on several unhappy paths (`api/publish`, `api/v1/publish`,
   `api/pages/[id]`, `api/v1/pages/[id]`) and in the shared `toErrorResponse`
@@ -768,30 +781,23 @@ resolves it normally
 via `node_modules` since it runs as a regular long-lived Node process under
 PM2.
 
-## Error tracking / structured logging
+## Error tracking
 
-**Current state:** `src/lib/logger.ts` provides `logError`/`logWarn`/`logInfo`,
-emitting JSON lines to stdout/stderr instead of free-form
-`console.error(string, err)` calls. Every catch-and-log site across the app
-(~21 call sites) now goes through this. Logs still land in PM2's log files
-(`~/.pm2/logs/`) — there is **no external aggregation, search, or alerting**
-yet.
+`logError` (`src/lib/logger.ts`) writes a JSON line to PM2's log, and counts
+the error in the `error_events` collection (`src/lib/db/error-events.ts`):
+one row per distinct error, by scope, message, error name and the first
+frame of its stack, with a count and first and last sighting. A row is
+removed 30 days after its last sighting.
 
-**Why not further:** an external error tracker (Sentry, Axiom, Better Stack,
-etc.) needs a real account/DSN, and none is set up yet.
+- `/admin` lists the 25 most recent, each with its stack.
+- With `ERROR_ALERT_EMAIL` set (and `RESEND_API_KEY`), a new error is
+  mailed once when first seen, then at most once a day for that error, and
+  ten mails an hour in all. Unset, nothing is mailed and nothing else changes.
+- Recording never throws and is never awaited: a database that is down
+  costs the count, not the request.
 
-**What a future integration needs:**
-1. Pick a provider, create an account, get a DSN/API key.
-2. For Sentry specifically: `npm install @sentry/nextjs`, run
-   `npx @sentry/wizard@latest -i nextjs`, set `SENTRY_DSN` in the environment.
-3. Wrap `logError` in `src/lib/logger.ts` to also call
-   `Sentry.captureException(err, { tags: { scope }, extra })` when
-   `SENTRY_DSN` is set — keep the JSON-stdout behavior too, so PM2 logs stay
-   useful without the external service.
-4. Wire PM2 itself to alert on process crashes/restarts (PM2 Plus, or a
-   simple watchdog cron hitting `pm2 jlist` and paging on unexpected state)
-   — this is a different concern from application-level error tracking and
-   isn't addressed by the logger change above.
+There is no outside tracker. If one is wanted later, `recordErrorEvent` is
+the one place to send from.
 
 ## Infrastructure: single-machine deployment
 
@@ -858,6 +864,27 @@ single Node process OOM-ing or crashing under load — a real, if partial,
 reliability improvement with no new moving parts. Recommended as the
 practical next step unless a Cloudflare Workers (or other managed-host)
 migration is actually imminent.
+
+## Content Security Policy
+
+`src/middleware.ts` builds the policy per request. Scripts run only with
+that request's nonce (`script-src 'self' 'nonce-…' 'strict-dynamic'
+'wasm-unsafe-eval'`); there is no `'unsafe-inline'` for scripts. The nonce is
+set on the request too, as `x-nonce` and in a `Content-Security-Policy`
+request header: Next.js reads the header to put the nonce on its own
+scripts, and the root layout reads `x-nonce` for the theme script.
+
+Consequences:
+
+- No page is prerendered. A nonce differs per request, so every page is
+  rendered when asked for. Most already were.
+- A `<script>` added to a page by hand needs `nonce={nonce}` from
+  `headers().get("x-nonce")`. JSON-LD blocks do not: they are data.
+- Cloudflare's injected script (`/cdn-cgi/challenge-platform/…`) is given
+  the nonce by Cloudflare, which reads it from the response header. If the
+  browser console shows it blocked, that is where to look.
+- Styles still allow `'unsafe-inline'`: the document themes and KaTeX set
+  inline styles.
 
 ## OAuth for MCP clients
 

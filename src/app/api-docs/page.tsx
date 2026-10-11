@@ -301,7 +301,7 @@ slug: incident-auth-2026-05
           </Section>
 
           <Section id="patch-slug" title="Update slug or visibility">
-            <Endpoint method="PATCH" path="/api/v1/pages/{id}" description="Change a page's custom slug or visibility without touching content.">
+            <Endpoint method="PATCH" path="/api/v1/pages/{id}" description="Change a page's custom slug or visibility, or move it between team spaces, without touching content.">
               <p className="text-sm text-text-secondary mb-2">Set a custom slug, remove it, or change visibility:</p>
               <Pre>{[1, 2, 3].map((i) => ex("PatchPageRequest", i)).join("\n\n")}</Pre>
               <p className="mt-3 text-sm text-text-secondary">

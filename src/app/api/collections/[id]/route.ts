@@ -1,7 +1,7 @@
 import { deleteCollectionRecord, updateCollectionRecord } from "@/lib/db";
 import { getSession } from "@/lib/auth/session";
 import { assertCanNest, getOwnedCollection, resolveParent } from "@/server/collections";
-import { toErrorResponse } from "@/server/errors";
+import { toErrorResponse, problem } from "@/server/errors";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -15,7 +15,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const userId = (await getSession())?.userId ?? null;
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!userId) return problem(401, "Unauthorized");
 
   const { id } = await params;
   let collection;
@@ -29,7 +29,7 @@ export async function PATCH(
   try {
     body = (await req.json()) as { name?: unknown; parent_id?: unknown };
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return problem(400, "Invalid JSON");
   }
 
   const patch: { name?: string; parent_id?: string | null; updated_at: string } = {
@@ -39,7 +39,7 @@ export async function PATCH(
   if (body.name !== undefined) {
     const name = cleanName(body.name);
     if (name.length < 1 || name.length > 80) {
-      return NextResponse.json({ error: "Collection name must be 1-80 characters." }, { status: 422 });
+      return problem(422, "Collection name must be 1-80 characters.");
     }
     patch.name = name;
   }
@@ -47,10 +47,10 @@ export async function PATCH(
   if (body.parent_id !== undefined) {
     const requestedParentId = typeof body.parent_id === "string" && body.parent_id.trim() ? body.parent_id.trim() : null;
     if (collection.is_team_space && requestedParentId !== null) {
-      return NextResponse.json({ error: "Team spaces can't be nested." }, { status: 422 });
+      return problem(422, "Team spaces can't be nested.");
     }
     if (requestedParentId === id) {
-      return NextResponse.json({ error: "A folder can't be its own parent." }, { status: 422 });
+      return problem(422, "A folder can't be its own parent.");
     }
     try {
       if (requestedParentId !== null) {
@@ -68,7 +68,7 @@ export async function PATCH(
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "";
     if (message.includes("E11000")) {
-      return NextResponse.json({ error: "A folder with that name already exists here." }, { status: 409 });
+      return problem(409, "A folder with that name already exists here.");
     }
     throw err;
   }
@@ -81,7 +81,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const userId = (await getSession())?.userId ?? null;
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!userId) return problem(401, "Unauthorized");
 
   const { id } = await params;
   try {

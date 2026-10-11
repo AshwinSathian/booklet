@@ -12,7 +12,6 @@ const eslintConfig = [
 			"packages/*/dist/**",
 			"packages/*/dist.previous/**",
 			"node_modules/**",
-			"mcp-server/**",
 			"scripts/stub-og.cjs",
 		],
 	},
@@ -20,18 +19,17 @@ const eslintConfig = [
 	...nextTs,
 	{
 		rules: {
-			// New in eslint-config-next 16 (React Compiler rules from
-			// eslint-plugin-react-hooks 7, plus one Next rule). This app does
-			// not use the compiler, and the 25 existing hits are unreviewed, so
-			// they warn rather than fail until someone reviews them.
-			"react-hooks/set-state-in-effect": "warn",
-			"react-hooks/purity": "warn",
-			"react-hooks/refs": "warn",
-			"@next/next/no-location-assign-relative-destination": "warn",
+			// React Compiler rules (eslint-plugin-react-hooks 7) and one Next
+			// rule. Every hit was reviewed in 2026-10: most were rewritten, and
+			// each one left is disabled in place with its reason. So these fail.
+			"react-hooks/set-state-in-effect": "error",
+			"react-hooks/purity": "error",
+			"react-hooks/refs": "error",
+			"@next/next/no-location-assign-relative-destination": "error",
 			// Allow the { secret: _s, ...rest } omit pattern without flagging _s.
 			// ignoreRestSiblings is the canonical option for this idiom.
 			"@typescript-eslint/no-unused-vars": [
-				"warn",
+				"error",
 				{
 					args: "after-used",
 					argsIgnorePattern: "^_",

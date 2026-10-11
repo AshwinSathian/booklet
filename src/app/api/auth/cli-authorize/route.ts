@@ -7,6 +7,7 @@ import { createId } from "@/lib/id";
 import { isSameOriginRequest } from "@/lib/auth/origin-check";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/request-ip";
+import { problem } from "@/server/errors";
 
 export const runtime = "nodejs";
 
@@ -33,12 +34,12 @@ function isValidState(v: unknown): v is string {
 // self-initiated `booklet login` from a link on someone else's page.
 export async function POST(req: Request) {
   if (!isSameOriginRequest(req)) {
-    return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
+    return problem(403, "Invalid request origin");
   }
 
   const session = await getSession();
   if (!session) {
-    return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+    return problem(401, "Not signed in");
   }
 
   const ip = getClientIp(req.headers);
@@ -50,7 +51,7 @@ export async function POST(req: Request) {
   const state = body && typeof body === "object" ? (body as Record<string, unknown>).state : undefined;
 
   if (!isValidPort(port) || !isValidState(state)) {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    return problem(400, "Invalid request");
   }
 
   const { userId } = session;
@@ -58,10 +59,7 @@ export async function POST(req: Request) {
   if (unverified) return unverified;
   const existing = await getApiKeysByUser(userId);
   if (existing.length >= MAX_KEYS_PER_USER) {
-    return NextResponse.json(
-      { error: `You have ${MAX_KEYS_PER_USER} API keys — the maximum allowed. Delete an unused key first.` },
-      { status: 409 },
-    );
+    return problem(409, `You have ${MAX_KEYS_PER_USER} API keys — the maximum allowed. Delete an unused key first.`);
   }
 
   try {
@@ -75,10 +73,7 @@ export async function POST(req: Request) {
     const after = await getApiKeysByUser(userId);
     if (after.length > MAX_KEYS_PER_USER) {
       await deleteApiKey(id, userId);
-      return NextResponse.json(
-        { error: `You have ${MAX_KEYS_PER_USER} API keys — the maximum allowed. Delete an unused key first.` },
-        { status: 409 },
-      );
+      return problem(409, `You have ${MAX_KEYS_PER_USER} API keys — the maximum allowed. Delete an unused key first.`);
     }
 
     // 127.0.0.1 is exempt from HSTS (RFC 6797 §8.3) so HTTP is safe here.
@@ -89,6 +84,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ ok: true, callbackUrl }, { status: 200 });
   } catch {
-    return NextResponse.json({ error: "We couldn't create your API key. Please try again." }, { status: 500 });
+    return problem(500, "We couldn't create your API key. Please try again.");
   }
 }

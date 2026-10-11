@@ -920,3 +920,75 @@ test.describe("review findings", () => {
     expect((await withRequestScope(nope, () => removeFromCollection(nope, ctx(s.id)))).status).toBe(403);
   });
 });
+
+// ─── Moving an existing page between spaces through the API ──────────────────
+
+test.describe("PATCH /api/v1/pages/:id with `space`", () => {
+  const move = (a: Account, id: string, body: Record<string, unknown>) =>
+    v1Patch(api(a, `/pages/${id}`, { method: "PATCH", body }), ctx(id));
+
+  test("an editor moves their own page into a space, sets it team-only in the same call, and takes it out again", async () => {
+    const owner = await account();
+    const editor = await account();
+    const s = await space(owner, [[editor, "editor"]]);
+    const id = await published(editor, { raw: "# Loose page\n\nBody." });
+
+    expect((await move(editor, id, { space: s.slug, visibility: "team" })).status).toBe(200);
+    expect(await getPageRecord(id)).toMatchObject({ collection_id: s.id, visibility: "team" });
+
+    // Team-only pages stay with their team: out needs a visibility change in the same request.
+    const stuck = await move(editor, id, { space: null });
+    expect(stuck.status).toBe(422);
+    expect((await stuck.json()).code).toBe("TEAM_ONLY_PAGE");
+    expect((await getPageRecord(id))?.collection_id).toBe(s.id);
+
+    expect((await move(editor, id, { space: null, visibility: "unlisted" })).status).toBe(200);
+    expect(await getPageRecord(id)).toMatchObject({ collection_id: null, visibility: "unlisted" });
+  });
+
+  test("a viewer, a stranger and a made-up slug cannot move a page in; a team-only page cannot hop to another team", async () => {
+    const owner = await account();
+    const viewer = await account();
+    const stranger = await account();
+    const s = await space(owner, [[viewer, "viewer"]]);
+    const other = await space(owner);
+
+    const viewers = await published(viewer, { raw: "# Viewer page" });
+    expect((await move(viewer, viewers, { space: s.slug })).status).toBe(403);
+    const strangers = await published(stranger, { raw: "# Stranger page" });
+    // 404, as for a space that does not exist: its slug is not theirs to confirm.
+    expect((await move(stranger, strangers, { space: s.slug })).status).toBe(404);
+    expect((await move(stranger, strangers, { space: "no-such-space" })).status).toBe(404);
+    expect((await move(stranger, strangers, { space: 7 })).status).toBe(422);
+    for (const id of [viewers, strangers]) expect((await getPageRecord(id))?.collection_id).toBeNull();
+
+    const secret = await published(owner, { raw: "# Team secret", space: s.slug, visibility: "team" });
+    expect((await move(owner, secret, { space: other.slug })).status).toBe(422);
+    expect((await getPageRecord(secret))?.collection_id).toBe(s.id);
+    // Nobody but its owner moves a page at all.
+    expect((await move(viewer, secret, { space: null, visibility: "unlisted" })).status).toBeGreaterThanOrEqual(403);
+  });
+
+  test("`space: null` leaves a page in one of its owner's own folders where it is", async () => {
+    const owner = await account();
+    const folder = createId(10);
+    spaceIds.push(folder);
+    await createCollectionRecord(folder, owner.userId, `Folder ${folder}`, false);
+    const id = await published(owner, { raw: "# Filed page" });
+    await updatePageRecord(id, { collection_id: folder });
+
+    expect((await move(owner, id, { space: null })).status).toBe(200);
+    expect((await getPageRecord(id))?.collection_id).toBe(folder);
+  });
+
+  test("a move redoes the page's links: it links to its new space's pages", async () => {
+    const owner = await account();
+    const s = await space(owner);
+    const adr = await published(owner, { raw: "# ADR-077 In the space", space: s.slug });
+    const incident = await published(owner, { raw: "# Incident outside\n\nSee [[ADR-077 In the space]]." });
+    await expect.poll(async () => (await getBacklinkPages(adr)).map((p) => p.id)).toEqual([]);
+
+    expect((await move(owner, incident, { space: s.slug })).status).toBe(200);
+    await expect.poll(async () => (await getBacklinkPages(adr)).map((p) => p.id)).toEqual([incident]);
+  });
+});

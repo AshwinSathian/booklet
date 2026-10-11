@@ -1,6 +1,6 @@
 {
   "name": "@booklet/mcp-server",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "description": "Publish Markdown incident reports, ADRs, RFCs and runbooks as web pages, with team spaces.",
   "private": true,
   "license": "MIT",
@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/server": "^2.3.1",
-    "booklet-api-client": "^3.0.0",
+    "booklet-api-client": "^3.1.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {

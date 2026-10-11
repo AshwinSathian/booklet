@@ -26,6 +26,7 @@ export function AppLoader() {
     // asked for reduced motion shouldn't be held on a mandatory delay for a
     // decorative flash, so skip it entirely.
     if (prefersReducedMotion()) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- with reduced motion the decorative delay is skipped outright
       setPhase("done");
       return;
     }

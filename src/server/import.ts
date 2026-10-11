@@ -7,7 +7,7 @@
  *    `github.com/<owner>/<repo>/blob/<ref>/<path>` link is rewritten to its
  *    raw URL here; github.com itself is never fetched.
  *  - The host is resolved once through the SSRF guard and the connection is
- *    pinned to that checked address, as for webhooks (see pinnedLookup).
+ *    pinned to that checked address, as for webhooks (see pinnedRequest).
  *  - A redirect is followed only to the same host, and is checked again.
  *  - The body is cut off at MAX_BYTES while it streams, and a document over
  *    the editor's character limit is refused, not shortened.
@@ -16,10 +16,8 @@
  * later published goes through buildDocument like any other.
  */
 
-import https from "node:https";
-import http from "node:http";
 import { STORAGE } from "@/lib/constants";
-import { bareHostname, pinnedLookup, resolveHostForDelivery, type HostResolveResult } from "@/lib/ssrf-guard";
+import { bareHostname, pinnedRequest, resolveHostForDelivery, type HostResolveResult, type PinnedResponse } from "@/lib/ssrf-guard";
 import { ServiceError } from "./errors";
 
 const RAW_HOST = "raw.githubusercontent.com";
@@ -63,51 +61,12 @@ export function toRawGithubUrl(input: unknown): URL {
   return new URL(`https://${RAW_HOST}${path}`);
 }
 
-type PinnedResponse = { status: number; location: string | null; contentType: string; body: Buffer; truncated: boolean };
-
-/** GET `url` with the TCP connection pinned to an address that already passed the SSRF guard. Never follows a redirect. */
+/** GET `url` over a connection pinned to an address that already passed the SSRF guard. Never follows a redirect. */
 export function pinnedGet(url: URL, address: string, family: 4 | 6, maxBytes = MAX_BYTES): Promise<PinnedResponse> {
-  return new Promise((resolve, reject) => {
-    const isHttps = url.protocol === "https:";
-    const req = (isHttps ? https : http).request(
-      {
-        hostname: url.hostname,
-        port: url.port || (isHttps ? 443 : 80),
-        path: `${url.pathname}${url.search}`,
-        method: "GET",
-        headers: { Host: url.host, Accept: "text/plain, text/markdown, text/*;q=0.9", "User-Agent": "Booklet-Import" },
-        timeout: TIMEOUT_MS,
-        lookup: pinnedLookup(address, family),
-        ...(isHttps ? { servername: url.hostname } : {}),
-      },
-      (res) => {
-        const chunks: Buffer[] = [];
-        let size = 0;
-        const finish = (truncated: boolean) =>
-          resolve({
-            status: res.statusCode ?? 0,
-            location: typeof res.headers.location === "string" ? res.headers.location : null,
-            contentType: String(res.headers["content-type"] ?? ""),
-            body: Buffer.concat(chunks),
-            truncated,
-          });
-        res.on("data", (chunk: Buffer) => {
-          size += chunk.length;
-          if (size > maxBytes) {
-            // Stop reading: the answer is "too large" whatever follows.
-            finish(true);
-            req.destroy();
-            return;
-          }
-          chunks.push(chunk);
-        });
-        res.on("end", () => finish(false));
-        res.on("error", reject);
-      },
-    );
-    req.on("timeout", () => req.destroy(new Error("timeout")));
-    req.on("error", reject);
-    req.end();
+  return pinnedRequest(url, address, family, {
+    headers: { Accept: "text/plain, text/markdown, text/*;q=0.9", "User-Agent": "Booklet-Import" },
+    timeoutMs: TIMEOUT_MS,
+    maxBytes,
   });
 }
 

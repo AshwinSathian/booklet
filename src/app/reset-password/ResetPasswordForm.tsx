@@ -27,10 +27,10 @@ export function ResetPasswordForm() {
       body: JSON.stringify({ token, password }),
     }).catch(() => null);
 
-    const data = (await res?.json().catch(() => ({}))) as { error?: string } | undefined;
+    const data = (await res?.json().catch(() => ({}))) as { detail?: string } | undefined;
 
     if (!res || !res.ok) {
-      setError(data?.error ?? "Something went wrong. Please try again.");
+      setError(data?.detail ?? "Something went wrong. Please try again.");
       setSubmitting(false);
       return;
     }

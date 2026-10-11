@@ -4,6 +4,7 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/request-ip";
 import { signUnlockToken } from "@/lib/unlock-token";
 import { NextResponse } from "next/server";
+import { problem } from "@/server/errors";
 
 export const runtime = "nodejs";
 
@@ -28,22 +29,22 @@ export async function POST(
     const body = (await req.json()) as { password?: string };
     password = body.password;
   } catch {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    return problem(400, "Invalid request");
   }
 
   if (!password || typeof password !== "string") {
-    return NextResponse.json({ error: "Password required" }, { status: 400 });
+    return problem(400, "Password required");
   }
 
   const page = await getPageRecord(id).catch(() => null);
   if (!page || !page.password_hash) {
     // Return 401 (not 404) — don't reveal whether the page exists but is unprotected.
-    return NextResponse.json({ error: "Incorrect password" }, { status: 401 });
+    return problem(401, "Incorrect password");
   }
 
   const ok = await verifyPassword(password, page.password_hash);
   if (!ok) {
-    return NextResponse.json({ error: "Incorrect password" }, { status: 401 });
+    return problem(401, "Incorrect password");
   }
 
   // Cookie value is an HMAC over pageId + the page's *current* password_hash

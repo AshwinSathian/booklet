@@ -142,12 +142,13 @@ export async function handleUpdatePage(
   apiBase: string,
 ): Promise<CallToolResult> {
   try {
-    const { id, raw, slug, visibility } = args;
+    const { id, raw, slug, visibility, space } = args;
 
     const patch: PatchPageRequest = {};
     if (raw !== undefined) patch.raw = raw;
     if (slug !== undefined) patch.slug = slug;
     if (visibility !== undefined) patch.visibility = visibility;
+    if (space !== undefined) patch.space = space;
 
     const r = await client(apiKey, apiBase).updatePage(id, patch);
     const lines = [`Page updated.\n\nURL: ${r.url}`];

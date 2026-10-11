@@ -6,7 +6,8 @@ import { Icon } from "@/components/ui/Icon";
 import type { PublishedDoc } from "@/lib/blocks";
 import { diffLines, type DiffLine } from "@/lib/line-diff";
 import { formatUpdatedAtLong, formatUpdatedAtLongUTC } from "@/lib/ui/time";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useHydrated } from "@/lib/ui/hydration";
 
 type VersionItem = {
   version_number: number;
@@ -43,8 +44,7 @@ export function VersionsClient({
   // the visitor's browser disagreeing, a React hydration mismatch. Render
   // the timezone-pinned, deterministic form until mounted, then upgrade to
   // the visitor's own local time — see formatUpdatedAtLongUTC's doc comment.
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const mounted = useHydrated();
 
   async function loadVersion(version: number): Promise<PublishedDoc> {
     const res = await fetch(`/api/pages/${pageId}/versions/${version}`);
@@ -98,8 +98,8 @@ export function VersionsClient({
         body: JSON.stringify({ settings: doc.settings, raw: doc.raw }),
       });
       if (!res.ok) {
-        const body = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(body.error ?? `Could not restore v${version}`);
+        const body = (await res.json().catch(() => ({}))) as { detail?: string };
+        throw new Error(body.detail ?? `Could not restore v${version}`);
       }
       window.location.reload();
     } catch (e) {

@@ -427,6 +427,44 @@ test.describe("clients", () => {
     }
   });
 
+  test("a client pinned in OAUTH_STATIC_CLIENTS is used without a fetch, if it passes the same checks", async () => {
+    const before = process.env.OAUTH_STATIC_CLIENTS;
+    const fetchWas = metadataFetcher.fetch;
+    const fetched: string[] = [];
+    metadataFetcher.fetch = async (url) => {
+      fetched.push(url.href);
+      return null;
+    };
+    try {
+      process.env.OAUTH_STATIC_CLIENTS = JSON.stringify([
+        { client_id: "https://pinned.example/client.json", client_name: "Pinned", redirect_uris: [CLAUDE_CALLBACK] },
+        { client_id: "https://bad-redirect.example/client.json", redirect_uris: ["javascript:alert(1)"] },
+        { client_id: "http://plain-http.example/client.json", redirect_uris: [CLAUDE_CALLBACK] },
+        "not an object",
+      ]);
+      clearClientCache();
+      expect(await getClient("https://pinned.example/client.json")).toEqual({
+        client_id: "https://pinned.example/client.json",
+        client_name: "Pinned",
+        redirect_uris: [CLAUDE_CALLBACK],
+      });
+      expect(fetched).toEqual([]);
+      // An entry that fails the checks is not a client; its URL is fetched like any other.
+      expect(await getClient("https://bad-redirect.example/client.json")).toBeNull();
+      expect(await getClient("http://plain-http.example/client.json")).toBeNull();
+      expect(fetched).toEqual(["https://bad-redirect.example/client.json"]);
+
+      process.env.OAUTH_STATIC_CLIENTS = "{ not json";
+      clearClientCache();
+      expect(await getClient("https://pinned.example/client.json")).toBeNull();
+    } finally {
+      if (before === undefined) delete process.env.OAUTH_STATIC_CLIENTS;
+      else process.env.OAUTH_STATIC_CLIENTS = before;
+      metadataFetcher.fetch = fetchWas;
+      clearClientCache();
+    }
+  });
+
   test("the real metadata fetch refuses internal addresses", async () => {
     const stub = metadataFetcher.fetch;
     metadataFetcher.fetch = realMetadataFetch;

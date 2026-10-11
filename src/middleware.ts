@@ -10,23 +10,24 @@ import { goneNoticeHtml, isGoneReason, type GoneReason } from "@/lib/gone-notice
 // WASM-based, which needs the separate, narrower 'wasm-unsafe-eval' keyword
 // instead — that one stays in every environment.
 //
-// 'unsafe-inline' on script-src remains for now: removing it requires a
-// per-request nonce plumbed through the root layout, which per Next.js's
-// own CSP guide requires forcing dynamic rendering on every page (nonces
-// change per request, so pages that read one can't be statically
-// generated/ISR'd) — a real perf/caching trade-off for the public share
-// pages this app's value prop depends on, not a drop-in hardening change.
-// Flagged as a follow-up decision rather than made unilaterally here.
-const SCRIPT_SRC =
-  process.env.NODE_ENV === "development"
-    ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval'"
-    : "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'";
+// Scripts need this request's nonce. There is no 'unsafe-inline': an
+// injected <script> or inline handler does not run. 'strict-dynamic' lets a
+// script that carries the nonce load the chunks it asks for, which is how
+// Next.js loads its own (it puts the nonce on its scripts when it sees one
+// in the request's Content-Security-Policy header, set below).
+//
+// The cost, per Next.js's CSP guide: a nonce changes per request, so no page
+// is prerendered any more; each is rendered when asked for. Most already
+// were. For browsers without 'strict-dynamic' (CSP level 2), 'self' and the
+// host sources still apply and the nonce covers the inline bootstrap.
+const scriptSrc = (nonce: string) =>
+  `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' 'wasm-unsafe-eval'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""}`;
 
 // Cloudflare Turnstile loads a script and runs in an iframe from this one
 // origin. Allowed only when a site key was present at build time.
 const TURNSTILE = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ? " https://challenges.cloudflare.com" : "";
 
-const SECURITY_HEADERS: Record<string, string> = {
+const STATIC_SECURITY_HEADERS: Record<string, string> = {
   "X-Frame-Options": "DENY",
   "X-Content-Type-Options": "nosniff",
   "Referrer-Policy": "strict-origin-when-cross-origin",
@@ -36,23 +37,26 @@ const SECURITY_HEADERS: Record<string, string> = {
   // reads regardless of where TLS ends, and this app has no non-TLS
   // production hostname for it to break.
   "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
-  "Content-Security-Policy": [
+};
+
+function contentSecurityPolicy(nonce: string, embed: boolean): string {
+  return [
     "default-src 'self'",
-    SCRIPT_SRC + TURNSTILE,
+    scriptSrc(nonce) + TURNSTILE,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
     "connect-src 'self'",
     TURNSTILE ? `frame-src${TURNSTILE}` : "frame-src 'none'",
-    // Modern replacement for X-Frame-Options; overridden to '*' for /p/[id]/embed
-    // below. X-Frame-Options is also still set for older-browser defense in depth.
-    "frame-ancestors 'none'",
+    // Modern replacement for X-Frame-Options, which is also still set for
+    // older browsers. An embed page may be framed from anywhere.
+    embed ? "frame-ancestors *" : "frame-ancestors 'none'",
     "worker-src blob:",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
-  ].join("; "),
-};
+  ].join("; ");
+}
 
 // booklet-api.ashwinsathian.com is the same Next.js process as
 // booklet.ashwinsathian.com (see ecosystem.config.js — one PM2 app, one
@@ -93,15 +97,12 @@ async function fetchGoneReason(id: string): Promise<GoneReason | null> {
   }
 }
 
-function withSecurityHeaders(res: Response, isEmbedRoute: boolean): Response {
-  for (const [key, value] of Object.entries(SECURITY_HEADERS)) {
+function withSecurityHeaders(res: Response, isEmbedRoute: boolean, csp: string): Response {
+  for (const [key, value] of Object.entries(STATIC_SECURITY_HEADERS)) {
     if (isEmbedRoute && key === "X-Frame-Options") continue;
-    if (isEmbedRoute && key === "Content-Security-Policy") {
-      res.headers.set(key, value.replace(/frame-ancestors[^;]*(;|$)/, "frame-ancestors *$1"));
-      continue;
-    }
     res.headers.set(key, value);
   }
+  res.headers.set("Content-Security-Policy", csp);
   return res;
 }
 
@@ -141,6 +142,13 @@ export default async function middleware(req: NextRequest) {
   // Embed pages must be iframe-able from any origin.
   const isEmbedRoute = /^\/p\/[^/]+\/embed(\/|$)/.test(req.nextUrl.pathname);
 
+  // One nonce per request. It goes to the page in two places: the response's
+  // policy, which the browser enforces, and the request's headers, where
+  // Next.js reads the policy to put the nonce on its own scripts and the
+  // root layout reads `x-nonce` for the one inline script it renders.
+  const nonce = btoa(crypto.randomUUID());
+  const csp = contentSecurityPolicy(nonce, isEmbedRoute);
+
   const share = SHARE_PATH.exec(req.nextUrl.pathname);
   if (share && (req.method === "GET" || req.method === "HEAD")) {
     let id = share[1];
@@ -159,6 +167,7 @@ export default async function middleware(req: NextRequest) {
       return withSecurityHeaders(
         NextResponse.rewrite(new URL(`/api/pages/${encodeURIComponent(pageId)}/markdown`, req.url)),
         false,
+        csp,
       );
     }
 
@@ -179,16 +188,20 @@ export default async function middleware(req: NextRequest) {
           },
         }),
         isEmbedRoute,
+        csp,
       );
     }
   }
 
-  const res = NextResponse.next();
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set("x-nonce", nonce);
+  requestHeaders.set("Content-Security-Policy", csp);
+  const res = NextResponse.next({ request: { headers: requestHeaders } });
   if (share && !share[2]) {
     res.headers.set("Link", `</p/${share[1]}.md>; rel="alternate"; type="text/markdown"`);
     res.headers.set("Vary", "Accept");
   }
-  return withSecurityHeaders(res, isEmbedRoute);
+  return withSecurityHeaders(res, isEmbedRoute, csp);
 }
 
 export const config = {

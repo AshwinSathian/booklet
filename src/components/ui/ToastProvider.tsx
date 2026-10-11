@@ -3,6 +3,7 @@
 import { UI } from "@/lib/constants";
 import { createPortal } from "react-dom";
 import * as React from "react";
+import { useHydrated } from "@/lib/ui/hydration";
 
 type ToastKind = "success" | "info" | "warn" | "error";
 
@@ -128,9 +129,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = React.useState<ToastItem[]>([]);
   const timersRef = React.useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
   const lastCoalescedAtRef = React.useRef<Map<string, number>>(new Map());
-  const [mounted, setMounted] = React.useState(false);
-
-  React.useEffect(() => { setMounted(true); }, []);
+  const mounted = useHydrated();
 
   const dismiss = React.useCallback((id: number) => {
     const t = timersRef.current.get(id);

@@ -10,6 +10,7 @@ import { prefersReducedMotion } from "@/lib/ui/motion";
 import { useSession } from "@/components/auth/SessionProvider";
 import { AccountMenu } from "@/components/auth/AccountMenu";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Sheet, SheetSection } from "../ui/Sheet";
 import { Menu, ContextMenuItem } from "../ui/ContextMenu";
 import { AppLogo } from "../ui/AppLogo";
@@ -97,6 +98,7 @@ function MoreActionsDrawer({
   const [view, setView] = useState<MoreDrawerView>("menu");
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- the drawer reopens on its menu, however it was closed
     if (!open) setView("menu");
   }, [open]);
 
@@ -545,7 +547,9 @@ function PublishReveal({ onDone }: { onDone: () => void }) {
   // it in the effect's dependency array — keeps this a one-shot timeline
   // that can't be restarted mid-flight by an unrelated parent re-render.
   const onDoneRef = useRef(onDone);
-  onDoneRef.current = onDone;
+  useEffect(() => {
+    onDoneRef.current = onDone;
+  });
 
   useEffect(() => {
     const toSuccess = setTimeout(() => setPhase("success"), REVEAL_COMPILE_MS);
@@ -926,6 +930,7 @@ function PostPublishSlugBar({
   useEffect(() => {
     const value = draft.trim().toLowerCase();
     if (!value || !isValidSlug(value)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- an empty or invalid slug resets the check at once; the debounced request is for a valid one
       setAvailability("idle");
       return;
     }
@@ -965,8 +970,8 @@ function PostPublishSlugBar({
         body: JSON.stringify({ slug: value }),
       });
       if (!res.ok) {
-        const body = await res.json().catch(() => ({})) as { error?: string };
-        throw new Error(body.error ?? "Failed to save");
+        const body = await res.json().catch(() => ({})) as { detail?: string };
+        throw new Error(body.detail ?? "Failed to save");
       }
       onSlugSet(value);
     } catch (e) {
@@ -1120,6 +1125,7 @@ export function TopBar({
   paragraphDimming: boolean;
   onParagraphDimmingChange: (v: boolean) => void;
 }) {
+  const router = useRouter();
   const [visibleSettings, setVisibleSettings] = useState(false);
   const [visibleMoreActions, setVisibleMoreActions] = useState(false);
   const [visibleDrafts, setVisibleDrafts] = useState(false);
@@ -1230,7 +1236,7 @@ export function TopBar({
     {
       title: "Navigation",
       items: [
-        { label: "Go to homepage", detail: "Return to Booklet's public page.", icon: "home", onClick: () => { window.location.href = "/"; } },
+        { label: "Go to homepage", detail: "Return to Booklet's public page.", icon: "home", onClick: () => router.push("/") },
       ],
     },
   ];

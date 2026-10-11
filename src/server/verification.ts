@@ -1,8 +1,8 @@
 import type { NextResponse } from "next/server";
-import { createEmailVerificationToken, getUserById, hasLiveEmailVerificationToken } from "@/lib/db/auth";
+import { createEmailVerificationToken, getUserById, hasLiveEmailVerificationToken, setUserEmail } from "@/lib/db/auth";
 import type { DbUser } from "@/lib/db/types";
 import { generatePasswordResetToken, hashPasswordResetToken } from "@/lib/auth/password-reset-token";
-import { sendVerificationEmail } from "@/lib/email";
+import { sendEmailChangeEmail, sendEmailChangedNotice, sendVerificationEmail } from "@/lib/email";
 import { logError } from "@/lib/logger";
 import { ServiceError, toErrorResponse } from "./errors";
 
@@ -63,6 +63,34 @@ export async function sendVerification(user: DbUser, origin: string, opts?: { on
   sendVerificationEmail(user.email, `${origin}/verify-email?token=${encodeURIComponent(raw)}`).catch((err) =>
     logError("verify-email", "Verification email failed", err),
   );
+}
+
+/**
+ * Mails the link that, confirmed from the account's own session, moves the
+ * account to `newEmail`. Replaces any earlier link for the account.
+ */
+export async function sendEmailChangeLink(user: DbUser, newEmail: string, origin: string): Promise<void> {
+  const raw = generatePasswordResetToken();
+  await createEmailVerificationToken(user.id, newEmail, await hashVerificationToken(raw), new Date(Date.now() + VERIFY_TTL_MS), true);
+  sendEmailChangeEmail(newEmail, `${origin}/verify-email?token=${encodeURIComponent(raw)}`).catch((err) =>
+    logError("verify-email", "Email change link failed", err),
+  );
+}
+
+/**
+ * Moves the account to `newEmail`, and tells the old address, so someone
+ * whose account was moved without them hears of it where they still read
+ * mail. `proven`: the new address was confirmed by its link (see
+ * setUserEmail). False when the address belongs to another account.
+ */
+export async function applyEmailChange(user: DbUser, newEmail: string, proven: boolean): Promise<boolean> {
+  if (!(await setUserEmail(user.id, newEmail, proven))) return false;
+  // Told only if it was ever confirmed as the holder's: otherwise it is an
+  // address somebody typed, and this would be mail to a stranger.
+  if (process.env.RESEND_API_KEY && user.email_verified_at) {
+    sendEmailChangedNotice(user.email, newEmail).catch((err) => logError("verify-email", "Email change notice failed", err));
+  }
+  return true;
 }
 
 /** For routes that do not go through v1(): the 403 response, or null when the user may proceed. */

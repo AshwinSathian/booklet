@@ -5,13 +5,12 @@ import { createId } from "@/lib/id";
 import { getSession } from "@/lib/auth/session";
 import { NextResponse } from "next/server";
 import { problem } from "@/server/errors";
-import { rfc9457Only } from "@/server/v1";
 
 export const runtime = "nodejs";
 
 const MAX_KEYS_PER_USER = 10;
 
-export const GET = rfc9457Only(async () => {
+export async function GET() {
   const userId = (await getSession())?.userId ?? null;
   if (!userId) {
     return problem(401, "Unauthorized");
@@ -26,9 +25,9 @@ export const GET = rfc9457Only(async () => {
       last_used_at: k.last_used_at,
     })),
   });
-});
+}
 
-export const POST = rfc9457Only(async (req: Request) => {
+export async function POST(req: Request) {
   const userId = (await getSession())?.userId ?? null;
   if (!userId) {
     return problem(401, "Unauthorized");
@@ -67,4 +66,4 @@ export const POST = rfc9457Only(async (req: Request) => {
   }
 
   return NextResponse.json({ id, label, key: raw }, { status: 201 });
-});
+}

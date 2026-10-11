@@ -49,6 +49,7 @@ export function useDraftListActions({
   const refresh = useCallback(() => setDrafts(listDrafts()), []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- a snapshot of localStorage drafts, taken each time the list is shown
     if (active) refresh();
   }, [active, refresh]);
 

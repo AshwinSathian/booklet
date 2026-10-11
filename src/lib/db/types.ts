@@ -49,6 +49,7 @@ export type DbSession = {
 export type DbPasswordResetToken = {
   id: string;
   user_id: string;
+  email: string;        // the address the link was mailed to
   token_hash: string;   // HMAC-SHA256(raw token, PASSWORD_RESET_TOKEN_PEPPER)
   created_at: string;
   expires_at: Date;     // BSON Date — TTL index, 30-minute window

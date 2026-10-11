@@ -1,10 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { browserSupportsWebAuthn, startRegistration } from "@simplewebauthn/browser";
 import { Button } from "@/components/ui/Button";
 import { useSession } from "@/components/auth/SessionProvider";
+import { useHydrated } from "@/lib/ui/hydration";
 
 const INPUT =
   "w-full rounded-lg border border-border-default bg-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft";
@@ -48,7 +49,7 @@ async function send(url: string, method: string, body?: unknown): Promise<string
       ...(body === undefined ? {} : { headers: { "content-type": "application/json" }, body: JSON.stringify(body) }),
     });
     if (res.ok) return null;
-    return ((await res.json().catch(() => ({}))) as { error?: string }).error ?? "Something went wrong. Try again.";
+    return ((await res.json().catch(() => ({}))) as { detail?: string }).detail ?? "Something went wrong. Try again.";
   } catch {
     return "Network error. Try again.";
   }
@@ -63,9 +64,11 @@ export function AccountClient({ email, needsVerification, hasPassword, providers
   const [notice, setNotice] = useState<{ kind: "ok" | "error"; text: string } | null>(
     errorCode ? { kind: "error", text: LINK_ERRORS[errorCode] ?? "Could not connect that account. Try again." } : null,
   );
-  const [canUsePasskeys, setCanUsePasskeys] = useState(false);
-  useEffect(() => setCanUsePasskeys(browserSupportsWebAuthn()), []);
+  // Decided after hydration: the server cannot know what the browser supports.
+  const canUsePasskeys = useHydrated() && browserSupportsWebAuthn();
 
+  const [newEmail, setNewEmail] = useState("");
+  const [emailPassword, setEmailPassword] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [deleting, setDeleting] = useState(false);
@@ -80,6 +83,40 @@ export function AccountClient({ email, needsVerification, hasPassword, providers
     setBusy(false);
     if (!error) router.refresh();
     return !error;
+  }
+
+  async function changeEmail(e: FormEvent) {
+    e.preventDefault();
+    const address = newEmail.trim();
+    // Where mail is set up a link goes out and nothing changes yet. Where it
+    // is not, the address has already changed: the answer says which.
+    let changedNow = false;
+    const ok = await run(async () => {
+      try {
+        const res = await fetch("/api/account/email", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ email: address, password: emailPassword }),
+        });
+        const data = (await res.json().catch(() => ({}))) as { changed?: boolean; detail?: string };
+        if (!res.ok) return data.detail ?? "Something went wrong. Try again.";
+        changedNow = data.changed === true;
+        return null;
+      } catch {
+        return "Network error. Try again.";
+      }
+    }, "");
+    if (!ok) return;
+    setNotice({
+      kind: "ok",
+      text: changedNow
+        ? `This account's email address is now ${address}.${needsVerification ? " Use \"Email me the link\" above to confirm it." : ""}`
+        : // The same words whether or not a link went out: see the route.
+          `If ${address} can be used, we sent it a link. Open it while signed in here and this account moves to that address.`,
+    });
+    setNewEmail("");
+    setEmailPassword("");
+    router.refresh();
   }
 
   async function changePassword(e: FormEvent) {
@@ -98,7 +135,7 @@ export function AccountClient({ email, needsVerification, hasPassword, providers
     await run(async () => {
       try {
         const options = await fetch("/api/auth/passkey/register", { method: "POST", headers: { "content-type": "application/json" }, body: "{}" });
-        if (!options.ok) return ((await options.json().catch(() => ({}))) as { error?: string }).error ?? "Could not start. Try again.";
+        if (!options.ok) return ((await options.json().catch(() => ({}))) as { detail?: string }).detail ?? "Could not start. Try again.";
         const response = await startRegistration({ optionsJSON: await options.json() });
         return await send("/api/auth/passkey/register", "POST", { response, name: `Passkey added ${day(new Date().toISOString())}` });
       } catch (e) {
@@ -139,6 +176,41 @@ export function AccountClient({ email, needsVerification, hasPassword, providers
           </Button>
         </Section>
       )}
+
+      <Section
+        title="Email address"
+        hint={`This account's address is ${email}. Sign-in, password resets and team invites all go by it.`}
+      >
+        <form onSubmit={(e) => void changeEmail(e)} className="max-w-xs space-y-2">
+          <input
+            type="email"
+            aria-label="New email address"
+            placeholder="New email address"
+            autoComplete="email"
+            required
+            maxLength={254}
+            value={newEmail}
+            onChange={(e) => setNewEmail(e.target.value)}
+            className={INPUT}
+          />
+          {hasPassword && (
+            <input
+              type="password"
+              aria-label="Password, to change the email address"
+              placeholder="Your password"
+              autoComplete="current-password"
+              required
+              maxLength={256}
+              value={emailPassword}
+              onChange={(e) => setEmailPassword(e.target.value)}
+              className={INPUT}
+            />
+          )}
+          <Button type="submit" variant="secondary" size="md" disabled={busy}>
+            Change email
+          </Button>
+        </form>
+      </Section>
 
       <Section
         title={hasPassword ? "Change password" : "Set a password"}

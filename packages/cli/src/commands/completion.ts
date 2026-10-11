@@ -8,7 +8,7 @@ import { emit, isJson } from "../fmt.js";
 // generator would be more machinery than the problem needs. Update this
 // list if commands/flags change.
 const TOP_LEVEL = ["login", "logout", "whoami", "publish", "pull", "new", "pages", "completion", "help"];
-const PAGES_SUBCOMMANDS = ["list", "open", "delete"];
+const PAGES_SUBCOMMANDS = ["list", "open", "move", "delete"];
 
 const BASH_SCRIPT = `_booklet_completions() {
   local cur prev words cword

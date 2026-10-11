@@ -90,13 +90,21 @@ export const UpdatePageInputSchema = z
       .nullable()
       .optional()
       .describe("New custom slug, or null to remove it and revert to the page ID."),
+    space: z
+      .string()
+      .min(1)
+      .nullable()
+      .optional()
+      .describe(
+        "Move the page: the slug of a team space the user can publish to, or null to take it out of its space. A team-only page cannot be moved unless `visibility` changes in the same call.",
+      ),
     visibility: VisibilitySchema.optional().describe(
       'Change visibility to "public", "unlisted" or "team" (team space members only; the page must be in a team space).',
     ),
   })
   .refine(
-    (v) => v.raw !== undefined || v.slug !== undefined || v.visibility !== undefined,
-    "Provide at least one of: `raw`, `slug`, `visibility`",
+    (v) => v.raw !== undefined || v.slug !== undefined || v.visibility !== undefined || v.space !== undefined,
+    "Provide at least one of: `raw`, `slug`, `visibility`, `space`",
   );
 
 export const GetPageInputSchema = z.object({

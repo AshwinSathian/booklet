@@ -11,12 +11,13 @@ import { isSameOriginRequest } from "@/lib/auth/origin-check";
 import { SignupSchema } from "@/lib/auth/schemas";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/request-ip";
+import { problem } from "@/server/errors";
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
   if (!isSameOriginRequest(req)) {
-    return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
+    return problem(403, "Invalid request origin");
   }
 
   const ip = getClientIp(req.headers);
@@ -25,17 +26,17 @@ export async function POST(req: Request) {
 
   const body = (await req.json().catch(() => null)) as { turnstile_token?: unknown } | null;
   if (!(await verifyTurnstile(req, body?.turnstile_token))) {
-    return NextResponse.json({ error: TURNSTILE_FAILED }, { status: 403 });
+    return problem(403, TURNSTILE_FAILED);
   }
 
   const parsed = SignupSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid email or password" }, { status: 400 });
+    return problem(400, "Invalid email or password");
   }
   const { email, password } = parsed.data;
 
   if (await getUserByEmail(email)) {
-    return NextResponse.json({ error: "An account with this email already exists" }, { status: 409 });
+    return problem(409, "An account with this email already exists");
   }
 
   const passwordHash = await hashUserPassword(password);
@@ -52,7 +53,7 @@ export async function POST(req: Request) {
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "";
     if (message.includes("E11000")) {
-      return NextResponse.json({ error: "An account with this email already exists" }, { status: 409 });
+      return problem(409, "An account with this email already exists");
     }
     throw err;
   }

@@ -1,6 +1,6 @@
 {
   "name": "booklet",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "Publish Markdown incident reports, ADRs, RFCs and runbooks as web pages, with team spaces.",
   "private": true,
   "license": "AGPL-3.0-only",
@@ -17,7 +17,7 @@
     "build": "next build",
     "start": "next start",
     "serve": "next start",
-    "lint": "eslint .",
+    "lint": "eslint . --max-warnings 0",
     "test": "tsc --noEmit",
     "test:unit": "playwright test --config=playwright.unit.config.ts",
     "postinstall": "node scripts/stub-og.cjs",

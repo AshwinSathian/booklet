@@ -1,8 +1,6 @@
-import http from "node:http";
-import https from "node:https";
 import { getWebhooksByUser, recordWebhookDelivery, touchWebhookTriggered } from "@/lib/db";
 import { logError } from "@/lib/logger";
-import { bareHostname, resolveHostForDelivery, pinnedLookup } from "@/lib/ssrf-guard";
+import { bareHostname, resolveHostForDelivery, pinnedRequest } from "@/lib/ssrf-guard";
 import type { DbWebhook, DbWebhookDelivery } from "@/lib/db/types";
 
 type WebhookEvent = DbWebhook["events"][number];
@@ -31,62 +29,24 @@ async function signPayload(secret: string, body: string): Promise<string> {
 }
 
 /**
- * POSTs to a URL while pinning the TCP connection to a specific, already
- * SSRF-validated IP address, using node:http(s) directly instead of `fetch`.
- *
- * `fetch` (undici) does its own independent DNS resolution when it connects
- * — if we validated the hostname with a separate lookup and then handed the
- * URL to `fetch`, an attacker controlling the hostname's DNS could answer
- * the validation lookup with a public IP and the connection's lookup
- * (moments later, low TTL) with an internal one (DNS rebinding). Forcing
- * the actual socket to connect to the address we already checked closes
- * that gap: the Host header / TLS SNI still use the original hostname, only
- * the raw connection target is pinned.
- *
- * Never follows redirects (matches the previous `redirect: "manual"`
- * behavior) — a receiver that 3xx's is treated as a delivery failure.
+ * POSTs one delivery over a pinned connection (see pinnedRequest). A
+ * receiver that redirects is a failed delivery: the 3xx status is recorded
+ * and nothing is followed.
  */
-function requestPinned(
+async function requestPinned(
   url: URL,
   address: string,
   family: 4 | 6,
   init: { headers: Record<string, string>; body: string; timeoutMs: number },
 ): Promise<{ status: number } | { error: string }> {
-  return new Promise((resolve) => {
-    const isHttps = url.protocol === "https:";
-    const mod = isHttps ? https : http;
-    let settled = false;
-    const done = (result: { status: number } | { error: string }) => {
-      if (settled) return;
-      settled = true;
-      resolve(result);
-    };
-
-    const req = mod.request(
-      {
-        hostname: url.hostname,
-        port: url.port || (isHttps ? 443 : 80),
-        path: `${url.pathname}${url.search}`,
-        method: "POST",
-        headers: { ...init.headers, Host: url.host },
-        timeout: init.timeoutMs,
-        // Pin the connection to the pre-validated address instead of letting
-        // Node re-resolve `url.hostname` itself.
-        lookup: pinnedLookup(address, family),
-        ...(isHttps ? { servername: url.hostname } : {}),
-      },
-      (res) => {
-        res.resume(); // drain the body; we only care about the status
-        done({ status: res.statusCode ?? 0 });
-      },
-    );
-
-    req.on("timeout", () => req.destroy(new Error("Timed out after 10 seconds")));
+  try {
+    const res = await pinnedRequest(url, address, family, { method: "POST", ...init });
+    return { status: res.status };
+  } catch (err) {
     // Only a fixed set of words reaches the log the owner reads: a raw
     // socket error could name an address the lookup was steered to.
-    req.on("error", (err) => done({ error: /timed out/i.test(err.message) ? "Timed out after 10 seconds" : "Could not connect" }));
-    req.end(init.body);
-  });
+    return { error: err instanceof Error && /timeout/i.test(err.message) ? "Timed out after 10 seconds" : "Could not connect" };
+  }
 }
 
 /** Resolves, validates, and returns one already-checked address to connect to. */
@@ -102,7 +62,7 @@ async function resolveOneSafeAddress(hostname: string): Promise<{ address: strin
  * logged body again and so adds a second row.
  *
  * The hostname is resolved and checked immediately before the request, and
- * the connection goes to that checked address (see requestPinned): DNS
+ * the connection goes to that checked address (see pinnedRequest): DNS
  * answers can change between registration and delivery, and between a
  * check and a connection made moments apart.
  */

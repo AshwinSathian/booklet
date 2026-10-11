@@ -3,7 +3,7 @@ import { createServer } from "node:http";
 import { randomBytes } from "node:crypto";
 import { createClient } from "booklet-api-client";
 import { readConfig, writeConfig, getApiKey, getApiBase, setApiKey, clearApiKey, getApiKeySource } from "../config.js";
-import { CliError, EXIT, toCliError } from "../errors.js";
+import { CliError, toCliError } from "../errors.js";
 import { success, info, bold, dim, gray, openUrl, print, emit, isJson } from "../fmt.js";
 
 const BROWSER_AUTH_TIMEOUT_MS = 5 * 60_000; // 5 minutes

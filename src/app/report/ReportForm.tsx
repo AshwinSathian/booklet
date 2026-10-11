@@ -44,8 +44,8 @@ export function ReportForm({ pageId }: { pageId: string }) {
         setState("sent");
         return;
       }
-      const data = (await res.json().catch(() => ({}))) as { error?: string };
-      setError(data.error ?? "Could not send the report. Try again.");
+      const data = (await res.json().catch(() => ({}))) as { detail?: string };
+      setError(data.detail ?? "Could not send the report. Try again.");
     } catch (e) {
       setError(e instanceof Error && e.message.includes("robot") ? e.message : "Could not send the report. Try again.");
     }

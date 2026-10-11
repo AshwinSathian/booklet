@@ -3,7 +3,8 @@
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { formatUpdatedAtLong, formatUpdatedAtLongUTC } from "@/lib/ui/time";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
+import { useHydrated } from "@/lib/ui/hydration";
 
 type DeliveryRow = {
   id: string;
@@ -35,17 +36,16 @@ function DeliveryLog({ webhookId, initial }: { webhookId: string; initial: Deliv
   const [resending, setResending] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   // Server and browser may format a time differently: see formatUpdatedAtLongUTC.
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const mounted = useHydrated();
 
   const resend = async (deliveryId: string) => {
     setResending(deliveryId);
     setError(null);
     try {
       const res = await fetch(`/api/webhooks/${webhookId}/deliveries/${deliveryId}/resend`, { method: "POST" });
-      const data = (await res.json().catch(() => ({}))) as { delivery?: DeliveryRow; error?: string };
+      const data = (await res.json().catch(() => ({}))) as { delivery?: DeliveryRow; detail?: string };
       if (!res.ok || !data.delivery) {
-        setError(data.error ?? "Could not resend.");
+        setError(data.detail ?? "Could not resend.");
         return;
       }
       setRows((prev) => [data.delivery!, ...prev].slice(0, MAX_DELIVERIES));
@@ -301,10 +301,10 @@ export function WebhooksSection({ initialWebhooks }: { initialWebhooks: WebhookR
         url?: string;
         events?: string[];
         secret?: string;
-        error?: string;
+        detail?: string;
       };
       if (!res.ok) {
-        setError(data.error ?? "Failed to create webhook.");
+        setError(data.detail ?? "Failed to create webhook.");
         return;
       }
       const newWh: WebhookRow = {

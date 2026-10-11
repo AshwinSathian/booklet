@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth/session";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getSiteOrigin } from "@/lib/site-url";
 import { buildRedirect, issueAuthorizationCode, validateAuthorizeRequest, type AuthorizeParams } from "@/lib/oauth/server";
+import { problem } from "@/server/errors";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -33,10 +34,10 @@ export async function POST(req: Request) {
   } catch {
     /* malformed Origin */
   }
-  if (!sameOrigin) return NextResponse.json({ error: "Invalid request origin" }, { status: 403, headers: NO_STORE });
+  if (!sameOrigin) return problem(403, "Invalid request origin", undefined, NO_STORE);
 
   const session = await getSession();
-  if (!session) return NextResponse.json({ error: "Not signed in" }, { status: 401, headers: NO_STORE });
+  if (!session) return problem(401, "Not signed in", undefined, NO_STORE);
 
   const limited = await checkRateLimit(`oauth_authorize__${session.userId}`, 20);
   if (limited) return limited;
@@ -47,14 +48,14 @@ export async function POST(req: Request) {
     Object.entries(raw).filter((e): e is [string, string] => typeof e[1] === "string"),
   );
   if (body?.decision !== "approve" && body?.decision !== "deny") {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400, headers: NO_STORE });
+    return problem(400, "Invalid request", undefined, NO_STORE);
   }
 
   const issuer = getSiteOrigin(req);
   const validation = await validateAuthorizeRequest(params, issuer);
   if (!validation.ok) {
     // An untrusted client or redirect URI is never redirected to.
-    if (!validation.redirect) return NextResponse.json({ error: validation.message }, { status: 400, headers: NO_STORE });
+    if (!validation.redirect) return problem(400, validation.message, undefined, NO_STORE);
     return NextResponse.json({ redirect: validation.redirect }, { headers: NO_STORE });
   }
 

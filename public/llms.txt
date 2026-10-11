@@ -28,7 +28,7 @@ Booklet publishes Markdown as a web page with a link. It is built for engineerin
 All endpoints are under `/api/v1/`, authenticated with `Authorization: Bearer <bklt_...>`:
 
 - `POST /api/v1/publish` — create a new page, returns `{ id, url }`
-- `PATCH /api/v1/pages/{id}` — update an existing page in place (same URL)
+- `PATCH /api/v1/pages/{id}` — update an existing page in place (same URL): content, slug, visibility, or `space` to move it between team spaces
 - `GET /api/v1/pages` — list pages owned by the authenticated account, with `q`, `tag`, `type` and `space` filters, paged by `cursor`
 - `GET /api/v1/pages/{id}` — read a page's metadata and raw Markdown
 - `DELETE /api/v1/pages/{id}` — delete a page permanently

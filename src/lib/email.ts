@@ -56,6 +56,45 @@ export async function sendVerificationEmail(to: string, verifyUrl: string): Prom
   if (error) throw new Error(`Resend rejected the verification email: ${error.message}`);
 }
 
+/** The link that moves an account to this address, sent to the new address. */
+export async function sendEmailChangeEmail(to: string, confirmUrl: string): Promise<void> {
+  const { error } = await getResendClient().emails.send({
+    from: FROM_ADDRESS,
+    to,
+    subject: "Confirm your new email address for Booklet",
+    html: `
+      <div style="font-family: -apple-system, system-ui, sans-serif; max-width: 480px; margin: 0 auto; color: #1a1a1a;">
+        <p>Someone signed in to a Booklet account asked to change its email address to this one.</p>
+        <p>
+          <a href="${confirmUrl}" style="display:inline-block;background:#f5a623;color:#0a0a0a;padding:10px 20px;border-radius:9999px;text-decoration:none;font-weight:600;">
+            Use this address
+          </a>
+        </p>
+        <p style="color:#666;font-size:13px;">
+          This link works for 24 hours, and only while signed in to that account. If this was not you, ignore this email: nothing changes.
+        </p>
+      </div>
+    `,
+  });
+  if (error) throw new Error(`Resend rejected the email change link: ${error.message}`);
+}
+
+/** Tells the address an account just left that it has moved. Plain text: it carries an address someone typed. */
+export async function sendEmailChangedNotice(oldAddress: string, newAddress: string): Promise<void> {
+  const { error } = await getResendClient().emails.send({
+    from: FROM_ADDRESS,
+    to: oldAddress,
+    subject: "Your Booklet email address was changed",
+    text: [
+      `The email address of your Booklet account was changed to ${newAddress}.`,
+      "",
+      "If you did this, there is nothing to do.",
+      "If you did not, someone else has been in your account. Sign in, change the address back, then change your password. If you can no longer sign in, write to whoever runs this Booklet: this address can no longer reset the password.",
+    ].join("\n"),
+  });
+  if (error) throw new Error(`Resend rejected the email change notice: ${error.message}`);
+}
+
 /**
  * Notifies the abuse inbox of a new report. Plain text on purpose: every
  * field below except the URL is written by an anonymous reporter, and a
@@ -91,4 +130,30 @@ export async function sendAbuseReportEmail(report: {
   });
   if (error) throw new Error(`Resend rejected the abuse report email: ${error.message}`);
   return true;
+}
+
+const escapeHtml = (v: string) => v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+/** One error the app logged, to whoever runs this install (ERROR_ALERT_EMAIL). Plain text: a stack is not prose. */
+export async function sendErrorAlertEmail(
+  to: string,
+  event: { scope: string; message: string; errorMessage: string | null; stack: string | null; count: number; firstSeen: Date },
+): Promise<void> {
+  const lines = [
+    `${event.scope}: ${event.message}`,
+    event.errorMessage ? `Error: ${event.errorMessage}` : null,
+    `Seen ${event.count} time${event.count === 1 ? "" : "s"} since ${event.firstSeen.toISOString()}.`,
+    "",
+    event.stack ?? "(no stack)",
+    "",
+    "Every error from the last 30 days is listed at /admin. This one will not be mailed again for 24 hours.",
+  ].filter((l): l is string => l !== null);
+  const { error } = await getResendClient().emails.send({
+    from: FROM_ADDRESS,
+    to,
+    subject: `Booklet error: ${event.scope}: ${event.message}`.slice(0, 180),
+    text: lines.join("\n"),
+    html: `<pre style="font-family: ui-monospace, monospace; font-size: 13px; white-space: pre-wrap;">${escapeHtml(lines.join("\n"))}</pre>`,
+  });
+  if (error) throw new Error(`Resend rejected the error alert: ${error.message}`);
 }

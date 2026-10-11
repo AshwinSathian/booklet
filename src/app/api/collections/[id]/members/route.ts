@@ -8,7 +8,7 @@ import { createId } from "@/lib/id";
 import { getSession } from "@/lib/auth/session";
 import { getOwnedCollection } from "@/server/collections";
 import { isVerified } from "@/server/verification";
-import { toErrorResponse } from "@/server/errors";
+import { toErrorResponse, problem } from "@/server/errors";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -19,7 +19,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const userId = (await getSession())?.userId ?? null;
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!userId) return problem(401, "Unauthorized");
 
   const { id } = await params;
   try {
@@ -38,7 +38,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const userId = (await getSession())?.userId ?? null;
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!userId) return problem(401, "Unauthorized");
 
   const { id } = await params;
   let collection;
@@ -47,18 +47,18 @@ export async function POST(
   } catch (e) {
     return toErrorResponse(e);
   }
-  if (!collection.is_team_space) return NextResponse.json({ error: "Not a team space" }, { status: 400 });
+  if (!collection.is_team_space) return problem(400, "Not a team space");
 
   let body: { email?: string; role?: string };
   try {
     body = (await req.json()) as { email?: string; role?: string };
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return problem(400, "Invalid JSON");
   }
 
   const email = body.email?.trim().toLowerCase();
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return NextResponse.json({ error: "Valid email required" }, { status: 422 });
+    return problem(422, "Valid email required");
   }
 
   const role = body.role === "viewer" ? "viewer" : "editor";
@@ -82,7 +82,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const userId = (await getSession())?.userId ?? null;
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!userId) return problem(401, "Unauthorized");
 
   const { id } = await params;
   try {
@@ -95,11 +95,11 @@ export async function DELETE(
   try {
     body = (await req.json()) as { user_id?: string };
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return problem(400, "Invalid JSON");
   }
 
   if (typeof body.user_id !== "string" || !body.user_id) {
-    return NextResponse.json({ error: "user_id required" }, { status: 400 });
+    return problem(400, "user_id required");
   }
 
   await removeCollectionMember(id, body.user_id);

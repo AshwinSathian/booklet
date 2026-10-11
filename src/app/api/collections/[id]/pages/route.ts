@@ -1,7 +1,7 @@
 import { updatePageRecord } from "@/lib/db";
 import { getSession } from "@/lib/auth/session";
 import { getAssignableCollection } from "@/server/collections";
-import { ServiceError } from "@/server/errors";
+import { ServiceError, problem } from "@/server/errors";
 import { getOwnedPage } from "@/server/pages";
 import { toErrorResponse } from "@/server/errors";
 import { NextResponse } from "next/server";
@@ -29,14 +29,14 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const userId = (await getSession())?.userId ?? null;
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!userId) return problem(401, "Unauthorized");
 
   const { id } = await params;
   let page;
   try {
     await getAssignableCollection(id, userId);
     const pageId = await readPageId(req);
-    if (!pageId) return NextResponse.json({ error: "Missing pageId" }, { status: 400 });
+    if (!pageId) return problem(400, "Missing pageId");
     page = await getOwnedPage(pageId, userId);
     // A team-only page is readable by the members of the space it is in.
     // Moving it would hand it to another team, or to nobody.
@@ -57,7 +57,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const userId = (await getSession())?.userId ?? null;
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!userId) return problem(401, "Unauthorized");
 
   const { id } = await params;
   let page;
@@ -66,7 +66,7 @@ export async function DELETE(
     // team space, or made a viewer, must still be able to leave with what
     // is theirs.
     const pageId = await readPageId(req);
-    if (!pageId) return NextResponse.json({ error: "Missing pageId" }, { status: 400 });
+    if (!pageId) return problem(400, "Missing pageId");
     page = await getOwnedPage(pageId, userId);
     if (page.visibility === "team" && page.collection_id === id) throw teamOnlyPageStays();
   } catch (e) {

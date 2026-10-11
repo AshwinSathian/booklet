@@ -8,7 +8,7 @@ import { sessionCookieFor, withRequestScope } from "./helpers/request-scope";
 import { getDb } from "@/lib/mongodb";
 import { ensureIndexes } from "@/lib/db/index-specs.mjs";
 import { createApiKey, createPageRecord, getPageRecord, updatePageRecord } from "@/lib/db";
-import { createUser, findSessionByHash, getIdentitiesByUser, getUserByEmail, getUserById } from "@/lib/db/auth";
+import { createUser, findSessionByHash, getIdentitiesByUser, getUserByEmail, getUserById, markEmailVerified, setUserEmail } from "@/lib/db/auth";
 import { generateRawKey, hashApiKey } from "@/lib/api-key";
 import { hashUserPassword } from "@/lib/auth/password";
 import { hashSessionToken } from "@/lib/auth/session-token";
@@ -35,6 +35,7 @@ import { PATCH as v1Patch } from "@/app/api/v1/pages/[id]/route";
 import { POST as webPublish } from "@/app/api/publish/route";
 import { POST as createKey } from "@/app/api/v1/keys/route";
 import { POST as verifyEmail } from "@/app/api/auth/verify-email/route";
+import { POST as changeEmail } from "@/app/api/account/email/route";
 import { GET as me } from "@/app/api/auth/me/route";
 import { POST as report } from "@/app/api/reports/route";
 import { DELETE as disconnectProvider } from "@/app/api/auth/sso/[provider]/route";
@@ -88,10 +89,10 @@ function publishWithKey(rawKey: string, raw = "# Hello\n\nBody.") {
   );
 }
 
-function withSession(cookie: string | null, url: string, init: { method?: string; body?: unknown } = {}) {
+function withSession(cookie: string | null, url: string, init: { method?: string; body?: unknown; headers?: Record<string, string> } = {}) {
   return new Request(`${ORIGIN}${url}`, {
     method: init.method ?? "POST",
-    headers: { host: "localhost", origin: ORIGIN, "content-type": "application/json", ...(cookie ? { cookie } : {}), ...ip() },
+    headers: { host: "localhost", origin: ORIGIN, "content-type": "application/json", ...(cookie ? { cookie } : {}), ...ip(), ...init.headers },
     ...(init.body === undefined ? {} : { body: JSON.stringify(init.body) }),
   });
 }
@@ -559,5 +560,141 @@ test.describe("account page actions", () => {
     expect(await listConnectedApps(user.id)).toEqual([]);
     expect(await verifyAccessToken(tokens.access_token)).toBeNull();
     metadataFetcher.fetch = realFetch;
+  });
+});
+
+// ─── Changing an account's email address ─────────────────────────────────────
+
+test.describe("change email", () => {
+  test.beforeAll(() => {
+    process.env.RESEND_API_KEY = "re_test";
+  });
+  test.afterAll(() => {
+    delete process.env.RESEND_API_KEY;
+  });
+
+  const ask = (cookie: string | null, body: Record<string, unknown>, headers?: Record<string, string>) => {
+    const req = withSession(cookie, "/api/account/email", { body, ...(headers ? { headers } : {}) });
+    return withRequestScope(req, () => changeEmail(req));
+  };
+  const fresh = () => `moved-${crypto.randomUUID()}@example.test`;
+
+  test("the address changes only when the link sent to the new one is confirmed from the account's session", async () => {
+    const { user, cookie } = await newUser({ verified: true, password: "correct horse battery" });
+    const other = await newUser({ verified: true, password: "correct horse battery" });
+    const next = fresh();
+
+    // Refusals, on another account: the route allows five tries a minute.
+    expect((await ask(other.cookie, { email: next, password: "wrong" })).status).toBe(403);
+    expect((await ask(other.cookie, { email: next })).status).toBe(403);
+    expect((await ask(null, { email: next, password: "correct horse battery" })).status).toBe(401);
+    expect((await ask(other.cookie, { email: "not an address", password: "correct horse battery" })).status).toBe(400);
+    expect((await ask(other.cookie, { email: other.user.email, password: "correct horse battery" })).status).toBe(400);
+
+    const asked = await ask(cookie, { email: next.toUpperCase(), password: "correct horse battery" });
+    expect(await asked.json()).toEqual({ ok: true, changed: false });
+    // Nothing has moved yet.
+    expect((await getUserById(user.id))?.email).toBe(user.email);
+
+    const token = await tokenMailedTo(next);
+    // Someone else's session, and no session, do nothing with the link... and it is spent.
+    expect((await confirm(other.cookie, token)).status).toBe(400);
+    expect((await getUserById(user.id))?.email).toBe(user.email);
+
+    // The account's own session and its own link: the account moves.
+    const third = await newUser({ verified: true, password: "correct horse battery" });
+    const target = fresh();
+    await ask(third.cookie, { email: target, password: "correct horse battery" });
+    const done = await confirm(third.cookie, await tokenMailedTo(target));
+    expect(await done.json()).toEqual({ ok: true, changed: true, email: target });
+    const moved = await getUserById(third.user.id);
+    expect(moved?.email).toBe(target);
+    expect(moved?.email_verified_at).toBeTruthy();
+    // The address it left is told.
+    await expect.poll(() => sentMail.some((m) => m.to === third.user.email)).toBe(true);
+  });
+
+  test("an address that is another account's gets the same answer and no mail, and cannot be taken by a race", async () => {
+    const { user, cookie } = await newUser({ verified: true, password: "correct horse battery" });
+    const holder = await newUser({ verified: true });
+    sentMail.length = 0;
+
+    const asked = await ask(cookie, { email: holder.user.email, password: "correct horse battery" });
+    expect(asked.status).toBe(200);
+    expect(await asked.json()).toEqual({ ok: true, changed: false });
+    expect(sentMail.filter((m) => m.to === holder.user.email)).toEqual([]);
+
+    // The address was free when the link went out and is taken when it is opened.
+    const late = await newUser({ verified: true, password: "correct horse battery" });
+    const next = fresh();
+    await ask(late.cookie, { email: next, password: "correct horse battery" });
+    const token = await tokenMailedTo(next);
+    const racer = await createUser(createId(20), next, null, null, new Date().toISOString());
+    userIds.push(racer.id);
+    const lost = await confirm(late.cookie, token);
+    expect(lost.status).toBe(409);
+    expect((await getUserById(late.user.id))?.email).toBe(late.user.email);
+    expect((await getUserById(user.id))?.email).toBe(user.email);
+  });
+
+  test("an account with no password changes its address with its session alone; a cross-origin request never does", async () => {
+    const { user, cookie } = await newUser({ verified: true });
+    const next = fresh();
+    expect((await ask(cookie, { email: next }, { origin: "https://evil.example" })).status).toBe(403);
+    expect((await ask(cookie, { email: next })).status).toBe(200);
+    expect((await confirm(cookie, await tokenMailedTo(next))).status).toBe(200);
+    expect((await getUserById(user.id))?.email).toBe(next);
+  });
+
+  test("an account that never confirmed its address changes it at once, stays unverified, and no mail goes out", async () => {
+    // A typo at signup: the link went somewhere unreadable.
+    const { user, cookie } = await newUser({ password: "correct horse battery" });
+    const next = fresh();
+    sentMail.length = 0;
+    expect(await (await ask(cookie, { email: next, password: "correct horse battery" })).json()).toEqual({ ok: true, changed: true });
+    const moved = await getUserById(user.id);
+    expect(moved?.email).toBe(next);
+    expect(moved?.email_verified_at).toBeFalsy();
+    expect(sentMail).toEqual([]);
+  });
+
+  test("a change kills password-reset links mailed to the old address, and a second link in a minute is refused", async () => {
+    const { user, cookie } = await newUser({ verified: true, password: "correct horse battery" });
+    const db = await getDb();
+    await db.collection("password_reset_tokens").insertOne({ _id: createId(20), user_id: user.id, token_hash: `h-${crypto.randomUUID()}`, expires_at: new Date(Date.now() + 600_000) } as never);
+    const next = fresh();
+    expect((await ask(cookie, { email: next, password: "correct horse battery" })).status).toBe(200);
+    expect((await ask(cookie, { email: fresh(), password: "correct horse battery" })).status).toBe(429);
+    expect((await confirm(cookie, await tokenMailedTo(next))).status).toBe(200);
+    expect(await db.collection("password_reset_tokens").countDocuments({ user_id: user.id })).toBe(0);
+  });
+
+  test("a proof of one address never verifies another: a reset link sent before a change", async () => {
+    // What a password reset does when an address change lands while it hashes the new password.
+    const { user } = await newUser({ password: "correct horse battery" });
+    const proven = user.email;
+    const next = fresh();
+    expect(await setUserEmail(user.id, next, false)).toBe(true);
+    await markEmailVerified(user.id, proven);
+    expect((await getUserById(user.id))?.email_verified_at).toBeFalsy();
+    await markEmailVerified(user.id, next);
+    expect((await getUserById(user.id))?.email_verified_at).toBeTruthy();
+  });
+
+  test("with no mail configured the address changes at once, and a taken one is refused", async () => {
+    delete process.env.RESEND_API_KEY;
+    try {
+      const { user, cookie } = await newUser({ password: "correct horse battery" });
+      const holder = await newUser();
+      expect((await ask(cookie, { email: holder.user.email, password: "correct horse battery" })).status).toBe(409);
+      const next = fresh();
+      expect(await (await ask(cookie, { email: next, password: "correct horse battery" })).json()).toEqual({ ok: true, changed: true });
+      const moved = await getUserById(user.id);
+      expect(moved?.email).toBe(next);
+      // Nobody proved it, so it is not marked verified (a provider sign-in must not link to it).
+      expect(moved?.email_verified_at).toBeFalsy();
+    } finally {
+      process.env.RESEND_API_KEY = "re_test";
+    }
   });
 });

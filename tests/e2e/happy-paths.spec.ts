@@ -106,8 +106,8 @@ test.describe("Publish API", () => {
       data: { blocks: [], raw: "" },
     });
     expect(res.status()).toBe(400);
-    const body = await res.json() as { error: string };
-    expect(body.error).toBeTruthy();
+    const body = await res.json() as { detail: string };
+    expect(body.detail).toBeTruthy();
   });
 
   test("POST /api/publish rejects missing body", async ({ request }) => {
@@ -454,8 +454,8 @@ test.describe("Auth — signup, session-gated access, logout, login", () => {
       data: { email: `nobody-${Date.now()}@example.test`, password: "whatever12345" },
     });
     expect(res.status()).toBe(401);
-    const body = (await res.json()) as { error: string };
-    expect(body.error).toBe("Invalid email or password");
+    const body = (await res.json()) as { detail: string };
+    expect(body.detail).toBe("Invalid email or password");
   });
 
   test("signup rejects a password shorter than 8 characters", async ({ request }) => {

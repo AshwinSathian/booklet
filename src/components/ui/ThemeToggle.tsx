@@ -1,14 +1,12 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
 import { Icon } from "./Icon";
+import { useHydrated } from "@/lib/ui/hydration";
 
 export default function ThemeToggle() {
   const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => { setMounted(true); }, []);
+  const mounted = useHydrated();
 
   if (!mounted) return <div className="h-8 w-8 shrink-0" aria-hidden />;
 

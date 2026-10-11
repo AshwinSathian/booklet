@@ -96,7 +96,7 @@ async function handleMcp(request: Request, env: Env, origin: string | null): Pro
 // Worker entry point
 // ─────────────────────────────────────────────────────────────────────────────
 
-export default {
+const worker = {
   async fetch(request: Request, env: Env): Promise<Response> {
     try {
       const url = new URL(request.url);
@@ -165,3 +165,5 @@ export default {
     }
   },
 };
+
+export default worker;

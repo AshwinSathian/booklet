@@ -9,17 +9,18 @@ import { isSameOriginRequest } from "@/lib/auth/origin-check";
 import { LoginSchema } from "@/lib/auth/schemas";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/request-ip";
+import { problem } from "@/server/errors";
 
 export const runtime = "nodejs";
 
 // Generic message on every failure path below — never reveal whether the
 // email exists, whether the account has a password set, or whether the
 // password itself was wrong (user enumeration).
-const INVALID_CREDENTIALS = { error: "Invalid email or password" } as const;
+const INVALID_CREDENTIALS = "Invalid email or password";
 
 export async function POST(req: Request) {
   if (!isSameOriginRequest(req)) {
-    return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
+    return problem(403, "Invalid request origin");
   }
 
   const ip = getClientIp(req.headers);
@@ -28,7 +29,7 @@ export async function POST(req: Request) {
 
   const parsed = LoginSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
-    return NextResponse.json(INVALID_CREDENTIALS, { status: 400 });
+    return problem(400, INVALID_CREDENTIALS);
   }
   const { email, password } = parsed.data;
 
@@ -37,12 +38,12 @@ export async function POST(req: Request) {
 
   const user = await getUserByEmail(email);
   if (!user || !user.password_hash) {
-    return NextResponse.json(INVALID_CREDENTIALS, { status: 401 });
+    return problem(401, INVALID_CREDENTIALS);
   }
 
   const valid = await verifyUserPassword(password, user.password_hash);
   if (!valid) {
-    return NextResponse.json(INVALID_CREDENTIALS, { status: 401 });
+    return problem(401, INVALID_CREDENTIALS);
   }
 
   await createSession(user.id);

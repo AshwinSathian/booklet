@@ -3,6 +3,13 @@
 All notable changes to `booklet-cli` are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [3.1.0] - 2026-10-11
+
+### Added
+- `booklet pages move <id> --space <slug>` moves a page into a team space, and `--no-space` takes
+  it out. `--visibility` changes visibility in the same step, which a team-only page needs before
+  it can leave its team. Needs a Booklet server at 2.1.0 or later.
+
 ## [3.0.0] - 2026-10-11
 
 Needs a Booklet server at 2.0.0 or later. Commands, flags and exit codes are unchanged.

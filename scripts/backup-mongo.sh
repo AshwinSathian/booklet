@@ -119,6 +119,26 @@ else
   log "Could not rotate the MongoDB log (the backup goes ahead)."
 fi
 
+# PM2 does not rotate its logs either. Only Booklet's two apps are touched:
+# the PM2 daemon on this Mac runs other things. A log over 5 MB is moved
+# aside with a date, `pm2 reloadLogs` makes PM2 reopen the files, and
+# rotated copies older than 14 days are deleted.
+PM2_LOG_DIR="$HOME/.pm2/logs"
+if [[ -d "$PM2_LOG_DIR" ]]; then
+  source "$(dirname "${BASH_SOURCE[0]}")/lib/pm2-path.sh"
+  ROTATED=false
+  for f in "$PM2_LOG_DIR"/booklet-*.log; do
+    [[ -f "$f" ]] || continue
+    if [[ $(stat -f%z "$f" 2>/dev/null || echo 0) -gt 5242880 ]]; then
+      mv "$f" "${f%.log}.$(date -u +%Y%m%d).log.old" && ROTATED=true
+    fi
+  done
+  if [[ "$ROTATED" == "true" ]]; then
+    pm2 reloadLogs >/dev/null 2>&1 || log "Could not make PM2 reopen its logs (the backup goes ahead)."
+  fi
+  find "$PM2_LOG_DIR" -name 'booklet-*.log.old' -mtime +14 -delete 2>/dev/null || true
+fi
+
 STEP="mongodump | age"
 log "Dumping → $NAME"
 # pipefail (set above) makes a mongodump failure fail the pipeline, so a

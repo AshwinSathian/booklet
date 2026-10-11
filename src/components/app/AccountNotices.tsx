@@ -22,6 +22,7 @@ export function AccountNotices() {
   const [sent, setSent] = useState<"idle" | "sent" | "failed">("idle");
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- local drafts are in localStorage, counted once the session is known
     setUnclaimed(isLoaded && userId ? listUnclaimedDrafts(userId).length : 0);
   }, [isLoaded, userId]);
 

@@ -113,6 +113,7 @@ function toPasswordResetToken(doc: PasswordResetTokenDoc): DbPasswordResetToken 
 /** Creates a reset token, first deleting any earlier still-live token for this user — only one live reset link at a time. */
 export async function createPasswordResetToken(
   userId: string,
+  email: string,
   tokenHash: string,
   expiresAt: Date,
 ): Promise<void> {
@@ -121,6 +122,7 @@ export async function createPasswordResetToken(
   await db.collection<PasswordResetTokenDoc>("password_reset_tokens").insertOne({
     _id: createId(20),
     user_id: userId,
+    email,
     token_hash: tokenHash,
     created_at: new Date().toISOString(),
     expires_at: expiresAt,
@@ -140,12 +142,20 @@ export async function deletePasswordResetToken(tokenHash: string): Promise<void>
 
 // ── Email verification ──────────────────────────────────────────────────────
 
-/** Records that the user's current address is verified. Keeps the first time if already set. */
-export async function markEmailVerified(userId: string): Promise<void> {
+/**
+ * Records that the account's address is verified. Keeps the first time if
+ * already set.
+ *
+ * `email` is the address that was proven (the one a link was mailed to, or
+ * the one a provider vouched for). It is part of the filter, so an account
+ * whose address changed between the proof and this write is left alone: a
+ * proof of one address never verifies another.
+ */
+export async function markEmailVerified(userId: string, email: string): Promise<void> {
   const db = await getDb();
   await db
     .collection<UserDoc>("users")
-    .updateOne({ _id: userId, email_verified_at: null }, { $set: { email_verified_at: new Date().toISOString() } });
+    .updateOne({ _id: userId, email, email_verified_at: null }, { $set: { email_verified_at: new Date().toISOString() } });
 }
 
 type EmailVerificationTokenDoc = {
@@ -155,21 +165,60 @@ type EmailVerificationTokenDoc = {
   email: string;
   token_hash: string;
   expires_at: Date;
+  /** True on a link that moves the account to `email`. Absent on one that confirms the address the account already has. */
+  change?: true;
 };
 
-/** Creates a verification token, replacing any earlier one: only the newest link works. */
-export async function createEmailVerificationToken(userId: string, email: string, tokenHash: string, expiresAt: Date): Promise<void> {
+/**
+ * Creates a verification token, replacing any earlier one: only the newest
+ * link works. With `change`, confirming it moves the account to `email`.
+ */
+export async function createEmailVerificationToken(
+  userId: string,
+  email: string,
+  tokenHash: string,
+  expiresAt: Date,
+  change = false,
+): Promise<void> {
   const col = (await getDb()).collection<EmailVerificationTokenDoc>("email_verification_tokens");
   await col.deleteMany({ user_id: userId });
-  await col.insertOne({ _id: createId(20), user_id: userId, email, token_hash: tokenHash, expires_at: expiresAt });
+  await col.insertOne({ _id: createId(20), user_id: userId, email, token_hash: tokenHash, expires_at: expiresAt, ...(change ? { change: true as const } : {}) });
 }
 
 /** Removes and returns the token, so a link works once. Null when unknown or expired. */
-export async function consumeEmailVerificationToken(tokenHash: string): Promise<{ user_id: string; email: string } | null> {
+export async function consumeEmailVerificationToken(tokenHash: string): Promise<{ user_id: string; email: string; change: boolean } | null> {
   const col = (await getDb()).collection<EmailVerificationTokenDoc>("email_verification_tokens");
   const doc = await col.findOneAndDelete({ token_hash: tokenHash });
   if (!doc || doc.expires_at.getTime() <= Date.now()) return null;
-  return { user_id: doc.user_id, email: doc.email };
+  return { user_id: doc.user_id, email: doc.email, change: doc.change === true };
+}
+
+/**
+ * Moves an account to a new address. False when the address is another
+ * account's: the unique index on `users.email` decides, so two changes to
+ * the same address cannot both win.
+ *
+ * `proven` says whether the account's holder showed they can read the new
+ * address (they opened the link mailed to it). Only then is it marked
+ * verified. An address nobody proved must not be: a provider sign-in is
+ * linked to an account by its verified address (src/server/sso.ts), and
+ * that would let anyone prepare an account for someone else's.
+ *
+ * Password-reset links already mailed to the old address stop working, so
+ * the mailbox the account left cannot be used to take it back.
+ */
+export async function setUserEmail(userId: string, email: string, proven: boolean): Promise<boolean> {
+  try {
+    const db = await getDb();
+    await db
+      .collection<{ _id: string }>("users")
+      .updateOne({ _id: userId }, { $set: { email, email_verified_at: proven ? new Date().toISOString() : null } });
+    await db.collection("password_reset_tokens").deleteMany({ user_id: userId });
+    return true;
+  } catch (err) {
+    if (typeof err === "object" && err !== null && "code" in err && err.code === 11000) return false;
+    throw err;
+  }
 }
 
 export async function hasLiveEmailVerificationToken(userId: string): Promise<boolean> {

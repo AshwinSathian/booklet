@@ -25,6 +25,7 @@ import { parseFrontmatter, type FrontmatterMeta } from "@/lib/frontmatter";
 import { logError } from "@/lib/logger";
 import { parseToBlocks } from "@/lib/parse";
 import { resolveWikilinks, type LinkSource } from "./links";
+import { getWritableSpace } from "./access";
 import { isValidSlug, SLUG_RULES_MESSAGE } from "@/lib/slug";
 import { STORAGE } from "@/lib/constants";
 import { GONE_MESSAGES } from "@/lib/gone-notice";
@@ -216,4 +217,38 @@ export function assertIfMatch(req: Request, page: DbPage): void {
       412,
     );
   }
+}
+
+/**
+ * Where a page is going when its owner asks to move it: the id of the team
+ * space with `slug`, or null to take it out of whichever space it is in.
+ *
+ * - Into a space: the caller must be able to publish there (owner, admin or
+ *   editor of it). Out of one: owning the page is enough, so someone
+ *   removed from a space can still leave with what is theirs.
+ * - A team-only page is readable by the members of the space it is in, so
+ *   moving it would hand it to another team, or to nobody. It stays put
+ *   unless the same request also changes its visibility (`nextVisibility`).
+ *
+ * The page's links are the caller's to redo: a page links within its space
+ * (see ./links.ts), so a move changes what its `[[Title]]`s may point at.
+ */
+export async function resolveSpaceMove(
+  page: DbPage,
+  space: string | null,
+  userId: string,
+  nextVisibility: DbPage["visibility"] = page.visibility,
+): Promise<string | null> {
+  // `null` is "out of its team space". A page in one of its owner's own
+  // folders is in no space, and stays in its folder.
+  const inTeamSpace = page.collection_id ? Boolean((await getCollectionRecord(page.collection_id))?.is_team_space) : false;
+  const target = space === null ? (inTeamSpace ? null : page.collection_id) : (await getWritableSpace({ slug: space }, userId)).id;
+  if (nextVisibility === "team" && page.visibility === "team" && target !== page.collection_id) {
+    throw new ServiceError(
+      "TEAM_ONLY_PAGE",
+      "This page is team-only. Change its visibility before moving it out of its team space.",
+      422,
+    );
+  }
+  return target;
 }

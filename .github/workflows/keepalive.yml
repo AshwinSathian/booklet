@@ -1,0 +1,30 @@
+# GitHub switches a scheduled workflow off after 60 days with no commit to a
+# public repository. uptime.yml is how an outage is noticed, so it must not
+# go quiet because the code did. Once a week this re-enables it, and itself,
+# through the API, which is also what resets that 60-day clock.
+name: Keep scheduled workflows on
+
+on:
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  enable:
+    name: Re-enable scheduled workflows
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: write
+    steps:
+      - name: Enable uptime.yml and keepalive.yml
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          for workflow in uptime.yml keepalive.yml; do
+            gh api --method PUT "repos/$REPO/actions/workflows/$workflow/enable"
+            echo "enabled $workflow"
+          done

@@ -113,7 +113,7 @@ test.describe("Finder-style collections", () => {
       data: { parent_id: target!.id },
     });
     expect(patchRes.status()).toBe(422);
-    const body = (await patchRes.json()) as { error: string };
-    expect(body.error).toContain("sub-folders");
+    const body = (await patchRes.json()) as { detail: string };
+    expect(body.detail).toContain("sub-folders");
   });
 });

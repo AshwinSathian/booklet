@@ -48,10 +48,12 @@ export function CommandPalette({
   // blob (see src/lib/drafts/store.ts), which is unnecessary work per
   // keystroke when cmdk already filters client-side over a static list.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- a snapshot of localStorage drafts, taken each time the palette opens
     if (open) setDrafts(listDrafts());
   }, [open]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- the query is cleared when the palette closes, whichever way it was closed
     if (!open) setSearch("");
   }, [open]);
 
