@@ -52,7 +52,7 @@ jobs:
       # are left out.
       - name: No pre-Booklet names
         run: |
-          if git grep -nE 'rdbl_|READABLE_|"readable"|readable-(api|mcp)|27017/readable' -- src mcp-server packages scripts tests ':!**/CHANGELOG.md' ':!src/app/changelog'; then
+          if git grep -nE 'rdbl_|READABLE_|"readable"|readable-(api|mcp)|27017/readable' -- src mcp-server packages scripts tests ':!**/CHANGELOG.md' ':!src/lib/changelog.ts'; then
             echo "::error::Stale pre-Booklet name found (see matches above)."
             exit 1
           fi
