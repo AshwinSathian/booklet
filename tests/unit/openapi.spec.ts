@@ -19,5 +19,5 @@ test("the documented examples satisfy the schemas the clients validate with", ()
   expect(() => PageDetailResponseSchema.parse(schemaExamples("PageDetail")[0])).not.toThrow();
   expect(() => ListPagesResponseSchema.parse(schemaExamples("ListPagesResponse")[0])).not.toThrow();
   expect(() => ApiErrorSchema.parse(schemaExamples("Problem")[0])).not.toThrow();
-  expect(schemaExamples("PatchPageRequest")).toHaveLength(4); // the docs page indexes these
+  expect(schemaExamples("PatchPageRequest")).toHaveLength(6); // the docs page indexes these
 });
