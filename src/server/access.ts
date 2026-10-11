@@ -3,7 +3,7 @@
  * that shows a page's content, title or existence in a listing asks here.
  */
 
-import { getCollectionBySlug, getCollectionMember, getCollectionRecord } from "@/lib/db";
+import { getCollectionBySlug, getCollectionMember, getCollectionRecord, getCollectionsByIds, getMemberCollectionIds } from "@/lib/db";
 import type { CollectionMemberRole, DbCollection, DbPage } from "@/lib/db/types";
 import { ServiceError } from "./errors";
 
@@ -40,11 +40,29 @@ export async function canViewPage(
  * readable by link, and listing it would hand out the link.
  */
 export async function canListPage(page: DbPage, userId: string | null): Promise<boolean> {
-  if (page.taken_down_at) return false;
-  if (userId && page.user_id === userId) return true;
-  if (page.visibility === "public" && !page.password_hash) return true;
-  if (!userId || !page.collection_id) return false;
-  return (await spaceRole(await getCollectionRecord(page.collection_id), userId)) !== null;
+  return (await listablePages([page], userId)).length === 1;
+}
+
+/**
+ * The pages among `pages` that may be named to this viewer, in the same
+ * order. This is the rule; canListPage is it for one page. Two queries
+ * however many pages there are: the spaces involved, and the viewer's
+ * memberships in them.
+ */
+export async function listablePages(pages: DbPage[], userId: string | null): Promise<DbPage[]> {
+  const open = (p: DbPage) => (userId !== null && p.user_id === userId) || (p.visibility === "public" && !p.password_hash);
+  const candidates = pages.filter((p) => !p.taken_down_at);
+  // Only a page that is neither the viewer's nor public needs its space looked at.
+  const spaceIds = userId ? [...new Set(candidates.filter((p) => !open(p) && p.collection_id).map((p) => p.collection_id as string))] : [];
+  const readable = new Set<string>();
+  if (userId && spaceIds.length) {
+    const spaces = await getCollectionsByIds(spaceIds);
+    const memberOf = await getMemberCollectionIds(spaceIds, userId);
+    for (const [id, space] of spaces) {
+      if (space.is_team_space && (space.user_id === userId || memberOf.has(id))) readable.add(id);
+    }
+  }
+  return candidates.filter((p) => open(p) || (p.collection_id !== null && readable.has(p.collection_id)));
 }
 
 /** 404, never 403, for a space the caller is not in: a team's slug is not theirs to confirm. */

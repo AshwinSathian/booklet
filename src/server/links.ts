@@ -6,7 +6,7 @@
  */
 
 import type { Block } from "@/lib/blocks";
-import { findLinkTargets, getCollectionRecord } from "@/lib/db";
+import { findLinkTargets, getCollectionRecord, getCollectionsByIds } from "@/lib/db";
 import type { DbCollection, DbPage } from "@/lib/db/types";
 import { ROUTES } from "@/lib/constants";
 import { normalizeTitleKey } from "@/lib/wikilinks/resolve";
@@ -74,13 +74,19 @@ export async function resolveWikilinks(
     [...wanted.values()],
   );
 
+  // Outside a space, the author's pages that sit in some team space are
+  // that team's, not part of this page's neighbourhood. One query for all
+  // the candidates' collections, not one per candidate.
+  const collections = inSpace
+    ? new Map<string, DbCollection>()
+    : await getCollectionsByIds(candidates.flatMap((p) => (p.collection_id ? [p.collection_id] : [])));
+  const inSomeTeamSpace = (page: DbPage) => Boolean(page.collection_id && collections.get(page.collection_id)?.is_team_space);
+
   const byTitle = new Map<string, DbPage>();
   for (const page of candidates) {
     const key = normalizeTitleKey(page.title ?? "");
     if (page.id === source.id || byTitle.has(key) || !mayLink(source.visibility, page.visibility)) continue;
-    // Outside a space, the author's pages that sit in some team space are
-    // that team's, not part of this page's neighbourhood.
-    if (!inSpace && (await teamSpace(page.collection_id))) continue;
+    if (!inSpace && inSomeTeamSpace(page)) continue;
     byTitle.set(key, page);
   }
 

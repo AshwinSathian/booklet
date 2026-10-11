@@ -342,6 +342,15 @@ export async function getSpacePages(collectionId: string, publicOnly: boolean): 
   return docs.map(toPage);
 }
 
+/** Whether a space has a page its Atom feed would carry. One indexed lookup, no pages loaded. */
+export async function hasPublicSpacePage(collectionId: string): Promise<boolean> {
+  const db = await getDb();
+  const doc = await db
+    .collection<PageDoc>("pages")
+    .findOne({ collection_id: collectionId, taken_down_at: null, visibility: "public", password_hash: null }, { projection: { _id: 1 } });
+  return doc !== null;
+}
+
 // ---------------------------------------------------------------------------
 // Published links between pages (`[[Title]]` resolved at publish)
 // ---------------------------------------------------------------------------
@@ -412,6 +421,27 @@ export async function getCollectionRecord(collectionId: string): Promise<DbColle
   const db = await getDb();
   const doc = await db.collection<CollectionDoc>("collections").findOne({ _id: collectionId });
   return doc ? toCollection(doc) : null;
+}
+
+/** Several collections in one query, by id. Ids that match nothing are absent from the map. */
+export async function getCollectionsByIds(ids: string[]): Promise<Map<string, DbCollection>> {
+  const unique = [...new Set(ids)];
+  if (unique.length === 0) return new Map();
+  const db = await getDb();
+  const docs = await db.collection<CollectionDoc>("collections").find({ _id: { $in: unique } }).toArray();
+  return new Map(docs.map((d) => [d._id, toCollection(d)]));
+}
+
+/** Which of these collections the user has a membership row in. The owner has none: check `user_id` for that. */
+export async function getMemberCollectionIds(collectionIds: string[], userId: string): Promise<Set<string>> {
+  if (collectionIds.length === 0) return new Set();
+  const db = await getDb();
+  const docs = await db
+    .collection<CollectionMemberDoc>("collection_members")
+    .find({ user_id: userId, collection_id: { $in: collectionIds } })
+    .project<{ collection_id: string }>({ collection_id: 1 })
+    .toArray();
+  return new Set(docs.map((d) => d.collection_id));
 }
 
 function toCollectionMember(doc: CollectionMemberDoc): DbCollectionMember {

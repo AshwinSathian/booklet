@@ -4,7 +4,7 @@ import ThemeToggle from "@/components/ui/ThemeToggle";
 import type { Block } from "@/lib/blocks";
 import { APP_NAME, ROUTES } from "@/lib/constants";
 import { getBacklinkPages, getPageBySlug, getPageRecord, incrementViewCount } from "@/lib/db";
-import { canListPage, canViewPage } from "@/server/access";
+import { canViewPage, listablePages } from "@/server/access";
 import { parseFrontmatter } from "@/lib/frontmatter";
 import { DocHeaderStrip } from "@/components/share/DocHeaderStrip";
 import { absoluteUrl, buildMetadata } from "@/lib/seo";
@@ -382,17 +382,14 @@ export default async function SharePage({
 
 /**
  * Pages that link here through `[[Title]]`, limited to the ones this viewer
- * could find anyway (see canListPage): a team-only or unlisted page that
+ * could find anyway (see listablePages): a team-only or unlisted page that
  * references this one is not named to someone outside it.
  */
 async function ReferencedBy({ pageId }: { pageId: string }) {
   const sources = await getBacklinkPages(pageId).catch(() => []);
   if (sources.length === 0) return null;
   const viewerId = (await getSession())?.userId ?? null;
-  const visible = [];
-  for (const page of sources) {
-    if (await canListPage(page, viewerId)) visible.push(page);
-  }
+  const visible = await listablePages(sources, viewerId);
   if (visible.length === 0) return null;
 
   return (

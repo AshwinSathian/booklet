@@ -1,7 +1,7 @@
 import { AppLogo } from "@/components/ui/AppLogo";
 import { StatusChip, formatDocDate } from "@/components/share/DocHeaderStrip";
 import { ROUTES } from "@/lib/constants";
-import { getCollectionBySlug, getCollectionMembers, getSpacePages } from "@/lib/db";
+import { getCollectionBySlug, getCollectionMembers, getSpacePages, hasPublicSpacePage } from "@/lib/db";
 import { getSession } from "@/lib/auth/session";
 import { groupSpacePages } from "@/lib/space-groups";
 import { spaceRole } from "@/server/access";
@@ -21,7 +21,7 @@ export async function generateMetadata({
   const team = await getCollectionBySlug(slug);
   if (!team) return { title: "Team not found" };
   // The feed link is only advertised when there is a feed (see feed.xml/route.ts).
-  const hasFeed = (await getSpacePages(team.id, true)).length > 0;
+  const hasFeed = await hasPublicSpacePage(team.id);
   return {
     title: `${team.name} — Booklet`,
     ...(hasFeed ? { alternates: { types: { "application/atom+xml": `/t/${slug}/feed.xml` } } } : {}),
