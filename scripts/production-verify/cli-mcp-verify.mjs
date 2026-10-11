@@ -203,7 +203,7 @@ async function main() {
       child.on("close", (c) => resolve({ code: c, stdout: out, stderr: err }));
     });
     ok("CLI process exited 0", code === 0, `stderr: ${stderr}`);
-    ok("CLI printed 'Authenticated'", stdout.includes("Authenticated"), stdout);
+    ok("CLI printed 'Signed in'", stdout.includes("Signed in"), stdout);
     ok("CLI reported 0 pages for a fresh account", /You have 0 pages/.test(stdout), stdout);
 
     const config = JSON.parse(await readFile(join(home, ".booklet", "config.json"), "utf8"));

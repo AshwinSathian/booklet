@@ -5,6 +5,17 @@ All notable changes to `booklet-cli` are documented here. Format follows
 
 ## [Unreleased]
 
+## [3.2.0] - 2026-10-11
+
+### Added
+- `booklet new postmortem`.
+
+### Changed
+- `booklet new` starts each document type from the sections the web editor and the MCP prompts
+  use. The templates come from `booklet-api-client`.
+- `booklet new` creates the folder of the path it is given when that folder does not exist.
+- Messages were reworded: `booklet login` ends with "Signed in.", and errors say what to do next.
+
 ## [3.1.1] - 2026-10-11
 
 ### Fixed

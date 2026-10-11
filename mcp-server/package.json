@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/server": "^2.3.1",
-    "booklet-api-client": "^3.1.0",
+    "booklet-api-client": "^3.2.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {

@@ -3,6 +3,12 @@
 All notable changes to `booklet-api-client` are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [3.2.0] - 2026-10-11
+
+### Added
+- `CORE_TEMPLATES`, `coreTemplate` and `coreTemplateMarkdown`: the six engineering templates
+  (incident report, postmortem, ADR, RFC, runbook, release notes) as Markdown bodies.
+
 ## [3.1.1] - 2026-10-11
 
 ### Changed
