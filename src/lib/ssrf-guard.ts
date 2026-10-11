@@ -1,3 +1,5 @@
+import http from "node:http";
+import https from "node:https";
 import { promises as dns } from "node:dns";
 import net from "node:net";
 
@@ -262,4 +264,95 @@ export function pinnedLookup(address: string, family: 4 | 6) {
     if (options?.all) callback(null, [{ address, family }]);
     else callback(null, address, family);
   };
+}
+
+export type PinnedResponse = { status: number; location: string | null; contentType: string; body: Buffer; truncated: boolean };
+
+/**
+ * One HTTP request with the TCP connection pinned to an address that has
+ * already passed the denylist (`resolveHostForDelivery`), using node:http(s)
+ * and not `fetch`.
+ *
+ * `fetch` resolves the hostname again when it connects. Had the hostname
+ * been checked with a separate lookup first, whoever controls its DNS could
+ * answer the check with a public address and the connection's lookup,
+ * moments later, with an internal one (DNS rebinding). Here the socket goes
+ * to the checked address; the Host header and TLS server name still carry
+ * the hostname.
+ *
+ * - Never follows a redirect: `location` is returned for the caller to refuse.
+ * - `timeoutMs` bounds the whole exchange, not only idle time, so a server
+ *   that drips bytes cannot hold the request open.
+ * - `maxBytes` caps the body kept. Past it, reading stops and `truncated`
+ *   is true. With 0 (the default) the body is drained and not kept, and
+ *   the promise settles as soon as the status line arrives.
+ *
+ * Rejects on a connection error or timeout. The error's message can name
+ * the address connected to: callers show their own words, not it.
+ *
+ * Every outbound request to a user-supplied host goes through here: webhook
+ * delivery, import from URL, and OAuth client metadata documents.
+ */
+export function pinnedRequest(
+  url: URL,
+  address: string,
+  family: 4 | 6,
+  init: { method?: "GET" | "POST"; headers?: Record<string, string>; body?: string; timeoutMs: number; maxBytes?: number },
+): Promise<PinnedResponse> {
+  const maxBytes = init.maxBytes ?? 0;
+  return new Promise((resolve, reject) => {
+    const isHttps = url.protocol === "https:";
+    const deadline = setTimeout(() => req.destroy(new Error("timeout")), init.timeoutMs);
+    const settle = <T>(fn: (value: T) => void) => (value: T) => {
+      clearTimeout(deadline);
+      fn(value);
+    };
+    const ok = settle(resolve);
+    const fail = settle(reject);
+
+    const req = (isHttps ? https : http).request(
+      {
+        hostname: url.hostname,
+        port: url.port || (isHttps ? 443 : 80),
+        path: `${url.pathname}${url.search}`,
+        method: init.method ?? "GET",
+        headers: { ...init.headers, Host: url.host },
+        timeout: init.timeoutMs,
+        lookup: pinnedLookup(address, family),
+        ...(isHttps ? { servername: url.hostname } : {}),
+      },
+      (res) => {
+        const chunks: Buffer[] = [];
+        let size = 0;
+        const finish = (truncated: boolean) =>
+          ok({
+            status: res.statusCode ?? 0,
+            location: typeof res.headers.location === "string" ? res.headers.location : null,
+            contentType: String(res.headers["content-type"] ?? ""),
+            body: Buffer.concat(chunks),
+            truncated,
+          });
+        if (maxBytes === 0) {
+          res.resume();
+          finish(false);
+          return;
+        }
+        res.on("data", (chunk: Buffer) => {
+          size += chunk.length;
+          if (size > maxBytes) {
+            // Stop reading: the answer is "too large" whatever follows.
+            finish(true);
+            req.destroy();
+            return;
+          }
+          chunks.push(chunk);
+        });
+        res.on("end", () => finish(false));
+        res.on("error", fail);
+      },
+    );
+    req.on("timeout", () => req.destroy(new Error("timeout")));
+    req.on("error", fail);
+    req.end(init.body);
+  });
 }

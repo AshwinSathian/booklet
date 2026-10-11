@@ -13,6 +13,13 @@ async function toReact(node: unknown): Promise<ReactNode> {
   const { children, ...rest } = props;
   if (typeof type === "function") {
     let out: unknown;
+    // React reports a hook called outside a render on console.error before
+    // it throws. The throw is handled below; the report is only noise in
+    // the test output, so that one message is dropped for this call.
+    const report = console.error;
+    console.error = (...args: unknown[]) => {
+      if (!String(args[0]).includes("Invalid hook call")) report(...args);
+    };
     try {
       out = await (type as (p: unknown) => unknown)(props);
     } catch (e) {
@@ -20,6 +27,8 @@ async function toReact(node: unknown): Promise<ReactNode> {
       // are the page's interactive chrome, which no server-side check reads.
       if (e instanceof TypeError || /hook/i.test(String(e))) return null;
       throw e;
+    } finally {
+      console.error = report;
     }
     return toReact(out);
   }
