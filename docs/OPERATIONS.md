@@ -128,11 +128,13 @@ when one is down twice a minute apart. GitHub emails the person who last
 edited the schedule. It has no status page and can start late; a real
 monitor (see "Monitoring") is still the better answer. GitHub switches a
 scheduled workflow off after 60 days with no commits to a public
-repository, and sends an email when it does: re-enable it from the Actions
-tab, or the probes stop.
+repository; `.github/workflows/keepalive.yml` re-enables `uptime.yml` and
+itself every Monday through the API, which also resets that clock.
 
-**Logs.** PM2 does not rotate its logs. `pm2 install pm2-logrotate` does it
-for every app on this Mac's PM2 daemon, not only Booklet's.
+**Logs.** The nightly job (`scripts/backup-mongo.sh`) rotates Booklet's two
+PM2 logs: one over 5 MB is moved aside with the date, `pm2 reloadLogs`
+makes PM2 reopen its files, and rotated copies older than 14 days are
+deleted. Other apps on this Mac's PM2 daemon are not touched.
 
 **After a restart**, once logged in:
 
@@ -401,6 +403,19 @@ taken. The export leaves taken-down pages out.
 
 `/p/<id>` for a page that does not exist now answers 404. It used to answer
 200 with a "doesn't exist" notice.
+
+**Changing an email address.** Account settings, "Email address". A link
+goes to the new address (`email_verification_tokens`, with `change: true`)
+and the account moves when it is confirmed from that account's session; the
+address it left is told by mail. An account with a password must type it.
+An address that is another account's gets the same answer and no mail.
+Without `RESEND_API_KEY` the address changes at once. Team invites are
+bound to the address they were sent to, so one sent to the old address no
+longer admits the account.
+
+**Pinned OAuth clients.** `OAUTH_STATIC_CLIENTS` is a JSON array of Client
+ID Metadata Documents. A client listed there is used as written and its URL
+is never fetched. Unset in production: Claude.ai's document is fetched.
 
 ## Auth: in-house (Clerk removed)
 
@@ -766,30 +781,23 @@ resolves it normally
 via `node_modules` since it runs as a regular long-lived Node process under
 PM2.
 
-## Error tracking / structured logging
+## Error tracking
 
-**Current state:** `src/lib/logger.ts` provides `logError`/`logWarn`/`logInfo`,
-emitting JSON lines to stdout/stderr instead of free-form
-`console.error(string, err)` calls. Every catch-and-log site across the app
-(~21 call sites) now goes through this. Logs still land in PM2's log files
-(`~/.pm2/logs/`) — there is **no external aggregation, search, or alerting**
-yet.
+`logError` (`src/lib/logger.ts`) writes a JSON line to PM2's log, and counts
+the error in the `error_events` collection (`src/lib/db/error-events.ts`):
+one row per distinct error, by scope, message, error name and the first
+frame of its stack, with a count and first and last sighting. A row is
+removed 30 days after its last sighting.
 
-**Why not further:** an external error tracker (Sentry, Axiom, Better Stack,
-etc.) needs a real account/DSN, and none is set up yet.
+- `/admin` lists the 25 most recent, each with its stack.
+- With `ERROR_ALERT_EMAIL` set (and `RESEND_API_KEY`), a new error is
+  mailed once when first seen, then at most once a day for that error, and
+  ten mails an hour in all. Unset, nothing is mailed and nothing else changes.
+- Recording never throws and is never awaited: a database that is down
+  costs the count, not the request.
 
-**What a future integration needs:**
-1. Pick a provider, create an account, get a DSN/API key.
-2. For Sentry specifically: `npm install @sentry/nextjs`, run
-   `npx @sentry/wizard@latest -i nextjs`, set `SENTRY_DSN` in the environment.
-3. Wrap `logError` in `src/lib/logger.ts` to also call
-   `Sentry.captureException(err, { tags: { scope }, extra })` when
-   `SENTRY_DSN` is set — keep the JSON-stdout behavior too, so PM2 logs stay
-   useful without the external service.
-4. Wire PM2 itself to alert on process crashes/restarts (PM2 Plus, or a
-   simple watchdog cron hitting `pm2 jlist` and paging on unexpected state)
-   — this is a different concern from application-level error tracking and
-   isn't addressed by the logger change above.
+There is no outside tracker. If one is wanted later, `recordErrorEvent` is
+the one place to send from.
 
 ## Infrastructure: single-machine deployment
 

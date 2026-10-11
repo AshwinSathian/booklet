@@ -30,7 +30,7 @@ import { PROMPT_DEFINITIONS, renderPrompt } from "./prompts.js";
 
 // Must match mcp-server/package.json and mcp-server/server.json (the MCP
 // registry entry); tests/unit/mcp-version.spec.ts checks all three.
-export const SERVER_VERSION = "4.0.0";
+export const SERVER_VERSION = "4.1.0";
 
 // Tools are registered, and so listed, in this order. Keep it fixed: a
 // client caches tools/list, and a reordered list is a changed list.

@@ -9,6 +9,54 @@ Notable changes to the Booklet app and MCP server. The format follows
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-10-11
+
+`booklet-api-client` and `booklet-cli` are 3.1.0 and the MCP server is 4.1.0.
+
+### Added
+
+- **Change your email address** in Account settings. A link goes to the new
+  address and the account moves when the link is confirmed while signed in
+  to it. The address it left is told by mail.
+- **Move a page between team spaces** without the web app:
+  `PATCH /api/v1/pages/:id` takes `space` (a slug, or `null`),
+  `booklet pages move <id> --space <slug>` or `--no-space`, and the MCP
+  `update_page` tool takes `space`. The page's `[[Title]]` links are
+  resolved again for where it now is.
+- **Error tracking, built in.** Every error the app logs is counted by
+  fingerprint and listed on `/admin` with its stack, for 30 days. With
+  `ERROR_ALERT_EMAIL` set, a new error is also emailed.
+- `OAUTH_STATIC_CLIENTS` pins an OAuth client's metadata, so signing in does
+  not depend on fetching it.
+
+### Security
+
+- **Scripts run only with a per-request nonce.** The Content-Security-Policy
+  no longer has `'unsafe-inline'` for scripts; it has a nonce and
+  `'strict-dynamic'`. An injected `<script>` or inline handler does not run.
+  Every page is now rendered per request, which a nonce requires.
+- One pinned-connection helper (`pinnedRequest`) makes every outbound
+  request to a host a user supplied: webhook delivery, import from URL and
+  OAuth client metadata. All three now have a deadline for the whole
+  exchange, which only one had.
+
+### Changed
+
+- **Rendered documents are set tighter.** Line height is 1.5 (1.55 in the
+  serif face), with smaller gaps between blocks and list items. The HTML
+  export matches.
+- **One error shape.** Every error response is RFC 9457 problem details,
+  from the app's own routes as from `/api/v1`. The web UI reads `detail`.
+  A script that called the session routes (`/api/webhooks`, `/api/publish`)
+  and read `error` has to read `detail`. OAuth endpoints keep RFC 6749's.
+- "Referenced by", link resolution and the space home's feed check make a
+  fixed number of queries, not one per page.
+- The nightly job rotates Booklet's PM2 logs, and a weekly workflow keeps
+  the uptime probe from being switched off after 60 days without a commit.
+- Lint fails on any warning. The React Compiler rules were reviewed hit by
+  hit: most were rewritten, and each effect that still sets state says why.
+
+
 ## [2.0.1] - 2026-10-11
 
 ### Security
@@ -409,5 +457,6 @@ code.
   scripts.
 
 [1.1.0]: https://github.com/AshwinSathian/booklet/releases/tag/v1.1.0
+[2.1.0]: https://github.com/AshwinSathian/booklet/releases/tag/v2.1.0
 [2.0.1]: https://github.com/AshwinSathian/booklet/releases/tag/v2.0.1
 [2.0.0]: https://github.com/AshwinSathian/booklet/releases/tag/v2.0.0

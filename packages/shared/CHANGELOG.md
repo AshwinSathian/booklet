@@ -3,6 +3,12 @@
 All notable changes to `booklet-api-client` are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [3.1.0] - 2026-10-11
+
+### Added
+- `PatchPageRequestSchema` and `updatePage` take `space`: the slug of a team space to move the page
+  into, or `null` to take it out of its space. Needs a Booklet server at 2.1.0 or later.
+
 ## [3.0.0] - 2026-10-11
 
 Needs a Booklet server at 2.0.0 or later.

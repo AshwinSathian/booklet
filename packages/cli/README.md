@@ -143,6 +143,18 @@ booklet pages open abc123 --json      # prints the page object as JSON
 booklet pages open my-custom-slug     # works with slugs too
 ```
 
+### `booklet pages move <id>`
+
+Move a page into a team space you can publish to, or out of the space it is in.
+
+```bash
+booklet pages move abc123 --space platform-team
+booklet pages move abc123 --space platform-team --visibility team   # and restrict it to the team
+booklet pages move abc123 --no-space                                # take it out of its space
+```
+
+A team-only page stays with its team: to move it, change its visibility in the same command.
+
 ### `booklet pages delete <id>`
 
 Delete a page by ID or slug. Shows the page title and URL in the confirmation prompt.
@@ -230,6 +242,7 @@ URL=$(booklet publish notes.md --json | jq -r .url)
 | `pull <id>` | the page, including `raw`; with `-o`: `{ "id", "url", "file" }` |
 | `new <template>` | `{ "template", "file" }` |
 | `pages list` | an array of pages |
+| `pages move` | `{ "id", "url", "space" }` |
 | `pages open <id>` | the page (the browser is not opened) |
 | `pages delete <id>` | `{ "deleted", "id" }` |
 | `whoami` | `{ "authenticated", "key", "base", "source" }` |

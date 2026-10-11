@@ -955,8 +955,8 @@ export default function McpSetupPage() {
                     },
                     {
                       name: "update_page",
-                      desc: "Update an existing page's content or metadata",
-                      inputs: "id or slug, raw, new slug, visibility",
+                      desc: "Update a page's content or metadata, or move it between team spaces",
+                      inputs: "id or slug, raw, new slug, visibility, space",
                     },
                     {
                       name: "get_page",

@@ -32,6 +32,18 @@ const TAG_COLORS: Record<Entry["tag"], string> = {
 
 const RELEASES: Release[] = [
   {
+    version: "v2.1.0",
+    date: "2026-10-11",
+    summary: "Change your email address, move pages between team spaces from the API and CLI, and a stricter script policy.",
+    entries: [
+      { date: "2026-10-11", tag: "New", text: "Change your account's email address from Account settings. The change happens when you open the link sent to the new address" },
+      { date: "2026-10-11", tag: "New", text: "Move a page into or out of a team space from the API, with booklet pages move, or through the MCP update_page tool" },
+      { date: "2026-10-11", tag: "Improved", text: "Published pages are set tighter: less space between lines, paragraphs and list items" },
+      { date: "2026-10-11", tag: "Improved", text: "Scripts on every page now need a per-request nonce to run, so injected script does not" },
+      { date: "2026-10-11", tag: "Improved", text: "Every error the API and the app return has one shape, RFC 9457 problem details" },
+    ],
+  },
+  {
     version: "v2.0.1",
     date: "2026-10-11",
     summary: "Mermaid diagrams are sanitized before they are shown, and the editor's visibility control is a proper menu.",
