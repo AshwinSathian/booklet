@@ -9,6 +9,10 @@ import { listDrafts, type DraftMeta } from "@/lib/drafts";
 import { ROUTES } from "@/lib/constants";
 import { navigateWithViewTransition, usePrefersReducedMotion } from "@/lib/motion";
 
+// The label styles sit on the heading alone: on the group they are inherited by every item.
+const GROUP =
+  "px-2 py-1 [&_[cmdk-group-heading]]:pb-1 [&_[cmdk-group-heading]]:text-2xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-[0.16em] [&_[cmdk-group-heading]]:text-text-muted";
+
 export function CommandPalette({
   open,
   onOpenChange,
@@ -84,7 +88,7 @@ export function CommandPalette({
       open={open}
       onOpenChange={onOpenChange}
       label="Command palette"
-      className="fixed left-1/2 top-24 z-50 w-full max-w-lg -translate-x-1/2 rounded-card border border-border-default bg-bg-elevated shadow-glass"
+      className="fixed left-1/2 top-24 z-50 w-[calc(100%-1.5rem)] max-w-lg -translate-x-1/2 rounded-xl border border-border-default bg-bg-elevated shadow-glass"
     >
       <Command.Input
         value={search}
@@ -98,7 +102,7 @@ export function CommandPalette({
         </Command.Empty>
 
         {visibleDrafts.length > 0 && (
-          <Command.Group heading="Drafts" className="text-2xs uppercase tracking-wider text-text-muted px-2 py-1">
+          <Command.Group heading="Drafts" className={GROUP}>
             {visibleDrafts.map((d) => (
               <Command.Item
                 key={d.id}
@@ -115,14 +119,14 @@ export function CommandPalette({
                 <Icon name="markdown" size={13} className="shrink-0 text-text-muted" />
                 <span className="truncate">{d.title || "Untitled"}</span>
                 {d.id === activeDraftId && (
-                  <span className="ml-auto shrink-0 text-2xs text-text-muted">Current</span>
+                  <span className="ml-auto shrink-0 text-xs text-text-muted">Current</span>
                 )}
               </Command.Item>
             ))}
           </Command.Group>
         )}
 
-        <Command.Group heading="Actions" className="text-2xs uppercase tracking-wider text-text-muted px-2 py-1">
+        <Command.Group heading="Actions" className={GROUP}>
           <Command.Item
             value="New draft"
             keywords={["create", "blank"]}
@@ -158,7 +162,7 @@ export function CommandPalette({
           </Command.Item>
         </Command.Group>
 
-        <Command.Group heading="Insert" className="text-2xs uppercase tracking-wider text-text-muted px-2 py-1">
+        <Command.Group heading="Insert" className={GROUP}>
           {INSERT_ITEMS.map((item) => (
             <Command.Item
               key={item.id}
@@ -179,7 +183,7 @@ export function CommandPalette({
           ))}
         </Command.Group>
 
-        <Command.Group heading="Navigate" className="text-2xs uppercase tracking-wider text-text-muted px-2 py-1">
+        <Command.Group heading="Navigate" className={GROUP}>
           <Command.Item
             onSelect={() => go(ROUTES.myPages)}
             className="cursor-pointer rounded-lg px-3 py-2 text-sm text-text-primary aria-selected:bg-fill-2"

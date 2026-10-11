@@ -89,7 +89,7 @@ export default function PrivacyPage() {
             </p>
             <p>
               To delete your account and all associated data, email{" "}
-              <a href="mailto:booklet@ashwinsathian.com" className="text-accent underline underline-offset-2">
+              <a href="mailto:booklet@ashwinsathian.com" className="link">
                 booklet@ashwinsathian.com
               </a>
               . We will process your request within 30 days.
@@ -115,7 +115,7 @@ export default function PrivacyPage() {
           <Section title="Contact">
             <p>
               Questions? Email{" "}
-              <a href="mailto:booklet@ashwinsathian.com" className="text-accent underline underline-offset-2">
+              <a href="mailto:booklet@ashwinsathian.com" className="link">
                 booklet@ashwinsathian.com
               </a>
               .

@@ -1,3 +1,4 @@
+import { formatDate, formatDateUTC } from "./time";
 import { useSyncExternalStore } from "react";
 
 const subscribeNever = () => () => {};
@@ -12,4 +13,9 @@ const subscribeNever = () => () => {};
  */
 export function useHydrated(): boolean {
   return useSyncExternalStore(subscribeNever, () => true, () => false);
+}
+
+/** A date formatter for server-rendered client components: UTC until hydrated, local after. */
+export function useDateFormat(): (iso: string) => string {
+  return useHydrated() ? formatDate : formatDateUTC;
 }

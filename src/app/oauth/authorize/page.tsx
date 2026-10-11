@@ -73,12 +73,11 @@ export default async function OAuthAuthorizePage({
     // consent screen (POST /api/oauth/authorize).
     return (
       <AuthLayout>
-        <p className="text-3xl">⚠</p>
         <div className="text-center space-y-1.5">
-          <h1 className="text-base font-semibold">This app can&apos;t be connected</h1>
+          <h1 className="font-display text-2xl font-medium leading-tight tracking-[-0.02em]">This app can&apos;t be connected</h1>
           <p className="text-sm text-text-secondary leading-relaxed">{validation.message}</p>
         </div>
-        <Link href="/docs/guides/mcp" className="text-sm text-accent hover:text-accent-soft transition-colors">
+        <Link href="/docs/guides/mcp" className="text-sm link">
           MCP setup guide →
         </Link>
       </AuthLayout>

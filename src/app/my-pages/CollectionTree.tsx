@@ -19,7 +19,7 @@ function RenameInput({ initialValue, onCommit, onCancel }: { initialValue: strin
         if (e.key === "Escape") { e.preventDefault(); onCancel(); }
       }}
       onBlur={() => onCommit(draft.trim() || initialValue)}
-      className="min-w-0 flex-1 rounded-md border border-accent/40 bg-bg px-1.5 py-0.5 text-sm text-text-primary focus-visible:outline-none"
+      className="min-w-0 flex-1 rounded-md border border-border-strong bg-bg px-1.5 py-0.5 text-sm text-text-primary focus-visible:outline-none"
     />
   );
 }
@@ -79,7 +79,7 @@ function Row({
     <div
       className={[
         "group flex items-center gap-1 rounded-lg transition",
-        isDropTarget ? "bg-accent-dim ring-1 ring-accent/40" : "",
+        isDropTarget ? "bg-fill-2 ring-1 ring-accent/40" : "",
       ].join(" ")}
       style={{ paddingLeft: depth * 14 }}
       draggable={draggable}
@@ -104,7 +104,7 @@ function Row({
       {renaming && onCommitRename && onCancelRename ? (
         <div className="flex min-w-0 flex-1 items-center gap-1.5 px-2 py-1">
           {id !== "all" && id !== "uncollected" ? (
-            <Icon name="folder" size={13} className="shrink-0 text-accent" />
+            <Icon name="folder" size={13} className="shrink-0 text-text-primary" />
           ) : null}
           <RenameInput initialValue={label} onCommit={onCommitRename} onCancel={onCancelRename} />
         </div>
@@ -114,16 +114,16 @@ function Row({
           onClick={onSelect}
           className={[
             "flex min-w-0 flex-1 items-center justify-between gap-2 rounded-lg px-2 py-2 text-left text-sm transition",
-            active ? "bg-accent-dim text-accent font-semibold shadow-[inset_2px_0_0_var(--color-accent)]" : "text-text-secondary hover:bg-fill-2 hover:text-text-primary",
+            active ? "bg-fill-2 text-text-primary font-semibold shadow-[inset_2px_0_0_var(--color-accent)]" : "text-text-secondary hover:bg-fill-2 hover:text-text-primary",
           ].join(" ")}
         >
           <span className="flex items-center gap-1.5 truncate">
             {id !== "all" && id !== "uncollected" ? (
-              <Icon name={active ? "folder-open" : "folder"} size={13} className="shrink-0 text-accent" />
+              <Icon name={active ? "folder-open" : "folder"} size={13} className="shrink-0 text-text-primary" />
             ) : null}
             <span className="truncate">{label}</span>
           </span>
-          <span className="shrink-0 rounded-full bg-fill-2 px-1.5 py-0.5 text-2xs text-text-muted tabular-nums">
+          <span className="shrink-0 rounded-full bg-fill-2 px-1.5 py-0.5 text-xs text-text-muted tabular-nums">
             {count}
           </span>
         </button>

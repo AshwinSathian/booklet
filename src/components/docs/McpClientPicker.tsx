@@ -1,5 +1,6 @@
 "use client";
 
+import { CopyButton } from "@/components/marketing/CopyButton";
 import { ROUTES } from "@/lib/constants";
 import Link from "next/link";
 import { onTablistKeyDown } from "@/lib/ui/tablist";
@@ -13,7 +14,7 @@ function cn(...cls: (string | false | undefined)[]) {
 
 function Code({ children }: { children: ReactNode }) {
   return (
-    <code className="rounded px-1.5 py-0.5 text-[0.8em] font-mono bg-fill-2 text-accent-soft break-all">
+    <code className="rounded px-1.5 py-0.5 text-[0.8em] font-mono bg-fill-2 text-text-primary break-all">
       {children}
     </code>
   );
@@ -21,7 +22,7 @@ function Code({ children }: { children: ReactNode }) {
 
 function StepNumber({ n }: { n: number }) {
   return (
-    <span className="shrink-0 w-6 h-6 rounded-full bg-accent/15 text-accent text-xs font-bold flex items-center justify-center">
+    <span className="shrink-0 w-6 h-6 rounded-full bg-fill-2 text-text-primary text-xs font-bold flex items-center justify-center">
       {n}
     </span>
   );
@@ -29,38 +30,6 @@ function StepNumber({ n }: { n: number }) {
 
 // ─── Copy button ──────────────────────────────────────────────────────────────
 
-function CopyButton({ text, className }: { text: string; className?: string }) {
-  const [copied, setCopied] = useState(false);
-  const copy = useCallback(() => {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  }, [text]);
-
-  return (
-    <button
-      type="button"
-      onClick={copy}
-      title={copied ? "Copied!" : "Copy"}
-      className={cn(
-        "p-1.5 rounded-md transition text-text-muted hover:text-text-primary hover:bg-bg-elevated border border-transparent hover:border-border-default",
-        className,
-      )}
-    >
-      {copied ? (
-        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" aria-hidden>
-          <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      ) : (
-        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" aria-hidden>
-          <rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" strokeWidth="1.7" />
-          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke="currentColor" strokeWidth="1.7" />
-        </svg>
-      )}
-    </button>
-  );
-}
 
 function CodeBlock({ code, label }: { code: string; label?: string }) {
   return (
@@ -79,7 +48,7 @@ function CodeBlock({ code, label }: { code: string; label?: string }) {
           {code}
         </pre>
         {!label && (
-          <CopyButton text={code} className="absolute top-2.5 right-2.5 opacity-0 group-hover:opacity-100 bg-bg-soft" />
+          <CopyButton text={code} className="absolute right-2.5 top-2.5" />
         )}
       </div>
     </div>
@@ -100,10 +69,10 @@ function InlineCode({ text }: { text: string }) {
       type="button"
       onClick={copy}
       title={copied ? "Copied!" : "Click to copy"}
-      className="group inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-mono text-[0.8em] bg-fill-2 text-accent-soft hover:bg-accent/10 transition cursor-pointer"
+      className="group inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-mono text-[0.8em] bg-fill-2 text-text-primary hover:bg-fill-3 transition cursor-pointer"
     >
       <span className="break-all">{text}</span>
-      <span className="shrink-0 text-text-muted group-hover:text-accent transition">
+      <span className="shrink-0 text-text-muted group-hover:text-text-primary">
         {copied ? (
           <svg width="11" height="11" fill="none" viewBox="0 0 24 24" aria-hidden>
             <path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -345,7 +314,7 @@ function ClaudeAiInstructions() {
         <Step n={1} title="Add the connector">
           <p className="text-sm text-text-secondary mb-2">
             Go to{" "}
-            <a href="https://claude.ai" target="_blank" rel="noopener noreferrer" className="text-accent underline underline-offset-2">
+            <a href="https://claude.ai" target="_blank" rel="noopener noreferrer" className="link">
               claude.ai
             </a>{" "}
             → <strong>Settings</strong> → <strong>Connectors</strong> → <strong>Add custom connector</strong>, and

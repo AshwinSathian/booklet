@@ -33,7 +33,7 @@ export default async function SignUpPage({
   }
 
   return (
-    <AuthLayout>
+    <AuthLayout title="Create your account">
       <div className="text-center">
         <p className="text-sm text-text-secondary">
           {redirectUrl?.startsWith("/cli-auth")
@@ -44,17 +44,17 @@ export default async function SignUpPage({
 
       <AuthForm mode="sign-up" redirectUrl={redirectUrl} providers={enabledSsoProviders()} errorCode={error} />
 
-      <p className="text-xs text-text-muted text-center">
+      <p className="text-center text-sm text-text-secondary">
         Already have an account?{" "}
         <Link
           href={redirectUrl ? `${ROUTES.signIn}?redirect_url=${encodeURIComponent(redirectUrl)}` : ROUTES.signIn}
-          className="text-accent underline underline-offset-2 hover:text-accent-soft transition-colors"
+          className="link"
         >
           Sign in
         </Link>
         <br />
         Just want to share something quick?{" "}
-        <Link href={ROUTES.app} className="text-accent underline underline-offset-2 hover:text-accent-soft transition-colors">
+        <Link href={ROUTES.app} className="link">
           Publish without an account →
         </Link>
       </p>

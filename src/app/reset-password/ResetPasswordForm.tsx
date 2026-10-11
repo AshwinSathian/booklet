@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { ROUTES } from "@/lib/constants";
 
 const INPUT_CLASS =
-  "w-full rounded-lg border border-border-default bg-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft";
+  "w-full field";
 
 export function ResetPasswordForm() {
   const router = useRouter();
@@ -43,7 +43,7 @@ export function ResetPasswordForm() {
   }
 
   return (
-    <form onSubmit={(e) => void handleSubmit(e)} className="w-full max-w-xs space-y-3">
+    <form onSubmit={(e) => void handleSubmit(e)} className="w-full space-y-3">
       <div>
         <label htmlFor="password" className="sr-only">New password</label>
         <input
@@ -59,8 +59,8 @@ export function ResetPasswordForm() {
           className={INPUT_CLASS}
         />
       </div>
-      {error && <p role="alert" className="text-xs text-danger">{error}</p>}
-      <Button type="submit" variant="primary" size="md" disabled={submitting} className="w-full justify-center">
+      {error && <p role="alert" className="text-sm text-danger">{error}</p>}
+      <Button type="submit" variant="primary" size="lg" disabled={submitting} className="w-full justify-center">
         {submitting ? "Please wait…" : "Reset password"}
       </Button>
     </form>

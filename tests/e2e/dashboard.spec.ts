@@ -63,7 +63,7 @@ test("API keys and webhooks live under Settings, and a page published by the CLI
 
   await page.goto("/my-pages");
   await expect(page.getByRole("heading", { level: 1, name: "My pages" })).toBeVisible();
-  const row = (title: string) => page.locator(".group", { has: page.getByRole("link", { name: title }) });
+  const row = (title: string) => page.getByTestId("page-card").filter({ has: page.getByRole("link", { name: title }) });
   await expect(row("Published from a terminal")).toContainText("Published from CLI");
   await expect(row("Published from the editor")).toContainText("Published from Web");
   // The two sections that moved are gone from the dashboard.

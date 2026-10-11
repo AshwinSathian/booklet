@@ -18,7 +18,7 @@ export default function ThemeToggle() {
       onClick={() => setTheme(isDark ? "light" : "dark")}
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
       title={isDark ? "Switch to light mode" : "Switch to dark mode"}
-      className="flex h-8 w-8 items-center justify-center rounded-pill text-text-muted hover:text-text-primary hover:bg-fill-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg overflow-hidden"
+      className="flex h-8 w-8 items-center justify-center rounded-lg text-text-muted hover:text-text-primary hover:bg-fill-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg overflow-hidden"
     >
       <span key={String(isDark)} className="flex items-center justify-center animate-scale-in">
         <Icon name={isDark ? "sun" : "moon"} size={15} />

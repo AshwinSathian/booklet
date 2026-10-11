@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
+import { useDateFormat } from "@/lib/ui/hydration";
 import { formatUpdatedAtLong, formatUpdatedAtLongUTC } from "@/lib/ui/time";
 import { useCallback, useRef, useState } from "react";
 import { useHydrated } from "@/lib/ui/hydration";
@@ -72,8 +73,8 @@ function DeliveryLog({ webhookId, initial }: { webhookId: string; initial: Deliv
                 {d.status_code ?? "No response"}
               </span>
               <span className="text-text-secondary">{d.ok ? "Delivered" : (d.error ?? "Failed")}</span>
-              <code className="font-mono text-2xs text-text-secondary">{d.event}</code>
-              <a href={`/p/${d.page_id}`} className="font-mono text-2xs text-text-secondary underline hover:text-text-primary">
+              <code className="font-mono text-xs text-text-secondary">{d.event}</code>
+              <a href={`/p/${d.page_id}`} className="font-mono text-xs text-text-secondary underline hover:text-text-primary">
                 {d.page_id}
               </a>
               <time dateTime={d.created_at} className="text-text-secondary">
@@ -98,13 +99,9 @@ function DeliveryLog({ webhookId, initial }: { webhookId: string; initial: Deliv
 
 type SecretReveal = { id: string; secret: string };
 
-function formatDate(iso: string | null) {
-  if (!iso) return "Never";
-  return new Date(iso).toLocaleDateString(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+function useNullableDate() {
+  const format = useDateFormat();
+  return (iso: string | null) => (iso ? format(iso) : "Never");
 }
 
 function WebhookCard({
@@ -114,6 +111,7 @@ function WebhookCard({
   wh: WebhookRow;
   onDeleted: (id: string) => void;
 }) {
+  const formatDate = useNullableDate();
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -131,7 +129,7 @@ function WebhookCard({
   }, [wh.id, onDeleted]);
 
   return (
-    <div className="group flex items-start gap-3 rounded-xl border border-border-default bg-bg-elevated px-4 py-3 transition hover:border-accent-soft/30">
+    <div className="group flex items-start gap-3 rounded-xl border border-border-default bg-bg-elevated px-4 py-3 transition hover:border-border-strong">
       <div className="min-w-0 flex-1">
         <div className="text-sm font-medium text-text-primary truncate">{wh.url}</div>
         <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-text-muted">
@@ -139,7 +137,7 @@ function WebhookCard({
             {wh.events.map((e) => (
               <span
                 key={e}
-                className="rounded-pill bg-fill-2 border border-border-default px-1.5 py-0.5 text-2xs font-mono"
+                className="rounded-pill bg-fill-2 border border-border-default px-1.5 py-0.5 text-xs font-mono"
               >
                 {e}
               </span>
@@ -214,7 +212,7 @@ function SecretBanner({ reveal, onDismiss }: { reveal: SecretReveal; onDismiss: 
   };
 
   return (
-    <div className="rounded-xl border border-accent/30 bg-accent-dim p-4 flex flex-col gap-3">
+    <div className="rounded-xl border border-border-strong bg-fill-2 p-4 flex flex-col gap-3">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-sm font-semibold text-text-primary">Webhook signing secret</p>
@@ -237,7 +235,7 @@ function SecretBanner({ reveal, onDismiss }: { reveal: SecretReveal; onDismiss: 
           iconOnly
           onClick={() => void copy()}
           title="Copy secret"
-          className={`shrink-0 ${copied ? "text-accent bg-accent-dim" : ""}`}
+          className={`shrink-0 ${copied ? "bg-fill-2 text-text-primary" : ""}`}
         >
           <Icon name={copied ? "check" : "copy"} size={14} />
         </Button>
@@ -326,10 +324,10 @@ export function WebhooksSection({ initialWebhooks }: { initialWebhooks: WebhookR
 
   return (
     <div>
-      <div className="mb-4 flex items-baseline justify-between gap-4">
+      <div className="mb-8 flex items-baseline justify-between gap-4">
         <div>
-          <h1 className="text-xl font-medium">Webhooks</h1>
-          <p className="mt-0.5 text-sm text-text-secondary">
+          <h1 className="font-display text-2xl font-medium tracking-[-0.02em] sm:text-[1.75rem]">Webhooks</h1>
+          <p className="mt-2 text-sm text-text-secondary">
             Get notified when pages are published or updated.
           </p>
         </div>
@@ -355,11 +353,11 @@ export function WebhooksSection({ initialWebhooks }: { initialWebhooks: WebhookR
             type="url"
             placeholder="https://your-server.com/webhook"
             aria-label="Webhook URL"
-            className="min-w-0 flex-1 rounded-lg border border-border-default bg-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft"
+            className="min-w-0 flex-1 field"
           />
           <Button
             variant="primary"
-            size="md"
+            size="lg"
             onClick={() => void handleCreate()}
             disabled={creating}
             className="shrink-0"
@@ -398,7 +396,7 @@ export function WebhooksSection({ initialWebhooks }: { initialWebhooks: WebhookR
                 onChange={() => toggleEvent(opt.value)}
                 className="accent-[var(--color-accent)]"
               />
-              <code className="font-mono text-2xs">{opt.label}</code>
+              <code className="font-mono text-xs">{opt.label}</code>
             </label>
           ))}
         </div>

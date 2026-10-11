@@ -371,7 +371,7 @@ function FindReplaceBar({
             className="w-full h-6 rounded border border-border-subtle bg-bg px-2 py-0 text-xs font-mono text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-accent-soft pr-14"
           />
           {findText && (
-            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-2xs tabular-nums text-text-muted pointer-events-none">
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs tabular-nums text-text-muted pointer-events-none">
               {matches.length === 0
                 ? "0/0"
                 : `${safeMatchIdx + 1}/${matches.length}`}
@@ -388,7 +388,7 @@ function FindReplaceBar({
           className={[
             "h-6 w-6 shrink-0 rounded flex items-center justify-center text-2xs font-mono font-semibold border transition",
             caseSensitive
-              ? "border-accent/50 bg-accent/10 text-accent"
+              ? "border-border-strong bg-fill-2 text-text-primary"
               : "border-border-subtle bg-bg text-text-muted hover:text-text-primary hover:bg-fill-2",
           ].join(" ")}
         >
@@ -447,7 +447,7 @@ function FindReplaceBar({
           type="button"
           onClick={handleReplace}
           disabled={!findText || matches.length === 0}
-          className="h-6 shrink-0 px-2 rounded border border-border-subtle bg-bg text-2xs text-text-muted transition hover:text-text-primary hover:bg-fill-2 disabled:opacity-30"
+          className="h-6 shrink-0 px-2 rounded border border-border-subtle bg-bg text-xs text-text-muted transition hover:text-text-primary hover:bg-fill-2 disabled:opacity-30"
         >
           Replace
         </button>
@@ -455,7 +455,7 @@ function FindReplaceBar({
           type="button"
           onClick={handleReplaceAll}
           disabled={!findText || matches.length === 0}
-          className="h-6 shrink-0 px-2 rounded border border-border-subtle bg-bg text-2xs text-text-muted transition hover:text-text-primary hover:bg-fill-2 disabled:opacity-30"
+          className="h-6 shrink-0 px-2 rounded border border-border-subtle bg-bg text-xs text-text-muted transition hover:text-text-primary hover:bg-fill-2 disabled:opacity-30"
         >
           All
         </button>
@@ -722,7 +722,7 @@ function WikilinkAutocomplete({
           className={[
             "w-full truncate px-3 py-1.5 text-left text-xs",
             i === selectedIndex
-              ? "bg-accent/15 text-text-primary"
+              ? "bg-fill-2 text-text-primary"
               : "text-text-secondary hover:bg-fill-2",
           ].join(" ")}
         >
@@ -1059,7 +1059,7 @@ export function PasteInput({
 
         {/* First-run empty state — disappears the moment there's any content */}
         {isEmpty && (
-          <div className="shrink-0 flex items-center justify-between gap-3 border-b border-border-subtle bg-accent-dim/40 px-4 py-2 animate-fade-in">
+          <div className="shrink-0 flex items-center justify-between gap-3 border-b border-border-subtle bg-fill-2/40 px-4 py-2 animate-fade-in">
             <span className="text-xs text-text-secondary">
               Write your first line — or press <kbd className="font-mono">⌘K</kbd> for commands, <kbd className="font-mono">/</kbd> to insert a block.
             </span>
@@ -1067,7 +1067,7 @@ export function PasteInput({
               <button
                 type="button"
                 onClick={onInsertSample}
-                className="shrink-0 text-xs font-semibold text-accent transition hover:text-accent-soft"
+                className="shrink-0 text-xs font-semibold link"
               >
                 Insert sample
               </button>
@@ -1248,36 +1248,36 @@ export function PasteInput({
         {/* Status bar */}
         <div className="shrink-0 flex items-center justify-between border-t border-border-subtle px-3 py-1">
           <div className="flex items-center gap-2">
-            <span className="text-2xs text-text-muted tabular-nums">
+            <span className="text-xs text-text-muted tabular-nums">
               {wordCount.toLocaleString()} {wordCount === 1 ? "word" : "words"}
             </span>
-            <span className="text-2xs text-text-muted" aria-hidden>·</span>
+            <span className="text-xs text-text-muted" aria-hidden>·</span>
             {charCount > CHAR_COUNTER_THRESHOLD ? (
               // Near the publish limit the plain count becomes "used / limit"
               // so a 413 from the publish routes is never a surprise.
               <span
                 data-testid="char-limit-counter"
                 role="status"
-                className={`text-2xs tabular-nums ${charCount > STORAGE.maxInputChars ? "text-danger" : "text-warning"}`}
+                className={`text-xs tabular-nums ${charCount > STORAGE.maxInputChars ? "text-danger" : "text-warning"}`}
               >
                 {charCount.toLocaleString()} / {STORAGE.maxInputChars.toLocaleString()} characters
               </span>
             ) : (
-              <span className="text-2xs text-text-muted tabular-nums">
+              <span className="text-xs text-text-muted tabular-nums">
                 {charCount.toLocaleString()} chars
               </span>
             )}
             {wordCount > 50 && (
               <>
-                <span className="text-2xs text-text-muted" aria-hidden>·</span>
-                <span className="text-2xs text-text-muted tabular-nums">
+                <span className="text-xs text-text-muted" aria-hidden>·</span>
+                <span className="text-xs text-text-muted tabular-nums">
                   {readingMins} min read
                 </span>
               </>
             )}
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-2xs text-text-muted hidden sm:inline">
+            <span className="text-xs text-text-muted hidden sm:inline">
               <kbd className="font-mono">⌘J</kbd> focus · <kbd className="font-mono">⌘↵</kbd> publish
             </span>
             <button

@@ -9,6 +9,63 @@ Notable changes to the Booklet app and MCP server. The format follows
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-10-11
+
+The second half of the redesign: the signed-in app. No routes, API or data
+changed.
+
+### Changed
+
+- **One header on every page behind the editor.** My pages, analytics,
+  version history, Settings, Spaces and admin share a header with links to
+  My pages, Spaces and Settings, the theme toggle and the account menu. A
+  visitor to a public space sees Sign in there. There were six headers with
+  four widths.
+- **Collection pages (`/c`) and author pages (`/u`) use the public site's
+  header and footer** and list pages with the card Explore uses.
+- **Serif page titles, rectangular buttons and one input style** across the
+  app and the auth forms. Sign in, sign up and the password pages have a
+  title. The smallest chrome text is 12px, up from 10px.
+- **Colour only where it means something.** Avatars are an ink initial on a
+  soft tile. "Unlisted" is plain text and "Public" and "Team only" are
+  neutral chips. Version history has one primary button, Compare.
+- **Dates read "11 Oct 2026"** on My pages, API keys and webhooks.
+- **On a phone or tablet an empty draft opens on Write.** It used to open
+  on Preview.
+- The second "Theme" setting in the editor is named "Page colour".
+
+### Fixed
+
+- My pages was wider than a phone screen, and its page menu opened
+  off-screen.
+- The editor's settings panel and account menu ran off the left edge of a
+  phone, and the draft title's rename icon covered the button beside it.
+- A hydration error on My pages, API keys and webhooks when the browser's
+  locale or time zone differed from the server's.
+- Command palette items were in capitals.
+- The analytics chart cut off its last date, drew its labels at about 5px
+  on a phone, and repeated a tick when a page had one view.
+- The Publish button had no accessible name on a phone, where it shows only
+  an icon.
+- The site header's "Write a page" button wrapped onto two lines on a phone
+  when signed in.
+- The docs menu on a phone closes when a link in it is followed.
+- The homepage product shot no longer shows a half-typed table as a line of
+  pipes.
+
+### Removed
+
+- The two bridge rules that underlined accent-coloured links while the app
+  still used the old accent. A test now fails if app or site chrome uses the
+  accent as a text colour; published pages keep it, since there it is the
+  document theme's link colour.
+
+### Added
+
+- `scripts/visual-qa-app.mjs`: a screenshot sweep of the signed-in app in
+  both themes at three widths. It creates data, so it runs against localhost
+  only.
+
 ## [3.0.0] - 2026-10-11
 
 A redesign of every surface and a new documentation site. The major version

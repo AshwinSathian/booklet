@@ -1,5 +1,4 @@
-import { AppLogo } from "@/components/ui/AppLogo";
-import { AccountMenu } from "@/components/auth/AccountMenu";
+import { AppPage, AppPageTitle } from "@/components/app/AppPage";
 import { ROUTES } from "@/lib/constants";
 import { getCollectionsByUser, getTeamSpacesByMembership } from "@/lib/db";
 import { getSession } from "@/lib/auth/session";
@@ -26,31 +25,22 @@ export default async function SpacesPage() {
   const spaces = [...owned, ...joined.filter((c) => !ownedIds.has(c.id))].filter((c) => c.slug);
 
   return (
-    <div className="min-h-screen bg-bg text-text-primary">
-      <header className="border-b border-border-subtle bg-bg/85 backdrop-blur-xl sticky top-0 z-20">
-        <div className="mx-auto w-full max-w-3xl px-4 h-12 flex items-center justify-between gap-4">
-          <AppLogo onlyIcon={false} />
-          <AccountMenu />
-        </div>
-      </header>
-
-      <main className="mx-auto w-full max-w-3xl px-4 py-10">
-        <h1 className="text-xl font-medium">Spaces</h1>
-        <p className="mt-1 text-sm text-text-secondary">
-          A space is where a team keeps its incident reports, decisions, RFCs and runbooks. Members can read
-          every page in it, including the ones marked team-only.
-        </p>
+    <AppPage>
+        <AppPageTitle
+          title="Spaces"
+          lede="A space is where a team keeps its incident reports, decisions, RFCs and runbooks. Members can read every page in it, including the ones marked team-only."
+        />
 
         {spaces.length > 0 && (
-          <ul className="mt-8 divide-y divide-border-subtle border-y border-border-subtle">
+          <ul className="divide-y divide-border-default border-y border-border-default">
             {spaces.map((space) => (
               <li key={space.id}>
                 <Link
                   href={ROUTES.space(space.slug as string)}
-                  className="flex items-center justify-between gap-4 py-3 text-sm transition hover:bg-fill-1"
+                  className="group flex items-center justify-between gap-4 py-3.5 text-sm"
                 >
-                  <span className="font-medium text-text-primary">{space.name}</span>
-                  <span className="text-2xs text-text-muted">{ownedIds.has(space.id) ? "Owner" : "Member"}</span>
+                  <span className="font-medium text-text-primary underline-offset-3 group-hover:underline">{space.name}</span>
+                  <span className="text-xs text-text-muted">{ownedIds.has(space.id) ? "Owner" : "Member"}</span>
                 </Link>
               </li>
             ))}
@@ -58,12 +48,11 @@ export default async function SpacesPage() {
         )}
 
         <section className="mt-10" aria-labelledby="create-space">
-          <h2 id="create-space" className="text-sm font-medium">
+          <h2 id="create-space" className="text-[0.9375rem] font-semibold">
             Create a space
           </h2>
           <CreateSpaceForm />
         </section>
-      </main>
-    </div>
+    </AppPage>
   );
 }

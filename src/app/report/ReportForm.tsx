@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/Button";
 import { useState } from "react";
 import { getTurnstileToken } from "@/lib/turnstile-client";
 import type { ReportReason } from "@/lib/db/types";
@@ -15,7 +16,7 @@ const REASONS: Array<{ value: ReportReason; label: string }> = [
 ];
 
 const FIELD =
-  "w-full rounded-lg border border-border-default bg-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft";
+  "w-full field";
 
 export function ReportForm({ pageId }: { pageId: string }) {
   const [reason, setReason] = useState<ReportReason>("spam");
@@ -98,13 +99,9 @@ export function ReportForm({ pageId }: { pageId: string }) {
           {error}
         </p>
       ) : null}
-      <button
-        type="submit"
-        disabled={state === "sending"}
-        className="self-start rounded-pill bg-accent px-4 py-2 text-sm font-semibold text-accent-contrast transition hover:bg-accent-hover disabled:opacity-50"
-      >
+      <Button type="submit" variant="primary" size="lg" disabled={state === "sending"} className="self-start">
         {state === "sending" ? "Sending…" : "Send report"}
-      </button>
+      </Button>
     </form>
   );
 }

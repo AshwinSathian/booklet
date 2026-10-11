@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
+import { useDateFormat } from "@/lib/ui/hydration";
 import { useCallback, useRef, useState } from "react";
 
 type KeyRow = {
@@ -11,12 +12,13 @@ type KeyRow = {
   last_used_at: string | null;
 };
 
-function formatDate(iso: string | null) {
-  if (!iso) return "Never";
-  return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+function useNullableDate() {
+  const format = useDateFormat();
+  return (iso: string | null) => (iso ? format(iso) : "Never");
 }
 
 function KeyCard({ k, onRevoked }: { k: KeyRow; onRevoked: (id: string) => void }) {
+  const formatDate = useNullableDate();
   const [confirming, setConfirming] = useState(false);
   const [revoking, setRevoking] = useState(false);
 
@@ -34,7 +36,7 @@ function KeyCard({ k, onRevoked }: { k: KeyRow; onRevoked: (id: string) => void 
   }, [k.id, onRevoked]);
 
   return (
-    <div className="group flex items-center gap-3 rounded-xl border border-border-default bg-bg-elevated px-4 py-3 transition hover:border-accent-soft/30">
+    <div className="group flex items-center gap-3 rounded-xl border border-border-default bg-bg-elevated px-4 py-3 transition hover:border-border-strong">
       <div className="min-w-0 flex-1">
         <div className="text-sm font-medium text-text-primary">
           {k.label ?? <span className="text-text-muted italic">Unlabeled key</span>}
@@ -92,7 +94,7 @@ function NewKeyReveal({ raw, onDismiss }: { raw: string; onDismiss: () => void }
   };
 
   return (
-    <div className="rounded-xl border border-accent/30 bg-accent-dim p-4 flex flex-col gap-3">
+    <div className="rounded-xl border border-border-strong bg-fill-2 p-4 flex flex-col gap-3">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-sm font-semibold text-text-primary">Your new API key</p>
@@ -112,7 +114,7 @@ function NewKeyReveal({ raw, onDismiss }: { raw: string; onDismiss: () => void }
           iconOnly
           onClick={() => void copy()}
           title="Copy key"
-          className={`shrink-0 ${copied ? "text-accent bg-accent-dim" : ""}`}
+          className={`shrink-0 ${copied ? "bg-fill-2 text-text-primary" : ""}`}
         >
           <Icon name={copied ? "check" : "copy"} size={14} />
         </Button>
@@ -161,10 +163,10 @@ export function ApiKeysSection({ initialKeys }: { initialKeys: KeyRow[] }) {
 
   return (
     <div>
-      <div className="mb-4 flex items-baseline justify-between gap-4">
+      <div className="mb-8 flex items-baseline justify-between gap-4">
         <div>
-          <h1 className="text-xl font-medium">API keys</h1>
-          <p className="mt-0.5 text-sm text-text-secondary">
+          <h1 className="font-display text-2xl font-medium tracking-[-0.02em] sm:text-[1.75rem]">API keys</h1>
+          <p className="mt-2 text-sm text-text-secondary">
             Use these keys with the Booklet API to publish programmatically.
           </p>
         </div>
@@ -190,9 +192,9 @@ export function ApiKeysSection({ initialKeys }: { initialKeys: KeyRow[] }) {
           placeholder="Label (optional)"
           aria-label="Label for the new key (optional)"
           maxLength={80}
-          className="min-w-0 flex-1 rounded-lg border border-border-default bg-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft"
+          className="min-w-0 flex-1 field"
         />
-        <Button variant="primary" size="md" onClick={() => void handleCreate()} disabled={creating} className="shrink-0">
+        <Button variant="primary" size="lg" onClick={() => void handleCreate()} disabled={creating} className="shrink-0">
           {creating ? (
             <svg width="12" height="12" viewBox="0 0 13 13" fill="none" className="animate-spin" aria-hidden>
               <path d="M6.5 1a5.5 5.5 0 1 0 5.5 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />

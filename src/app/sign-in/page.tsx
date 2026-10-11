@@ -34,7 +34,7 @@ export default async function SignInPage({
   }
 
   return (
-    <AuthLayout>
+    <AuthLayout title="Sign in">
       <div className="text-center">
         <p className="text-sm text-text-secondary">
           {redirectUrl?.startsWith("/cli-auth")
@@ -45,22 +45,22 @@ export default async function SignInPage({
 
       <AuthForm mode="sign-in" redirectUrl={redirectUrl} providers={enabledSsoProviders()} errorCode={error} />
 
-      <p className="text-xs text-text-muted text-center">
-        <Link href={ROUTES.forgotPassword} className="text-accent underline underline-offset-2 hover:text-accent-soft transition-colors">
+      <p className="text-center text-sm text-text-secondary">
+        <Link href={ROUTES.forgotPassword} className="link">
           Forgot your password?
         </Link>
       </p>
 
-      <p className="text-xs text-text-muted text-center">
+      <p className="text-center text-sm text-text-secondary">
         No account?{" "}
         <Link
           href={redirectUrl ? `${ROUTES.signUp}?redirect_url=${encodeURIComponent(redirectUrl)}` : ROUTES.signUp}
-          className="text-accent underline underline-offset-2 hover:text-accent-soft transition-colors"
+          className="link"
         >
           Create one
         </Link>{" "}
         or{" "}
-        <Link href={ROUTES.app} className="text-accent underline underline-offset-2 hover:text-accent-soft transition-colors">
+        <Link href={ROUTES.app} className="link">
           write and publish without signing in
         </Link>.
       </p>

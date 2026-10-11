@@ -15,7 +15,7 @@ export const metadata: Metadata = buildMetadata({
 const ABUSE_EMAIL = process.env.ABUSE_REPORT_EMAIL?.trim() || null;
 const STATUS_PAGE_URL = process.env.NEXT_PUBLIC_STATUS_PAGE_URL?.trim() || null;
 
-const link = "text-accent underline underline-offset-2";
+const link = "link";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (

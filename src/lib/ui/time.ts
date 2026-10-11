@@ -89,3 +89,17 @@ export function formatRelativeTimeFromIso(iso: string, nowMs?: number): string {
   const dayLabel = diffDay === 1 ? TIME_LABELS.day : TIME_LABELS.days;
   return `${diffDay} ${dayLabel} ${TIME_LABELS.ago}`;
 }
+
+const DATE_PARTS = { year: "numeric", month: "short", day: "numeric" } as const;
+
+/** "11 Oct 2026" in the visitor's time zone. Client-only: see formatDateUTC. */
+export function formatDate(iso: string): string {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString("en-GB", DATE_PARTS);
+}
+
+/** The same date pinned to UTC: what the server and the first client paint both render. */
+export function formatDateUTC(iso: string): string {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString("en-GB", { ...DATE_PARTS, timeZone: "UTC" });
+}

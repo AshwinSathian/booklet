@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/Button";
 
 const INPUT_CLASS =
-  "w-full rounded-lg border border-border-default bg-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft";
+  "w-full field";
 
 export function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
@@ -32,7 +32,7 @@ export function ForgotPasswordForm() {
   }
 
   return (
-    <form onSubmit={(e) => void handleSubmit(e)} className="w-full max-w-xs space-y-3">
+    <form onSubmit={(e) => void handleSubmit(e)} className="w-full space-y-3">
       <div>
         <label htmlFor="email" className="sr-only">Email</label>
         <input
@@ -47,7 +47,7 @@ export function ForgotPasswordForm() {
           className={INPUT_CLASS}
         />
       </div>
-      <Button type="submit" variant="primary" size="md" disabled={submitting} className="w-full justify-center">
+      <Button type="submit" variant="primary" size="lg" disabled={submitting} className="w-full justify-center">
         {submitting ? "Sending…" : "Send reset link"}
       </Button>
     </form>

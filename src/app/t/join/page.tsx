@@ -5,6 +5,7 @@ import { verifyInviteToken } from "@/lib/invite-token";
 import { isVerified } from "@/server/verification";
 import { logError } from "@/lib/logger";
 import { getSession } from "@/lib/auth/session";
+import { Button } from "@/components/ui/Button";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { redirect } from "next/navigation";
 
@@ -83,14 +84,11 @@ export default async function TeamJoinPage({
 
 function ErrorPage({ message }: { message: string }) {
   return (
-    <AuthLayout>
-      <div className="flex h-12 w-12 items-center justify-center rounded-card bg-fill-2 text-text-muted">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
-          <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.5" />
-          <path d="M12 8v4M12 16h.01" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
-      </div>
-      <p className="text-sm text-text-secondary text-center max-w-sm">{message}</p>
+    <AuthLayout title="Join a space">
+      <p role="alert" className="text-center text-sm text-text-secondary">{message}</p>
+      <Button variant="secondary" size="lg" href="/t">
+        Your spaces
+      </Button>
     </AuthLayout>
   );
 }

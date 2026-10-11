@@ -7,7 +7,7 @@ import { ROUTES } from "@/lib/constants";
 import { answerDraftAdoption, listUnclaimedDrafts } from "@/lib/drafts/cloud-sync";
 
 const BAR = "flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-b border-border-subtle bg-bg-soft px-4 py-2 text-xs text-text-secondary";
-const ACTION = "font-semibold text-accent transition-colors hover:text-accent-soft disabled:opacity-50";
+const ACTION = "font-semibold link disabled:opacity-50";
 
 /**
  * Two things a signed-in writer is told above the editor: that the email

@@ -19,11 +19,11 @@ export function BookletMark({ size = 28 }: { size?: number }) {
   );
 }
 
-export function AppLogo({ onlyIcon = false }: { onlyIcon?: boolean }) {
+export function AppLogo({ onlyIcon = false, href = ROUTES.home }: { onlyIcon?: boolean; href?: string }) {
   return (
     <Link
-      href={ROUTES.home}
-      aria-label={`${APP_NAME} — go to homepage`}
+      href={href}
+      aria-label={href === ROUTES.home ? `${APP_NAME} — go to homepage` : `${APP_NAME} — go to the editor`}
       className="flex items-center gap-2 rounded-sm"
     >
       <BookletMark size={28} />

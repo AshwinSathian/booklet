@@ -4,12 +4,12 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { browserSupportsWebAuthn, startAuthentication } from "@simplewebauthn/browser";
 import { getTurnstileToken } from "@/lib/turnstile-client";
-import { Button } from "@/components/ui/Button";
+import { Button, buttonClass } from "@/components/ui/Button";
 import { useSession } from "@/components/auth/SessionProvider";
 import { useHydrated } from "@/lib/ui/hydration";
 
 const INPUT_CLASS =
-  "w-full rounded-lg border border-border-default bg-bg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft";
+  "w-full field";
 
 const SSO_ERRORS: Record<string, string> = {
   sso_state: "That sign-in did not start in this browser, or it took too long. Try again.",
@@ -20,8 +20,8 @@ const SSO_ERRORS: Record<string, string> = {
     "A Booklet account already uses that email address, and the address has not been confirmed. If the account is yours, sign in with its password and confirm the email. If you never created it, use Forgot your password to take the address back. Then try again.",
 };
 
-const ALT_BUTTON =
-  "flex h-9 w-full items-center justify-center rounded-pill border border-border-default text-xs font-semibold text-text-secondary transition hover:border-accent-soft/50 hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft disabled:opacity-40";
+// SSO start is an API route: a plain anchor, never a prefetching Link.
+const ALT_BUTTON = buttonClass("secondary", "lg", false, "w-full");
 
 export function AuthForm({
   mode,
@@ -106,7 +106,7 @@ export function AuthForm({
   }
 
   return (
-    <form onSubmit={(e) => void handleSubmit(e)} className="w-full max-w-xs space-y-3">
+    <form onSubmit={(e) => void handleSubmit(e)} className="w-full space-y-3">
       <div>
         <label htmlFor="email" className="sr-only">Email</label>
         <input
@@ -137,14 +137,14 @@ export function AuthForm({
         />
       </div>
 
-      {error && <p role="alert" className="text-xs text-danger">{error}</p>}
+      {error && <p role="alert" className="text-sm text-danger">{error}</p>}
 
-      <Button type="submit" variant="primary" size="md" disabled={submitting} className="w-full justify-center">
+      <Button type="submit" variant="primary" size="lg" disabled={submitting} className="w-full justify-center">
         {submitting ? "Please wait…" : mode === "sign-in" ? "Sign in" : "Create account"}
       </Button>
 
       {(providers.length > 0 || passkeys) && (
-        <div className="space-y-2 border-t border-border-subtle pt-3">
+        <div className="space-y-2 border-t border-border-default pt-3">
           {providers.map((p) => (
             <a
               key={p.id}

@@ -40,7 +40,8 @@ function computeYAxis(maxValue: number, tickIntervals = 3): { axisMax: number; t
     return { axisMax: tickIntervals, ticks: Array.from({ length: tickIntervals + 1 }, (_, i) => i) };
   }
   const niceRange = niceNum(maxValue, false);
-  const step = niceNum(niceRange / tickIntervals, true);
+  // Views are whole numbers: a step under 1 would round two ticks to the same value.
+  const step = Math.max(1, niceNum(niceRange / tickIntervals, true));
   const axisMax = Math.ceil(maxValue / step) * step;
   const ticks: number[] = [];
   for (let v = 0; v <= axisMax + step / 2; v += step) ticks.push(Math.round(v));
@@ -49,7 +50,9 @@ function computeYAxis(maxValue: number, tickIntervals = 3): { axisMax: number; t
 
 const VB_WIDTH = 720;
 const VB_HEIGHT = 220;
-const MARGIN = { top: 12, right: 8, bottom: 26, left: 34 };
+// Axis labels are HTML laid over the chart, so they keep their size when the
+// SVG scales down on a phone; the plot needs no room for them.
+const MARGIN = { top: 18, right: 4, bottom: 4, left: 4 };
 const PLOT_WIDTH = VB_WIDTH - MARGIN.left - MARGIN.right;
 const PLOT_HEIGHT = VB_HEIGHT - MARGIN.top - MARGIN.bottom;
 
@@ -111,7 +114,7 @@ export function ViewsChart({ data }: { data: DayPoint[] }) {
         onPointerMove={handlePointerMove}
         onPointerLeave={() => setHoverIndex(null)}
         role="img"
-        aria-label={`Views for the last ${n} days, peak day ${maxViews.toLocaleString()} views`}
+        aria-label={`Views for the last ${n} days, peak day ${maxViews.toLocaleString("en-US")} views`}
       >
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
@@ -132,16 +135,6 @@ export function ViewsChart({ data }: { data: DayPoint[] }) {
               strokeWidth={1}
               vectorEffect="non-scaling-stroke"
             />
-            <text
-              x={MARGIN.left - 8}
-              y={yAt(t)}
-              textAnchor="end"
-              dominantBaseline="middle"
-              fontSize={9}
-              fill="var(--color-text-muted)"
-            >
-              {t.toLocaleString()}
-            </text>
           </g>
         ))}
 
@@ -156,19 +149,6 @@ export function ViewsChart({ data }: { data: DayPoint[] }) {
           vectorEffect="non-scaling-stroke"
         />
 
-        {/* X-axis date labels */}
-        {xTickIndices.map((i) => (
-          <text
-            key={i}
-            x={xAt(i)}
-            y={VB_HEIGHT - 8}
-            textAnchor="middle"
-            fontSize={9}
-            fill="var(--color-text-muted)"
-          >
-            {formatDay(data[i].date)}
-          </text>
-        ))}
 
         {/* Area wash + line */}
         {n > 0 && (
@@ -204,6 +184,37 @@ export function ViewsChart({ data }: { data: DayPoint[] }) {
         )}
       </svg>
 
+      {/* Y-axis values, sitting on their gridlines */}
+      <div className="pointer-events-none absolute inset-x-0 top-0" style={{ aspectRatio: `${VB_WIDTH} / ${VB_HEIGHT}` }} aria-hidden>
+        {ticks.slice(1).map((t) => (
+          <span
+            key={t}
+            className="absolute -translate-y-full pb-0.5 text-xs tabular-nums text-text-muted"
+            style={{ left: `${(MARGIN.left / VB_WIDTH) * 100}%`, top: `${(yAt(t) / VB_HEIGHT) * 100}%` }}
+          >
+            {t.toLocaleString("en-US")}
+          </span>
+        ))}
+      </div>
+
+      {/* X-axis dates: the first and last are pinned to the edges so neither is cut off */}
+      <div className="relative mt-1.5 h-4 text-xs text-text-muted" aria-hidden>
+        {xTickIndices.map((i, k) => (
+          <span
+            key={i}
+            className={[
+              "absolute top-0 whitespace-nowrap",
+              k === 0 ? "" : k === xTickIndices.length - 1 ? "-translate-x-full" : "-translate-x-1/2",
+              // A phone has room for three dates: the ends and the middle.
+              k === 0 || k === xTickIndices.length - 1 || k === Math.floor((xTickIndices.length - 1) / 2) ? "" : "max-sm:hidden",
+            ].join(" ")}
+            style={{ left: `${(xAt(i) / VB_WIDTH) * 100}%` }}
+          >
+            {formatDay(data[i].date)}
+          </span>
+        ))}
+      </div>
+
       {hovered && (
         <div
           className="pointer-events-none absolute top-1 z-10 whitespace-nowrap rounded-md border border-border-default bg-bg-elevated px-2.5 py-1.5 text-xs shadow-card"
@@ -219,7 +230,7 @@ export function ViewsChart({ data }: { data: DayPoint[] }) {
         >
           <div className="text-text-muted">{formatDay(hovered.date, true)}</div>
           <div className="font-semibold tabular-nums text-text-primary">
-            {hovered.views.toLocaleString()} {hovered.views === 1 ? "view" : "views"}
+            {hovered.views.toLocaleString("en-US")} {hovered.views === 1 ? "view" : "views"}
           </div>
         </div>
       )}

@@ -1,6 +1,6 @@
 {
   "name": "booklet-cli",
-  "version": "3.1.0",
+  "version": "3.1.1",
   "description": "Publish Markdown incident reports, ADRs, RFCs and runbooks as web pages, with team spaces.",
   "bin": {
     "booklet": "dist/index.js"

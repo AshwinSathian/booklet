@@ -146,7 +146,7 @@ export function Sheet({
                 type="button"
                 onClick={onClose}
                 aria-label="Close panel"
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-pill text-text-muted hover:text-text-primary hover:bg-fill-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-text-muted hover:text-text-primary hover:bg-fill-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
               >
                 <Icon name="close" size={14} />
               </button>

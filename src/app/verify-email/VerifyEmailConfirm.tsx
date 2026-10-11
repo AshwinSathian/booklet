@@ -43,7 +43,7 @@ export function VerifyEmailConfirm({ token }: { token: string }) {
         <p role="status" className="text-sm text-text-secondary">
           {movedTo ? `This account's email address is now ${movedTo}.` : "Your email is confirmed. You can publish now."}
         </p>
-        <Link href={ROUTES.app} className="text-sm text-accent transition-colors hover:text-accent-soft">
+        <Link href={ROUTES.app} className="text-sm link">
           Open the editor
         </Link>
       </div>
@@ -53,30 +53,30 @@ export function VerifyEmailConfirm({ token }: { token: string }) {
   // Confirming needs the account's own session (see the route).
   if (isLoaded && !isSignedIn) {
     return (
-      <div className="w-full max-w-xs space-y-3 text-center">
+      <div className="w-full space-y-3 text-center">
         <p className="text-sm text-text-secondary">Sign in to the account this link was sent for, and you will come back here to confirm.</p>
         <Link
           href={`${ROUTES.signIn}?redirect_url=${encodeURIComponent(`/verify-email?token=${encodeURIComponent(token)}`)}`}
-          className="text-sm font-semibold text-accent transition-colors hover:text-accent-soft"
+          className="text-sm font-semibold link"
         >
           Sign in
         </Link>
-        <p className="text-xs text-text-muted">
+        <p className="text-sm text-text-secondary">
           If you did not create this account, do not sign in to it. Use{" "}
-          <Link href={ROUTES.forgotPassword} className="text-accent underline underline-offset-2 hover:text-accent-soft">Forgot your password</Link> to take the address back.
+          <Link href={ROUTES.forgotPassword} className="link">Forgot your password</Link> to take the address back.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="w-full max-w-xs space-y-3 text-center">
+    <div className="w-full space-y-3 text-center">
       <p className="text-sm text-text-secondary">Confirm this email address for your Booklet account.</p>
-      {error && <p role="alert" className="text-xs text-danger">{error}</p>}
+      {error && <p role="alert" className="text-sm text-danger">{error}</p>}
       <Button
         type="button"
         variant="primary"
-        size="md"
+        size="lg"
         disabled={state === "sending" || !token}
         onClick={() => void confirm()}
         className="w-full justify-center"

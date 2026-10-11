@@ -27,14 +27,13 @@ function isValidState(v: string | undefined): v is string {
 function ErrorPage({ title, body }: { title: string; body: string }) {
   return (
     <AuthLayout>
-      <p className="text-3xl">⚠</p>
       <div className="text-center space-y-1.5">
-        <h1 className="text-base font-semibold">{title}</h1>
+        <h1 className="font-display text-2xl font-medium leading-tight tracking-[-0.02em]">{title}</h1>
         <p className="text-sm text-text-secondary leading-relaxed">{body}</p>
       </div>
       <Link
         href="/my-pages"
-        className="text-sm text-accent hover:text-accent-soft transition-colors"
+        className="text-sm link"
       >
         Go to My Pages →
       </Link>

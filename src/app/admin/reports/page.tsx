@@ -1,4 +1,5 @@
-import Link from "next/link";
+import { AppPage, AppPageTitle } from "@/components/app/AppPage";
+import { Button } from "@/components/ui/Button";
 import { notFound } from "next/navigation";
 import { isAdminRequest } from "@/server/admin";
 import { listOpenReports } from "@/lib/db/reports";
@@ -19,28 +20,31 @@ export default async function AdminReportsPage() {
   const reports = await listOpenReports();
 
   return (
-    <div className="min-h-screen bg-bg p-10 text-text-primary max-w-3xl">
-      <div className="mb-8 flex items-baseline gap-4">
-        <h1 className="text-xl font-bold font-display">Abuse reports</h1>
-        <span className="text-xs text-text-muted">{reports.length} open</span>
-        <Link href="/admin" className="ml-auto text-xs text-accent underline underline-offset-2">
-          Metrics
-        </Link>
-      </div>
+    <AppPage width="medium">
+      <AppPageTitle
+        eyebrow="Admin"
+        title="Abuse reports"
+        lede={`${reports.length} open`}
+        action={
+          <Button variant="secondary" size="lg" href="/admin">
+            Metrics
+          </Button>
+        }
+      />
 
       {reports.length === 0 ? (
         <p className="text-sm text-text-secondary">No open reports.</p>
       ) : (
         <ul className="flex flex-col gap-4">
           {reports.map((r) => (
-            <li key={r.id} data-testid="report" className="rounded-card border border-border-default p-4">
+            <li key={r.id} data-testid="report" className="rounded-xl border border-border-default bg-bg-elevated p-5">
               <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                 <span className="text-sm font-semibold">{r.reason}</span>
                 <a
                   href={`/p/${r.page_id}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-mono text-xs text-accent underline underline-offset-2"
+                  className="font-mono text-xs link"
                 >
                   /p/{r.page_id}
                 </a>
@@ -55,27 +59,21 @@ export default async function AdminReportsPage() {
               <div className="mt-3 flex gap-2">
                 <form action={takeDownAction}>
                   <input type="hidden" name="reportId" value={r.id} />
-                  <button
-                    type="submit"
-                    className="rounded-pill bg-danger/15 px-3.5 py-1.5 text-xs font-semibold text-danger transition hover:bg-danger/25"
-                  >
+                  <Button type="submit" variant="danger" size="md">
                     Take down
-                  </button>
+                  </Button>
                 </form>
                 <form action={dismissAction}>
                   <input type="hidden" name="reportId" value={r.id} />
-                  <button
-                    type="submit"
-                    className="rounded-pill border border-border-default px-3.5 py-1.5 text-xs font-medium text-text-secondary transition hover:text-text-primary"
-                  >
+                  <Button type="submit" variant="secondary" size="md">
                     Dismiss
-                  </button>
+                  </Button>
                 </form>
               </div>
             </li>
           ))}
         </ul>
       )}
-    </div>
+    </AppPage>
   );
 }

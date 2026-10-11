@@ -834,8 +834,6 @@ function AppPageContent() {
         <h1 className="sr-only">{draftTitle ? `${draftTitle} — Booklet editor` : "Booklet editor"}</h1>
         <AppShell
           focusMode={focusMode}
-          isEmpty={isEmpty}
-          isReady={isReady}
           left={
             <PasteInput
               value={raw}

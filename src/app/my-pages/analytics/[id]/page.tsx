@@ -1,11 +1,10 @@
-import { AppLogo } from "@/components/ui/AppLogo";
+import { AppPage, AppPageTitle } from "@/components/app/AppPage";
 import { ROUTES } from "@/lib/constants";
 import { getPageAnalytics } from "@/lib/db/analytics";
 import { getPageRecord } from "@/lib/db";
 import { extractDocTitle } from "@/lib/doc-title";
 import { getDoc } from "@/lib/storage";
 import { getSession } from "@/lib/auth/session";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ViewsChart } from "./ViewsChart";
 
@@ -32,8 +31,8 @@ function pctWidth(value: number, max: number): string {
 
 function Stat({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-lg border border-border-default bg-bg-elevated px-4 py-3">
-      <div className="text-2xl font-semibold text-text-primary">{value}</div>
+    <div className="rounded-xl border border-border-default bg-bg-elevated px-5 py-4">
+      <div className="font-display text-3xl font-medium tabular-nums text-text-primary">{value}</div>
       <div className="mt-1 text-xs text-text-muted">{label}</div>
     </div>
   );
@@ -62,24 +61,8 @@ export default async function PageAnalyticsPage({
   const maxCountryViews = Math.max(0, ...summary.top_countries.map((row) => row.count));
 
   return (
-    <div className="min-h-screen bg-bg text-text-primary">
-      <header className="sticky top-0 z-20 border-b border-border-subtle bg-bg/85 backdrop-blur-xl">
-        <div className="mx-auto flex h-12 w-full max-w-4xl items-center justify-between gap-4 px-4">
-          <AppLogo onlyIcon={false} />
-          <Link
-            href={ROUTES.myPages}
-            className="inline-flex items-center rounded-pill border border-border-default px-3.5 py-1.5 text-xs font-medium text-text-secondary transition hover:border-accent-soft/50 hover:text-text-primary"
-          >
-            Back to My pages
-          </Link>
-        </div>
-      </header>
-
-      <main className="mx-auto w-full max-w-4xl px-4 py-8">
-        <div className="mb-5">
-          <p className="text-xs text-text-muted">Analytics</p>
-          <h1 className="mt-1 truncate text-[clamp(20px,3vw,26px)]">{title}</h1>
-        </div>
+    <AppPage width="medium">
+        <AppPageTitle back={{ href: ROUTES.myPages, label: "My pages" }} eyebrow="Analytics" title={title} />
 
         <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Stat label="Views" value={summary.total_views.toLocaleString()} />
@@ -88,16 +71,16 @@ export default async function PageAnalyticsPage({
           <Stat label="Read 100%" value={`${summary.read_100_pct}%`} />
         </section>
 
-        <section className="mt-6 rounded-lg border border-border-default bg-bg-elevated p-4">
+        <section className="mt-6 rounded-xl border border-border-default bg-bg-elevated p-5">
           <div className="mb-4 flex items-center justify-between gap-3">
-            <h2 className="text-sm font-medium">Views last 30 days</h2>
+            <h2 className="text-sm font-semibold">Views last 30 days</h2>
             <span className="text-xs text-text-muted">{maxDayViews.toLocaleString()} peak day</span>
           </div>
           <ViewsChart data={summary.views_by_day} />
         </section>
 
         <div className="mt-6 grid gap-6 md:grid-cols-2">
-          <section className="rounded-lg border border-border-default bg-bg-elevated p-4">
+          <section className="rounded-xl border border-border-default bg-bg-elevated p-5">
             <h2 className="mb-4 text-sm font-semibold">Referrers</h2>
             <div className="space-y-3">
               {Object.entries(summary.referrers).map(([bucket, count]) => {
@@ -117,7 +100,7 @@ export default async function PageAnalyticsPage({
             </div>
           </section>
 
-          <section className="rounded-lg border border-border-default bg-bg-elevated p-4">
+          <section className="rounded-xl border border-border-default bg-bg-elevated p-5">
             <h2 className="mb-4 text-sm font-semibold">Top countries</h2>
             {summary.top_countries.length > 0 ? (
               <div className="space-y-3">
@@ -138,7 +121,6 @@ export default async function PageAnalyticsPage({
             )}
           </section>
         </div>
-      </main>
-    </div>
+    </AppPage>
   );
 }
