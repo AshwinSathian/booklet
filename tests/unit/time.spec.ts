@@ -90,6 +90,13 @@ test.describe("formatDate / formatDateUTC", () => {
     expect(formatDate(LATE_ISO)).toBe("12 Oct 2026");
   });
 
+  test("September is three letters, whatever the runtime's own abbreviation is", async () => {
+    const { formatDate, formatDateUTC } = await import("@/lib/ui/time");
+    process.env.TZ = "UTC";
+    expect(formatDateUTC("2026-09-11T12:00:00.000Z")).toBe("11 Sep 2026");
+    expect(formatDate("2026-09-11T12:00:00.000Z")).toBe("11 Sep 2026");
+  });
+
   test("an unreadable date renders as nothing", async () => {
     const { formatDate, formatDateUTC } = await import("@/lib/ui/time");
     expect(formatDate("nope")).toBe("");

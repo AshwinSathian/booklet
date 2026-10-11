@@ -28,8 +28,6 @@ function StepNumber({ n }: { n: number }) {
   );
 }
 
-// ─── Copy button ──────────────────────────────────────────────────────────────
-
 
 function CodeBlock({ code, label }: { code: string; label?: string }) {
   return (
@@ -43,7 +41,8 @@ function CodeBlock({ code, label }: { code: string; label?: string }) {
       <div className="relative">
         <pre tabIndex={0} className={cn(
           "text-[12px] font-mono bg-bg-soft border border-border-default p-4 text-text-secondary overflow-x-auto leading-relaxed whitespace-pre",
-          label ? "rounded-b-xl rounded-t-none" : "rounded-xl",
+          // Room for the copy button, which sits over the top right corner.
+          label ? "rounded-b-xl rounded-t-none" : "rounded-xl pr-20",
         )}>
           {code}
         </pre>

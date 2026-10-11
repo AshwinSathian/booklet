@@ -1,7 +1,7 @@
 import { test, expect, type Browser, type Page } from "@playwright/test";
 
 // The signed-in app on the Typeset system: one header on every page behind
-// the editor, and the faults the PR 2 screenshot review found, each pinned at
+// the editor, and layout faults that have happened before, each pinned at
 // the width it broke at.
 
 const PASSWORD = "app-chrome-e2e-correct-horse";
@@ -126,7 +126,8 @@ test("dates render the same on the server and in a browser with another locale a
     // "11 Oct 2026", whatever the browser's own locale would write.
     await expect(page.getByText(/\b\d{1,2} [A-Z][a-z]{2} \d{4}\b/).first(), route).toBeVisible();
   }
-  expect(errors.filter((e) => /hydrat/i.test(e))).toEqual([]);
+  // A production build reports a hydration mismatch as a minified error number.
+  expect(errors.filter((e) => /hydrat|Minified React error #(418|423|425)/i.test(e))).toEqual([]);
 });
 
 test("on a phone, an empty draft opens on Write and the editor's panels stay on screen", async ({ browser }) => {
@@ -162,9 +163,11 @@ test("the analytics chart labels its axes in text that does not shrink with the 
   await page.goto(`/my-pages/analytics/${pageId}`, { waitUntil: "networkidle" });
   const today = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
   const last = page.getByText(today, { exact: true });
+  await last.scrollIntoViewIfNeeded();
   await expect(last).toBeInViewport({ ratio: 1 });
   expect(await last.evaluate((el) => parseFloat(getComputedStyle(el).fontSize))).toBeGreaterThanOrEqual(11);
   // One view is one tick, not two that round to the same number.
+  await expect(page.locator("[data-y-axis] span")).toHaveText(["1"]);
   expect(errors).toEqual([]);
 });
 

@@ -55,7 +55,7 @@ export function InlineRenderer({
                 href={href}
                 target={href === "#" ? "_self" : "_blank"}
                 rel={USER_LINK_REL}
-                className="text-accent-soft underline decoration-accent/40 underline-offset-4 transition hover:decoration-accent-soft"
+                className="text-accent-soft underline decoration-1 underline-offset-3"
               >
                 <InlineRenderer inl={node.c} wikilinkCtx={wikilinkCtx} />
               </a>

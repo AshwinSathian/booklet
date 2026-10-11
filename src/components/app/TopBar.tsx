@@ -1248,12 +1248,15 @@ export function TopBar({
     <header id="header" className="sticky top-0 z-20 border-b border-border-default bg-bg-glass backdrop-blur-md">
       <div className="flex h-12 w-full items-center gap-2 px-3">
 
-        {/* ── Left zone ── clipped: on a phone the title has almost no room, and its
-            rename icon must not spill over the buttons to its right. */}
-        <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
+        {/* ── Left zone ── */}
+        <div className="flex min-w-0 flex-1 items-center gap-2">
           <AppLogo onlyIcon={true} />
           <div className="h-4 w-px bg-fill-2 shrink-0" />
-          <DraftTitle title={draftTitle} onRename={onRenameCurrentDraft} />
+          {/* Clipped: on a phone the title has almost no room, and its rename icon
+              must not spill over the buttons to its right. */}
+          <div className="min-w-0 overflow-hidden">
+            <DraftTitle title={draftTitle} onRename={onRenameCurrentDraft} />
+          </div>
         </div>
 
         {/* ── Right zone ── */}
@@ -1355,7 +1358,7 @@ export function TopBar({
       {/* Post-publish sign-in nudge — shown for anonymous publishes */}
       {status === "published" && !publishedOwned && !isSignedIn ? (
         <div className="border-t border-border-strong bg-fill-2/60 backdrop-blur-xl px-3 py-2">
-          <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3">
+          <div className="flex w-full items-center justify-between gap-3">
             <p className="text-xs text-text-secondary">
               <span className="font-semibold text-text-primary">This page is kept for 90 days.</span>
               {" "}Sign in (free) and claim it to keep it, edit it in place and track views.

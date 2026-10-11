@@ -18,8 +18,7 @@ if (!BASE_URL) {
 // 7's share/TOC chrome, an existing published page reused here
 // specifically to avoid burning the local dev DB's anonymous publish quota)
 // round out every surface Tasks 1-10 actually touched.
-// Task 29 added the routes below that the prior "The
-// Reveal" sweep never covered, plus surfaces this redesign introduced.
+// The routes below complete the public site.
 // `/admin` will likely redirect/404 without admin access in most
 // environments — acceptable, since this still confirms the route doesn't
 // crash. `/reset-password` renders its "missing token" state since no

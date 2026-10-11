@@ -722,7 +722,7 @@ function WikilinkAutocomplete({
           className={[
             "w-full truncate px-3 py-1.5 text-left text-xs",
             i === selectedIndex
-              ? "bg-fill-2 text-text-primary"
+              ? "bg-fill-3 text-text-primary"
               : "text-text-secondary hover:bg-fill-2",
           ].join(" ")}
         >

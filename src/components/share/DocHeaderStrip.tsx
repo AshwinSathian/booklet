@@ -90,7 +90,7 @@ export function DocHeaderStrip({
         <span>
           by{" "}
           {userId ? (
-            <Link href={`/u/${userId}`} className="font-medium text-text-primary transition hover:text-accent">
+            <Link href={`/u/${userId}`} className="font-medium text-text-primary underline-offset-3 transition hover:text-accent hover:underline">
               {author}
             </Link>
           ) : (

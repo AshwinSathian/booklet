@@ -52,7 +52,7 @@ const VB_WIDTH = 720;
 const VB_HEIGHT = 220;
 // Axis labels are HTML laid over the chart, so they keep their size when the
 // SVG scales down on a phone; the plot needs no room for them.
-const MARGIN = { top: 18, right: 4, bottom: 4, left: 4 };
+const MARGIN = { top: 8, right: 4, bottom: 4, left: 4 };
 const PLOT_WIDTH = VB_WIDTH - MARGIN.left - MARGIN.right;
 const PLOT_HEIGHT = VB_HEIGHT - MARGIN.top - MARGIN.bottom;
 
@@ -123,7 +123,7 @@ export function ViewsChart({ data }: { data: DayPoint[] }) {
           </linearGradient>
         </defs>
 
-        {/* Gridlines + y-axis tick labels */}
+        {/* Gridlines */}
         {ticks.map((t) => (
           <g key={t}>
             <line
@@ -184,12 +184,12 @@ export function ViewsChart({ data }: { data: DayPoint[] }) {
         )}
       </svg>
 
-      {/* Y-axis values, sitting on their gridlines */}
-      <div className="pointer-events-none absolute inset-x-0 top-0" style={{ aspectRatio: `${VB_WIDTH} / ${VB_HEIGHT}` }} aria-hidden>
+      {/* Y-axis values, each under its gridline */}
+      <div data-y-axis className="pointer-events-none absolute inset-x-0 top-0" style={{ aspectRatio: `${VB_WIDTH} / ${VB_HEIGHT}` }} aria-hidden>
         {ticks.slice(1).map((t) => (
           <span
             key={t}
-            className="absolute -translate-y-full pb-0.5 text-xs tabular-nums text-text-muted"
+            className="absolute pt-0.5 text-xs tabular-nums text-text-muted"
             style={{ left: `${(MARGIN.left / VB_WIDTH) * 100}%`, top: `${(yAt(t) / VB_HEIGHT) * 100}%` }}
           >
             {t.toLocaleString("en-US")}

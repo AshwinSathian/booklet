@@ -59,10 +59,12 @@ export default async function UserProfilePage({
       <Container className="py-14 sm:py-20">
         <div className="flex items-center gap-5">
           <Avatar initials={initials} className="h-16 w-16 font-display text-xl" />
-          <PageTitle
-            title={name}
-            lede={pages.length > 0 ? `${pages.length} public ${pages.length === 1 ? "page" : "pages"}` : undefined}
-          />
+          <div className="min-w-0 [overflow-wrap:anywhere]">
+            <PageTitle
+              title={name}
+              lede={pages.length > 0 ? `${pages.length} public ${pages.length === 1 ? "page" : "pages"}` : undefined}
+            />
+          </div>
         </div>
         {pages.length > 0 ? (
           <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">

@@ -25,7 +25,9 @@ changed.
   header and footer** and list pages with the card Explore uses.
 - **Serif page titles, rectangular buttons and one input style** across the
   app and the auth forms. Sign in, sign up and the password pages have a
-  title. The smallest chrome text is 12px, up from 10px.
+  title. Text in the app is 12px or
+  larger; 11px is kept for keyboard hints and small-caps labels. The smallest
+  was 10px.
 - **Colour only where it means something.** Avatars are an ink initial on a
   soft tile. "Unlisted" is plain text and "Public" and "Team only" are
   neutral chips. Version history has one primary button, Compare.

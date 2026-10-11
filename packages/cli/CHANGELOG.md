@@ -5,8 +5,6 @@ All notable changes to `booklet-cli` are documented here. Format follows
 
 ## [Unreleased]
 
-## [3.1.1] - 2026-10-11
-
 ### Fixed
 - `booklet publish --update ""` is a usage error (exit 2). It used to publish a new page, so a
   workflow whose page ID variable was unset made a new page on every run.

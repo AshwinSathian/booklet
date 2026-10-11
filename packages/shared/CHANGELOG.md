@@ -3,12 +3,6 @@
 All notable changes to `booklet-api-client` are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [3.1.1] - 2026-10-11
-
-### Changed
-- The authorization server metadata's `service_documentation` points at `/docs/guides/mcp`. The old
-  address, `/mcp-setup`, redirects there.
-
 ## [3.1.0] - 2026-10-11
 
 ### Added

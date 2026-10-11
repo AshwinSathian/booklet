@@ -5,18 +5,21 @@
 //
 // It makes an account, pages, a collection, a team space, a webhook, an API
 // key and an abuse report, so it runs against a local instance only: any
-// other host is refused. scripts/visual-qa.mjs covers the public site and is
+// other host is refused, and so is port 3100, where production listens. scripts/visual-qa.mjs covers the public site and is
 // the one to point at production (with QA_PUBLIC_ONLY=1).
 //
-// Exits 1 if any page is wider than its viewport or throws in the browser.
+// Exits 1 if any page is wider than its viewport or throws in the browser,
+// or if seeding or a navigation failed.
 import { chromium } from "playwright";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 
 const BASE = process.argv[2];
 const OUT = process.argv[3] ?? "qa-screenshots/app";
-if (!BASE || !["localhost", "127.0.0.1"].includes(new URL(BASE).hostname)) {
+// Port 3100 is where a production instance listens (ecosystem.config.js), on localhost too.
+const target = BASE && URL.canParse(BASE) ? new URL(BASE) : null;
+if (!target || !["localhost", "127.0.0.1"].includes(target.hostname) || target.port === "3100") {
   console.error("Usage: node scripts/visual-qa-app.mjs http://localhost:<port> [output-dir]");
-  console.error("This sweep creates data, so it only runs against localhost.");
+  console.error("This sweep creates data, so it only runs against localhost, and never against port 3100.");
   process.exit(1);
 }
 mkdirSync(OUT, { recursive: true });
@@ -234,9 +237,9 @@ for (const theme of THEMES) {
 }
 await browser.close();
 writeFileSync(`${OUT}/_log.txt`, log.join("\n"));
-const faults = log.filter((line) => /^(OVERFLOW|PAGEERROR)/.test(line));
+const faults = log.filter((line) => /^(OVERFLOW|PAGEERROR|SEED FAIL|NAV FAIL)/.test(line));
 if (faults.length) {
-  console.error(`${faults.length} fault(s): pages wider than the viewport, or errors in the browser.`);
+  console.error(`${faults.length} fault(s): see the lines above (page wider than its viewport, error in the browser, seeding or navigation failed).`);
   process.exit(1);
 }
 console.log(`Screenshots written to ${OUT}/`);
