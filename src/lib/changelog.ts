@@ -17,16 +17,16 @@ export const RELEASES: Release[] = [
   {
     version: "v3.2.0",
     date: "2026-10-11",
-    summary: "Link previews that show, one set of templates everywhere, and a site whose every claim was checked against the code.",
+    summary: "Link previews are PNG images, the editor, CLI and MCP prompts share one set of templates, and team space invites are emailed.",
     entries: [
-      { date: "2026-10-11", tag: "New", text: "A link you share now shows a picture in Slack, iMessage, WhatsApp, LinkedIn and X: the page's title on a card, as a PNG. It was an SVG, which none of them draws. Docs pages and templates have cards of their own" },
+      { date: "2026-10-11", tag: "New", text: "The preview image of a shared link is now a PNG card with the page's title. It was an SVG, which most chat and social apps do not draw. Docs pages and templates have cards of their own" },
       { date: "2026-10-11", tag: "New", text: "An RFC template in the editor, and a postmortem prompt for MCP clients. The editor, booklet new and the MCP prompts now start each document type from the same sections" },
-      { date: "2026-10-11", tag: "New", text: "Team invites are emailed, and the owner is shown the link as well. The page used to say the invite was sent and sent nothing" },
+      { date: "2026-10-11", tag: "New", text: "Team space invites are emailed when the instance has email set up, and the owner is always shown the link. The page used to say the invite was sent and sent nothing" },
       { date: "2026-10-11", tag: "New", text: "The editor's preview shows the header strip a published page gets from its frontmatter" },
       { date: "2026-10-11", tag: "New", text: "Share from a phone's own share sheet, and embed a page by pasting its link where oEmbed is supported" },
       { date: "2026-10-11", tag: "Improved", text: "A page with a custom URL has one address. Its ID redirects there, and search engines, link previews and the embed code all use it" },
       { date: "2026-10-11", tag: "Improved", text: "Pages you make public are in the sitemap, so a search engine can find them. robots.txt no longer keeps crawlers from the site's styles and scripts" },
-      { date: "2026-10-11", tag: "Improved", text: "The site's wording was checked line by line against what the product does. One name for each thing: custom URL, team space, folder, Team only, Referenced by" },
+      { date: "2026-10-11", tag: "Improved", text: "The site uses one name for each thing: custom URL, team space, folder, Team only, Referenced by" },
       { date: "2026-10-11", tag: "Improved", text: "The homepage's examples of a header strip, a link between documents and a team space are drawn by the same code that draws the real ones" },
       { date: "2026-10-11", tag: "Improved", text: "The Trust, Privacy and Terms pages say what is stored and sent, how long a page without an account is kept, what stays in backups, and that Booklet is in public beta" },
       { date: "2026-10-11", tag: "Fixed", text: "Updating a page through the API, the CLI or an MCP client reset its theme, typeface, width and spacing to the defaults" },
@@ -49,7 +49,7 @@ export const RELEASES: Release[] = [
       { date: "2026-10-11", tag: "Fixed", text: "Numbered steps keep their numbers after a code block. Every step used to be 1" },
       { date: "2026-10-11", tag: "Improved", text: "The editor works from the keyboard alone: Escape then Tab leaves the text, the formatting buttons answer to Enter, and closing the command palette puts the cursor back" },
       { date: "2026-10-11", tag: "Improved", text: "On a phone the formatting bar shows a shade on the side it scrolls to, and the draft's title has room before publishing" },
-      { date: "2026-10-11", tag: "Improved", text: "A page that was taken down or has expired has its own page that says so, which follows your system's dark setting. A page with a password asks for it on the same card as sign-in" },
+      { date: "2026-10-11", tag: "Improved", text: "A page that was taken down or has expired has its own page that says so, in light or dark to match your system. A page with a password asks for it on the same card as sign-in" },
       { date: "2026-10-11", tag: "Improved", text: "Times read 11 Oct 2026, 18:53, like the dates beside them" },
       { date: "2026-10-11", tag: "Improved", text: "Space settings keeps its header while loading, and has a page for a space that is not found or that you do not own" },
     ],
@@ -105,7 +105,7 @@ export const RELEASES: Release[] = [
   {
     version: "v2.0.1",
     date: "2026-10-11",
-    summary: "Mermaid diagrams are sanitized before they are shown, and the editor's visibility control is a menu.",
+    summary: "Mermaid diagrams are sanitised before they are shown, and the editor's visibility control is a menu.",
     entries: [
       { date: "2026-10-11", tag: "Fixed", text: "A Mermaid diagram could carry CSS that loaded an image from another host when the page was read. Diagrams are now checked as a parsed tree before they are mounted" },
       { date: "2026-10-11", tag: "Improved", text: "The visibility control beside Publish is a menu that says, under each choice, who can find the page" },
@@ -117,7 +117,7 @@ export const RELEASES: Release[] = [
     date: "2026-10-11",
     summary: "Document types, links between pages and team spaces for engineering documents; accounts with verification and passkeys; OAuth for MCP clients. Older versions of several flows were removed, so this release breaks some API, CLI and MCP callers.",
     entries: [
-      { date: "2026-10-11", tag: "New", text: "Document types. Put type: incident, postmortem, adr, rfc, runbook or release-notes in a page's frontmatter and it shows status, severity, date and owners in a strip in a strip above the title. The templates start with this frontmatter" },
+      { date: "2026-10-11", tag: "New", text: "Document types. Put type: incident, postmortem, adr, rfc, runbook or release-notes in a page's frontmatter and it shows status, severity, date and owners in a strip above the title. The templates start with this frontmatter" },
       { date: "2026-10-11", tag: "New", text: "Links between published pages. [[Title]] becomes a link when a published page with that title is in the same team space, or among your own pages, and the linked page lists what references it" },
       { date: "2026-10-11", tag: "New", text: "Team spaces at /t. A space lists its pages by type, with a decision log in ADR-number order and incidents by date, and has an Atom feed of its public pages" },
       { date: "2026-10-11", tag: "New", text: "Team visibility: a page in a team space that its members can open and nobody else can" },

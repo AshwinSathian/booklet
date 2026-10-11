@@ -28,10 +28,15 @@ export async function GET(req: Request) {
   }
   if (!key) return problem(404, "No published page at that address.");
 
-  const record = (await getPageRecord(key)) ?? (await getPageBySlug(key));
-  const id = record?.id ?? key;
+  // A document with this id first, a custom URL only when there is none: the order the page itself uses.
+  let id = key;
+  let doc = await getDoc(id);
+  const record = doc ? await getPageRecord(id) : await getPageBySlug(key);
+  if (!doc && record) {
+    id = record.id;
+    doc = await getDoc(id);
+  }
   if (record && (record.password_hash || record.visibility === "team")) return problem(404, "No published page at that address.");
-  const doc = await getDoc(id);
   if (!doc || (await getGoneReason(id))) return problem(404, "No published page at that address.");
 
   const title = extractDocTitle(doc.blocks) ?? "Untitled";

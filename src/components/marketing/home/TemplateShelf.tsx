@@ -42,7 +42,7 @@ export function TemplateShelf() {
     <Section
       eyebrow="Templates"
       title="Start from a template"
-      lede="A template opens in the editor with its sections and frontmatter in place. These six are the same ones the CLI and the MCP prompts use."
+      lede="A template opens in the editor with its sections and frontmatter in place. The CLI and the MCP prompts start these six from the same sections."
     >
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {templates.map((t) => (

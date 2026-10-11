@@ -29,12 +29,16 @@ const SITE_URL =
 // The site's own title, description, canonical and link preview, which a
 // page replaces through buildMetadata(). No author or keywords here: they
 // would be inherited by every page, and a page someone published is theirs.
+// Without the canonical address: a page that sets only its title (the
+// signed-in ones do) would inherit the homepage's and call itself a copy of it.
+const { alternates: _homeOnly, ...siteMetadata } = buildMetadata({
+  description:
+    "Publish Markdown incident reports, ADRs, RFCs and runbooks as web pages, with team spaces. Free, and you can try it without an account.",
+});
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  ...buildMetadata({
-    description:
-      "Publish Markdown incident reports, ADRs, RFCs and runbooks as web pages, with team spaces. Free, and you can try it without an account.",
-  }),
+  ...siteMetadata,
   manifest: "/manifest.json",
   icons: {
     icon: [

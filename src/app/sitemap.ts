@@ -6,7 +6,8 @@ import { absoluteUrl } from "@/lib/seo";
 import { TEMPLATES } from "@/lib/templates";
 import type { MetadataRoute } from "next";
 
-export const dynamic = "force-dynamic";
+// Read from the database, so not built ahead of time; kept for an hour, so a crawler's visits cost one query.
+export const revalidate = 3600;
 
 // The site's own pages, then the pages their authors made public. Not here:
 // the editor and anything else that is not indexed (Explore and the tag

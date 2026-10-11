@@ -200,8 +200,6 @@ export default async function SharePage({
   // A real 404, rendered by ./not-found.tsx. Returning the notice from here
   // answered 200, so a deleted page looked alive to crawlers and scripts.
   if (!doc) notFound();
-  // A page with a custom URL has one address. Its id redirects there.
-  if (pageRecord?.slug && idOrSlug !== pageRecord.slug) permanentRedirect(`/p/${pageRecord.slug}`);
   // Null unless this browser published the page and nobody owns it yet.
   const expiresAt = await expiryForAuthor(resolvedId, pageRecord !== null);
   // An expired page is still shown to its author, with the notice below,
@@ -219,6 +217,11 @@ export default async function SharePage({
       return <PasswordGate pageId={resolvedId} />;
     }
   }
+
+  // A page with a custom URL has one address, and its id redirects there.
+  // After the password gate and the gone notice: the redirect names the
+  // slug, which someone without the password has no business learning.
+  if (pageRecord?.slug && idOrSlug !== pageRecord.slug) permanentRedirect(`/p/${pageRecord.slug}`);
 
   // Fire-and-forget view count — non-blocking, non-fatal. Deduped per
   // session (see incrementViewCount) so reloads/bot re-fetches from the

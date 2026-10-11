@@ -19,7 +19,7 @@ const WAYS = [
   {
     id: "cli",
     label: "CLI",
-    text: "Publish a file from a terminal or a script, and update the same page later. JSON output and fixed exit codes for scripts.",
+    text: "Publish a file from a terminal and update the same page later. For scripts, --json prints the result as JSON and the exit codes are fixed.",
     file: "Terminal",
     code: "export BOOKLET_API_KEY=bklt_your_key\nnpx booklet-cli publish runbook.md --space payments\nnpx booklet-cli publish runbook.md --update Ab3k91QxZp",
     href: "/docs/guides/cli",
@@ -39,7 +39,7 @@ const WAYS = [
     label: "GitHub workflow",
     text: "Publish release notes when a release is published, or a runbook when it changes on the main branch. The link stays the same.",
     file: ".github/workflows/runbook.yml",
-    code: 'on:\n  push:\n    branches: [main]\n    paths: [docs/runbook.md]\njobs:\n  publish:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v7\n      - run: npx booklet-cli publish docs/runbook.md --update "$PAGE_ID"\n        env:\n          BOOKLET_API_KEY: ${{ secrets.BOOKLET_API_KEY }}\n          PAGE_ID: ${{ vars.RUNBOOK_PAGE_ID }}',
+    code: 'on:\n  push:\n    branches: [main]\n    paths: [docs/runbook.md]\njobs:\n  publish:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - run: npx booklet-cli publish docs/runbook.md --update "$PAGE_ID"\n        env:\n          BOOKLET_API_KEY: ${{ secrets.BOOKLET_API_KEY }}\n          PAGE_ID: ${{ vars.RUNBOOK_PAGE_ID }}',
     href: "/docs/guides/github-action",
     link: "GitHub workflow guide",
   },

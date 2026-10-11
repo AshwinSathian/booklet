@@ -152,7 +152,7 @@ export default async function EmbedPage({
       <footer className="border-t border-border-subtle mt-4">
         <div className={`mx-auto w-full px-5 py-3 ${maxW} flex items-center justify-between gap-3`}>
           <span className="text-xs text-text-muted">
-            Published via {APP_NAME}
+            Published with {APP_NAME}
             {" · "}
             <Link
               href={`/report?page=${encodeURIComponent(resolvedId)}`}

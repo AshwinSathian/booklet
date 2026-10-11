@@ -86,7 +86,7 @@ test("collection and author pages use the public site header and footer", async 
     await page.goto(route);
     await expect(page.locator("header[data-site-header]"), route).toHaveCount(1);
     await expect(page.getByRole("contentinfo"), route).toHaveCount(1);
-    await expect(page.getByText(/No public pages/), route).toHaveCount(1);
+    await expect(page.getByText(/no public pages/i), route).toHaveCount(1);
   }
 });
 

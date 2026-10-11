@@ -33,7 +33,7 @@ export default function AboutPage() {
 
       <h2>What it costs</h2>
       <p>
-        Nothing. Without an account you can publish 10 pages a month and each is kept for 90 days; sign in and both limits
+        Nothing. Without an account you can publish 10 pages a month and each is served for 90 days; sign in and both limits
         go away. Who pays for it, where it runs and how it is backed up are on the <Link href="/trust">Trust page</Link>.
       </p>
 

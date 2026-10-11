@@ -131,7 +131,7 @@ export const DeletePageInputSchema = z.object({
   confirm: z
     .boolean()
     .refine((v) => v === true, "`confirm` must be true to delete a page. This action cannot be undone.")
-    .describe("Must be true to proceed. Prevents accidental deletion — this cannot be undone."),
+    .describe("Must be true to proceed. Deletion cannot be undone."),
 });
 
 export const PublishPageOutputSchema = z.object({

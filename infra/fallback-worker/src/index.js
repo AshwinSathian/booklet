@@ -44,9 +44,9 @@ p{margin:0 0 1rem;color:#45433b}
 Booklet
 </div>
 <h1>Booklet is not reachable right now</h1>
-<p>The page you asked for is still there. It cannot be served at the moment.</p>
-<p>This page tries again every minute, or you can reload it. Booklet is in public beta.</p>
-<p class="small">If you were writing in the editor, your draft is saved in your browser.</p>
+<p>Booklet cannot serve this page at the moment.</p>
+<p>This page tries again every minute, or you can reload it.</p>
+<p class="small">Booklet is in public beta. If you were writing in the editor, your draft is in your browser as of your last pause in typing.</p>
 </main>
 </body>
 </html>
@@ -56,6 +56,8 @@ const HEADERS = {
   "cache-control": "no-store",
   "retry-after": String(RETRY_AFTER_SECONDS),
   "x-robots-tag": "noindex",
+  "x-content-type-options": "nosniff",
+  "x-frame-options": "DENY",
   "x-booklet-fallback": "1",
 };
 
@@ -77,7 +79,9 @@ export function originIsDown(response) {
 }
 
 const worker = {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
+    // If this Worker itself fails, the request goes to the origin as if the Worker were not there.
+    ctx?.passThroughOnException?.();
     // ORIGIN is set only on the preview copy, to point it at a host that is down.
     const target = env.ORIGIN ? new Request(new URL(new URL(request.url).pathname + new URL(request.url).search, env.ORIGIN), request) : request;
     let response;

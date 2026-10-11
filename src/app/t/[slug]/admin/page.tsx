@@ -293,7 +293,7 @@ function AdminPageInner({ slug }: { slug: string }) {
         <section className="border-t border-border-default pt-8">
           <h2 className="mb-1 text-[0.9375rem] font-semibold">Delete this space</h2>
           <p className="mb-4 text-sm text-text-secondary">
-            Deleting a space cannot be undone. Its pages are kept and leave the space, and its members lose access. A Team only page stays Team only, which then means only its author can open it until they change who can read it.
+            Deleting a space cannot be undone. Its pages are kept and leave the space, and its members lose access. A Team only page can then be opened only by its author, until the author changes its visibility.
           </p>
           {confirmDelete ? (
             <div className="flex items-center gap-2">

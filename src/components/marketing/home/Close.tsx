@@ -27,11 +27,11 @@ const FACTS: Array<{ title: string; body: ReactNode }> = [
 const FAQ: Array<{ q: string; a: ReactNode }> = [
   {
     q: "Do I need an account?",
-    a: "No. Without one you can publish 10 pages a month, each kept for 90 days. A free account removes both limits and adds editing a page after publishing, custom URLs, version history, analytics, team spaces and API keys. You confirm your email address before the first publish.",
+    a: "No. Without one you can publish 10 pages a month, each served for 90 days. A free account removes both limits and adds editing a page after publishing, custom URLs, version history, analytics, team spaces and API keys. You confirm your email address before the first publish.",
   },
   {
     q: "Who can read a page I publish?",
-    a: "Anyone with the link, so treat a link as something that can be forwarded. To keep a page to a team's members, publish it into a team space and choose the team in the visibility menu. A page can also have a password.",
+    a: "Anyone with the link, so treat a link as something that can be forwarded. To keep a page to a team's members, publish it into a team space and choose the team space in the visibility menu. A page can also have a password.",
   },
   {
     q: "Can I change a page after publishing it?",

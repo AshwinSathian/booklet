@@ -30,7 +30,7 @@ curl https://booklet.ashwinsathian.com/p/example-incident-report.md
 
 ## Embed a page in another site
 
-On a published page, **Embed** copies an `<iframe>` that shows the page without Booklet's header and footer:
+On a published page, **Embed** copies an `<iframe>` that shows the page without Booklet's header, and with a one-line "Published with Booklet" footer:
 
 ```html
 <iframe

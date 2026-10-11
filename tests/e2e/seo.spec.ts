@@ -52,6 +52,8 @@ test("robots.txt lets a crawler fetch the styles and scripts, and the sitemap li
   const robots = await (await request.get("/robots.txt")).text();
   expect(robots).not.toContain("/_next");
   expect(robots).toContain("Disallow: /api/");
+  // The preview images are for crawlers: a card's bot obeys robots.txt.
+  expect(robots).not.toContain("/og");
   const sitemap = await (await request.get("/sitemap.xml")).text();
   expect(sitemap).not.toMatch(/<loc>[^<]*\/app<\/loc>/);
   expect(sitemap).toContain("/docs/quickstart</loc>");
@@ -60,7 +62,7 @@ test("robots.txt lets a crawler fetch the styles and scripts, and the sitemap li
   expect(sitemap).not.toMatch(/\/docs\/quickstart<\/loc>\s*<lastmod>/);
 });
 
-test("a public page is in the sitemap under its custom address, which is its one canonical URL", async ({ page }) => {
+test("a public page with a custom address has that as its one canonical URL", async ({ page }) => {
   await account(page.request);
   const slug = `seo-${Date.now()}`;
   const raw = `---\ntags: [seo-check]\n---\n\n# A public page for crawlers\n\nMIT\n\nThis paragraph is long enough to describe the page in a search result or a link preview.\n`;
@@ -78,7 +80,7 @@ test("a public page is in the sitemap under its custom address, which is its one
   const canonical = await page.locator('link[rel="canonical"]').getAttribute("href");
   expect(new URL(canonical!).pathname).toBe(`/p/${slug}`);
   expect(new URL((await page.locator('meta[property="og:url"]').getAttribute("content"))!).pathname).toBe(`/p/${slug}`);
-  expect(await page.locator('meta[name="robots"]').getAttribute("content")).toContain("index");
+  expect(await page.locator('meta[name="robots"]').getAttribute("content")).not.toContain("noindex");
   expect(await page.locator('meta[property="og:type"]').getAttribute("content")).toBe("article");
   expect(await page.locator('meta[property="article:published_time"]').getAttribute("content")).toMatch(/^\d{4}-\d\d-\d\dT/);
   // The description is the first paragraph that says something, not a one-word line.
@@ -90,11 +92,11 @@ test("a public page is in the sitemap under its custom address, which is its one
   expect(structured["@graph"].map((node) => node["@type"])).toEqual(["TechArticle", "BreadcrumbList"]);
   expect(structured["@graph"][0].headline).toBe("A public page for crawlers");
 
-  expect(await (await page.request.get("/sitemap.xml")).text()).toContain(`/p/${slug}</loc>`);
-
   // oEmbed, found from the page, answers with the frame.
   const oembedHref = await page.locator('link[type="application/json+oembed"]').getAttribute("href");
-  const oembed = (await (await page.request.get(oembedHref!)).json()) as { type: string; title: string; html: string };
+  // By path: the href is absolute, and on a machine with no site URL set it names the live site.
+  const oembedUrl = new URL(oembedHref!);
+  const oembed = (await (await page.request.get(oembedUrl.pathname + oembedUrl.search)).json()) as { type: string; title: string; html: string };
   expect(oembed.type).toBe("rich");
   expect(oembed.title).toBe("A public page for crawlers");
   expect(oembed.html).toContain(`/p/${slug}/embed`);

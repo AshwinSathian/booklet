@@ -29,14 +29,18 @@ export const runtime = "nodejs";
 type Card = { title?: string; kicker?: string; footer?: string };
 
 async function publishedPage(idOrSlug: string): Promise<Card> {
+  // As the page itself resolves its address: a document with this id first,
+  // and a custom URL only when there is none. A page without an account has
+  // no record, and its id must not be answered with whatever page took that
+  // id as its slug.
   let id = idOrSlug;
-  let record = await getPageRecord(id);
-  if (!record) {
-    record = await getPageBySlug(idOrSlug);
-    if (record) id = record.id;
+  let doc = await getDoc(id);
+  const record = doc ? await getPageRecord(id) : await getPageBySlug(idOrSlug);
+  if (!doc && record) {
+    id = record.id;
+    doc = await getDoc(id);
   }
   if (record && (record.password_hash || record.visibility === "team")) return {};
-  const doc = await getDoc(id);
   if (!doc || (await getGoneReason(id))) return {};
   const title = extractDocTitle(doc.blocks);
   if (!title) return {};
@@ -58,6 +62,13 @@ async function card(key: string[]): Promise<Card | null> {
   return null;
 }
 
+const render = async (card: Card) =>
+  new Uint8Array(await sharp(Buffer.from(buildOgSvg(card.title, card.kicker, card.footer))).png({ compressionLevel: 9, palette: true }).toBuffer());
+
+// Drawn once: it is what every missing, locked or gone page gets, and anyone can ask for those in any number.
+let site: Promise<Uint8Array<ArrayBuffer>> | null = null;
+const siteCard = () => (site ??= render({}));
+
 export async function GET(_req: Request, { params }: { params: Promise<{ key: string[] }> }) {
   const { key } = await params;
   const last = key.at(-1) ?? "";
@@ -71,12 +82,20 @@ export async function GET(_req: Request, { params }: { params: Promise<{ key: st
   const found = await card(parts);
   if (!found) return new Response("Not found", { status: 404 });
 
-  const png = await sharp(Buffer.from(buildOgSvg(found.title, found.kicker, found.footer))).png({ compressionLevel: 9, palette: true }).toBuffer();
-  return new Response(new Uint8Array(png), {
+  let png: Uint8Array<ArrayBuffer>;
+  try {
+    png = found.title ? await render(found) : await siteCard();
+  } catch {
+    // A title the renderer cannot draw still gets a preview: the site's.
+    png = await siteCard();
+  }
+  return new Response(png, {
     headers: {
       "Content-Type": "image/png",
-      // A page's title can change; the site's own cards change with a release.
-      "Cache-Control": parts[0] === "p" ? "public, max-age=600, s-maxage=3600" : "public, max-age=86400, s-maxage=604800",
+      // A page's title can change, and a page can be given a password or
+      // taken down: its card is kept for ten minutes. The site's own cards
+      // change with a release.
+      "Cache-Control": parts[0] === "p" ? "public, max-age=600" : "public, max-age=86400, s-maxage=604800",
       "X-Robots-Tag": "noindex",
     },
   });

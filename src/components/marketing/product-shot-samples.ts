@@ -62,7 +62,7 @@ pool_size: 5 # was 50
     source: `---
 type: adr
 status: Accepted
-date: 2026-08-02
+date: 2026-08-03
 owners: [platform-team]
 supersedes: ADR-007 Retry in the client
 ---

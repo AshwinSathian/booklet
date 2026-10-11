@@ -6,7 +6,7 @@ import { buildMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = buildMetadata({
-  title: "Privacy Policy",
+  title: "Privacy policy",
   description: `Privacy policy for ${APP_NAME}: what we store, why, and how to delete it.`,
   pathname: "/privacy",
   noIndex: false,
@@ -34,13 +34,15 @@ export default function PrivacyPage() {
               that, unless you sign in and choose Keep this page. A cookie is set in the browser you published from,
               for 120 days, so that only that browser can keep the page later. To enforce the cap of{" "}
               {ANONYMOUS_LIMITS.pagesPerMonth} pages a month, we store the IP address you publish from with a
-              counter, which is deleted early the following month.
+              counter, which is deleted early the following month. Rate limits on publishing, sign-in, page passwords,
+              reports and analytics also keep the IP address (and, for sign-in, the email address typed) with a counter
+              for about two minutes.
             </p>
             <p>
               <strong className="text-text-primary">Accounts.</strong> We store your email address and an argon2id hash
               of your password, never the password itself. We email you a link to confirm the address. Signing in
-              issues a random session token, stored on the server as a hash and referenced by an httpOnly cookie in
-              your browser. If you add a passkey, we store its public key; the private key stays on your device.
+              issues a random session token. The server stores a hash of it; the token itself is in an httpOnly cookie
+              in your browser. If you add a passkey, we store its public key; the private key stays on your device.
               {providers.length > 0 && (
                 <>
                   {" "}If you sign in with {providerNames}, we receive your account ID there and your verified email
@@ -50,14 +52,17 @@ export default function PrivacyPage() {
             </p>
             <p>
               <strong className="text-text-primary">Team spaces.</strong> A space stores the email address of each
-              member, and of anyone its owner has invited. An invite is emailed to the address the owner typed.
+              member. An invited address is not stored until that person joins: it is carried in the invite link and
+              in the email sent to it. When the owner removes a member, the space keeps that address so that the
+              invites sent to it earlier stop working.
             </p>
             <p>
               <strong className="text-text-primary">Analytics on a page.</strong> We count views, whether a reader
               reached half way and the end, clicks on the page&apos;s link to the editor, the kind of site a reader came
               from (not its address), and an approximate country taken from Cloudflare&apos;s headers. To count a reader
               once a day we store a one-way hash of their IP address, browser user agent and the date; the IP address
-              itself is not stored with analytics. Only the page&apos;s owner sees these numbers. No third-party analytics
+              itself is not stored with analytics. The page&apos;s owner sees its views, reading depth, kinds of referrer
+              and countries. The administrator sees totals for the whole site, not per reader. No third-party analytics
               script runs on any {APP_NAME} page.
             </p>
             <p>
@@ -94,12 +99,12 @@ export default function PrivacyPage() {
               <a href="mailto:booklet@ashwinsathian.com" className="link">
                 booklet@ashwinsathian.com
               </a>
-              . A page an administrator took down for breaking the terms is kept, with no owner, so that its address
-              cannot be reused.
+              . A page an administrator took down for breaking the terms is kept after its owner&apos;s account is
+              deleted, so that its address cannot be reused.
             </p>
             <p>
               The database is backed up every night and 30 nightly archives are kept, so a deleted page or account
-              remains in those archives for up to 30 nights. If you report a page, we store the report and, if you
+              remains in those archives until 30 newer ones have replaced them, normally 30 nights. If you report a page, we store the report and, if you
               give one, your email address.
             </p>
           </Section>

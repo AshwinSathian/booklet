@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { getDb } from "@/lib/mongodb";
 import { ensureIndexes } from "@/lib/db/index-specs.mjs";
-import { createCollectionRecord, getCollectionRecord, getCollectionChildren, deleteCollectionRecord, getPagesByCollection } from "@/lib/db";
+import { createCollectionRecord, getCollectionRecord, getCollectionChildren, deleteCollectionRecord, getPagesByCollection, getPublicPagesForSitemap } from "@/lib/db";
 import { createId } from "@/lib/id";
 import { resolveParent, assertCanNest } from "@/server/collections";
 import { ServiceError } from "@/server/errors";
@@ -269,4 +269,27 @@ test.describe("assertCanNest", () => {
       await cleanup([parentId, childId]);
     }
   });
+});
+
+test("the sitemap lists a public page by its custom address, and no unlisted, locked or taken-down page", async () => {
+  const db = await getDb();
+  const now = new Date().toISOString();
+  const ids = Array.from({ length: 5 }, () => createId(10));
+  const slug = `sitemap-${createId(8).toLowerCase()}`;
+  const page = { user_id: `testuser${createId(8)}`, title: "Page", visibility: "public", collection_id: null, team_id: null, view_count: 0, password_hash: null, frontmatter_meta: null, created_at: now, updated_at: now };
+  try {
+    await db.collection("pages").insertMany([
+      { ...page, _id: ids[0], slug },
+      { ...page, _id: ids[1] },
+      { ...page, _id: ids[2], visibility: "unlisted" },
+      { ...page, _id: ids[3], password_hash: "x" },
+      { ...page, _id: ids[4], taken_down_at: now },
+    ] as never);
+    const keys = (await getPublicPagesForSitemap()).map((entry) => entry.key);
+    expect(keys).toContain(slug);
+    expect(keys).toContain(ids[1]);
+    for (const id of [ids[0], ids[2], ids[3], ids[4]]) expect(keys).not.toContain(id);
+  } finally {
+    await db.collection("pages").deleteMany({ _id: { $in: ids } } as never);
+  }
 });

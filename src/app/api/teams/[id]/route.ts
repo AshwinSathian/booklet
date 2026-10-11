@@ -27,7 +27,8 @@ export async function PATCH(
     return problem(400, "Invalid JSON");
   }
 
-  const name = body.name?.trim();
+  // One line of at most 80 characters, as when the space was created: the name goes into invite emails.
+  const name = typeof body.name === "string" ? body.name.replace(/\s+/g, " ").trim().slice(0, 80) : "";
   if (name) {
     await updateCollectionRecord(id, { name, updated_at: new Date().toISOString() });
   }

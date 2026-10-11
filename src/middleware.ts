@@ -117,7 +117,7 @@ const PAGE_CACHE_CONTROL = "private, no-cache, no-store, max-age=0, must-revalid
 
 // Not pages: the API, and the files a crawler or a chat app fetches on its
 // own, which set their own caching and should be cacheable.
-const NOT_A_PAGE = /^\/(api\/|og\/|robots\.txt$|sitemap\.xml$|manifest\.json$|llms(-full)?\.txt$|docs\/search-index|docs\/raw\/)|\/feed\.xml$|\.md$/;
+const NOT_A_PAGE = /^\/(api\/|og\/|\.well-known\/|robots\.txt$|sitemap\.xml$|manifest\.json$|llms(-full)?\.txt$|docs\/search-index|docs\/raw\/)|\/feed\.xml$|\.md$/;
 const isPagePath = (pathname: string) => !NOT_A_PAGE.test(pathname);
 
 /** Hands the request on to the app with this request's nonce and policy. */

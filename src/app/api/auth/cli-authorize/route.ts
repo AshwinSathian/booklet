@@ -59,7 +59,7 @@ export async function POST(req: Request) {
   if (unverified) return unverified;
   const existing = await getApiKeysByUser(userId);
   if (existing.length >= MAX_KEYS_PER_USER) {
-    return problem(409, `You have ${MAX_KEYS_PER_USER} API keys — the maximum allowed. Delete an unused key first.`);
+    return problem(409, `You have ${MAX_KEYS_PER_USER} API keys, which is the most an account can have. Delete one in Settings, then try again.`);
   }
 
   try {
@@ -73,7 +73,7 @@ export async function POST(req: Request) {
     const after = await getApiKeysByUser(userId);
     if (after.length > MAX_KEYS_PER_USER) {
       await deleteApiKey(id, userId);
-      return problem(409, `You have ${MAX_KEYS_PER_USER} API keys — the maximum allowed. Delete an unused key first.`);
+      return problem(409, `You have ${MAX_KEYS_PER_USER} API keys, which is the most an account can have. Delete one in Settings, then try again.`);
     }
 
     // 127.0.0.1 is exempt from HSTS (RFC 6797 §8.3) so HTTP is safe here.

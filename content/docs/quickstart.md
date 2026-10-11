@@ -10,11 +10,11 @@ Booklet turns a Markdown document into a web page with a link. This page gets yo
 
 1. Open [the editor](/app). You do not need an account.
 2. Write some Markdown, or start from a [template](/templates). The preview beside the editor is the page your reader will get.
-3. Press **Publish**, or `⌘↵`.
+3. Press **Publish**, or `⌘↵` (`Ctrl+Enter` on Windows and Linux).
 
 You get a link like `https://booklet.ashwinsathian.com/p/Ab3k91QxZp`. A new page is **unlisted**: anyone with the link can read it, and search engines are told not to index it.
 
-Without an account you can publish 10 pages a month, each is kept for 90 days, and a page cannot be edited after it is published. A free account removes all three limits. See [Limits](/docs/reference/limits).
+Without an account you can publish 10 pages a month, each is served for 90 days, and a page cannot be edited after it is published. A free account removes all three limits. See [Limits](/docs/reference/limits).
 
 ## Publish from the terminal
 

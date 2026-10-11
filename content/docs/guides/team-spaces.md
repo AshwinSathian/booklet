@@ -9,7 +9,7 @@ A team space is a shared home for a team's documents at `/t/<slug>`. Members can
 ## Create a space and invite people
 
 1. Sign in and open [Spaces](/t).
-2. Create a space. Its slug becomes its address.
+2. Create a space. Its name becomes its address, `/t/<slug>`.
 3. On the space's admin page, enter a colleague's email address. Booklet emails them an invite, and shows you the same link in case you would rather send it yourself. The link works for 72 hours and only for an account with that address. They sign in, or create that account, and join as an editor.
 
 An editor can read every page in the space and publish into it. The owner can remove a member from the same admin page; the invites sent to that person before then stop working. Deleting a space keeps its pages: they leave the space, and a Team only page can then be opened by its author alone.
@@ -34,7 +34,7 @@ An editor can read every page in the space and publish into it. The owner can re
 
 ## The space's home
 
-The home lists pages by [document type](/docs/guides/document-types): a decision log in ADR-number order, incidents by date, then RFCs, runbooks and release notes. A member sees every page. A visitor sees the public ones.
+The home lists pages by [document type](/docs/guides/document-types): incidents and postmortems by date, a decision log in ADR-number order, then RFCs, runbooks and release notes. A member sees every page. A visitor sees the public ones.
 
 A space with public pages has an Atom feed at `/t/<slug>/feed.xml`.
 

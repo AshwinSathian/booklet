@@ -28,10 +28,10 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 export default function TrustPage() {
   return (
-    <ProsePage eyebrow="Trust" title="What you are trusting when you publish here" lede={`${APP_NAME} is in public beta and is run by one person. This page says who runs it, where your pages live, what is stored and how you get your pages out.`}>
+    <ProsePage eyebrow="Trust" title="What you are trusting when you publish here" lede={`Who runs ${APP_NAME}, where your pages live, what is stored and how you get your pages out.`}>
           <Section title="Public beta">
             <p>
-              {APP_NAME} is in public beta. Features can change, and there is no promise about how long it runs or
+              Features can change, and there is no promise about how long {APP_NAME} runs or
               what notice you would get if it stopped. Keep your own copy of anything you cannot lose: the
               section on taking your pages out says how.
             </p>
@@ -65,10 +65,11 @@ export default function TrustPage() {
 
           <Section title="Backups">
             <p>
-              The database is dumped every night at 03:30 India time and the last 30 archives are kept.
+              The database is dumped every night at 03:30, the machine&apos;s local time, and the last 30 archives are kept.
               Restoring from one has been tested. The archives are on the same disk as the database, so they
               cover a bad change or an accidental delete, and they do not cover losing the disk. A page or an
-              account you delete stays in those archives until they are rotated out, 30 nights later.
+              account you delete stays in those archives until 30 newer ones have replaced them, which is 30 nights when
+              no backup is missed.
             </p>
           </Section>
 
@@ -93,7 +94,8 @@ export default function TrustPage() {
           <Section title="Who pays for it">
             <p>
               The maintainer does. {APP_NAME} has no paid plan, no ads and no third-party analytics. It
-              counts page views, how far readers scroll, referrers and approximate country, and shows those
+              counts page views, how far readers scroll, the kind of site a reader came from and an approximate
+              country, and shows those
               numbers to the page&apos;s author.
             </p>
           </Section>
@@ -116,9 +118,9 @@ export default function TrustPage() {
             <p>
               <Link href={ROUTES.account} className={link}>Account settings</Link> has a download of every
               page you own as a ZIP of Markdown files, frontmatter included. The ZIP has each page as it is
-              now: not its earlier versions, and not your drafts. The same screen deletes the account, and with
+              now: not its earlier versions, not your drafts, and not a page that was taken down. The same screen deletes the account, and with
               it your pages, versions, drafts, API keys and webhooks. A page that was taken down for breaking the
-              terms is kept, with no owner, so its address cannot be reused.
+              terms is kept after its owner&apos;s account is deleted, so its address cannot be reused.
             </p>
           </Section>
 
@@ -130,7 +132,7 @@ export default function TrustPage() {
                 the repository
               </a>
               ; its README has a section on running your own. The action has a repository of its own. If you
-              change the app and run it as a service for others, AGPL section 13 asks you to offer them your
+              change the app and run it as a service for others, AGPL section 13 requires you to offer them your
               source.
             </p>
           </Section>

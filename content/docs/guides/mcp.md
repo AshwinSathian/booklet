@@ -40,7 +40,7 @@ In short:
 
 ## Try it
 
-Ask in plain words. Ask in plain words. For example:
+Ask in plain words. For example:
 
 - "Publish this as a Booklet page and give me the link."
 - "Write an incident report for the checkout outage from this timeline and publish it."

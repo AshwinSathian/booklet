@@ -14,7 +14,6 @@ export default function robots(): MetadataRoute.Robots {
           "/api/",
           "/app",
           "/settings/",
-          "/og/",
         ],
       },
     ],

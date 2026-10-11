@@ -134,9 +134,9 @@ test.describe("Production verification — signup, publish, session lifecycle", 
     expect(res.status()).toBe(403);
   });
 
-  test("admin is forbidden without an allowlisted IP", async ({ request }) => {
+  test("admin is not found without an allowlisted IP", async ({ request }) => {
     const res = await request.get(`${BASE}/admin`, { maxRedirects: 0 });
-    expect(res.status()).toBe(403);
+    expect(res.status()).toBe(404);
   });
 });
 

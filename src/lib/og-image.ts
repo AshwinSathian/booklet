@@ -1,5 +1,6 @@
 function escXml(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  // Control characters are not allowed in XML at all, escaped or not.
+  return s.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
 function wrapTitle(title: string): [string, string | null] {
@@ -35,7 +36,8 @@ export function buildOgSvg(title?: string, kicker?: string, footer = "Published 
 
   let content: string;
   if (title) {
-    const [line1, line2] = wrapTitle(escXml(title));
+    // Cut to length first, escape after: cutting escaped text can split an entity, which is not XML.
+    const [line1, line2] = wrapTitle(title.replace(/\s+/g, " ").trim()).map((line) => (line === null ? null : escXml(line)));
     const fontSize = line2 ? 64 : 72;
     const y1 = line2 ? 310 : 350;
     const y2 = y1 + fontSize + 14;

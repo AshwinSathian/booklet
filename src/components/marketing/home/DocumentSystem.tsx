@@ -48,14 +48,14 @@ const page = (id: string, title: string, doc_type: DbPage["doc_type"], status: s
   updated_at: `${date}T00:00:00.000Z`,
 });
 const SPACE_PAGES: DbPage[] = [
-  page("adr-012-queue-retries", "ADR-012 Queue retries", "adr", "Accepted", "2026-08-02"),
+  page("adr-012-queue-retries", "ADR-012 Queue retries", "adr", "Accepted", "2026-08-03"),
   page("adr-007-retry-in-the-client", "ADR-007 Retry in the client", "adr", "Superseded", "2026-03-11", "team"),
   page("checkout-incident-07-18", "Checkout API errors, 18 July", "incident", "Resolved", "2026-07-18"),
   page("delayed-payouts-06-02", "Delayed payouts, 2 June", "incident", "Resolved", "2026-06-02"),
 ];
 
 // One sentence of ADR-012, with its link as the published page has it.
-const LINKING_SENTENCE = parseToBlocks("One caller has no limit: see [Delayed payouts, 2 June](/p/delayed-payouts-06-02).");
+const LINKING_SENTENCE = parseToBlocks("Three callers do it three ways, and one has no limit: see [Delayed payouts, 2 June](/p/delayed-payouts-06-02).");
 
 /**
  * Three things a page carries besides its text. Each is drawn by the
@@ -68,7 +68,6 @@ export function DocumentSystem() {
     <Section
       eyebrow="For engineering teams"
       title="What a page carries besides the text"
-      lede="A page shows its type and status, links to the documents it names, and can be limited to a team."
     >
       <Row
         title="A document says what it is"

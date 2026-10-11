@@ -18,7 +18,7 @@ export async function generateMetadata({
   const { id } = await params;
   const collection = await getCollectionRecord(id).catch(() => null);
   if (!collection) {
-    return buildMetadata({ title: "Collection not found", noIndex: true });
+    return buildMetadata({ title: "Folder not found", noIndex: true });
   }
   return buildMetadata({
     title: collection.name,
@@ -57,7 +57,7 @@ export default async function CollectionPage({
             ))}
           </div>
         ) : (
-          <p className="mt-6 text-lg text-text-secondary">No public pages in this collection yet.</p>
+          <p className="mt-6 text-lg text-text-secondary">This folder has no public pages yet.</p>
         )}
       </Container>
     </PageShell>

@@ -5,7 +5,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = buildMetadata({
-  title: "Terms of Service",
+  title: "Terms of service",
   description: `Terms of service for ${APP_NAME}: what you may publish, how long pages are kept, and what is not promised.`,
   pathname: "/terms",
   noIndex: false,

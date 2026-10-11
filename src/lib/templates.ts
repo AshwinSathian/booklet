@@ -66,7 +66,7 @@ const CORE_PAGES: Record<CoreTemplate["key"], Pick<Template, "slug" | "aliases" 
     slug: "rfc",
     category: "Engineering",
     metaDescription:
-      "An RFC template in Markdown: the problem, the proposal, alternatives, rollout and open questions. Publish it and send the link for comments.",
+      "An RFC template in Markdown: the problem, the proposal, alternatives, rollout and open questions. Publish it and send the link to reviewers.",
     audience: "For an engineer proposing a change that others have to agree to.",
   },
   runbook: {
@@ -236,8 +236,6 @@ Anything that surprises people: units, time zones, values that mean "unknown".
     metaDescription: "An onboarding guide template in Markdown: the access a new engineer needs, how to set up, what to do in the first week and who to ask.",
     audience: "For the person who onboards a new teammate.",
     content: `# Onboarding: [team]
-
-What to set up in your first week, and who to ask.
 
 ## Access
 

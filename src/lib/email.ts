@@ -104,12 +104,14 @@ export async function sendEmailChangedNotice(oldAddress: string, newAddress: str
  */
 export async function sendTeamInviteEmail(to: string, invite: { spaceName: string; invitedBy: string | null; joinUrl: string }): Promise<boolean> {
   if (!process.env.RESEND_API_KEY) return false;
+  // One line, and short: the name is typed by the inviter and lands in a stranger's inbox under our sender.
+  const spaceName = invite.spaceName.replace(/\s+/g, " ").trim().slice(0, 80) || "a";
   const { error } = await getResendClient().emails.send({
     from: FROM_ADDRESS,
     to,
-    subject: `Join the ${invite.spaceName} space on Booklet`.slice(0, 180),
+    subject: `Join the ${spaceName} space on Booklet`,
     text: [
-      `${invite.invitedBy ?? "The owner"} invited you to the ${invite.spaceName} team space on Booklet.`,
+      `${invite.invitedBy ?? "The owner"} invited you to the ${spaceName} team space on Booklet.`,
       "",
       `Join: ${invite.joinUrl}`,
       "",

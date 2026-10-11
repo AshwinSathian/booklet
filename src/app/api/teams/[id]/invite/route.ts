@@ -28,7 +28,8 @@ export async function POST(
   } catch (e) {
     return toErrorResponse(e);
   }
-  const limited = await checkRateLimit(`team_invite__${userId}`, 10);
+  // A handful a minute is plenty for a person adding colleagues, and too few to be worth abusing.
+  const limited = await checkRateLimit(`team_invite__${userId}`, 5);
   if (limited) return limited;
 
   let body: { email?: string };

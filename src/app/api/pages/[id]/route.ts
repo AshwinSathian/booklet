@@ -141,7 +141,7 @@ export async function PATCH(
       return problem(409, "This slug is already taken.");
     }
     logError("update-page", "Failed to update", e);
-    return problem(500, "Failed to update");
+    return problem(500, "The change was not saved. Try again.");
   }
 
   return NextResponse.json({ id, ...patch });
@@ -173,7 +173,7 @@ export async function DELETE(
     await deleteDoc(id);
   } catch (e: unknown) {
     logError("delete-page", "Delete failed", e);
-    return problem(500, "Delete failed");
+    return problem(500, "Nothing was deleted. Try again.");
   }
 
   try {

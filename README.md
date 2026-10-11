@@ -9,7 +9,7 @@
 
 You write Markdown, and Booklet gives you a page with a link. The page is typeset, has a table of contents when it's long enough to need one, and opens for anyone you send it to.
 
-It's built for the documents engineering teams pass around. Put `type: incident` (or `adr`, `rfc`, `runbook`, `postmortem`, `release-notes`) in the frontmatter and the page shows status, severity, date and owners in a strip under the title. `[[ADR-012 Queue retries]]` in an incident report links to that ADR, and the ADR lists the incident under "Referenced by". A team space keeps a team's documents together, grouped by type, and a page in one can be restricted to its members.
+It's built for the documents engineering teams pass around. Put `type: incident` (or `adr`, `rfc`, `runbook`, `postmortem`, `release-notes`) in the frontmatter and the page shows status, severity, date and owners in a strip above the title. `[[ADR-012 Queue retries]]` in an incident report links to that ADR, and the ADR lists the incident under "Referenced by". A team space keeps a team's documents together, grouped by type, and a page in one can be restricted to its members.
 
 There are five ways to publish, and all of them produce the same page: the web editor, the REST API, the `booklet-cli` npm package, a GitHub Action, and an MCP server for Claude and other MCP clients.
 
@@ -25,7 +25,7 @@ booklet login                            # opens your browser to authorize
 booklet publish README.md --open         # publish this file, open it in your browser
 ```
 
-You get back the page's URL. The editor works without an account, up to 10 pages a month, each kept for 90 days. An account (free, and there is no paid plan) removes both limits, The CLI needs an API key, and a key needs an account.
+You get back the page's URL. The editor works without an account, up to 10 pages a month, each served for 90 days. An account (free, and there is no paid plan) removes both limits. The CLI needs an API key, and a key needs an account.
 
 ---
 
@@ -140,7 +140,7 @@ cd mcp-server && npm run dev
 - Node.js 24 (see `.nvmrc`)
 - MongoDB connection string (a local `mongod`, or any self-hosted/managed instance)
 
-### Install & run
+### Install and run
 
 ```bash
 npm install
@@ -169,11 +169,11 @@ Booklet is one Next.js app, one MongoDB database and, if you want MCP clients, o
 
 1. Node.js 24 and a MongoDB connection string.
 2. Copy `.env.example` to `.env.production.local` and fill in every secret marked required. Set `NEXT_PUBLIC_SITE_URL` to the address people will use.
-3. `npm ci && npm run build && npm start` serves the app (port 3100 in `ecosystem.config.js`).
-4. The MCP server is `mcp-server/`; `ecosystem.config.js` starts both under PM2.
+3. `npm ci && npm run build && npm start` serves the app on port 3000 (`npm start -- -p 3100` for another port).
+4. The MCP server is `mcp-server/`. `ecosystem.config.js` starts both under PM2, the app on port 3100, once you change `BASE` and `NODE_BIN` at the top of the file to your own paths.
 5. Point the CLI at your copy with `BOOKLET_API_URL=https://your-host`.
 
-Email (confirmation, password reset, team invites) needs `RESEND_API_KEY`; without it accounts work unconfirmed and an invite is a link the owner sends. GitHub and Google sign-in appear when their client IDs are set. The app is AGPL-3.0: if you change it and run it for other people, section 13 asks you to offer them your source.
+Email (confirmation, password reset, team invites) needs `RESEND_API_KEY`; without it accounts work unconfirmed and an invite is a link the owner sends. GitHub and Google sign-in appear when a provider's client ID and secret are set. The app is AGPL-3.0: if you change it and run it for other people, section 13 requires you to offer them your source.
 
 ### Deploy
 
@@ -231,7 +231,7 @@ Required secret: `NPM_TOKEN` (Granular Access Token with publish + 2FA bypass).
 
 ### Publish docs to Booklet from your repo
 
-Two ways: the [`AshwinSathian/publish-to-booklet`](https://github.com/AshwinSathian/publish-to-booklet) GitHub Action, or `booklet-cli` via `npx`. See [.github/examples/publish-to-booklet.yml](.github/examples/publish-to-booklet.yml) for both — copy it into your own repo's `.github/workflows/`, add a `BOOKLET_API_KEY` secret, and it publishes on every release.
+Two ways: the [`AshwinSathian/publish-to-booklet`](https://github.com/AshwinSathian/publish-to-booklet) GitHub Action, or `booklet-cli` via `npx`. See [.github/examples/publish-to-booklet.yml](.github/examples/publish-to-booklet.yml) for both. Copy it into your own repo's `.github/workflows/`, add a `BOOKLET_API_KEY` secret, and it publishes on every release.
 
 ## License
 

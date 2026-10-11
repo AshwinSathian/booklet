@@ -182,7 +182,7 @@ export const PATCH = v1("patch", 60, "pages:write", async (req: Request, userId:
       // above, so anything reaching here is an unexpected DB/driver
       // failure that could carry internal details (hosts, connection info).
       logError("v1/pages", "Update failed", e);
-      return problem(500, "Update failed");
+      return problem(500, "The page was not updated. Try again.");
     }
 
     void recordPublishEvent({
@@ -220,7 +220,7 @@ export const PATCH = v1("patch", 60, "pages:write", async (req: Request, userId:
         return problem(409, "Slug is already taken.");
       }
       logError("v1/pages", "DB patch write failed", dbErr);
-      return problem(500, "Update failed");
+      return problem(500, "The page was not updated. Try again.");
     }
   }
 
@@ -253,7 +253,7 @@ export const DELETE = v1("delete", 60, "pages:write", async (req: Request, userI
     await deleteDoc(id);
   } catch (e: unknown) {
     logError("v1/pages", "Delete failed", e);
-    return problem(500, "Delete failed");
+    return problem(500, "Nothing was deleted. Try again.");
   }
 
   try {

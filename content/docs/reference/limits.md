@@ -57,7 +57,7 @@ Each API endpoint has its own count, per account, per minute.
 | `GET /api/v1/pages` | 60 |
 | `GET /api/v1/pages/{id}` | 120 |
 
-Every response that got past the API key check says where you stand:
+Every response except a 401, or a 403 for a missing OAuth scope, says where you stand:
 
 ```text
 RateLimit-Policy: "default";q=60;w=60

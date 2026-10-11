@@ -56,7 +56,7 @@ export async function PATCH(
     }
 
     if (!payload?.raw || typeof payload.raw !== "string" || !payload.raw.trim()) {
-      return problem(400, "Nothing to publish — provide `raw` markdown.");
+      return problem(400, "Nothing to publish. Send the Markdown in `raw`.");
     }
 
     // Same pipeline as a first publish: see buildDocument.
@@ -89,7 +89,7 @@ export async function PATCH(
       });
     } catch (e: unknown) {
       logError("patch-publish", "Update failed", e);
-      return problem(500, "Update failed");
+      return problem(500, "The page was not updated. Try again.");
     }
 
     const updatedAt = new Date().toISOString();
@@ -121,6 +121,6 @@ export async function PATCH(
     return NextResponse.json({ id, url: publishedUrl, updated_at: updatedAt });
   } catch (e: unknown) {
     logError("patch-publish", "Unhandled error", e);
-    return problem(500, "An unexpected error occurred");
+    return problem(500, "Something went wrong on the server. Try again.");
   }
 }

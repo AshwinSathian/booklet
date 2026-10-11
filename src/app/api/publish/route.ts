@@ -68,7 +68,7 @@ export async function POST(req: Request) {
     }
 
     if (!payload?.raw || typeof payload.raw !== "string" || !payload.raw.trim()) {
-      return problem(400, "Nothing to publish — provide `raw` markdown.");
+      return problem(400, "Nothing to publish. Send the Markdown in `raw`.");
     }
 
     const id = createId(10);
@@ -134,7 +134,7 @@ export async function POST(req: Request) {
       );
     } catch (e: unknown) {
       logError("publish", "Publish failed", e);
-      return problem(500, "Publish failed");
+      return problem(500, "The page was not published. Try again.");
     }
 
     if (isAuthenticated && userId) {
@@ -149,7 +149,7 @@ export async function POST(req: Request) {
       } catch (dbErr) {
         logError("publish", "DB ownership write failed", dbErr);
         await deleteDoc(id).catch(() => {});
-        return problem(500, "Publish failed");
+        return problem(500, "The page was not published. Try again.");
       }
       void setPageLinks(id, built.linkTargetIds).catch((err) => logError("publish", "Link write failed", err));
       void snapshotPageVersion(id, doc).catch((err) => {
@@ -194,6 +194,6 @@ export async function POST(req: Request) {
     return res;
   } catch (e: unknown) {
     logError("publish", "Unhandled error", e);
-    return problem(500, "An unexpected error occurred");
+    return problem(500, "Something went wrong on the server. Try again.");
   }
 }

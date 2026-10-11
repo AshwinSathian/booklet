@@ -57,7 +57,7 @@ What failed and why.
   {
     key: "postmortem",
     name: "Postmortem",
-    description: "Impact, timeline, root cause, contributing factors, what we learned, action items",
+    description: "Impact, timeline, root cause, contributing factors, what went well, what we would change, action items",
     doc: { type: "postmortem", status: "Draft", severity: "P2" },
     title: "Postmortem: [incident title]",
     body: `This review is blameless: it describes what the system and the process allowed, not who made a mistake.
@@ -151,7 +151,7 @@ How this ships, and how it is rolled back.
   {
     key: "runbook",
     name: "Runbook",
-    description: "When to use it, checks before you start, steps, how to verify, how to roll back",
+    description: "When to use it, checks before you start, steps, how to verify, how to roll back, who to escalate to",
     doc: { type: "runbook", status: "Current" },
     title: "Runbook: [task]",
     body: `## When to use this
