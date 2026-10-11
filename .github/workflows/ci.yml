@@ -253,6 +253,9 @@ jobs:
       GOOGLE_CLIENT_ID: ci-stub
       GOOGLE_CLIENT_SECRET: ci-stub
       SSO_GOOGLE_BASE_URL: http://127.0.0.1:3199/google
+      # tests/e2e/oauth-consent.spec.ts signs in as this client. Pinned here
+      # so the suite does not fetch a document from someone else's host.
+      OAUTH_STATIC_CLIENTS: '[{"client_id":"https://e2e-client.booklet.test/oauth/client.json","client_name":"Claude","redirect_uris":["https://claude.ai/api/mcp/auth_callback"]}]'
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

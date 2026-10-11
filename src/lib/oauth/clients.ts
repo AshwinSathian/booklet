@@ -140,6 +140,39 @@ async function fetchMetadataClient(url: URL): Promise<OAuthClient | null> {
   return meta ? { client_id: url.href, ...meta } : null;
 }
 
+let staticSource: string | undefined;
+let staticParsed = new Map<string, OAuthClient>();
+
+/**
+ * Clients the operator has written into `OAUTH_STATIC_CLIENTS`: a JSON array
+ * of metadata documents (`client_id`, `client_name`, `redirect_uris`). One
+ * of these is used as written and its URL is never fetched.
+ *
+ * For an install that cannot reach a client's host, or that would rather
+ * not depend on it being up at sign-in; and for the end-to-end tests, whose
+ * server has no test seam to swap the fetch through. Each entry passes the
+ * same checks a fetched document does. An entry that fails them is dropped.
+ */
+function staticClients(): Map<string, OAuthClient> {
+  const source = process.env.OAUTH_STATIC_CLIENTS;
+  if (source === staticSource) return staticParsed;
+  staticSource = source;
+  staticParsed = new Map();
+  if (!source?.trim()) return staticParsed;
+  let list: unknown;
+  try {
+    list = JSON.parse(source);
+  } catch {
+    return staticParsed;
+  }
+  for (const entry of Array.isArray(list) ? list : []) {
+    const id = entry && typeof entry === "object" ? (entry as Record<string, unknown>).client_id : null;
+    const meta = cleanMetadata(entry);
+    if (typeof id === "string" && isMetadataUrl(id) && meta) staticParsed.set(id, { client_id: id, ...meta });
+  }
+  return staticParsed;
+}
+
 /** Test seam: replaces the metadata fetch. */
 export const metadataFetcher = { fetch: fetchMetadataClient };
 
@@ -149,6 +182,9 @@ export async function getClient(clientId: unknown): Promise<OAuthClient | null> 
 
   const url = isMetadataUrl(clientId);
   if (!url) return null;
+
+  const pinned = staticClients().get(clientId);
+  if (pinned) return pinned;
 
   const cached = metadataCache.get(clientId);
   if (cached && Date.now() - cached.at < CACHE_TTL_MS) return cached.client;

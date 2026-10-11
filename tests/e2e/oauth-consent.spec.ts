@@ -11,9 +11,10 @@ import { createHash, randomBytes } from "node:crypto";
 test.use({ extraHTTPHeaders: { "cf-connecting-ip": `2001:db8::${Math.random().toString(16).slice(2, 6)}` } });
 
 const CALLBACK = "https://claude.ai/api/mcp/auth_callback";
-// Claude's own Client ID Metadata Document. The app under test fetches it,
-// as it does when a real connector signs in, so this spec needs the network.
-const CLIENT_ID = "https://claude.ai/oauth/mcp-oauth-client-metadata";
+// A client pinned in the server's OAUTH_STATIC_CLIENTS (set in ci.yml), so
+// nothing is fetched from another host. The fetch of a real metadata
+// document is covered by scripts/production-verify/cli-mcp-verify.mjs.
+const CLIENT_ID = "https://e2e-client.booklet.test/oauth/client.json";
 const PASSWORD = "oauth-e2e-correct-horse";
 
 async function setup(request: import("@playwright/test").APIRequestContext) {
