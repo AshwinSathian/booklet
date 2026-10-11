@@ -9,15 +9,15 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
 // ---------------------------------------------------------------------------
 
 const BASE =
-  "inline-flex items-center justify-center font-semibold rounded-pill " +
+  "inline-flex items-center justify-center font-semibold rounded-lg " +
   "transition-[color,background-color,border-color,box-shadow,opacity,transform] " +
   "active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 " +
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft " +
-  "focus-visible:ring-offset-2 focus-visible:ring-offset-bg select-none";
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent " +
+  "focus-visible:ring-offset-2 focus-visible:ring-offset-highlight select-none";
 
 const VARIANTS = {
   primary: "bg-accent text-accent-contrast hover:bg-accent-hover",
-  secondary: "border border-border-default text-text-secondary hover:border-accent-soft/50 hover:text-text-primary",
+  secondary: "border border-border-strong bg-bg-elevated text-text-primary hover:border-accent",
   danger: "border border-danger/40 text-danger hover:bg-danger/10",
   ghost: "text-text-muted hover:text-text-primary hover:bg-fill-2",
 } as const;

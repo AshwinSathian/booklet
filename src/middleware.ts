@@ -149,6 +149,12 @@ export default async function middleware(req: NextRequest) {
   const nonce = btoa(crypto.randomUUID());
   const csp = contentSecurityPolicy(nonce, isEmbedRoute);
 
+  // A docs page as Markdown: /docs/<slug>.md is served by /docs/raw/<slug>.
+  const docsMarkdown = /^\/docs\/(.+)\.md$/.exec(req.nextUrl.pathname);
+  if (docsMarkdown && (req.method === "GET" || req.method === "HEAD")) {
+    return withSecurityHeaders(NextResponse.rewrite(new URL(`/docs/raw/${docsMarkdown[1]}`, req.url)), false, csp);
+  }
+
   const share = SHARE_PATH.exec(req.nextUrl.pathname);
   if (share && (req.method === "GET" || req.method === "HEAD")) {
     let id = share[1];

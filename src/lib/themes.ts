@@ -76,7 +76,7 @@ export const DEFAULT_THEME_ID = "default";
 /**
  * Curated set — intentionally small (5, not dozens). Each theme is a
  * coherent, tasteful variation on the existing token system:
- *  - default: the current Booklet palette, unchanged (also the safe fallback).
+ *  - default: the site's own paper-and-ink palette (also the safe fallback).
  *  - verdant / ember: distinct colour-accent variations (cool green, warm
  *    terracotta) that keep the accent role strictly action/link-only — no
  *    theme repurposes its accent as a decorative wash.
@@ -90,44 +90,44 @@ export const DEFAULT_THEME_ID = "default";
 export const THEMES: Theme[] = [
   {
     id: "default",
-    name: "Signature",
-    description: "The default Booklet palette — ink accent, pure-black dark mode, Apple-white light mode.",
-    swatch: "#ea8590",
+    name: "Typeset",
+    description: "The default Booklet palette: paper and ink, the same as the site.",
+    swatch: "#16150f",
     dark: {
-      "--color-bg": "#000000",
-      "--color-bg-soft": "#0d0d0d",
-      "--color-bg-elevated": "#161617",
-      "--color-text-primary": "#f5f5f7",
-      "--color-text-secondary": "#c5c5c7",
-      "--color-text-muted": "#9e9ea0",
-      "--color-accent": "#ea8590",
-      "--color-accent-hover": "#d97480",
-      "--color-accent-soft": "#f2a3ac",
-      "--color-accent-dim": "rgba(234, 133, 144, 0.14)",
-      "--color-border-strong": "rgba(255, 255, 255, 0.16)",
-      "--color-border-default": "rgba(255, 255, 255, 0.09)",
-      "--color-border-subtle": "rgba(255, 255, 255, 0.05)",
-      "--color-fill-1": "rgba(255, 255, 255, 0.04)",
-      "--color-fill-2": "rgba(255, 255, 255, 0.08)",
-      "--color-fill-3": "rgba(255, 255, 255, 0.13)",
+      "--color-bg": "#121110",
+      "--color-bg-soft": "#171614",
+      "--color-bg-elevated": "#1b1a18",
+      "--color-text-primary": "#f4f1ea",
+      "--color-text-secondary": "#c9c5ba",
+      "--color-text-muted": "#a5a195",
+      "--color-accent": "#f4f1ea",
+      "--color-accent-hover": "#d9d5cb",
+      "--color-accent-soft": "#f4f1ea",
+      "--color-accent-dim": "rgba(244, 241, 234, 0.09)",
+      "--color-border-strong": "rgba(244, 241, 234, 0.20)",
+      "--color-border-default": "rgba(244, 241, 234, 0.12)",
+      "--color-border-subtle": "rgba(244, 241, 234, 0.07)",
+      "--color-fill-1": "rgba(244, 241, 234, 0.04)",
+      "--color-fill-2": "rgba(244, 241, 234, 0.08)",
+      "--color-fill-3": "rgba(244, 241, 234, 0.13)",
     },
     light: {
-      "--color-bg": "#ffffff",
-      "--color-bg-soft": "#f5f5f7",
-      "--color-bg-elevated": "#e8e8ed",
-      "--color-text-primary": "#1d1d1f",
-      "--color-text-secondary": "#3f3f41",
-      "--color-text-muted": "#5a5a5d",
-      "--color-accent": "#963a48",
-      "--color-accent-hover": "#81323e",
-      "--color-accent-soft": "#8c414d",
-      "--color-accent-dim": "rgba(150, 58, 72, 0.1)",
-      "--color-border-strong": "rgba(0, 0, 0, 0.14)",
-      "--color-border-default": "rgba(0, 0, 0, 0.09)",
-      "--color-border-subtle": "rgba(0, 0, 0, 0.05)",
-      "--color-fill-1": "rgba(0, 0, 0, 0.03)",
-      "--color-fill-2": "rgba(0, 0, 0, 0.06)",
-      "--color-fill-3": "rgba(0, 0, 0, 0.10)",
+      "--color-bg": "#fbfaf7",
+      "--color-bg-soft": "#f3f1eb",
+      "--color-bg-elevated": "#ffffff",
+      "--color-text-primary": "#16150f",
+      "--color-text-secondary": "#45433b",
+      "--color-text-muted": "#66635a",
+      "--color-accent": "#16150f",
+      "--color-accent-hover": "#33312a",
+      "--color-accent-soft": "#16150f",
+      "--color-accent-dim": "rgba(22, 21, 15, 0.07)",
+      "--color-border-strong": "rgba(22, 21, 15, 0.22)",
+      "--color-border-default": "rgba(22, 21, 15, 0.13)",
+      "--color-border-subtle": "rgba(22, 21, 15, 0.07)",
+      "--color-fill-1": "rgba(22, 21, 15, 0.03)",
+      "--color-fill-2": "rgba(22, 21, 15, 0.06)",
+      "--color-fill-3": "rgba(22, 21, 15, 0.10)",
     },
   },
   {
@@ -329,9 +329,9 @@ function tokensToDeclarations(tokens: ThemeTokens): string {
 
 /**
  * Build the <style> tag body that scopes a theme's token overrides to
- * `.theme-{id}`, with a light-mode override block for when the surrounding
- * `html` element carries the `.light` class (see globals.css's dark-first
- * strategy: :root is dark, html.light overrides to light).
+ * `.theme-{id}`: the light tokens by default, and the dark tokens when the
+ * surrounding `html` element carries the `.dark` class (see globals.css:
+ * :root is light, html.dark overrides).
  *
  * Every value written into this string comes from the fixed `THEMES` array
  * above — never from request input — so this is safe to render verbatim
@@ -339,5 +339,5 @@ function tokensToDeclarations(tokens: ThemeTokens): string {
  */
 export function themeStyleTagContent(theme: Theme): string {
   const scope = themeScopeClass(theme);
-  return `.${scope}{${tokensToDeclarations(theme.dark)}} html.light .${scope}{${tokensToDeclarations(theme.light)}}`;
+  return `.${scope}{${tokensToDeclarations(theme.light)}} html.dark .${scope}{${tokensToDeclarations(theme.dark)}}`;
 }

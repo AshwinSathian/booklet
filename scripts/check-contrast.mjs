@@ -63,11 +63,13 @@ function blockAfter(source, marker, from = 0) {
 export function palettes() {
   const css = read("src/app/globals.css");
   const hljsAt = css.indexOf("--hljs-fg");
+  // :root holds the light palette; html.dark overrides it.
   const app = {
-    dark: { ...declarations(blockAfter(css, "\n:root {")), ...declarations(blockAfter(css, "\n:root {", hljsAt - 200)) },
-    light: {},
+    light: { ...declarations(blockAfter(css, "\n:root {")), ...declarations(blockAfter(css, "\n:root {", hljsAt - 200)) },
+    dark: {},
   };
-  app.light = { ...app.dark, ...declarations(blockAfter(css, "\nhtml.light {")), ...declarations(blockAfter(css, "\nhtml.light {", hljsAt)) };
+  app.dark = { ...app.light, ...declarations(blockAfter(css, "\nhtml.dark {")), ...declarations(blockAfter(css, "\nhtml.dark {", hljsAt - 200)) };
+  if (app.dark["--color-bg"] === app.light["--color-bg"]) throw new Error("The dark palette was not read: both themes have the same --color-bg.");
 
   const out = [{ name: "app dark", vars: app.dark }, { name: "app light", vars: app.light }];
   const themes = read("src/lib/themes.ts");
@@ -108,8 +110,10 @@ export function pairs(v) {
       [token, "own 15% tint on bg-elevated", over(tint, elevated)],
     );
   }
-  // A label on an accent-filled button.
+  // A label on an accent-filled button, and ink on the highlighter.
   out.push(["--color-accent-contrast", "accent", v["--color-accent"]]);
+  out.push(["--color-accent-contrast", "accent-hover", v["--color-accent-hover"]]);
+  out.push(["--color-on-highlight", "highlight", v["--color-highlight"]]);
   // Highlighted code is drawn on bg-elevated (CodeBlock).
   for (const token of Object.keys(v).filter((k) => k.startsWith("--hljs-"))) out.push([token, "bg-elevated", elevated]);
   return out;

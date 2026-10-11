@@ -36,24 +36,19 @@ export function CodeBlock({
     <div className="rounded-xl border border-border-default overflow-hidden bg-bg-elevated">
       <div className="flex items-center justify-between px-3 py-2 border-b border-border-default bg-fill-2">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="flex gap-1">
-            <span className="h-2 w-2 rounded-full bg-text-muted/25" />
-            <span className="h-2 w-2 rounded-full bg-text-muted/25" />
-            <span className="h-2 w-2 rounded-full bg-text-muted/25" />
-          </div>
-          <span className="truncate text-[11px] font-mono text-text-muted">
+          <span className="truncate text-[12px] font-mono text-text-muted">
             {lang ?? "code"}
           </span>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <span className="tabular-nums text-[10px] text-text-muted">{lines} lines</span>
+          <span className="tabular-nums text-[12px] text-text-muted">{lines} lines</span>
 
           {shouldCollapse ? (
             <button
               type="button"
               onClick={() => setExpanded((v) => !v)}
-              className="rounded-md border border-border-default px-2 py-0.5 text-[10px] font-medium text-text-muted transition hover:bg-fill-3 hover:text-text-primary"
+              className="rounded-md border border-border-default px-2 py-0.5 text-[12px] font-medium text-text-muted transition hover:bg-fill-3 hover:text-text-primary"
               aria-label={expanded ? "Collapse code block" : "Expand code block"}
             >
               {expanded ? "Collapse" : "Expand"}
@@ -63,7 +58,7 @@ export function CodeBlock({
           <button
             type="button"
             onClick={() => void onCopy()}
-            className="rounded-md border border-border-default px-2 py-0.5 text-[10px] font-medium text-text-muted transition hover:bg-fill-3 hover:text-text-primary"
+            className="rounded-md border border-border-default px-2 py-0.5 text-[12px] font-medium text-text-muted transition hover:bg-fill-3 hover:text-text-primary"
             aria-label="Copy code"
           >
             {copyState === "copied" ? "✓ Copied" : "Copy"}
@@ -92,7 +87,7 @@ export function CodeBlock({
       </pre>
 
       {isCollapsed ? (
-        <div className="px-3 py-2 text-[11px] text-text-muted border-t border-border-default bg-fill-1">
+        <div className="px-3 py-2 text-[12px] text-text-muted border-t border-border-default bg-fill-1">
           Collapsed — use Expand to view the full block.
         </div>
       ) : null}

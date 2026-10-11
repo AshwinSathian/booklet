@@ -80,3 +80,7 @@ MARKET_PLAN.md
 
 # Subagent-driven-development scratch workspace (never committed)
 .superpowers/
+
+# Written by `next dev` for coding agents; local to a checkout
+/AGENTS.md
+/CLAUDE.md

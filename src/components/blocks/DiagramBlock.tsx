@@ -7,7 +7,7 @@ import { sanitizeCompiledSvgElement, sanitizeRenderedSvg } from "@/lib/svg-sanit
 
 async function renderMermaid(code: string): Promise<Element> {
   const mermaid = (await import("mermaid")).default;
-  const isDark = !document.documentElement.classList.contains("light");
+  const isDark = document.documentElement.classList.contains("dark");
 
   mermaid.initialize({
     startOnLoad: false,

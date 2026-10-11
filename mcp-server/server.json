@@ -9,7 +9,7 @@
     "subfolder": "mcp-server"
   },
   "version": "4.1.0",
-  "websiteUrl": "https://booklet.ashwinsathian.com/mcp-setup",
+  "websiteUrl": "https://booklet.ashwinsathian.com/docs/guides/mcp",
   "remotes": [
     {
       "type": "streamable-http",

@@ -1,6 +1,5 @@
-import { SiteFooter } from "@/components/marketing/SiteFooter";
-import { SiteHeader } from "@/components/marketing/SiteHeader";
 import { APP_NAME, REPO_URL, ROUTES } from "@/lib/constants";
+import { ProsePage } from "@/components/marketing/primitives";
 import { buildMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -20,31 +19,16 @@ const link = "text-accent underline underline-offset-2";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="flex flex-col gap-3">
-      <h2 className="text-base text-text-primary border-b border-border-default pb-2">{title}</h2>
-      <div className="flex flex-col gap-3 text-sm text-text-secondary leading-relaxed">{children}</div>
+    <section>
+      <h2>{title}</h2>
+      {children}
     </section>
   );
 }
 
 export default function TrustPage() {
   return (
-    <div className="min-h-screen bg-bg text-text-primary flex flex-col">
-      <SiteHeader />
-
-      <main className="flex-1 mx-auto w-full max-w-3xl px-4 py-12 sm:py-16">
-        <div className="max-w-2xl flex flex-col gap-8">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-text-muted mb-3">Trust</p>
-            <h1 className="text-[clamp(22px,3.5vw,30px)] text-text-primary mb-2 font-display">
-              What you&apos;re trusting when you publish here
-            </h1>
-            <p className="text-sm text-text-secondary leading-relaxed">
-              {APP_NAME} is a small service, and you should know how small before you put an incident
-              report on it. This page says who runs it, where your pages live, and how you get them out.
-            </p>
-          </div>
-
+    <ProsePage eyebrow="Trust" title="What you are trusting when you publish here" lede={`${APP_NAME} is a small service, and you should know how small before you put an incident report on it. This page says who runs it, where your pages live, and how you get them out.`}>
           <Section title="Who runs it">
             <p>
               One person:{" "}
@@ -152,10 +136,6 @@ export default function TrustPage() {
               ) : null}
             </p>
           </Section>
-        </div>
-      </main>
-
-      <SiteFooter />
-    </div>
+    </ProsePage>
   );
 }

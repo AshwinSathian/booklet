@@ -34,7 +34,7 @@ let createdPageIds: string[] = [];
 test.describe.configure({ mode: "serial" });
 
 test.describe("Production verification — core routes", () => {
-  for (const path of ["/", "/explore", "/pricing", "/integrations", "/api-docs", "/mcp-setup", "/sign-in", "/sign-up"]) {
+  for (const path of ["/", "/docs", "/docs/quickstart", "/docs/reference/api", "/templates", "/pricing", "/changelog", "/explore", "/sign-in", "/sign-up"]) {
     test(`${path} loads without error`, async ({ page }) => {
       const res = await page.goto(`${BASE}${path}`);
       expect(res?.status()).toBeLessThan(500);

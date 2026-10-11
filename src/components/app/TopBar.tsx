@@ -808,7 +808,7 @@ function PublishArea({
             title="More publish options"
             disabled={isPublishing}
             onClick={() => setShowPublishOptions((v) => !v)}
-            className="flex h-8 w-8 items-center justify-center rounded-r-pill bg-accent text-accent-contrast border-l border-white/20 hover:bg-accent-hover transition active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+            className="flex h-8 w-8 items-center justify-center rounded-r-pill bg-accent text-accent-contrast border-l border-accent-contrast/25 hover:bg-accent-hover transition active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
           >
             <Icon name="chevron-down" size={11} />
           </button>

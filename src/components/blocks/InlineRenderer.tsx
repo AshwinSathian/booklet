@@ -42,7 +42,7 @@ export function InlineRenderer({
             return (
               <code
                 key={i}
-                className="px-1.5 py-0.5 rounded-sm bg-accent-dim border border-border-default font-mono text-[0.9em] text-accent-soft"
+                className="px-1.5 py-0.5 rounded-sm bg-accent-dim border border-border-default font-mono text-[0.9em] text-accent-soft [overflow-wrap:anywhere]"
               >
                 {node.v}
               </code>
@@ -83,7 +83,7 @@ export function InlineRenderer({
                 <a
                   href={`#fn-${encodeURIComponent(node.id)}`}
                   id={`fnref-${encodeURIComponent(node.id)}`}
-                  className="text-accent-soft no-underline hover:underline"
+                  className="text-accent-soft underline underline-offset-2"
                   aria-label={`Jump to footnote ${node.n}`}
                 >
                   [{node.n}]

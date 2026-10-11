@@ -6,6 +6,7 @@ import go from "highlight.js/lib/languages/go";
 import html from "highlight.js/lib/languages/xml";
 import javascript from "highlight.js/lib/languages/javascript";
 import json from "highlight.js/lib/languages/json";
+import markdown from "highlight.js/lib/languages/markdown";
 import python from "highlight.js/lib/languages/python";
 import rust from "highlight.js/lib/languages/rust";
 import sql from "highlight.js/lib/languages/sql";
@@ -24,6 +25,8 @@ hljs.registerLanguage("javascript", javascript);
 hljs.registerLanguage("js", javascript);
 hljs.registerLanguage("jsx", javascript);
 hljs.registerLanguage("json", json);
+hljs.registerLanguage("markdown", markdown);
+hljs.registerLanguage("md", markdown);
 hljs.registerLanguage("python", python);
 hljs.registerLanguage("py", python);
 hljs.registerLanguage("rust", rust);
@@ -36,7 +39,9 @@ hljs.registerLanguage("yaml", yaml);
 hljs.registerLanguage("yml", yaml);
 
 export function highlightCode(code: string, lang?: string): string | null {
-  if (!lang) return null;
+  // An unregistered language is shown as plain text. Asking highlight.js for
+  // it would log an error to the console on every render.
+  if (!lang || !hljs.getLanguage(lang)) return null;
   try {
     const result = hljs.highlight(code, { language: lang, ignoreIllegals: true });
     return result.value;

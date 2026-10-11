@@ -3,6 +3,12 @@
 All notable changes to `booklet-cli` are documented here. Format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Fixed
+- `booklet publish --update ""` is a usage error (exit 2). It used to publish a new page, so a
+  workflow whose page ID variable was unset made a new page on every run.
+
 ## [3.1.0] - 2026-10-11
 
 ### Added

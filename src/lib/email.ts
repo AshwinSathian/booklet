@@ -22,7 +22,7 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string): Prom
       <div style="font-family: -apple-system, system-ui, sans-serif; max-width: 480px; margin: 0 auto; color: #1a1a1a;">
         <p>Someone requested a password reset for this Booklet account.</p>
         <p>
-          <a href="${resetUrl}" style="display:inline-block;background:#f5a623;color:#0a0a0a;padding:10px 20px;border-radius:9999px;text-decoration:none;font-weight:600;">
+          <a href="${resetUrl}" style="display:inline-block;background:#16150f;color:#fbfaf7;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;">
             Reset password
           </a>
         </p>
@@ -43,7 +43,7 @@ export async function sendVerificationEmail(to: string, verifyUrl: string): Prom
       <div style="font-family: -apple-system, system-ui, sans-serif; max-width: 480px; margin: 0 auto; color: #1a1a1a;">
         <p>Confirm this address to publish pages from your Booklet account.</p>
         <p>
-          <a href="${verifyUrl}" style="display:inline-block;background:#f5a623;color:#0a0a0a;padding:10px 20px;border-radius:9999px;text-decoration:none;font-weight:600;">
+          <a href="${verifyUrl}" style="display:inline-block;background:#16150f;color:#fbfaf7;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;">
             Confirm email
           </a>
         </p>
@@ -66,7 +66,7 @@ export async function sendEmailChangeEmail(to: string, confirmUrl: string): Prom
       <div style="font-family: -apple-system, system-ui, sans-serif; max-width: 480px; margin: 0 auto; color: #1a1a1a;">
         <p>Someone signed in to a Booklet account asked to change its email address to this one.</p>
         <p>
-          <a href="${confirmUrl}" style="display:inline-block;background:#f5a623;color:#0a0a0a;padding:10px 20px;border-radius:9999px;text-decoration:none;font-weight:600;">
+          <a href="${confirmUrl}" style="display:inline-block;background:#16150f;color:#fbfaf7;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;">
             Use this address
           </a>
         </p>

@@ -114,7 +114,7 @@ export function DocHeaderStrip({
             <Link
               key={tag}
               href={`/tags/${encodeURIComponent(tag)}`}
-              className="rounded-pill bg-accent-dim text-accent text-xs px-2 py-0.5 font-medium transition hover:bg-accent/20 hover:text-accent"
+              className="rounded-md bg-fill-2 px-2 py-0.5 text-xs font-medium text-text-secondary hover:bg-fill-3 hover:text-text-primary"
             >
               #{tag}
             </Link>

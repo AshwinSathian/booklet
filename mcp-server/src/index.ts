@@ -51,7 +51,7 @@ function wire(env: Env) {
     resourceServerUrl: resource,
     scopesSupported: [...OAUTH_SCOPES],
     resourceName: "Booklet",
-    serviceDocumentationUrl: new URL(`${issuer}/mcp-setup`),
+    serviceDocumentationUrl: new URL(`${issuer}/docs/guides/mcp`),
     // A self-hosted or test deployment may run its app on plain HTTP.
     dangerouslyAllowInsecureIssuerUrl: !issuer.startsWith("https://"),
   };

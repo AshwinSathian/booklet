@@ -24,6 +24,11 @@ async function doPublish(
   raw: string,
   opts: { update?: string; slug?: string; visibility?: Visibility; space?: string },
 ): Promise<PublishResult> {
+  // `--update "$PAGE_ID"` with the variable unset arrives as an empty string.
+  // Publishing a new page instead would do it on every run of a script.
+  if (opts.update !== undefined && !opts.update.trim()) {
+    throw new CliError("--update needs a page ID, and got an empty value.", EXIT.USAGE);
+  }
   const client = await requireClient();
 
   if (opts.update) {

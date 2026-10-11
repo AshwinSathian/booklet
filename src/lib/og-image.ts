@@ -12,54 +12,48 @@ function wrapTitle(title: string): [string, string | null] {
   return [t.slice(0, split), t.slice(split + 1)];
 }
 
+const SERIF = "Georgia, 'Times New Roman', serif";
+const SANS = "system-ui, -apple-system, sans-serif";
+const INK = "#16150f";
+const PAPER = "#fbfaf7";
+const MARKER = "#ffd84d";
+
+/**
+ * The link-preview image: paper, ink, a serif headline with the marker under
+ * its second line. An SVG has no web fonts, so the headline names Georgia,
+ * which every consumer that draws this has or substitutes with a serif.
+ */
 export function buildOgSvg(title?: string): string {
-  const defs = `<defs>
-    <radialGradient id="glow1" cx="30%" cy="40%" r="50%">
-      <stop offset="0%" stop-color="#f5a623" stop-opacity="0.15"/>
-      <stop offset="100%" stop-color="#f5a623" stop-opacity="0"/>
-    </radialGradient>
-    <radialGradient id="glow2" cx="70%" cy="60%" r="50%">
-      <stop offset="0%" stop-color="#f8c368" stop-opacity="0.1"/>
-      <stop offset="100%" stop-color="#f8c368" stop-opacity="0"/>
-    </radialGradient>
-  </defs>`;
-
-  const background = `
-  <rect width="1200" height="630" fill="#000000"/>
-  <rect width="1200" height="630" fill="url(#glow1)"/>
-  <rect width="1200" height="630" fill="url(#glow2)"/>`;
-
-  // Mark: a page with a folded corner — a page worth flagging and keeping.
+  // Mark: an ink tile, a paper page with a folded corner, one highlighted line.
   const logo = `
-  <rect x="80" y="80" width="72" height="72" rx="16" fill="#f5a623"/>
-  <path d="M99.50 99.50C99.50 97.01 101.51 95.00 104.00 95.00H125.60L132.50 101.90V132.50C132.50 134.99 130.49 137.00 128.00 137.00H104.00C101.51 137.00 99.50 134.99 99.50 132.50V99.50Z" fill="white"/>
-  <path d="M125.60 95.00L132.50 101.90H128.00C126.67 101.90 125.60 100.83 125.60 99.50V95.00Z" fill="rgba(0, 0, 0, 0.18)"/>
-  <rect x="106.10" y="108.80" width="20.70" height="4.50" rx="2.25" fill="#f5a623" fill-opacity="0.85"/>
-  <rect x="106.10" y="117.80" width="13.80" height="4.50" rx="2.25" fill="#f5a623" fill-opacity="0.55"/>
-  <text x="172" y="130" font-family="system-ui, -apple-system, sans-serif" font-size="36" font-weight="600" fill="#f5f5f7" letter-spacing="-0.5">booklet</text>`;
+  <rect x="80" y="72" width="64" height="64" rx="14" fill="${INK}"/>
+  <path d="M97.3 89.3C97.3 87.1 99.1 85.3 101.3 85.3H120.5L126.7 91.5V118.7C126.7 120.9 124.9 122.7 122.7 122.7H101.3C99.1 122.7 97.3 120.9 97.3 118.7V89.3Z" fill="${PAPER}"/>
+  <rect x="103.2" y="96.6" width="18.4" height="6" rx="1" fill="${MARKER}"/>
+  <rect x="103.2" y="106.6" width="12.3" height="3" rx="1.5" fill="${INK}" fill-opacity="0.32"/>
+  <text x="160" y="116" font-family="${SERIF}" font-size="34" font-weight="700" fill="${INK}">Booklet</text>`;
 
   let content: string;
   if (title) {
     const [line1, line2] = wrapTitle(escXml(title));
-    const fontSize = line2 ? 60 : 68;
-    const y1 = line2 ? 300 : 330;
-    const y2 = y1 + fontSize + 12;
+    const fontSize = line2 ? 64 : 72;
+    const y1 = line2 ? 300 : 340;
+    const y2 = y1 + fontSize + 14;
     content = `
-  <text x="80" y="${y1}" font-family="system-ui, -apple-system, sans-serif" font-size="${fontSize}" font-weight="700" fill="#f5f5f7" letter-spacing="-1.5">${line1}</text>
-  ${line2 ? `<text x="80" y="${y2}" font-family="system-ui, -apple-system, sans-serif" font-size="${fontSize}" font-weight="700" fill="#f5a623" letter-spacing="-1.5">${line2}</text>` : ""}
-  <text x="80" y="490" font-family="system-ui, -apple-system, sans-serif" font-size="24" fill="#636366" letter-spacing="-0.2">Shared via Booklet</text>`;
+  <text x="80" y="${y1}" font-family="${SERIF}" font-size="${fontSize}" fill="${INK}" letter-spacing="-1">${line1}</text>
+  ${line2 ? `<text x="80" y="${y2}" font-family="${SERIF}" font-size="${fontSize}" fill="${INK}" letter-spacing="-1">${line2}</text>` : ""}
+  <text x="80" y="548" font-family="${SANS}" font-size="24" fill="#66635a">Published with Booklet</text>`;
   } else {
     content = `
-  <text x="80" y="310" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="700" fill="#f5f5f7" letter-spacing="-2">Engineering documents,</text>
-  <text x="80" y="400" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="700" fill="#f5a623" letter-spacing="-2">published as pages.</text>
-  <text x="80" y="470" font-family="system-ui, -apple-system, sans-serif" font-size="28" fill="#86868b" letter-spacing="-0.3">Incident reports, ADRs, RFCs and runbooks, with team spaces.</text>
-  <rect x="80" y="512" width="200" height="44" rx="22" fill="#1d1d1f"/>
-  <text x="180" y="540" font-family="system-ui, -apple-system, sans-serif" font-size="18" fill="#a1a1a6" text-anchor="middle">Free · Open source</text>`;
+  <text x="80" y="300" font-family="${SERIF}" font-size="84" fill="${INK}" letter-spacing="-2">Write it in Markdown.</text>
+  <rect x="72" y="352" width="760" height="46" fill="${MARKER}"/>
+  <text x="80" y="394" font-family="${SERIF}" font-size="84" fill="${INK}" letter-spacing="-2">Publish it as a page.</text>
+  <text x="80" y="478" font-family="${SANS}" font-size="28" fill="#45433b">Incident reports, ADRs, RFCs and runbooks, with team spaces.</text>
+  <text x="80" y="548" font-family="${SANS}" font-size="22" fill="#66635a">Free · Open source</text>`;
   }
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
-  ${defs}
-  ${background}
+  <rect width="1200" height="630" fill="${PAPER}"/>
+  <rect x="0" y="0" width="1200" height="10" fill="${INK}"/>
   ${logo}
   ${content}
 </svg>`;

@@ -15,7 +15,7 @@ const CALLOUT_ICON_CLASSES: Record<CalloutKind, { icon: IconName; classes: strin
   note: { icon: "callout-note", classes: "border-info/30 bg-info/10 text-info" },
   tip: { icon: "callout-tip", classes: "border-success/30 bg-success/10 text-success" },
   warning: { icon: "callout-warning", classes: "border-warning/30 bg-warning/10 text-warning" },
-  important: { icon: "callout-important", classes: "border-accent/30 bg-accent/10 text-accent-soft" },
+  important: { icon: "callout-important", classes: "border-special/30 bg-special/10 text-special" },
   caution: { icon: "callout-caution", classes: "border-danger/30 bg-danger/10 text-danger" },
 };
 

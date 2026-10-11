@@ -2,6 +2,9 @@ export const APP_NAME = "Booklet";
 // Shown as "Source" in the site footer (AGPL-3.0 section 13). If you run a
 // modified copy, point this at your own source.
 export const REPO_URL = "https://github.com/AshwinSathian/booklet";
+// The live example pages linked from the homepage and the docs. They exist
+// on the hosted service, so the links are absolute.
+export const EXAMPLES_ORIGIN = "https://booklet.ashwinsathian.com";
 
 export const ROUTES = {
   home: "/",
@@ -17,8 +20,10 @@ export const ROUTES = {
   webhooks: "/settings/webhooks",
   spaces: "/t",
   space: (slug: string) => `/t/${slug}`,
-  mcpSetup: "/mcp-setup",
-  integrations: "/integrations",
+  docs: "/docs",
+  templates: "/templates",
+  pricing: "/pricing",
+  changelog: "/changelog",
 } as const;
 
 export const STORAGE = {

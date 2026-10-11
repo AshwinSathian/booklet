@@ -55,7 +55,7 @@ Pass `retryOnRateLimit: true` to `createClient` to wait for `Retry-After` and tr
 The package also exports the schemas themselves (`PublishRequestSchema`, `PageDetailResponseSchema`
 and the rest), `MAX_RAW_CHARS`, `DOC_TYPES`, `frontmatterBlock(fields)` and `buildOpenApi`.
 
-Full API reference: <https://booklet.ashwinsathian.com/api-docs>. Changes: [CHANGELOG.md](https://github.com/AshwinSathian/booklet/blob/main/packages/shared/CHANGELOG.md).
+Full API reference: <https://booklet.ashwinsathian.com/docs/reference/api>. Changes: [CHANGELOG.md](https://github.com/AshwinSathian/booklet/blob/main/packages/shared/CHANGELOG.md).
 
 ## License
 

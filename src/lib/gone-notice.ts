@@ -18,5 +18,5 @@ export function isGoneReason(v: unknown): v is GoneReason {
 
 /** One line, no page content, no title. Messages are fixed strings — nothing here is user input. */
 export function goneNoticeHtml(reason: GoneReason): string {
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Page unavailable</title></head><body style="font-family:system-ui,sans-serif;margin:0;padding:3rem 1.5rem;background:#0b0b0c;color:#e7e7ea"><p style="max-width:32rem;margin:0 auto;line-height:1.6">${GONE_MESSAGES[reason]}</p></body></html>`;
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Page unavailable</title></head><body style="font-family:system-ui,sans-serif;margin:0;padding:3rem 1.5rem;background:#fbfaf7;color:#16150f"><p style="max-width:32rem;margin:0 auto;line-height:1.6">${GONE_MESSAGES[reason]}</p></body></html>`;
 }

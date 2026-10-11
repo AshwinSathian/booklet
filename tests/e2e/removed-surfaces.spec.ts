@@ -1,19 +1,13 @@
 import { test, expect } from "@playwright/test";
 
 // Phase 1 removals, checked against a running server: the Clerk claim page
-// is gone, /mcp redirects to the setup guide, and no page loads Google
+// is gone, and no page loads Google
 // Analytics or is allowed to by the CSP.
 
 const GA_HOSTS = /googletagmanager\.com|google-analytics\.com/;
 
 test("/claim returns 404", async ({ request }) => {
   expect((await request.get("/claim")).status()).toBe(404);
-});
-
-test("/mcp redirects permanently to /mcp-setup", async ({ request }) => {
-  const res = await request.get("/mcp", { maxRedirects: 0 });
-  expect(res.status()).toBe(308);
-  expect(res.headers().location).toBe("/mcp-setup");
 });
 
 test("/, /app and a share page make no Google Analytics requests", async ({ page }) => {
