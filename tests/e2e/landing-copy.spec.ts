@@ -16,7 +16,19 @@ test("the landing page names the four document types above the fold", async ({ p
 test("the landing page says nothing is the only or the first of its kind", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
-  const text = (await page.locator("body").innerText()).toLowerCase();
+  // The site's own words. The example documents on the page (marked
+  // data-sample) are sample content, and an incident timeline may well say
+  // "first alert".
+  const text = (
+    await page.locator("body").evaluate((body) => {
+      const copy = body.cloneNode(true) as HTMLElement;
+      copy.querySelectorAll("[data-sample]").forEach((el) => el.remove());
+      document.body.appendChild(copy);
+      const words = copy.innerText;
+      copy.remove();
+      return words;
+    })
+  ).toLowerCase();
   for (const word of ["only", "first", "unlike any"]) {
     expect(text, `"${word}" appears on the landing page`).not.toMatch(new RegExp(`\\b${word}\\b`));
   }

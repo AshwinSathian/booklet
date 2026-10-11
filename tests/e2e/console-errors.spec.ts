@@ -13,7 +13,10 @@ import { test, expect } from "@playwright/test";
 const PUBLIC_ROUTES = [
   "/",
   "/about",
-  "/api-docs",
+  "/docs",
+  "/docs/quickstart",
+  "/docs/guides/mcp",
+  "/docs/reference/api",
   "/changelog",
   "/explore",
   "/pricing",
@@ -24,8 +27,8 @@ const PUBLIC_ROUTES = [
   "/templates/adr",
   "/terms",
   "/tags",
-  "/mcp-setup",
-  "/integrations",
+  "/templates/incident-report",
+  "/trust",
   "/cli-auth",
 ];
 

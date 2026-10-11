@@ -15,6 +15,25 @@ export type Release = {
 
 export const RELEASES: Release[] = [
   {
+    version: "v3.0.0",
+    date: "2026-10-11",
+    summary: "A new look for every page, documentation in one place at /docs, and a homepage that shows a document being published.",
+    entries: [
+      { date: "2026-10-11", tag: "New", text: "Docs at /docs: a quickstart, guides for MCP clients, the CLI, GitHub workflows, webhooks, team spaces, document types and linking, seven recipes, and the reference. Each page can be copied or opened as Markdown, and there is a search (press /)" },
+      { date: "2026-10-11", tag: "New", text: "The homepage plays a document being written in Markdown beside the page it becomes, for an incident report, an ADR, an RFC and a runbook. It can be paused, and does not play if you have asked for reduced motion" },
+      { date: "2026-10-11", tag: "New", text: "/llms.txt lists every docs page as Markdown, and /llms-full.txt has all of them in one file" },
+      { date: "2026-10-11", tag: "Improved", text: "A new design across the site, the editor and published pages: paper and ink, serif headings, and one yellow highlighter as the accent. Light is the default; the dark theme is still one click away or follows your system" },
+      { date: "2026-10-11", tag: "Improved", text: "Pages on the default theme change appearance with the site. The other four document themes are unchanged" },
+      { date: "2026-10-11", tag: "Improved", text: "A published page with a table of contents keeps its full reading width. The contents used to take its space from the text, which clipped tables" },
+      { date: "2026-10-11", tag: "Improved", text: "One header and one footer on every page. Pricing is a table of what works with and without an account. Templates lead with the ones for engineering documents" },
+      { date: "2026-10-11", tag: "Improved", text: "The changelog shows the latest release and folds the earlier ones" },
+      { date: "2026-10-11", tag: "Improved", text: "Code blocks highlight Markdown, and their labels and buttons are larger" },
+      { date: "2026-10-11", tag: "Fixed", text: "A code block in a language Booklet does not highlight no longer logs an error in the browser console" },
+      { date: "2026-10-11", tag: "Removed", text: "/api-docs, /integrations and /mcp-setup. Each redirects to its place in /docs, and a link to a section of one of them lands on that section's new page" },
+      { date: "2026-10-11", tag: "Removed", text: "Explore and the tag pages are no longer linked from the site or listed for search engines. They still work for pages their authors made public" },
+    ],
+  },
+  {
     version: "v2.1.0",
     date: "2026-10-11",
     summary: "Change your email address, move pages between team spaces from the API and CLI, and a stricter script policy.",

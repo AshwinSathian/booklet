@@ -9,6 +9,63 @@ Notable changes to the Booklet app and MCP server. The format follows
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-10-11
+
+A redesign of every surface and a new documentation site. The major version
+is for the URLs that moved; the API, the CLI and the MCP server are unchanged.
+
+### Added
+
+- **Docs at `/docs`**, written as Markdown files under `content/docs` and
+  rendered by the same parser and renderer as a published page. A
+  quickstart, eight guides, seven recipes and six reference pages. Each page
+  is also served as Markdown at its address with `.md` added, and can be
+  copied as Markdown. Search opens with `/` or `⌘K`.
+- **Request and response examples in the docs come from the OpenAPI
+  schemas.** `{{example:PublishRequest}}` in a docs file is filled in when
+  the file is read, and a name with no example fails the docs tests.
+- **`/llms.txt` and `/llms-full.txt` are generated** from the docs tree.
+- **A product shot on the homepage**: a document typed in Markdown beside
+  the page it becomes, for four document types. The parser runs on the
+  server; the browser plays the frames. It can be paused and does not play
+  under `prefers-reduced-motion`.
+
+### Changed
+
+- **The design system is "Typeset".** Paper and ink, Source Serif 4 for
+  display type, Geist for the interface, and one yellow highlighter
+  (`--color-highlight`) used behind ink text. `--color-accent` is now ink.
+  `:root` holds the light palette and `html.dark` the dark one; it was the
+  other way round. Document themes follow: light tokens by default, dark
+  under `html.dark`.
+- **The default document theme matches the site**, so pages on it change
+  appearance. The other themes are unchanged.
+- **A published page keeps its reading width beside a table of contents.**
+  The container grows by the contents column instead of the text shrinking
+  to 29rem.
+- One `SiteHeader` and `SiteFooter` on every marketing and docs page.
+  Pricing, templates, changelog, about, trust, privacy, terms, explore, tags
+  and the 404 pages are rebuilt on shared primitives
+  (`src/components/marketing/primitives.tsx`).
+- The homepage is seven blocks instead of eleven sections, and about 7,000
+  pixels tall on a desktop instead of 12,600.
+- `highlightCode` returns plain text for a language that is not registered
+  instead of asking highlight.js for it, which logged an error. Markdown is
+  now a registered language.
+- `service_documentation` in the OAuth metadata, and the MCP server's
+  website URL, point at `/docs/guides/mcp`.
+
+### Removed
+
+- `/api-docs`, `/integrations` and `/mcp-setup`, with permanent redirects to
+  `/docs/reference/api`, `/docs` and `/docs/guides/mcp`. `/mcp` redirects to
+  the MCP guide. A fragment from an old link is mapped to the page that has
+  that section now (`LEGACY_HASHES` in `src/lib/docs-nav.ts`).
+- Explore and the tag pages from the footer, the sitemap and search
+  indexing. The routes still work.
+- `public/llms.txt` (now a route), the scroll-driven hero and the cursor
+  spotlight.
+
 ## [2.1.0] - 2026-10-11
 
 `booklet-api-client` and `booklet-cli` are 3.1.0 and the MCP server is 4.1.0.

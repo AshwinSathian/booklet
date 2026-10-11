@@ -135,7 +135,7 @@ test.describe("Published page (/p/:id)", () => {
 
   test("published page shows not-found for bogus id", async ({ page }) => {
     await page.goto(`${BASE}/p/thisisnotarealpageid`);
-    await expect(page.locator("body")).toContainText(/doesn.t exist|not found|expired/i, {
+    await expect(page.locator("body")).toContainText(/does not exist|not found|expired/i, {
       timeout: 10000,
     });
     await expect(page.locator("body")).not.toContainText("Application error");
