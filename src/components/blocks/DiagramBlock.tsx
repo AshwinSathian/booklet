@@ -2,24 +2,27 @@
 
 import { useEffect, useRef, useState } from "react";
 import { GRAPHVIZ_LANGS } from "@/lib/blocks";
-import { sanitizeCompiledSvg } from "@/lib/svg-sanitize";
+import { MERMAID_SAFETY } from "@/lib/mermaid-config";
+import { sanitizeCompiledSvgElement, sanitizeRenderedSvg } from "@/lib/svg-sanitize";
 
-async function renderMermaid(code: string): Promise<string> {
+async function renderMermaid(code: string): Promise<Element> {
   const mermaid = (await import("mermaid")).default;
   const isDark = !document.documentElement.classList.contains("light");
 
   mermaid.initialize({
     startOnLoad: false,
     theme: isDark ? "dark" : "default",
-    securityLevel: "strict",
+    ...MERMAID_SAFETY,
   });
 
   const uid = `diagram-${Math.random().toString(36).slice(2)}`;
   const { svg } = await mermaid.render(uid, code.trim());
-  return svg;
+  const clean = sanitizeRenderedSvg(svg);
+  if (!clean) throw new Error("Failed to render diagram");
+  return clean;
 }
 
-async function renderGraphviz(code: string): Promise<string> {
+async function renderGraphviz(code: string): Promise<Element> {
   const { instance } = await import("@viz-js/viz");
   const viz = await instance();
   const result = viz.render(code.trim(), { format: "svg" });
@@ -29,7 +32,7 @@ async function renderGraphviz(code: string): Promise<string> {
     throw new Error(message || "Failed to render diagram");
   }
 
-  const sanitized = sanitizeCompiledSvg(result.output);
+  const sanitized = sanitizeCompiledSvgElement(result.output);
   if (!sanitized) throw new Error("Failed to render diagram");
   return sanitized;
 }
@@ -66,7 +69,10 @@ export function DiagramBlock({ lang, code }: { lang: string; code: string }) {
           : await renderMermaid(code);
 
         if (!stale && containerRef.current) {
-          containerRef.current.innerHTML = svg;
+          // Both renderers hand back an element that was sanitized as a
+          // tree. Mounting that tree, and not markup made from it, keeps it
+          // the thing that was checked.
+          containerRef.current.replaceChildren(document.importNode(svg, true));
           setReady(true);
         }
       } catch (e) {

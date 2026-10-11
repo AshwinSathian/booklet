@@ -10,6 +10,7 @@ const eslintConfig = [
 			"out/**",
 			"dist/**",
 			"packages/*/dist/**",
+			"packages/*/dist.previous/**",
 			"node_modules/**",
 			"mcp-server/**",
 			"scripts/stub-og.cjs",

@@ -679,7 +679,31 @@ hostname). `scripts/health-check.sh` checks both that the hostname routes
 correctly *and* that it actually rejects a non-API path, not just that DNS
 resolves.
 
-## Manual production verification
+## Deploying
+
+`npm run deploy` (`scripts/redeploy.sh`) is the whole deploy. In order: `npm
+ci`; a copy of every build output (`.next`, `packages/shared/dist`,
+`packages/cli/dist`); a build of every workspace that has one, then the
+app; a PM2 reload of both processes; `scripts/health-check.sh`; and both
+production-verify suites against the live hostnames.
+
+| Exit | Meaning |
+|---|---|
+| 0 | Live, healthy, verified |
+| 1 | Health check failed. The previous builds were restored (or could not be: read the log) |
+| 2 | Live and healthy, and a verify suite failed. Nothing was rolled back |
+
+`SKIP_VERIFY=1 npm run deploy` skips the suites, for when the tunnel or npm
+is known to be down. The log is in `~/.booklet-deploy-logs/`.
+
+A rollback restores builds. It does not restore source: the MCP server runs
+from `mcp-server/src`, and the checkout stays at the new commit.
+`~/.booklet/deployed-commit` holds the commit of the last deploy that passed
+its health check, and the rollback log prints it. Data changed by the new
+build is not undone either, which is why a failed verify suite never rolls
+back by itself.
+
+## Production verification
 
 `scripts/production-verify/prod-smoke.spec.ts` is a scoped, self-cleaning
 Playwright suite for verifying a live deployment end-to-end — signup,
@@ -688,7 +712,7 @@ and the full v1 API surface via `booklet-api.ashwinsathian.com`. Deliberately ke
 its own `playwright.config.ts`) so it's never picked up by the normal
 dev/CI test run — every account/page it creates is tagged
 `e2e-verify-<timestamp>` and deleted in `afterAll`, scoped precisely to
-what that run created. Run it after any production deploy:
+what that run created. `npm run deploy` runs it; to run it by hand:
 
 ```bash
 TEST_BASE_URL=https://booklet.ashwinsathian.com \

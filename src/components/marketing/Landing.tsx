@@ -710,13 +710,13 @@ export function Landing() {
       {
         tag: "Incident",
         title: "Incident summaries",
-        desc: "Timeline, severity and root cause on one page. Send the link when the incident closes.",
+        desc: "Timeline, severity and root cause on one page, with status and severity in a strip at the top and a link to the ADR behind it.",
         href: "https://booklet.ashwinsathian.com/p/example-incident-report",
       },
       {
         tag: "ADR",
         title: "Design decisions",
-        desc: "The decision, its status and what it supersedes, readable by someone who has never opened the repository.",
+        desc: "The decision and its status, readable by someone who has never opened the repository. The live example lists the incident that references it.",
         href: "https://booklet.ashwinsathian.com/p/example-adr",
       },
       {

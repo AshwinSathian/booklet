@@ -205,7 +205,8 @@ test("Spaces is in the account menu, and a space can be created from it", async 
 
   // The editor now offers the space when publishing.
   await page.goto("/app");
-  await expect(page.getByLabel("Who can find this page").locator("option")).toContainText([`Team only (${name})`]);
+  await page.getByLabel("Who can find this page").click();
+  await expect(page.getByRole("menuitemradio", { name: `Team only (${name})` })).toBeVisible();
 });
 
 test("after a first publish, someone with no space is offered one", async ({ browser }) => {

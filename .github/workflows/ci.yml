@@ -56,6 +56,10 @@ jobs:
             echo "::error::Stale pre-Booklet name found (see matches above)."
             exit 1
           fi
+      # A syntax error in a deploy script is otherwise found during a deploy.
+      - name: Shell scripts parse
+        run: |
+          for f in scripts/*.sh scripts/lib/*.sh .githooks/*; do bash -n "$f" || exit 1; done
       - run: npm ci --prefer-offline
       - run: npm run lint
       # Every text colour token against every surface it is drawn on, for

@@ -19,21 +19,7 @@ fi
 export PATH="$NODE_BIN:$PATH"
 
 # ── Make sure `pm2` is actually resolvable ────────────────────────────────────
-# nvm only puts a version's bin/ on PATH once something has `nvm use`'d it —
-# sourcing nvm.sh alone does not, and git invokes hooks with whatever PATH the
-# pushing shell happened to have, which will not generally match. Found live:
-# a push here silently printed "PM2 does not have booklet-app" and skipped
-# the redeploy even though PM2 was demonstrably running (under a different
-# Node version than the pushing shell's active one) — same class of gap
-# pm2-startup.sh already guards against for the launchd-started watchdog.
-if ! command -v pm2 &>/dev/null; then
-  for bin in "$HOME"/.nvm/versions/node/*/bin; do
-    if [[ -x "$bin/pm2" ]]; then
-      export PATH="$bin:$PATH"
-      break
-    fi
-  done
-fi
+source "$REPO_ROOT/scripts/lib/pm2-path.sh"
 
 # ── Determine whether we're pushing to main ──────────────────────────────────
 PUSH_TO_MAIN=false
@@ -65,7 +51,21 @@ echo "│  pre-push → pushing to main → redeploying server…  │"
 echo "└─────────────────────────────────────────────────────┘"
 echo ""
 
-bash "$REPO_ROOT/scripts/redeploy.sh"
+# Exit 2 means the new build is live and healthy and a verify suite failed.
+# Production already runs this commit, so cancelling the push would leave it
+# serving code that origin/main does not have: let the push through, loudly.
+# Exit 1 means the build was rolled back (or could not be): cancel the push.
+status=0
+bash "$REPO_ROOT/scripts/redeploy.sh" || status=$?
 
 echo ""
+if [[ "$status" -eq 2 ]]; then
+  echo "[pre-push] The server runs this commit, and a verify suite FAILED (see above)."
+  echo "           Proceeding with push so origin/main matches what is live."
+  exit 0
+fi
+if [[ "$status" -ne 0 ]]; then
+  echo "[pre-push] Deploy failed (exit $status). Push cancelled."
+  exit "$status"
+fi
 echo "[pre-push] Server is up-to-date. Proceeding with push."

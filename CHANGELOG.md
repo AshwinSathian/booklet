@@ -9,6 +9,42 @@ Notable changes to the Booklet app and MCP server. The format follows
 
 ## [Unreleased]
 
+## [2.0.1] - 2026-10-11
+
+### Security
+
+- **Mermaid diagrams on a page are sanitized before they are mounted.** They
+  used to rely on Mermaid's own pass alone, which keeps CSS and images: a
+  `themeCSS` in a diagram's init directive, or an `<img>` in a label, made
+  every reader's browser fetch from another host. Two changes close that.
+  Mermaid is configured so that a directive cannot set `themeCSS` and a
+  label cannot contain an element that fetches or submits. And the drawn
+  diagram is checked as a parsed tree (styles, images, event handlers,
+  script links, form controls) and that tree is what is mounted, for
+  Mermaid and Graphviz alike. One route is left: a Mermaid image shape is
+  fetched while Mermaid lays the diagram out. That is the same request an
+  image in the page's Markdown makes, which is a feature.
+- Links inside a diagram to a path on the same site (`/p/...`) and `tel:`
+  links are kept. The sanitizer used to remove them from Graphviz diagrams.
+
+### Changed
+
+- **Visibility in the editor** is a menu in the app's own style, with a line
+  under each choice saying who can find the page. It was a native select.
+- **`npm run deploy` covers the whole deploy.** It builds every workspace
+  that has a build (the CLI was left at whatever was last built by hand),
+  backs up and restores every build output on a failed health check, records
+  the commit of each healthy deploy, and ends by running both
+  production-verify suites against the live site. `SKIP_VERIFY=1` skips
+  them. It exits 2 when the build is live and a verify suite failed.
+- `scripts/health-check.sh` finds `pm2` under whichever nvm Node version
+  has it. It used to report three failures for running processes.
+- CI checks that every shell script parses.
+- The example incident report and ADR linked from the landing page carry
+  typed frontmatter, so they show the header strip, and the incident links
+  to the ADR.
+
+
 ## [2.0.0] - 2026-10-11
 
 Booklet 2.0.0 is the engineering-documents release: document types, links
@@ -373,4 +409,5 @@ code.
   scripts.
 
 [1.1.0]: https://github.com/AshwinSathian/booklet/releases/tag/v1.1.0
+[2.0.1]: https://github.com/AshwinSathian/booklet/releases/tag/v2.0.1
 [2.0.0]: https://github.com/AshwinSathian/booklet/releases/tag/v2.0.0

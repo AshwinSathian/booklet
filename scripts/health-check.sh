@@ -3,6 +3,9 @@
 # Exits 0 if all checks pass, 1 if any fail.
 set -euo pipefail
 
+# Without this the PM2 checks below report failures for running processes.
+source "$(dirname "${BASH_SOURCE[0]}")/lib/pm2-path.sh"
+
 PASS=0; FAIL=0; WARN=0
 
 _check() {
