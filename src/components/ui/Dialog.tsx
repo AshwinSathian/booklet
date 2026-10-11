@@ -23,6 +23,8 @@ export function Dialog({
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
+  // Where the press began: selecting text in a field and letting go outside the box must not close it.
+  const pressedBackdrop = useRef(false);
 
   useEffect(() => {
     const dialog = ref.current;
@@ -36,8 +38,11 @@ export function Dialog({
       ref={ref}
       onClose={onClose}
       // The dialog element covers only its own box; a click that lands on the element itself is on the backdrop.
+      onPointerDown={(e) => {
+        pressedBackdrop.current = e.target === e.currentTarget;
+      }}
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (e.target === e.currentTarget && pressedBackdrop.current) onClose();
       }}
       aria-labelledby={titleId}
       // m-auto: the reset takes a dialog's own centring margin away.
