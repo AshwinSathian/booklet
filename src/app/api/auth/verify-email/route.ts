@@ -4,7 +4,7 @@ import { isSameOriginRequest } from "@/lib/auth/origin-check";
 import { getSession } from "@/lib/auth/session";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/request-ip";
-import { hashVerificationToken } from "@/server/verification";
+import { hashVerificationToken, applyEmailChange } from "@/server/verification";
 import { problem } from "@/server/errors";
 
 export const runtime = "nodejs";
@@ -43,10 +43,19 @@ export async function POST(req: Request) {
   const record = await consumeEmailVerificationToken(await hashVerificationToken(token));
   if (!record) return problem(400, INVALID);
 
-  // The link confirms the address it was sent to, nothing else.
   const user = await getUserById(record.user_id);
-  if (!user || user.id !== session.userId || user.email !== record.email) return problem(400, INVALID);
+  if (!user || user.id !== session.userId) return problem(400, INVALID);
 
+  // A change link moves the account to the address it was mailed to.
+  if (record.change) {
+    if (!(await applyEmailChange(user, record.email))) {
+      return problem(409, "That address now belongs to another account. Your email was not changed.");
+    }
+    return NextResponse.json({ ok: true, changed: true, email: record.email });
+  }
+
+  // Any other link confirms the address it was sent to, nothing else.
+  if (user.email !== record.email) return problem(400, INVALID);
   await markEmailVerified(user.id);
   return NextResponse.json({ ok: true });
 }

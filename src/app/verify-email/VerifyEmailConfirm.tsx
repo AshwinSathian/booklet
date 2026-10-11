@@ -9,6 +9,8 @@ import { ROUTES } from "@/lib/constants";
 export function VerifyEmailConfirm({ token }: { token: string }) {
   const { refetch, isLoaded, isSignedIn } = useSession();
   const [state, setState] = useState<"idle" | "sending" | "done">("idle");
+  // Set when the link was a change of address, not a first confirmation.
+  const [movedTo, setMovedTo] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(token ? null : "This link is missing its token. Open the link from the email again.");
 
   async function confirm() {
@@ -21,6 +23,8 @@ export function VerifyEmailConfirm({ token }: { token: string }) {
         body: JSON.stringify({ token }),
       });
       if (res.ok) {
+        const done = (await res.json().catch(() => ({}))) as { changed?: boolean; email?: string };
+        if (done.changed && done.email) setMovedTo(done.email);
         setState("done");
         void refetch();
         return;
@@ -36,7 +40,9 @@ export function VerifyEmailConfirm({ token }: { token: string }) {
   if (state === "done") {
     return (
       <div className="space-y-3 text-center">
-        <p role="status" className="text-sm text-text-secondary">Your email is confirmed. You can publish now.</p>
+        <p role="status" className="text-sm text-text-secondary">
+          {movedTo ? `This account's email address is now ${movedTo}.` : "Your email is confirmed. You can publish now."}
+        </p>
         <Link href={ROUTES.app} className="text-sm text-accent transition-colors hover:text-accent-soft">
           Open the editor
         </Link>

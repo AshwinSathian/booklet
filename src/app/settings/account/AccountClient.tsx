@@ -67,6 +67,8 @@ export function AccountClient({ email, needsVerification, hasPassword, providers
   // Decided after hydration: the server cannot know what the browser supports.
   const canUsePasskeys = useHydrated() && browserSupportsWebAuthn();
 
+  const [newEmail, setNewEmail] = useState("");
+  const [emailPassword, setEmailPassword] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [deleting, setDeleting] = useState(false);
@@ -81,6 +83,21 @@ export function AccountClient({ email, needsVerification, hasPassword, providers
     setBusy(false);
     if (!error) router.refresh();
     return !error;
+  }
+
+  async function changeEmail(e: FormEvent) {
+    e.preventDefault();
+    const address = newEmail.trim();
+    const ok = await run(
+      () => send("/api/account/email", "POST", { email: address, password: emailPassword }),
+      // The same words whether or not a link went out: see the route.
+      `If ${address} can be used, we sent it a link. Open it while signed in here and this account moves to that address.`,
+    );
+    if (ok) {
+      setNewEmail("");
+      setEmailPassword("");
+      router.refresh();
+    }
   }
 
   async function changePassword(e: FormEvent) {
@@ -140,6 +157,41 @@ export function AccountClient({ email, needsVerification, hasPassword, providers
           </Button>
         </Section>
       )}
+
+      <Section
+        title="Email address"
+        hint={`This account's address is ${email}. Sign-in, password resets and team invites all go by it.`}
+      >
+        <form onSubmit={(e) => void changeEmail(e)} className="max-w-xs space-y-2">
+          <input
+            type="email"
+            aria-label="New email address"
+            placeholder="New email address"
+            autoComplete="email"
+            required
+            maxLength={254}
+            value={newEmail}
+            onChange={(e) => setNewEmail(e.target.value)}
+            className={INPUT}
+          />
+          {hasPassword && (
+            <input
+              type="password"
+              aria-label="Password, to change the email address"
+              placeholder="Your password"
+              autoComplete="current-password"
+              required
+              maxLength={256}
+              value={emailPassword}
+              onChange={(e) => setEmailPassword(e.target.value)}
+              className={INPUT}
+            />
+          )}
+          <Button type="submit" variant="secondary" size="md" disabled={busy}>
+            Change email
+          </Button>
+        </form>
+      </Section>
 
       <Section
         title={hasPassword ? "Change password" : "Set a password"}

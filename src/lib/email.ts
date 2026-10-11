@@ -56,6 +56,45 @@ export async function sendVerificationEmail(to: string, verifyUrl: string): Prom
   if (error) throw new Error(`Resend rejected the verification email: ${error.message}`);
 }
 
+/** The link that moves an account to this address, sent to the new address. */
+export async function sendEmailChangeEmail(to: string, confirmUrl: string): Promise<void> {
+  const { error } = await getResendClient().emails.send({
+    from: FROM_ADDRESS,
+    to,
+    subject: "Confirm your new email address for Booklet",
+    html: `
+      <div style="font-family: -apple-system, system-ui, sans-serif; max-width: 480px; margin: 0 auto; color: #1a1a1a;">
+        <p>Someone signed in to a Booklet account asked to change its email address to this one.</p>
+        <p>
+          <a href="${confirmUrl}" style="display:inline-block;background:#f5a623;color:#0a0a0a;padding:10px 20px;border-radius:9999px;text-decoration:none;font-weight:600;">
+            Use this address
+          </a>
+        </p>
+        <p style="color:#666;font-size:13px;">
+          This link works for 24 hours, and only while signed in to that account. If this was not you, ignore this email: nothing changes.
+        </p>
+      </div>
+    `,
+  });
+  if (error) throw new Error(`Resend rejected the email change link: ${error.message}`);
+}
+
+/** Tells the address an account just left that it has moved. Plain text: it carries an address someone typed. */
+export async function sendEmailChangedNotice(oldAddress: string, newAddress: string): Promise<void> {
+  const { error } = await getResendClient().emails.send({
+    from: FROM_ADDRESS,
+    to: oldAddress,
+    subject: "Your Booklet email address was changed",
+    text: [
+      `The email address of your Booklet account was changed to ${newAddress}.`,
+      "",
+      "If you did this, there is nothing to do.",
+      "If you did not, someone else has been in your account. Sign in, change the address back, then change your password. If you can no longer sign in, write to whoever runs this Booklet: this address can no longer reset the password.",
+    ].join("\n"),
+  });
+  if (error) throw new Error(`Resend rejected the email change notice: ${error.message}`);
+}
+
 /**
  * Notifies the abuse inbox of a new report. Plain text on purpose: every
  * field below except the URL is written by an anonymous reporter, and a

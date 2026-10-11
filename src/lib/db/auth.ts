@@ -155,21 +155,49 @@ type EmailVerificationTokenDoc = {
   email: string;
   token_hash: string;
   expires_at: Date;
+  /** True on a link that moves the account to `email`. Absent on one that confirms the address the account already has. */
+  change?: true;
 };
 
-/** Creates a verification token, replacing any earlier one: only the newest link works. */
-export async function createEmailVerificationToken(userId: string, email: string, tokenHash: string, expiresAt: Date): Promise<void> {
+/**
+ * Creates a verification token, replacing any earlier one: only the newest
+ * link works. With `change`, confirming it moves the account to `email`.
+ */
+export async function createEmailVerificationToken(
+  userId: string,
+  email: string,
+  tokenHash: string,
+  expiresAt: Date,
+  change = false,
+): Promise<void> {
   const col = (await getDb()).collection<EmailVerificationTokenDoc>("email_verification_tokens");
   await col.deleteMany({ user_id: userId });
-  await col.insertOne({ _id: createId(20), user_id: userId, email, token_hash: tokenHash, expires_at: expiresAt });
+  await col.insertOne({ _id: createId(20), user_id: userId, email, token_hash: tokenHash, expires_at: expiresAt, ...(change ? { change: true as const } : {}) });
 }
 
 /** Removes and returns the token, so a link works once. Null when unknown or expired. */
-export async function consumeEmailVerificationToken(tokenHash: string): Promise<{ user_id: string; email: string } | null> {
+export async function consumeEmailVerificationToken(tokenHash: string): Promise<{ user_id: string; email: string; change: boolean } | null> {
   const col = (await getDb()).collection<EmailVerificationTokenDoc>("email_verification_tokens");
   const doc = await col.findOneAndDelete({ token_hash: tokenHash });
   if (!doc || doc.expires_at.getTime() <= Date.now()) return null;
-  return { user_id: doc.user_id, email: doc.email };
+  return { user_id: doc.user_id, email: doc.email, change: doc.change === true };
+}
+
+/**
+ * Moves an account to a new address and marks it confirmed. False when the
+ * address is another account's: the unique index on `users.email` decides,
+ * so two changes to the same address cannot both win.
+ */
+export async function setUserEmail(userId: string, email: string): Promise<boolean> {
+  try {
+    await (await getDb())
+      .collection<{ _id: string }>("users")
+      .updateOne({ _id: userId }, { $set: { email, email_verified_at: new Date().toISOString() } });
+    return true;
+  } catch (err) {
+    if (typeof err === "object" && err !== null && "code" in err && err.code === 11000) return false;
+    throw err;
+  }
 }
 
 export async function hasLiveEmailVerificationToken(userId: string): Promise<boolean> {
