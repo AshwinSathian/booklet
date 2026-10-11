@@ -148,11 +148,12 @@ export async function sendErrorAlertEmail(
     "",
     "Every error from the last 30 days is listed at /admin. This one will not be mailed again for 24 hours.",
   ].filter((l): l is string => l !== null);
-  await getResendClient().emails.send({
+  const { error } = await getResendClient().emails.send({
     from: FROM_ADDRESS,
     to,
     subject: `Booklet error: ${event.scope}: ${event.message}`.slice(0, 180),
     text: lines.join("\n"),
     html: `<pre style="font-family: ui-monospace, monospace; font-size: 13px; white-space: pre-wrap;">${escapeHtml(lines.join("\n"))}</pre>`,
   });
+  if (error) throw new Error(`Resend rejected the error alert: ${error.message}`);
 }

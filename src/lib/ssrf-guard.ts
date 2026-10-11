@@ -284,8 +284,8 @@ export type PinnedResponse = { status: number; location: string | null; contentT
  * - `timeoutMs` bounds the whole exchange, not only idle time, so a server
  *   that drips bytes cannot hold the request open.
  * - `maxBytes` caps the body kept. Past it, reading stops and `truncated`
- *   is true. With 0 (the default) the body is drained and not kept, and
- *   the promise settles as soon as the status line arrives.
+ *   is true. With 0 (the default) the body is not read: the promise
+ *   settles when the status line arrives and the connection is closed.
  *
  * Rejects on a connection error or timeout. The error's message can name
  * the address connected to: callers show their own words, not it.
@@ -333,8 +333,10 @@ export function pinnedRequest(
             truncated,
           });
         if (maxBytes === 0) {
-          res.resume();
+          // The status is all that is wanted. Closing here, and not
+          // draining, means a body that never ends cannot hold the socket.
           finish(false);
+          req.destroy();
           return;
         }
         res.on("data", (chunk: Buffer) => {

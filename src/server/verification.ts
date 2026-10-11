@@ -80,11 +80,14 @@ export async function sendEmailChangeLink(user: DbUser, newEmail: string, origin
 /**
  * Moves the account to `newEmail`, and tells the old address, so someone
  * whose account was moved without them hears of it where they still read
- * mail. False when the address belongs to another account.
+ * mail. `proven`: the new address was confirmed by its link (see
+ * setUserEmail). False when the address belongs to another account.
  */
-export async function applyEmailChange(user: DbUser, newEmail: string): Promise<boolean> {
-  if (!(await setUserEmail(user.id, newEmail))) return false;
-  if (process.env.RESEND_API_KEY) {
+export async function applyEmailChange(user: DbUser, newEmail: string, proven: boolean): Promise<boolean> {
+  if (!(await setUserEmail(user.id, newEmail, proven))) return false;
+  // Told only if it was ever confirmed as the holder's: otherwise it is an
+  // address somebody typed, and this would be mail to a stranger.
+  if (process.env.RESEND_API_KEY && user.email_verified_at) {
     sendEmailChangedNotice(user.email, newEmail).catch((err) => logError("verify-email", "Email change notice failed", err));
   }
   return true;

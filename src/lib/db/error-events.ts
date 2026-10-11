@@ -70,13 +70,25 @@ export async function recordErrorEvent(scope: string, message: string, error: Fi
 
     const to = process.env.ERROR_ALERT_EMAIL?.trim();
     if (!to || !process.env.RESEND_API_KEY) return;
-    if (before?.alerted_at && now.getTime() - before.alerted_at.getTime() < ALERT_EVERY_MS) return;
+    // Claimed in one write, so of many requests hitting the same new error
+    // at once, one sends the mail.
+    const cutoff = new Date(now.getTime() - ALERT_EVERY_MS);
+    const claim = await col.updateOne({ _id, $or: [{ alerted_at: null }, { alerted_at: { $lt: cutoff } }] }, { $set: { alerted_at: now } });
+    if (claim.modifiedCount !== 1) return;
+    const release = () => col.updateOne({ _id, alerted_at: now }, { $set: { alerted_at: before?.alerted_at ?? null } });
+
     if (now.getTime() - alertWindow.startedAt > 60 * 60 * 1000) alertWindow = { startedAt: now.getTime(), sent: 0 };
-    if (alertWindow.sent >= MAX_ALERTS_PER_HOUR) return;
+    if (alertWindow.sent >= MAX_ALERTS_PER_HOUR) {
+      await release(); // not sent: let the next sighting try, once the hour's cap has room
+      return;
+    }
     alertWindow.sent++;
-    await col.updateOne({ _id }, { $set: { alerted_at: now } });
-    const { sendErrorAlertEmail } = await import("@/lib/email");
-    await sendErrorAlertEmail(to, { scope, message, errorMessage: text(error?.message), stack, count: (before?.count ?? 0) + 1, firstSeen: before?.first_seen ?? now });
+    try {
+      const { sendErrorAlertEmail } = await import("@/lib/email");
+      await sendErrorAlertEmail(to, { scope, message, errorMessage: text(error?.message), stack, count: (before?.count ?? 0) + 1, firstSeen: before?.first_seen ?? now });
+    } catch {
+      await release();
+    }
   } catch {
     /* see the note at the top of this file */
   }

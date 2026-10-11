@@ -4,7 +4,7 @@ import { isSameOriginRequest } from "@/lib/auth/origin-check";
 import { verifyUserPassword } from "@/lib/auth/password";
 import { EmailSchema } from "@/lib/auth/schemas";
 import { getSession } from "@/lib/auth/session";
-import { checkRateLimit } from "@/lib/rate-limit";
+import { checkMonthlyQuota, checkRateLimit } from "@/lib/rate-limit";
 import { getSiteOrigin } from "@/lib/site-url";
 import { problem } from "@/server/errors";
 import { applyEmailChange, emailVerificationRequired, sendEmailChangeLink } from "@/server/verification";
@@ -21,7 +21,8 @@ export const runtime = "nodejs";
  * whether or not the new address belongs to another account, so this
  * cannot be used to find out who has one.
  *
- * Without mail, nobody can confirm anything, and the address changes now.
+ * Without mail, or for an account that never confirmed its first address,
+ * the address changes now and the account is left unverified.
  *
  * An account with a password must give it: a borrowed, signed-in browser is
  * not enough to take the account's recovery address.
@@ -52,12 +53,26 @@ export async function POST(req: Request) {
 
   const taken = (await getUserByEmail(next.data)) !== null;
 
-  if (!emailVerificationRequired()) {
-    if (taken) return problem(409, "Another account uses that address.");
-    const changed = await applyEmailChange(user, next.data);
-    if (!changed) return problem(409, "Another account uses that address.");
+  // Two cases change the address now, unproven, and leave the account
+  // unverified. Where there is no mail, nobody can prove anything. And an
+  // account that never confirmed its first address (a typo at signup, say)
+  // has proven nothing to lose: it gets the new address and then asks for
+  // its confirmation link in the usual way, under that route's limits. So
+  // this route never mails an address for an account that has not shown it
+  // can read one.
+  if (!emailVerificationRequired() || !user.email_verified_at) {
+    if (taken || !(await applyEmailChange(user, next.data, false))) return problem(409, "Another account uses that address.");
     return NextResponse.json({ ok: true, changed: true });
   }
+
+  // This route sends mail to an address its caller chose. One link a
+  // minute and ten a month per account, so it cannot be used to mail
+  // strangers in bulk. Counted whether or not the address is taken, so the
+  // limit says nothing about that either.
+  const tooMany =
+    (await checkRateLimit(`change_email_send__${session.userId}`, 1)) ??
+    (await checkMonthlyQuota(`change_email_send__${session.userId}`, 10, "Too many email changes this month."));
+  if (tooMany) return tooMany;
 
   // Nothing is sent for an address that is taken, and nothing says so.
   if (!taken) await sendEmailChangeLink(user, next.data, getSiteOrigin(req));

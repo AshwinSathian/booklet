@@ -239,7 +239,10 @@ export async function resolveSpaceMove(
   userId: string,
   nextVisibility: DbPage["visibility"] = page.visibility,
 ): Promise<string | null> {
-  const target = space === null ? null : (await getWritableSpace({ slug: space }, userId)).id;
+  // `null` is "out of its team space". A page in one of its owner's own
+  // folders is in no space, and stays in its folder.
+  const inTeamSpace = page.collection_id ? Boolean((await getCollectionRecord(page.collection_id))?.is_team_space) : false;
+  const target = space === null ? (inTeamSpace ? null : page.collection_id) : (await getWritableSpace({ slug: space }, userId)).id;
   if (nextVisibility === "team" && page.visibility === "team" && target !== page.collection_id) {
     throw new ServiceError(
       "TEAM_ONLY_PAGE",

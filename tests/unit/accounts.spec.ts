@@ -601,15 +601,17 @@ test.describe("change email", () => {
     expect((await confirm(other.cookie, token)).status).toBe(400);
     expect((await getUserById(user.id))?.email).toBe(user.email);
 
-    await ask(cookie, { email: next, password: "correct horse battery" });
-    const again = await tokenMailedTo(next);
-    const done = await confirm(cookie, again);
-    expect(await done.json()).toEqual({ ok: true, changed: true, email: next });
-    const moved = await getUserById(user.id);
-    expect(moved?.email).toBe(next);
+    // The account's own session and its own link: the account moves.
+    const third = await newUser({ verified: true, password: "correct horse battery" });
+    const target = fresh();
+    await ask(third.cookie, { email: target, password: "correct horse battery" });
+    const done = await confirm(third.cookie, await tokenMailedTo(target));
+    expect(await done.json()).toEqual({ ok: true, changed: true, email: target });
+    const moved = await getUserById(third.user.id);
+    expect(moved?.email).toBe(target);
     expect(moved?.email_verified_at).toBeTruthy();
     // The address it left is told.
-    await expect.poll(() => sentMail.some((m) => m.to === user.email)).toBe(true);
+    await expect.poll(() => sentMail.some((m) => m.to === third.user.email)).toBe(true);
   });
 
   test("an address that is another account's gets the same answer and no mail, and cannot be taken by a race", async () => {
@@ -623,13 +625,15 @@ test.describe("change email", () => {
     expect(sentMail.filter((m) => m.to === holder.user.email)).toEqual([]);
 
     // The address was free when the link went out and is taken when it is opened.
+    const late = await newUser({ verified: true, password: "correct horse battery" });
     const next = fresh();
-    await ask(cookie, { email: next, password: "correct horse battery" });
+    await ask(late.cookie, { email: next, password: "correct horse battery" });
     const token = await tokenMailedTo(next);
     const racer = await createUser(createId(20), next, null, null, new Date().toISOString());
     userIds.push(racer.id);
-    const lost = await confirm(cookie, token);
+    const lost = await confirm(late.cookie, token);
     expect(lost.status).toBe(409);
+    expect((await getUserById(late.user.id))?.email).toBe(late.user.email);
     expect((await getUserById(user.id))?.email).toBe(user.email);
   });
 
@@ -642,6 +646,29 @@ test.describe("change email", () => {
     expect((await getUserById(user.id))?.email).toBe(next);
   });
 
+  test("an account that never confirmed its address changes it at once, stays unverified, and no mail goes out", async () => {
+    // A typo at signup: the link went somewhere unreadable.
+    const { user, cookie } = await newUser({ password: "correct horse battery" });
+    const next = fresh();
+    sentMail.length = 0;
+    expect(await (await ask(cookie, { email: next, password: "correct horse battery" })).json()).toEqual({ ok: true, changed: true });
+    const moved = await getUserById(user.id);
+    expect(moved?.email).toBe(next);
+    expect(moved?.email_verified_at).toBeFalsy();
+    expect(sentMail).toEqual([]);
+  });
+
+  test("a change kills password-reset links mailed to the old address, and a second link in a minute is refused", async () => {
+    const { user, cookie } = await newUser({ verified: true, password: "correct horse battery" });
+    const db = await getDb();
+    await db.collection("password_reset_tokens").insertOne({ _id: createId(20), user_id: user.id, token_hash: `h-${crypto.randomUUID()}`, expires_at: new Date(Date.now() + 600_000) } as never);
+    const next = fresh();
+    expect((await ask(cookie, { email: next, password: "correct horse battery" })).status).toBe(200);
+    expect((await ask(cookie, { email: fresh(), password: "correct horse battery" })).status).toBe(429);
+    expect((await confirm(cookie, await tokenMailedTo(next))).status).toBe(200);
+    expect(await db.collection("password_reset_tokens").countDocuments({ user_id: user.id })).toBe(0);
+  });
+
   test("with no mail configured the address changes at once, and a taken one is refused", async () => {
     delete process.env.RESEND_API_KEY;
     try {
@@ -650,7 +677,10 @@ test.describe("change email", () => {
       expect((await ask(cookie, { email: holder.user.email, password: "correct horse battery" })).status).toBe(409);
       const next = fresh();
       expect(await (await ask(cookie, { email: next, password: "correct horse battery" })).json()).toEqual({ ok: true, changed: true });
-      expect((await getUserById(user.id))?.email).toBe(next);
+      const moved = await getUserById(user.id);
+      expect(moved?.email).toBe(next);
+      // Nobody proved it, so it is not marked verified (a provider sign-in must not link to it).
+      expect(moved?.email_verified_at).toBeFalsy();
     } finally {
       process.env.RESEND_API_KEY = "re_test";
     }

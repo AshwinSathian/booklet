@@ -184,15 +184,26 @@ export async function consumeEmailVerificationToken(tokenHash: string): Promise<
 }
 
 /**
- * Moves an account to a new address and marks it confirmed. False when the
- * address is another account's: the unique index on `users.email` decides,
- * so two changes to the same address cannot both win.
+ * Moves an account to a new address. False when the address is another
+ * account's: the unique index on `users.email` decides, so two changes to
+ * the same address cannot both win.
+ *
+ * `proven` says whether the account's holder showed they can read the new
+ * address (they opened the link mailed to it). Only then is it marked
+ * verified. An address nobody proved must not be: a provider sign-in is
+ * linked to an account by its verified address (src/server/sso.ts), and
+ * that would let anyone prepare an account for someone else's.
+ *
+ * Password-reset links already mailed to the old address stop working, so
+ * the mailbox the account left cannot be used to take it back.
  */
-export async function setUserEmail(userId: string, email: string): Promise<boolean> {
+export async function setUserEmail(userId: string, email: string, proven: boolean): Promise<boolean> {
   try {
-    await (await getDb())
+    const db = await getDb();
+    await db
       .collection<{ _id: string }>("users")
-      .updateOne({ _id: userId }, { $set: { email, email_verified_at: new Date().toISOString() } });
+      .updateOne({ _id: userId }, { $set: { email, email_verified_at: proven ? new Date().toISOString() : null } });
+    await db.collection("password_reset_tokens").deleteMany({ user_id: userId });
     return true;
   } catch (err) {
     if (typeof err === "object" && err !== null && "code" in err && err.code === 11000) return false;

@@ -17,7 +17,10 @@ Notable changes to the Booklet app and MCP server. The format follows
 
 - **Change your email address** in Account settings. A link goes to the new
   address and the account moves when the link is confirmed while signed in
-  to it. The address it left is told by mail.
+  to it. The address it left is told by mail, and password-reset links
+  already sent there stop working. An account that never confirmed its
+  first address (a typo at signup) changes it at once and stays
+  unconfirmed. One link a minute, ten a month.
 - **Move a page between team spaces** without the web app:
   `PATCH /api/v1/pages/:id` takes `space` (a slug, or `null`),
   `booklet pages move <id> --space <slug>` or `--no-space`, and the MCP

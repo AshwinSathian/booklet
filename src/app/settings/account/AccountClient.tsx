@@ -88,16 +88,35 @@ export function AccountClient({ email, needsVerification, hasPassword, providers
   async function changeEmail(e: FormEvent) {
     e.preventDefault();
     const address = newEmail.trim();
-    const ok = await run(
-      () => send("/api/account/email", "POST", { email: address, password: emailPassword }),
-      // The same words whether or not a link went out: see the route.
-      `If ${address} can be used, we sent it a link. Open it while signed in here and this account moves to that address.`,
-    );
-    if (ok) {
-      setNewEmail("");
-      setEmailPassword("");
-      router.refresh();
-    }
+    // Where mail is set up a link goes out and nothing changes yet. Where it
+    // is not, the address has already changed: the answer says which.
+    let changedNow = false;
+    const ok = await run(async () => {
+      try {
+        const res = await fetch("/api/account/email", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ email: address, password: emailPassword }),
+        });
+        const data = (await res.json().catch(() => ({}))) as { changed?: boolean; detail?: string };
+        if (!res.ok) return data.detail ?? "Something went wrong. Try again.";
+        changedNow = data.changed === true;
+        return null;
+      } catch {
+        return "Network error. Try again.";
+      }
+    }, "");
+    if (!ok) return;
+    setNotice({
+      kind: "ok",
+      text: changedNow
+        ? `This account's email address is now ${address}.${needsVerification ? " Use \"Email me the link\" above to confirm it." : ""}`
+        : // The same words whether or not a link went out: see the route.
+          `If ${address} can be used, we sent it a link. Open it while signed in here and this account moves to that address.`,
+    });
+    setNewEmail("");
+    setEmailPassword("");
+    router.refresh();
   }
 
   async function changePassword(e: FormEvent) {

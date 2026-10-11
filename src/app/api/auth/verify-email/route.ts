@@ -48,7 +48,7 @@ export async function POST(req: Request) {
 
   // A change link moves the account to the address it was mailed to.
   if (record.change) {
-    if (!(await applyEmailChange(user, record.email))) {
+    if (!(await applyEmailChange(user, record.email, true))) {
       return problem(409, "That address now belongs to another account. Your email was not changed.");
     }
     return NextResponse.json({ ok: true, changed: true, email: record.email });

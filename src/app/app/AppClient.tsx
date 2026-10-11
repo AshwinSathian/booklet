@@ -565,17 +565,16 @@ function AppPageContent() {
 
   // Per publish, not per draft: every new page starts unlisted and the
   // author opts in to Explore each time.
-  // The choice belongs to one draft: switching drafts is back to Unlisted.
-  // Kept with the draft's id, so there is nothing to reset in an effect.
-  const [visibilityChoice, setVisibilityChoice] = useState<{ draftId: string | null; value: PublishVisibility }>({
-    draftId: null,
-    value: "unlisted",
-  });
-  const publishVisibility: PublishVisibility = visibilityChoice.draftId === activeDraftId ? visibilityChoice.value : "unlisted";
-  const setPublishVisibility = useCallback(
-    (value: PublishVisibility) => setVisibilityChoice({ draftId: activeDraftId, value }),
-    [activeDraftId],
-  );
+  // Switching drafts is back to Unlisted, every time: a choice made for one
+  // draft is not waiting when you return to it. Reset while rendering, when
+  // the draft id is seen to have changed (React's pattern for state that
+  // follows a prop), so there is no effect and no frame with the old value.
+  const [publishVisibility, setPublishVisibility] = useState<PublishVisibility>("unlisted");
+  const [visibilityDraftId, setVisibilityDraftId] = useState(activeDraftId);
+  if (visibilityDraftId !== activeDraftId) {
+    setVisibilityDraftId(activeDraftId);
+    setPublishVisibility("unlisted");
+  }
 
   const onPublish = useCallback(async () => {
     if (!canPublish) {
@@ -642,7 +641,7 @@ function AppPageContent() {
       setStatus("error");
       toast.error("Publish failed", toErrorMessage(e));
     }
-  }, [activeDraftId, settings, toast, canPublish, raw, publishVisibility, setPublishVisibility, isSignedIn]);
+  }, [activeDraftId, settings, toast, canPublish, raw, publishVisibility, isSignedIn]);
 
   const onUpdatePage = useCallback(async () => {
     if (!canPublish) {
@@ -913,7 +912,8 @@ export function AppClient() {
 async function safeReadErrorMessage(res: Response): Promise<string> {
   try {
     const ct = res.headers.get("content-type") ?? "";
-    if (ct.includes("application/json")) {
+    // application/json, and application/problem+json, which every error is.
+    if (ct.includes("json")) {
       const data = (await res.json()) as { detail?: string };
       return data.detail || `Request failed (${res.status})`;
     }

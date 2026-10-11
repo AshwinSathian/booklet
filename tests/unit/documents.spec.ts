@@ -969,6 +969,18 @@ test.describe("PATCH /api/v1/pages/:id with `space`", () => {
     expect((await move(viewer, secret, { space: null, visibility: "unlisted" })).status).toBeGreaterThanOrEqual(403);
   });
 
+  test("`space: null` leaves a page in one of its owner's own folders where it is", async () => {
+    const owner = await account();
+    const folder = createId(10);
+    spaceIds.push(folder);
+    await createCollectionRecord(folder, owner.userId, `Folder ${folder}`, false);
+    const id = await published(owner, { raw: "# Filed page" });
+    await updatePageRecord(id, { collection_id: folder });
+
+    expect((await move(owner, id, { space: null })).status).toBe(200);
+    expect((await getPageRecord(id))?.collection_id).toBe(folder);
+  });
+
   test("a move redoes the page's links: it links to its new space's pages", async () => {
     const owner = await account();
     const s = await space(owner);
