@@ -48,6 +48,16 @@ function computeYAxis(maxValue: number, tickIntervals = 3): { axisMax: number; t
   return { axisMax, ticks };
 }
 
+/** Sparse x-axis ticks for `n` days: evenly spaced indices, first and last always included, none for no days. */
+export function xTicks(n: number): number[] {
+  if (n <= 0) return [];
+  if (n === 1) return [0];
+  const count = Math.min(6, n);
+  const idxs = new Set<number>();
+  for (let k = 0; k < count; k++) idxs.add(Math.round((k / (count - 1)) * (n - 1)));
+  return Array.from(idxs).sort((a, b) => a - b);
+}
+
 const VB_WIDTH = 720;
 const VB_HEIGHT = 220;
 // Axis labels are HTML laid over the chart, so they keep their size when the
@@ -77,14 +87,7 @@ export function ViewsChart({ data }: { data: DayPoint[] }) {
   const linePoints = data.map((d, i) => `${xAt(i)},${yAt(d.views)}`).join(" ");
   const areaPoints = n > 0 ? `${xAt(0)},${yAt(0)} ${linePoints} ${xAt(n - 1)},${yAt(0)}` : "";
 
-  // Sparse x-axis ticks: evenly spaced indices, first/last always included.
-  const xTickIndices = useMemo(() => {
-    if (n <= 1) return [0];
-    const count = Math.min(6, n);
-    const idxs = new Set<number>();
-    for (let k = 0; k < count; k++) idxs.add(Math.round((k / (count - 1)) * (n - 1)));
-    return Array.from(idxs).sort((a, b) => a - b);
-  }, [n]);
+  const xTickIndices = useMemo(() => xTicks(n), [n]);
 
   const handlePointerMove = (e: ReactPointerEvent<SVGSVGElement>) => {
     if (n === 0) return;

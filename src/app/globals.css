@@ -326,6 +326,17 @@ button {
 }
 
 /* A text input, select or textarea in the app and on forms. */
+/* A row that scrolls sideways: a shade on each edge that has more beyond it.
+   The two covers scroll with the content (`local`) and hide the shade under
+   them once that end is reached. No script. */
+@utility scroll-cue-x {
+  background:
+    linear-gradient(to right, var(--color-bg) 50%, transparent) left / 2rem 100% no-repeat local,
+    linear-gradient(to left, var(--color-bg) 50%, transparent) right / 2rem 100% no-repeat local,
+    linear-gradient(to right, var(--color-border-strong), transparent) left / 0.75rem 100% no-repeat scroll,
+    linear-gradient(to left, var(--color-border-strong), transparent) right / 0.75rem 100% no-repeat scroll;
+}
+
 @utility field {
   min-height: 2.5rem;
   border-radius: 0.5rem;

@@ -51,8 +51,7 @@ export default async function CollectionPage({
         {pages.length > 0 ? (
           <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {pages.map((page) => (
-              // No tags here: this list can include a public page behind a password, whose frontmatter stays private.
-              <PageCard key={page.id} page={{ ...page, tags: null }} />
+              <PageCard key={page.id} page={page} />
             ))}
           </div>
         ) : (

@@ -23,6 +23,8 @@ test.describe("editor toolbar", () => {
   test("every toolbar button is at least 24 by 24 CSS pixels", async ({ page }) => {
     await page.goto("/app");
     await page.waitForSelector("textarea");
+    // The pane slides in on load; a box measured mid-slide comes back a hair under its size.
+    await page.locator(".animate-pane-in").first().evaluate((el) => Promise.all(el.getAnimations().map((a) => a.finished)));
     const sizes = await page.locator("button[title='Insert block (/)']").locator("xpath=..").locator("button").evaluateAll((buttons) =>
       buttons.map((b) => ({ title: b.getAttribute("title"), ...(({ width, height }) => ({ width, height }))(b.getBoundingClientRect()) })),
     );
@@ -40,6 +42,7 @@ test.describe("editor toolbar", () => {
     const bar = page.locator("button[title='Insert block (/)']").locator("xpath=..");
     const box = await bar.evaluate((el) => ({
       overflowX: getComputedStyle(el).overflowX,
+      cue: getComputedStyle(el).backgroundImage,
       scrollWidth: el.scrollWidth,
       clientWidth: el.clientWidth,
       bottom: el.getBoundingClientRect().bottom,
@@ -49,6 +52,8 @@ test.describe("editor toolbar", () => {
     expect(box.overflowX).toBe("auto");
     expect(box.scrollWidth).toBeGreaterThan(box.clientWidth);
     expect(box.pageOverflows).toBe(false);
+    // Nothing else says the bar scrolls: no scrollbar shows on a touch screen. An edge shade does.
+    expect(box.cue).toContain("linear-gradient");
     // The keyboard covers the bottom of the screen; the bar is above the text it edits.
     const textTop = await page.locator("textarea").first().evaluate((el) => el.getBoundingClientRect().top);
     expect(box.bottom).toBeLessThanOrEqual(textTop + 1);

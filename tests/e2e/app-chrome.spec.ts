@@ -227,3 +227,158 @@ test("the editor's startup overlay goes away even when the browser holds back an
   await editor.click({ timeout: 3000 });
   await expect(editor).toBeFocused();
 });
+
+// ---- Close-out of the redesign: faults found by the last sweep and keyboard pass ----
+
+test("the custom URL bar after publishing covers no control, at phone, tablet and desktop width", async ({ browser }) => {
+  for (const viewport of [PHONE, { width: 768, height: 1024 }, { width: 1440, height: 900 }]) {
+    const { page } = await seeded(browser, viewport);
+    await page.goto("/app", { waitUntil: "networkidle" });
+    const editor = page.getByRole("textbox", { name: "Write or paste Markdown…" });
+    await editor.fill("# Slug bar\n\nBody.");
+    await page.getByRole("button", { name: "Publish", exact: true }).click();
+    const bar = page.locator("[data-slug-bar]");
+    await expect(bar, `${viewport.width}`).toBeVisible({ timeout: 15000 });
+    const covered = await bar.evaluate((el) => {
+      const b = el.getBoundingClientRect();
+      return [...document.querySelectorAll("button, a, [role=tab], input, textarea")]
+        .filter((c) => !el.contains(c))
+        .filter((c) => {
+          const r = c.getBoundingClientRect();
+          return r.width > 0 && r.height > 0 && r.left < b.right && r.right > b.left && r.top < b.bottom && r.bottom > b.top;
+        })
+        .map((c) => c.getAttribute("aria-label") || c.getAttribute("title") || c.textContent?.trim().slice(0, 30));
+    });
+    expect(covered, `${viewport.width}`).toEqual([]);
+    expect(await overflow(page), `${viewport.width}`).toBeLessThanOrEqual(1);
+    if (viewport === PHONE) {
+      // What hangs from the header still opens right under it, not under the bar.
+      await page.getByRole("button", { name: "Settings", exact: true }).click();
+      const gap = await page.evaluate(() => {
+        const header = document.getElementById("header")!.getBoundingClientRect();
+        const panel = document.querySelector("[aria-label='Close settings']")!.closest(".absolute")!.getBoundingClientRect();
+        return panel.top - header.bottom;
+      });
+      expect(gap).toBeLessThanOrEqual(16);
+    }
+    await page.context().close();
+  }
+});
+
+test("the editor can be left, and its toolbar and palette used, from the keyboard alone", async ({ browser }) => {
+  const { page } = await seeded(browser);
+  await page.goto("/app", { waitUntil: "networkidle" });
+  const editor = page.getByRole("textbox", { name: "Write or paste Markdown…" });
+  await editor.fill("word");
+
+  // A toolbar button acts on Enter, not only on a mouse press.
+  await editor.selectText();
+  await page.locator("button[title^='Bold']").focus();
+  await page.keyboard.press("Enter");
+  await expect(editor).toHaveValue("**word**");
+  // Formatting hands focus back to the text a frame later; let that frame pass.
+  await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
+  await expect(editor).toBeFocused();
+  await page.locator("button[title^='Find & replace']").focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("button", { name: "Case sensitive" })).toBeVisible();
+  await page.keyboard.press("Escape");
+
+  // The palette gives focus back to where it was.
+  await editor.focus();
+  await page.keyboard.press("Control+k");
+  await expect(page.getByPlaceholder("Jump to a draft, or run a command…")).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(editor).toBeFocused();
+
+  // Tab indents. Escape, then Tab, moves on.
+  await page.keyboard.press("Tab");
+  await expect(editor).toBeFocused();
+  await page.keyboard.press("Escape");
+  await page.keyboard.press("Tab");
+  await expect(editor).not.toBeFocused();
+});
+
+test("the find bar's case toggle looks pressed when it is, and not like a hovered one", async ({ browser }) => {
+  const { page } = await seeded(browser);
+  await page.goto("/app", { waitUntil: "networkidle" });
+  await page.getByRole("textbox", { name: "Write or paste Markdown…" }).fill("Word word");
+  await page.locator("button[title^='Find & replace']").click();
+  const toggle = page.getByRole("button", { name: "Case sensitive" });
+  await expect(toggle).toHaveAttribute("aria-pressed", "false");
+  await toggle.hover();
+  const hovered = await toggle.evaluate((el) => getComputedStyle(el).backgroundColor);
+  await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-pressed", "true");
+  await page.mouse.move(0, 0);
+  await expect.poll(() => toggle.evaluate((el) => getComputedStyle(el).backgroundColor)).not.toBe(hovered);
+});
+
+test("a menu item that is active with no label of its own shows a tick", async ({ browser }) => {
+  const { page } = await seeded(browser);
+  await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+  await page.goto("/my-pages", { waitUntil: "networkidle" });
+  await page.getByLabel("More actions").first().click();
+  const item = page.getByRole("menuitem", { name: /Copy embed code/ });
+  await expect(item.locator("svg")).toHaveCount(1);
+  await item.click();
+  const copied = page.getByRole("menuitem", { name: /Copied!/ });
+  await expect(copied.locator("svg")).toHaveCount(2);
+});
+
+test("team settings keeps the header while it loads, and its refusals have a heading", async ({ browser }) => {
+  const { page, spaceSlug } = await seeded(browser);
+  let release = () => {};
+  const held = new Promise<void>((resolve) => (release = resolve));
+  await page.route("**/api/teams", async (route) => {
+    await held;
+    await route.continue();
+  });
+  await page.goto(`/t/${spaceSlug}/admin`);
+  await expect(page.getByRole("status", { name: "Loading team settings" })).toBeVisible();
+  await expect(page.locator("header[data-app-header]")).toBeVisible();
+  release();
+  await expect(page.getByRole("heading", { level: 1, name: "Team settings" })).toBeVisible();
+  await page.unroute("**/api/teams");
+
+  await page.goto("/t/no-such-space-here/admin");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Team not found");
+  await expect(page.locator("header[data-app-header]")).toHaveCount(1);
+});
+
+test("on a phone, a published page keeps a named link to the editor in both of its headers", async ({ browser }) => {
+  const context = await browser.newContext({ extraHTTPHeaders: ip(), viewport: PHONE });
+  const raw = `# A long page\n\n${"A paragraph that takes up room.\n\n".repeat(60)}`;
+  const published = await context.request.post("/api/publish", { data: { raw } });
+  expect(published.status(), await published.text()).toBe(200);
+  const { id } = (await published.json()) as { id: string };
+  const page = await context.newPage();
+  await page.goto(`/p/${id}`);
+  const cta = page.locator('[data-booklet-cta="make-your-own"]');
+  await expect(cta).toBeVisible();
+  await expect(cta).toHaveAccessibleName("Write");
+  // The compact header takes over once the page has scrolled.
+  await page.mouse.wheel(0, 600);
+  await expect(page.getByRole("button", { name: "Copy embed code" })).toBeHidden();
+  await expect(cta).toBeVisible();
+  await expect(cta).toHaveAccessibleName("Write");
+  for (const width of [360, 320]) {
+    await page.setViewportSize({ width, height: 700 });
+    await page.evaluate(() => window.scrollTo(0, 0));
+    // Back at the top the full header returns: logo, export, embed, theme and the link.
+    await expect(page.getByRole("button", { name: "Copy embed code" }), `${width}`).toBeVisible();
+    expect(await overflow(page), `${width}`).toBeLessThanOrEqual(1);
+    await expect(cta, `${width}`).toBeInViewport();
+  }
+});
+
+test("on a phone, the draft's title is on screen before publishing", async ({ browser }) => {
+  const { page } = await seeded(browser, PHONE);
+  await page.goto("/app", { waitUntil: "networkidle" });
+  await page.getByRole("textbox", { name: "Write or paste Markdown…" }).fill("# Quarterly review\n\nBody.");
+  const title = page.locator("button[title='Click to rename']");
+  await expect(title).toContainText("Quarterly");
+  expect((await title.boundingBox())!.width).toBeGreaterThan(40);
+  // The visibility control still says what it is to a screen reader.
+  await expect(page.getByLabel(/Who can find this page: /)).toBeVisible();
+});

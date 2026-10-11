@@ -153,7 +153,7 @@ export default async function EmbedPage({
       {/* Minimal attribution footer — always shown in embeds */}
       <footer className="border-t border-border-subtle mt-4">
         <div className={`mx-auto w-full px-5 py-3 ${maxW} flex items-center justify-between gap-3`}>
-          <span className="text-2xs text-text-muted">
+          <span className="text-xs text-text-muted">
             Published via {APP_NAME}
             {" · "}
             <Link
@@ -169,7 +169,7 @@ export default async function EmbedPage({
             href={`/p/${idOrSlug}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-2xs text-accent underline decoration-1 underline-offset-3"
+            className="text-xs text-accent underline decoration-1 underline-offset-3"
           >
             Open full page →
           </Link>

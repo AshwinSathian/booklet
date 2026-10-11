@@ -148,7 +148,7 @@ export function GraphView({
                       <text
                         x={r + 4}
                         y={4}
-                        className="fill-text-secondary text-[10px] select-none"
+                        className="fill-text-secondary text-xs select-none"
                       >
                         {(d.title || "Untitled").slice(0, 28)}
                       </text>

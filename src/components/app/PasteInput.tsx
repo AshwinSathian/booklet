@@ -146,6 +146,7 @@ const SHORTCUT_GROUPS = [
       { keys: ["⌘", "."], label: "Toggle focus mode" },
       { keys: ["Tab"], label: "Indent (2 spaces)" },
       { keys: ["⇧", "Tab"], label: "Unindent" },
+      { keys: ["Esc", "Tab"], label: "Leave the editor" },
     ],
   },
   {
@@ -383,12 +384,15 @@ function FindReplaceBar({
         <button
           type="button"
           title="Case sensitive"
+          aria-label="Case sensitive"
+          aria-pressed={caseSensitive}
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => setCaseSensitive((p) => !p)}
           className={[
             "h-6 w-6 shrink-0 rounded flex items-center justify-center text-2xs font-mono font-semibold border transition",
+            // Inverted when on: a hovered "off" is the soft fill, so "on" cannot be.
             caseSensitive
-              ? "border-border-strong bg-fill-2 text-text-primary"
+              ? "border-accent bg-accent text-accent-contrast"
               : "border-border-subtle bg-bg text-text-muted hover:text-text-primary hover:bg-fill-2",
           ].join(" ")}
         >
@@ -525,8 +529,11 @@ function FormatToolbar({
     [textareaRef, onChange],
   );
 
+  // The buttons act on mousedown so the editor keeps its selection. A click
+  // with detail 0 is one made from the keyboard, which has no mousedown.
   return (
-    <div className="shrink-0 flex items-center gap-0.5 px-1.5 py-1 border-b border-border-subtle overflow-x-auto">
+    // On a phone the row is wider than the screen and scrolls; scroll-cue-x shows which way.
+    <div data-format-toolbar className="scroll-cue-x shrink-0 flex items-center gap-0.5 px-1.5 py-1 border-b border-border-subtle overflow-x-auto">
       {TOOLBAR.map((item, i) => {
         if (item.type === "sep") {
           return <div key={i} className="w-px h-3.5 bg-border-subtle mx-0.5 shrink-0" />;
@@ -542,6 +549,7 @@ function FormatToolbar({
                 e.preventDefault();
                 handleClick(item.key);
               }}
+              onClick={(e) => { if (e.detail === 0) handleClick(item.key); }}
               className="shrink-0 h-6 w-6 flex items-center justify-center rounded transition text-text-muted hover:text-text-primary hover:bg-fill-2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft"
             >
               {item.icon}
@@ -560,6 +568,7 @@ function FormatToolbar({
               e.preventDefault();
               handleClick(item.key);
             }}
+            onClick={(e) => { if (e.detail === 0) handleClick(item.key); }}
             className={[
               "shrink-0 flex items-center justify-center rounded transition",
               "text-text-muted hover:text-text-primary hover:bg-fill-2",
@@ -595,6 +604,7 @@ function FormatToolbar({
           e.preventDefault();
           onOpenInsertMenu();
         }}
+        onClick={(e) => { if (e.detail === 0) onOpenInsertMenu(); }}
         className="shrink-0 h-6 w-6 flex items-center justify-center rounded transition text-text-muted hover:text-text-primary hover:bg-fill-2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft"
       >
         <Icon name="plus" size={12} />
@@ -606,6 +616,7 @@ function FormatToolbar({
         type="button"
         title="Find & replace (⌘F)"
         onMouseDown={(e) => { e.preventDefault(); onOpenFind(); }}
+        onClick={(e) => { if (e.detail === 0) onOpenFind(); }}
         className="shrink-0 h-6 w-6 flex items-center justify-center rounded transition text-text-muted hover:text-text-primary hover:bg-fill-2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft"
       >
         <svg width="12" height="12" fill="none" viewBox="0 0 16 16" aria-hidden>
@@ -768,6 +779,8 @@ export function PasteInput({
   // the textarea's onScroll rather than React state, so a fast scroll
   // doesn't re-render the whole overlay's token tree on every tick.
   const overlayContentRef = useRef<HTMLDivElement | null>(null);
+  // Set by Escape: the next Tab leaves the editor instead of indenting.
+  const tabLeavesRef = useRef(false);
   const [showFindReplace, setShowFindReplace] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [wikilinkTrigger, setWikilinkTrigger] = useState<WikilinkTrigger | null>(null);
@@ -1175,16 +1188,32 @@ export function PasteInput({
                 }
               }
 
-              if (e.key !== "Tab") return;
+              // Tab indents, so Escape is the way out for a keyboard: the Tab
+              // (or Shift+Tab) after it moves focus as it does everywhere else.
+              if (e.key === "Escape") {
+                tabLeavesRef.current = true;
+                return;
+              }
+              if (e.key !== "Tab") {
+                if (e.key !== "Shift") tabLeavesRef.current = false;
+                return;
+              }
+              if (tabLeavesRef.current) {
+                tabLeavesRef.current = false;
+                return;
+              }
               e.preventDefault();
               const ta = e.currentTarget;
               const { selectionStart: start, selectionEnd: end, value: v } = ta;
+              // The caret is placed a frame later. By then Escape and Tab may have moved
+              // focus on, and it must not be pulled back.
+              const stillHere = () => document.activeElement === ta;
 
               if (!e.shiftKey) {
                 if (start === end) {
                   const next = v.slice(0, start) + "  " + v.slice(end);
                   applyUndoableEdit(ta, next, onChange);
-                  requestAnimationFrame(() => { ta.focus(); ta.setSelectionRange(start + 2, start + 2); });
+                  requestAnimationFrame(() => { if (stillHere()) ta.setSelectionRange(start + 2, start + 2); });
                 } else {
                   const lineStart = v.lastIndexOf("\n", start - 1) + 1;
                   const lineEnd = v.indexOf("\n", end - 1);
@@ -1193,7 +1222,7 @@ export function PasteInput({
                   const newBlock = block.split("\n").map((l) => "  " + l).join("\n");
                   const delta = newBlock.length - block.length;
                   applyUndoableEdit(ta, v.slice(0, lineStart) + newBlock + v.slice(blockEnd), onChange);
-                  requestAnimationFrame(() => { ta.focus(); ta.setSelectionRange(start + 2, end + delta); });
+                  requestAnimationFrame(() => { if (stillHere()) ta.setSelectionRange(start + 2, end + delta); });
                 }
               } else {
                 const lineStart = v.lastIndexOf("\n", start - 1) + 1;
@@ -1209,8 +1238,7 @@ export function PasteInput({
                 const removedFirst = lines[0].startsWith("  ") ? 2 : lines[0].startsWith(" ") ? 1 : 0;
                 applyUndoableEdit(ta, v.slice(0, lineStart) + newBlock + v.slice(blockEnd), onChange);
                 requestAnimationFrame(() => {
-                  ta.focus();
-                  ta.setSelectionRange(Math.max(lineStart, start - removedFirst), end + delta);
+                  if (stillHere()) ta.setSelectionRange(Math.max(lineStart, start - removedFirst), end + delta);
                 });
               }
             }}

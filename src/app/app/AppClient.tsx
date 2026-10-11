@@ -763,16 +763,30 @@ function AppPageContent() {
   }, [activeDraftId, onNew, onPublish, persistNow]);
 
   // Cmd/Ctrl+K toggles the command palette.
+  const paletteReturnRef = useRef<HTMLElement | null>(null);
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && (e.key === "k" || e.key === "K")) {
         e.preventDefault();
+        // Where focus is now, unless that is the palette itself (the key closes it too).
+        const from = document.activeElement;
+        if (from instanceof HTMLElement && !from.closest("[cmdk-root]")) paletteReturnRef.current = from;
         setPaletteOpen((open) => !open);
       }
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+  // Closing the palette left focus on <body>. Put it back where it was,
+  // unless the chosen command has already moved it somewhere.
+  useEffect(() => {
+    if (paletteOpen) return;
+    const frame = requestAnimationFrame(() => {
+      if (document.activeElement === document.body) paletteReturnRef.current?.focus();
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [paletteOpen]);
 
   const isBusy = status === "typing" || status === "publishing";
   const isEmpty = !normalized.trim();

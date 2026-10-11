@@ -643,7 +643,8 @@ function VisibilityPicker({
         <span className="shrink-0 text-text-muted">
           <Icon name={current.icon} size={12} />
         </span>
-        <span className="truncate">{current.short}</span>
+        {/* A phone has room for this or for the draft's title, and the title says which draft is open. */}
+        <span className="truncate max-sm:sr-only">{current.short}</span>
         <span className={`shrink-0 text-text-muted transition-transform ${open ? "rotate-180" : ""}`}>
           <Icon name="chevron-down" size={10} />
         </span>
@@ -995,8 +996,9 @@ function PostPublishSlugBar({
     availability !== "checking";
 
   return (
-    <div className="absolute top-full left-0 right-0 z-10 border-b border-border-default/50 bg-bg-soft/95 backdrop-blur-xl px-3 py-2.5 animate-dropdown-in">
-      <div className="mx-auto w-full max-w-7xl flex flex-col sm:flex-row sm:items-center gap-2">
+    // In the flow under the header, so it pushes the editor down: laid over it, it hid the tabs and the toolbar.
+    <div data-slug-bar className="shrink-0 border-b border-border-default bg-bg-soft px-3 py-2.5 animate-dropdown-in">
+      <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center">
         <span className="text-xs text-text-secondary shrink-0">
           Set a custom URL before sharing:
         </span>
@@ -1015,7 +1017,7 @@ function PostPublishSlugBar({
             placeholder="my-incident-2026"
             className={[
               "min-w-0 flex-1 sm:w-52 sm:flex-none px-2 py-1 text-xs bg-bg border rounded-md sm:rounded-l-none sm:rounded-r-md text-text-primary placeholder:text-text-muted",
-              "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 focus-visible:ring-offset-highlight",
               "transition-colors duration-fast",
               availability === "taken" ? "border-danger/60" : "border-border-default",
             ].join(" ")}
@@ -1245,6 +1247,7 @@ export function TopBar({
   ];
 
   return (
+    <>
     <header id="header" className="sticky top-0 z-20 border-b border-border-default bg-bg-glass backdrop-blur-md">
       <div className="flex h-12 w-full items-center gap-2 px-3">
 
@@ -1375,22 +1378,10 @@ export function TopBar({
         </div>
       ) : null}
 
-      {/* Post-publish slug bar — shown once for owned pages until dismissed or slug saved */}
-      {status === "published" && publishedOwned && publishedId && !slugBarDismissed ? (
-        <PostPublishSlugBar
-          pageId={publishedId}
-          onSlugSet={(newSlug) => {
-            setSlugBarDismissed(true);
-            onSlugSet?.(newSlug);
-          }}
-          onDismiss={() => setSlugBarDismissed(true)}
-        />
-      ) : null}
-
       {/* Save warning — absolutely positioned so it doesn't shift header height */}
       {showSaveWarning ? (
         <div className="absolute top-full left-0 right-0 px-3 py-2 bg-bg/95 backdrop-blur-xl">
-          <div className="mx-auto w-full max-w-7xl">
+          <div className="w-full">
             <div className="flex items-center justify-between gap-3 rounded-xl border border-warning/30 bg-warning/8 px-3 py-2">
               <span className="text-xs text-warning">
                 Couldn&apos;t save — browser storage may be full.
@@ -1420,6 +1411,20 @@ export function TopBar({
       />
 
     </header>
+
+      {/* Post-publish slug bar — shown once for owned pages until dismissed or slug saved.
+          After the header, not in it: the settings panel and the account menu hang from the header's lower edge. */}
+      {status === "published" && publishedOwned && publishedId && !slugBarDismissed ? (
+        <PostPublishSlugBar
+          pageId={publishedId}
+          onSlugSet={(newSlug) => {
+            setSlugBarDismissed(true);
+            onSlugSet?.(newSlug);
+          }}
+          onDismiss={() => setSlugBarDismissed(true)}
+        />
+      ) : null}
+    </>
   );
 }
 
