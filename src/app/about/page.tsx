@@ -34,7 +34,7 @@ export default function AboutPage() {
       <h2>What it costs</h2>
       <p>
         Nothing. Without an account you can publish 10 pages a month and each is served for 90 days; sign in and both limits
-        go away. Who pays for it, where it runs and how it is backed up are on the <Link href="/trust">Trust page</Link>.
+        go away. Who runs it and how it is backed up are on the <Link href="/trust">Trust page</Link>.
       </p>
 
       <h2>Who makes it</h2>
@@ -43,7 +43,7 @@ export default function AboutPage() {
         <a href="https://ashwinsathian.com" target="_blank" rel="noopener noreferrer">
           Ashwin Sathian
         </a>
-        . It runs on Next.js and MongoDB, and the{" "}
+        . The{" "}
         <a href={REPO_URL} target="_blank" rel="noopener noreferrer">
           source is on GitHub
         </a>{" "}

@@ -12,9 +12,22 @@ routes = [
   { pattern = "booklet-api.ashwinsathian.com/*", zone_name = "ashwinsathian.com" },
 ]
 
+# The day's request count (src/index.js says what it is for).
+[[durable_objects.bindings]]
+name = "COUNTER"
+class_name = "RequestCounter"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["RequestCounter"]
+
 # A second copy at a workers.dev address, for trying the fallback without
 # touching the live routes: `wrangler deploy --env preview --var ORIGIN:https://<a host that is down>`.
 [env.preview]
 name = "booklet-fallback-preview"
 workers_dev = true
 routes = []
+
+[[env.preview.durable_objects.bindings]]
+name = "COUNTER"
+class_name = "RequestCounter"

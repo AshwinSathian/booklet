@@ -15,7 +15,8 @@ import { test, expect, type Page } from "@playwright/test";
 // no matter what the app does. With a restored draft, the only undoable step
 // is the programmatic edit under test, in both engines.
 async function openEditorWith(page: Page, content: string) {
-  await page.goto("/app");
+  // Typing before the editor has hydrated is lost: wait for the page to settle first.
+  await page.goto("/app", { waitUntil: "networkidle" });
   const textarea = page.locator("textarea").first();
   await textarea.fill(content);
   // Autosave is debounced; reload only once the draft is really persisted.

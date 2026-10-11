@@ -18,7 +18,7 @@ const FACTS: Array<{ title: string; body: ReactNode }> = [
         <a href={REPO_URL} target="_blank" rel="noopener noreferrer">
           source is public
         </a>
-        . The <Link href="/trust">Trust page</Link> says who runs it, where, and how it is backed up.
+        . The <Link href="/trust">Trust page</Link> says who runs it and how it is backed up.
       </>
     ),
   },
@@ -51,7 +51,7 @@ const FAQ: Array<{ q: string; a: ReactNode }> = [
     a: (
       <>
         Booklet is in public beta and one person runs it; the <Link href="/trust">Trust page</Link> has the details. If it
-        goes away, the hosted pages go with it, so export what you need: any page as Markdown or HTML, or every page as a
+        goes away, your pages go with it, so export what you need: any page as Markdown or HTML, or every page as a
         ZIP from Account settings. The source is public if you want to run your own copy.
       </>
     ),
@@ -88,7 +88,7 @@ export function Close() {
         </div>
       </Section>
 
-      <section className="border-t border-border-default bg-accent py-16 text-accent-contrast sm:py-[4.5rem]">
+      <section className="border-t border-border-default bg-accent py-14 text-accent-contrast sm:py-14">
         <Container className="text-center">
           <h2 className="mx-auto max-w-3xl font-display text-h2 font-medium text-balance">
             Publish the next incident report as a page

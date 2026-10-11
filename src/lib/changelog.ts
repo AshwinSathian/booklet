@@ -15,6 +15,18 @@ export type Release = {
 
 export const RELEASES: Release[] = [
   {
+    version: "v3.2.1",
+    date: "2026-10-11",
+    summary: "New pages are set in the serif reading face wherever they are published from, and the site closes for the rest of the day when it nears its daily request limit.",
+    entries: [
+      { date: "2026-10-11", tag: "Improved", text: "A page published without a typeface setting, from the editor, the API, the CLI or an MCP client, is set in the serif reading face. The editor used to start a draft in sans while the API's pages were stored as sans and older pages read as serif. Sans is still one click away in the editor's settings" },
+      { date: "2026-10-11", tag: "Fixed", text: "A draft keeps the typeface and theme chosen for it after the editor is reloaded" },
+      { date: "2026-10-11", tag: "New", text: "Booklet is in public beta and serves a fixed number of requests a day. Near that number it closes until midnight UTC and says so on a page of its own" },
+      { date: "2026-10-11", tag: "Improved", text: "An http:// address is redirected to https://" },
+      { date: "2026-10-11", tag: "Improved", text: "The MCP server is version 4.2.0: a postmortem prompt, and prompts that start from the same sections as the editor's templates" },
+    ],
+  },
+  {
     version: "v3.2.0",
     date: "2026-10-11",
     summary: "Link previews are PNG images, the editor, CLI and MCP prompts share one set of templates, and team space invites are emailed.",
@@ -133,7 +145,7 @@ export const RELEASES: Release[] = [
       { date: "2026-10-11", tag: "New", text: "MCP tools create_document and search_pages" },
       { date: "2026-10-11", tag: "New", text: "API: Idempotency-Key on publish, ETag and If-Match on pages, RateLimit headers, and an OpenAPI 3.1 document at /api/v1/openapi.json" },
       { date: "2026-10-11", tag: "New", text: "/p/<id>.md returns a page's Markdown, for pages anyone with the link may read" },
-      { date: "2026-10-11", tag: "New", text: "Trust page: who runs Booklet, where it is hosted, how it is backed up, and how to export or delete an account" },
+      { date: "2026-10-11", tag: "New", text: "Trust page: who runs Booklet, how it is backed up, and how to export or delete an account" },
       { date: "2026-10-11", tag: "Improved", text: "The HTML export draws Mermaid diagrams into the file. They used to export as source text" },
       { date: "2026-10-11", tag: "Improved", text: "Every page passes the WCAG 2.2 AA automated checks in both themes. Text colours were adjusted to reach a 4.5:1 contrast ratio" },
       { date: "2026-10-11", tag: "Improved", text: "The site's copy was rewritten around engineering documents, and claims that could not be checked against the code were removed" },

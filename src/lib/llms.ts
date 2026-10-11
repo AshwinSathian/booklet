@@ -35,7 +35,7 @@ ${docs}
 - [Editor](${origin}/app)
 - [Templates](${origin}/templates): ${TEMPLATES.map((t) => t.name).join(", ")}
 - [Pricing](${origin}/pricing): free, with and without an account
-- [Trust](${origin}/trust): who runs it, where it is hosted, backups, export and deletion
+- [Trust](${origin}/trust): who runs it, backups, export and deletion
 - [Changelog](${origin}/changelog)
 - [Source code](https://github.com/AshwinSathian/booklet): the app is AGPL-3.0; the CLI, API client, MCP server and GitHub Action are MIT
 `;

@@ -1,4 +1,4 @@
-import { DEFAULT_SETTINGS } from "@/lib/blocks";
+import { resolveSettings } from "@/lib/blocks";
 import { DRAFTS_DB, DRAFT_DOC, PUBLISH_LINKAGE } from "./constants";
 import type { DraftDoc, DraftsDb, PublishedSnapshotRef } from "./types";
 
@@ -45,23 +45,9 @@ function coercePublishHistory(v: unknown): PublishedSnapshotRef[] | undefined {
   return refs.length ? refs : undefined;
 }
 
+// The same check a published page's settings get, so a draft keeps its typeface and theme too.
 function coerceSettings(v: unknown): DraftDoc["settings"] {
-  if (!isPlainObject(v)) return { ...DEFAULT_SETTINGS };
-
-  return {
-    spacing:
-      v.spacing === "compact" || v.spacing === "comfortable"
-        ? v.spacing
-        : DEFAULT_SETTINGS.spacing,
-    width:
-      v.width === "normal" || v.width === "wide"
-        ? v.width
-        : DEFAULT_SETTINGS.width,
-    code:
-      v.code === "show" || v.code === "collapse"
-        ? v.code
-        : DEFAULT_SETTINGS.code,
-  };
+  return resolveSettings(v);
 }
 
 function emptyDb(): DraftsDb {

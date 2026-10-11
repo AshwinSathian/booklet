@@ -134,14 +134,15 @@ export type PublishedDoc = {
   raw?: string; // original markdown source; present for docs published after this field was added
 };
 
-// What a new page gets, from the editor and from the API alike. Sans is the
-// face the editor, the homepage and the example pages all show; serif is one
+// What a new page gets, from the editor and from the API alike. Serif is the
+// reading face: it is also what a page with no stored typeface gets
+// (BlockRenderer) and what the editor's setting shows for one. Sans is one
 // click away in the editor's settings.
 export const DEFAULT_SETTINGS: DocSettings = {
   spacing: "comfortable",
   width: "normal",
   code: "collapse",
-  typeface: "sans",
+  typeface: "serif",
 };
 
 const SETTING_VALUES = {

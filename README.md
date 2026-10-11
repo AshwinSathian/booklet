@@ -125,7 +125,7 @@ cd mcp-server && npm run dev
 | Styling | Tailwind CSS v4 |
 | Auth | In-house (email + password with argon2id, passkeys, optional GitHub and Google sign-in, DB-backed sessions) |
 | Database | Self-hosted MongoDB (pages, users, API keys, webhooks, rendered documents) |
-| Deployment | PM2 on one Mac behind a Cloudflare Tunnel (why: `docs/adr/0001-hosting-platform.md`) |
+| Deployment | PM2 (`ecosystem.config.js`) |
 | Markdown | unified + remark-parse + remark-gfm + remark-math |
 | Math | KaTeX |
 | Diagrams | Mermaid, Graphviz (`@viz-js/viz`) |

@@ -85,8 +85,8 @@ test("a published page keeps its reading width when it has a table of contents",
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(`/p/${id}`);
   await expect(page.getByRole("complementary").getByText("On this page")).toBeVisible();
-  // 48rem of reading column, less nothing: the contents sit beside it, not inside it.
-  expect((await page.locator("main p").first().boundingBox())!.width).toBeGreaterThan(700);
+  // The serif measure, 68ch at 19px, less nothing: the contents sit beside the column, not inside it.
+  expect((await page.locator("main p").first().boundingBox())!.width).toBeGreaterThan(640);
   // The table fits the column, so it has nothing to scroll.
   expect(await page.locator("main table").evaluate((t) => t.parentElement!.scrollWidth <= t.parentElement!.clientWidth)).toBe(true);
 });

@@ -29,8 +29,8 @@ export default function PrivacyPage() {
     <ProsePage eyebrow="Legal" title="Privacy policy" lede="Last updated: October 2026">
           <Section title="What we store">
             <p>
-              <strong className="text-text-primary">Publishing without an account.</strong> Your page is stored in a
-              MongoDB database on the machine {APP_NAME} runs on. It is served for 90 days and deleted 30 days after
+              <strong className="text-text-primary">Publishing without an account.</strong> Your page is stored in
+              {APP_NAME}&apos;s database. It is served for 90 days and deleted 30 days after
               that, unless you sign in and choose Keep this page. A cookie is set in the browser you published from,
               for 120 days, so that only that browser can keep the page later. To enforce the cap of{" "}
               {ANONYMOUS_LIMITS.pagesPerMonth} pages a month, we store the IP address you publish from with a
@@ -59,7 +59,7 @@ export default function PrivacyPage() {
             <p>
               <strong className="text-text-primary">Analytics on a page.</strong> We count views, whether a reader
               reached half way and the end, clicks on the page&apos;s link to the editor, the kind of site a reader came
-              from (not its address), and an approximate country taken from Cloudflare&apos;s headers. To count a reader
+              from (not its address), and an approximate country. To count a reader
               once a day we store a one-way hash of their IP address, browser user agent and the date; the IP address
               itself is not stored with analytics. The page&apos;s owner sees its views, reading depth, kinds of referrer
               and countries. The administrator sees totals for the whole site, not per reader. No third-party analytics
@@ -111,7 +111,7 @@ export default function PrivacyPage() {
 
           <Section title="Other companies involved">
             <ul className="list-disc list-outside pl-5 flex flex-col gap-1.5">
-              <li><strong className="text-text-primary">Cloudflare.</strong> Its network and tunnel sit in front of the machine {APP_NAME} runs on, so it carries every request</li>
+              <li><strong className="text-text-primary">Cloudflare.</strong> Its network carries every request to {APP_NAME}, and so sees your IP address</li>
               <li><strong className="text-text-primary">Resend.</strong> It delivers our email, and so receives the address of anyone we write to (see above) and the text of an abuse report, with the reporter&apos;s address if they gave one</li>
               {providers.length > 0 && (
                 <li><strong className="text-text-primary">{providerNames}.</strong> Only if you choose to sign in with one. It learns that you signed in to {APP_NAME}</li>
