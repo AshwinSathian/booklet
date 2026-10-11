@@ -431,7 +431,7 @@ export function BlockRenderer({
                         </span>{" "}
                         <a
                           href={`#fnref-${encodeURIComponent(item.id)}`}
-                          className="text-accent-soft no-underline hover:underline"
+                          className="text-accent-soft underline underline-offset-2"
                           aria-label="Back to content"
                         >
                           ↩

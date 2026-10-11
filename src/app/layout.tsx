@@ -15,8 +15,10 @@ import "./globals.css";
 // considered editorial artifact, not generic app chrome.
 const sourceSerif4 = Source_Serif_4({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  // Variable weight, with the optical-size axis: the display cut at
+  // headline sizes, the text cut at reading sizes.
   style: ["normal", "italic"],
+  axes: ["opsz"],
   variable: "--font-source-serif-4",
   display: "swap",
 });
@@ -101,8 +103,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
-    { media: "(prefers-color-scheme: light)", color: "#fafafa" },
+    { media: "(prefers-color-scheme: dark)", color: "#121110" },
+    { media: "(prefers-color-scheme: light)", color: "#fbfaf7" },
   ],
   width: "device-width",
   initialScale: 1,

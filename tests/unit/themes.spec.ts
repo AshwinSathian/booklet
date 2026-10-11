@@ -37,12 +37,12 @@ test.describe("themes", () => {
   test("default theme's tokens match globals.css's actual current values", () => {
     // Guards against the two silently drifting apart — see src/app/globals.css
     // for the source values (DARK / LIGHT root token blocks).
-    expect(DEFAULT_THEME.dark["--color-bg"]).toBe("#000000");
-    expect(DEFAULT_THEME.dark["--color-accent"]).toBe("#ea8590");
-    expect(DEFAULT_THEME.dark["--color-text-muted"]).toBe("#9e9ea0");
-    expect(DEFAULT_THEME.light["--color-bg"]).toBe("#ffffff");
-    expect(DEFAULT_THEME.light["--color-accent"]).toBe("#963a48");
-    expect(DEFAULT_THEME.light["--color-text-muted"]).toBe("#5a5a5d");
+    expect(DEFAULT_THEME.dark["--color-bg"]).toBe("#121110");
+    expect(DEFAULT_THEME.dark["--color-accent"]).toBe("#f4f1ea");
+    expect(DEFAULT_THEME.dark["--color-text-muted"]).toBe("#a5a195");
+    expect(DEFAULT_THEME.light["--color-bg"]).toBe("#fbfaf7");
+    expect(DEFAULT_THEME.light["--color-accent"]).toBe("#16150f");
+    expect(DEFAULT_THEME.light["--color-text-muted"]).toBe("#66635a");
   });
 
   test("themeScopeClass is derived from the resolved theme's id", () => {
@@ -53,8 +53,10 @@ test.describe("themes", () => {
   test("themeStyleTagContent never contains anything beyond the fixed token set", () => {
     for (const theme of THEMES) {
       const css = themeStyleTagContent(theme);
-      expect(css).toContain(`.theme-${theme.id}{`);
-      expect(css).toContain(`html.light .theme-${theme.id}{`);
+      // Light is the base, so a page read without JavaScript (no class on
+      // <html>) matches the light site around it.
+      expect(css.startsWith(`.theme-${theme.id}{${"--color-bg"}:${theme.light["--color-bg"]};`)).toBe(true);
+      expect(css).toContain(`html.dark .theme-${theme.id}{`);
       for (const key of THEME_TOKEN_KEYS) {
         expect(css).toContain(`${key}:${theme.dark[key]};`);
       }

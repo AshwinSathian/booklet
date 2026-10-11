@@ -2,196 +2,138 @@
 @import "katex/dist/katex.min.css";
 
 /*
-  Theme strategy (dark-first, avoids white flash):
-  - :root is DARK (pre-hydration background is dark)
-  - html.light overrides to LIGHT when user chooses light or system is light
-  - next-themes toggles html class: "light" | "dark"
-
-  Design DNA — "Precision" (2026-08-01, replaces "Ink & Paper"/"The Reveal";
-  see docs/superpowers/specs/2026-08-01-precision-redesign-design.md):
-  - Monochrome base, one accent: amber means action/active only, never
-    decoration or a category color
-  - Three surfaces: base → elevated → glass (bg → bg-elevated → bg-glass);
-    no fourth level
-  - Hairline borders are the primary depth cue, not blurred glow shadows
-  - Motion is the differentiator: cursor-aware spotlight, staggered reveal,
-    a command palette, view-transitions — restraint everywhere else
+  Design system: "Typeset" (2026-10).
+  - Paper and ink. :root is LIGHT; html.dark overrides. next-themes sets the
+    class on <html> before first paint, so neither theme flashes the other.
+  - One brand hue, the highlighter (--color-highlight). It is a background
+    for ink text, never a text colour.
+  - "Accent" is ink: primary buttons and active states. Links in prose are
+    ink with an underline.
+  - Cards are paper with a hairline. Depth comes from rules, not glows.
+  - Display type is Source Serif 4 (the face published pages are read in),
+    applied with the font-display utility. UI is Geist, code is Geist Mono.
 */
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 
   --font-body:    var(--font-geist-sans), "Geist Sans", system-ui, -apple-system, sans-serif;
   --font-mono:    var(--font-geist-mono), "Geist Mono", ui-monospace, "SF Mono", monospace;
-  /* Distinct reading typeface for published-page body content when a reader
-     explicitly picks "serif" (BlockRenderer / DocSettings.typeface in
-     src/lib/blocks.ts) — the default for NEW documents flips to "sans" in
-     Task 26, but existing published documents and the per-document toggle
-     itself are unchanged: this stays loaded. */
+  /* Reading face for published pages set to "serif", and the display face. */
   --font-reading: var(--font-source-serif-4), Georgia, "Times New Roman", serif;
-  /* Precision has no separate display identity — Geist Sans handles both UI
-     chrome and headline/display type, so --font-display is kept only as an
-     alias (zero risk to the ~9 pages that already reference the
-     `font-display` Tailwind class) rather than touching every call site. */
-  --font-display: var(--font-geist-sans), "Geist Sans", system-ui, sans-serif;
+  --font-display: var(--font-source-serif-4), Georgia, "Times New Roman", serif;
 
-  /* ── Central type scale — edit here to restyle the entire app ───────────
-     Weight ladder mirrors ashwin-portfolio prose system.
-     Display weights (100/200) used for large marketing headings via
-     explicit Tailwind class (font-thin / font-extralight).
-  ────────────────────────────────────────────────────────────────────── */
-  --type-weight-h1:      200;      /* extralight — page-level titles         */
-  --type-weight-h2:      300;      /* light       — section headings          */
-  --type-weight-h3:      400;      /* normal      — sub-sections              */
-  --type-weight-h4:      500;      /* medium      — labels, callouts          */
-  --type-weight-body:    400;      /* normal      — body copy                 */
+  /* One weight ladder. Family is not set here: a heading is serif only
+     where a surface asks for font-display. */
+  --type-weight-h1:      600;
+  --type-weight-h2:      600;
+  --type-weight-h3:      600;
+  --type-weight-h4:      600;
+  --type-weight-body:    400;
 
-  --type-tracking-h1:   -0.025em;
+  --type-tracking-h1:   -0.022em;
   --type-tracking-h2:   -0.018em;
   --type-tracking-h3:   -0.012em;
   --type-tracking-h4:    0em;
 
-  --type-leading-h1:     1.12;
-  --type-leading-h2:     1.25;
-  --type-leading-h3:     1.375;
+  --type-leading-h1:     1.1;
+  --type-leading-h2:     1.2;
+  --type-leading-h3:     1.35;
   --type-leading-h4:     1.4;
-  --type-leading-body:   1.75;
+  --type-leading-body:   1.7;
 
-  /* ── Surfaces (DARK) ────────────────────────────────────────────────────── */
-  --color-bg:           #0a0a0a;          /* base — pure near-black            */
-  --color-bg-soft:      #0d0d0d;          /* subtle step up — nav, input bg    */
-  --color-bg-elevated:  #161616;          /* cards, dialogs, panels            */
-  --color-bg-glass:     rgba(22, 22, 23, 0.72); /* backdrop-blur surfaces     */
+  /* ── Surfaces ───────────────────────────────────────────────────────────── */
+  --color-bg:           #fbfaf7;          /* paper                             */
+  --color-bg-soft:      #f3f1eb;          /* code, inset panels, nav hover     */
+  --color-bg-elevated:  #ffffff;          /* cards, dialogs, document surfaces */
+  --color-bg-glass:     rgba(251, 250, 247, 0.88);
 
-  /* ── Text (DARK) ────────────────────────────────────────────────────────── */
-  --color-text-primary:   #f5f5f7;        /* Apple primary label               */
-  /* Secondary is body copy and sits a clear step above muted, which is
-     for captions and metadata: 11.6:1 against 7.3:1 on --color-bg. */
-  --color-text-secondary: #c6c6cc;
-  /* Lifted from #636366 (was 3.5:1 on bg, 3.0:1 on bg-elevated — failed WCAG
-     AA's 4.5:1). Now 5.3:1 on bg, 4.5:1 on bg-elevated (the harder case). */
-  --color-text-muted:     #9e9ea0;        /* Apple tertiary label              */
+  /* ── Text ───────────────────────────────────────────────────────────────── */
+  --color-text-primary:   #16150f;        /* ink                               */
+  --color-text-secondary: #45433b;
+  --color-text-muted:     #66635a;
 
-  /* ── Accent (DARK) — "Precision" (2026-08-01) ────────────────────────────────── */
-  /* A single amber/gold accent replaces "Ink & Paper"'s oxblood — chosen to
-     avoid the indigo/violet that's become this product category's default
-     (Linear, most YC-era dev tools) and the burgundy the last two systems
-     already used. Two distinct hexes exist for a reason bright amber is
-     genuinely bad at: amber (#f5a623) reads at ~9.5:1 as bare text/icon
-     directly on --color-bg, but a WHITE label on that same amber button
-     background only hits ~2.1:1 (fails AA outright) — bright colors are
-     high-luminance, so white text on them is low-contrast almost by
-     definition. --color-accent-contrast is the fix: it's the text color to
-     place ON TOP of an accent-colored surface (near-black in dark mode,
-     since black-on-amber hits ~9.5:1), never white. Button.tsx's primary
-     variant uses --color-accent-contrast, not a hardcoded text-white, for
-     exactly this reason. Verified via `node scripts/check-contrast.mjs`. */
-  --color-accent:          #f5a623;   /* action/active — text/icon on dark bg: ~9.5:1 */
-  --color-accent-hover:    #e0961d;
-  --color-accent-soft:     #f8c368;   /* lighter tint — secondary tints, focus rings */
-  --color-accent-contrast: #0a0a0a;   /* text/icon ON an accent-colored surface */
-  --color-accent-dim:      rgba(245, 166, 35, 0.14); /* icon backgrounds */
+  /* ── Accent: ink ────────────────────────────────────────────────────────── */
+  --color-accent:          #16150f;
+  --color-accent-hover:    #33312a;
+  --color-accent-soft:     #16150f;
+  --color-accent-contrast: #fbfaf7;       /* label on an ink surface           */
+  --color-accent-dim:      rgba(22, 21, 15, 0.07);
 
-  /* ── Status (DARK) ──────────────────────────────────────────────────────── */
-  /* Five named roles, used as text and, at 8-15% opacity, as the tint behind
-     that text: errors and destructive actions, success, warnings, neutral
-     information, and "special" (the IMPORTANT callout, PATCH badges). Use
-     text-danger / bg-success/10 and so on, never a raw Tailwind hue.
-     Checked by scripts/check-contrast.mjs on every surface and tint. */
-  --color-danger:  #f87171;
-  --color-success: #34d399;
-  --color-warning: #fbbf24;
-  --color-info:    #60a5fa;
-  --color-special: #a78bfa;
+  /* ── Highlighter: the one brand hue, always behind ink ──────────────────── */
+  --color-highlight:    #ffd84d;
+  --color-on-highlight: #16150f;
 
-  /* ── Borders — pre-computed, never composed in component classes (DARK) ── */
-  --color-border-strong:  rgba(255, 255, 255, 0.16);
-  --color-border-default: rgba(255, 255, 255, 0.09);
-  --color-border-subtle:  rgba(255, 255, 255, 0.05);
-
-  /* ── Surface fills (DARK) ───────────────────────────────────────────────── */
-  --color-fill-1: rgba(255, 255, 255, 0.04);   /* table row alternates        */
-  --color-fill-2: rgba(255, 255, 255, 0.08);   /* code headers, inset panels  */
-  --color-fill-3: rgba(255, 255, 255, 0.13);   /* table head, button hover    */
-
-  /* ── Shadows (DARK) ─────────────────────────────────────────────────────── */
-  /* Precision favors hairline borders over glow/blur shadows as the primary
-     depth cue — --shadow-soft and --shadow-glow (both accent-tinted glows)
-     are retired outright, not retuned. --shadow-card/--shadow-glass survive
-     because their values were already neutral black (never accent-tinted),
-     so they're legitimate generic elevation shadows, not brand artifacts.
-     --shadow-print is renamed --shadow-hard: identical value, but the old
-     name carried "printed card" framing this identity doesn't use. */
-  --shadow-glass: 0 8px 48px rgba(0, 0, 0, 0.70);       /* dropdowns/drawers/toasts */
-  --shadow-card:  0 1px 2px rgba(0, 0, 0, 0.60), 0 4px 24px rgba(0, 0, 0, 0.40);
-  --shadow-hard:  0 2px 0 0 rgba(0, 0, 0, 0.9);          /* rare hard-offset emphasis */
-
-  /* ── Scrollbar (DARK) ───────────────────────────────────────────────────── */
-  --scrollbar-thumb:       rgba(255, 255, 255, 0.10);
-  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.20);
-
-}
-
-/* ── LIGHT override ──────────────────────────────────────────────────────── */
-html.light {
-  color-scheme: light;
-
-  /* ── Surfaces (LIGHT) ───────────────────────────────────────────────────── */
-  --color-bg:           #fafafa;          /* near-white base                   */
-  --color-bg-soft:      #f2f2f3;          /* subtle step up — nav, input bg    */
-  --color-bg-elevated:  #e8e8ea;          /* cards, dialogs, panels            */
-  --color-bg-glass:     rgba(255, 255, 255, 0.90);
-
-  /* ── Text (LIGHT) ───────────────────────────────────────────────────────── */
-  --color-text-primary:   #1d1d1f;        /* Apple label                       */
-  /* The same step as in the dark theme: secondary 9.7:1, muted 6.6:1 on --color-bg. */
-  --color-text-secondary: #424247;
-  /* Darkened from #86868b (was 3.6:1 on bg, 3.0:1 on bg-elevated — failed
-     WCAG AA's 4.5:1). Now 5.7:1 on bg, 4.7:1 on bg-elevated (the harder case). */
-  --color-text-muted:     #5a5a5d;        /* Apple tertiaryLabel               */
-
-  /* ── Accent (LIGHT) — "Precision" ───────────────────────────────────────── */
-  /* Amber itself fails as bare text or a white-text button fill on a WHITE
-     background (same luminance problem as dark mode, mirrored) — light mode
-     uses a deep ochre instead, tuned so both roles clear AA: as bare text on
-     --color-bg (#fafafa) it's ~5.96:1; as a button fill with
-     --color-accent-contrast (white) label it's the same ~5.96:1. */
-  --color-accent:          #7c5100;
-  --color-accent-hover:    #6b4600;
-  --color-accent-soft:     #7b5108;
-  --color-accent-contrast: #fafafa;
-  --color-accent-dim:      rgba(124, 81, 0, 0.1);
-
-  /* ── Status (LIGHT) ─────────────────────────────────────────────────────── */
+  /* ── Status ─────────────────────────────────────────────────────────────── */
+  /* Text, and at 8-15% opacity the tint behind that text. Checked on every
+     surface and tint by scripts/check-contrast.mjs. */
   --color-danger:  #7f1d1d;
   --color-success: #064e3b;
   --color-warning: #78350f;
   --color-info:    #1e3a8a;
   --color-special: #4c1d95;
 
-  /* ── Borders (LIGHT) ────────────────────────────────────────────────────── */
-  --color-border-strong:  rgba(0, 0, 0, 0.14);
-  --color-border-default: rgba(0, 0, 0, 0.09);
-  --color-border-subtle:  rgba(0, 0, 0, 0.05);
+  /* ── Borders ────────────────────────────────────────────────────────────── */
+  --color-border-strong:  rgba(22, 21, 15, 0.22);
+  --color-border-default: rgba(22, 21, 15, 0.13);
+  --color-border-subtle:  rgba(22, 21, 15, 0.07);
 
-  /* ── Surface fills (LIGHT) ──────────────────────────────────────────────── */
-  --color-fill-1: rgba(0, 0, 0, 0.03);
-  --color-fill-2: rgba(0, 0, 0, 0.06);
-  --color-fill-3: rgba(0, 0, 0, 0.10);
+  /* ── Surface fills ──────────────────────────────────────────────────────── */
+  --color-fill-1: rgba(22, 21, 15, 0.03);
+  --color-fill-2: rgba(22, 21, 15, 0.06);
+  --color-fill-3: rgba(22, 21, 15, 0.10);
 
-  /* ── Shadows (LIGHT) ────────────────────────────────────────────────────── */
-  --shadow-glass: 0 4px 24px rgba(0, 0, 0, 0.10);
-  --shadow-card:  0 1px 2px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.06);
-  --shadow-hard:  0 2px 0 0 rgba(0, 0, 0, 0.12);
+  /* ── Shadows: neutral, small ────────────────────────────────────────────── */
+  --shadow-glass: 0 12px 40px rgba(22, 21, 15, 0.12);
+  --shadow-card:  0 1px 2px rgba(22, 21, 15, 0.05);
+  --shadow-hard:  0 2px 0 0 rgba(22, 21, 15, 0.14);
 
-  /* ── Scrollbar (LIGHT) ──────────────────────────────────────────────────── */
-  --scrollbar-thumb:       rgba(0, 0, 0, 0.14);
-  --scrollbar-thumb-hover: rgba(0, 0, 0, 0.28);
-
+  --scrollbar-thumb:       rgba(22, 21, 15, 0.16);
+  --scrollbar-thumb-hover: rgba(22, 21, 15, 0.30);
 }
 
+/* ── DARK override ───────────────────────────────────────────────────────── */
 html.dark {
   color-scheme: dark;
+
+  --color-bg:           #121110;
+  --color-bg-soft:      #171614;
+  --color-bg-elevated:  #1b1a18;
+  --color-bg-glass:     rgba(27, 26, 24, 0.78);
+
+  --color-text-primary:   #f4f1ea;
+  --color-text-secondary: #c9c5ba;
+  --color-text-muted:     #a5a195;
+
+  --color-accent:          #f4f1ea;
+  --color-accent-hover:    #d9d5cb;
+  --color-accent-soft:     #f4f1ea;
+  --color-accent-contrast: #121110;
+  --color-accent-dim:      rgba(244, 241, 234, 0.09);
+
+  --color-highlight:    #ffd84d;
+  --color-on-highlight: #16150f;
+
+  --color-danger:  #f87171;
+  --color-success: #34d399;
+  --color-warning: #fbbf24;
+  --color-info:    #60a5fa;
+  --color-special: #a78bfa;
+
+  --color-border-strong:  rgba(244, 241, 234, 0.20);
+  --color-border-default: rgba(244, 241, 234, 0.12);
+  --color-border-subtle:  rgba(244, 241, 234, 0.07);
+
+  --color-fill-1: rgba(244, 241, 234, 0.04);
+  --color-fill-2: rgba(244, 241, 234, 0.08);
+  --color-fill-3: rgba(244, 241, 234, 0.13);
+
+  --shadow-glass: 0 12px 48px rgba(0, 0, 0, 0.6);
+  --shadow-card:  0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-hard:  0 2px 0 0 rgba(0, 0, 0, 0.9);
+
+  --scrollbar-thumb:       rgba(244, 241, 234, 0.12);
+  --scrollbar-thumb-hover: rgba(244, 241, 234, 0.24);
 }
 
 /* ── Tailwind v4 @theme — bind CSS vars to utility classes ───────────────── */
@@ -213,6 +155,10 @@ html.dark {
   --color-accent-soft:     var(--color-accent-soft);
   --color-accent-contrast: var(--color-accent-contrast);
   --color-accent-dim:      var(--color-accent-dim);
+
+  /* Highlighter */
+  --color-highlight:    var(--color-highlight);
+  --color-on-highlight: var(--color-on-highlight);
 
   /* Status */
   --color-danger:  var(--color-danger);
@@ -248,6 +194,15 @@ html.dark {
   --text-2xs: 0.625rem;     /* 10px — kbd hints, eyebrow labels, tab names   */
   --text-xs:  0.6875rem;    /* 11px — secondary chrome, save indicator       */
   --text-sm:  0.8125rem;    /* 13px — body-small, menu items, captions       */
+  /* Marketing and docs display scale. */
+  --text-display: clamp(2.5rem, 6.2vw, 4.75rem);
+  --text-display--line-height: 1.02;
+  --text-display--letter-spacing: -0.03em;
+  --text-h2: clamp(1.875rem, 3.6vw, 2.75rem);
+  --text-h2--line-height: 1.1;
+  --text-h2--letter-spacing: -0.022em;
+  --text-h3: 1.375rem;
+  --text-h3--line-height: 1.3;
 
   /* ── Radius ──────────────────────────────────────────────────────────────
      Semantic tokens. Use: rounded-input, rounded-card, rounded-pill.
@@ -321,12 +276,53 @@ body {
 
 a,
 button {
-  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg;
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-highlight;
 }
 
 ::selection {
-  background: rgba(245, 166, 35, 0.25);
-  color: inherit;
+  background: var(--color-highlight);
+  color: var(--color-on-highlight);
+}
+
+/* Running prose on marketing, docs and legal pages: ink links, underlined. */
+.prose-typeset a {
+  color: var(--color-text-primary);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+.prose-typeset a:hover {
+  text-decoration-thickness: 2px;
+}
+
+/* The highlighter mark. */
+.mark {
+  background: var(--color-highlight);
+  color: var(--color-on-highlight);
+  padding: 0 0.12em;
+  border-radius: 0.12em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+/* ponytail: bridge for app surfaces that still use the accent as a colour
+   cue. The accent is ink now, so these three rules keep links, hover and
+   active rows distinguishable until the app pass (PR 2) restyles each one
+   directly; delete this block then. */
+a.text-accent,
+a.text-accent-soft {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+.hover\:text-accent:hover,
+.hover\:text-accent-soft:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.bg-accent-dim.text-accent {
+  font-weight: 600;
+  box-shadow: inset 2px 0 0 var(--color-accent);
 }
 
 /* ── Keyframes ───────────────────────────────────────────────────────────── */
@@ -487,21 +483,8 @@ a, button, [role="button"], input, select, textarea {
   scrollbar-gutter: stable;
 }
 
-/* ── Syntax highlight tokens (highlight.js, dark) ───────────────────────── */
+/* ── Syntax highlight tokens (highlight.js) ─────────────────────────────── */
 :root {
-  --hljs-fg:       #cdd6f4;
-  --hljs-keyword:  #cba6f7;
-  --hljs-string:   #a6e3a1;
-  --hljs-number:   #fab387;
-  --hljs-comment:  #8c8fa1;
-  --hljs-fn:       #89b4fa;
-  --hljs-type:     #f9e2af;
-  --hljs-operator: #89dceb;
-  --hljs-attr:     #f38ba8;
-  --hljs-literal:  #fab387;
-}
-
-html.light {
   --hljs-fg:       #24273a;
   --hljs-keyword:  #7531ce;
   --hljs-string:   #29661b;
@@ -512,6 +495,19 @@ html.light {
   --hljs-operator: #026085;
   --hljs-attr:     #b50d31;
   --hljs-literal:  #9c3d07;
+}
+
+html.dark {
+  --hljs-fg:       #cdd6f4;
+  --hljs-keyword:  #cba6f7;
+  --hljs-string:   #a6e3a1;
+  --hljs-number:   #fab387;
+  --hljs-comment:  #8c8fa1;
+  --hljs-fn:       #89b4fa;
+  --hljs-type:     #f9e2af;
+  --hljs-operator: #89dceb;
+  --hljs-attr:     #f38ba8;
+  --hljs-literal:  #fab387;
 }
 
 .hljs                        { color: var(--hljs-fg); }
