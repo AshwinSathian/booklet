@@ -22,7 +22,7 @@ for (const [from, to] of MOVES) {
 
 const FRAGMENTS: Array<[string, RegExp, string]> = [
   ["/api-docs#github-actions", /\/docs\/guides\/github-action$/, "GitHub Action"],
-  ["/api-docs#rate-limits", /\/docs\/reference\/limits$/, "Limits"],
+  ["/api-docs#rate-limits", /\/docs\/reference\/limits#api-rate-limits$/, "Limits"],
   ["/api-docs#webhooks", /\/docs\/guides\/webhooks$/, "Webhooks"],
   ["/integrations#cli", /\/docs\/guides\/cli$/, "CLI"],
 ];
