@@ -29,7 +29,7 @@ const SITE_URL =
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
 
-  title: `${APP_NAME} — Engineering Documents, Published as Pages`,
+  title: `${APP_NAME}: incident reports, ADRs, RFCs and runbooks, published as pages`,
 
   description:
     "Publish Markdown incident reports, ADRs, RFCs and runbooks as web pages, with team spaces. Free, and you can try it without an account.",
@@ -39,19 +39,16 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
 
   keywords: [
-    "markdown viewer",
-    "share markdown online",
-    "markdown to html",
-    "markdown preview",
-    "markdown page publisher",
-    "technical writing tool",
-    "shareable markdown link",
-    "incident report template",
-    "ADR template",
-    "README viewer",
-    "markdown formatter",
-    "postmortem template",
-    "runbook template",
+    "incident report",
+    "postmortem",
+    "architecture decision record",
+    "ADR",
+    "RFC",
+    "runbook",
+    "release notes",
+    "Markdown publishing",
+    "engineering documentation",
+    "MCP server",
   ],
 
   authors: [{ name: "Ashwin Sathian" }],
@@ -71,7 +68,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: APP_NAME,
-    title: `${APP_NAME} — Engineering Documents, Published as Pages`,
+    title: `${APP_NAME}: incident reports, ADRs, RFCs and runbooks, published as pages`,
     description:
       "Publish Markdown incident reports, ADRs, RFCs and runbooks as web pages, with team spaces.",
     url: SITE_URL,
@@ -80,14 +77,14 @@ export const metadata: Metadata = {
         url: "/opengraph-image",
         width: 1200,
         height: 630,
-        alt: `${APP_NAME} — Engineering documents, published as pages.`,
+        alt: `${APP_NAME}: write it in Markdown, publish it as a page.`,
       },
     ],
   },
 
   twitter: {
     card: "summary_large_image",
-    title: `${APP_NAME} — Engineering Documents, Published as Pages`,
+    title: `${APP_NAME}: incident reports, ADRs, RFCs and runbooks, published as pages`,
     description:
       "Publish Markdown incident reports, ADRs, RFCs and runbooks as web pages, with team spaces.",
     images: [
@@ -95,7 +92,7 @@ export const metadata: Metadata = {
         url: "/twitter-image",
         width: 1200,
         height: 630,
-        alt: `${APP_NAME} — Engineering documents, published as pages.`,
+        alt: `${APP_NAME}: write it in Markdown, publish it as a page.`,
       },
     ],
   },

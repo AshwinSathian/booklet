@@ -16,7 +16,7 @@ Members are editors or viewers. An editor can publish into the space. A viewer c
 
 ## Publish into a space
 
-- **Editor**: choose the space in the visibility menu beside Publish.
+- **Editor**: in the visibility menu beside Publish, choose "Team only" for the space.
 - **Frontmatter**: `space: payments`.
 - **CLI**: `booklet publish adr.md --space payments`.
 - **API**: `"space": "payments"` in the request body.

@@ -65,7 +65,7 @@ export default async function TemplatePage({ params }: Props) {
           <span className="text-text-secondary">{template.name}</span>
         </nav>
 
-        <div className="mt-8 grid gap-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-14">
+        <div className="mt-8 grid grid-cols-[minmax(0,1fr)] gap-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-14">
           <header className="lg:sticky lg:top-28 lg:self-start">
             {template.category ? (
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-text-muted">{template.category}</p>
@@ -75,7 +75,7 @@ export default async function TemplatePage({ params }: Props) {
             </h1>
             <p className="mt-4 text-lg leading-relaxed text-text-secondary">{template.metaDescription ?? template.description}</p>
             {template.useCases?.length ? (
-              <p className="mt-4 text-sm text-text-muted">For {template.useCases.join(", ").toLowerCase()}.</p>
+              <p className="mt-4 text-sm text-text-muted">For {template.useCases.join(", ")}.</p>
             ) : null}
             <div className="mt-7 flex flex-wrap items-center gap-3">
               <Button variant="primary" size="xl" href={editorUrl}>

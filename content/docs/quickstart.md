@@ -9,7 +9,7 @@ Booklet turns a Markdown document into a web page with a link. This page gets yo
 ## Publish from the editor
 
 1. Open [the editor](/app). You do not need an account.
-2. Write some Markdown, or pick a template from the command menu (press `⌘K`, or `Ctrl+K`). The preview beside the editor is the page your reader will get.
+2. Write some Markdown, or start from a [template](/templates). The preview beside the editor is the page your reader will get.
 3. Press **Publish**, or `⌘↵`.
 
 You get a link like `https://booklet.ashwinsathian.com/p/Ab3k91QxZp`. A new page is **unlisted**: anyone with the link can read it, and search engines are told not to index it.

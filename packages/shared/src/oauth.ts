@@ -29,6 +29,6 @@ export function oauthServerMetadata(issuer: string) {
     code_challenge_methods_supported: ["S256"],
     client_id_metadata_document_supported: true,
     authorization_response_iss_parameter_supported: true,
-    service_documentation: `${issuer}/mcp-setup`,
+    service_documentation: `${issuer}/docs/guides/mcp`,
   };
 }

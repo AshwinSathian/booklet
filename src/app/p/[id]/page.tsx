@@ -222,7 +222,12 @@ export default async function SharePage({
   const { toc, anchorMap } = buildToc(doc.blocks ?? []);
   const showToc = toc.length >= MIN_TOC_HEADINGS;
   // anchorMap is always populated so all headings get IDs regardless of TOC visibility
-  const maxW = doc.settings?.width === "wide" ? "max-w-4xl" : "max-w-3xl";
+  // The reading column keeps its width whether or not a table of contents
+  // sits beside it: with one, the container grows by the contents column
+  // (14rem) and its gap (3rem). It used to come out of the reading column,
+  // which left 29rem for the text and clipped every table.
+  const wide = doc.settings?.width === "wide";
+  const maxW = showToc ? (wide ? "max-w-4xl lg:max-w-[73rem]" : "max-w-3xl lg:max-w-[65rem]") : wide ? "max-w-4xl" : "max-w-3xl";
   const pageTitle = extractTitle(doc.blocks) ?? "Shared page";
   const readMins = readingTimeMinutes(doc.blocks ?? []);
 

@@ -306,6 +306,14 @@ button {
   border-top: 1px solid var(--color-border-default);
 }
 
+/* Reference tables hold sentences: let cells wrap instead of scrolling sideways. */
+.docs-body table {
+  min-width: 100%;
+}
+.docs-body :is(td, th):first-child {
+  white-space: nowrap;
+}
+
 /* The highlighter mark. */
 .mark {
   /* Drawn across the lower part of the line, the way a marker is. */

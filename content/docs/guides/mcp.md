@@ -36,7 +36,7 @@ Seven tools, the account's pages as resources, and five prompts that start a doc
 
 ## When it does not work
 
-**The client says it has no Booklet tools.** Claude.ai needs a Pro or Max plan for custom connectors. Claude Desktop must be quit and reopened after its config changes, not only have its window closed. In Cursor and Windsurf, check that the server shows as connected in their MCP settings.
+**The client says it has no Booklet tools.** On Claude.ai, check that your plan includes custom connectors. Claude Desktop must be quit and reopened after its config changes, not only have its window closed. In Cursor and Windsurf, check that the server shows as connected in their MCP settings.
 
 **"Unauthorized".** The key in the config is wrong or was revoked. Create a new one under [Settings, API keys](/settings/api-keys) and replace the value after `Bearer`.
 

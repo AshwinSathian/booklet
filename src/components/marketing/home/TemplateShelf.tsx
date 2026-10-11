@@ -15,13 +15,15 @@ export const ENGINEERING_TEMPLATE_SLUGS = [
   "technical-investigation",
 ];
 
-/** A template as a small page: the top of its real rendered output, with its name under it. */
+/**
+ * A template as a small page: the top of its real rendered output, with its
+ * name under it. The whole card is one link, made by stretching the title's
+ * link over the card: the preview can contain links of its own, and a link
+ * cannot sit inside another.
+ */
 export function TemplateCard({ template }: { template: Template }) {
   return (
-    <Link
-      href={`/templates/${template.slug}`}
-      className="group flex flex-col overflow-hidden rounded-xl border border-border-default bg-bg-elevated hover:border-accent"
-    >
+    <article className="group relative flex flex-col overflow-hidden rounded-xl border border-border-default bg-bg-elevated hover:border-accent">
       <div aria-hidden inert data-sample className="relative h-44 overflow-hidden border-b border-border-default bg-bg px-5 pt-5">
         <div className="origin-top-left scale-[0.72]" style={{ width: "139%" }}>
           <BlockRenderer blocks={parseToBlocks(template.content.trim()).slice(0, 7)} settings={DEFAULT_SETTINGS} headingOffset={2} />
@@ -29,10 +31,14 @@ export function TemplateCard({ template }: { template: Template }) {
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-bg to-transparent" />
       </div>
       <div className="p-5">
-        <h3 className="font-semibold text-text-primary group-hover:underline group-hover:underline-offset-4">{template.name}</h3>
+        <h3 className="font-semibold text-text-primary">
+          <Link href={`/templates/${template.slug}`} className="after:absolute after:inset-0 group-hover:underline group-hover:underline-offset-4">
+            {template.name}
+          </Link>
+        </h3>
         <p className="mt-1.5 text-sm leading-relaxed text-text-secondary">{template.description}</p>
       </div>
-    </Link>
+    </article>
   );
 }
 

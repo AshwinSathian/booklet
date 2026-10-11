@@ -82,7 +82,7 @@ export default function TermsPage() {
           <Section title="API and programmatic access">
             <p>
               API access is subject to the rate limits described in the{" "}
-              <Link href="/api-docs" className="text-accent underline underline-offset-2">API reference</Link>. Automated
+              <Link href="/docs/reference/api" className="text-accent underline underline-offset-2">API reference</Link>. Automated
               scraping, abuse, or attempts to circumvent rate limits may result in key revocation.
             </p>
           </Section>

@@ -11,7 +11,7 @@ const WAYS = [
     label: "Editor",
     text: "Write in the browser with the page beside you as you type. Publish with one key press. No account needed to try it.",
     file: "Keyboard",
-    code: "⌘ ↵     Publish\n⌘ K     Templates and commands\n[[      Link to another document",
+    code: "⌘ ↵     Publish\n⌘ K     Commands and drafts\n[[      Link to another document",
     href: "/app",
     link: "Open the editor",
   },

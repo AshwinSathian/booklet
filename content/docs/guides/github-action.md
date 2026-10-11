@@ -35,7 +35,7 @@ jobs:
 
 The first run creates the page and prints its URL in the job log. Copy the ID at the end of that URL into a repository **variable** named `BOOKLET_PAGE_ID`, and every later run updates that page.
 
-Without the variable, a second run fails: the slug `release-notes` is already taken, and the API answers 409 instead of creating a duplicate.
+Without the variable, every run publishes a new page. The slug `release-notes` already belongs to the first one, so the new page is published without it and the CLI says so in the log.
 
 ## With the publish-to-booklet action
 

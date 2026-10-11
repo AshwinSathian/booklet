@@ -102,9 +102,9 @@ export function DocumentSystem() {
                 {
                   group: "Decision log",
                   rows: [
-                    ["ADR-012 Queue retries", "Accepted"],
-                    ["ADR-011 One ledger per region", "Accepted"],
                     ["ADR-007 Retry in the client", "Superseded"],
+                    ["ADR-011 One ledger per region", "Accepted"],
+                    ["ADR-012 Queue retries", "Accepted"],
                   ],
                 },
                 {

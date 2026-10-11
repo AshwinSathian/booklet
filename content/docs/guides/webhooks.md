@@ -8,7 +8,7 @@ A webhook is a URL that Booklet sends a POST request to when you publish or upda
 
 ## Register one
 
-Open [Settings, Webhooks](/settings/webhooks), enter an HTTPS URL, and choose the events: `page.published`, `page.updated`, or both. The signing secret is shown once, when the webhook is created. Copy it then.
+Open [Settings, Webhooks](/settings/webhooks), enter a URL, and choose the events: `page.published`, `page.updated`, or both. The signing secret is shown once, when the webhook is created. Copy it then.
 
 The URL has to be reachable from the internet. Addresses on a private network or on localhost are refused.
 

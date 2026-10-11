@@ -13,7 +13,7 @@ It's built for the documents engineering teams pass around. Put `type: incident`
 
 There are five ways to publish, and all of them produce the same page: the web editor, the REST API, the `booklet-cli` npm package, a GitHub Action, and an MCP server for Claude and other MCP clients.
 
-**Live:** [booklet.ashwinsathian.com](https://booklet.ashwinsathian.com) · **API docs:** [/api-docs](https://booklet.ashwinsathian.com/api-docs) · **MCP setup:** [/mcp-setup](https://booklet.ashwinsathian.com/mcp-setup)
+**Live:** [booklet.ashwinsathian.com](https://booklet.ashwinsathian.com) · **API docs:** [/docs/reference/api](https://booklet.ashwinsathian.com/docs/reference/api) · **MCP setup:** [/docs/guides/mcp](https://booklet.ashwinsathian.com/docs/guides/mcp)
 
 ---
 
@@ -93,7 +93,7 @@ curl -X POST https://booklet-api.ashwinsathian.com/api/v1/publish \
 
 `booklet-api.ashwinsathian.com` is a dedicated hostname for the API surface (same app/process as the main site, just scoped; see `docs/OPERATIONS.md`). `booklet.ashwinsathian.com` serves `/api/v1/*` too, so either works.
 
-Full endpoint reference with request/response shapes: [booklet.ashwinsathian.com/api-docs](https://booklet.ashwinsathian.com/api-docs).
+Full endpoint reference with request/response shapes: [booklet.ashwinsathian.com/docs/reference/api](https://booklet.ashwinsathian.com/docs/reference/api).
 
 ---
 
@@ -107,7 +107,7 @@ A Node process (`mcp-server/`) that gives [Model Context Protocol](https://model
 **Resources:** your published pages, as `booklet://pages/:id`
 **Prompts:** five document templates the assistant can fill in and publish: `incident_report`, `adr`, `release_notes`, `rfc` and `runbook`
 
-Point an MCP client at the endpoint above. A client that supports OAuth (a Claude.ai custom connector, for one) signs in with your Booklet account; the rest send your API key in the `Authorization` header. [booklet.ashwinsathian.com/mcp-setup](https://booklet.ashwinsathian.com/mcp-setup) has copy-paste config for Claude Desktop, Claude.ai, Cursor, Windsurf, VS Code, and Zed.
+Point an MCP client at the endpoint above. A client that supports OAuth (a Claude.ai custom connector, for one) signs in with your Booklet account; the rest send your API key in the `Authorization` header. [booklet.ashwinsathian.com/docs/guides/mcp](https://booklet.ashwinsathian.com/docs/guides/mcp) has copy-paste config for Claude Desktop, Claude.ai, Cursor, Windsurf, VS Code, and Zed.
 
 To run the server itself locally:
 

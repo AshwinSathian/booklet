@@ -64,7 +64,7 @@ export function DesktopTocClient({ toc }: { toc: TocItem[] }) {
                       "block px-2 py-1 text-xs leading-[1.4] transition border-l-2 rounded-r-sm",
                       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
                       isActive
-                        ? "font-medium text-accent-soft border-accent"
+                        ? "font-semibold text-text-primary border-accent"
                         : "text-text-muted border-transparent hover:text-text-primary hover:border-border-default",
                     ].join(" ")}
                   >
