@@ -200,7 +200,6 @@ export function ContextMenuItem({
   disabled,
   active,
   activeLabel,
-  locked,
   checked,
 }: {
   icon: Parameters<typeof Icon>[0]["name"];
@@ -212,7 +211,6 @@ export function ContextMenuItem({
   disabled?: boolean;
   active?: boolean;
   activeLabel?: string;
-  locked?: boolean;
   /** Set (true or false) to make this one choice of several: a radio item, with a tick when chosen. */
   checked?: boolean;
 }) {
@@ -239,11 +237,7 @@ export function ContextMenuItem({
         <span className="block leading-tight">{label}</span>
         {description ? <span className="mt-0.5 block text-xs text-text-muted">{description}</span> : null}
       </span>
-      {locked ? (
-        <span className="shrink-0 rounded-pill border border-border-strong bg-fill-2 px-2 py-0.5 text-xs font-semibold text-text-primary">
-          Pro
-        </span>
-      ) : active && activeLabel ? (
+      {active && activeLabel ? (
         <span className="shrink-0 text-xs font-medium text-text-primary">{activeLabel}</span>
       ) : checked || active ? (
         // An active item with no label of its own would otherwise look like a hovered one.
@@ -255,13 +249,12 @@ export function ContextMenuItem({
   );
 
   if (href) {
-    const external = !locked;
     return (
       <a
         role="menuitem"
         href={href}
-        target={external ? "_blank" : undefined}
-        rel={external ? "noopener noreferrer" : undefined}
+        target="_blank"
+        rel="noopener noreferrer"
         onClick={onSelect}
         className={cls}
       >

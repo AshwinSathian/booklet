@@ -1,0 +1,20 @@
+# A Cloudflare Worker in front of the tunnel. It passes every request to the
+# origin untouched, and answers itself only when the origin cannot be
+# reached: a short page for a browser, a 503 problem document for an API
+# client. See README.md in this folder.
+name = "booklet-fallback"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+workers_dev = false
+
+routes = [
+  { pattern = "booklet.ashwinsathian.com/*", zone_name = "ashwinsathian.com" },
+  { pattern = "booklet-api.ashwinsathian.com/*", zone_name = "ashwinsathian.com" },
+]
+
+# A second copy at a workers.dev address, for trying the fallback without
+# touching the live routes: `wrangler deploy --env preview --var ORIGIN:https://<a host that is down>`.
+[env.preview]
+name = "booklet-fallback-preview"
+workers_dev = true
+routes = []

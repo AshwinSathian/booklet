@@ -26,4 +26,19 @@ curl https://booklet.ashwinsathian.com/p/example-incident-report.md
 
 ## Everything at once
 
-[Account settings](/settings/account) has a download of every page you own as a ZIP of Markdown files, each with its frontmatter.
+[Account settings](/settings/account) has a download of every page you own as a ZIP of Markdown files, each with its frontmatter. The ZIP has each page as it is now. It does not have earlier versions, drafts, or a page that was taken down.
+
+## Embed a page in another site
+
+On a published page, **Embed** copies an `<iframe>` that shows the page without Booklet's header, and with a one-line "Published with Booklet" footer:
+
+```html
+<iframe
+  src="https://booklet.ashwinsathian.com/p/your-page/embed"
+  style="width:100%;min-height:400px;border:none;border-radius:8px;"
+  title="Your page's title"
+  loading="lazy"
+></iframe>
+```
+
+A tool that embeds a pasted link through oEmbed finds the same frame at `/api/oembed?url=<the page's address>`. oEmbed does not answer for a page behind a password or limited to a team.

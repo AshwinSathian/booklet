@@ -133,7 +133,7 @@ export const THEMES: Theme[] = [
   {
     id: "verdant",
     name: "Verdant",
-    description: "A cool emerald accent in place of violet — same surfaces, same rhythm, calmer.",
+    description: "A cool emerald accent in place of violet, on the same surfaces.",
     swatch: "#22b573",
     dark: {
       "--color-bg": "#000000",
@@ -175,7 +175,7 @@ export const THEMES: Theme[] = [
   {
     id: "ember",
     name: "Ember",
-    description: "Warm terracotta accent on paper-cream and charcoal — an editorial, essay-like feel.",
+    description: "A warm terracotta accent on cream paper and charcoal.",
     swatch: "#e68b5f",
     dark: {
       "--color-bg": "#14100d",
@@ -259,7 +259,7 @@ export const THEMES: Theme[] = [
   {
     id: "noir",
     name: "Noir",
-    description: "Leans further into the dark aesthetic — moody surfaces in both modes, desaturated steel-blue accent.",
+    description: "Darker surfaces in both modes, with a muted steel-blue accent.",
     swatch: "#8293ab",
     dark: {
       "--color-bg": "#000000",

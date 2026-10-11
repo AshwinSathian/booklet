@@ -10,7 +10,7 @@ import { CreateSpaceForm } from "./CreateSpaceForm";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Spaces — Booklet", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "Spaces · Booklet", robots: { index: false, follow: false } };
 
 export default async function SpacesPage() {
   const userId = (await getSession())?.userId ?? null;
@@ -28,7 +28,7 @@ export default async function SpacesPage() {
     <AppPage>
         <AppPageTitle
           title="Spaces"
-          lede="A space is where a team keeps its incident reports, decisions, RFCs and runbooks. Members can read every page in it, including the ones marked team-only."
+          lede="A space is where a team keeps its incident reports, decisions, RFCs and runbooks. Members can read every page in it, including the ones marked Team only."
         />
 
         {spaces.length > 0 && (

@@ -1,6 +1,6 @@
 import { assertVerified } from "@/server/verification";
 import type { PublishedDoc } from "@/lib/blocks";
-import { DEFAULT_SETTINGS } from "@/lib/blocks";
+import { resolveSettings } from "@/lib/blocks";
 import { BLOCKS, ROUTES } from "@/lib/constants";
 import { createPageRecord, setPageLinks, updatePageRecord } from "@/lib/db";
 import { createId } from "@/lib/id";
@@ -46,7 +46,7 @@ async function publish(req: Request, userId: string, bodyText: string): Promise<
   }
 
   if (!payload?.raw || typeof payload.raw !== "string" || !payload.raw.trim()) {
-    return problem(400, "Nothing to publish — provide `raw` markdown.");
+    return problem(400, "Nothing to publish. Send the Markdown in `raw`.");
   }
 
   // First, as before: nothing parses or looks anything up for a document
@@ -80,7 +80,7 @@ async function publish(req: Request, userId: string, bodyText: string): Promise<
   const doc: PublishedDoc = {
     v: BLOCKS.version,
     createdAt: new Date().toISOString(),
-    settings: payload.settings ?? DEFAULT_SETTINGS,
+    settings: resolveSettings(payload.settings),
     blocks,
     raw: payload.raw,
   };
@@ -89,7 +89,7 @@ async function publish(req: Request, userId: string, bodyText: string): Promise<
     await putDoc(id, doc);
   } catch (e: unknown) {
     logError("v1/publish", "Publish failed", e);
-    return problem(500, "Publish failed");
+    return problem(500, "The page was not published. Try again.");
   }
 
   // The record is what makes a page owned, and what a team-only page's
@@ -103,7 +103,7 @@ async function publish(req: Request, userId: string, bodyText: string): Promise<
   } catch (dbErr) {
     logError("v1/publish", "DB write failed", dbErr);
     await deleteDoc(id).catch(() => {});
-    return problem(500, "Publish failed");
+    return problem(500, "The page was not published. Try again.");
   }
 
   // After the page record: the event also writes the record's `last_source`.

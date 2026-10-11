@@ -3,7 +3,7 @@ import { LegacyHashRedirect } from "@/components/docs/LegacyHashRedirect";
 import { CopyButton } from "@/components/marketing/CopyButton";
 import { getDocPage, getDocsTree, getNeighbours } from "@/lib/docs";
 import { parseToBlocks } from "@/lib/parse";
-import { buildMetadata } from "@/lib/seo";
+import { absoluteUrl, breadcrumbJsonLd, buildMetadata, jsonLdScript } from "@/lib/seo";
 import { buildToc } from "@/lib/toc";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -14,7 +14,14 @@ type Props = { params: Promise<{ slug: string[] }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const page = getDocPage((await params).slug);
   if (!page) return buildMetadata({ title: "Not found", noIndex: true });
-  return buildMetadata({ title: page.title, description: page.description, pathname: page.href });
+  return buildMetadata({
+    // "CLI" or "Limits" alone says nothing in a search result.
+    title: `${page.title} · Docs`,
+    description: page.description,
+    pathname: page.href,
+    image: `/og${page.href}.png`,
+    imageAlt: page.title,
+  });
 }
 
 export default async function DocPageRoute({ params }: Props) {
@@ -30,6 +37,15 @@ export default async function DocPageRoute({ params }: Props) {
   return (
     <div className="xl:grid xl:grid-cols-[minmax(0,1fr)_13rem] xl:gap-12">
       <article className="min-w-0 max-w-3xl">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: jsonLdScript([
+              { "@type": "TechArticle", headline: page.title, description: page.description, url: absoluteUrl(page.href), mainEntityOfPage: absoluteUrl(page.href), inLanguage: "en", isAccessibleForFree: true },
+              breadcrumbJsonLd([["Docs", "/docs"], [section.title, "/docs"], [page.title, page.href]]),
+            ]),
+          }}
+        />
         {page.href === "/docs/reference/api" ? <LegacyHashRedirect /> : null}
         <header className="border-b border-border-default pb-8">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-text-muted">{section.title}</p>

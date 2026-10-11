@@ -30,7 +30,7 @@ export function ResetPasswordForm() {
     const data = (await res?.json().catch(() => ({}))) as { detail?: string } | undefined;
 
     if (!res || !res.ok) {
-      setError(data?.detail ?? "Something went wrong. Please try again.");
+      setError(data?.detail ?? "Something went wrong. Try again.");
       setSubmitting(false);
       return;
     }
@@ -61,7 +61,7 @@ export function ResetPasswordForm() {
       </div>
       {error && <p role="alert" className="text-sm text-danger">{error}</p>}
       <Button type="submit" variant="primary" size="lg" disabled={submitting} className="w-full justify-center">
-        {submitting ? "Please wait…" : "Reset password"}
+        {submitting ? "One moment…" : "Reset password"}
       </Button>
     </form>
   );

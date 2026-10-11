@@ -9,7 +9,7 @@
 
 You write Markdown, and Booklet gives you a page with a link. The page is typeset, has a table of contents when it's long enough to need one, and opens for anyone you send it to.
 
-It's built for the documents engineering teams pass around. Put `type: incident` (or `adr`, `rfc`, `runbook`, `postmortem`, `release-notes`) in the frontmatter and the page shows status, severity, date and owners in a strip under the title. `[[ADR-012 Queue retries]]` in an incident report links to that ADR, and the ADR lists the incident under "Referenced by". A team space keeps a team's documents together, grouped by type, and a page in one can be restricted to its members.
+It's built for the documents engineering teams pass around. Put `type: incident` (or `adr`, `rfc`, `runbook`, `postmortem`, `release-notes`) in the frontmatter and the page shows status, severity, date and owners in a strip above the title. `[[ADR-012 Queue retries]]` in an incident report links to that ADR, and the ADR lists the incident under "Referenced by". A team space keeps a team's documents together, grouped by type, and a page in one can be restricted to its members.
 
 There are five ways to publish, and all of them produce the same page: the web editor, the REST API, the `booklet-cli` npm package, a GitHub Action, and an MCP server for Claude and other MCP clients.
 
@@ -25,7 +25,7 @@ booklet login                            # opens your browser to authorize
 booklet publish README.md --open         # publish this file, open it in your browser
 ```
 
-You get back the page's URL. The editor works without an account, up to 10 pages a month, each kept for 90 days. An account (free, and there is no paid plan) removes both limits, and you need one for an API key and so for the CLI.
+You get back the page's URL. The editor works without an account, up to 10 pages a month, each served for 90 days. An account (free, and there is no paid plan) removes both limits. The CLI needs an API key, and a key needs an account.
 
 ---
 
@@ -36,17 +36,17 @@ You get back the page's URL. The editor works without an account, up to 10 pages
 - **Links between pages**: `[[Title]]` resolves to a published page in the same team space, or among your own pages
 - **Team spaces**: `/t/<slug>` lists a team's pages by type, with an ADR log and an Atom feed of its public pages
 - **Visibility**: unlisted (the default, not indexed), public, or team; a password on top if you want one
-- **Share pages**: table of contents, reading time, dark and light themes, five document themes, `<iframe>` embeds at `/p/:id/embed`
+- **Published pages**: table of contents, reading time, dark and light themes, five document themes, `<iframe>` embeds at `/p/:id/embed`
 - **Math and diagrams**: KaTeX (`$...$`, `$$...$$`), Mermaid and Graphviz in fenced code blocks
 - **Export**: Markdown, self-contained HTML with diagrams and math drawn in, and Print to PDF
-- **Version history**: 50 snapshots per page, a line diff between any two, restore as a new version
+- **Version history**: 50 versions per page, a line diff between any two, restore as a new version
 - **Analytics**: per-page views, how many readers reached 50% and 100%, referrers
-- **Custom slugs**: a URL such as `/p/my-release-notes`
+- **Custom URLs**: an address such as `/p/my-release-notes`
 - **Webhooks**: `page.published` and `page.updated`, signed, with a log of the last 50 deliveries
 - **REST API**: publish, update, list and delete pages; OpenAPI 3.1 at `/api/v1/openapi.json`
 - **CLI**: `booklet-cli` on npm, with `--json` output and exit codes for scripts
 - **GitHub Action**: [`AshwinSathian/publish-to-booklet`](https://github.com/AshwinSathian/publish-to-booklet)
-- **MCP server**: seven tools and five prompts, with OAuth sign-in or an API key
+- **MCP server**: seven tools and six prompts, with OAuth sign-in or an API key
 - **Accounts**: email and password, passkeys, and GitHub or Google sign-in where the host has configured them
 
 ---
@@ -78,9 +78,8 @@ All endpoints are under `/api/v1/` and authenticated with `Authorization: Bearer
 | `GET` | `/api/v1/pages/:id` | Read a page's metadata and raw content |
 | `PATCH` | `/api/v1/pages/:id` | Update content, slug, or visibility |
 | `DELETE` | `/api/v1/pages/:id` | Delete a page |
-| `GET` | `/api/v1/keys` | List API keys |
-| `POST` | `/api/v1/keys` | Create an API key |
-| `DELETE` | `/api/v1/keys/:id` | Revoke an API key |
+
+API keys are created and deleted in the browser, under Settings, API keys. They are not part of this API.
 
 **Publish example:**
 
@@ -91,13 +90,13 @@ curl -X POST https://booklet-api.ashwinsathian.com/api/v1/publish \
   -d '{"raw": "# Hello\n\nThis is my page."}'
 ```
 
-`booklet-api.ashwinsathian.com` is a dedicated hostname for the API surface (same app/process as the main site, just scoped; see `docs/OPERATIONS.md`). `booklet.ashwinsathian.com` serves `/api/v1/*` too, so either works.
+`booklet-api.ashwinsathian.com` is a second hostname for the API, served by the same app (see `docs/OPERATIONS.md`). `booklet.ashwinsathian.com/api/v1` is the same API, and is the address the docs use.
 
 Full endpoint reference with request/response shapes: [booklet.ashwinsathian.com/docs/reference/api](https://booklet.ashwinsathian.com/docs/reference/api).
 
 ---
 
-## MCP Server
+## MCP server
 
 A Node process (`mcp-server/`) that gives [Model Context Protocol](https://modelcontextprotocol.io) clients Booklet's API. It runs under PM2 beside the main app and speaks protocol 2026-07-28 over Streamable HTTP.
 
@@ -141,7 +140,7 @@ cd mcp-server && npm run dev
 - Node.js 24 (see `.nvmrc`)
 - MongoDB connection string (a local `mongod`, or any self-hosted/managed instance)
 
-### Install & run
+### Install and run
 
 ```bash
 npm install
@@ -163,6 +162,18 @@ INVITE_JWT_SECRET=<random-secret>
 ```
 
 See `.env.example` for the full list of required secrets (session auth, API keys, page-password tokens, etc.). Each documents its own generation command and fail-closed behavior.
+
+### Run your own copy
+
+Booklet is one Next.js app, one MongoDB database and, if you want MCP clients, one more Node process.
+
+1. Node.js 24 and a MongoDB connection string.
+2. Copy `.env.example` to `.env.production.local` and fill in every secret marked required. Set `NEXT_PUBLIC_SITE_URL` to the address people will use.
+3. `npm ci && npm run build && npm start` serves the app on port 3000 (`npm start -- -p 3100` for another port).
+4. The MCP server is `mcp-server/`. `ecosystem.config.js` starts both under PM2, the app on port 3100, once you change `BASE` and `NODE_BIN` at the top of the file to your own paths.
+5. Point the CLI at your copy with `BOOKLET_API_URL=https://your-host`.
+
+Email (confirmation, password reset, team invites) needs `RESEND_API_KEY`; without it accounts work unconfirmed and an invite is a link the owner sends. GitHub and Google sign-in appear when a provider's client ID and secret are set. The app is AGPL-3.0: if you change it and run it for other people, section 13 requires you to offer them your source.
 
 ### Deploy
 
@@ -220,7 +231,7 @@ Required secret: `NPM_TOKEN` (Granular Access Token with publish + 2FA bypass).
 
 ### Publish docs to Booklet from your repo
 
-Two ways: the [`AshwinSathian/publish-to-booklet`](https://github.com/AshwinSathian/publish-to-booklet) GitHub Action, or `booklet-cli` via `npx`. See [.github/examples/publish-to-booklet.yml](.github/examples/publish-to-booklet.yml) for both — copy it into your own repo's `.github/workflows/`, add a `BOOKLET_API_KEY` secret, and it publishes on every release.
+Two ways: the [`AshwinSathian/publish-to-booklet`](https://github.com/AshwinSathian/publish-to-booklet) GitHub Action, or `booklet-cli` via `npx`. See [.github/examples/publish-to-booklet.yml](.github/examples/publish-to-booklet.yml) for both. Copy it into your own repo's `.github/workflows/`, add a `BOOKLET_API_KEY` secret, and it publishes on every release.
 
 ## License
 

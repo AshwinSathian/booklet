@@ -66,7 +66,7 @@ async function connect(token: string, versionNegotiation?: ConstructorParameters
 const PINNED = { versionNegotiation: { mode: { pin: "2026-07-28" } } } as never;
 
 {
-  test("a 2026-07-28 client lists 7 tools, 5 prompts and the resource template", async () => {
+  test("a 2026-07-28 client lists 7 tools, 6 prompts and the resource template", async () => {
     const client = await connect(API_KEY, PINNED);
     expect(client.getNegotiatedProtocolVersion()).toBe("2026-07-28");
 
@@ -76,7 +76,7 @@ const PINNED = { versionNegotiation: { mode: { pin: "2026-07-28" } } } as never;
 
     const { prompts } = await client.listPrompts();
     expect(prompts.map((p) => p.name).sort()).toEqual([...PROMPT_NAMES].sort());
-    expect(prompts).toHaveLength(5);
+    expect(prompts).toHaveLength(6);
 
     const { resourceTemplates } = await client.listResourceTemplates();
     expect(resourceTemplates.map((t) => t.uriTemplate)).toEqual(["booklet://pages/{id}"]);

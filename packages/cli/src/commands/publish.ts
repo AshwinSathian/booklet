@@ -71,13 +71,13 @@ export function registerPublishCommand(program: Command) {
   program
     .command("publish [file]")
     .description("Publish a Markdown file (use - for stdin)")
-    .option("--slug <slug>", "Set a custom URL slug")
+    .option("--slug <slug>", "Custom URL (slug), 3 to 60 lowercase letters, digits or hyphens")
     .option(
       "--visibility <v>",
-      "unlisted (link only, not indexed), public (listed on Explore) or team (members of --space only). Default: unlisted",
+      "unlisted (anyone with the link; search engines are told not to index it), public (open to search engines and listed among public pages) or team (members of --space only). Default: unlisted",
     )
     .option("--space <slug>", "Publish into this team space (the slug in /t/<slug>). New pages only")
-    .option("--update <id>", "Update an existing page by ID instead of creating new")
+    .option("--update <id>", "Update an existing page by ID instead of creating one")
     .option("--watch", "Watch file for changes and re-publish automatically")
     .option("--open", "Open the published page in your browser after success")
     .action(async (file: string | undefined, opts: {
@@ -97,7 +97,7 @@ export function registerPublishCommand(program: Command) {
         throw new CliError(`--visibility must be "public", "unlisted" or "team", not "${opts.visibility}".`, EXIT.USAGE);
       }
       if (opts.space && opts.update) {
-        throw new CliError("--space only applies to a new page. Move an existing page from My pages on the web.", EXIT.USAGE);
+        throw new CliError("--space only applies to a new page. To move an existing page, run `booklet pages move <id> --space <slug>`.", EXIT.USAGE);
       }
       const publishOpts = {
         update: opts.update,

@@ -81,7 +81,7 @@ export function GraphView({
           <div>
             <span className="text-sm font-semibold">Graph</span>
             <p className="mt-0.5 text-xs text-text-muted">
-              Private to you — {drafts.length} draft{drafts.length === 1 ? "" : "s"},{" "}
+              Only you see this: {drafts.length} draft{drafts.length === 1 ? "" : "s"},{" "}
               {edges.length} link{edges.length === 1 ? "" : "s"}
             </p>
           </div>

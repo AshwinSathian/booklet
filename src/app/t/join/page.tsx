@@ -8,9 +8,11 @@ import { getSession } from "@/lib/auth/session";
 import { Button } from "@/components/ui/Button";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { redirect } from "next/navigation";
+import { buildMetadata } from "@/lib/seo";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const metadata = buildMetadata({ title: "Join a space", pathname: "/t/join", noIndex: true });
 
 export default async function TeamJoinPage({
   searchParams,
@@ -29,9 +31,9 @@ export default async function TeamJoinPage({
   } catch (err) {
     if (err instanceof Error && err.message.startsWith("INVITE_JWT_SECRET")) {
       logError("t/join", "Failed to verify invite token", err);
-      return <ErrorPage message="Joining a team isn't available right now. Please contact the administrator." />;
+      return <ErrorPage message="Joining a space is not set up on this install. Tell whoever runs it." />;
     }
-    return <ErrorPage message="This invite link has expired or is invalid." />;
+    return <ErrorPage message="This invite link has expired or is not valid. Ask the space's owner for a new one." />;
   }
 
   const session = await getSession();
@@ -48,7 +50,7 @@ export default async function TeamJoinPage({
   // does not get in.
   if (typeof payload.invitedEmail !== "string" || userEmail !== payload.invitedEmail.toLowerCase()) {
     return (
-      <ErrorPage message={`This invite was sent to ${payload.invitedEmail}. Please sign in with that account.`} />
+      <ErrorPage message={`This invite is for ${payload.invitedEmail}. Sign in with that account.`} />
     );
   }
   // Anyone can sign up with the invited address. Until it is confirmed,
@@ -59,13 +61,13 @@ export default async function TeamJoinPage({
 
   const team = await getCollectionRecord(payload.teamId);
   if (!team?.is_team_space) {
-    return <ErrorPage message="This team no longer exists." />;
+    return <ErrorPage message="This space no longer exists." />;
   }
   // Removing a member cancels the invites sent to them before it, or they
   // could walk back in with the link they joined by.
   const issuedAt = (payload.iat ?? 0) * 1000;
   if (team.invite_revocations?.some((r) => r.email === userEmail && issuedAt < Date.parse(r.at))) {
-    return <ErrorPage message="This invite link has expired or is invalid." />;
+    return <ErrorPage message="This invite link has expired or is not valid. Ask the space's owner for a new one." />;
   }
 
   // Someone already in the space keeps the role they have: an invite always

@@ -1,7 +1,7 @@
 import { TURNSTILE_FAILED, verifyTurnstile } from "@/lib/turnstile";
 import { unverifiedResponse } from "@/server/verification";
 import type { PublishedDoc } from "@/lib/blocks";
-import { DEFAULT_SETTINGS } from "@/lib/blocks";
+import { resolveSettings } from "@/lib/blocks";
 import { BLOCKS, ROUTES } from "@/lib/constants";
 import { createPageRecord, setPageLinks } from "@/lib/db";
 import { createId } from "@/lib/id";
@@ -68,7 +68,7 @@ export async function POST(req: Request) {
     }
 
     if (!payload?.raw || typeof payload.raw !== "string" || !payload.raw.trim()) {
-      return problem(400, "Nothing to publish — provide `raw` markdown.");
+      return problem(400, "Nothing to publish. Send the Markdown in `raw`.");
     }
 
     const id = createId(10);
@@ -111,7 +111,7 @@ export async function POST(req: Request) {
     const doc: PublishedDoc = {
       v: BLOCKS.version,
       createdAt: new Date().toISOString(),
-      settings: payload.settings ?? DEFAULT_SETTINGS,
+      settings: resolveSettings(payload.settings),
       blocks,
       raw: payload.raw,
     };
@@ -134,7 +134,7 @@ export async function POST(req: Request) {
       );
     } catch (e: unknown) {
       logError("publish", "Publish failed", e);
-      return problem(500, "Publish failed");
+      return problem(500, "The page was not published. Try again.");
     }
 
     if (isAuthenticated && userId) {
@@ -149,7 +149,7 @@ export async function POST(req: Request) {
       } catch (dbErr) {
         logError("publish", "DB ownership write failed", dbErr);
         await deleteDoc(id).catch(() => {});
-        return problem(500, "Publish failed");
+        return problem(500, "The page was not published. Try again.");
       }
       void setPageLinks(id, built.linkTargetIds).catch((err) => logError("publish", "Link write failed", err));
       void snapshotPageVersion(id, doc).catch((err) => {
@@ -194,6 +194,6 @@ export async function POST(req: Request) {
     return res;
   } catch (e: unknown) {
     logError("publish", "Unhandled error", e);
-    return problem(500, "An unexpected error occurred");
+    return problem(500, "Something went wrong on the server. Try again.");
   }
 }

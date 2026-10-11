@@ -61,7 +61,7 @@ Set `status: Superseded` in ADR-012 and publish it again with `--update <its id>
 
 Open `/t/payments` while signed in. The **Decision log** group lists the records in number order. Signed out, a `team` page answers 404.
 
-## If it does not
+## If it did not work
 
 - **Exit code 4 on publish.** There is no space with that slug, or you are not a member of it.
 - **Exit code 3.** You are a viewer in the space. Publishing needs the editor role.

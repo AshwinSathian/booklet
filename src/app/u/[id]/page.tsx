@@ -27,7 +27,7 @@ export async function generateMetadata({
   if (!user) return buildMetadata({ title: "User not found", noIndex: true });
   const name = displayName(user);
   return buildMetadata({
-    title: `${name} — ${APP_NAME}`,
+    title: name,
     description: `Public pages published by ${name} on ${APP_NAME}.`,
     pathname: `/u/${id}`,
   });

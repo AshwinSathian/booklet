@@ -1,5 +1,6 @@
 import { Command } from "commander";
-import { writeFile } from "fs/promises";
+import { mkdir, writeFile } from "fs/promises";
+import { dirname } from "path";
 import { CliError, EXIT } from "../errors.js";
 import { TEMPLATES } from "../templates.js";
 import { success, info, emit } from "../fmt.js";
@@ -22,6 +23,8 @@ export function registerNewCommand(program: Command) {
 
       const file = opts.output ?? `${template}.md`;
       try {
+        // `-o adr/0012.md` in a repository with no adr/ yet: make the folder.
+        await mkdir(dirname(file), { recursive: true });
         // "wx" fails if the file exists, so nothing is overwritten by accident.
         await writeFile(file, entry.body(), { encoding: "utf8", flag: opts.force ? "w" : "wx" });
       } catch (e) {

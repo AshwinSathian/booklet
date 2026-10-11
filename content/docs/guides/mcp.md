@@ -19,7 +19,7 @@ Claude.ai signs in with your Booklet account, so there is no key to create. Ever
 mcp-client-picker
 ```
 
-The picker above is interactive. In short:
+In short:
 
 - **Claude.ai**: Settings, Connectors, Add custom connector. Name it Booklet, give it the endpoint above, and sign in when asked.
 - **Claude Desktop and Cursor**: add a server with the endpoint as its URL and your key in an `Authorization` header. Windsurf has fields for the same two values.
@@ -40,7 +40,7 @@ The picker above is interactive. In short:
 
 ## Try it
 
-Ask in plain words. These work as written:
+Ask in plain words. For example:
 
 - "Publish this as a Booklet page and give me the link."
 - "Write an incident report for the checkout outage from this timeline and publish it."
@@ -51,7 +51,7 @@ A page published this way is unlisted unless you ask for it to be public.
 
 ## What the server offers
 
-Seven tools, the account's pages as resources, and five prompts that start a document of a given type. [MCP tools and prompts](/docs/reference/mcp-tools) lists them.
+Seven tools, the account's pages as resources, and six prompts that start a document of a given type. [MCP tools and prompts](/docs/reference/mcp-tools) lists them.
 
 ## When it does not work
 

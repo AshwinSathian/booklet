@@ -86,7 +86,7 @@ async function main() {
       process.exit(err.exitCode === 0 ? EXIT.OK : EXIT.USAGE);
     }
     error(err instanceof Error ? err.message : String(err));
-    console.error(`\nThis looks like a bug. Please report it: ${REPO_URL}/issues`);
+    console.error(`\nThis looks like a bug. Report it at ${REPO_URL}/issues`);
     process.exit(EXIT.FAILURE);
   }
 }

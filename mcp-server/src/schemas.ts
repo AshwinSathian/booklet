@@ -43,7 +43,7 @@ export const PublishPageInputSchema = z.object({
     .enum(["public", "unlisted"])
     .optional()
     .describe(
-      '"unlisted" (default: reachable by URL, hidden from listings and search engines) or "public" (listed on Explore and indexable).',
+      '"unlisted" (default: anyone with the link; search engines are told not to index it) or "public" (open to search engines and listed among public pages).',
     ),
 });
 
@@ -131,7 +131,7 @@ export const DeletePageInputSchema = z.object({
   confirm: z
     .boolean()
     .refine((v) => v === true, "`confirm` must be true to delete a page. This action cannot be undone.")
-    .describe("Must be true to proceed. Prevents accidental deletion — this cannot be undone."),
+    .describe("Must be true to proceed. Deletion cannot be undone."),
 });
 
 export const PublishPageOutputSchema = z.object({

@@ -57,7 +57,7 @@ A blockquote that starts with a marker becomes a callout. The markers are `NOTE`
 A section the reader can open and close:
 
 ```markdown
-:::toggle Full stack trace
+:::toggle[Full stack trace]
 
 The content, in any Markdown.
 

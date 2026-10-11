@@ -13,17 +13,17 @@ export const metadata: Metadata = buildMetadata({
 });
 
 const ROWS: Array<[string, string, string]> = [
-  ["Pages a month", "10", "No cap"],
-  ["How long a page is kept", "90 days", "Until you delete it"],
+  ["Pages a month", "10, counted per IP address", "No cap"],
+  ["How long a page is kept", "Served for 90 days, deleted 30 days later", "Until you delete it"],
   ["Change a page after publishing", "No", "Yes, at the same link"],
-  ["Custom address (slug)", "No", "Yes"],
+  ["Custom URL", "No", "Yes"],
   ["Version history", "No", "50 versions a page, with compare and restore"],
-  ["Views and read depth", "No", "Yes"],
+  ["Analytics: views and read depth", "No", "Yes"],
   ["Password on a page", "No", "Yes"],
-  ["Team spaces and team-only pages", "No", "Yes"],
+  ["Team spaces and Team only pages", "No", "Yes"],
   ["API, CLI and GitHub workflows", "No", "Yes"],
   ["Claude and other MCP clients", "No", "Yes"],
-  ["Webhooks", "No", "Yes, five"],
+  ["Webhooks", "No", "Yes, 5"],
   ["Links between documents", "No", "Yes"],
   ["Document types, export, themes", "Yes", "Yes"],
 ];
@@ -41,8 +41,8 @@ export default function PricingPage() {
           }
           lede={
             <>
-              Every feature of {APP_NAME} comes with a free account. Nothing asks for a card. The maintainer pays for the
-              hosting, and the{" "}
+              Every feature of {APP_NAME} comes with a free account, once you have confirmed its email address. Nothing asks
+              for a card. {APP_NAME} is in public beta. The maintainer pays for the hosting, and the{" "}
               <Link href="/trust" className="text-text-primary underline underline-offset-4">
                 Trust page
               </Link>{" "}
@@ -56,7 +56,7 @@ export default function PricingPage() {
             Write a page
           </Button>
           <Button variant="secondary" size="lg" href={ROUTES.signUp}>
-            Create a free account
+            Create an account
           </Button>
         </div>
 

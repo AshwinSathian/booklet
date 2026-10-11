@@ -16,7 +16,7 @@ The retry storm was made possible by the policy in `[[ADR-012 Queue retries]]`.
 
 Written without the backticks, that becomes a link to the published page titled "ADR-012 Queue retries" when you publish. To show different text, add it after a bar: `[[ADR-012 Queue retries|the retry ADR]]`.
 
-In the editor, typing `[[` opens a list of titles to pick from.
+In the editor, typing `[[` opens a list of your draft titles to pick from. The link is made when you publish, if a published page has that title.
 
 ## What a title matches
 

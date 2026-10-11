@@ -118,9 +118,10 @@ export const INSERT_ITEMS: InsertItem[] = [
     keywords: ["toggle", "collapse", "details", "disclosure"],
     icon: "toggle",
     snippet: {
-      text: ":::toggle Summary\n\n:::\n",
-      selectFrom: ":::toggle ".length,
-      selectTo: ":::toggle Summary".length,
+      // The label goes in brackets: `:::toggle Summary` is not a directive and prints as text.
+      text: ":::toggle[Summary]\n\n:::\n",
+      selectFrom: ":::toggle[".length,
+      selectTo: ":::toggle[Summary".length,
       block: true,
     },
   },
@@ -130,9 +131,10 @@ export const INSERT_ITEMS: InsertItem[] = [
     keywords: ["columns", "layout", "side by side"],
     icon: "columns",
     snippet: {
-      text: ":::columns\n\n---\n\n:::\n",
-      selectFrom: ":::columns\n".length,
-      selectTo: ":::columns\n".length,
+      // A blank line each side of what is typed: text directly above `---` would make it a heading, not a column break.
+      text: ":::columns\n\n\n\n---\n\n\n\n:::\n",
+      selectFrom: ":::columns\n\n".length,
+      selectTo: ":::columns\n\n".length,
       block: true,
     },
   },

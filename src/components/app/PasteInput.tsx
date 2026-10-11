@@ -153,7 +153,7 @@ const SHORTCUT_GROUPS = [
     group: "Insert",
     shortcuts: [
       { keys: ["/"], label: "Insert menu (at line start)" },
-      { keys: ["[", "["], label: "Link to another draft" },
+      { keys: ["[", "["], label: "Link to one of your drafts" },
     ],
   },
   {
@@ -1074,7 +1074,7 @@ export function PasteInput({
         {isEmpty && (
           <div className="shrink-0 flex items-center justify-between gap-3 border-b border-border-subtle bg-fill-2/40 px-4 py-2 animate-fade-in">
             <span className="text-xs text-text-secondary">
-              Write your first line — or press <kbd className="font-mono">⌘K</kbd> for commands, <kbd className="font-mono">/</kbd> to insert a block.
+              Write your first line, or press <kbd className="font-mono">⌘K</kbd> for commands or <kbd className="font-mono">/</kbd> to insert a block.
             </span>
             {onInsertSample && (
               <button
@@ -1269,7 +1269,9 @@ export function PasteInput({
               "bg-transparent text-transparent placeholder:text-text-muted",
               "font-mono text-sm leading-[1.65]",
               "px-5 py-4",
-              "focus:outline-none",
+              // A rule down the left edge says the text has focus. The caret alone
+              // is a 1px line, and in an empty draft it is easy not to see at all.
+              "focus:outline-none focus:shadow-[inset_2px_0_0_var(--color-accent)]",
               "caret-accent",
             ].join(" ")}
           />

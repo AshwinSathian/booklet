@@ -8,7 +8,7 @@ import type { Metadata } from "next";
 export const runtime = "nodejs";
 
 export const metadata: Metadata = {
-  title: "Authorize CLI — Booklet",
+  title: "Authorize CLI · Booklet",
   robots: { index: false },
 };
 

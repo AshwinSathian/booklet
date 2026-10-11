@@ -188,7 +188,7 @@ export function CommandPalette({
             onSelect={() => go(ROUTES.myPages)}
             className="cursor-pointer rounded-lg px-3 py-2 text-sm text-text-primary aria-selected:bg-fill-2"
           >
-            My Pages
+            My pages
           </Command.Item>
           <Command.Item
             onSelect={createNewPage}

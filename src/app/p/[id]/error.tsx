@@ -18,7 +18,7 @@ export default function ShareError({
           This page could not be loaded.
         </h1>
         <p className="mt-4 max-w-xl text-lg leading-relaxed text-text-secondary">
-          The link may be wrong, or something failed on our side.
+          Something failed while loading this page. Try again.
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
           <Button variant="primary" size="lg" onClick={reset}>

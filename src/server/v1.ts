@@ -27,7 +27,7 @@ export function v1<C>(
     const state = await consumeRateLimit(`v1__${bucket}__${auth.userId}`, limitPerMin);
     let res: Response;
     if (state.limited) {
-      res = problem(429, "Too many requests. Please slow down and try again.");
+      res = problem(429, "Too many requests. Wait for the time in Retry-After, then try again.");
     } else {
       try {
         res = await handler(req, auth.userId, ctx as C);

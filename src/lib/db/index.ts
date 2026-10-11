@@ -277,6 +277,19 @@ export async function getRecentPublicPages(limit = 48): Promise<ExploreItem[]> {
   return docs.map(toExploreItem);
 }
 
+/** Every page its author made public and left open: what a search engine may be told about. */
+export async function getPublicPagesForSitemap(limit = 5000): Promise<Array<{ key: string; updated_at: string }>> {
+  const db = await getDb();
+  const docs = await db
+    .collection<PageDoc>("pages")
+    .find({ visibility: "public", password_hash: null, taken_down_at: null })
+    .sort({ updated_at: -1 })
+    .limit(limit)
+    .project<Pick<PageDoc, "_id" | "slug" | "updated_at">>({ _id: 1, slug: 1, updated_at: 1 })
+    .toArray();
+  return docs.map((d) => ({ key: d.slug ?? d._id, updated_at: d.updated_at }));
+}
+
 export async function getPagesByTag(tag: string, limit = 100): Promise<ExploreItem[]> {
   const db = await getDb();
   const docs = await db
@@ -511,17 +524,17 @@ export async function updateCollectionRecord(
 
 export async function deleteCollectionRecord(collectionId: string, userId: string): Promise<void> {
   const db = await getDb();
-  const children = await getCollectionChildren(collectionId);
-  for (const child of children) {
-    await db
-      .collection<PageDoc>("pages")
-      .updateMany({ user_id: userId, collection_id: child.id }, { $set: { collection_id: null } });
-    await db.collection<CollectionDoc>("collections").deleteOne({ _id: child.id, user_id: userId });
-  }
-  await db
-    .collection<PageDoc>("pages")
-    .updateMany({ user_id: userId, collection_id: collectionId }, { $set: { collection_id: null } });
-  await db.collection<CollectionDoc>("collections").deleteOne({ _id: collectionId, user_id: userId });
+  // Only its owner deletes a collection. Checked here too, because what
+  // follows touches pages that belong to other people.
+  const owned = await db.collection<CollectionDoc>("collections").findOne({ _id: collectionId, user_id: userId }, { projection: { _id: 1 } });
+  if (!owned) return;
+  const ids = [collectionId, ...(await getCollectionChildren(collectionId)).map((child) => child.id)];
+  // Every page in it leaves, whoever published it: in a team space the
+  // members' pages are there too, and one left pointing at a deleted space
+  // could be opened by nobody but its author, with nothing saying why.
+  await db.collection<PageDoc>("pages").updateMany({ collection_id: { $in: ids } }, { $set: { collection_id: null, team_id: null } });
+  await db.collection<CollectionMemberDoc>("collection_members").deleteMany({ collection_id: { $in: ids } });
+  await db.collection<CollectionDoc>("collections").deleteMany({ _id: { $in: ids }, user_id: userId });
 }
 
 // ---------------------------------------------------------------------------

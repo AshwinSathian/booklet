@@ -8,10 +8,10 @@ order: 6
 
 | | Without an account | With a free account |
 | --- | --- | --- |
-| Pages a month | 10 | No cap |
-| How long a page is kept | 90 days | Until you delete it |
+| Pages a month | 10, counted per IP address | No cap |
+| How long a page is kept | Served for 90 days, deleted 30 days later | Until you delete it |
 | Edit a page after publishing | No | Yes, at the same link |
-| Custom slug, password, version history, analytics | No | Yes |
+| Custom URL (slug), password, version history, analytics | No | Yes |
 | Links between documents | No | Yes |
 | Team spaces, API, CLI, MCP, webhooks | No | Yes |
 
@@ -28,8 +28,22 @@ There is no paid plan.
 | Versions kept for a page | 50 |
 | Webhooks for an account | 5 |
 | Deliveries kept for a webhook | 50 |
-| A custom slug | 3 to 60 characters |
+| A custom URL (slug) | 3 to 60 lowercase letters, digits or hyphens |
+| A Markdown file imported into the editor | 500,000 bytes |
+| API keys for an account | 10 |
+| Passkeys for an account | 10 |
 | A page password | At least 6 characters |
+
+## Times
+
+| What | How long |
+| --- | --- |
+| A team space invite link works for | 72 hours |
+| A page's password is not asked again in the same browser for | 8 hours |
+| A password-reset link works for | 30 minutes |
+| An email confirmation link works for | 24 hours |
+
+An account has to confirm its email address before it can publish, update a page or create an API key.
 
 ## API rate limits
 
@@ -43,7 +57,7 @@ Each API endpoint has its own count, per account, per minute.
 | `GET /api/v1/pages` | 60 |
 | `GET /api/v1/pages/{id}` | 120 |
 
-Every response says where you stand:
+Every response except a 401, or a 403 for a missing OAuth scope, says where you stand:
 
 ```text
 RateLimit-Policy: "default";q=60;w=60

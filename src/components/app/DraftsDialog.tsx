@@ -80,7 +80,7 @@ export function DraftsDialog({
             <div className="rounded-xl border border-border-default/60 bg-bg-glass/40 p-5">
               <div className="text-sm font-semibold">No drafts yet.</div>
               <div className="mt-1.5 text-sm leading-relaxed text-text-secondary">
-                Drafts autosave to your browser. Publishing creates a shareable link — your draft stays here, ready to edit.
+                Drafts are saved in this browser as you type. A draft stays here after you publish it.
               </div>
             </div>
           ) : (

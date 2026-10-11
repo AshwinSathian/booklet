@@ -54,7 +54,7 @@ export async function POST(req: Request) {
 
   const name = body.name?.trim();
   if (!name || name.length > 80) {
-    return problem(422, "Team name is required (max 80 chars).");
+    return problem(422, "A space needs a name of 1 to 80 characters.");
   }
 
   const slug = body.slug?.trim() ? slugify(body.slug.trim()) : slugify(name);
@@ -70,7 +70,7 @@ export async function POST(req: Request) {
   // duplicate-key error is what we authoritatively act on below.
   const existing = await getCollectionBySlug(slug);
   if (existing) {
-    return problem(409, "That team URL is already taken.");
+    return problem(409, "That space address is already taken. Choose another.");
   }
 
   const id = createId(10);
@@ -84,7 +84,7 @@ export async function POST(req: Request) {
         typeof e === "object" && e !== null && "code" in e && (e as { code?: unknown }).code === 11000;
       if (isDuplicateKey) {
         await deleteCollectionRecord(id, userId).catch(() => {});
-        return problem(409, "That team URL is already taken.");
+        return problem(409, "That space address is already taken. Choose another.");
       }
       throw e;
     }
@@ -92,7 +92,7 @@ export async function POST(req: Request) {
     await addCollectionMember(createId(10), id, userId, null, "editor", userId);
   } catch (e) {
     logError("teams", "Failed to create team", e);
-    return problem(500, "Failed to create team");
+    return problem(500, "The space was not created. Try again.");
   }
 
   return NextResponse.json({ id, name, slug }, { status: 201 });

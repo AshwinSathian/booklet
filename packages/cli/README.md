@@ -32,7 +32,7 @@ npx booklet-cli publish README.md
 booklet login
 ```
 
-This opens your browser to authorize the CLI. Sign in (or create an account) and you're done, no copy-pasting required. Your key is saved securely — see [Credential storage](#credential-storage) below for where.
+This opens your browser to authorize the CLI. Sign in (or create an account) and the CLI has its key, with nothing to copy and paste. [Credential storage](#credential-storage) says where the key is saved.
 
 **CI / non-interactive environments:** pass your key directly with `--key`:
 
@@ -86,7 +86,7 @@ Options:
 | Flag | Description |
 |------|-------------|
 | `--slug <slug>` | Set a custom URL slug (e.g. `my-readme`) |
-| `--visibility <v>` | `unlisted` (default: reachable by link, not listed or indexed), `public` (listed on Explore) or `team` (members of `--space` only) |
+| `--visibility <v>` | `unlisted` (default: anyone with the link; search engines are told not to index it), `public` (open to search engines and listed among public pages) or `team` (members of `--space` only) |
 | `--space <slug>` | Publish into a team space (the slug in `/t/<slug>`). New pages only |
 | `--update <id>` | Update an existing page by ID |
 | `--watch` | Watch file and re-publish on change |
@@ -279,7 +279,7 @@ once more. Exit code 5 means the second attempt was limited too.
 
 ## Credential storage
 
-`booklet login` saves your API key to your OS's credential store when available — macOS
+`booklet login` saves your API key to your OS's credential store when available: macOS
 Keychain, Windows Credential Manager, or Linux Secret Service. On macOS, the first `booklet`
 command that touches the keychain may show a one-time system prompt asking to allow access;
 choosing "Always Allow" avoids repeat prompts.

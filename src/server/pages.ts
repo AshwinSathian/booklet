@@ -132,7 +132,7 @@ export async function buildDocument(raw: string, source: LinkSource, origin: str
   const blocksError = validateBlocks(blocks);
   if (blocksError) {
     logError("buildDocument", "Parser produced an invalid block shape", new Error(blocksError));
-    throw new ServiceError("PARSE_FAILED", "Failed to parse document. Please report this.", 500);
+    throw new ServiceError("PARSE_FAILED", "This document could not be parsed. Report it at github.com/AshwinSathian/booklet/issues.", 500);
   }
   assertStoredWithinLimit(blocks, raw);
   return { fm, blocks, linkTargetIds: targetIds, record: recordFields(fm, blocks) };

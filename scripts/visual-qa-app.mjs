@@ -224,7 +224,6 @@ const ANON_ROUTES = [
   ["p-password-gate", `/p/${seed.locked}`],
   ["p-embed", `/p/${seed.themed.default}/embed`],
   ["tag", "/tags/sweep"],
-  ["templates-adr", "/templates/adr"],
   ...DOC_THEMES.map((theme) => [`p-theme-${theme}`, `/p/${seed.themed[theme]}`]),
 ];
 // Answered with a status that says what they are.
@@ -279,7 +278,7 @@ async function states(page, tag) {
   // The preview pane's two panels. Below lg the pane is behind its tab.
   const previewTab = page.getByRole("tab", { name: "Preview" });
   if (await previewTab.isVisible()) await previewTab.click();
-  await step("backlinks", async () => { await page.locator("button[title^='Linked mentions']").click({ timeout: 3000 }); await page.getByRole("dialog", { name: "Linked mentions" }).waitFor({ timeout: 3000 }); await page.waitForTimeout(300); });
+  await step("backlinks", async () => { await page.locator("button[title^='Drafts that link']").click({ timeout: 3000 }); await page.getByRole("dialog", { name: "Referenced by" }).waitFor({ timeout: 3000 }); await page.waitForTimeout(300); });
   await esc();
   await step("graph", async () => { await page.locator("button[title^='Graph']").click({ timeout: 3000 }); await page.getByRole("dialog", { name: "Draft graph" }).waitFor({ timeout: 3000 }); await page.waitForTimeout(600); });
   await esc();
@@ -289,8 +288,17 @@ async function states(page, tag) {
   await page.waitForTimeout(300);
   // Publishing shows a toast and the custom URL bar.
   await step("published", async () => { await page.getByRole("button", { name: "Publish" }).click({ timeout: 3000 }); await page.locator("[data-slug-bar]").waitFor({ timeout: 15000 }); await page.waitForTimeout(600); });
-  await step("slug-taken", async () => { await page.getByLabel("Custom URL slug").fill(SLUG_TAKEN); await page.getByText("Taken").waitFor({ timeout: 5000 }); });
-  await step("slug-invalid", async () => { await page.getByLabel("Custom URL slug").fill("Not A Slug!"); await page.getByLabel("Custom URL slug").press("Enter"); await page.waitForTimeout(400); });
+  await step("slug-taken", async () => { await page.getByLabel("Custom URL", { exact: true }).fill(SLUG_TAKEN); await page.getByText("Taken").waitFor({ timeout: 5000 }); });
+  await step("slug-invalid", async () => { await page.getByLabel("Custom URL", { exact: true }).fill("Not A Slug!"); await page.getByLabel("Custom URL", { exact: true }).press("Enter"); await page.waitForTimeout(400); });
+  // Saving fails: browser storage is full from here until the next navigation.
+  await step("save-warning", async () => {
+    await page.evaluate(() => { Storage.prototype.setItem = () => { throw new DOMException("full", "QuotaExceededError"); }; });
+    const writeTab = page.getByRole("tab", { name: "Write" });
+    if (await writeTab.isVisible()) await writeTab.click();
+    await editor.focus();
+    await page.keyboard.type(" more");
+    await page.locator("[data-save-warning]").waitFor({ timeout: 10000 });
+  });
   // My pages, versions, settings.
   await page.goto(`/my-pages/versions/${first}`, { waitUntil: "networkidle" });
   await step("versions-compare", async () => { await page.getByRole("button", { name: "Compare" }).first().click({ timeout: 3000 }); await page.waitForTimeout(600); });

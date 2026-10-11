@@ -48,7 +48,7 @@ export default function ChangelogPage() {
   return (
     <PageShell>
       <Container className="py-14 sm:py-20">
-        <PageTitle eyebrow="Changelog" title={`What changed in ${APP_NAME}`} lede="The latest release is open. Earlier ones unfold." />
+        <PageTitle eyebrow="Changelog" title={`What changed in ${APP_NAME}`} />
 
         <div className="mt-12 max-w-3xl">
           <section className="border-t border-border-strong pt-8">

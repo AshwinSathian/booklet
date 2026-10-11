@@ -7,6 +7,7 @@ import { getPageBySlug, getPageRecord } from "@/lib/db";
 import { verifyUnlockToken } from "@/lib/unlock-token";
 import { getTheme, themeScopeClass, themeStyleTagContent } from "@/lib/themes";
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { GoneNotice } from "@/components/share/GoneNotice";
@@ -64,21 +65,23 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { id: idOrSlug } = await params;
   const { doc, pageRecord, gone } = await resolveEmbedPage(idOrSlug);
-  if (!doc) return buildMetadata({ title: "Not found", noIndex: true });
-  if (gone) return buildMetadata({ title: "Page unavailable", noIndex: true });
+  // An embed is the page in a frame: its canonical address is the page's.
+  const pathname = `/p/${pageRecord?.slug ?? idOrSlug}`;
+  if (!doc) return buildMetadata({ title: "Not found", pathname, noIndex: true });
+  if (gone) return buildMetadata({ title: "Page unavailable", pathname, noIndex: true });
 
   // Locked pages: generic metadata only — see src/lib/locked-page-metadata.ts.
   // Must come before extractTitle() below touches real content.
   if (pageRecord?.password_hash) {
     return {
-      ...buildLockedPageMetadata(`/p/${idOrSlug}/embed`),
+      ...buildLockedPageMetadata(pathname),
       robots: { index: false, follow: false },
     };
   }
 
-  const title = extractTitle(doc.blocks as Parameters<typeof extractTitle>[0]) ?? "Shared page";
+  const title = extractTitle(doc.blocks as Parameters<typeof extractTitle>[0]) ?? "Untitled";
   return {
-    ...buildMetadata({ title, noIndex: true }),
+    ...buildMetadata({ title, pathname, noIndex: true }),
     robots: { index: false, follow: false },
   };
 }
@@ -91,13 +94,8 @@ export default async function EmbedPage({
   const { id: idOrSlug } = await params;
   const { doc, resolvedId, pageRecord, gone } = await resolveEmbedPage(idOrSlug);
 
-  if (!doc) {
-    return (
-      <div className="flex min-h-50 items-center justify-center bg-bg text-center p-8">
-        <p className="text-sm text-text-muted">This page doesn&apos;t exist or was deleted.</p>
-      </div>
-    );
-  }
+  // A real 404, as the page itself gives: answering 200 made a deleted page look alive.
+  if (!doc) notFound();
 
   if (gone) return <GoneNotice reason={gone} embed />;
 
@@ -154,7 +152,7 @@ export default async function EmbedPage({
       <footer className="border-t border-border-subtle mt-4">
         <div className={`mx-auto w-full px-5 py-3 ${maxW} flex items-center justify-between gap-3`}>
           <span className="text-xs text-text-muted">
-            Published via {APP_NAME}
+            Published with {APP_NAME}
             {" · "}
             <Link
               href={`/report?page=${encodeURIComponent(resolvedId)}`}

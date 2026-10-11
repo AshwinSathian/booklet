@@ -1,6 +1,6 @@
 import { Landing } from "@/components/marketing/Landing";
 import { APP_NAME } from "@/lib/constants";
-import { absoluteUrl, buildMetadata } from "@/lib/seo";
+import { DEFAULT_TITLE, buildMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = buildMetadata({ pathname: "/" });
@@ -20,7 +20,6 @@ const jsonLd = {
         "Publish Markdown incident reports, ADRs, RFCs and runbooks as web pages, with team spaces. Publish from the editor, the CLI, the REST API, a GitHub Action or an MCP client.",
       applicationCategory: "DeveloperApplication",
       operatingSystem: "Web Browser",
-      screenshot: absoluteUrl("/opengraph-image"),
       offers: {
         "@type": "Offer",
         price: "0",
@@ -28,31 +27,32 @@ const jsonLd = {
         description: "Free. There is no paid plan.",
       },
       featureList: [
-        "Markdown rendering",
-        "Live preview",
+        "Markdown rendering with a live preview",
         "Document types: incident, postmortem, ADR, RFC, runbook, release notes",
         "Team spaces with pages restricted to members",
         "Links between published documents",
-        "Code block rendering",
-        "Table rendering",
         "No account required",
         "Drafts saved in the browser and synced to an account",
         "Pages that do not expire when published from an account",
         "REST API for publishing from scripts and automation",
         "Command-line interface (booklet-cli)",
-        "GitHub Action for publishing docs in CI",
+        "Publishing from a GitHub workflow",
         "MCP server for Claude and other MCP clients",
       ],
-      creator: {
-        "@type": "Person",
-        name: "Ashwin Sathian",
-      },
+      author: { "@id": `${SITE_URL}/#maintainer` },
+    },
+    {
+      "@type": "Person",
+      "@id": `${SITE_URL}/#maintainer`,
+      name: "Ashwin Sathian",
+      url: "https://ashwinsathian.com",
     },
     {
       "@type": "WebSite",
       "@id": `${SITE_URL}/#website`,
       url: SITE_URL,
       name: APP_NAME,
+      publisher: { "@id": `${SITE_URL}/#maintainer` },
       description:
         "Publish Markdown incident reports, ADRs, RFCs and runbooks as web pages, with team spaces.",
       inLanguage: "en-US",
@@ -61,7 +61,7 @@ const jsonLd = {
       "@type": "WebPage",
       "@id": `${SITE_URL}/#webpage`,
       url: SITE_URL,
-      name: `${APP_NAME}: Markdown incident reports, ADRs, RFCs and runbooks, published as pages`,
+      name: DEFAULT_TITLE,
       isPartOf: { "@id": `${SITE_URL}/#website` },
       about: { "@id": `${SITE_URL}/#app` },
       description:

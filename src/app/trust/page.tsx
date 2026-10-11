@@ -28,7 +28,15 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 export default function TrustPage() {
   return (
-    <ProsePage eyebrow="Trust" title="What you are trusting when you publish here" lede={`${APP_NAME} is a small service, and you should know how small before you put an incident report on it. This page says who runs it, where your pages live, and how you get them out.`}>
+    <ProsePage eyebrow="Trust" title="What you are trusting when you publish here" lede={`Who runs ${APP_NAME}, where your pages live, what is stored and how you get your pages out.`}>
+          <Section title="Public beta">
+            <p>
+              Features can change, and there is no promise about how long {APP_NAME} runs or
+              what notice you would get if it stopped. Keep your own copy of anything you cannot lose: the
+              section on taking your pages out says how.
+            </p>
+          </Section>
+
           <Section title="Who runs it">
             <p>
               One person:{" "}
@@ -43,7 +51,7 @@ export default function TrustPage() {
             <p>
               On one Mac, behind a Cloudflare Tunnel. The app and its MongoDB database are on that same
               machine. If the Mac loses power or its internet connection, every page is unreachable until
-              it comes back, and after a restart someone has to sign in to it by hand.
+              it comes back, and after a restart the maintainer has to sign in to it by hand.
             </p>
             <p>
               A move to hosted infrastructure was looked at in October 2026 and put off. The measurements
@@ -57,9 +65,11 @@ export default function TrustPage() {
 
           <Section title="Backups">
             <p>
-              The database is dumped every night at 03:30 and the last 30 archives are kept. Restoring
-              from one has been tested. The archives are on the same disk as the database, so they cover
-              a bad change or an accidental delete, and they do not cover losing the disk.
+              The database is dumped every night at 03:30, the machine&apos;s local time, and the last 30 archives are kept.
+              Restoring from one has been tested. The archives are on the same disk as the database, so they
+              cover a bad change or an accidental delete, and they do not cover losing the disk. A page or an
+              account you delete stays in those archives until 30 newer ones have replaced them, which is 30 nights when
+              no backup is missed.
             </p>
           </Section>
 
@@ -84,7 +94,9 @@ export default function TrustPage() {
           <Section title="Who pays for it">
             <p>
               The maintainer does. {APP_NAME} has no paid plan, no ads and no third-party analytics. It
-              counts page views and how far readers scroll, and shows those numbers to the page&apos;s author.
+              counts page views, how far readers scroll, the kind of site a reader came from and an approximate
+              country, and shows those
+              numbers to the page&apos;s author.
             </p>
           </Section>
 
@@ -96,27 +108,32 @@ export default function TrustPage() {
             </p>
             <p>
               A new page is unlisted: anyone with the link can read it, and search engines are told not
-              to index it. A page published without an account is deleted 90 days later unless you claim
-              it. The <Link href="/privacy" className={link}>privacy policy</Link> has the rest.
+              to index it. A page published without an account stops being served after 90 days and is
+              deleted 30 days after that, unless you sign in and choose Keep this page. The{" "}
+              <Link href="/privacy" className={link}>privacy policy</Link> has the rest.
             </p>
           </Section>
 
           <Section title="Taking your pages out, or leaving">
             <p>
               <Link href={ROUTES.account} className={link}>Account settings</Link> has a download of every
-              page you own as a ZIP of Markdown files, frontmatter included. The same screen deletes the
-              account, and with it your pages, versions, drafts, API keys and webhooks.
+              page you own as a ZIP of Markdown files, frontmatter included. The ZIP has each page as it is
+              now: not its earlier versions, not your drafts, and not a page that was taken down. The same screen deletes the account, and with
+              it your pages, versions, drafts, API keys and webhooks. A page that was taken down for breaking the
+              terms is kept after its owner&apos;s account is deleted, so its address cannot be reused.
             </p>
           </Section>
 
-          <Section title="Source and license">
+          <Section title="Source and licence">
             <p>
               The app is open source under AGPL-3.0. The CLI, the API client, the MCP server and the
               GitHub Action are MIT. You can read the code, or run your own copy, from{" "}
               <a href={REPO_URL} target="_blank" rel="noopener noreferrer" className={link}>
                 the repository
               </a>
-              .
+              ; its README has a section on running your own. The action has a repository of its own. If you
+              change the app and run it as a service for others, AGPL section 13 requires you to offer them your
+              source.
             </p>
           </Section>
 
@@ -134,6 +151,20 @@ export default function TrustPage() {
                   .
                 </>
               ) : null}
+            </p>
+          </Section>
+
+          <Section title="Contact and security">
+            <p>
+              Write to{" "}
+              <a href="mailto:booklet@ashwinsathian.com" className={link}>
+                booklet@ashwinsathian.com
+              </a>
+              . If an error page showed you a reference code, include it. To report a vulnerability privately, follow{" "}
+              <a href={`${REPO_URL}/blob/main/SECURITY.md`} target="_blank" rel="noopener noreferrer" className={link}>
+                SECURITY.md
+              </a>{" "}
+              in the repository.
             </p>
           </Section>
     </ProsePage>

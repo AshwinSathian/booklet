@@ -28,7 +28,7 @@ The package is `booklet-cli`; the command it installs is `booklet`. It needs Nod
 
 ## new
 
-`booklet new <template>` writes a template file to edit. Templates: `incident`, `adr`, `rfc`, `runbook`.
+`booklet new <template>` writes a template file to edit. Templates: `incident`, `postmortem`, `adr`, `rfc`, `runbook`, `release-notes`. A folder in the output path is created if it is missing.
 
 | Option | Meaning |
 | --- | --- |
@@ -70,6 +70,8 @@ The package is `booklet-cli`; the command it installs is `booklet`. It needs Nod
 | --- | --- |
 | `BOOKLET_API_KEY` | The API key. Wins over a saved key |
 | `BOOKLET_API_URL` | Base URL of the Booklet to talk to, for a self-hosted copy |
+| `BOOKLET_NO_KEYCHAIN` | Set to `1` to keep the saved key in `~/.booklet/config.json` and not in the OS keychain |
+| `NO_COLOR` | Set to turn colour off in the output |
 
 ## Exit codes
 

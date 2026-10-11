@@ -1,23 +1,9 @@
-export const SAMPLE_MARKDOWN = `# Example: A clear incident update
+import { SHOT_SAMPLES } from "@/components/marketing/product-shot-samples";
 
-**What happened**
-- Deploy completed at 10:42
-- Error rate spiked from 0.2% to 4.8% within 2 minutes
-
-**Impact**
-- ~12% of users saw 500s
-- Duration: 9 minutes
-
-**Root cause**
-A config flag enabled a slow code path for all requests.
-
-\`\`\`ts
-export function isEnabled(flag: string) {
-  return process.env[flag] === "true";
-}
-\`\`\`
-
-**Fix**
-- Rolled back the flag
-- Added a guardrail + alert on rollout
-`;
+/**
+ * The document "Insert sample" puts in an empty draft: the incident report
+ * the homepage plays, frontmatter and all, so the first thing a new writer
+ * sees rendered is a document with a header strip, a table, code and a
+ * callout.
+ */
+export const SAMPLE_MARKDOWN = SHOT_SAMPLES[0].source;

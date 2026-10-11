@@ -8,7 +8,7 @@ There are two ways to publish from a workflow. Both need an API key stored as a 
 
 ## With the CLI
 
-The CLI commands in this workflow are run against a test instance. The workflow file itself is not run in our tests.
+Booklet's tests run the CLI commands in this workflow, but not the workflow file itself.
 
 ```yaml
 name: Publish to Booklet
@@ -33,7 +33,7 @@ jobs:
           fi
 ```
 
-The first run creates the page and prints its URL in the job log. Copy the ID at the end of that URL into a repository **variable** named `BOOKLET_PAGE_ID`, and every later run updates that page.
+The first run creates the page and prints its URL in the job log. Copy the ID from the `ID:` line under it into a repository **variable** named `BOOKLET_PAGE_ID`, and every later run updates that page.
 
 Without the variable, every run publishes a new page. The slug `release-notes` already belongs to the first one, so the new page is published without it and the CLI says so in the log.
 

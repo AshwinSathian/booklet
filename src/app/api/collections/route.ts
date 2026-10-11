@@ -46,7 +46,7 @@ export async function POST(req: Request) {
 
   const name = cleanName(body.name);
   if (name.length < 1 || name.length > 80) {
-    return problem(422, "Collection name must be 1-80 characters.");
+    return problem(422, "A folder name must be 1 to 80 characters.");
   }
 
   const isTeamSpace = body.is_team_space === true;

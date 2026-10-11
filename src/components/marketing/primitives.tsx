@@ -48,14 +48,14 @@ export function Section({
   className?: string;
 }) {
   return (
-    <section id={id} className={cx("border-t border-border-default py-16 sm:py-24", className)}>
+    <section id={id} className={cx("border-t border-border-default py-14 sm:py-16", className)}>
       <Container>
         <div className="max-w-3xl">
           {eyebrow ? <Eyebrow>{eyebrow}</Eyebrow> : null}
           <h2 className="mt-3 font-display text-h2 font-medium text-balance">{title}</h2>
           {lede ? <p className="mt-5 max-w-2xl text-lg leading-relaxed text-text-secondary">{lede}</p> : null}
         </div>
-        <div className="mt-12 sm:mt-14">{children}</div>
+        <div className="mt-10 sm:mt-12">{children}</div>
       </Container>
     </section>
   );

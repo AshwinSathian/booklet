@@ -1,18 +1,19 @@
-import type { DocType } from "booklet-api-client";
+import { CORE_TEMPLATES, type CoreTemplate, type DocType } from "booklet-api-client";
 
 export type Template = {
   name: string;
+  /** One line: the sections it has. Shown on the template's card. */
   description: string;
   content: string;
   /** Frontmatter for an engineering document type; other templates get a plain `status` and `date`. */
   doc?: { type: DocType; status: string; severity?: string };
-  // SEO landing page fields (optional — only templates with these get a /templates/* page)
-  slug?: string;
+  slug: string;
   aliases?: string[];
-  headline?: string;
-  metaDescription?: string;
-  category?: string;
-  useCases?: string[];
+  /** For the template's own page and its search result: what the document is and what the template gives you. */
+  metaDescription: string;
+  /** Who writes this document, as a sentence. */
+  audience?: string;
+  category: "Engineering" | "Product" | "Team";
 };
 
 /**
@@ -21,1479 +22,595 @@ export type Template = {
  * severity, date, owners), and `type` is what a team space groups by.
  */
 export function templateMarkdown(template: Template, today = new Date().toISOString().slice(0, 10)): string {
-  const { type, status = "Draft", severity } = template.doc ?? {};
-  const lines = [
-    ...(type ? [`type: ${type}`] : []),
-    `status: ${status}`,
-    ...(severity ? [`severity: ${severity}`] : []),
-    `date: ${today}`,
-    "owners: []",
-  ];
+  const lines = [...Object.entries(templateMeta(template, today)).map(([key, value]) => `${key}: ${String(value)}`), "owners: []"];
   return `---\n${lines.join("\n")}\n---\n\n${template.content.trimStart()}`;
+}
+
+/** The fields `templateMarkdown` writes, for showing the header strip a published page would have. */
+export function templateMeta(template: Template, today = new Date().toISOString().slice(0, 10)): Record<string, unknown> {
+  const { type, status = "Draft", severity } = template.doc ?? {};
+  return { ...(type ? { type } : {}), status, ...(severity ? { severity } : {}), date: today };
 }
 
 export function getTemplateBySlug(slug: string): Template | undefined {
   return TEMPLATES.find((t) => t.slug === slug || t.aliases?.includes(slug));
 }
 
-export const TEMPLATES: Template[] = [
-  {
+// The six engineering templates are written once, in booklet-api-client, and
+// shared with `booklet new` and the MCP prompts. This adds what a page on
+// the site needs: an address, and a sentence for the search result.
+const CORE_PAGES: Record<CoreTemplate["key"], Pick<Template, "slug" | "aliases" | "metaDescription" | "audience" | "category">> = {
+  incident: {
     slug: "incident-report",
-    name: "Incident Report",
-    doc: { type: "incident", status: "Resolved", severity: "P2" },
-    headline: "Free Incident Report Template",
-    description: "P1/P2 post-mortem: severity, timeline, root cause, next steps",
-    metaDescription:
-      "Free incident report template. Write and share a clean post-incident report with your team. No account required.",
     category: "Engineering",
-    useCases: ["SRE teams", "DevOps engineers", "Engineering managers", "On-call engineers"],
-    content: `# Incident Report — [Service Name] [Date]
-
-## Summary
-
-**Duration:** HH:MM – HH:MM UTC
-**Impact:** Brief description of user-visible impact.
-
----
-
-## Timeline
-
-| Time (UTC) | Event |
-|---|---|
-| HH:MM | Incident detected by [monitoring / user report] |
-| HH:MM | On-call engineer paged |
-| HH:MM | Root cause identified |
-| HH:MM | Fix deployed |
-| HH:MM | Incident resolved |
-
----
-
-## Root Cause
-
-Describe the underlying technical cause.
-
----
-
-## What Went Well
-
-- Point 1
-- Point 2
-
-## What Could Be Improved
-
-- Point 1
-- Point 2
-
----
-
-## Action Items
-
-| Action | Owner | Due |
-|---|---|---|
-| Item 1 | @owner | YYYY-MM-DD |
-| Item 2 | @owner | YYYY-MM-DD |
-`,
+    metaDescription:
+      "An incident report template in Markdown: summary, impact, a UTC timeline, root cause and follow-ups with owners. Opens in the editor; no account needed.",
+    audience: "For the on-call engineer who ran the incident.",
   },
-  {
+  postmortem: {
+    slug: "postmortem",
+    category: "Engineering",
+    metaDescription:
+      "A blameless postmortem template in Markdown: impact, timeline, root cause, contributing factors, what you would change, and action items with owners.",
+    audience: "For whoever leads the review after an incident.",
+  },
+  adr: {
     slug: "architecture-decision-record",
     aliases: ["adr"],
-    name: "Architecture Decision Record",
-    doc: { type: "adr", status: "Proposed" },
-    headline: "Free Architecture Decision Record (ADR) Template",
-    description: "ADR: status, context, decision, consequences",
-    metaDescription:
-      "Free ADR template. Capture and share significant architecture decisions with context, rationale, and consequences.",
     category: "Engineering",
-    useCases: ["Staff engineers", "Tech leads", "Software architects", "Engineering teams"],
-    content: `# ADR-NNN: [Decision Title]
+    metaDescription:
+      "An architecture decision record (ADR) template in Markdown: context, decision, consequences and the alternatives you rejected. Number the title and a team space keeps the log in order.",
+    audience: "For the engineer or architect making the decision.",
+  },
+  rfc: {
+    slug: "rfc",
+    category: "Engineering",
+    metaDescription:
+      "An RFC template in Markdown: the problem, the proposal, alternatives, rollout and open questions. Publish it and send the link to reviewers.",
+    audience: "For an engineer proposing a change that others have to agree to.",
+  },
+  runbook: {
+    slug: "runbook",
+    category: "Engineering",
+    metaDescription:
+      "A runbook template in Markdown: when to use it, checks before you start, numbered steps with commands, how to verify, how to roll back and who to call.",
+    audience: "For the team that owns the service and is on call for it.",
+  },
+  "release-notes": {
+    slug: "release-notes",
+    category: "Engineering",
+    metaDescription: "A release notes template in Markdown: what was added, changed and fixed, and what a user has to do when upgrading.",
+    audience: "For whoever ships the release.",
+  },
+};
 
-**Deciders:** @name1, @name2
+const CORE: Template[] = CORE_TEMPLATES.map((core) => ({
+  name: core.name,
+  description: core.description,
+  doc: core.doc,
+  content: `# ${core.title}\n\n${core.body}`,
+  ...CORE_PAGES[core.key],
+}));
 
----
+const OTHERS: Template[] = [
+  {
+    slug: "technical-investigation",
+    name: "Technical investigation",
+    category: "Engineering",
+    description: "Question, what was tried, findings, conclusion, what is still unknown",
+    metaDescription:
+      "A template for writing up a debugging or research investigation: the question, what you tried, what you found, the conclusion and what is still unknown.",
+    audience: "For the engineer who did the digging.",
+    content: `# Investigation: [the question]
 
-## Context
+## Question
 
-What is the issue we're facing? What forces are at play (technical, organisational, constraints)?
+What you set out to find, and why it matters now.
 
----
+## What we know
 
-## Decision
+The symptoms, with numbers, logs or graphs.
 
-What is the change we're making?
+## What was tried
 
----
+| Hypothesis | How it was tested | Result |
+|---|---|---|
+| | | |
 
-## Consequences
+## Findings
 
-### Positive
-- Benefit 1
-- Benefit 2
+What the evidence shows.
 
-### Negative / Trade-offs
-- Trade-off 1
-- Trade-off 2
+## Conclusion
 
-### Risks
-- Risk 1
+The answer, or the most likely one and how sure you are.
 
----
+## Still unknown
 
-## Alternatives Considered
-
-**Option A — [name]:** Brief description. Rejected because…
-
-**Option B — [name]:** Brief description. Rejected because…
+- [ ] Question, and how to answer it
 `,
   },
   {
-    slug: "release-notes",
-    name: "Release Notes",
+    slug: "api-changelog",
+    name: "API changelog",
+    category: "Engineering",
     doc: { type: "release-notes", status: "Released" },
-    headline: "Free Release Notes Template",
-    description: "Version, highlights, changes, breaking changes",
+    description: "Breaking changes, deprecations, additions, fixes, with dates",
     metaDescription:
-      "Free release notes template. Write clear, structured release notes and share them with your users instantly.",
-    category: "Product",
-    useCases: ["Product teams", "Engineering teams", "Open source maintainers", "SaaS companies"],
-    content: `# Release Notes — v[X.Y.Z]
+      "An API changelog template in Markdown: breaking changes with what to do about them, deprecations with removal dates, additions and fixes.",
+    audience: "For the team that maintains an API other people call.",
+    content: `# [API name] changelog: [version or date]
 
-**Milestone:** [Link to milestone or tracker]
+## Breaking changes
 
----
+| Change | What breaks | What to do |
+|---|---|---|
+| | | |
 
-## Highlights
+## Deprecated
 
-One sentence about the most notable thing in this release.
+| Endpoint or field | Use instead | Removed on |
+|---|---|---|
+| | | |
 
----
+## Added
 
-## What's New
+-
 
-- **Feature name:** Description of the new capability.
-- **Feature name:** Description of the new capability.
+## Fixed
 
-## Improvements
-
-- Description of enhancement.
-- Description of enhancement.
-
-## Bug Fixes
-
-- Fixed: description of the fix.
-- Fixed: description of the fix.
-
----
-
-## Breaking Changes
-
-> ⚠️ These changes require action before upgrading.
-
-- **Changed:** What changed and what you need to do.
-
----
-
-## Upgrade Guide
-
-Steps to upgrade from the previous version.
-
----
-
-## Contributors
-
-Thank you to everyone who contributed to this release.
+-
 `,
   },
   {
     slug: "readme",
     name: "README",
-    headline: "Free README Template",
-    description: "Project name, installation, usage, contributing, licence",
-    metaDescription:
-      "Free README template for open source projects. Write a clean, structured README and share it as a readable page.",
     category: "Engineering",
-    useCases: ["Open source maintainers", "Software developers", "Engineering teams"],
-    content: `# Project Name
+    description: "What it is, install, usage, configuration, contributing, licence",
+    metaDescription: "A README template in Markdown: what the project is, how to install and use it, configuration, how to contribute and the licence.",
+    audience: "For the maintainer of a library or service.",
+    content: `# [Project name]
 
-> One sentence description of what this project does.
+One sentence: what it does and who it is for.
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-
----
-
-## Features
-
-- Feature 1
-- Feature 2
-- Feature 3
-
----
-
-## Installation
+## Install
 
 \`\`\`bash
-npm install project-name
+command --here
 \`\`\`
-
----
 
 ## Usage
 
-\`\`\`typescript
-import { thing } from 'project-name';
+The smallest example that does something useful.
 
-const result = thing({ option: 'value' });
+\`\`\`bash
+command --here
 \`\`\`
-
----
 
 ## Configuration
 
-| Option | Type | Default | Description |
-|---|---|---|---|
-| \`option\` | \`string\` | \`"default"\` | What it does |
-
----
+| Setting | Default | What it does |
+|---|---|---|
+| | | |
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch: \`git checkout -b feature/my-feature\`
-3. Commit your changes: \`git commit -m 'Add my feature'\`
-4. Push to the branch: \`git push origin feature/my-feature\`
-5. Open a pull request
-
----
+How to run the tests, and what a pull request needs.
 
 ## Licence
 
-[MIT](LICENSE) © Your Name
-`,
-  },
-  {
-    slug: "meeting-notes",
-    name: "Meeting Notes",
-    headline: "Free Meeting Notes Template",
-    description: "Attendees, agenda, decisions, action items with owners",
-    metaDescription:
-      "Free meeting notes template. Capture decisions and action items clearly. Share readable meeting notes with your team instantly.",
-    category: "General",
-    useCases: ["Teams", "Project managers", "Engineering leads", "Anyone running meetings"],
-    content: `# Meeting Notes — [Meeting Name]
-
-**Date:** YYYY-MM-DD
-**Time:** HH:MM – HH:MM [Timezone]
-**Location / Link:** Zoom / Slack Huddle / Room
-
-**Attendees:** @name1, @name2, @name3
-**Facilitator:** @name
-**Note-taker:** @name
-
----
-
-## Agenda
-
-1. Topic 1
-2. Topic 2
-3. Topic 3
-
----
-
-## Discussion
-
-### Topic 1
-
-Notes from the discussion.
-
-### Topic 2
-
-Notes from the discussion.
-
----
-
-## Decisions
-
-- Decision 1
-- Decision 2
-
----
-
-## Action Items
-
-| # | Action | Owner | Due |
-|---|---|---|---|
-| 1 | Description | @owner | YYYY-MM-DD |
-| 2 | Description | @owner | YYYY-MM-DD |
-
----
-
-## Next Meeting
-
-**Date:** YYYY-MM-DD
-**Agenda items to carry forward:** Item 1, Item 2
-`,
-  },
-  {
-    slug: "onboarding-guide",
-    name: "Onboarding Guide",
-    headline: "Free Onboarding Guide Template",
-    description: "Setup, prerequisites, day-one steps, key contacts",
-    metaDescription:
-      "Free onboarding guide template. Create a clear, shareable onboarding doc for new team members. No account required.",
-    category: "General",
-    useCases: ["Engineering teams", "Team leads", "HR and People", "Remote teams"],
-    content: `# Onboarding Guide — [Team / Role / System]
-
-Welcome! This guide covers everything you need to get up and running.
-
----
-
-## Prerequisites
-
-- Prerequisite 1 (e.g. access to tool X)
-- Prerequisite 2 (e.g. invite to Slack workspace)
-- Prerequisite 3
-
----
-
-## Day 1: Environment Setup
-
-### Step 1 — Install tools
-
-\`\`\`bash
-# Install dependencies
-brew install tool-name
-\`\`\`
-
-### Step 2 — Clone the repo
-
-\`\`\`bash
-git clone https://github.com/org/repo.git
-cd repo
-npm install
-\`\`\`
-
-### Step 3 — Configure environment
-
-Copy \`.env.example\` to \`.env.local\` and fill in the values (ask your buddy for secrets).
-
----
-
-## Key Resources
-
-| Resource | Link | Description |
-|---|---|---|
-| Docs | [Link] | Internal documentation |
-| Runbooks | [Link] | Operational runbooks |
-| Alerts | [Link] | Monitoring dashboard |
-
----
-
-## Key Contacts
-
-| Name | Role | How to reach |
-|---|---|---|
-| @name | Tech lead | Slack: @handle |
-| @name | Product | Slack: @handle |
-
----
-
-## First Week Goals
-
-- [ ] Complete environment setup
-- [ ] Review architecture overview
-- [ ] Ship one small change
-
----
-
-## Questions?
-
-Post in **#team-channel** or ask **@buddy**.
-`,
-  },
-  {
-    slug: "runbook",
-    name: "Runbook",
-    doc: { type: "runbook", status: "Current" },
-    headline: "Free Runbook Template",
-    description: "Trigger, pre-conditions, steps, rollback, escalation",
-    metaDescription:
-      "Free runbook template for engineering teams. Document operational procedures clearly. Publish a shareable runbook in minutes.",
-    category: "Engineering",
-    useCases: ["SRE teams", "Platform engineers", "DevOps", "On-call engineers"],
-    content: `# Runbook — [Procedure Name]
-
-**Last updated:** YYYY-MM-DD
-**Owner:** @team or @name
-
----
-
-## Trigger / When to Use This
-
-Describe the situation or alert that triggers this runbook.
-
----
-
-## Pre-conditions
-
-- [ ] Confirm condition 1
-- [ ] Confirm condition 2 (e.g. you have the right access)
-
----
-
-## Steps
-
-### 1. Verify the issue
-
-\`\`\`bash
-# Check logs
-kubectl logs -n namespace deployment/service --tail 100
-\`\`\`
-
-### 2. Mitigate
-
-\`\`\`bash
-# Apply the fix
-kubectl rollout restart deployment/service -n namespace
-\`\`\`
-
-### 3. Verify resolution
-
-Describe how to confirm the issue is resolved.
-
----
-
-## Rollback
-
-\`\`\`bash
-# Revert the change
-kubectl rollout undo deployment/service -n namespace
-\`\`\`
-
----
-
-## Escalation
-
-If these steps do not resolve the issue:
-
-1. Page **@on-call-engineer** via PagerDuty
-2. Post in **#incidents** with the alert link and what you've tried
-
----
-
-## Post-Incident
-
-- [ ] File a post-mortem if P1/P2
-- [ ] Update this runbook if steps were inaccurate
-`,
-  },
-  {
-    slug: "postmortem",
-    name: "Postmortem",
-    doc: { type: "postmortem", status: "Draft", severity: "P2" },
-    headline: "Free Blameless Postmortem Template",
-    description: "Blameless postmortem: impact, timeline, root cause, contributing factors, action items",
-    metaDescription:
-      "Free blameless postmortem template. Write a clear, structured postmortem and share it with your team instantly. No account required.",
-    category: "Engineering",
-    useCases: ["SRE teams", "Engineering managers", "DevOps engineers", "On-call engineers"],
-    content: `# Postmortem — [Service / Feature Name]
-
-**Duration:** HH:MM – HH:MM UTC
-**Author(s):** @name1, @name2
-
----
-
-## Summary
-
-A brief, neutral description of what happened and its impact. (2–3 sentences, no blame.)
-
----
-
-## Impact
-
-- **Users affected:** ~N users / % of traffic
-- **Services affected:** Service A, Service B
-- **Revenue impact:** $X or "not quantified"
-- **Duration:** X hours Y minutes
-
----
-
-## Timeline
-
-| Time (UTC) | Event |
-|---|---|
-| HH:MM | First alert / first user report |
-| HH:MM | On-call engineer paged |
-| HH:MM | Incident channel opened |
-| HH:MM | Root cause identified |
-| HH:MM | Mitigation applied |
-| HH:MM | Service restored |
-| HH:MM | Monitoring confirmed stable |
-
----
-
-## Root Cause
-
-Describe the primary technical cause. Be specific: which system, which change, which condition?
-
----
-
-## Contributing Factors
-
-- Factor 1 (e.g. missing test coverage for edge case)
-- Factor 2 (e.g. monitoring gap)
-- Factor 3 (e.g. deployment without feature flag)
-
----
-
-## What Went Well
-
-- Point 1 (e.g. fast detection via alert)
-- Point 2 (e.g. clear runbook made mitigation fast)
-
----
-
-## What Went Poorly
-
-- Point 1 (e.g. alert threshold too high — delayed detection)
-- Point 2 (e.g. no rollback path)
-
----
-
-## Lessons Learned
-
-- Lesson 1
-- Lesson 2
-
----
-
-## Action Items
-
-| # | Action | Owner | Due |
-|---|---|---|---|
-| 1 | Corrective action | @owner | YYYY-MM-DD |
-| 2 | Monitoring improvement | @owner | YYYY-MM-DD |
-| 3 | Process improvement | @owner | YYYY-MM-DD |
-`,
-  },
-  {
-    slug: "weekly-update",
-    name: "Weekly Update",
-    headline: "Free Weekly Update Template",
-    description: "Summary, progress, blockers, next week",
-    metaDescription:
-      "Free weekly update template. Write and share a clear team status update with progress, blockers, and next steps.",
-    category: "General",
-    useCases: ["Engineering teams", "Managers", "Individual contributors", "Remote teams"],
-    content: `# Weekly Update — Week of [Date]
-
-**Author:** @name
-**Team:** [Team name]
-
----
-
-## Summary
-
-One to two sentences on the week's most important outcome.
-
----
-
-## Progress This Week
-
-- ✅ Completed: Description
-- ✅ Completed: Description
-- 🔄 In progress: Description (ETA: date)
-
----
-
-## Metrics
-
-| Metric | Last Week | This Week | Target |
-|---|---|---|---|
-| Metric 1 | 0 | 0 | 0 |
-| Metric 2 | 0 | 0 | 0 |
-
----
-
-## Blockers
-
-- **Blocker:** Description. **Needs:** What help is needed from whom.
-
-*(No blockers this week)* — delete if applicable
-
----
-
-## Next Week
-
-- [ ] Goal 1
-- [ ] Goal 2
-- [ ] Goal 3
-
----
-
-## Shoutouts
-
-> Thanks to @name for [reason].
-`,
-  },
-  {
-    slug: "product-spec",
-    name: "Product Spec",
-    description: "Define a feature — problem, goals, constraints, and non-goals.",
-    category: "Product",
-    headline: "Product Spec Template",
-    metaDescription: "Write a clear product specification with problem statement, goals, constraints, and success metrics.",
-    content: `# Product Spec: [Feature Name]
-
-**Author:** [Your name]
-**Status:** Draft | In Review | Approved
-**Last updated:** [Date]
-
----
-
-## Problem Statement
-
-What user pain are we solving? Why does it matter now?
-
-> [1–2 sentence summary of the problem]
-
----
-
-## Goals
-
-What does success look like? List outcomes, not outputs.
-
-- Goal 1: [e.g., Reduce time to X by Y%]
-- Goal 2:
-- Goal 3:
-
-## Non-Goals
-
-Be explicit about what is out of scope for this version.
-
-- We are not building [X]
-- We are not targeting [audience segment]
-
----
-
-## User Stories
-
-| As a… | I want to… | So that… |
-|-------|-----------|----------|
-| [user type] | [action] | [outcome] |
-| [user type] | [action] | [outcome] |
-
----
-
-## Proposed Solution
-
-High-level description of the approach. Link to design mocks if available.
-
-### Key Flows
-
-1. **Flow 1:** [description]
-2. **Flow 2:** [description]
-
----
-
-## Constraints & Risks
-
-| Constraint | Impact | Mitigation |
-|-----------|--------|------------|
-| [e.g., Must use existing auth] | [Medium] | [Plan] |
-
----
-
-## Success Metrics
-
-How will we measure whether this worked?
-
-| Metric | Baseline | Target | Timeframe |
-|--------|---------|--------|-----------|
-| [Metric name] | [Current] | [Goal] | [When] |
-
----
-
-## Open Questions
-
-- [ ] Question 1 — *Owner: @name*
-- [ ] Question 2
-
----
-
-## Timeline
-
-| Milestone | Date |
-|-----------|------|
-| Design review | |
-| Engineering kickoff | |
-| Beta / internal launch | |
-| GA | |
-`,
-  },
-  {
-    slug: "design-review",
-    name: "Design Review",
-    description: "Capture design decisions, feedback, and open questions from a review session.",
-    category: "Design",
-    content: `# Design Review: [Feature / Component Name]
-
-**Date:** [Date]
-**Designer:** [Name]
-**Attendees:** [Names]
-**Design link:** [Figma / link]
-
----
-
-## Context
-
-Why are we reviewing this design now? What decision do we need to make?
-
----
-
-## Design Summary
-
-What is the design trying to achieve? What constraints shaped it?
-
----
-
-## Feedback
-
-### Approved decisions
-
-- ✅ [Decision 1]
-- ✅ [Decision 2]
-
-### Items to revisit
-
-| Issue | Severity | Owner | Resolution |
-|-------|---------|-------|------------|
-| [Description] | High / Med / Low | @name | |
-
----
-
-## Open Questions
-
-- [ ] Question 1
-- [ ] Question 2
-
----
-
-## Next Steps
-
-- [ ] [Action] — *Owner: @name, by [date]*
-- [ ] [Action] — *Owner: @name, by [date]*
-`,
-  },
-  {
-    slug: "api-changelog",
-    name: "API Changelog",
-    doc: { type: "release-notes", status: "Released" },
-    description: "Communicate breaking changes, deprecations, and new endpoints to API consumers.",
-    category: "Engineering",
-    headline: "API Changelog Template",
-    metaDescription: "Document API breaking changes, deprecations, and new endpoints clearly for your developers.",
-    content: `# API Changelog
-
-> **Subscribe to updates:** [Link to mailing list / Slack channel]
-
----
-
-## [Version] — [Date]
-
-### Breaking changes
-
-> ⚠️ Action required by [date].
-
-- **[Endpoint or field]:** [What changed and why.]
-  *Migration:* [What callers must do.]
-
-### Deprecated
-
-- **[Endpoint or field]:** Deprecated, will be removed in [version/date].
-  *Use instead:* [\`replacement\`](#)
-
-### New
-
-- **[Endpoint]:** [Brief description.] [Docs →](#)
-
-### Fixed
-
-- **[Bug description]** — [Impact and resolution.]
-
----
-
-## [Previous version] — [Date]
-
-*(Copy the block above for each release)*
-`,
-  },
-  {
-    slug: "technical-investigation",
-    name: "Technical Investigation",
-    description: "Document a debugging or research investigation — findings, hypotheses, and resolution.",
-    category: "Engineering",
-    headline: "Technical Investigation Template",
-    metaDescription: "Structure a technical investigation with hypothesis, findings, and resolution for knowledge sharing.",
-    content: `# Technical Investigation: [Topic]
-
-**Author:** [Name]
-**Date:** [Date]
-**Status:** In progress | Resolved | Inconclusive
-
----
-
-## Summary
-
-One paragraph summary of what was investigated and what was found.
-
----
-
-## Background
-
-Why did we investigate this? What triggered the investigation?
-
----
-
-## Hypotheses
-
-| # | Hypothesis | Tested | Result |
-|---|-----------|--------|--------|
-| 1 | [Hypothesis] | Yes / No | [Outcome] |
-| 2 | [Hypothesis] | | |
-
----
-
-## Investigation Log
-
-### [Date / Time] — [Investigator]
-
-What was tried, what was observed.
-
-\`\`\`bash
-# Commands or queries used
-\`\`\`
-
-**Finding:** [What was learned]
-
----
-
-## Root Cause
-
-[Describe the root cause once identified, or mark as unknown.]
-
----
-
-## Resolution
-
-Steps taken to resolve the issue.
-
----
-
-## Follow-up Actions
-
-- [ ] [Action] — *Owner: @name*
-- [ ] [Action] — *Owner: @name*
-
----
-
-## References
-
-- [Link to related issue, PR, or document]
-`,
-  },
-  {
-    slug: "sprint-retrospective",
-    name: "Sprint Retrospective",
-    description: "Capture what went well, what didn't, and what to change next sprint.",
-    category: "Engineering",
-    content: `# Sprint [Number] Retrospective
-
-**Date:** [Date]
-**Facilitator:** [Name]
-**Team:** [Team name]
-**Sprint period:** [Start] → [End]
-
----
-
-## What went well ✅
-
-- [Positive observation]
-- [Positive observation]
-- [Positive observation]
-
----
-
-## What could be better 🔧
-
-- [Friction point]
-- [Friction point]
-- [Friction point]
-
----
-
-## Action items
-
-| Action | Owner | By when |
-|--------|-------|---------|
-| [Action] | @name | [date] |
-| [Action] | @name | [date] |
-
----
-
-## Metrics
-
-| Metric | This sprint | Last sprint | Trend |
-|--------|------------|-------------|-------|
-| Story points delivered | | | |
-| Bugs filed | | | |
-| Bugs closed | | | |
-
----
-
-## Notes
-
-[Any other discussion worth capturing]
-`,
-  },
-  {
-    slug: "job-description",
-    name: "Job Description",
-    description: "Write a clear, honest job description that attracts the right candidates.",
-    category: "People",
-    content: `# [Job Title] at [Company]
-
-**Location:** [City, Country / Remote / Hybrid]
-**Team:** [Team name]
-**Reports to:** [Role]
-
----
-
-## About us
-
-[2–3 sentences about the company — mission, product, and stage.]
-
----
-
-## About the role
-
-[2–3 sentences on why this role exists and what impact it will have.]
-
----
-
-## What you'll do
-
-- [Responsibility 1]
-- [Responsibility 2]
-- [Responsibility 3]
-- [Responsibility 4]
-- [Responsibility 5]
-
----
-
-## What we're looking for
-
-**Must-have**
-- [Requirement]
-- [Requirement]
-- [Requirement]
-
-**Nice-to-have**
-- [Requirement]
-- [Requirement]
-
----
-
-## What we offer
-
-- [Benefit 1]
-- [Benefit 2]
-- [Benefit 3]
-
----
-
-## How to apply
-
-[Description of the application process and link.]
-
-*[Company] is an equal-opportunity employer. We welcome applicants of all backgrounds.*
-`,
-  },
-  {
-    slug: "interview-debrief",
-    name: "Interview Debrief",
-    description: "Structured debrief doc to capture interviewer feedback and reach a hiring decision.",
-    category: "People",
-    content: `# Interview Debrief: [Candidate Name]
-
-**Role:** [Role title]
-**Interview date:** [Date]
-**Hiring manager:** [Name]
-
----
-
-## Panel
-
-| Interviewer | Area covered | Signal |
-|-------------|-------------|--------|
-| [Name] | [e.g., Technical screen] | Strong / Mixed / Weak |
-| [Name] | [e.g., System design] | |
-| [Name] | [e.g., Behavioral] | |
-
----
-
-## Feedback by dimension
-
-### Technical ability
-
-[Summary of technical performance — include specific examples from the interview.]
-
-**Signal:** Strong ✅ / Mixed ⚠️ / Weak ❌
-
----
-
-### Problem solving & thinking
-
-[How did the candidate approach ambiguity? Did they ask good questions?]
-
-**Signal:** Strong ✅ / Mixed ⚠️ / Weak ❌
-
----
-
-### Communication
-
-[Was the candidate clear, concise, and able to explain complex ideas?]
-
-**Signal:** Strong ✅ / Mixed ⚠️ / Weak ❌
-
----
-
-### Culture / values fit
-
-[Did the candidate's values and working style align with the team?]
-
-**Signal:** Strong ✅ / Mixed ⚠️ / Weak ❌
-
----
-
-## Strengths
-
-- [Strength]
-- [Strength]
-
-## Concerns
-
-- [Concern]
-- [Concern]
-
----
-
-## Decision
-
-☐ Strong hire  ☐ Hire  ☐ No hire  ☐ Strong no hire
-
-**Rationale:** [1–2 sentences]
-
----
-
-## Next steps
-
-- [ ] Send offer / rejection by [date]
-- [ ] [Any follow-up action]
-`,
-  },
-  {
-    slug: "project-kickoff",
-    name: "Project Kickoff",
-    description: "Align a project team on goals, scope, roles, and delivery plan from day one.",
-    category: "Project Management",
-    headline: "Project Kickoff Template",
-    metaDescription: "Align your team on project goals, scope, roles, and milestones with this kickoff template.",
-    content: `# Project Kickoff: [Project Name]
-
-**Date:** [Date]
-**PM / DRI:** [Name]
-**Status:** Planning | Active | On hold
-
----
-
-## Problem & opportunity
-
-What problem are we solving and why does it matter now?
-
----
-
-## Goals & success criteria
-
-| Goal | How we measure it | Target |
-|------|------------------|--------|
-| [Goal] | [Metric] | [Value] |
-| [Goal] | [Metric] | [Value] |
-
-## Non-goals
-
-- [What is explicitly out of scope]
-
----
-
-## Scope
-
-### In scope
-
-- [Feature / area]
-- [Feature / area]
-
-### Out of scope
-
-- [Feature / area]
-- [Feature / area]
-
----
-
-## Team
-
-| Role | Name | Responsibility |
-|------|------|---------------|
-| Project lead | [Name] | Overall delivery |
-| Engineering | [Name] | [Area] |
-| Design | [Name] | [Area] |
-| [Other] | [Name] | [Area] |
-
----
-
-## Milestones
-
-| Milestone | Target date | Owner |
-|-----------|------------|-------|
-| Kickoff complete | [Date] | [Name] |
-| Design approved | [Date] | [Name] |
-| Engineering complete | [Date] | [Name] |
-| Launch | [Date] | [Name] |
-
----
-
-## Risks
-
-| Risk | Likelihood | Impact | Mitigation |
-|------|-----------|--------|------------|
-| [Risk] | H/M/L | H/M/L | [Plan] |
-
----
-
-## Open questions
-
-- [ ] [Question] — *Owner: @name*
-- [ ] [Question] — *Owner: @name*
-`,
-  },
-  {
-    slug: "launch-checklist",
-    name: "Launch Checklist",
-    description: "Track every task before, during, and after a product or feature launch.",
-    category: "Product",
-    headline: "Launch Checklist Template",
-    metaDescription: "Never miss a step with this comprehensive pre-launch, launch-day, and post-launch checklist template.",
-    content: `# Launch Checklist: [Feature / Product Name]
-
-**Launch date:** [Date]
-**DRI:** [Name]
-**Status:** Preparing | Ready | Launched
-
----
-
-## Pre-launch
-
-### Engineering
-- [ ] Feature flag enabled in production
-- [ ] Load / performance testing complete
-- [ ] Rollback plan documented
-- [ ] Monitoring and alerts configured
-- [ ] Error logging verified
-
-### Design
-- [ ] Final designs approved
-- [ ] Accessibility review complete
-- [ ] Mobile / responsive tested
-
-### Product
-- [ ] User acceptance testing (UAT) complete
-- [ ] Edge cases identified and handled
-- [ ] Analytics events wired
-
-### Legal / Compliance
-- [ ] Privacy review complete
-- [ ] Terms of service updated if needed
-
-### Communications
-- [ ] Internal announcement drafted
-- [ ] External announcement / blog post ready
-- [ ] Support team briefed
-- [ ] Changelog entry written
-
----
-
-## Launch day
-
-- [ ] Deploy to production
-- [ ] Verify core flows in production
-- [ ] Enable for target audience
-- [ ] Publish announcement
-- [ ] Notify support team
-
----
-
-## Post-launch (first 48h)
-
-- [ ] Monitor error rates
-- [ ] Review user feedback / support volume
-- [ ] Check analytics for anomalies
-- [ ] Gather initial user feedback
-
----
-
-## Retrospective
-
-*To be filled in 1 week post-launch.*
-
-**What went well:**
-
-**What could be improved:**
-
-**Action items:**
+The licence, and a link to its text.
 `,
   },
   {
     slug: "data-dictionary",
-    name: "Data Dictionary",
-    description: "Document your data model — tables, fields, types, and business definitions.",
+    name: "Data dictionary",
     category: "Engineering",
-    content: `# Data Dictionary: [System / Domain Name]
+    description: "Tables, fields, types, meaning, where the data comes from",
+    metaDescription: "A data dictionary template in Markdown: each table with its fields, types, meaning, and where the data comes from.",
+    audience: "For the team that owns a database or a data pipeline.",
+    content: `# Data dictionary: [system]
 
-**Last updated:** [Date]
-**Owner:** [Name / Team]
+## [table_name]
 
----
+What one row is.
 
-## Overview
-
-Brief description of the data model and how it relates to the system.
-
----
-
-## Tables / Collections
-
-### \`[table_name]\`
-
-[Brief description of what this table stores and its business purpose.]
-
-| Column | Type | Nullable | Description |
-|--------|------|----------|-------------|
-| \`id\` | \`UUID\` | No | Primary key |
-| \`created_at\` | \`TIMESTAMP\` | No | Record creation time (UTC) |
-| \`updated_at\` | \`TIMESTAMP\` | No | Last update time (UTC) |
-| \`[column]\` | \`[type]\` | Yes / No | [Description] |
-
-**Indexes:** \`[column]\`, \`[column]\`
-**Relations:** References \`[other_table]\` via \`[column]\`
-
----
-
-### \`[table_name]\`
-
-[Description]
-
-| Column | Type | Nullable | Description |
-|--------|------|----------|-------------|
-| \`id\` | | No | |
+| Field | Type | Meaning | Source |
+|---|---|---|---|
 | | | | |
 
----
+## Relationships
 
-## Enums & Constants
+Which tables point at which, and through what key.
 
-### \`[enum_name]\`
+## Notes
 
-| Value | Meaning |
-|-------|---------|
-| \`[VALUE]\` | [Description] |
-| \`[VALUE]\` | [Description] |
+Anything that surprises people: units, time zones, values that mean "unknown".
+`,
+  },
+  {
+    slug: "onboarding-guide",
+    name: "Onboarding guide",
+    category: "Engineering",
+    description: "Access, setup, the first week, who to ask",
+    metaDescription: "An onboarding guide template in Markdown: the access a new engineer needs, how to set up, what to do in the first week and who to ask.",
+    audience: "For the person who onboards a new teammate.",
+    content: `# Onboarding: [team]
 
----
+## Access
 
-## Deprecated Fields
+- [ ] Account or tool, and who grants it
 
-| Field | Table | Deprecated in | Will be removed | Migration |
-|-------|-------|--------------|----------------|-----------|
-| \`[field]\` | \`[table]\` | [version/date] | [date] | [action] |
+## Set up
+
+1. First step
+
+   \`\`\`bash
+   command --here
+   \`\`\`
+
+2. Second step
+
+## First week
+
+- [ ] A first change to ship
+- [ ] A document to read
+- [ ] A person to meet
+
+## Who to ask
+
+| About | Ask |
+|---|---|
+| | |
+`,
+  },
+  {
+    slug: "sprint-retrospective",
+    name: "Sprint retrospective",
+    category: "Engineering",
+    description: "What went well, what did not, what to change, action items",
+    metaDescription: "A sprint retrospective template in Markdown: what went well, what did not, what to change next sprint, and action items with owners.",
+    audience: "For whoever runs the retrospective.",
+    content: `# Retrospective: [sprint]
+
+## What went well
+
+-
+
+## What did not
+
+-
+
+## What we will change
+
+-
+
+## Action items
+
+| Action | Owner | Due |
+|---|---|---|
+| | | |
+`,
+  },
+  {
+    slug: "product-spec",
+    name: "Product spec",
+    category: "Product",
+    description: "Problem, goals, non-goals, requirements, open questions",
+    metaDescription: "A product spec template in Markdown: the problem, goals and non-goals, requirements, how success is measured and open questions.",
+    audience: "For the product manager or engineer defining a feature.",
+    content: `# [Feature name]
+
+## Problem
+
+Who has it, how often, and what they do about it today.
+
+## Goals
+
+- What will be true when this ships
+
+## Non-goals
+
+- What this deliberately leaves out
+
+## Requirements
+
+| Requirement | Must or should | Notes |
+|---|---|---|
+| | | |
+
+## Measuring success
+
+The number that should move, and by how much.
+
+## Open questions
+
+- [ ] Question, and who can answer it
+`,
+  },
+  {
+    slug: "launch-checklist",
+    name: "Launch checklist",
+    category: "Product",
+    description: "Before, on the day and after, with an owner for each task",
+    metaDescription: "A launch checklist template in Markdown: the tasks before, on the day and after a launch, each with an owner.",
+    audience: "For whoever is responsible for the launch.",
+    content: `# Launch: [name]
+
+Launch date: [date]
+
+## Before
+
+- [ ] Task, owner
+
+## On the day
+
+- [ ] Task, owner
+
+## After
+
+- [ ] Task, owner
+
+## Rolling back
+
+What "this is not working" looks like, and what to do then.
 `,
   },
   {
     slug: "proposal",
     name: "Proposal",
-    description: "A structured proposal for a new initiative, change, or investment.",
-    category: "Business",
-    content: `# Proposal: [Title]
-
-**Author:** [Name]
-**Date:** [Date]
-**Status:** Draft | Under review | Approved | Rejected
-
----
+    category: "Product",
+    description: "Summary, the case for it, the plan, cost, risks, the decision asked for",
+    metaDescription: "A proposal template in Markdown: a summary, the case for the change, the plan, what it costs, the risks and the decision you are asking for.",
+    audience: "For anyone asking for a decision or a budget.",
+    content: `# Proposal: [title]
 
 ## Summary
 
-One paragraph describing what is being proposed and why.
+What you are asking for, in two or three sentences.
 
----
+## Why
 
-## Background
+The problem, and what it costs to leave it.
 
-What context does the reader need to evaluate this proposal? What has been tried before?
+## Plan
 
----
+What would be done, in what order, and by whom.
 
-## Proposal
+## Cost
 
-### What we're proposing
-
-[Clear description of the proposal.]
-
-### Why this approach
-
-[Rationale. Why not other approaches?]
-
-### What we're asking for
-
-| Ask | Amount / resource |
-|-----|-------------------|
-| Budget | |
-| Engineering time | |
-| Design time | |
-| Other | |
-
----
-
-## Expected outcomes
-
-| Outcome | How we'll measure it |
-|---------|---------------------|
-| [Outcome] | [Metric] |
-| [Outcome] | [Metric] |
-
----
+Time, money and what will not get done instead.
 
 ## Risks
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|-----------|--------|------------|
-| [Risk] | H/M/L | H/M/L | [Plan] |
+| Risk | How likely | What we would do |
+|---|---|---|
+| | | |
 
----
+## Decision needed
 
-## Alternatives considered
+What you need decided, by whom, and by when.
+`,
+  },
+  {
+    slug: "project-kickoff",
+    name: "Project kickoff",
+    category: "Team",
+    description: "Goal, scope, who does what, milestones, risks",
+    metaDescription: "A project kickoff template in Markdown: the goal, what is in and out of scope, who does what, milestones and risks.",
+    audience: "For the person leading the project.",
+    content: `# Kickoff: [project]
 
-1. **[Alternative A]:** [Why not chosen]
-2. **[Alternative B]:** [Why not chosen]
+## Goal
 
----
+What will be true when the project is done.
 
-## Timeline
+## Scope
 
-| Phase | Duration | Description |
-|-------|---------|-------------|
-| [Phase] | [Weeks] | [What happens] |
+In:
 
----
+-
 
-## Decision
+Out:
 
-**Approved:** ☐ Yes ☐ No ☐ Conditional
-**Notes:**
-**Decision date:**
+-
+
+## People
+
+| Person | Role |
+|---|---|
+| | |
+
+## Milestones
+
+| Milestone | Date |
+|---|---|
+| | |
+
+## Risks
+
+-
+`,
+  },
+  {
+    slug: "meeting-notes",
+    name: "Meeting notes",
+    category: "Team",
+    description: "Who was there, decisions, action items with owners",
+    metaDescription: "A meeting notes template in Markdown: who was there, what was decided, and action items with an owner and a date.",
+    audience: "For whoever is taking notes.",
+    content: `# [Meeting], [date]
+
+Present: [names]
+
+## Decisions
+
+-
+
+## Discussion
+
+What was said that someone who missed the meeting needs to know.
+
+## Action items
+
+| Action | Owner | Due |
+|---|---|---|
+| | | |
+`,
+  },
+  {
+    slug: "weekly-update",
+    name: "Weekly update",
+    category: "Team",
+    description: "What shipped, what is in progress, what is blocked, next week",
+    metaDescription: "A weekly update template in Markdown: what shipped, what is in progress, what is blocked and what comes next week.",
+    audience: "For a team lead writing to the people who depend on the team.",
+    content: `# Week of [date]
+
+## Shipped
+
+-
+
+## In progress
+
+-
+
+## Blocked
+
+What is stuck, and what would unblock it. Delete this section if there is nothing.
+
+## Next week
+
+-
+`,
+  },
+  {
+    slug: "design-review",
+    name: "Design review",
+    category: "Team",
+    description: "What was reviewed, feedback, decisions, open questions",
+    metaDescription: "A design review template in Markdown: what was reviewed, the feedback, what was decided and what is still open.",
+    audience: "For the designer or engineer whose work was reviewed.",
+    content: `# Design review: [what was reviewed]
+
+Reviewers: [names]
+
+## What was reviewed
+
+A link to the design, and the question the review was meant to answer.
+
+## Feedback
+
+| Point | Raised by | Response |
+|---|---|---|
+| | | |
+
+## Decisions
+
+-
+
+## Open questions
+
+- [ ] Question, and who can answer it
 `,
   },
   {
     slug: "user-research-report",
-    name: "User Research Report",
-    description: "Summarize user research findings, insights, and recommended actions.",
-    category: "Design",
-    content: `# User Research Report: [Study Name]
+    name: "User research report",
+    category: "Team",
+    description: "Question, method, who took part, findings, recommendations",
+    metaDescription: "A user research report template in Markdown: the question, the method, who took part, findings with evidence, and recommendations.",
+    audience: "For the researcher or product manager who ran the study.",
+    content: `# Research: [the question]
 
-**Researcher:** [Name]
-**Date:** [Date]
-**Methods:** [e.g., Interviews, Usability test, Survey]
-**Participants:** [n=X, describe cohort briefly]
+## Question
 
----
+What the study set out to learn.
 
-## Research Questions
+## Method
 
-1. [What were we trying to learn?]
-2. [Question 2]
-3. [Question 3]
+How it was done, and with how many people. Describe participants by role, not by name.
 
----
+## Findings
 
-## Methodology
-
-Brief description of how the research was conducted. Link to discussion guide or screener if available.
-
----
-
-## Key Findings
-
-### Finding 1: [Title]
-
-[Description with supporting data or quotes.]
-
-> "[Representative quote from participant]"
-> — [Participant descriptor, e.g., "Startup founder, 3 years experience"]
-
-**Implication:** [What this means for the product or team]
-
----
-
-### Finding 2: [Title]
-
-[Description]
-
-> "[Quote]"
-
-**Implication:** [Implication]
-
----
-
-### Finding 3: [Title]
-
-[Description]
-
----
-
-## Themes Summary
-
-| Theme | Frequency | Severity |
-|-------|----------|---------|
-| [Theme] | [X of Y participants] | High / Med / Low |
-| [Theme] | | |
-
----
+1. Finding, and the evidence for it
 
 ## Recommendations
 
-| Priority | Recommendation | Owner |
-|----------|---------------|-------|
-| P0 | [Action] | [Team] |
-| P1 | [Action] | [Team] |
-| P2 | [Action] | [Team] |
+| Recommendation | Based on finding |
+|---|---|
+| | |
 
----
+## Limits
 
-## Appendix
+What this study cannot tell you.
+`,
+  },
+  {
+    slug: "job-description",
+    name: "Job description",
+    category: "Team",
+    description: "The role, what the person will do, what they need, how to apply",
+    metaDescription: "A job description template in Markdown: the role and team, what the person will do, what they need to have, pay and location, and how to apply.",
+    audience: "For the hiring manager.",
+    content: `# [Job title]
 
-- [Link to raw notes]
-- [Link to recordings]
-- [Link to screener/guide]
+Location: [place or remote] · Team: [team] · Pay: [range]
+
+## The role
+
+What the team does, and what this person is being hired to do.
+
+## What you will do
+
+-
+
+## What you need
+
+-
+
+## Good to have
+
+-
+
+## How to apply
+
+Where to send what, and what happens after.
+`,
+  },
+  {
+    slug: "interview-debrief",
+    name: "Interview debrief",
+    category: "Team",
+    description: "Panel, feedback by area, strengths, concerns, decision",
+    metaDescription: "An interview debrief template in Markdown: the panel, feedback by area, strengths, concerns and the decision. Publish it to your team only.",
+    audience: "For the hiring manager running the debrief.",
+    content: `# Interview debrief: [role]
+
+> [!IMPORTANT]
+> This page is about a person. Publish it into a team space as Team only, or give it a password. Use the candidate's initials, not their name.
+
+Panel: [names]
+
+## Feedback by area
+
+| Area | Interviewer | Notes |
+|---|---|---|
+| | | |
+
+## Strengths
+
+-
+
+## Concerns
+
+-
+
+## Decision
+
+Hire, no hire, or what is still needed to decide.
 `,
   },
 ];
 
+export const TEMPLATES: Template[] = [...CORE, ...OTHERS];

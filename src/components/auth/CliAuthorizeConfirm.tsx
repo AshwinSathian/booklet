@@ -19,13 +19,13 @@ export function CliAuthorizeConfirm({ port, state }: { port: string; state: stri
       const data = await res.json().catch(() => null);
       if (!res.ok || !data?.callbackUrl) {
         setStatus("error");
-        setError(data?.detail ?? "Something went wrong. Please try again.");
+        setError(data?.detail ?? "Something went wrong. Try again.");
         return;
       }
       window.location.href = data.callbackUrl;
     } catch {
       setStatus("error");
-      setError("Something went wrong. Please try again.");
+      setError("Something went wrong. Try again.");
     }
   }
 

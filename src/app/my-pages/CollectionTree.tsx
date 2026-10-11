@@ -204,7 +204,7 @@ export function CollectionTree({
   return (
     <aside className="rounded-xl border border-border-default bg-bg-elevated p-3 lg:sticky lg:top-16 lg:self-start">
       <div className="mb-2 px-1 text-2xs font-semibold uppercase tracking-wider text-text-muted">
-        Collections
+        Folders
       </div>
 
       <div className="flex flex-col gap-0.5">

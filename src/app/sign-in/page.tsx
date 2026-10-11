@@ -39,7 +39,7 @@ export default async function SignInPage({
         <p className="text-sm text-text-secondary">
           {redirectUrl?.startsWith("/cli-auth")
             ? "Sign in to authorize the Booklet CLI."
-            : "Sign in to edit your pages in place and manage them from anywhere."}
+            : "Sign in to edit your pages and see them under My pages."}
         </p>
       </div>
 

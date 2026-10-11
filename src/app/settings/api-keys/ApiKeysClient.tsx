@@ -39,7 +39,7 @@ function KeyCard({ k, onRevoked }: { k: KeyRow; onRevoked: (id: string) => void 
     <div className="group flex items-center gap-3 rounded-xl border border-border-default bg-bg-elevated px-4 py-3 transition hover:border-border-strong">
       <div className="min-w-0 flex-1">
         <div className="text-sm font-medium text-text-primary">
-          {k.label ?? <span className="text-text-muted italic">Unlabeled key</span>}
+          {k.label ?? <span className="text-text-muted italic">Unlabelled key</span>}
         </div>
         <div className="meta-row mt-1 text-xs text-text-muted">
           <span className="font-mono text-text-muted">{k.id}</span>
@@ -56,7 +56,7 @@ function KeyCard({ k, onRevoked }: { k: KeyRow; onRevoked: (id: string) => void 
                 <path d="M6.5 1a5.5 5.5 0 1 0 5.5 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
             ) : null}
-            Revoke
+            Delete
           </Button>
           <Button variant="ghost" size="md" iconOnly onClick={() => setConfirming(false)}>
             <Icon name="close" size={13} />
@@ -68,7 +68,7 @@ function KeyCard({ k, onRevoked }: { k: KeyRow; onRevoked: (id: string) => void 
           size="md"
           iconOnly
           onClick={() => setConfirming(true)}
-          title="Revoke key"
+          title="Delete key"
           className="sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 shrink-0 hover:text-danger hover:bg-danger/8"
         >
           <Icon name="trash" size={14} />
@@ -96,7 +96,7 @@ function NewKeyReveal({ raw, onDismiss }: { raw: string; onDismiss: () => void }
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-sm font-semibold text-text-primary">Your new API key</p>
-          <p className="mt-0.5 text-xs text-text-secondary">Copy it now — it won&apos;t be shown again.</p>
+          <p className="mt-0.5 text-xs text-text-secondary">Copy it now. It is not shown again.</p>
         </div>
         <Button variant="ghost" size="sm" iconOnly onClick={onDismiss}>
           <Icon name="close" size={12} />
@@ -165,7 +165,7 @@ export function ApiKeysSection({ initialKeys }: { initialKeys: KeyRow[] }) {
         <div>
           <h1 className="font-display text-2xl font-medium tracking-[-0.02em] sm:text-[1.75rem]">API keys</h1>
           <p className="mt-2 text-sm text-text-secondary">
-            Use these keys with the Booklet API to publish programmatically.
+            A key lets the API, the CLI and MCP clients act as your account. An account can have 10.
           </p>
         </div>
       </div>

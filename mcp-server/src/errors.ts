@@ -13,9 +13,9 @@ export const ERRORS = {
   INTERNAL: (msg?: string) => mcpError(-32603, msg ?? "Internal error"),
   // Application-level errors (MCP convention: -32000 to -32099)
   UNAUTHORIZED: () =>
-    mcpError(-32001, "Invalid or missing API key. Generate one at booklet.ashwinsathian.com/settings/api-keys"),
+    mcpError(-32001, "Not signed in to Booklet, or the API key is wrong or was deleted. Reconnect, or create a key at booklet.ashwinsathian.com/settings/api-keys"),
   RATE_LIMITED: () =>
-    mcpError(-32002, "Rate limit exceeded. Booklet allows 60 requests per minute per API key."),
+    mcpError(-32002, "Rate limit reached. Wait a minute and try again."),
   NOT_FOUND: (resource: string) => mcpError(-32003, `${resource} not found`),
   FORBIDDEN: () => mcpError(-32004, "You do not own this page"),
   UPSTREAM: (status: number) =>

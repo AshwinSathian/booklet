@@ -128,7 +128,7 @@ export async function handlePublishPage(
     // The v1/publish endpoint reads title and slug from YAML frontmatter.
     const r = await client(apiKey, apiBase).publishPage(withFrontmatter(raw, { title, slug }), { visibility });
     return toolResult(
-      `Page published.\n\nURL: ${r.url}\nID: ${r.id}\n\nShare this link. The page is live and permanent.`,
+      `Page published.\n\nURL: ${r.url}\nID: ${r.id}\n\nThe page stays at this URL until you delete it.`,
       { link: resourceLink(r.id, title ?? r.id), structuredContent: { id: r.id, url: r.url } },
     );
   } catch (e) {

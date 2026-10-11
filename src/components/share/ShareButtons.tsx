@@ -1,5 +1,6 @@
 "use client";
 
+import { useHydrated } from "@/lib/ui/hydration";
 import { useState } from "react";
 
 interface ShareButtonsProps {
@@ -9,6 +10,9 @@ interface ShareButtonsProps {
 
 export function ShareButtons({ url, title }: ShareButtonsProps) {
   const [copied, setCopied] = useState(false);
+  // A phone's own share sheet reaches every app on it. Known only in the browser, so after hydration.
+  const hydrated = useHydrated();
+  const canShare = hydrated && typeof navigator.share === "function";
 
   const handleCopy = async () => {
     try {
@@ -32,7 +36,7 @@ export function ShareButtons({ url, title }: ShareButtonsProps) {
   const linkedInUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
 
   return (
-    <div className="flex items-center gap-2 mt-6 pt-5 border-t border-border-subtle print:hidden">
+    <div className="flex flex-wrap items-center gap-2 mt-6 pt-5 border-t border-border-subtle print:hidden">
       <span className="text-2xs font-medium uppercase tracking-widest text-text-muted mr-1">Share</span>
 
       {/* Copy link */}
@@ -65,6 +69,16 @@ export function ShareButtons({ url, title }: ShareButtonsProps) {
         )}
       </button>
 
+      {canShare ? (
+        <button
+          type="button"
+          onClick={() => void navigator.share({ title, url }).catch(() => {})}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border-subtle bg-bg-elevated px-3 py-1.5 text-xs font-medium text-text-muted transition hover:border-accent/30 hover:text-text-primary hover:bg-fill-1"
+        >
+          Share…
+        </button>
+      ) : null}
+
       {/* X (Twitter) */}
       <a
         href={tweetUrl}
@@ -90,7 +104,7 @@ export function ShareButtons({ url, title }: ShareButtonsProps) {
         <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-label="LinkedIn" role="img">
           <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
         </svg>
-        Share
+        LinkedIn
       </a>
     </div>
   );

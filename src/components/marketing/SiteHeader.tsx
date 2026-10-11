@@ -36,10 +36,16 @@ export function SiteHeader() {
       >
         Skip to content
       </a>
-      <div className="mx-auto flex h-16 w-full max-w-[72rem] items-center gap-8 px-5 sm:px-8">
-        <AppLogo />
+      <div className="mx-auto flex h-16 w-full max-w-[72rem] items-center gap-4 px-5 lg:gap-8 lg:px-8">
+        <div className="flex items-center gap-2.5">
+          <AppLogo />
+          {/* The Trust page says what "beta" means here. */}
+          <Link href="/trust" className="whitespace-nowrap rounded-pill border border-border-strong px-2 py-px text-xs font-medium text-text-secondary hover:text-text-primary">
+            Public beta
+          </Link>
+        </div>
 
-        <nav aria-label="Site" className="hidden items-center gap-7 md:flex">
+        <nav aria-label="Site" className="hidden items-center gap-4 md:flex lg:gap-7">
           {NAV_LINKS.map((link) => {
             const current = isCurrent(link.href, pathname);
             return (

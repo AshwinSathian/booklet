@@ -60,7 +60,7 @@ booklet new incident        # writes incident.md
 booklet new adr -o adr/0013-cache.md
 ```
 
-The templates are `incident`, `adr`, `rfc` and `runbook`. Each starts with the frontmatter that drives the page's header strip.
+The templates are `incident`, `postmortem`, `adr`, `rfc`, `runbook` and `release-notes`. Each starts with the frontmatter that drives the page's header strip.
 
 ## List, pull, move, delete
 

@@ -11,9 +11,18 @@ export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ tag: string }> };
 
+/** Null for a malformed escape, which is a 404 and not an error. */
+function decodeTag(tag: string): string | null {
+  try {
+    return decodeURIComponent(tag);
+  } catch {
+    return null;
+  }
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { tag } = await params;
-  const decoded = decodeURIComponent(tag);
+  const decoded = decodeTag(tag) ?? "";
   return buildMetadata({
     title: `Pages tagged ${decoded}`,
     description: `Public pages tagged "${decoded}".`,
@@ -24,7 +33,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function TagPage({ params }: Props) {
   const { tag } = await params;
-  const decoded = decodeURIComponent(tag);
+  const decoded = decodeTag(tag) ?? "";
   if (!decoded.trim()) notFound();
   const pages = await getPagesByTag(decoded).catch(() => [] as ExploreItem[]);
 

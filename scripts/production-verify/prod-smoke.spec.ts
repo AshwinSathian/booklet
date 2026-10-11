@@ -34,11 +34,17 @@ let createdPageIds: string[] = [];
 test.describe.configure({ mode: "serial" });
 
 test.describe("Production verification — core routes", () => {
-  for (const path of ["/", "/docs", "/docs/quickstart", "/docs/reference/api", "/templates", "/pricing", "/changelog", "/explore", "/sign-in", "/sign-up"]) {
+  // /privacy, /terms and /trust print an email address. A CDN that rewrites
+  // addresses in HTML breaks hydration on exactly those pages, and only on
+  // the live site: this is the one suite that goes through it.
+  for (const path of ["/", "/docs", "/docs/quickstart", "/docs/reference/api", "/templates", "/pricing", "/changelog", "/explore", "/sign-in", "/sign-up", "/privacy", "/terms", "/trust", "/about"]) {
     test(`${path} loads without error`, async ({ page }) => {
-      const res = await page.goto(`${BASE}${path}`);
+      const errors: string[] = [];
+      page.on("pageerror", (e) => errors.push(e.message.split("\n")[0]));
+      const res = await page.goto(`${BASE}${path}`, { waitUntil: "networkidle" });
       expect(res?.status()).toBeLessThan(500);
       await expect(page.locator("body")).not.toContainText("Application error");
+      expect(errors, `errors thrown in the browser on ${path}`).toEqual([]);
     });
   }
 });
@@ -128,9 +134,9 @@ test.describe("Production verification — signup, publish, session lifecycle", 
     expect(res.status()).toBe(403);
   });
 
-  test("admin is forbidden without an allowlisted IP", async ({ request }) => {
+  test("admin is not found without an allowlisted IP", async ({ request }) => {
     const res = await request.get(`${BASE}/admin`, { maxRedirects: 0 });
-    expect(res.status()).toBe(403);
+    expect(res.status()).toBe(404);
   });
 });
 

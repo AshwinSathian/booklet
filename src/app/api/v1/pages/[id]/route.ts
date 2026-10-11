@@ -1,6 +1,6 @@
 import { assertVerified } from "@/server/verification";
 import type { PublishedDoc } from "@/lib/blocks";
-import { DEFAULT_SETTINGS } from "@/lib/blocks";
+import { resolveSettings } from "@/lib/blocks";
 import { BLOCKS } from "@/lib/constants";
 import { updatePageRecord, deletePageRecord, deletePageAssociatedRecords, setPageLinks } from "@/lib/db";
 import { assertVisibilityAllowed } from "@/server/access";
@@ -164,7 +164,9 @@ export const PATCH = v1("patch", 60, "pages:write", async (req: Request, userId:
     const doc: PublishedDoc = {
       v: BLOCKS.version,
       createdAt: record.created_at,
-      settings: payload.settings ?? DEFAULT_SETTINGS,
+      // What the request did not send stays as the author left it: the API, the
+      // CLI and the MCP server never send a theme or a typeface.
+      settings: resolveSettings(payload.settings, (await getDoc(record.id))?.settings),
       blocks,
       raw: payload.raw,
     };
@@ -180,7 +182,7 @@ export const PATCH = v1("patch", 60, "pages:write", async (req: Request, userId:
       // above, so anything reaching here is an unexpected DB/driver
       // failure that could carry internal details (hosts, connection info).
       logError("v1/pages", "Update failed", e);
-      return problem(500, "Update failed");
+      return problem(500, "The page was not updated. Try again.");
     }
 
     void recordPublishEvent({
@@ -218,7 +220,7 @@ export const PATCH = v1("patch", 60, "pages:write", async (req: Request, userId:
         return problem(409, "Slug is already taken.");
       }
       logError("v1/pages", "DB patch write failed", dbErr);
-      return problem(500, "Update failed");
+      return problem(500, "The page was not updated. Try again.");
     }
   }
 
@@ -251,7 +253,7 @@ export const DELETE = v1("delete", 60, "pages:write", async (req: Request, userI
     await deleteDoc(id);
   } catch (e: unknown) {
     logError("v1/pages", "Delete failed", e);
-    return problem(500, "Delete failed");
+    return problem(500, "Nothing was deleted. Try again.");
   }
 
   try {

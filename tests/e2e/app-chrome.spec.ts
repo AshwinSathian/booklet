@@ -86,7 +86,7 @@ test("collection and author pages use the public site header and footer", async 
     await page.goto(route);
     await expect(page.locator("header[data-site-header]"), route).toHaveCount(1);
     await expect(page.getByRole("contentinfo"), route).toHaveCount(1);
-    await expect(page.getByText(/No public pages/), route).toHaveCount(1);
+    await expect(page.getByText(/no public pages/i), route).toHaveCount(1);
   }
 });
 
@@ -330,7 +330,7 @@ test("a menu item that is active with no label of its own shows a tick", async (
   const item = page.getByRole("menuitem", { name: /Copy embed code/ });
   await expect(item.locator("svg")).toHaveCount(1);
   await item.click();
-  const copied = page.getByRole("menuitem", { name: /Copied!/ });
+  const copied = page.getByRole("menuitem", { name: /Copied/ });
   await expect(copied.locator("svg")).toHaveCount(2);
 });
 
@@ -343,14 +343,14 @@ test("team settings keeps the header while it loads, and its refusals have a hea
     await route.continue();
   });
   await page.goto(`/t/${spaceSlug}/admin`);
-  await expect(page.getByRole("status", { name: "Loading team settings" })).toBeVisible();
+  await expect(page.getByRole("status", { name: "Loading space settings" })).toBeVisible();
   await expect(page.locator("header[data-app-header]")).toBeVisible();
   release();
-  await expect(page.getByRole("heading", { level: 1, name: "Team settings" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Space settings" })).toBeVisible();
   await page.unroute("**/api/teams");
 
   await page.goto("/t/no-such-space-here/admin");
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Team not found");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Space not found");
   await expect(page.locator("header[data-app-header]")).toHaveCount(1);
 });
 
@@ -421,4 +421,77 @@ test("the slash menu opens at the caret and stays on screen, and the editor's di
     await page.keyboard.press("Escape");
     await page.context().close();
   }
+});
+
+// ---- 3.1.2 ----
+
+test("an update that sends no settings keeps the page's theme and typeface", async ({ browser }) => {
+  const { page } = await seeded(browser);
+  const api = page.context().request;
+  const settings = { spacing: "compact", width: "wide", code: "show", typeface: "serif", theme: "noir" };
+  const published = await api.post("/api/publish", { data: { raw: "# Themed\n\nBody.", settings } });
+  expect(published.status(), await published.text()).toBe(200);
+  const { id } = (await published.json()) as { id: string };
+  // The editor's own update route, with content only: what the CLI and the API send.
+  expect((await api.patch(`/api/publish/${id}`, { data: { raw: "# Themed\n\nBody, edited." } })).ok()).toBe(true);
+  await page.goto(`/p/${id}`);
+  const body = page.getByText("Body, edited.");
+  await expect(body).toBeVisible();
+  // Still the noir theme and the serif face.
+  await expect(page.locator('[class*="noir"]').first()).toBeAttached();
+  expect(await body.evaluate((el) => getComputedStyle(el).fontFamily)).toMatch(/serif/i);
+});
+
+test("pages are sent with no-transform, so a CDN leaves the markup React rendered alone", async ({ request }) => {
+  for (const path of ["/privacy", "/terms", "/trust", "/"]) {
+    const res = await request.get(path);
+    expect(res.headers()["cache-control"], path).toContain("no-transform");
+  }
+});
+
+test("/admin from an address that is not allowed is the site's own 404", async ({ browser }) => {
+  const visitor = await (await browser.newContext({ extraHTTPHeaders: { "cf-connecting-ip": "203.0.113.9" } })).newPage();
+  for (const path of ["/admin", "/admin/reports"]) {
+    const res = await visitor.goto(path);
+    expect(res!.status(), path).toBe(404);
+    await expect(visitor.getByRole("heading", { level: 1 }), path).toHaveText("There is no page here.");
+    await expect(visitor.locator("header[data-site-header]"), path).toHaveCount(1);
+  }
+});
+
+test("when saving fails, the warning pushes the editor down and covers no control", async ({ browser }) => {
+  const { page } = await seeded(browser, PHONE);
+  await page.goto("/app", { waitUntil: "networkidle" });
+  // Browser storage is full from here on.
+  await page.evaluate(() => {
+    Storage.prototype.setItem = () => {
+      throw new DOMException("full", "QuotaExceededError");
+    };
+  });
+  await page.getByRole("textbox", { name: "Write or paste Markdown…" }).fill("# Cannot be saved\n\nBody.");
+  const warning = page.locator("[data-save-warning]");
+  await expect(warning).toBeVisible({ timeout: 10000 });
+  const covered = await warning.evaluate((el) => {
+    const b = el.getBoundingClientRect();
+    return [...document.querySelectorAll("button, a, [role=tab], textarea")]
+      .filter((c) => !el.contains(c))
+      .filter((c) => {
+        const r = c.getBoundingClientRect();
+        return r.width > 0 && r.height > 0 && r.left < b.right && r.right > b.left && r.top < b.bottom && r.bottom > b.top;
+      })
+      .map((c) => c.getAttribute("aria-label") || c.getAttribute("title") || c.textContent?.trim().slice(0, 30));
+  });
+  expect(covered).toEqual([]);
+  expect(await overflow(page)).toBeLessThanOrEqual(1);
+});
+
+test("the editor's text shows that it has focus", async ({ browser }) => {
+  const { page } = await seeded(browser);
+  await page.goto("/app", { waitUntil: "networkidle" });
+  const editor = page.getByRole("textbox", { name: "Write or paste Markdown…" });
+  const shadow = () => editor.evaluate((el) => getComputedStyle(el).boxShadow);
+  await page.getByRole("button", { name: "Settings", exact: true }).focus();
+  const resting = await shadow();
+  await editor.focus();
+  expect(await shadow()).not.toBe(resting);
 });

@@ -289,7 +289,7 @@ function ClaudeDesktopInstructions({ apiKey }: { apiKey: string }) {
           <p className="text-sm text-text-secondary">
             In a new conversation, look for the{" "}
             <span className="font-medium text-text-primary">plug icon</span> (⚡ or 🔌) near the
-            input box. Click it — <strong>booklet</strong> should appear in the list of connected
+            input box. Click it: <strong>booklet</strong> should appear in the list of connected
             servers.
           </p>
         </Step>
@@ -362,11 +362,11 @@ function CursorInstructions({ apiKey }: { apiKey: string }) {
       <div className="space-y-4">
         <Step n={1} title="Open MCP settings">
           <p className="text-sm text-text-secondary">
-            <strong>Option A — UI:</strong> Open Cursor → <Code>⌘ ,</Code> (Settings) →{" "}
+            <strong>Option A, in the app:</strong> Open Cursor → <Code>⌘ ,</Code> (Settings) →{" "}
             <strong>MCP</strong> → <strong>Add new global MCP server</strong>.
           </p>
           <p className="text-sm text-text-secondary mt-2">
-            <strong>Option B — file:</strong> Create or edit the config file directly:
+            <strong>Option B, in the file:</strong> Create or edit the config file directly:
           </p>
           <div className="mt-1.5 space-y-1">
             <div className="flex items-center gap-2 text-xs">
@@ -473,7 +473,7 @@ function VSCodeInstructions({ apiKey }: { apiKey: string }) {
           <p className="text-sm text-text-secondary">
             VS Code detects the file automatically. Open Copilot Chat (<Code>⌘ ⌥ I</Code>) and
             switch to <strong>Agent mode</strong> (the @ icon). Click{" "}
-            <strong>Select tools</strong> — <strong>booklet</strong> should be listed.
+            <strong>Select tools</strong>: <strong>booklet</strong> should be listed.
           </p>
         </Step>
 
@@ -515,7 +515,7 @@ function ZedInstructions({ apiKey }: { apiKey: string }) {
         <Step n={2} title="Save and open the AI assistant">
           <p className="text-sm text-text-secondary">
             Save the file. Zed reloads settings automatically. Open the AI panel (<Code>⌘ ?</Code>)
-            and start a new conversation — <Code>mcp-remote</Code> will be fetched on first use.
+            and start a new conversation. <Code>mcp-remote</Code> is fetched on first use.
           </p>
         </Step>
 

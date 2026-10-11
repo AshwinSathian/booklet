@@ -6,7 +6,7 @@ import { ReportForm } from "./ReportForm";
 
 export const metadata: Metadata = buildMetadata({
   title: "Report a page",
-  description: "Report a published page that breaks the terms of use.",
+  description: "Report a published page that breaks the terms of service.",
   pathname: "/report",
   noIndex: true,
 });

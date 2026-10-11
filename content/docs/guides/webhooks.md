@@ -4,13 +4,13 @@ description: Receive a signed HTTP request when one of your pages is published o
 order: 4
 ---
 
-A webhook is a URL that Booklet sends a POST request to when you publish or update a page. An account can have five.
+A webhook is a URL that Booklet sends a POST request to when you publish or update a page. An account can have 5.
 
 ## Register one
 
 Open [Settings, Webhooks](/settings/webhooks), enter a URL, and choose the events: `page.published`, `page.updated`, or both. The signing secret is shown once, when the webhook is created. Copy it then.
 
-The URL has to be reachable from the internet. Addresses on a private network or on localhost are refused.
+The URL has to be HTTPS and reachable from the internet. Addresses on a private network or on localhost are refused.
 
 ## What is sent
 

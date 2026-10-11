@@ -1,6 +1,9 @@
 import { Container, PageShell } from "@/components/marketing/primitives";
 import { Button } from "@/components/ui/Button";
+import { buildMetadata } from "@/lib/seo";
 import { ROUTES } from "@/lib/constants";
+
+export const metadata = buildMetadata({ title: "Page not found", noIndex: true });
 
 export default function NotFound() {
   return (

@@ -109,7 +109,7 @@ export function createMcpServer(apiBase: string, apiKey: string, siteUrl = "http
     {
       title: "Get Page",
       description:
-        "Retrieve metadata and (for pages under 8,000 characters) the raw Markdown of a specific page you own. Larger pages return metadata plus a resource link instead of the full body — follow up with resources/read to fetch it.",
+        "Retrieve metadata and (for pages under 8,000 characters) the raw Markdown of a specific page you own. Larger pages return metadata plus a resource link instead of the full body. Call resources/read to fetch it.",
       inputSchema: GetPageInputSchema,
       outputSchema: GetPageOutputSchema,
       annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
@@ -133,7 +133,7 @@ export function createMcpServer(apiBase: string, apiKey: string, siteUrl = "http
     {
       title: "Delete Page",
       description:
-        "Permanently delete a Booklet page. Cannot be undone — the URL stops working immediately. Use list_pages to confirm the ID first.",
+        "Permanently delete a Booklet page. This cannot be undone: the URL stops working immediately. Use list_pages to confirm the ID first.",
       inputSchema: DeletePageInputSchema,
       outputSchema: DeletePageOutputSchema,
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },

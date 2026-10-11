@@ -2,6 +2,7 @@
 
 import { AppPage, AppPageTitle } from "@/components/app/AppPage";
 import { Button } from "@/components/ui/Button";
+import { CopyButton } from "@/components/marketing/CopyButton";
 import { useRouter } from "next/navigation";
 import { use, useCallback, useEffect, useState } from "react";
 import { useSession } from "@/components/auth/SessionProvider";
@@ -32,7 +33,7 @@ function AdminPageInner({ slug }: { slug: string }) {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviting, setInviting] = useState(false);
-  const [inviteResult, setInviteResult] = useState<{ ok: boolean; message: string } | null>(null);
+  const [inviteResult, setInviteResult] = useState<{ ok: boolean; message: string; link?: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
@@ -57,7 +58,7 @@ function AdminPageInner({ slug }: { slug: string }) {
           setMembers(mData.members);
         }
       } catch {
-        setError("Failed to load team data.");
+        setError("The space could not be loaded. Reload the page.");
       } finally {
         setLoading(false);
       }
@@ -96,12 +97,19 @@ function AdminPageInner({ slug }: { slug: string }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ email: inviteEmail.trim() }),
       });
-      const data = (await res.json()) as { ok?: boolean; detail?: string };
-      if (res.ok) {
-        setInviteResult({ ok: true, message: `Invite sent to ${inviteEmail.trim()}.` });
+      const data = (await res.json()) as { ok?: boolean; detail?: string; inviteUrl?: string; emailed?: boolean };
+      if (res.ok && data.inviteUrl) {
+        const to = inviteEmail.trim();
+        setInviteResult({
+          ok: true,
+          link: data.inviteUrl,
+          message: data.emailed
+            ? `The invite was emailed to ${to}. This is the same link, if you would rather send it yourself.`
+            : `Invite link for ${to}. Send it to them yourself.`,
+        });
         setInviteEmail("");
       } else {
-        setInviteResult({ ok: false, message: data.detail ?? "Failed to send invite." });
+        setInviteResult({ ok: false, message: data.detail ?? "The invite was not created. Try again." });
       }
     } finally {
       setInviting(false);
@@ -141,7 +149,7 @@ function AdminPageInner({ slug }: { slug: string }) {
     return (
       // Inside AppPage, so the header is there from the first paint.
       <AppPage>
-        <div className="flex justify-center py-24" role="status" aria-label="Loading team settings">
+        <div className="flex justify-center py-24" role="status" aria-label="Loading space settings">
           <svg width="24" height="24" viewBox="0 0 13 13" fill="none" className="animate-spin text-text-muted" aria-hidden>
             <path d="M6.5 1a5.5 5.5 0 1 0 5.5 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
@@ -156,7 +164,7 @@ function AdminPageInner({ slug }: { slug: string }) {
         <AppPageTitle
           back={{ href: "/t", label: "Spaces" }}
           eyebrow="Space"
-          title="Team not found"
+          title="Space not found"
           lede="There is no team space at this address, or you are not a member of it."
         />
         <Button variant="secondary" size="lg" href="/t">All spaces</Button>
@@ -170,7 +178,7 @@ function AdminPageInner({ slug }: { slug: string }) {
         <AppPageTitle
           back={{ href: `/t/${slug}`, label: team.name }}
           eyebrow="Space"
-          title="Only the owner can change this team"
+          title="Only the owner can change this space"
           lede="You are a member of this space. Its name, members and deletion are the owner's to manage."
         />
         <Button variant="secondary" size="lg" href={`/t/${slug}`}>Back to the space</Button>
@@ -183,13 +191,13 @@ function AdminPageInner({ slug }: { slug: string }) {
 
   return (
     <AppPage>
-        <AppPageTitle back={{ href: `/t/${slug}`, label: team.name }} eyebrow="Space" title="Team settings" />
+        <AppPageTitle back={{ href: `/t/${slug}`, label: team.name }} eyebrow="Space" title="Space settings" />
 
         {error && <p className="text-sm text-danger mb-4">{error}</p>}
 
         {/* Rename */}
         <section className="mb-10">
-          <h2 className="mb-3 text-[0.9375rem] font-semibold">Team name</h2>
+          <h2 className="mb-3 text-[0.9375rem] font-semibold">Space name</h2>
           <div className="flex items-center gap-2">
             <input
               value={teamName}
@@ -262,26 +270,35 @@ function AdminPageInner({ slug }: { slug: string }) {
               disabled={inviting || !inviteEmail.trim()}
               className="shrink-0"
             >
-              {inviting ? "Sending…" : "Send invite"}
+              {inviting ? "Inviting…" : "Invite"}
             </Button>
           </div>
+          <p className="mt-2 text-xs text-text-muted">
+            An invite works for 72 hours, and only for an account with that email address. The person joins as an editor.
+          </p>
           {inviteResult && (
-            <p className={`mt-1.5 text-xs ${inviteResult.ok ? "text-text-secondary" : "text-danger"}`}>
-              {inviteResult.message}
-            </p>
+            <div role="status" className="mt-3">
+              <p className={`text-sm ${inviteResult.ok ? "text-text-secondary" : "text-danger"}`}>{inviteResult.message}</p>
+              {inviteResult.link ? (
+                <div className="mt-2 flex items-center gap-2">
+                  <input readOnly value={inviteResult.link} aria-label="Invite link" onFocus={(e) => e.currentTarget.select()} className="min-w-0 flex-1 field font-mono text-xs" />
+                  <CopyButton text={inviteResult.link} label="Copy link" className="shrink-0" />
+                </div>
+              ) : null}
+            </div>
           )}
         </section>
 
         {/* Danger zone */}
         <section className="border-t border-border-default pt-8">
-          <h2 className="mb-1 text-[0.9375rem] font-semibold">Delete this team</h2>
+          <h2 className="mb-1 text-[0.9375rem] font-semibold">Delete this space</h2>
           <p className="mb-4 text-sm text-text-secondary">
-            Deleting a team is permanent. Pages are kept but removed from this team.
+            Deleting a space cannot be undone. Its pages are kept and leave the space, and its members lose access. A Team only page can then be opened only by its author, until the author changes its visibility.
           </p>
           {confirmDelete ? (
             <div className="flex items-center gap-2">
               <Button variant="danger" size="lg" onClick={() => void handleDelete()} disabled={deleting}>
-                {deleting ? "Deleting…" : "Yes, delete team"}
+                {deleting ? "Deleting…" : "Yes, delete the space"}
               </Button>
               <Button variant="ghost" size="lg" onClick={() => setConfirmDelete(false)}>
                 Cancel
@@ -289,7 +306,7 @@ function AdminPageInner({ slug }: { slug: string }) {
             </div>
           ) : (
             <Button variant="danger" size="lg" onClick={() => setConfirmDelete(true)}>
-              Delete team
+              Delete space
             </Button>
           )}
         </section>

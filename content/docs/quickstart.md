@@ -1,6 +1,6 @@
 ---
 title: Quickstart
-description: Publish a first page from the editor, then from the terminal. Neither needs more than a couple of minutes.
+description: Publish a first page from the editor, then from the terminal. 
 order: 1
 ---
 
@@ -10,17 +10,17 @@ Booklet turns a Markdown document into a web page with a link. This page gets yo
 
 1. Open [the editor](/app). You do not need an account.
 2. Write some Markdown, or start from a [template](/templates). The preview beside the editor is the page your reader will get.
-3. Press **Publish**, or `⌘↵`.
+3. Press **Publish**, or `⌘↵` (`Ctrl+Enter` on Windows and Linux).
 
 You get a link like `https://booklet.ashwinsathian.com/p/Ab3k91QxZp`. A new page is **unlisted**: anyone with the link can read it, and search engines are told not to index it.
 
-Without an account you can publish 10 pages a month, each is kept for 90 days, and a page cannot be edited after it is published. A free account removes all three limits. See [Limits](/docs/reference/limits).
+Without an account you can publish 10 pages a month, each is served for 90 days, and a page cannot be edited after it is published. A free account removes all three limits. See [Limits](/docs/reference/limits).
 
 ## Publish from the terminal
 
 The CLI needs an account and an API key.
 
-1. [Create an account](/sign-up), then create a key under [Settings, API keys](/settings/api-keys). The key starts with `bklt_` and is shown once.
+1. [Create an account](/sign-up), confirm your email address from the link we send, then create a key under [Settings, API keys](/settings/api-keys). The key starts with `bklt_` and is shown once.
 2. Give the key to the CLI and publish a file:
 
 ```bash
@@ -36,7 +36,7 @@ npx booklet-cli publish README.md --update Ab3k91QxZp
 
 ## Make it an engineering document
 
-Put a `type` in the frontmatter and the page shows its status, severity, date and owners in a strip under the title:
+Put a `type` in the frontmatter and the page shows its status, severity, date and owners in a strip above the title:
 
 ```markdown
 ---

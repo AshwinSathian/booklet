@@ -1,16 +1,16 @@
 import { BlockRenderer } from "@/components/blocks/BlockRenderer";
 import { AppLogo, BookletMark } from "@/components/ui/AppLogo";
 import ThemeToggle from "@/components/ui/ThemeToggle";
-import type { Block } from "@/lib/blocks";
 import { APP_NAME, ROUTES } from "@/lib/constants";
 import { getBacklinkPages, getPageBySlug, getPageRecord, incrementViewCount } from "@/lib/db";
 import { canViewPage, listablePages } from "@/server/access";
 import { parseFrontmatter } from "@/lib/frontmatter";
 import { DocHeaderStrip } from "@/components/share/DocHeaderStrip";
-import { absoluteUrl, buildMetadata } from "@/lib/seo";
+import { absoluteUrl, breadcrumbJsonLd, buildMetadata, jsonLdScript } from "@/lib/seo";
 import { buildLockedPageMetadata } from "@/lib/locked-page-metadata";
 import { getDoc } from "@/lib/storage";
 import { formatDateUTC } from "@/lib/ui/time";
+import { extractDocDescription, extractDocTitle } from "@/lib/doc-title";
 import { readingTimeMinutes } from "@/lib/reading-time";
 import { buildToc, MIN_TOC_HEADINGS } from "@/lib/toc";
 import { verifyUnlockToken } from "@/lib/unlock-token";
@@ -18,7 +18,7 @@ import { getTheme, themeScopeClass, themeStyleTagContent } from "@/lib/themes";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { cookies, headers } from "next/headers";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { getClientIp } from "@/lib/request-ip";
 import { hashSession } from "@/lib/session-hash";
 import { Button } from "@/components/ui/Button";
@@ -31,6 +31,7 @@ import { EmbedButton } from "@/components/share/EmbedButton";
 import { StickyHeader } from "@/components/share/StickyHeader";
 import { ShareButtons } from "@/components/share/ShareButtons";
 import { GoneNotice } from "@/components/share/GoneNotice";
+import { ReferencedByList } from "@/components/share/ReferencedByList";
 import { KeepPageNotice } from "@/components/share/KeepPageNotice";
 import { PURGE_GRACE_DAYS, claimCookieName, claimTokenMatches } from "@/lib/anonymous-claim";
 import { getSession } from "@/lib/auth/session";
@@ -109,7 +110,7 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id: idOrSlug } = await params;
-  const { doc, pageRecord, gone } = await resolveSharePage(idOrSlug);
+  const { doc, resolvedId, pageRecord, gone } = await resolveSharePage(idOrSlug);
 
   if (!doc) {
     return buildMetadata({
@@ -142,36 +143,45 @@ export async function generateMetadata({
   // `pages` record at all, so "not public" (rather than "is unlisted") is
   // what keeps them out of search engines too.
   const isPublic = pageRecord?.visibility === "public";
-  const title = extractTitle(doc.blocks) ?? "Shared page";
+  const title = extractDocTitle(doc.blocks) ?? "Untitled";
   const fmMeta = pageRecord?.frontmatter_meta as Record<string, unknown> | null | undefined;
   const fmDescription = typeof fmMeta?.description === "string" ? fmMeta.description : null;
-  const description = fmDescription ?? extractDescription(doc.blocks);
+  const description = fmDescription ?? extractDocDescription(doc.blocks) ?? "Published with Booklet.";
+  const tags = Array.isArray(fmMeta?.tags) ? fmMeta.tags.filter((t): t is string => typeof t === "string") : [];
+  // One address per page: its custom URL when it has one. The id still
+  // opens it (and redirects, see SharePage), but is not what gets indexed
+  // or shown in a link preview.
+  const key = pageRecord?.slug ?? resolvedId;
+  const pathname = `/p/${key}`;
+  const readMins = readingTimeMinutes(doc.blocks ?? []);
 
-  const titleParam = encodeURIComponent(title);
-  const ogImage = absoluteUrl(`/opengraph-image?title=${titleParam}`);
-  const twImage = absoluteUrl(`/twitter-image?title=${titleParam}`);
-
+  const base = buildMetadata({
+    // A browser tab and a search result cut a title at about 60 characters, suffix included.
+    title: title.length > 50 ? `${title.slice(0, 49).trimEnd()}…` : title,
+    description,
+    pathname,
+    noIndex: !isPublic,
+    image: `/og/p/${encodeURIComponent(key)}.png`,
+    imageAlt: title,
+  });
   return {
-    ...buildMetadata({
-      title,
-      description,
-      pathname: `/p/${idOrSlug}`,
-      noIndex: !isPublic,
-    }),
+    ...base,
+    keywords: tags.length ? tags : undefined,
     openGraph: {
+      ...base.openGraph,
       type: "article",
-      siteName: APP_NAME,
-      title: `${title} — ${APP_NAME}`,
-      description,
-      url: absoluteUrl(`/p/${idOrSlug}`),
-      images: [{ url: ogImage, width: 1200, height: 630, alt: title }],
+      title,
+      publishedTime: pageRecord?.created_at ?? doc.createdAt,
+      modifiedTime: pageRecord?.updated_at ?? doc.createdAt,
+      tags,
     },
-    twitter: {
-      card: "summary_large_image",
-      title: `${title} — ${APP_NAME}`,
-      description,
-      images: [{ url: twImage, width: 1200, height: 630, alt: title }],
+    twitter: { ...base.twitter, title },
+    alternates: {
+      ...base.alternates,
+      types: { "application/json+oembed": absoluteUrl(`/api/oembed?url=${encodeURIComponent(absoluteUrl(pathname))}`) },
     },
+    // Slack shows these two as a row under the preview.
+    other: { "twitter:label1": "Reading time", "twitter:data1": `${Math.max(1, readMins)} min read` },
   };
 }
 
@@ -208,6 +218,11 @@ export default async function SharePage({
     }
   }
 
+  // A page with a custom URL has one address, and its id redirects there.
+  // After the password gate and the gone notice: the redirect names the
+  // slug, which someone without the password has no business learning.
+  if (pageRecord?.slug && idOrSlug !== pageRecord.slug) permanentRedirect(`/p/${pageRecord.slug}`);
+
   // Fire-and-forget view count — non-blocking, non-fatal. Deduped per
   // session (see incrementViewCount) so reloads/bot re-fetches from the
   // same visitor don't keep inflating it.
@@ -228,7 +243,7 @@ export default async function SharePage({
   // which left 29rem for the text and clipped every table.
   const wide = doc.settings?.width === "wide";
   const maxW = showToc ? (wide ? "max-w-4xl lg:max-w-[73rem]" : "max-w-3xl lg:max-w-[65rem]") : wide ? "max-w-4xl" : "max-w-3xl";
-  const pageTitle = extractTitle(doc.blocks) ?? "Shared page";
+  const pageTitle = extractDocTitle(doc.blocks) ?? "Untitled";
   const readMins = readingTimeMinutes(doc.blocks ?? []);
 
   const pageUrl = absoluteUrl(`/p/${pageRecord?.slug ?? resolvedId}`);
@@ -246,6 +261,28 @@ export default async function SharePage({
           fixed developer-authored lookup; theme.id can never come directly
           from stored/request input, so this is safe to render verbatim. */}
       <style dangerouslySetInnerHTML={{ __html: themeStyleTagContent(theme) }} />
+      {/* For search engines, and only for a page its author made public. Dates and title are the page's own. */}
+      {pageRecord?.visibility === "public" && isNotPasswordLocked ? (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: jsonLdScript([
+              {
+                "@type": "TechArticle",
+                headline: pageTitle,
+                url: pageUrl,
+                mainEntityOfPage: pageUrl,
+                datePublished: pageRecord.created_at,
+                dateModified: pageRecord.updated_at,
+                inLanguage: "en",
+                isAccessibleForFree: true,
+                publisher: { "@type": "Organization", name: APP_NAME, url: absoluteUrl("/") },
+              },
+              breadcrumbJsonLd([["Public pages", "/explore"], [pageTitle, `/p/${pageRecord.slug ?? resolvedId}`]]),
+            ]),
+          }}
+        />
+      ) : null}
       <ReadingProgress />
       {expiresAt ? (
         <KeepPageNotice
@@ -294,19 +331,19 @@ export default async function SharePage({
               title={pageTitle}
             />
             <EmbedButton
-              pageId={resolvedId}
+              pageId={pageRecord?.slug ?? resolvedId}
               title={pageTitle}
               baseUrl={absoluteUrl("")}
             />
             <ThemeToggle />
-            {/* The way to the editor, at every width: "Write" on a phone, "Make your own" from sm up */}
+            {/* The way to the editor, at every width: "Write" on a phone, "Write a page" from sm up */}
             <Button
               variant="primary"
               size="md"
               href={ROUTES.app}
               data-booklet-cta="make-your-own"
             >
-              <span className="hidden sm:inline">Make your own</span>
+              <span className="hidden sm:inline">Write a page</span>
               <span className="sm:hidden">Write</span>
               <svg width="11" height="11" fill="none" viewBox="0 0 11 11" aria-hidden>
                 <path d="M2 9 9 2M9 2H4.5M9 2v4.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
@@ -367,7 +404,7 @@ export default async function SharePage({
               Report this page
             </Link>
             <Button variant="secondary" size="md" href={ROUTES.app}>
-              Write your own page
+              Write a page
               <svg width="10" height="10" fill="none" viewBox="0 0 12 12" aria-hidden>
                 <path d="M2.5 9.5 9.5 2.5M9.5 2.5H4M9.5 2.5V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
@@ -395,25 +432,7 @@ async function ReferencedBy({ pageId }: { pageId: string }) {
   const visible = await listablePages(sources, viewerId);
   if (visible.length === 0) return null;
 
-  return (
-    <nav aria-labelledby="referenced-by" className="mt-10 border-t border-border-subtle pt-6 print:hidden">
-      <h2 id="referenced-by" className="text-xs font-semibold uppercase tracking-wide text-text-muted">
-        Referenced by
-      </h2>
-      <ul className="mt-3 space-y-1.5">
-        {visible.map((page) => (
-          <li key={page.id}>
-            <Link
-              href={ROUTES.publish(page.slug ?? page.id)}
-              className="text-sm text-accent-soft underline decoration-1 underline-offset-3"
-            >
-              {page.title ?? "Untitled"}
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </nav>
-  );
+  return <ReferencedByList pages={visible} />;
 }
 
 // ---------------------------------------------------------------------------
@@ -422,45 +441,4 @@ async function ReferencedBy({ pageId }: { pageId: string }) {
 
 export async function generateStaticParams(): Promise<{ id: string }[]> {
   return [];
-}
-
-// ---------------------------------------------------------------------------
-// Metadata helpers (local — also used by generateMetadata above)
-// ---------------------------------------------------------------------------
-
-function extractTitle(blocks: Block[]): string | null {
-  for (const b of blocks ?? []) {
-    if (b?.t === "heading" && ((b as { level?: number }).level === 1 || (b as { level?: number }).level === 2)) {
-      const t = inlineToText((b as Record<string, unknown>).inl);
-      if (t) return clamp(t, 64);
-    }
-  }
-  return null;
-}
-
-function extractDescription(blocks: Block[]): string {
-  for (const b of blocks ?? []) {
-    if (b?.t === "paragraph") {
-      const t = inlineToText((b as Record<string, unknown>).inl);
-      if (t) return clamp(t, 160);
-    }
-  }
-  return "A clean, readable share page.";
-}
-
-function inlineToText(inl: unknown): string {
-  if (!inl) return "";
-  if (Array.isArray(inl)) return inl.map(inlineToText).join("").trim();
-  if (typeof inl === "string") return inl;
-  if (typeof inl !== "object" || inl === null) return "";
-  const o = inl as Record<string, unknown>;
-  if (o.t === "text" || o.t === "code") return String(o.v ?? "");
-  if (o.t === "link") return inlineToText(o.c);
-  if (o.t === "strong" || o.t === "em") return inlineToText(o.c);
-  return "";
-}
-
-function clamp(s: string, n: number) {
-  const t = s.replace(/\s+/g, " ").trim();
-  return t.length <= n ? t : t.slice(0, n - 1).trimEnd() + "…";
 }

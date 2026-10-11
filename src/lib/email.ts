@@ -20,14 +20,14 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string): Prom
     subject: "Reset your Booklet password",
     html: `
       <div style="font-family: -apple-system, system-ui, sans-serif; max-width: 480px; margin: 0 auto; color: #1a1a1a;">
-        <p>Someone requested a password reset for this Booklet account.</p>
+        <p>Someone asked to reset the password of this Booklet account.</p>
         <p>
           <a href="${resetUrl}" style="display:inline-block;background:#16150f;color:#fbfaf7;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;">
             Reset password
           </a>
         </p>
         <p style="color:#666;font-size:13px;">
-          This link expires in 30 minutes. If you didn't request this, ignore this email — your password won't change.
+          This link works for 30 minutes. If you did not ask for it, ignore this email and your password stays as it is.
         </p>
       </div>
     `,
@@ -64,7 +64,7 @@ export async function sendEmailChangeEmail(to: string, confirmUrl: string): Prom
     subject: "Confirm your new email address for Booklet",
     html: `
       <div style="font-family: -apple-system, system-ui, sans-serif; max-width: 480px; margin: 0 auto; color: #1a1a1a;">
-        <p>Someone signed in to a Booklet account asked to change its email address to this one.</p>
+        <p>Someone who is signed in to a Booklet account asked to change its email address to this one.</p>
         <p>
           <a href="${confirmUrl}" style="display:inline-block;background:#16150f;color:#fbfaf7;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;">
             Use this address
@@ -93,6 +93,34 @@ export async function sendEmailChangedNotice(oldAddress: string, newAddress: str
     ].join("\n"),
   });
   if (error) throw new Error(`Resend rejected the email change notice: ${error.message}`);
+}
+
+/**
+ * An invite to a team space, to the address it was made for. Plain text: the
+ * space's name and the inviter's address are both written by a user.
+ *
+ * Returns false, and sends nothing, when RESEND_API_KEY is unset: the
+ * owner is shown the link either way and can send it themselves.
+ */
+export async function sendTeamInviteEmail(to: string, invite: { spaceName: string; invitedBy: string | null; joinUrl: string }): Promise<boolean> {
+  if (!process.env.RESEND_API_KEY) return false;
+  // One line, and short: the name is typed by the inviter and lands in a stranger's inbox under our sender.
+  const spaceName = invite.spaceName.replace(/\s+/g, " ").trim().slice(0, 80) || "a";
+  const { error } = await getResendClient().emails.send({
+    from: FROM_ADDRESS,
+    to,
+    subject: `Join the ${spaceName} space on Booklet`,
+    text: [
+      `${invite.invitedBy ?? "The owner"} invited you to the ${spaceName} team space on Booklet.`,
+      "",
+      `Join: ${invite.joinUrl}`,
+      "",
+      "The link works for 72 hours, and only for an account with this email address. Sign in or create that account when asked.",
+      "If you were not expecting this, ignore this email: nothing happens unless you open the link.",
+    ].join("\n"),
+  });
+  if (error) throw new Error(`Resend rejected the team invite: ${error.message}`);
+  return true;
 }
 
 /**

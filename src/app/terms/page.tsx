@@ -5,8 +5,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = buildMetadata({
-  title: "Terms of Service",
-  description: `Terms of service for ${APP_NAME} — the rules for using the platform.`,
+  title: "Terms of service",
+  description: `Terms of service for ${APP_NAME}: what you may publish, how long pages are kept, and what is not promised.`,
   pathname: "/terms",
   noIndex: false,
 });
@@ -36,7 +36,7 @@ export default function TermsPage() {
           <Section title="What you can do">
             <p>
               You may use {APP_NAME} to publish, share, and manage Markdown documents for any lawful purpose.
-              You retain full ownership of any content you publish — we claim no intellectual property rights over your work.
+              You retain full ownership of any content you publish. We claim no intellectual property rights over your work.
             </p>
           </Section>
 
@@ -57,8 +57,8 @@ export default function TermsPage() {
 
           <Section title="Anonymous pages">
             <p>
-              Pages published without an account are kept for 90 days and then removed, unless the author signs
-              in and claims the page. We may remove an anonymous page sooner if it breaks these terms.
+              A page published without an account is served for 90 days and deleted 30 days after that, unless the
+              author signs in and keeps the page. We may remove an anonymous page sooner if it breaks these terms.
             </p>
           </Section>
 
@@ -81,16 +81,17 @@ export default function TermsPage() {
 
           <Section title="API and programmatic access">
             <p>
-              API access is subject to the rate limits described in the{" "}
-              <Link href="/docs/reference/api" className="link">API reference</Link>. Automated
+              API access is subject to the rate limits listed under{" "}
+              <Link href="/docs/reference/limits" className="link">Limits</Link>. Automated
               scraping, abuse, or attempts to circumvent rate limits may result in key revocation.
             </p>
           </Section>
 
           <Section title="Availability">
             <p>
-              The Service is provided &quot;as is&quot; without any uptime guarantee. We may modify, suspend, or
-              discontinue features at any time. We will make reasonable efforts to communicate significant changes.
+              The Service is in public beta and is provided &quot;as is&quot;, without any uptime guarantee. We may
+              modify, suspend, or discontinue it or any feature at any time. Keep your own copy of anything you cannot
+              lose; Account settings has a download of every page you own.
             </p>
           </Section>
 

@@ -48,9 +48,9 @@ jobs:
 
 The job log prints the same URL as before. The page shows the new text, and its version history has one more version. Running the job again is safe: the link stays the same, and the same text is saved as one more version.
 
-## If it does not
+## If it did not work
 
-- **"Set the RUNBOOK_PAGE_ID repository variable".** The variable is empty. The first line of the step stops the job there: an empty `--update` would publish a new page on every run.
+- **"Set the RUNBOOK_PAGE_ID repository variable".** The variable is empty. The first line of the step stops the job there with that message. Without it the CLI would stop anyway, with a usage error (exit 2).
 - **Exit code 4.** `RUNBOOK_PAGE_ID` names a page that was deleted.
 - **Exit code 3.** The key belongs to an account that does not own the page.
 - **The job never runs.** The `paths` filter does not match the file that changed.

@@ -6,8 +6,8 @@ import { buildMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = buildMetadata({
-  title: "Privacy Policy",
-  description: `Privacy policy for ${APP_NAME} — what data we collect, how we use it, and your rights.`,
+  title: "Privacy policy",
+  description: `Privacy policy for ${APP_NAME}: what we store, why, and how to delete it.`,
   pathname: "/privacy",
   noIndex: false,
 });
@@ -27,88 +27,98 @@ export default function PrivacyPage() {
   const providerNames = providers.map((p) => p.label).join(" or ");
   return (
     <ProsePage eyebrow="Legal" title="Privacy policy" lede="Last updated: October 2026">
-          <Section title="What we collect">
+          <Section title="What we store">
             <p>
-              <strong className="text-text-primary">Anonymous visitors</strong> — When you publish a page without signing in,
-              your content is stored in our database (MongoDB). The page is served for 90 days and deleted 30 days
-              after that, unless you sign in and claim it. We store no personal data alongside it. A cookie is
-              set in the browser you published from so that only that browser can claim the page later; we do
-              not track you across sites.
-              Anonymous publishing is capped at {ANONYMOUS_LIMITS.pagesPerMonth} pages per month per IP address to
-              keep the service sustainable for everyone; signing in removes that cap.
+              <strong className="text-text-primary">Publishing without an account.</strong> Your page is stored in a
+              MongoDB database on the machine {APP_NAME} runs on. It is served for 90 days and deleted 30 days after
+              that, unless you sign in and choose Keep this page. A cookie is set in the browser you published from,
+              for 120 days, so that only that browser can keep the page later. To enforce the cap of{" "}
+              {ANONYMOUS_LIMITS.pagesPerMonth} pages a month, we store the IP address you publish from with a
+              counter, which is deleted early the following month. Rate limits on publishing, sign-in, page passwords,
+              reports and analytics also keep the IP address (and, for sign-in, the email address typed) with a counter
+              for about two minutes.
             </p>
             <p>
-              <strong className="text-text-primary">Signed-in accounts</strong> — When you create an account, we store your
-              email address and a salted, memory-hard hash of your password (argon2id) — never the password itself.
-              We email you a link to confirm the address. Signing in issues a random session token, stored
-              server-side and referenced only by an httpOnly cookie in your browser. If you add a passkey, we
-              store its public key; the private key never leaves your device.
+              <strong className="text-text-primary">Accounts.</strong> We store your email address and an argon2id hash
+              of your password, never the password itself. We email you a link to confirm the address. Signing in
+              issues a random session token. The server stores a hash of it; the token itself is in an httpOnly cookie
+              in your browser. If you add a passkey, we store its public key; the private key stays on your device.
               {providers.length > 0 && (
                 <>
                   {" "}If you sign in with {providerNames}, we receive your account ID there and your verified email
                   address, and nothing else: no profile, contacts or repositories.
                 </>
               )}
-              {" "}You can download your pages or delete your account, with everything in it, from Account settings.
             </p>
             <p>
-              <strong className="text-text-primary">Page analytics</strong> — We count views, track scroll depth (50% and 100%
-              read events), record HTTP referrers, and infer approximate country from Cloudflare headers. This
-              data is attached to individual pages and accessible only to the page owner. We do not sell analytics
-              data or use it for advertising. No third-party analytics script runs on any {APP_NAME} page.
+              <strong className="text-text-primary">Team spaces.</strong> A space stores the email address of each
+              member. An invited address is not stored until that person joins: it is carried in the invite link and
+              in the email sent to it. When the owner removes a member, the space keeps that address so that the
+              invites sent to it earlier stop working.
             </p>
             <p>
-              <strong className="text-text-primary">API keys</strong> — If you generate API keys, the raw key is shown once and
-              then hashed. We store only the hash.
+              <strong className="text-text-primary">Analytics on a page.</strong> We count views, whether a reader
+              reached half way and the end, clicks on the page&apos;s link to the editor, the kind of site a reader came
+              from (not its address), and an approximate country taken from Cloudflare&apos;s headers. To count a reader
+              once a day we store a one-way hash of their IP address, browser user agent and the date; the IP address
+              itself is not stored with analytics. The page&apos;s owner sees its views, reading depth, kinds of referrer
+              and countries. The administrator sees totals for the whole site, not per reader. No third-party analytics
+              script runs on any {APP_NAME} page.
+            </p>
+            <p>
+              <strong className="text-text-primary">API keys and webhooks.</strong> An API key is shown once and then
+              stored as a hash. A webhook stores the address you gave it and a log of its last 50 deliveries.
             </p>
           </Section>
 
-          <Section title="How we use your data">
-            <p>We use collected data solely to operate the service: storing and serving your pages, associating
-              pages with your account, and delivering analytics you asked for. The email we send you is the link that confirms your
-              address, a password-reset link when you ask for one, and nothing else. We send no marketing email.</p>
-            <p>We do not serve ads, sell your data to third parties, or use your content to train AI models.</p>
+          <Section title="How we use it">
+            <p>
+              Only to run the service: to store and serve your pages, tie them to your account, and show you the
+              numbers above. We email you a link to confirm your address, a password-reset link when you ask for
+              one, a link to a new address when you change it, a notice to the old address after the change, and an
+              invite when someone invites you to a team space. We send no marketing email.
+            </p>
+            <p>We do not serve ads, sell your data, or use your content to train AI models.</p>
           </Section>
 
           <Section title="Cookies and local storage">
             <p>
-              {APP_NAME} uses browser <strong className="text-text-primary">localStorage</strong> to save your editor drafts
-              locally. Drafts stay on your device unless you publish them, or sign in, which syncs them to your
-              account. We use one first-party, httpOnly session cookie for signed-in auth, and short-lived
-              first-party cookies while a provider or passkey sign-in is in progress. We do not use
-              third-party tracking cookies.
+              {APP_NAME} saves your editor drafts in the browser&apos;s <strong className="text-text-primary">localStorage</strong>.
+              Drafts stay on your device unless you publish them or sign in, which syncs them to your account. The
+              cookies are all first-party: one httpOnly session cookie while you are signed in; short-lived cookies
+              while a provider or passkey sign-in is in progress; the cookie described above after you publish without
+              an account; and, after you enter a page&apos;s password, a cookie that keeps that page open in that browser
+              for 8 hours. There are no third-party or tracking cookies.
             </p>
           </Section>
 
-          <Section title="Data retention and deletion">
+          <Section title="Keeping and deleting">
             <p>
-              Pages under an account are stored until you delete them, which you can do at any time from the
-              My Pages dashboard. Pages published without an account stop being served after 90 days and are
-              deleted 30 days later; to have one removed sooner, contact us. If you report a page, we store
-              the report and, if you give one, your email address.
-            </p>
-            <p>
-              To delete your account and all associated data, email{" "}
+              A page under an account is stored until you delete it, which you can do from My pages. Delete your
+              account, and everything in it, from Account settings; if you cannot sign in, email{" "}
               <a href="mailto:booklet@ashwinsathian.com" className="link">
                 booklet@ashwinsathian.com
               </a>
-              . We will process your request within 30 days.
+              . A page an administrator took down for breaking the terms is kept after its owner&apos;s account is
+              deleted, so that its address cannot be reused.
+            </p>
+            <p>
+              The database is backed up every night and 30 nightly archives are kept, so a deleted page or account
+              remains in those archives until 30 newer ones have replaced them, normally 30 nights. If you report a page, we store the report and, if you
+              give one, your email address.
             </p>
           </Section>
 
-          <Section title="Third-party services">
-            <p>We keep this list short by design. Sessions and all page data are handled on infrastructure we run
-              ourselves.</p>
+          <Section title="Other companies involved">
             <ul className="list-disc list-outside pl-5 flex flex-col gap-1.5">
-              <li><strong className="text-text-primary">Cloudflare</strong> — edge network and tunnel in front of our servers</li>
-              <li><strong className="text-text-primary">Resend</strong> — delivers our email. It receives your email address when you create an account or request a password reset, and the text of an abuse report (with your email address, if you gave one) when you report a page</li>
+              <li><strong className="text-text-primary">Cloudflare.</strong> Its network and tunnel sit in front of the machine {APP_NAME} runs on, so it carries every request</li>
+              <li><strong className="text-text-primary">Resend.</strong> It delivers our email, and so receives the address of anyone we write to (see above) and the text of an abuse report, with the reporter&apos;s address if they gave one</li>
               {providers.length > 0 && (
-                <li><strong className="text-text-primary">{providerNames}</strong> — only if you choose to sign in with one. It learns that you signed in to {APP_NAME}</li>
+                <li><strong className="text-text-primary">{providerNames}.</strong> Only if you choose to sign in with one. It learns that you signed in to {APP_NAME}</li>
               )}
               {process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
-                <li><strong className="text-text-primary">Cloudflare Turnstile</strong> — a robot check on publishing without an account, creating an account and reporting a page. It runs in your browser and sends Cloudflare your IP address and browser signals</li>
+                <li><strong className="text-text-primary">Cloudflare Turnstile.</strong> A robot check on publishing without an account, creating an account and reporting a page. It runs in your browser and sends Cloudflare your IP address and browser signals</li>
               )}
-              <li><strong className="text-text-primary">MongoDB</strong> — self-hosted primary database for all page and account records, including anonymous pages</li>
             </ul>
           </Section>
 
