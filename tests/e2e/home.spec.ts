@@ -77,7 +77,8 @@ test("nothing inside an example document can take focus", async ({ page }) => {
   // The page pane has links and copy buttons in it. It is inert, so none of them is a Tab stop.
   const pane = page.getByTestId("shot-page");
   await expect(pane).toHaveAttribute("inert", "");
-  expect(await pane.locator("button, a").count()).toBeGreaterThan(0);
+  // The example is typed out, and its first button comes with the code block near the end.
+  await expect(pane.locator("button, a").first()).toBeAttached({ timeout: 20_000 });
   await page.getByRole("tab", { name: "Incident" }).focus();
   for (let i = 0; i < 4; i++) {
     await page.keyboard.press("Tab");
