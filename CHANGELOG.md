@@ -9,12 +9,71 @@ Notable changes to the Booklet app and MCP server. The format follows
 
 ## [Unreleased]
 
+## [3.1.1] - 2026-10-11
+
+The close-out of the redesign: what a last look at every screen, in both
+themes at 390, 768 and 1440, and a keyboard-only pass through the editor
+turned up. No routes changed. In stored and returned documents an ordered
+list block may now carry `start`.
+
 ### Fixed
 
 - The editor's startup overlay could stay on screen for good, covering the
   editor. Its entrance waited on animation frames and its exit on timers, so
   when the browser held frames back (a tab opened in the background, a busy
   machine) the entrance ran last and nothing was left to dismiss it.
+- `/c/[id]` listed a public page that has a password. It no longer does,
+  like the author page, Explore and tags.
+- The custom URL bar shown after publishing lay over the Write and Preview
+  tabs, the formatting toolbar and the first line of the draft. It is in the
+  flow under the top bar now.
+- The drafts dialog was rendered inside the top bar, whose
+  `backdrop-filter` made it the dialog's containing block: on a phone it was
+  cut off at the top of the screen. It and Import from URL are outside the
+  bar now.
+- The editor pane kept a transform after its entrance animation, so the
+  slash menu and link suggestions opened below the caret by the pane's
+  offset and could run off the screen.
+- An ordered list that does not begin at 1 lost its start number, so
+  numbered steps with a code block between them all read "1.". List blocks
+  carry an optional `start`.
+- The editor was a keyboard trap: Tab and Shift+Tab both indent. Escape,
+  then Tab, leaves it. The formatting toolbar acted on `mousedown` only, and
+  closing the command palette left focus on `<body>`.
+- A published page's link to the editor had no name in the compact header
+  on a phone, and the full header was wider than a 320px screen.
+- Meta rows on My pages, API keys and webhooks left a separator hanging at
+  the end of a line when they wrapped.
+- The MCP client picker's plan notice laid each bold word out as a column.
+- `ViewsChart` indexed an empty array when given no days.
+- Import from URL opened in the top corner of the screen: the CSS reset
+  removes a dialog's own centring margin.
+- The graph of drafts could not be scrolled to its left edge on a phone, and
+  its labels were scaled down to 6px.
+- A footnote's link back dropped to a line of its own. Site header labels
+  wrapped at tablet width when signed in.
+
+### Changed
+
+- The 410 notice has a heading, a link home and follows the system's dark
+  setting. The password
+  gate uses the sign-in card. The error page of a published page uses the
+  site's header and footer.
+- Date-times are written "11 Oct 2026, 18:53".
+- The formatting toolbar shows an edge shade where it scrolls. The find
+  bar's case toggle is inverted when on and has `aria-pressed`. An active
+  menu item with no label of its own shows a tick.
+- On a phone the focus-mode button is not in the editor's top bar, which
+  leaves room for the draft's title. The command palette and its shortcut
+  still switch it.
+- Team settings renders its header while loading, and its two refusals
+  have an `h1`.
+- The preview's live dot pulses twice instead of forever. The glow behind
+  the startup logo is gone.
+- `scripts/visual-qa-app.mjs` covers fourteen more states and the admin
+  pages, and fails when a state cannot be reached.
+  `scripts/visual-qa-prod.mjs` takes signed-in screenshots of a live
+  instance with an account it deletes.
 
 ## [3.1.0] - 2026-10-11
 

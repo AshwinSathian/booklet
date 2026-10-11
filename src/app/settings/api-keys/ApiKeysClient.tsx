@@ -41,11 +41,9 @@ function KeyCard({ k, onRevoked }: { k: KeyRow; onRevoked: (id: string) => void 
         <div className="text-sm font-medium text-text-primary">
           {k.label ?? <span className="text-text-muted italic">Unlabeled key</span>}
         </div>
-        <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-text-muted">
+        <div className="meta-row mt-1 text-xs text-text-muted">
           <span className="font-mono text-text-muted">{k.id}</span>
-          <span className="h-3 w-px bg-fill-2" aria-hidden />
           <span>Created {formatDate(k.created_at)}</span>
-          <span className="h-3 w-px bg-fill-2" aria-hidden />
           <span>Last used {formatDate(k.last_used_at)}</span>
         </div>
       </div>

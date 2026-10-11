@@ -512,7 +512,7 @@ function DraftTitle({
       type="button"
       onClick={begin}
       title="Click to rename"
-      className="group flex items-center gap-1.5 min-w-0 max-w-52 rounded-md px-1.5 py-0.5 transition hover:bg-fill-2/30"
+      className="group flex w-full min-w-0 max-w-52 items-center gap-1.5 rounded-md px-1.5 py-0.5 transition hover:bg-fill-2/30"
     >
       <span className="truncate text-sm font-medium text-text-secondary group-hover:text-text-primary transition">
         {title || "Untitled"}
@@ -643,7 +643,8 @@ function VisibilityPicker({
         <span className="shrink-0 text-text-muted">
           <Icon name={current.icon} size={12} />
         </span>
-        <span className="truncate">{current.short}</span>
+        {/* A phone has room for this or for the draft's title, and the title says which draft is open. */}
+        <span className="truncate max-sm:sr-only">{current.short}</span>
         <span className={`shrink-0 text-text-muted transition-transform ${open ? "rotate-180" : ""}`}>
           <Icon name="chevron-down" size={10} />
         </span>
@@ -995,8 +996,9 @@ function PostPublishSlugBar({
     availability !== "checking";
 
   return (
-    <div className="absolute top-full left-0 right-0 z-10 border-b border-border-default/50 bg-bg-soft/95 backdrop-blur-xl px-3 py-2.5 animate-dropdown-in">
-      <div className="mx-auto w-full max-w-7xl flex flex-col sm:flex-row sm:items-center gap-2">
+    // In the flow under the header, so it pushes the editor down: laid over it, it hid the tabs and the toolbar.
+    <div data-slug-bar className="shrink-0 border-b border-border-default bg-bg-soft px-3 py-2.5 animate-dropdown-in">
+      <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center">
         <span className="text-xs text-text-secondary shrink-0">
           Set a custom URL before sharing:
         </span>
@@ -1015,26 +1017,27 @@ function PostPublishSlugBar({
             placeholder="my-incident-2026"
             className={[
               "min-w-0 flex-1 sm:w-52 sm:flex-none px-2 py-1 text-xs bg-bg border rounded-md sm:rounded-l-none sm:rounded-r-md text-text-primary placeholder:text-text-muted",
-              "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 focus-visible:ring-offset-highlight",
               "transition-colors duration-fast",
               availability === "taken" ? "border-danger/60" : "border-border-default",
             ].join(" ")}
             aria-label="Custom URL slug"
           />
         </div>
-        <div className="flex items-center gap-1.5 shrink-0">
+        {/* On a phone a message has its own line; it used to squeeze "Save URL" onto two. */}
+        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1.5 sm:shrink-0 sm:flex-nowrap">
           {/* Availability indicator */}
           {availability === "checking" && (
-            <span key="checking" className="text-xs text-text-muted animate-fade-in">Checking…</span>
+            <span key="checking" className="max-sm:basis-full text-xs text-text-muted animate-fade-in">Checking…</span>
           )}
           {availability === "available" && !error && (
-            <span key="available" className="text-xs text-success animate-fade-in">✓ Available</span>
+            <span key="available" className="max-sm:basis-full text-xs text-success animate-fade-in">✓ Available</span>
           )}
           {availability === "taken" && !error && (
-            <span key="taken" className="text-xs text-danger animate-fade-in">✗ Taken</span>
+            <span key="taken" className="max-sm:basis-full text-xs text-danger animate-fade-in">✗ Taken</span>
           )}
-          {error && <span key="error" className="text-xs text-danger animate-fade-in">{error}</span>}
-          <Button variant="primary" size="sm" onClick={() => void save()} disabled={!canSave}>
+          {error && <span key="error" role="alert" className="max-sm:basis-full text-xs text-danger animate-fade-in">{error}</span>}
+          <Button variant="primary" size="sm" onClick={() => void save()} disabled={!canSave} className="shrink-0 whitespace-nowrap">
             {saving ? (
               <svg width="11" height="11" viewBox="0 0 13 13" fill="none" className="animate-spin" aria-hidden>
                 <path d="M6.5 1a5.5 5.5 0 1 0 5.5 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -1245,6 +1248,7 @@ export function TopBar({
   ];
 
   return (
+    <>
     <header id="header" className="sticky top-0 z-20 border-b border-border-default bg-bg-glass backdrop-blur-md">
       <div className="flex h-12 w-full items-center gap-2 px-3">
 
@@ -1277,13 +1281,17 @@ export function TopBar({
             active={visibleMoreActions}
           />
 
+          {/* Not in the bar on a phone: one pane shows at a time there anyway, the draft's
+              title needs the room, and the command palette still has it. */}
           {onToggleFocusMode && (
-            <IconBtn
-              label={focusMode ? "Exit focus mode (⌘.)" : "Focus mode (⌘.)"}
-              icon={focusMode ? "eye" : "eye-off"}
-              onClick={onToggleFocusMode}
-              active={focusMode}
-            />
+            <span className="max-sm:hidden">
+              <IconBtn
+                label={focusMode ? "Exit focus mode (⌘.)" : "Focus mode (⌘.)"}
+                icon={focusMode ? "eye" : "eye-off"}
+                onClick={onToggleFocusMode}
+                active={focusMode}
+              />
+            </span>
           )}
 
           {/* Below sm the panel hangs from the header: the gear sits mid-bar, and a
@@ -1342,7 +1350,6 @@ export function TopBar({
         onChange={(e) => { void onFilePicked(e.target.files?.[0] ?? null); }}
       />
 
-      <ImportUrlDialog open={importUrlOpen} onClose={() => setImportUrlOpen(false)} onImported={onUrlImported} />
 
       <MoreActionsDrawer
         open={visibleMoreActions}
@@ -1375,22 +1382,10 @@ export function TopBar({
         </div>
       ) : null}
 
-      {/* Post-publish slug bar — shown once for owned pages until dismissed or slug saved */}
-      {status === "published" && publishedOwned && publishedId && !slugBarDismissed ? (
-        <PostPublishSlugBar
-          pageId={publishedId}
-          onSlugSet={(newSlug) => {
-            setSlugBarDismissed(true);
-            onSlugSet?.(newSlug);
-          }}
-          onDismiss={() => setSlugBarDismissed(true)}
-        />
-      ) : null}
-
       {/* Save warning — absolutely positioned so it doesn't shift header height */}
       {showSaveWarning ? (
         <div className="absolute top-full left-0 right-0 px-3 py-2 bg-bg/95 backdrop-blur-xl">
-          <div className="mx-auto w-full max-w-7xl">
+          <div className="w-full">
             <div className="flex items-center justify-between gap-3 rounded-xl border border-warning/30 bg-warning/8 px-3 py-2">
               <span className="text-xs text-warning">
                 Couldn&apos;t save — browser storage may be full.
@@ -1407,6 +1402,11 @@ export function TopBar({
         </div>
       ) : null}
 
+    </header>
+
+      {/* Outside the header: its backdrop-filter makes it the containing block of anything
+          fixed inside it, which pinned these two dialogs to the bar instead of the screen. */}
+      <ImportUrlDialog open={importUrlOpen} onClose={() => setImportUrlOpen(false)} onImported={onUrlImported} />
       <DraftsDialog
         visible={visibleDrafts}
         activeDraftId={activeDraftId}
@@ -1419,7 +1419,19 @@ export function TopBar({
         onHide={() => setVisibleDrafts(false)}
       />
 
-    </header>
+      {/* Post-publish slug bar — shown once for owned pages until dismissed or slug saved.
+          After the header, not in it: the settings panel and the account menu hang from the header's lower edge. */}
+      {status === "published" && publishedOwned && publishedId && !slugBarDismissed ? (
+        <PostPublishSlugBar
+          pageId={publishedId}
+          onSlugSet={(newSlug) => {
+            setSlugBarDismissed(true);
+            onSlugSet?.(newSlug);
+          }}
+          onDismiss={() => setSlugBarDismissed(true)}
+        />
+      ) : null}
+    </>
   );
 }
 

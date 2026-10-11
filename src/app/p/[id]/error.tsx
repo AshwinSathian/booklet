@@ -1,7 +1,8 @@
 "use client";
 
+import { Container, PageShell } from "@/components/marketing/primitives";
+import { Button } from "@/components/ui/Button";
 import { ROUTES } from "@/lib/constants";
-import Link from "next/link";
 
 export default function ShareError({
   error,
@@ -11,38 +12,30 @@ export default function ShareError({
   reset: () => void;
 }) {
   return (
-    <main className="min-h-screen flex items-center justify-center px-6">
-      <div className="w-full max-w-lg rounded-2xl border border-border-default bg-bg-soft p-6 text-center shadow-glass">
-        <div className="text-lg font-semibold uppercase tracking-wide">
-          Couldn&apos;t load this page
+    <PageShell>
+      <Container className="py-24 sm:py-28">
+        <h1 className="font-display text-[clamp(2.25rem,5vw,3.5rem)] font-medium leading-[1.05] tracking-[-0.025em]">
+          This page could not be loaded.
+        </h1>
+        <p className="mt-4 max-w-xl text-lg leading-relaxed text-text-secondary">
+          The link may be wrong, or something failed on our side.
+        </p>
+        <div className="mt-8 flex flex-wrap gap-3">
+          <Button variant="primary" size="lg" onClick={reset}>
+            Try again
+          </Button>
+          <Button variant="secondary" size="lg" href={ROUTES.home}>
+            Go to the homepage
+          </Button>
+          <Button variant="secondary" size="lg" href={ROUTES.docs}>
+            Read the docs
+          </Button>
+          <Button variant="secondary" size="lg" href={ROUTES.app}>
+            Write a page
+          </Button>
         </div>
-        <div className="mt-3 text-sm text-text-secondary">
-          The link may be incorrect, or something went wrong on our end.
-        </div>
-
-        <div className="mt-6 flex justify-center gap-3">
-          <button
-            type="button"
-            onClick={reset}
-            className="inline-flex items-center gap-2 rounded-pill bg-accent px-5 py-2.5 text-sm font-semibold text-accent-contrast transition hover:bg-accent-hover active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
-          >
-            <svg width="14" height="14" fill="none" viewBox="0 0 14 14" aria-hidden>
-              <path d="M12 7A5 5 0 1 1 7 2a5 5 0 0 0 3.54 1.46M12 2v3.5H8.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            Retry
-          </button>
-          <Link
-            href={ROUTES.app}
-            className="inline-flex items-center gap-2 rounded-pill border border-border-default px-5 py-2.5 text-sm font-semibold text-text-secondary transition hover:border-border-strong hover:text-text-primary active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-soft focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
-          >
-            Open editor
-          </Link>
-        </div>
-
-        {error?.digest ? (
-          <div className="mt-5 text-xs text-text-muted">Ref: {error.digest}</div>
-        ) : null}
-      </div>
-    </main>
+        {error?.digest ? <p className="mt-8 font-mono text-xs text-text-muted">Ref: {error.digest}</p> : null}
+      </Container>
+    </PageShell>
   );
 }

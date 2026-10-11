@@ -410,31 +410,23 @@ function PageCard({
               {page.title ?? <span className="text-text-muted font-normal italic">Untitled</span>}
             </a>
 
-            <div className="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-xs text-text-muted">
+            <div className="meta-row mt-1 text-xs text-text-muted">
               <span>{page.view_count === 1 ? "1 view" : `${page.view_count} views`}</span>
-              <span className="opacity-30" aria-hidden>·</span>
               <span>{formatDate(page.created_at)}</span>
-              {page.updated_at !== page.created_at && (
-                <>
-                  <span className="opacity-30" aria-hidden>·</span>
-                  <span>Updated {formatDate(page.updated_at)}</span>
-                </>
-              )}
+              {page.updated_at !== page.created_at && <span>Updated {formatDate(page.updated_at)}</span>}
               {page.source && (
-                <>
-                  <span className="opacity-30" aria-hidden>·</span>
-                  <span title="How this page was last published">
-                    <span className="sr-only">Published from </span>
-                    {SOURCE_LABELS[page.source]}
-                  </span>
-                </>
+                <span title="How this page was last published">
+                  <span className="sr-only">Published from </span>
+                  {SOURCE_LABELS[page.source]}
+                </span>
               )}
-              <span className="opacity-30" aria-hidden>·</span>
               {page.visibility === "unlisted" ? (
                 <span>Unlisted</span>
               ) : (
-                <span className="rounded-pill bg-fill-2 px-2 py-px font-medium text-text-secondary">
-                  {page.visibility === "team" ? "Team only" : "Public"}
+                <span>
+                  <span className="rounded-pill bg-fill-2 px-2 py-px font-medium text-text-secondary">
+                    {page.visibility === "team" ? "Team only" : "Public"}
+                  </span>
                 </span>
               )}
             </div>

@@ -99,7 +99,7 @@ export default function PrivacyPage() {
           <Section title="Third-party services">
             <p>We keep this list short by design. Sessions and all page data are handled on infrastructure we run
               ourselves.</p>
-            <ul className="list-disc list-inside flex flex-col gap-1.5">
+            <ul className="list-disc list-outside pl-5 flex flex-col gap-1.5">
               <li><strong className="text-text-primary">Cloudflare</strong> — edge network and tunnel in front of our servers</li>
               <li><strong className="text-text-primary">Resend</strong> — delivers our email. It receives your email address when you create an account or request a password reset, and the text of an abuse report (with your email address, if you gave one) when you report a page</li>
               {providers.length > 0 && (

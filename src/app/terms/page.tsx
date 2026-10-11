@@ -42,7 +42,7 @@ export default function TermsPage() {
 
           <Section title="What you may not do">
             <p>You may not use the Service to publish content that:</p>
-            <ul className="list-disc list-inside flex flex-col gap-1.5">
+            <ul className="list-disc list-outside pl-5 flex flex-col gap-1.5">
               <li>Violates applicable laws or regulations</li>
               <li>Infringes the intellectual property rights of others</li>
               <li>Contains malware, phishing material, or deceptive content</li>

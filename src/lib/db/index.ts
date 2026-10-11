@@ -312,7 +312,7 @@ export async function getPagesByCollection(collectionId: string): Promise<Explor
   const db = await getDb();
   const docs = await db
     .collection<PageDoc>("pages")
-    .find({ collection_id: collectionId, visibility: "public" })
+    .find({ collection_id: collectionId, visibility: "public", password_hash: null })
     .sort({ created_at: -1 })
     .limit(200)
     .project<ExploreProjection>(EXPLORE_PROJECTION)

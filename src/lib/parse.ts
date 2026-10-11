@@ -30,6 +30,7 @@ type MdNode = {
   lang?: unknown;
   depth?: unknown;
   ordered?: unknown;
+  start?: unknown;
   checked?: unknown;
   name?: unknown;
   identifier?: unknown;
@@ -311,7 +312,8 @@ function listBlockFromNode(node: MdNode, ctx: ParseCtx, depth: number): Block | 
   }
   const ordered = Boolean(node.ordered);
   const items: ListItem[] = (node.children ?? []).map((n) => listItemFromNode(n, ctx, depth));
-  return { t: "list", ordered, items };
+  const start = ordered && typeof node.start === "number" && Number.isInteger(node.start) && node.start >= 0 && node.start !== 1 ? node.start : undefined;
+  return start === undefined ? { t: "list", ordered, items } : { t: "list", ordered, start, items };
 }
 
 // GitHub/Obsidian-convergent callout marker: the blockquote's first line is

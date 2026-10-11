@@ -1,6 +1,6 @@
 "use client";
 
-import { AppPage, AppPageTitle, EmptyState } from "@/components/app/AppPage";
+import { AppPage, AppPageTitle } from "@/components/app/AppPage";
 import { Button } from "@/components/ui/Button";
 import { useRouter } from "next/navigation";
 import { use, useCallback, useEffect, useState } from "react";
@@ -139,18 +139,27 @@ function AdminPageInner({ slug }: { slug: string }) {
 
   if (loading || !isLoaded) {
     return (
-      <div className="min-h-screen bg-bg flex items-center justify-center">
-        <svg width="24" height="24" viewBox="0 0 13 13" fill="none" className="animate-spin text-text-muted" aria-hidden>
-          <path d="M6.5 1a5.5 5.5 0 1 0 5.5 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        </svg>
-      </div>
+      // Inside AppPage, so the header is there from the first paint.
+      <AppPage>
+        <div className="flex justify-center py-24" role="status" aria-label="Loading team settings">
+          <svg width="24" height="24" viewBox="0 0 13 13" fill="none" className="animate-spin text-text-muted" aria-hidden>
+            <path d="M6.5 1a5.5 5.5 0 1 0 5.5 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        </div>
+      </AppPage>
     );
   }
 
   if (!team) {
     return (
       <AppPage>
-        <EmptyState title="Team not found" action={<Button variant="secondary" size="lg" href="/t">All spaces</Button>} />
+        <AppPageTitle
+          back={{ href: "/t", label: "Spaces" }}
+          eyebrow="Space"
+          title="Team not found"
+          lede="There is no team space at this address, or you are not a member of it."
+        />
+        <Button variant="secondary" size="lg" href="/t">All spaces</Button>
       </AppPage>
     );
   }
@@ -158,10 +167,13 @@ function AdminPageInner({ slug }: { slug: string }) {
   if (team.user_id !== userId) {
     return (
       <AppPage>
-        <EmptyState
+        <AppPageTitle
+          back={{ href: `/t/${slug}`, label: team.name }}
+          eyebrow="Space"
           title="Only the owner can change this team"
-          action={<Button variant="secondary" size="lg" href={`/t/${slug}`}>Back to the space</Button>}
+          lede="You are a member of this space. Its name, members and deletion are the owner's to manage."
         />
+        <Button variant="secondary" size="lg" href={`/t/${slug}`}>Back to the space</Button>
       </AppPage>
     );
   }

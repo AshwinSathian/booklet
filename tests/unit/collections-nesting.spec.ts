@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { getDb } from "@/lib/mongodb";
 import { ensureIndexes } from "@/lib/db/index-specs.mjs";
-import { createCollectionRecord, getCollectionRecord, getCollectionChildren, deleteCollectionRecord } from "@/lib/db";
+import { createCollectionRecord, getCollectionRecord, getCollectionChildren, deleteCollectionRecord, getPagesByCollection } from "@/lib/db";
 import { createId } from "@/lib/id";
 import { resolveParent, assertCanNest } from "@/server/collections";
 import { ServiceError } from "@/server/errors";
@@ -124,6 +124,31 @@ test.describe("deleteCollectionRecord cascade", () => {
       await db.collection("pages").deleteMany({ _id: { $in: [parentPageId, childPageId] } } as never);
     } finally {
       await cleanup([parentId, childId]);
+    }
+  });
+});
+
+test.describe("getPagesByCollection", () => {
+  test("a public page with a password is not listed", async () => {
+    const userId = `testuser${createId(8)}`;
+    const collectionId = createId(10);
+    const openId = createId(10);
+    const lockedId = createId(10);
+    const db = await getDb();
+    try {
+      await createCollectionRecord(collectionId, userId, "Listed");
+      const now = new Date().toISOString();
+      // slug omitted, as above.
+      const page = { user_id: userId, visibility: "public", collection_id: collectionId, team_id: null, view_count: 0, frontmatter_meta: null, created_at: now, updated_at: now };
+      await db.collection("pages").insertMany([
+        { ...page, _id: openId, title: "Open page", password_hash: null },
+        { ...page, _id: lockedId, title: "Locked page", password_hash: "x" },
+      ] as never);
+
+      expect((await getPagesByCollection(collectionId)).map((p) => p.id)).toEqual([openId]);
+    } finally {
+      await db.collection("pages").deleteMany({ _id: { $in: [openId, lockedId] } } as never);
+      await cleanup([collectionId]);
     }
   });
 });

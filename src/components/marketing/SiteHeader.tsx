@@ -63,7 +63,7 @@ export function SiteHeader() {
           <ThemeToggle />
           {isLoaded && isSignedIn ? (
             <>
-              <Link href={ROUTES.myPages} className="hidden px-2 text-sm text-text-secondary hover:text-text-primary md:inline">
+              <Link href={ROUTES.myPages} className="hidden whitespace-nowrap px-2 text-sm text-text-secondary hover:text-text-primary md:inline">
                 My pages
               </Link>
               <AccountMenu />
@@ -77,7 +77,7 @@ export function SiteHeader() {
               Sign in
             </Link>
           )}
-          <Button variant="primary" size="lg" href={ROUTES.app} className="max-sm:hidden">
+          <Button variant="primary" size="lg" href={ROUTES.app} className="whitespace-nowrap max-sm:hidden">
             Write a page
           </Button>
           <button

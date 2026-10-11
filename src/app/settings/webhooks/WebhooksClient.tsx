@@ -132,7 +132,7 @@ function WebhookCard({
     <div className="group flex items-start gap-3 rounded-xl border border-border-default bg-bg-elevated px-4 py-3 transition hover:border-border-strong">
       <div className="min-w-0 flex-1">
         <div className="text-sm font-medium text-text-primary truncate">{wh.url}</div>
-        <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-text-muted">
+        <div className="meta-row mt-1 text-xs text-text-muted">
           <div className="flex items-center gap-1 flex-wrap">
             {wh.events.map((e) => (
               <span
@@ -143,9 +143,7 @@ function WebhookCard({
               </span>
             ))}
           </div>
-          <span className="h-3 w-px bg-fill-2" aria-hidden />
           <span>Created {formatDate(wh.created_at)}</span>
-          <span className="h-3 w-px bg-fill-2" aria-hidden />
           <span>Last fired {formatDate(wh.last_triggered_at)}</span>
         </div>
         <DeliveryLog webhookId={wh.id} initial={wh.deliveries} />

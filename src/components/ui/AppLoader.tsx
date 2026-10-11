@@ -82,21 +82,7 @@ export function AppLoader() {
         }}
         className="flex flex-col items-center gap-6 select-none"
       >
-        {/* Logo with ambient glow */}
-        <div className="relative flex items-center justify-center">
-          <div
-            aria-hidden
-            className="absolute rounded-2xl"
-            style={{
-              width: 72,
-              height: 72,
-              background: "var(--color-accent)",
-              filter: "blur(28px)",
-              opacity: 0.35,
-            }}
-          />
-          <BookletMark size={56} />
-        </div>
+        <BookletMark size={56} />
 
         {/* Name */}
         <span className="text-[15px] font-semibold tracking-[-0.01em] text-text-primary">

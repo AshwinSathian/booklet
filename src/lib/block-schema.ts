@@ -51,7 +51,7 @@ export const BlockSchema: z.ZodType<import("./blocks").Block> = z.lazy(() =>
       inl: z.array(InlineSchema),
     }),
     z.object({ t: z.literal("paragraph"), inl: z.array(InlineSchema) }),
-    z.object({ t: z.literal("list"), ordered: z.boolean(), items: z.array(ListItemSchema) }),
+    z.object({ t: z.literal("list"), ordered: z.boolean(), start: z.number().int().min(0).max(1_000_000_000).optional(), items: z.array(ListItemSchema) }),
     z.object({ t: z.literal("quote"), blocks: z.array(BlockSchema) }),
     z.object({
       t: z.literal("callout"),

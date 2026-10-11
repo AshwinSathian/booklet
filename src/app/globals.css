@@ -325,7 +325,36 @@ button {
   }
 }
 
+/* A row of small facts with a rule between them. When the row wraps, no
+   rule is left hanging at either end of a line: each item carries its rule
+   on the left, and the row is pulled left so the first rule of every line
+   falls outside the clipped box. */
+@utility meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  row-gap: 0.25rem;
+  overflow: hidden;
+  margin-left: -0.625rem;
+  & > * {
+    margin-left: -1px;
+    padding-inline: 0.625rem;
+    border-left: 1px solid var(--color-border-default);
+  }
+}
+
 /* A text input, select or textarea in the app and on forms. */
+/* A row that scrolls sideways: a shade on each edge that has more beyond it.
+   The two covers scroll with the content (`local`) and hide the shade under
+   them once that end is reached. No script. */
+@utility scroll-cue-x {
+  background:
+    linear-gradient(to right, var(--color-bg) 50%, transparent) left / 2rem 100% no-repeat local,
+    linear-gradient(to left, var(--color-bg) 50%, transparent) right / 2rem 100% no-repeat local,
+    linear-gradient(to right, var(--color-border-strong), transparent) left / 0.75rem 100% no-repeat scroll,
+    linear-gradient(to left, var(--color-border-strong), transparent) right / 0.75rem 100% no-repeat scroll;
+}
+
 @utility field {
   min-height: 2.5rem;
   border-radius: 0.5rem;
@@ -442,13 +471,17 @@ html.dark .mark {
   --animate-dialog-in:   dialogIn   280ms cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-dropdown-in: dropdownIn 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-fade-in:     fadeIn     150ms cubic-bezier(0.16, 1, 0.3, 1) both;
-  --animate-pane-in:     paneIn     180ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  /* backwards, not both: a transform held after the end makes the pane the
+     containing block of the fixed popups inside it (slash menu, link
+     suggestions), which then open below the caret by the pane's offset. */
+  --animate-pane-in:     paneIn     180ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
   --animate-fade-up:     fadeUp     220ms cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-scale-in:    scaleIn    160ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
   --animate-toast-in:    toastIn    260ms cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-toast-out:   toastOut   180ms cubic-bezier(0.4, 0, 1, 1) both;
   --animate-shimmer:     shimmer    1.8s  linear infinite;
-  --animate-dot-pulse:   dotPulse   2.4s  ease-in-out infinite;
+  /* Twice, then still: nothing here moves for more than five seconds. */
+  --animate-dot-pulse:   dotPulse   2.4s  ease-in-out 2;
   --animate-drawer-backdrop-in:  drawerBackdropIn 180ms ease-out both;
   --animate-drawer-backdrop-out: drawerBackdropOut 160ms ease-in both;
   --animate-drawer-panel-in:     drawerPanelIn 220ms cubic-bezier(0.16, 1, 0.3, 1) both;

@@ -245,7 +245,8 @@ export function ContextMenuItem({
         </span>
       ) : active && activeLabel ? (
         <span className="shrink-0 text-xs font-medium text-text-primary">{activeLabel}</span>
-      ) : checked ? (
+      ) : checked || active ? (
+        // An active item with no label of its own would otherwise look like a hovered one.
         <span className="shrink-0 text-text-primary">
           <Icon name="check" size={14} />
         </span>

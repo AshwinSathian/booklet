@@ -42,7 +42,7 @@ export function CodeBlock({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <span className="tabular-nums text-[12px] text-text-muted">{lines} lines</span>
+          <span className="tabular-nums text-[12px] text-text-muted">{lines} {lines === 1 ? "line" : "lines"}</span>
 
           {shouldCollapse ? (
             <button

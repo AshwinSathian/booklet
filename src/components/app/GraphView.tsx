@@ -90,16 +90,20 @@ export function GraphView({
           </Button>
         </div>
 
-        <div className="overflow-auto flex-1 flex items-center justify-center p-3">
+        {/* The drawing centres itself (m-auto): centred by the flex box, its left part could not be scrolled to. */}
+        <div className="overflow-auto flex-1 flex p-3">
           {drafts.length === 0 ? (
-            <div className="p-6 text-sm text-text-secondary">No drafts yet.</div>
+            <div className="m-auto p-6 text-sm text-text-secondary">No drafts yet.</div>
           ) : (
             <svg
-              width={SIZE}
-              height={SIZE}
-              viewBox={`0 0 ${SIZE} ${SIZE}`}
+              // A margin all round: a node on the edge of the layout is not cut in half.
+              width={SIZE + 24}
+              height={SIZE + 24}
+              viewBox={`-12 -12 ${SIZE + 24} ${SIZE + 24}`}
               role="img"
               aria-label="Graph of linked drafts"
+              // Its own size on a phone too, where the panel scrolls: scaled to fit, the labels were 6px.
+              className="m-auto max-w-none shrink-0"
             >
               <g>
                 {edges.map((e, i) => {
@@ -145,10 +149,12 @@ export function GraphView({
                         }
                         strokeWidth={1.5}
                       />
+                      {/* On the right half the label goes to the left of its node, so it stays inside the drawing. */}
                       <text
-                        x={r + 4}
+                        x={p.x > SIZE / 2 ? -(r + 4) : r + 4}
                         y={4}
-                        className="fill-text-secondary text-[10px] select-none"
+                        textAnchor={p.x > SIZE / 2 ? "end" : "start"}
+                        className="fill-text-secondary text-xs select-none"
                       >
                         {(d.title || "Untitled").slice(0, 28)}
                       </text>

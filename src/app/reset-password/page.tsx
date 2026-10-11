@@ -14,9 +14,6 @@ export const metadata: Metadata = buildMetadata({
 export default function ResetPasswordPage() {
   return (
     <AuthLayout title="Choose a new password">
-      <div className="text-center">
-        <p className="text-sm text-text-secondary">Choose a new password for your account.</p>
-      </div>
       <Suspense>
         <ResetPasswordForm />
       </Suspense>

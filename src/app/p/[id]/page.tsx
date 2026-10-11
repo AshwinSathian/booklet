@@ -10,6 +10,7 @@ import { DocHeaderStrip } from "@/components/share/DocHeaderStrip";
 import { absoluteUrl, buildMetadata } from "@/lib/seo";
 import { buildLockedPageMetadata } from "@/lib/locked-page-metadata";
 import { getDoc } from "@/lib/storage";
+import { formatDateUTC } from "@/lib/ui/time";
 import { readingTimeMinutes } from "@/lib/reading-time";
 import { buildToc, MIN_TOC_HEADINGS } from "@/lib/toc";
 import { verifyUnlockToken } from "@/lib/unlock-token";
@@ -218,7 +219,6 @@ export default async function SharePage({
   })().catch(() => {});
 
 
-  const createdAt = new Date(doc.createdAt);
   const { toc, anchorMap } = buildToc(doc.blocks ?? []);
   const showToc = toc.length >= MIN_TOC_HEADINGS;
   // anchorMap is always populated so all headings get IDs regardless of TOC visibility
@@ -267,8 +267,8 @@ export default async function SharePage({
             <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
               <ExportMenu blocks={doc.blocks} settings={doc.settings} raw={doc.raw} title={pageTitle} />
               <ThemeToggle />
-              <Button variant="primary" size="md" href={ROUTES.app} data-booklet-cta="make-your-own" className="hidden xs:inline-flex">
-                <span className="hidden sm:inline">Write</span>
+              <Button variant="primary" size="md" href={ROUTES.app} data-booklet-cta="make-your-own">
+                Write
                 <svg width="11" height="11" fill="none" viewBox="0 0 11 11" aria-hidden>
                   <path d="M2 9 9 2M9 2H4.5M9 2v4.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
@@ -278,11 +278,13 @@ export default async function SharePage({
         }
       >
         <div className={`mx-auto w-full px-4 py-3 flex items-center justify-between gap-3 ${maxW}`}>
-          <AppLogo onlyIcon={false} />
+          {/* The wordmark needs 360px: on a narrower phone the row is wider than the screen with it. */}
+          <span className="min-[360px]:hidden"><AppLogo onlyIcon={true} /></span>
+          <span className="max-[359px]:hidden"><AppLogo onlyIcon={false} /></span>
 
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {/* Read time — desktop only */}
-            <span className="hidden md:inline text-2xs text-text-muted tabular-nums">
+            <span className="hidden md:inline text-xs text-text-muted tabular-nums">
               ~{readMins} min
             </span>
             <ExportMenu
@@ -297,13 +299,12 @@ export default async function SharePage({
               baseUrl={absoluteUrl("")}
             />
             <ThemeToggle />
-            {/* Make your own — visible at sm+ as button, at xs as icon only */}
+            {/* The way to the editor, at every width: "Write" on a phone, "Make your own" from sm up */}
             <Button
               variant="primary"
               size="md"
               href={ROUTES.app}
               data-booklet-cta="make-your-own"
-              className="hidden xs:inline-flex"
             >
               <span className="hidden sm:inline">Make your own</span>
               <span className="sm:hidden">Write</span>
@@ -352,8 +353,8 @@ export default async function SharePage({
               <BookletMark size={20} />
               <div>
                 <div className="text-xs font-semibold text-text-primary">{APP_NAME}</div>
-                <div className="text-2xs text-text-muted">
-                  Published {createdAt.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
+                <div className="text-xs text-text-muted">
+                  Published {formatDateUTC(doc.createdAt)}
                   {readMins > 0 && <> · ~{readMins} min read</>}
                 </div>
               </div>
@@ -361,19 +362,16 @@ export default async function SharePage({
             <Link
               href={`/report?page=${encodeURIComponent(resolvedId)}`}
               rel="nofollow"
-              className="text-2xs text-text-muted underline-offset-2 transition hover:text-text-secondary hover:underline sm:ml-auto"
+              className="text-xs text-text-muted underline-offset-2 transition hover:text-text-secondary hover:underline sm:ml-auto"
             >
               Report this page
             </Link>
-            <Link
-              href={ROUTES.app}
-              className="inline-flex items-center gap-1.5 rounded-pill border border-border-default px-3.5 py-1.5 text-xs font-medium text-text-secondary transition hover:border-accent-soft/50 hover:text-text-primary"
-            >
+            <Button variant="secondary" size="md" href={ROUTES.app}>
               Write your own page
               <svg width="10" height="10" fill="none" viewBox="0 0 12 12" aria-hidden>
                 <path d="M2.5 9.5 9.5 2.5M9.5 2.5H4M9.5 2.5V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-            </Link>
+            </Button>
           </div>
         </div>
       </footer>

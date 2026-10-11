@@ -305,8 +305,10 @@ function ClaudeAiInstructions() {
         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" aria-hidden className="shrink-0">
           <path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        Remote MCP on Claude.ai requires a <strong className="mx-0.5">Claude Pro</strong> or{" "}
-        <strong>Max</strong> plan.
+        {/* One span: as bare children of the flex row, each bold word became a column of its own. */}
+        <span>
+          Remote MCP on Claude.ai requires a <strong>Claude Pro</strong> or <strong>Max</strong> plan.
+        </span>
       </div>
 
       <div className="space-y-4">

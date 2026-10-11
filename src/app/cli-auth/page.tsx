@@ -35,7 +35,7 @@ function ErrorPage({ title, body }: { title: string; body: string }) {
         href="/my-pages"
         className="text-sm link"
       >
-        Go to My Pages →
+        Go to My pages →
       </Link>
     </AuthLayout>
   );

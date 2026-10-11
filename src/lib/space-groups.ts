@@ -38,7 +38,9 @@ export function groupSpacePages(pages: DbPage[]): SpaceGroup[] {
       ),
   }));
   groups.push({ key: "other", heading: "Other pages", pages: pages.filter((p) => !p.doc_type).sort(newestFirst) });
-  return groups.filter((g) => g.pages.length > 0);
+  const filled = groups.filter((g) => g.pages.length > 0);
+  // "Other" needs something to be other than.
+  return filled.length === 1 && filled[0].key === "other" ? [{ ...filled[0], heading: "Pages" }] : filled;
 }
 
 const xml = (s: string) =>
