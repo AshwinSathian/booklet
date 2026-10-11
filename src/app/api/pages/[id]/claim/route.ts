@@ -12,6 +12,7 @@ import { recordFields } from "@/server/pages";
 import { logError } from "@/lib/logger";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { clearClaimToken, clearDocExpiry, getDoc, getDocState } from "@/lib/storage";
+import { problem } from "@/server/errors";
 
 export const runtime = "nodejs";
 
@@ -24,13 +25,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   // State-changing and cookie-authenticated: same Origin check as the other
   // session endpoints.
   if (!isSameOriginRequest(req)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return problem(403, "Forbidden");
   }
 
   try {
     const userId = (await getSession())?.userId ?? null;
     if (!userId) {
-      return NextResponse.json({ error: "Sign in to keep this page." }, { status: 401 });
+      return problem(401, "Sign in to keep this page.");
     }
 
     const rl = await checkRateLimit(`claim__${userId}`, 20);
@@ -42,27 +43,24 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const { id } = await params;
     const state = await getDocState(id);
     if (!state) {
-      return NextResponse.json({ error: "Page not found" }, { status: 404 });
+      return problem(404, "Page not found");
     }
     if (state.takenDownAt) {
-      return NextResponse.json({ error: GONE_MESSAGES.taken_down }, { status: 410 });
+      return problem(410, GONE_MESSAGES.taken_down);
     }
     if (await getPageRecord(id)) {
-      return NextResponse.json({ error: "This page already belongs to an account." }, { status: 409 });
+      return problem(409, "This page already belongs to an account.");
     }
 
     const cookieName = claimCookieName(id);
     const token = (await cookies()).get(cookieName)?.value;
     if (!(await claimTokenMatches(token, state.claimTokenHash))) {
-      return NextResponse.json(
-        { error: "This page can only be claimed from the browser that published it." },
-        { status: 403 },
-      );
+      return problem(403, "This page can only be claimed from the browser that published it.");
     }
 
     const doc = await getDoc(id);
     if (!doc) {
-      return NextResponse.json({ error: "Page not found" }, { status: 404 });
+      return problem(404, "Page not found");
     }
 
     // Expiry is cleared BEFORE the owner record is written. The daily purge
@@ -82,7 +80,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       });
     } catch (e) {
       if (typeof e === "object" && e !== null && "code" in e && e.code === 11000) {
-        return NextResponse.json({ error: "This page already belongs to an account." }, { status: 409 });
+        return problem(409, "This page already belongs to an account.");
       }
       throw e;
     }
@@ -94,6 +92,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     return res;
   } catch (e) {
     logError("claim", "Unhandled error", e);
-    return NextResponse.json({ error: "Could not claim this page. Try again." }, { status: 500 });
+    return problem(500, "Could not claim this page. Try again.");
   }
 }

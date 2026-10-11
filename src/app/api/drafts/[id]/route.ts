@@ -9,6 +9,7 @@ import { logError } from "@/lib/logger";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getSession } from "@/lib/auth/session";
 import { NextResponse } from "next/server";
+import { problem } from "@/server/errors";
 
 export const runtime = "nodejs";
 
@@ -18,20 +19,20 @@ export async function GET(
 ) {
   const userId = (await getSession())?.userId ?? null;
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return problem(401, "Unauthorized");
   }
 
   const { id } = await params;
   if (!id?.trim()) {
-    return NextResponse.json({ error: "Missing draft id" }, { status: 400 });
+    return problem(400, "Missing draft id");
   }
 
   const record = await getDraftRecord(id);
   if (!record) {
-    return NextResponse.json({ error: "Draft not found" }, { status: 404 });
+    return problem(404, "Draft not found");
   }
   if (record.user_id !== userId) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return problem(403, "Forbidden");
   }
 
   const { user_id: _uid, ...draft } = record;
@@ -44,7 +45,7 @@ export async function PUT(
 ) {
   const userId = (await getSession())?.userId ?? null;
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return problem(401, "Unauthorized");
   }
 
   // Keyed by userId, not IP — every caller here is authenticated, and this
@@ -55,38 +56,35 @@ export async function PUT(
 
   const { id } = await params;
   if (!id?.trim()) {
-    return NextResponse.json({ error: "Missing draft id" }, { status: 400 });
+    return problem(400, "Missing draft id");
   }
 
   let body: unknown;
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return problem(400, "Invalid JSON");
   }
 
   const draft = coerceDraftDoc(body);
   if (!draft || draft.id !== id) {
-    return NextResponse.json({ error: "Invalid draft payload" }, { status: 422 });
+    return problem(422, "Invalid draft payload");
   }
 
   try {
     const bytes = new TextEncoder().encode(JSON.stringify(draft));
     if (bytes.byteLength > STORAGE.maxDocBytes) {
-      return NextResponse.json(
-        { error: "Draft is too large to sync." },
-        { status: 413 },
-      );
+      return problem(413, "Draft is too large to sync.");
     }
   } catch {
-    return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+    return problem(400, "Invalid payload");
   }
 
   // Ownership check before upsert — same 403 pattern as pages'
   // `record.user_id !== userId` guard (src/app/api/pages/[id]/route.ts).
   const existing = await getDraftRecord(id);
   if (existing && existing.user_id !== userId) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return problem(403, "Forbidden");
   }
 
   try {
@@ -94,7 +92,7 @@ export async function PUT(
   } catch (e: unknown) {
     logError("drafts-sync", "Upsert failed", e);
     const msg = e instanceof Error ? e.message : "Failed to sync draft";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return problem(500, msg);
   }
 
   return NextResponse.json({ id, updatedAt: draft.updatedAt });
@@ -106,7 +104,7 @@ export async function DELETE(
 ) {
   const userId = (await getSession())?.userId ?? null;
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return problem(401, "Unauthorized");
   }
 
   const rl = await checkRateLimit(`drafts_delete__${userId}`, 60).catch(() => null);
@@ -114,7 +112,7 @@ export async function DELETE(
 
   const { id } = await params;
   if (!id?.trim()) {
-    return NextResponse.json({ error: "Missing draft id" }, { status: 400 });
+    return problem(400, "Missing draft id");
   }
 
   const record = await getDraftRecord(id);
@@ -124,7 +122,7 @@ export async function DELETE(
     return new NextResponse(null, { status: 204 });
   }
   if (record.user_id !== userId) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return problem(403, "Forbidden");
   }
 
   try {
@@ -132,7 +130,7 @@ export async function DELETE(
   } catch (e: unknown) {
     logError("drafts-sync", "Delete failed", e);
     const msg = e instanceof Error ? e.message : "Failed to delete draft";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return problem(500, msg);
   }
 
   return new NextResponse(null, { status: 204 });

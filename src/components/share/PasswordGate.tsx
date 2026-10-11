@@ -23,8 +23,8 @@ export function PasswordGate({ pageId }: { pageId: string }) {
         // Reload so the server renders the full page with cookie set.
         window.location.reload();
       } else {
-        const data = (await res.json()) as { error?: string };
-        setError(data.error ?? "Incorrect password");
+        const data = (await res.json()) as { detail?: string };
+        setError(data.detail ?? "Incorrect password");
       }
     } catch {
       setError("Something went wrong. Try again.");

@@ -9,7 +9,7 @@ import { createSession } from "@/lib/auth/session";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/request-ip";
 import { getSiteOrigin } from "@/lib/site-url";
-import { toErrorResponse } from "@/server/errors";
+import { toErrorResponse, problem } from "@/server/errors";
 import { passkeyLoginOptions, verifyPasskeyLogin, WEBAUTHN_COOKIE } from "@/server/passkeys";
 
 export const runtime = "nodejs";
@@ -32,7 +32,7 @@ function challengeCookie(req: Request, res: NextResponse, id: string): NextRespo
  */
 export async function POST(req: Request) {
   if (!isSameOriginRequest(req)) {
-    return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
+    return problem(403, "Invalid request origin");
   }
   const limited = await checkRateLimit(`passkey_login__ip__${getClientIp(req.headers)}`, 20);
   if (limited) return limited;

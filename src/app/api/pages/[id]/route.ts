@@ -7,7 +7,7 @@ import { logError } from "@/lib/logger";
 import { getSession } from "@/lib/auth/session";
 import { getOwnedPage, assertNotTakenDown, assertSlugAvailable, relinkPage } from "@/server/pages";
 import { getSiteOrigin } from "@/lib/site-url";
-import { toErrorResponse } from "@/server/errors";
+import { toErrorResponse, problem } from "@/server/errors";
 import { assertVisibilityAllowed } from "@/server/access";
 import { NextResponse } from "next/server";
 
@@ -19,12 +19,12 @@ export async function GET(
 ) {
   const userId = (await getSession())?.userId ?? null;
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return problem(401, "Unauthorized");
   }
 
   const { id } = await params;
   if (!id?.trim()) {
-    return NextResponse.json({ error: "Missing page id" }, { status: 400 });
+    return problem(400, "Missing page id");
   }
 
   let record;
@@ -49,7 +49,7 @@ export async function PATCH(
 ) {
   const userId = (await getSession())?.userId ?? null;
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return problem(401, "Unauthorized");
   }
 
   // Slug, password and visibility decide how a page is published, so this
@@ -59,7 +59,7 @@ export async function PATCH(
 
   const { id } = await params;
   if (!id?.trim()) {
-    return NextResponse.json({ error: "Missing page id" }, { status: 400 });
+    return problem(400, "Missing page id");
   }
 
   let record;
@@ -78,7 +78,7 @@ export async function PATCH(
   try {
     body = (await req.json()) as typeof body;
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return problem(400, "Invalid JSON");
   }
 
   const patch: Parameters<typeof updatePageRecord>[1] = {};
@@ -89,7 +89,7 @@ export async function PATCH(
     } else if (typeof body.password === "string" && body.password.length >= 6) {
       patch.password_hash = await hashPassword(body.password);
     } else {
-      return NextResponse.json({ error: "Password must be at least 6 characters." }, { status: 422 });
+      return problem(422, "Password must be at least 6 characters.");
     }
   }
 
@@ -110,10 +110,7 @@ export async function PATCH(
 
   if (body.visibility !== undefined) {
     if (body.visibility !== "public" && body.visibility !== "unlisted" && body.visibility !== "team") {
-      return NextResponse.json(
-        { error: "visibility must be 'public', 'unlisted' or 'team'" },
-        { status: 422 },
-      );
+      return problem(422, "visibility must be 'public', 'unlisted' or 'team'");
     }
     try {
       await assertVisibilityAllowed(body.visibility, record.collection_id, userId);
@@ -124,7 +121,7 @@ export async function PATCH(
   }
 
   if (Object.keys(patch).length === 0) {
-    return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
+    return problem(400, "No valid fields to update");
   }
 
   try {
@@ -141,10 +138,10 @@ export async function PATCH(
     // case for a clean message; anything else is an unexpected DB failure
     // whose raw driver message shouldn't go to the client.
     if (typeof e === "object" && e !== null && "code" in e && e.code === 11000) {
-      return NextResponse.json({ error: "This slug is already taken." }, { status: 409 });
+      return problem(409, "This slug is already taken.");
     }
     logError("update-page", "Failed to update", e);
-    return NextResponse.json({ error: "Failed to update" }, { status: 500 });
+    return problem(500, "Failed to update");
   }
 
   return NextResponse.json({ id, ...patch });
@@ -156,12 +153,12 @@ export async function DELETE(
 ) {
   const userId = (await getSession())?.userId ?? null;
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return problem(401, "Unauthorized");
   }
 
   const { id } = await params;
   if (!id?.trim()) {
-    return NextResponse.json({ error: "Missing page id" }, { status: 400 });
+    return problem(400, "Missing page id");
   }
 
   try {
@@ -176,7 +173,7 @@ export async function DELETE(
     await deleteDoc(id);
   } catch (e: unknown) {
     logError("delete-page", "Delete failed", e);
-    return NextResponse.json({ error: "Delete failed" }, { status: 500 });
+    return problem(500, "Delete failed");
   }
 
   try {

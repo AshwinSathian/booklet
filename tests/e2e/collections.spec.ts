@@ -114,6 +114,6 @@ test.describe("Finder-style collections", () => {
     });
     expect(patchRes.status()).toBe(422);
     const body = (await patchRes.json()) as { error: string };
-    expect(body.error).toContain("sub-folders");
+    expect(body.detail).toContain("sub-folders");
   });
 });

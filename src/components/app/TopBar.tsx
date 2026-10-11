@@ -970,8 +970,8 @@ function PostPublishSlugBar({
         body: JSON.stringify({ slug: value }),
       });
       if (!res.ok) {
-        const body = await res.json().catch(() => ({})) as { error?: string };
-        throw new Error(body.error ?? "Failed to save");
+        const body = await res.json().catch(() => ({})) as { detail?: string };
+        throw new Error(body.detail ?? "Failed to save");
       }
       onSlugSet(value);
     } catch (e) {

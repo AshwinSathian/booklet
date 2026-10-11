@@ -7,7 +7,7 @@ import { isSameOriginRequest } from "@/lib/auth/origin-check";
 import { getSession } from "@/lib/auth/session";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getSiteOrigin } from "@/lib/site-url";
-import { toErrorResponse } from "@/server/errors";
+import { toErrorResponse, problem } from "@/server/errors";
 import { passkeyRegistrationOptions, verifyPasskeyRegistration, WEBAUTHN_COOKIE } from "@/server/passkeys";
 
 export const runtime = "nodejs";
@@ -30,10 +30,10 @@ function challengeCookie(req: Request, res: NextResponse, id: string): NextRespo
  */
 export async function POST(req: Request) {
   if (!isSameOriginRequest(req) || !req.headers.get("origin")) {
-    return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
+    return problem(403, "Invalid request origin");
   }
   const session = await getSession();
-  if (!session) return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+  if (!session) return problem(401, "Not signed in");
   const limited = await checkRateLimit(`passkey_register__${session.userId}`, 20);
   if (limited) return limited;
 
@@ -47,7 +47,7 @@ export async function POST(req: Request) {
   try {
     if (!body?.response) {
       const user = await getUserById(session.userId);
-      if (!user) return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+      if (!user) return problem(401, "Not signed in");
       const { options, challengeId } = await passkeyRegistrationOptions(user, origin);
       return challengeCookie(req, NextResponse.json(options), challengeId);
     }

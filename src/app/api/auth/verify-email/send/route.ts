@@ -5,16 +5,17 @@ import { getSession } from "@/lib/auth/session";
 import { checkMonthlyQuota, checkRateLimit } from "@/lib/rate-limit";
 import { getSiteOrigin } from "@/lib/site-url";
 import { sendVerification } from "@/server/verification";
+import { problem } from "@/server/errors";
 
 export const runtime = "nodejs";
 
 /** Sends the signed-in user a new verification link. One a minute, 20 a month. */
 export async function POST(req: Request) {
   if (!isSameOriginRequest(req)) {
-    return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
+    return problem(403, "Invalid request origin");
   }
   const session = await getSession();
-  if (!session) return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+  if (!session) return problem(401, "Not signed in");
 
   const limited =
     (await checkRateLimit(`verify-send__${session.userId}`, 1)) ??

@@ -98,8 +98,8 @@ export function VersionsClient({
         body: JSON.stringify({ settings: doc.settings, raw: doc.raw }),
       });
       if (!res.ok) {
-        const body = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(body.error ?? `Could not restore v${version}`);
+        const body = (await res.json().catch(() => ({}))) as { detail?: string };
+        throw new Error(body.detail ?? `Could not restore v${version}`);
       }
       window.location.reload();
     } catch (e) {

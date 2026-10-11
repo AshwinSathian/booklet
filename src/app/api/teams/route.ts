@@ -3,6 +3,7 @@ import { createId } from "@/lib/id";
 import { getSession } from "@/lib/auth/session";
 import { logError } from "@/lib/logger";
 import { NextResponse } from "next/server";
+import { problem } from "@/server/errors";
 
 export const runtime = "nodejs";
 
@@ -21,7 +22,7 @@ const RESERVED_TEAM_SLUGS = new Set(["join"]);
 
 export async function GET() {
   const userId = (await getSession())?.userId ?? null;
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!userId) return problem(401, "Unauthorized");
 
   const [owned, member] = await Promise.all([
     getCollectionsByUser(userId).then((cs) => cs.filter((c) => c.is_team_space)),
@@ -42,24 +43,24 @@ export async function GET() {
 
 export async function POST(req: Request) {
   const userId = (await getSession())?.userId ?? null;
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!userId) return problem(401, "Unauthorized");
 
   let body: { name?: string; slug?: string };
   try {
     body = (await req.json()) as { name?: string; slug?: string };
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return problem(400, "Invalid JSON");
   }
 
   const name = body.name?.trim();
   if (!name || name.length > 80) {
-    return NextResponse.json({ error: "Team name is required (max 80 chars)." }, { status: 422 });
+    return problem(422, "Team name is required (max 80 chars).");
   }
 
   const slug = body.slug?.trim() ? slugify(body.slug.trim()) : slugify(name);
-  if (!slug) return NextResponse.json({ error: "Could not derive a valid slug from the name." }, { status: 422 });
+  if (!slug) return problem(422, "Could not derive a valid slug from the name.");
   if (RESERVED_TEAM_SLUGS.has(slug)) {
-    return NextResponse.json({ error: "That team URL is reserved." }, { status: 409 });
+    return problem(409, "That team URL is reserved.");
   }
 
   // Fast, friendly rejection for the common case. This is a check-then-act
@@ -69,7 +70,7 @@ export async function POST(req: Request) {
   // duplicate-key error is what we authoritatively act on below.
   const existing = await getCollectionBySlug(slug);
   if (existing) {
-    return NextResponse.json({ error: "That team URL is already taken." }, { status: 409 });
+    return problem(409, "That team URL is already taken.");
   }
 
   const id = createId(10);
@@ -83,7 +84,7 @@ export async function POST(req: Request) {
         typeof e === "object" && e !== null && "code" in e && (e as { code?: unknown }).code === 11000;
       if (isDuplicateKey) {
         await deleteCollectionRecord(id, userId).catch(() => {});
-        return NextResponse.json({ error: "That team URL is already taken." }, { status: 409 });
+        return problem(409, "That team URL is already taken.");
       }
       throw e;
     }
@@ -91,7 +92,7 @@ export async function POST(req: Request) {
     await addCollectionMember(createId(10), id, userId, null, "editor", userId);
   } catch (e) {
     logError("teams", "Failed to create team", e);
-    return NextResponse.json({ error: "Failed to create team" }, { status: 500 });
+    return problem(500, "Failed to create team");
   }
 
   return NextResponse.json({ id, name, slug }, { status: 201 });

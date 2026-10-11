@@ -43,9 +43,9 @@ function DeliveryLog({ webhookId, initial }: { webhookId: string; initial: Deliv
     setError(null);
     try {
       const res = await fetch(`/api/webhooks/${webhookId}/deliveries/${deliveryId}/resend`, { method: "POST" });
-      const data = (await res.json().catch(() => ({}))) as { delivery?: DeliveryRow; error?: string };
+      const data = (await res.json().catch(() => ({}))) as { delivery?: DeliveryRow; detail?: string };
       if (!res.ok || !data.delivery) {
-        setError(data.error ?? "Could not resend.");
+        setError(data.detail ?? "Could not resend.");
         return;
       }
       setRows((prev) => [data.delivery!, ...prev].slice(0, MAX_DELIVERIES));
@@ -301,10 +301,10 @@ export function WebhooksSection({ initialWebhooks }: { initialWebhooks: WebhookR
         url?: string;
         events?: string[];
         secret?: string;
-        error?: string;
+        detail?: string;
       };
       if (!res.ok) {
-        setError(data.error ?? "Failed to create webhook.");
+        setError(data.detail ?? "Failed to create webhook.");
         return;
       }
       const newWh: WebhookRow = {

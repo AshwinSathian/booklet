@@ -914,8 +914,8 @@ async function safeReadErrorMessage(res: Response): Promise<string> {
   try {
     const ct = res.headers.get("content-type") ?? "";
     if (ct.includes("application/json")) {
-      const data = (await res.json()) as { error?: string };
-      return data.error || `Request failed (${res.status})`;
+      const data = (await res.json()) as { detail?: string };
+      return data.detail || `Request failed (${res.status})`;
     }
   } catch {
     // fall through

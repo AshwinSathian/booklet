@@ -11,7 +11,7 @@ import { putDoc } from "@/lib/storage";
 import { logError } from "@/lib/logger";
 import { getSession } from "@/lib/auth/session";
 import { assertNotTakenDown, buildDocument, getOwnedPage, type BuiltDocument } from "@/server/pages";
-import { toErrorResponse } from "@/server/errors";
+import { toErrorResponse, problem } from "@/server/errors";
 import { getSiteOrigin } from "@/lib/site-url";
 import { NextResponse } from "next/server";
 
@@ -29,7 +29,7 @@ export async function PATCH(
   try {
     const userId = (await getSession())?.userId ?? null;
     if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return problem(401, "Unauthorized");
     }
 
     const unverified = await unverifiedResponse(userId);
@@ -37,7 +37,7 @@ export async function PATCH(
 
     const { id } = await params;
     if (!id?.trim()) {
-      return NextResponse.json({ error: "Missing page id" }, { status: 400 });
+      return problem(400, "Missing page id");
     }
 
     let record;
@@ -52,11 +52,11 @@ export async function PATCH(
     try {
       payload = (await req.json()) as UpdatePayload;
     } catch {
-      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+      return problem(400, "Invalid JSON");
     }
 
     if (!payload?.raw || typeof payload.raw !== "string" || !payload.raw.trim()) {
-      return NextResponse.json({ error: "Nothing to publish — provide `raw` markdown." }, { status: 400 });
+      return problem(400, "Nothing to publish — provide `raw` markdown.");
     }
 
     // Same pipeline as a first publish: see buildDocument.
@@ -88,7 +88,7 @@ export async function PATCH(
       });
     } catch (e: unknown) {
       logError("patch-publish", "Update failed", e);
-      return NextResponse.json({ error: "Update failed" }, { status: 500 });
+      return problem(500, "Update failed");
     }
 
     const updatedAt = new Date().toISOString();
@@ -120,6 +120,6 @@ export async function PATCH(
     return NextResponse.json({ id, url: publishedUrl, updated_at: updatedAt });
   } catch (e: unknown) {
     logError("patch-publish", "Unhandled error", e);
-    return NextResponse.json({ error: "An unexpected error occurred" }, { status: 500 });
+    return problem(500, "An unexpected error occurred");
   }
 }

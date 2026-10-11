@@ -10,6 +10,7 @@ import { checkMonthlyQuota, checkRateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/request-ip";
 import { getSiteOrigin } from "@/lib/site-url";
 import { resolvePageId } from "@/server/page-gone";
+import { problem } from "@/server/errors";
 
 export const runtime = "nodejs";
 
@@ -27,7 +28,7 @@ const ReportSchema = z.object({
 /** Anyone can report a page — no account. 5 a minute per IP. */
 export async function POST(req: Request) {
   if (!isSameOriginRequest(req)) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return problem(403, "Forbidden");
   }
 
   try {
@@ -38,21 +39,21 @@ export async function POST(req: Request) {
     try {
       json = await req.json();
     } catch {
-      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+      return problem(400, "Invalid JSON");
     }
 
     if (!(await verifyTurnstile(req, (json as { turnstile_token?: unknown } | null)?.turnstile_token))) {
-      return NextResponse.json({ error: TURNSTILE_FAILED }, { status: 403 });
+      return problem(403, TURNSTILE_FAILED);
     }
 
     const parsed = ReportSchema.safeParse(json);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid report. Choose a reason; detail is at most 2,000 characters." }, { status: 400 });
+      return problem(400, "Invalid report. Choose a reason; detail is at most 2,000 characters.");
     }
 
     const pageId = await resolvePageId(parsed.data.page_id);
     if (!pageId) {
-      return NextResponse.json({ error: "Page not found" }, { status: 404 });
+      return problem(404, "Page not found");
     }
 
     // One page needs one decision, not a queue of duplicates: past 10 open
@@ -97,6 +98,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true }, { status: 201 });
   } catch (e) {
     logError("reports", "Unhandled error", e);
-    return NextResponse.json({ error: "Could not submit the report. Try again." }, { status: 500 });
+    return problem(500, "Could not submit the report. Try again.");
   }
 }

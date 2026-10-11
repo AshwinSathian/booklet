@@ -25,8 +25,8 @@ export function VerifyEmailConfirm({ token }: { token: string }) {
         void refetch();
         return;
       }
-      const data = (await res.json().catch(() => ({}))) as { error?: string };
-      setError(data.error ?? "Could not confirm the address. Try again.");
+      const data = (await res.json().catch(() => ({}))) as { detail?: string };
+      setError(data.detail ?? "Could not confirm the address. Try again.");
     } catch {
       setError("Network error. Try again.");
     }

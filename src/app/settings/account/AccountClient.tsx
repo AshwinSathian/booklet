@@ -49,7 +49,7 @@ async function send(url: string, method: string, body?: unknown): Promise<string
       ...(body === undefined ? {} : { headers: { "content-type": "application/json" }, body: JSON.stringify(body) }),
     });
     if (res.ok) return null;
-    return ((await res.json().catch(() => ({}))) as { error?: string }).error ?? "Something went wrong. Try again.";
+    return ((await res.json().catch(() => ({}))) as { detail?: string }).detail ?? "Something went wrong. Try again.";
   } catch {
     return "Network error. Try again.";
   }
@@ -99,7 +99,7 @@ export function AccountClient({ email, needsVerification, hasPassword, providers
     await run(async () => {
       try {
         const options = await fetch("/api/auth/passkey/register", { method: "POST", headers: { "content-type": "application/json" }, body: "{}" });
-        if (!options.ok) return ((await options.json().catch(() => ({}))) as { error?: string }).error ?? "Could not start. Try again.";
+        if (!options.ok) return ((await options.json().catch(() => ({}))) as { detail?: string }).detail ?? "Could not start. Try again.";
         const response = await startRegistration({ optionsJSON: await options.json() });
         return await send("/api/auth/passkey/register", "POST", { response, name: `Passkey added ${day(new Date().toISOString())}` });
       } catch (e) {

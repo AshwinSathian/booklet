@@ -5,6 +5,7 @@ import { getWebhook, getWebhookDelivery } from "@/lib/db";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { sendToWebhook } from "@/lib/webhook-delivery";
 import { unverifiedResponse } from "@/server/verification";
+import { problem } from "@/server/errors";
 
 export const runtime = "nodejs";
 
@@ -14,9 +15,9 @@ export const runtime = "nodejs";
  * the caller's user id, so someone else's ids answer 404.
  */
 export async function POST(req: Request, { params }: { params: Promise<{ id: string; deliveryId: string }> }) {
-  if (!isSameOriginRequest(req)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!isSameOriginRequest(req)) return problem(403, "Forbidden");
   const userId = (await getSession())?.userId ?? null;
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!userId) return problem(401, "Unauthorized");
 
   const unverified = await unverifiedResponse(userId);
   if (unverified) return unverified;
@@ -28,7 +29,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const { id, deliveryId } = await params;
   const webhook = await getWebhook(id, userId);
   const delivery = webhook ? await getWebhookDelivery(deliveryId, id, userId) : null;
-  if (!webhook || !delivery) return NextResponse.json({ error: "Delivery not found" }, { status: 404 });
+  if (!webhook || !delivery) return problem(404, "Delivery not found");
 
   const sent = await sendToWebhook(webhook, delivery.event, delivery.page_id, delivery.body);
   return NextResponse.json(

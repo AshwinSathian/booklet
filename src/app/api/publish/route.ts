@@ -25,7 +25,7 @@ import {
 } from "@/lib/anonymous-claim";
 import { assertVisibilityAllowed, getWritableSpace } from "@/server/access";
 import { buildDocument, type BuiltDocument } from "@/server/pages";
-import { toErrorResponse } from "@/server/errors";
+import { toErrorResponse, problem } from "@/server/errors";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -60,15 +60,15 @@ export async function POST(req: Request) {
     try {
       payload = (await req.json()) as PublishPayload;
     } catch {
-      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+      return problem(400, "Invalid JSON");
     }
 
     if (!isAuthenticated && !(await verifyTurnstile(req, payload?.turnstile_token))) {
-      return NextResponse.json({ error: TURNSTILE_FAILED }, { status: 403 });
+      return problem(403, TURNSTILE_FAILED);
     }
 
     if (!payload?.raw || typeof payload.raw !== "string" || !payload.raw.trim()) {
-      return NextResponse.json({ error: "Nothing to publish — provide `raw` markdown." }, { status: 400 });
+      return problem(400, "Nothing to publish — provide `raw` markdown.");
     }
 
     const id = createId(10);
@@ -134,7 +134,7 @@ export async function POST(req: Request) {
       );
     } catch (e: unknown) {
       logError("publish", "Publish failed", e);
-      return NextResponse.json({ error: "Publish failed" }, { status: 500 });
+      return problem(500, "Publish failed");
     }
 
     if (isAuthenticated && userId) {
@@ -149,7 +149,7 @@ export async function POST(req: Request) {
       } catch (dbErr) {
         logError("publish", "DB ownership write failed", dbErr);
         await deleteDoc(id).catch(() => {});
-        return NextResponse.json({ error: "Publish failed" }, { status: 500 });
+        return problem(500, "Publish failed");
       }
       void setPageLinks(id, built.linkTargetIds).catch((err) => logError("publish", "Link write failed", err));
       void snapshotPageVersion(id, doc).catch((err) => {
@@ -194,6 +194,6 @@ export async function POST(req: Request) {
     return res;
   } catch (e: unknown) {
     logError("publish", "Unhandled error", e);
-    return NextResponse.json({ error: "An unexpected error occurred" }, { status: 500 });
+    return problem(500, "An unexpected error occurred");
   }
 }

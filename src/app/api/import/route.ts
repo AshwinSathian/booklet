@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { isSameOriginRequest } from "@/lib/auth/origin-check";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/request-ip";
-import { toErrorResponse } from "@/server/errors";
+import { toErrorResponse, problem } from "@/server/errors";
 import { importMarkdownFromUrl } from "@/server/import";
 
 export const runtime = "nodejs";
@@ -15,7 +15,7 @@ export const runtime = "nodejs";
  * a script can, and gets what raw.githubusercontent.com serves anyone.
  */
 export async function POST(req: Request) {
-  if (!isSameOriginRequest(req)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!isSameOriginRequest(req)) return problem(403, "Forbidden");
 
   const limited = await checkRateLimit(`import_url__ip__${getClientIp(req.headers)}`, 10);
   if (limited) return limited;
@@ -24,7 +24,7 @@ export async function POST(req: Request) {
   try {
     body = (await req.json()) as { url?: unknown };
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return problem(400, "Invalid JSON");
   }
 
   try {

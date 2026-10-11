@@ -143,8 +143,8 @@ function SlugEditor({
         body: JSON.stringify({ slug: value }),
       });
       if (!res.ok) {
-        const body = await res.json().catch(() => ({})) as { error?: string };
-        throw new Error(body.error ?? "Failed to save slug");
+        const body = await res.json().catch(() => ({})) as { detail?: string };
+        throw new Error(body.detail ?? "Failed to save slug");
       }
       onSlugSaved(value);
       setEditing(false);
@@ -759,8 +759,8 @@ export function MyPagesList({
         body: JSON.stringify({ name, parent_id: parentId }),
       });
       if (!res.ok) {
-        const body = await res.json().catch(() => ({})) as { error?: string };
-        toast.error("Couldn't create folder", body.error ?? "Try again.");
+        const body = await res.json().catch(() => ({})) as { detail?: string };
+        toast.error("Couldn't create folder", body.detail ?? "Try again.");
         return;
       }
       const body = (await res.json()) as { collection: CollectionRow };
@@ -825,8 +825,8 @@ export function MyPagesList({
       body: JSON.stringify({ name: trimmed }),
     });
     if (!res.ok) {
-      const body = await res.json().catch(() => ({})) as { error?: string };
-      toast.error("Couldn't rename folder", body.error ?? "Try again.");
+      const body = await res.json().catch(() => ({})) as { detail?: string };
+      toast.error("Couldn't rename folder", body.detail ?? "Try again.");
       return;
     }
     setCollections((prev) => prev.map((c) => (c.id === id ? { ...c, name: trimmed } : c)));
@@ -843,8 +843,8 @@ export function MyPagesList({
       body: JSON.stringify({ parent_id: newParentId }),
     });
     if (!res.ok) {
-      const body = await res.json().catch(() => ({})) as { error?: string };
-      toast.error("Couldn't move folder", body.error ?? "Try again.");
+      const body = await res.json().catch(() => ({})) as { detail?: string };
+      toast.error("Couldn't move folder", body.detail ?? "Try again.");
       setCollections((prev) => prev.map((c) => (c.id === id ? { ...c, parent_id: previousParentId } : c)));
     }
   }, [collections, toast]);

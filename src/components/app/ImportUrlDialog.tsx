@@ -50,9 +50,9 @@ export function ImportUrlDialog({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ url }),
       });
-      const data = (await res.json().catch(() => ({}))) as { raw?: string; title?: string; error?: string };
+      const data = (await res.json().catch(() => ({}))) as { raw?: string; title?: string; detail?: string };
       if (!res.ok || typeof data.raw !== "string") {
-        setError(data.error ?? "Could not import that link.");
+        setError(data.detail ?? "Could not import that link.");
         return;
       }
       onImported(data.title ?? "Imported document", data.raw);

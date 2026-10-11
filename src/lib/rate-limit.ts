@@ -1,5 +1,6 @@
 import { getDb } from "@/lib/mongodb";
 import { NextResponse } from "next/server";
+import { problem } from "@/server/errors";
 
 type RateLimitDoc = {
   _id: string;
@@ -70,10 +71,7 @@ export async function checkRateLimit(
 ): Promise<NextResponse | null> {
   const state = await consumeRateLimit(discriminator, limitPerMin);
   if (!state.limited) return null;
-  return NextResponse.json(
-    { error: "Too many requests. Please slow down and try again." },
-    { status: 429, headers: rateLimitHeaders(state) },
-  );
+  return problem(429, "Too many requests. Please slow down and try again.", undefined, rateLimitHeaders(state));
 }
 
 /**
@@ -115,7 +113,7 @@ export async function checkMonthlyQuota(
   const count = result?.count ?? 1;
 
   if (count > limit) {
-    return NextResponse.json({ error: message }, { status: 429 });
+    return problem(429, message);
   }
 
   return null;

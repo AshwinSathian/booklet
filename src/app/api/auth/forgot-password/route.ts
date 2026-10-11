@@ -6,6 +6,7 @@ import { ForgotPasswordSchema } from "@/lib/auth/schemas";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/request-ip";
 import { sendPasswordResetEmail } from "@/lib/email";
+import { problem } from "@/server/errors";
 
 export const runtime = "nodejs";
 
@@ -17,7 +18,7 @@ const GENERIC_RESPONSE = { ok: true, message: "If that email has an account, a r
 
 export async function POST(req: Request) {
   if (!isSameOriginRequest(req)) {
-    return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
+    return problem(403, "Invalid request origin");
   }
 
   const ip = getClientIp(req.headers);

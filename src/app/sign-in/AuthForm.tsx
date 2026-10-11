@@ -62,8 +62,8 @@ export function AuthForm({
       const response = await startAuthentication({ optionsJSON: await options.json() });
       const res = await post({ response });
       if (!res.ok) {
-        const data = (await res.json().catch(() => ({}))) as { error?: string };
-        setError(data.error ?? "That passkey could not be verified. Try again.");
+        const data = (await res.json().catch(() => ({}))) as { detail?: string };
+        setError(data.detail ?? "That passkey could not be verified. Try again.");
         setSubmitting(false);
         return;
       }
@@ -90,10 +90,10 @@ export function AuthForm({
           ...(mode === "sign-up" ? { turnstile_token: await getTurnstileToken() } : {}),
         }),
       });
-      const data = (await res.json().catch(() => ({}))) as { error?: string };
+      const data = (await res.json().catch(() => ({}))) as { detail?: string };
 
       if (!res.ok) {
-        setError(data.error ?? "Something went wrong. Please try again.");
+        setError(data.detail ?? "Something went wrong. Please try again.");
         setSubmitting(false);
         return;
       }

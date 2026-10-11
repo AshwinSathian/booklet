@@ -97,12 +97,12 @@ function AdminPageInner({ slug }: { slug: string }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ email: inviteEmail.trim() }),
       });
-      const data = (await res.json()) as { ok?: boolean; error?: string };
+      const data = (await res.json()) as { ok?: boolean; detail?: string };
       if (res.ok) {
         setInviteResult({ ok: true, message: `Invite sent to ${inviteEmail.trim()}.` });
         setInviteEmail("");
       } else {
-        setInviteResult({ ok: false, message: data.error ?? "Failed to send invite." });
+        setInviteResult({ ok: false, message: data.detail ?? "Failed to send invite." });
       }
     } finally {
       setInviting(false);

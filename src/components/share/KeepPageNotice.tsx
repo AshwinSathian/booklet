@@ -32,8 +32,8 @@ export function KeepPageNotice({
         window.location.reload();
         return;
       }
-      const data = (await res.json().catch(() => ({}))) as { error?: string };
-      setError(data.error ?? "Could not keep this page. Try again.");
+      const data = (await res.json().catch(() => ({}))) as { detail?: string };
+      setError(data.detail ?? "Could not keep this page. Try again.");
     } catch {
       setError("Could not keep this page. Try again.");
     }

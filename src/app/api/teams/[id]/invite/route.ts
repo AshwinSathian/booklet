@@ -2,7 +2,7 @@ import { signInviteToken } from "@/lib/invite-token";
 import { logError } from "@/lib/logger";
 import { getSession } from "@/lib/auth/session";
 import { getOwnedTeamSpace } from "@/server/collections";
-import { toErrorResponse } from "@/server/errors";
+import { toErrorResponse, problem } from "@/server/errors";
 import { getSiteOrigin } from "@/lib/site-url";
 import { NextResponse } from "next/server";
 
@@ -13,7 +13,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const userId = (await getSession())?.userId ?? null;
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!userId) return problem(401, "Unauthorized");
 
   const { id } = await params;
   try {
@@ -26,12 +26,12 @@ export async function POST(
   try {
     body = (await req.json()) as { email?: string };
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return problem(400, "Invalid JSON");
   }
 
   const email = body.email?.trim().toLowerCase();
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return NextResponse.json({ error: "Valid email required" }, { status: 422 });
+    return problem(422, "Valid email required");
   }
 
   let token: string;
@@ -39,7 +39,7 @@ export async function POST(
     token = await signInviteToken({ teamId: id, invitedEmail: email, invitedBy: userId });
   } catch (err) {
     logError("teams/invite", "Failed to sign invite token", err);
-    return NextResponse.json({ error: "Invite creation is misconfigured. Contact the administrator." }, { status: 500 });
+    return problem(500, "Invite creation is misconfigured. Contact the administrator.");
   }
 
   const inviteUrl = `${getSiteOrigin(req)}/t/join?token=${token}`;

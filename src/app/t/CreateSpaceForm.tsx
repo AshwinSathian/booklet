@@ -20,9 +20,9 @@ export function CreateSpaceForm() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ name }),
       });
-      const data = (await res.json().catch(() => ({}))) as { slug?: string; error?: string };
+      const data = (await res.json().catch(() => ({}))) as { slug?: string; detail?: string };
       if (!res.ok || !data.slug) {
-        setError(data.error ?? "The space was not created. Try again.");
+        setError(data.detail ?? "The space was not created. Try again.");
         return;
       }
       router.push(ROUTES.space(data.slug));

@@ -6,7 +6,7 @@ import {
 import { createId } from "@/lib/id";
 import { getSession } from "@/lib/auth/session";
 import { resolveParent } from "@/server/collections";
-import { toErrorResponse } from "@/server/errors";
+import { toErrorResponse, problem } from "@/server/errors";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -21,7 +21,7 @@ function cleanParentId(value: unknown): string | null {
 
 export async function GET() {
   const userId = (await getSession())?.userId ?? null;
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!userId) return problem(401, "Unauthorized");
 
   const [owned, memberOf] = await Promise.all([
     getCollectionsByUser(userId),
@@ -35,18 +35,18 @@ export async function GET() {
 
 export async function POST(req: Request) {
   const userId = (await getSession())?.userId ?? null;
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!userId) return problem(401, "Unauthorized");
 
   let body: { name?: unknown; is_team_space?: unknown; parent_id?: unknown };
   try {
     body = (await req.json()) as { name?: unknown; is_team_space?: unknown; parent_id?: unknown };
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return problem(400, "Invalid JSON");
   }
 
   const name = cleanName(body.name);
   if (name.length < 1 || name.length > 80) {
-    return NextResponse.json({ error: "Collection name must be 1-80 characters." }, { status: 422 });
+    return problem(422, "Collection name must be 1-80 characters.");
   }
 
   const isTeamSpace = body.is_team_space === true;
@@ -67,10 +67,7 @@ export async function POST(req: Request) {
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "";
     if (message.includes("E11000")) {
-      return NextResponse.json(
-        { error: parentId ? "A folder with that name already exists here." : "Collection name already exists." },
-        { status: 409 },
-      );
+      return problem(409, parentId ? "A folder with that name already exists here." : "Collection name already exists.");
     }
     throw err;
   }

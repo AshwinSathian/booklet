@@ -1,6 +1,7 @@
 import { getDraftsByUser } from "@/lib/db/drafts";
 import { getSession } from "@/lib/auth/session";
 import { NextResponse } from "next/server";
+import { problem } from "@/server/errors";
 
 export const runtime = "nodejs";
 
@@ -12,7 +13,7 @@ export const runtime = "nodejs";
 export async function GET() {
   const userId = (await getSession())?.userId ?? null;
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return problem(401, "Unauthorized");
   }
 
   const drafts = await getDraftsByUser(userId);

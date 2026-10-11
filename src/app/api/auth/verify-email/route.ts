@@ -5,10 +5,11 @@ import { getSession } from "@/lib/auth/session";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/request-ip";
 import { hashVerificationToken } from "@/server/verification";
+import { problem } from "@/server/errors";
 
 export const runtime = "nodejs";
 
-const INVALID = { error: "This link is invalid or has expired. Send a new one from Account settings." } as const;
+const INVALID = "This link is invalid or has expired. Send a new one from Account settings.";
 
 /**
  * Confirms an email address. A POST from the button on /verify-email, not
@@ -25,26 +26,26 @@ const INVALID = { error: "This link is invalid or has expired. Send a new one fr
  */
 export async function POST(req: Request) {
   if (!isSameOriginRequest(req)) {
-    return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
+    return problem(403, "Invalid request origin");
   }
   const rl = await checkRateLimit(`verify-email__ip__${getClientIp(req.headers)}`, 10);
   if (rl) return rl;
 
   const session = await getSession();
-  if (!session) return NextResponse.json({ error: "Sign in to this account first, then open the link again." }, { status: 401 });
+  if (!session) return problem(401, "Sign in to this account first, then open the link again.");
 
   const body = (await req.json().catch(() => null)) as { token?: unknown } | null;
   const token = body?.token;
   if (typeof token !== "string" || !token || token.length > 128) {
-    return NextResponse.json(INVALID, { status: 400 });
+    return problem(400, INVALID);
   }
 
   const record = await consumeEmailVerificationToken(await hashVerificationToken(token));
-  if (!record) return NextResponse.json(INVALID, { status: 400 });
+  if (!record) return problem(400, INVALID);
 
   // The link confirms the address it was sent to, nothing else.
   const user = await getUserById(record.user_id);
-  if (!user || user.id !== session.userId || user.email !== record.email) return NextResponse.json(INVALID, { status: 400 });
+  if (!user || user.id !== session.userId || user.email !== record.email) return problem(400, INVALID);
 
   await markEmailVerified(user.id);
   return NextResponse.json({ ok: true });

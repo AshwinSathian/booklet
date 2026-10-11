@@ -6,6 +6,7 @@ import { PasswordSchema } from "@/lib/auth/schemas";
 import { createSession, destroyAllSessions, getSession } from "@/lib/auth/session";
 import { revokeAllForUser } from "@/lib/oauth/server";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { problem } from "@/server/errors";
 
 export const runtime = "nodejs";
 
@@ -17,24 +18,24 @@ export const runtime = "nodejs";
  */
 export async function POST(req: Request) {
   if (!isSameOriginRequest(req) || !req.headers.get("origin")) {
-    return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
+    return problem(403, "Invalid request origin");
   }
   const session = await getSession();
-  if (!session) return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+  if (!session) return problem(401, "Not signed in");
   const limited = await checkRateLimit(`change_password__${session.userId}`, 5);
   if (limited) return limited;
 
   const user = await getUserById(session.userId);
-  if (!user) return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+  if (!user) return problem(401, "Not signed in");
 
   const body = (await req.json().catch(() => null)) as { current_password?: unknown; new_password?: unknown } | null;
   const next = PasswordSchema.safeParse(body?.new_password);
-  if (!next.success) return NextResponse.json({ error: "The new password must be at least 8 characters." }, { status: 400 });
+  if (!next.success) return problem(400, "The new password must be at least 8 characters.");
 
   if (user.password_hash) {
     const current = body?.current_password;
     if (typeof current !== "string" || current.length > 256 || !(await verifyUserPassword(current, user.password_hash))) {
-      return NextResponse.json({ error: "Your current password is not correct." }, { status: 403 });
+      return problem(403, "Your current password is not correct.");
     }
   }
 

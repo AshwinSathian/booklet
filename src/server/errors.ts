@@ -32,8 +32,9 @@ const TITLES: Record<number, string> = {
 /**
  * An RFC 9457 problem-details response. `type` stays "about:blank", so
  * `title` is the status phrase and `detail` carries the specific message.
- * `error` repeats `detail` for the web app's own UI, which reads it from the
- * session routes. /api/v1 responses do not carry it (see `rfc9457Only`).
+ * Every error the app sends has this shape, to the public API and to its
+ * own pages alike (the OAuth endpoints excepted: RFC 6749 gives those
+ * their own).
  */
 export function problem(
   status: number,
@@ -42,7 +43,7 @@ export function problem(
   headers?: Record<string, string>,
 ): NextResponse {
   return NextResponse.json(
-    { type: "about:blank", title: TITLES[status] ?? "Error", status, detail, error: detail, ...extra },
+    { type: "about:blank", title: TITLES[status] ?? "Error", status, detail, ...extra },
     { status, headers: { "Content-Type": "application/problem+json", ...headers } },
   );
 }
