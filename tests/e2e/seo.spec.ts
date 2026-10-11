@@ -137,3 +137,11 @@ test("structured data says only what the page shows", async ({ page }) => {
   expect((await page.title()).length).toBeLessThanOrEqual(60);
   await expect(page.locator('meta[name="author"]')).toHaveCount(0);
 });
+
+test("the homepage is under 6,500 pixels tall on a desktop", async ({ page }) => {
+  // The redesign's target. It crept past it twice as sections were added.
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/", { waitUntil: "networkidle" });
+  expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThan(6500);
+});

@@ -9,6 +9,78 @@ Notable changes to the Booklet app and MCP server. The format follows
 
 ## [Unreleased]
 
+## [3.2.0] - 2026-10-11
+
+Three audits of the site (what it claims against what the code does, its
+wording, and what a crawler or a link preview gets) and the fixes they led
+to. `booklet-cli`, `booklet-api-client` and the MCP server changed too; the
+packages are released separately.
+
+### Added
+
+- **PNG link previews**, 1200 by 630, at `/og/*.png`: the site's card, one
+  per published page (its title and document type), one per docs page and
+  one per template. What a card says is looked up from its path. The SVG
+  routes they replace took their text from the query string, and no chat
+  app or social network drew them.
+- **One template set.** Six engineering templates (incident report,
+  postmortem, ADR, RFC, runbook, release notes) are written once in
+  `booklet-api-client` and used by the editor, `booklet new` and the MCP
+  prompts. New: an RFC template in the editor, a `postmortem` template in
+  the CLI and a `postmortem` prompt. The other 16 editor templates were
+  rewritten.
+- **Team invites are sent.** With mail configured the invite is emailed;
+  either way the owner is shown the link. Inviting needs a confirmed
+  account and is rate limited.
+- oEmbed (`/api/oembed`) with a discovery link on published pages; a native
+  share button where the browser has one; `TechArticle` and
+  `BreadcrumbList` structured data on public pages and docs.
+- The editor's preview shows the header strip.
+- `infra/fallback-worker`: a Cloudflare Worker that answers with a short
+  page, or a 503 problem document for the API, when the origin behind the
+  tunnel cannot be reached.
+- A "Public beta" label, `/.well-known/security.txt`, and a "Run your own
+  copy" section in the README.
+
+### Changed
+
+- A page with a custom URL has one address: `/p/<id>` redirects (308) to
+  `/p/<slug>`, which is the canonical URL, `og:url`, the embed address and
+  the sitemap entry.
+- `robots.txt` no longer disallows `/_next/`. Pages marked `noindex` are
+  now `follow`. The sitemap lists public pages, drops `/app`, and gives a
+  date only where one is known.
+- Pages are sent with `Cache-Control: no-transform`.
+- `/admin` from an address outside `ADMIN_IPS` is the site's 404, not a
+  bare 403.
+- Copy across the site, the docs, the emails, the CLI and the MCP server:
+  one name per thing, British spelling in site copy, errors that say what
+  to do next. Page titles use "·" as the separator.
+- The homepage's three specimens are rendered by `DocHeaderStrip`,
+  `BlockRenderer`, `ReferencedByList` and `SpaceGroups`, the components
+  the published site uses.
+
+### Fixed
+
+- An update that sent no `settings` (the API, the CLI, the MCP server and
+  the GitHub Action never send a theme or typeface) reset the page's
+  settings to the defaults. Settings from a request are now validated and
+  merged over what is stored.
+- Cloudflare's email obfuscation rewrote addresses in the HTML, which broke
+  hydration (React error 418) on Privacy, Terms, Trust and Account settings,
+  on the live site only. `no-transform` turns that rewriting off.
+- Deleting a team space unlinked only the owner's pages and left the
+  membership rows.
+- `:::toggle Label` in the docs and the editor's Toggle snippet did not
+  parse (the label goes in brackets); the Columns snippet became a heading
+  as soon as text was typed into it.
+- `/p/<missing>/embed` answered 200; a path with a malformed escape
+  answered 500; the published page's fallback description praised itself.
+- Many statements in the docs and on Trust, Privacy and Terms that did not
+  match the code: where the header strip is, which ID `--update` takes,
+  which frontmatter keys the web editor reads, how long an anonymous page
+  is kept, which emails are sent, what the ZIP leaves out.
+
 ## [3.1.1] - 2026-10-11
 
 The close-out of the redesign: what a last look at every screen, in both

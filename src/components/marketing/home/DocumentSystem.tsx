@@ -49,10 +49,9 @@ const page = (id: string, title: string, doc_type: DbPage["doc_type"], status: s
 });
 const SPACE_PAGES: DbPage[] = [
   page("adr-012-queue-retries", "ADR-012 Queue retries", "adr", "Accepted", "2026-08-02"),
-  page("adr-007-retry-in-the-client", "ADR-007 Retry in the client", "adr", "Superseded", "2026-03-11"),
+  page("adr-007-retry-in-the-client", "ADR-007 Retry in the client", "adr", "Superseded", "2026-03-11", "team"),
   page("checkout-incident-07-18", "Checkout API errors, 18 July", "incident", "Resolved", "2026-07-18"),
   page("delayed-payouts-06-02", "Delayed payouts, 2 June", "incident", "Resolved", "2026-06-02"),
-  page("runbook-db-failover", "Runbook: Database failover", "runbook", "Current", "2026-06-30", "team"),
 ];
 
 // One sentence of ADR-012, with its link as the published page has it.
@@ -128,15 +127,15 @@ export function DocumentSystem() {
         body={
           <p>
             A team space lists its pages by type: incidents by date, a decision log in ADR-number order, then RFCs and
-            runbooks. Invite a colleague by email address. A page limited to the team opens for members and answers 404 for
-            everyone else.
+            runbooks. Invite a colleague by email address. A page limited to the team opens for members and answers 404
+            for everyone else.
           </p>
         }
         href="/docs/guides/team-spaces"
         link="Team spaces"
         visual={
           <Card className="p-6 sm:p-7">
-            <div inert data-sample>
+            <div inert data-sample className="[&>div]:space-y-7">
               <SpaceGroups groups={groupSpacePages(SPACE_PAGES)} />
             </div>
           </Card>

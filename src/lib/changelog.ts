@@ -15,6 +15,28 @@ export type Release = {
 
 export const RELEASES: Release[] = [
   {
+    version: "v3.2.0",
+    date: "2026-10-11",
+    summary: "Link previews that show, one set of templates everywhere, and a site whose every claim was checked against the code.",
+    entries: [
+      { date: "2026-10-11", tag: "New", text: "A link you share now shows a picture in Slack, iMessage, WhatsApp, LinkedIn and X: the page's title on a card, as a PNG. It was an SVG, which none of them draws. Docs pages and templates have cards of their own" },
+      { date: "2026-10-11", tag: "New", text: "An RFC template in the editor, and a postmortem prompt for MCP clients. The editor, booklet new and the MCP prompts now start each document type from the same sections" },
+      { date: "2026-10-11", tag: "New", text: "Team invites are emailed, and the owner is shown the link as well. The page used to say the invite was sent and sent nothing" },
+      { date: "2026-10-11", tag: "New", text: "The editor's preview shows the header strip a published page gets from its frontmatter" },
+      { date: "2026-10-11", tag: "New", text: "Share from a phone's own share sheet, and embed a page by pasting its link where oEmbed is supported" },
+      { date: "2026-10-11", tag: "Improved", text: "A page with a custom URL has one address. Its ID redirects there, and search engines, link previews and the embed code all use it" },
+      { date: "2026-10-11", tag: "Improved", text: "Pages you make public are in the sitemap, so a search engine can find them. robots.txt no longer keeps crawlers from the site's styles and scripts" },
+      { date: "2026-10-11", tag: "Improved", text: "The site's wording was checked line by line against what the product does. One name for each thing: custom URL, team space, folder, Team only, Referenced by" },
+      { date: "2026-10-11", tag: "Improved", text: "The homepage's examples of a header strip, a link between documents and a team space are drawn by the same code that draws the real ones" },
+      { date: "2026-10-11", tag: "Improved", text: "The Trust, Privacy and Terms pages say what is stored and sent, how long a page without an account is kept, what stays in backups, and that Booklet is in public beta" },
+      { date: "2026-10-11", tag: "Fixed", text: "Updating a page through the API, the CLI or an MCP client reset its theme, typeface, width and spacing to the defaults" },
+      { date: "2026-10-11", tag: "Fixed", text: "On the live site, pages with an email address on them (Privacy, Terms, Trust, Account settings) threw an error in the browser while loading" },
+      { date: "2026-10-11", tag: "Fixed", text: "Deleting a team space left other members' pages attached to a space that no longer existed" },
+      { date: "2026-10-11", tag: "Fixed", text: "The Toggle and Columns items in the editor's insert menu inserted text that did not become a toggle or columns" },
+      { date: "2026-10-11", tag: "Fixed", text: "The custom URL rule said 1 to 60 characters; it is 3 to 60" },
+    ],
+  },
+  {
     version: "v3.1.1",
     date: "2026-10-11",
     summary: "A last pass over the new design: faults found by looking at every screen at three widths, and by using the editor without a mouse.",
