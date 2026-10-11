@@ -92,3 +92,28 @@ export async function sendAbuseReportEmail(report: {
   if (error) throw new Error(`Resend rejected the abuse report email: ${error.message}`);
   return true;
 }
+
+const escapeHtml = (v: string) => v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+/** One error the app logged, to whoever runs this install (ERROR_ALERT_EMAIL). Plain text: a stack is not prose. */
+export async function sendErrorAlertEmail(
+  to: string,
+  event: { scope: string; message: string; errorMessage: string | null; stack: string | null; count: number; firstSeen: Date },
+): Promise<void> {
+  const lines = [
+    `${event.scope}: ${event.message}`,
+    event.errorMessage ? `Error: ${event.errorMessage}` : null,
+    `Seen ${event.count} time${event.count === 1 ? "" : "s"} since ${event.firstSeen.toISOString()}.`,
+    "",
+    event.stack ?? "(no stack)",
+    "",
+    "Every error from the last 30 days is listed at /admin. This one will not be mailed again for 24 hours.",
+  ].filter((l): l is string => l !== null);
+  await getResendClient().emails.send({
+    from: FROM_ADDRESS,
+    to,
+    subject: `Booklet error: ${event.scope}: ${event.message}`.slice(0, 180),
+    text: lines.join("\n"),
+    html: `<pre style="font-family: ui-monospace, monospace; font-size: 13px; white-space: pre-wrap;">${escapeHtml(lines.join("\n"))}</pre>`,
+  });
+}

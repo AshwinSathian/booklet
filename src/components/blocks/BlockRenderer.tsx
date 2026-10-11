@@ -34,8 +34,10 @@ function tableAlignClass(align: TableAlign[] | undefined, i: number): string {
   return a ? TABLE_ALIGN_STYLE[a] : "text-left";
 }
 
+// The gap between blocks. Tight on purpose: a document reads as one piece,
+// and headings carry their own extra space above (see `rhythm` below).
 function spacingClass(settings: DocSettings): string {
-  return settings.spacing === "compact" ? "gap-3" : "gap-4";
+  return settings.spacing === "compact" ? "gap-2" : "gap-3";
 }
 
 function proseWidthClass(settings: DocSettings): string {
@@ -57,8 +59,8 @@ function isSerifMode(settings: DocSettings): boolean {
 // reverts to the original compact Inter treatment.
 function proseTextClass(settings: DocSettings): string {
   return isSerifMode(settings)
-    ? "font-reading text-[18px] sm:text-[19px] leading-[1.7] max-w-[68ch]"
-    : "text-[15px] sm:text-[16px] leading-[1.62]";
+    ? "font-reading text-[18px] sm:text-[19px] leading-[1.55] max-w-[68ch]"
+    : "text-[15px] sm:text-[16px] leading-[1.5]";
 }
 
 export function BlockRenderer({
@@ -240,14 +242,14 @@ export function BlockRenderer({
               return b.ordered ? (
                 <ol
                   key={idx}
-                  className={["list-decimal pl-6 space-y-1.5 text-text-primary", proseTextClass(settings)].join(" ")}
+                  className={["list-decimal pl-6 space-y-1 text-text-primary", proseTextClass(settings)].join(" ")}
                 >
                   {b.items.map(renderItem)}
                 </ol>
               ) : (
                 <ul
                   key={idx}
-                  className={["list-disc pl-6 space-y-1.5 text-text-primary", proseTextClass(settings)].join(" ")}
+                  className={["list-disc pl-6 space-y-1 text-text-primary", proseTextClass(settings)].join(" ")}
                 >
                   {b.items.map(renderItem)}
                 </ul>
@@ -264,8 +266,8 @@ export function BlockRenderer({
                   <div
                     className={
                       serif
-                        ? "font-reading text-[19px] sm:text-[20px] leading-[1.6] text-text-primary italic"
-                        : "text-[15px] leading-[1.62] text-text-muted italic"
+                        ? "font-reading text-[19px] sm:text-[20px] leading-[1.5] text-text-primary italic"
+                        : "text-[15px] leading-[1.5] text-text-muted italic"
                     }
                   >
                     <BlockRenderer

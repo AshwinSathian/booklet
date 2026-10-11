@@ -79,7 +79,7 @@ export async function blocksToHtmlDocument(
 <title>${safeTitle}</title>
 <style>
 *,*::before,*::after{box-sizing:border-box}
-body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;max-width:720px;margin:0 auto;padding:2.5rem 1.5rem;line-height:1.65;color:#111827;background:#fff}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;max-width:720px;margin:0 auto;padding:2.5rem 1.5rem;line-height:1.5;color:#111827;background:#fff}
 h1,h2,h3,h4{margin:1.5em 0 .5em;font-weight:700;line-height:1.25;color:#0f172a}
 h1{font-size:2em}h2{font-size:1.5em}h3{font-size:1.25em}h4{font-size:1em}
 p{margin:0 0 1em}

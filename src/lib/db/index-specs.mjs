@@ -193,6 +193,11 @@ export const INDEX_SPECS = [
   // same `expires_at` BSON-Date-for-TTL rationale as analytics_events above.
   { collection: "view_dedupe", spec: { expires_at: 1 }, options: { expireAfterSeconds: 7_776_000 } },
 
+  // --- error_events ---
+  // One row per distinct logged error (src/lib/db/error-events.ts), gone 30
+  // days after it was last seen. The admin page sorts on the same field.
+  { collection: "error_events", spec: { last_seen: 1 }, options: { expireAfterSeconds: 2_592_000 } },
+
   // --- drafts ---
   // Cloud draft sync for signed-in users (P4-2, src/lib/db/drafts.ts). Backs
   // getDraftsByUser's per-user listing, sorted by recency. Note this
