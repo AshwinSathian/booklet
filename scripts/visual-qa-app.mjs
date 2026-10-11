@@ -291,6 +291,15 @@ async function states(page, tag) {
   await step("published", async () => { await page.getByRole("button", { name: "Publish" }).click({ timeout: 3000 }); await page.locator("[data-slug-bar]").waitFor({ timeout: 15000 }); await page.waitForTimeout(600); });
   await step("slug-taken", async () => { await page.getByLabel("Custom URL slug").fill(SLUG_TAKEN); await page.getByText("Taken").waitFor({ timeout: 5000 }); });
   await step("slug-invalid", async () => { await page.getByLabel("Custom URL slug").fill("Not A Slug!"); await page.getByLabel("Custom URL slug").press("Enter"); await page.waitForTimeout(400); });
+  // Saving fails: browser storage is full from here until the next navigation.
+  await step("save-warning", async () => {
+    await page.evaluate(() => { Storage.prototype.setItem = () => { throw new DOMException("full", "QuotaExceededError"); }; });
+    const writeTab = page.getByRole("tab", { name: "Write" });
+    if (await writeTab.isVisible()) await writeTab.click();
+    await editor.focus();
+    await page.keyboard.type(" more");
+    await page.locator("[data-save-warning]").waitFor({ timeout: 10000 });
+  });
   // My pages, versions, settings.
   await page.goto(`/my-pages/versions/${first}`, { waitUntil: "networkidle" });
   await step("versions-compare", async () => { await page.getByRole("button", { name: "Compare" }).first().click({ timeout: 3000 }); await page.waitForTimeout(600); });

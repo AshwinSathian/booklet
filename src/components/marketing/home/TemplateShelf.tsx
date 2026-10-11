@@ -24,7 +24,7 @@ export const ENGINEERING_TEMPLATE_SLUGS = [
 export function TemplateCard({ template }: { template: Template }) {
   return (
     <article className="group relative flex flex-col overflow-hidden rounded-xl border border-border-default bg-bg-elevated hover:border-accent">
-      <div aria-hidden inert data-sample className="relative h-44 overflow-hidden border-b border-border-default bg-bg px-5 pt-5">
+      <div aria-hidden inert data-sample className="relative h-40 overflow-hidden border-b border-border-default bg-bg px-5 pt-5">
         <div className="origin-top-left scale-[0.72]" style={{ width: "139%" }}>
           <BlockRenderer blocks={parseToBlocks(template.content.trim()).slice(0, 7)} settings={DEFAULT_SETTINGS} headingOffset={2} />
         </div>

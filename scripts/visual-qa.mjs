@@ -80,10 +80,17 @@ const AUTH_PASSWORD = "Task11QaPass!";
 mkdirSync(OUT, { recursive: true });
 
 const browser = await chromium.launch();
+// Errors thrown in the browser (a hydration mismatch, for one). Reported at the end; the run then exits 1.
+const pageErrors = [];
+const reportPageErrors = () => {
+  for (const line of pageErrors) console.error(`PAGEERROR ${line}`);
+  return pageErrors.length > 0;
+};
 
 for (const theme of THEMES) {
   for (const viewport of VIEWPORTS) {
     const page = await browser.newPage({ viewport });
+    page.on("pageerror", (e) => pageErrors.push(`${theme}-${viewport.name} ${page.url()}: ${e.message.split("\n")[0]}`));
     // Reduced motion: sections that fade in on scroll are otherwise still
     // invisible in a full-page capture, which never scrolls.
     await page.emulateMedia({ colorScheme: theme, reducedMotion: "reduce" });
@@ -116,7 +123,7 @@ for (const theme of THEMES) {
 
 if (process.env.QA_PUBLIC_ONLY) {
   await browser.close();
-  process.exit(0);
+  process.exit(reportPageErrors() ? 1 : 0);
 }
 
 // `/my-pages`: sign in once per theme via the UI, then reuse that
@@ -208,3 +215,4 @@ for (const theme of THEMES) {
 
 await browser.close();
 console.log(`Screenshots written to ${OUT}/`);
+if (reportPageErrors()) process.exit(1);

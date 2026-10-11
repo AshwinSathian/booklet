@@ -106,6 +106,31 @@ function withSecurityHeaders(res: Response, isEmbedRoute: boolean, csp: string):
   return res;
 }
 
+// Every page is rendered per request (the nonce), so this is what Next.js
+// sends for one already, plus `no-transform`. That last word is for the CDN
+// in front of production: Cloudflare rewrites HTML on its way out (it swaps
+// any email address for a script-decoded placeholder), the browser then
+// holds different markup from what React rendered, and hydration fails with
+// error #418. It happened on /privacy, /terms, /trust, Account settings and
+// any published page with an address in it, and only through the CDN.
+const PAGE_CACHE_CONTROL = "private, no-cache, no-store, max-age=0, must-revalidate, no-transform";
+
+/** Hands the request on to the app with this request's nonce and policy. */
+function passOn(req: NextRequest, nonce: string, csp: string, rewriteTo?: URL): NextResponse {
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set("x-nonce", nonce);
+  requestHeaders.set("Content-Security-Policy", csp);
+  const init = { request: { headers: requestHeaders } };
+  return rewriteTo ? NextResponse.rewrite(rewriteTo, init) : NextResponse.next(init);
+}
+
+/** The app's 404 page, with status 404: a rewrite to a path no route has. */
+function notFoundPage(req: NextRequest, nonce: string, csp: string): Response {
+  const res = passOn(req, nonce, csp, new URL("/_not-found-by-middleware", req.url));
+  res.headers.set("Cache-Control", PAGE_CACHE_CONTROL);
+  return withSecurityHeaders(res, false, csp);
+}
+
 export default async function middleware(req: NextRequest) {
   const host = req.headers.get("host") ?? "";
   if (host === API_HOSTNAME || host.startsWith(`${API_HOSTNAME}:`)) {
@@ -113,6 +138,16 @@ export default async function middleware(req: NextRequest) {
       return new Response("Not found", { status: 404 });
     }
   }
+
+  // Embed pages must be iframe-able from any origin.
+  const isEmbedRoute = /^\/p\/[^/]+\/embed(\/|$)/.test(req.nextUrl.pathname);
+
+  // One nonce per request. It goes to the page in two places: the response's
+  // policy, which the browser enforces, and the request's headers, where
+  // Next.js reads the policy to put the nonce on its own scripts and the
+  // root layout reads `x-nonce` for the one inline script it renders.
+  const nonce = btoa(crypto.randomUUID());
+  const csp = contentSecurityPolicy(nonce, isEmbedRoute);
 
   // Admin route: IP allowlist. Fails closed — an empty/unset ADMIN_IPS means
   // nobody passes, not "no restriction configured". The authoritative
@@ -127,7 +162,9 @@ export default async function middleware(req: NextRequest) {
       .map((s) => s.trim())
       .filter(Boolean);
     if (!isDev && !allowedIps.includes(ip)) {
-      return new Response("Forbidden", { status: 403 });
+      // The site's own 404, as for a signed-in user who is not an admin: a
+      // bare "Forbidden" said the page exists and looked like a broken site.
+      return notFoundPage(req, nonce, csp);
     }
   }
 
@@ -139,15 +176,6 @@ export default async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/sign-in", req.url));
   }
 
-  // Embed pages must be iframe-able from any origin.
-  const isEmbedRoute = /^\/p\/[^/]+\/embed(\/|$)/.test(req.nextUrl.pathname);
-
-  // One nonce per request. It goes to the page in two places: the response's
-  // policy, which the browser enforces, and the request's headers, where
-  // Next.js reads the policy to put the nonce on its own scripts and the
-  // root layout reads `x-nonce` for the one inline script it renders.
-  const nonce = btoa(crypto.randomUUID());
-  const csp = contentSecurityPolicy(nonce, isEmbedRoute);
 
   // A docs page as Markdown: /docs/<slug>.md is served by /docs/raw/<slug>.
   const docsMarkdown = /^\/docs\/(.+)\.md$/.exec(req.nextUrl.pathname);
@@ -189,7 +217,7 @@ export default async function middleware(req: NextRequest) {
           status: 410,
           headers: {
             "content-type": "text/html; charset=utf-8",
-            "cache-control": "no-store",
+            "cache-control": "no-store, no-transform",
             "x-robots-tag": "noindex",
           },
         }),
@@ -199,10 +227,8 @@ export default async function middleware(req: NextRequest) {
     }
   }
 
-  const requestHeaders = new Headers(req.headers);
-  requestHeaders.set("x-nonce", nonce);
-  requestHeaders.set("Content-Security-Policy", csp);
-  const res = NextResponse.next({ request: { headers: requestHeaders } });
+  const res = passOn(req, nonce, csp);
+  if (!req.nextUrl.pathname.startsWith("/api/")) res.headers.set("Cache-Control", PAGE_CACHE_CONTROL);
   if (share && !share[2]) {
     res.headers.set("Link", `</p/${share[1]}.md>; rel="alternate"; type="text/markdown"`);
     res.headers.set("Vary", "Accept");

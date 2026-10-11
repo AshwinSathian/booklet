@@ -1,13 +1,13 @@
 import { unverifiedResponse } from "@/server/verification";
 import type { PublishedDoc } from "@/lib/blocks";
-import { DEFAULT_SETTINGS } from "@/lib/blocks";
+import { resolveSettings } from "@/lib/blocks";
 import { BLOCKS } from "@/lib/constants";
 import { setPageLinks, updatePageRecord } from "@/lib/db";
 import { collectRichBlockKinds } from "@/lib/block-usage";
 import { recordPublishEvent } from "@/lib/db/publish-events";
 import { snapshotPageVersion } from "@/lib/db/versions";
 import { deliverWebhooks } from "@/lib/webhook-delivery";
-import { putDoc } from "@/lib/storage";
+import { getDoc, putDoc } from "@/lib/storage";
 import { logError } from "@/lib/logger";
 import { getSession } from "@/lib/auth/session";
 import { assertNotTakenDown, buildDocument, getOwnedPage, type BuiltDocument } from "@/server/pages";
@@ -75,7 +75,8 @@ export async function PATCH(
     const doc: PublishedDoc = {
       v: BLOCKS.version,
       createdAt: record.created_at,
-      settings: payload.settings ?? DEFAULT_SETTINGS,
+      // What the request did not send stays as the author left it.
+      settings: resolveSettings(payload.settings, (await getDoc(id))?.settings),
       blocks,
       raw: payload.raw,
     };

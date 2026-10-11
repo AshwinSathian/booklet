@@ -144,7 +144,7 @@ export function ProductShot({ data }: { data: ShotData }) {
           <pre
             ref={sourcePane}
             data-sample
-            className="h-56 overflow-hidden whitespace-pre-wrap break-words px-4 py-4 font-mono text-[12.5px] leading-[1.65] text-text-secondary md:h-[30rem]"
+            className="h-56 overflow-hidden whitespace-pre-wrap break-words px-4 py-4 font-mono text-[12.5px] leading-[1.65] text-text-secondary md:h-[27rem]"
           >
             {sample.source.slice(0, current.chars)}
             {!done ? <span className="ml-px inline-block h-[1.1em] w-[2px] translate-y-[3px] bg-accent" /> : null}
@@ -172,7 +172,7 @@ export function ProductShot({ data }: { data: ShotData }) {
             data-testid="shot-page"
             data-sample
             inert
-            className="h-[22rem] overflow-hidden px-5 py-6 sm:px-8 md:h-[30rem]"
+            className="h-[22rem] overflow-hidden px-5 py-6 sm:px-8 md:h-[27rem]"
           >
             {current.strip ? <DocHeaderStrip meta={sample.meta} userId={null} /> : null}
             <BlockRenderer blocks={current.blocks} settings={SETTINGS} headingOffset={1} />

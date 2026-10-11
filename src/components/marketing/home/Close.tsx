@@ -64,14 +64,14 @@ export function Close() {
       <Section eyebrow="Plainly" title="What you get, and what you are trusting.">
         <dl className="prose-typeset grid gap-x-12 sm:grid-cols-2">
           {FACTS.map((fact) => (
-            <div key={fact.title} className="border-t border-border-default py-6">
+            <div key={fact.title} className="border-t border-border-default py-5">
               <dt className="font-display text-xl font-medium">{fact.title}</dt>
               <dd className="mt-2 leading-relaxed text-text-secondary">{fact.body}</dd>
             </div>
           ))}
         </dl>
 
-        <h3 className="mt-16 font-display text-h3 font-medium">Questions</h3>
+        <h3 className="mt-12 font-display text-h3 font-medium">Questions</h3>
         <div className="prose-typeset mt-4 max-w-3xl border-b border-border-default">
           {FAQ.map((item) => (
             <details key={item.q} className="group border-t border-border-default">
@@ -87,7 +87,7 @@ export function Close() {
         </div>
       </Section>
 
-      <section className="border-t border-border-default bg-accent py-20 text-accent-contrast sm:py-24">
+      <section className="border-t border-border-default bg-accent py-16 text-accent-contrast sm:py-[4.5rem]">
         <Container className="text-center">
           <h2 className="mx-auto max-w-3xl font-display text-h2 font-medium text-balance">
             Publish the next incident report as a page.

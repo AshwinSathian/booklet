@@ -134,12 +134,52 @@ export type PublishedDoc = {
   raw?: string; // original markdown source; present for docs published after this field was added
 };
 
+// What a new page gets, from the editor and from the API alike. Sans is the
+// face the editor, the homepage and the example pages all show; serif is one
+// click away in the editor's settings.
 export const DEFAULT_SETTINGS: DocSettings = {
   spacing: "comfortable",
   width: "normal",
   code: "collapse",
   typeface: "sans",
 };
+
+const SETTING_VALUES = {
+  spacing: ["compact", "comfortable"],
+  width: ["normal", "wide"],
+  code: ["show", "collapse"],
+  typeface: ["sans", "serif"],
+} as const;
+
+/**
+ * The settings to store for a page, from whatever a request sent. Known keys
+ * with valid values are taken; the rest come from `base`: the page's stored
+ * settings on an update, the defaults on a first publish. So a request that
+ * sends no settings, or only some (the API documents `width` alone), neither
+ * resets what the author chose nor stores a half-filled or made-up object.
+ * `theme` is a short id; getTheme() resolves an unknown one to the default.
+ */
+export function resolveSettings(input: unknown, base: DocSettings = DEFAULT_SETTINGS): DocSettings {
+  const from = input && typeof input === "object" && !Array.isArray(input) ? (input as Record<string, unknown>) : {};
+  const pick = <K extends keyof typeof SETTING_VALUES>(key: K): (typeof SETTING_VALUES)[K][number] | undefined => {
+    const allowed = SETTING_VALUES[key] as readonly string[];
+    const sent = from[key];
+    if (typeof sent === "string" && allowed.includes(sent)) return sent as (typeof SETTING_VALUES)[K][number];
+    const kept = base[key];
+    return typeof kept === "string" && allowed.includes(kept) ? (kept as (typeof SETTING_VALUES)[K][number]) : undefined;
+  };
+  const theme = typeof from.theme === "string" && /^[a-z0-9-]{1,32}$/.test(from.theme) ? from.theme : base.theme;
+  const out: DocSettings = {
+    spacing: pick("spacing") ?? DEFAULT_SETTINGS.spacing,
+    width: pick("width") ?? DEFAULT_SETTINGS.width,
+    code: pick("code") ?? DEFAULT_SETTINGS.code,
+  };
+  // Absent stays absent: a page stored before `typeface` existed reads as serif (see DocSettings).
+  const typeface = pick("typeface");
+  if (typeface) out.typeface = typeface;
+  if (typeof theme === "string") out.theme = theme;
+  return out;
+}
 
 /**
  * Languages routed to the Graphviz-in-WASM compiler (@viz-js/viz) instead of

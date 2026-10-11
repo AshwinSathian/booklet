@@ -1,7 +1,7 @@
 import { TURNSTILE_FAILED, verifyTurnstile } from "@/lib/turnstile";
 import { unverifiedResponse } from "@/server/verification";
 import type { PublishedDoc } from "@/lib/blocks";
-import { DEFAULT_SETTINGS } from "@/lib/blocks";
+import { resolveSettings } from "@/lib/blocks";
 import { BLOCKS, ROUTES } from "@/lib/constants";
 import { createPageRecord, setPageLinks } from "@/lib/db";
 import { createId } from "@/lib/id";
@@ -111,7 +111,7 @@ export async function POST(req: Request) {
     const doc: PublishedDoc = {
       v: BLOCKS.version,
       createdAt: new Date().toISOString(),
-      settings: payload.settings ?? DEFAULT_SETTINGS,
+      settings: resolveSettings(payload.settings),
       blocks,
       raw: payload.raw,
     };

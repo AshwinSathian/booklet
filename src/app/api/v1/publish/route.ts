@@ -1,6 +1,6 @@
 import { assertVerified } from "@/server/verification";
 import type { PublishedDoc } from "@/lib/blocks";
-import { DEFAULT_SETTINGS } from "@/lib/blocks";
+import { resolveSettings } from "@/lib/blocks";
 import { BLOCKS, ROUTES } from "@/lib/constants";
 import { createPageRecord, setPageLinks, updatePageRecord } from "@/lib/db";
 import { createId } from "@/lib/id";
@@ -80,7 +80,7 @@ async function publish(req: Request, userId: string, bodyText: string): Promise<
   const doc: PublishedDoc = {
     v: BLOCKS.version,
     createdAt: new Date().toISOString(),
-    settings: payload.settings ?? DEFAULT_SETTINGS,
+    settings: resolveSettings(payload.settings),
     blocks,
     raw: payload.raw,
   };

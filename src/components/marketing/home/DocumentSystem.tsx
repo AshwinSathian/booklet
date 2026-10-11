@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 
 function Row({ title, body, href, link, visual, flip }: { title: string; body: ReactNode; href: string; link: string; visual: ReactNode; flip?: boolean }) {
   return (
-    <div className="grid items-center gap-8 border-t border-border-default py-12 first:border-t-0 first:pt-0 last:pb-0 lg:grid-cols-2 lg:gap-16">
+    <div className="grid items-center gap-8 border-t border-border-default py-10 first:border-t-0 first:pt-0 last:pb-0 lg:grid-cols-2 lg:gap-16">
       <div className={flip ? "lg:order-2" : ""}>
         <h3 className="font-display text-h3 font-medium">{title}</h3>
         <div className="mt-3 text-[1.0625rem] leading-relaxed text-text-secondary">{body}</div>

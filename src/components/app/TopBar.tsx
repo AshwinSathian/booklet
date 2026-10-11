@@ -11,6 +11,7 @@ import { useSession } from "@/components/auth/SessionProvider";
 import { AccountMenu } from "@/components/auth/AccountMenu";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { createPortal } from "react-dom";
 import { Sheet, SheetSection } from "../ui/Sheet";
 import { Menu, ContextMenuItem } from "../ui/ContextMenu";
 import { AppLogo } from "../ui/AppLogo";
@@ -567,7 +568,8 @@ function PublishReveal({ onDone }: { onDone: () => void }) {
     // Run once per mount only — see comment above.
   }, []);
 
-  return (
+  // On <body>: inside the header, whose backdrop-filter contains anything fixed, it covered the bar alone.
+  return createPortal(
     <div
       aria-hidden
       className="fixed inset-0 z-50 pointer-events-none flex items-center justify-center"
@@ -582,7 +584,8 @@ function PublishReveal({ onDone }: { onDone: () => void }) {
           {phase === "compiling" ? "Publishing…" : "Published ✓"}
         </span>
       )}
-    </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -1382,25 +1385,6 @@ export function TopBar({
         </div>
       ) : null}
 
-      {/* Save warning — absolutely positioned so it doesn't shift header height */}
-      {showSaveWarning ? (
-        <div className="absolute top-full left-0 right-0 px-3 py-2 bg-bg/95 backdrop-blur-xl">
-          <div className="w-full">
-            <div className="flex items-center justify-between gap-3 rounded-xl border border-warning/30 bg-warning/8 px-3 py-2">
-              <span className="text-xs text-warning">
-                Couldn&apos;t save — browser storage may be full.
-              </span>
-              <button
-                type="button"
-                onClick={() => void onCopyMarkdown()}
-                className="text-xs font-semibold text-warning underline underline-offset-2 transition hover:text-warning"
-              >
-                Copy as Markdown
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
 
     </header>
 
@@ -1418,6 +1402,27 @@ export function TopBar({
         }}
         onHide={() => setVisibleDrafts(false)}
       />
+
+      {/* Save warning. In the flow, like the custom URL bar: hung from the header it lay over the tabs and the toolbar,
+          and it stays for as long as saving fails. */}
+      {showSaveWarning ? (
+        <div role="alert" data-save-warning className="shrink-0 border-b border-border-default bg-bg px-3 py-2">
+          <div className="w-full">
+            <div className="flex items-center justify-between gap-3 rounded-xl border border-warning/30 bg-warning/8 px-3 py-2">
+              <span className="text-xs text-warning">
+                Couldn&apos;t save — browser storage may be full.
+              </span>
+              <button
+                type="button"
+                onClick={() => void onCopyMarkdown()}
+                className="text-xs font-semibold text-warning underline underline-offset-2 transition hover:text-warning"
+              >
+                Copy as Markdown
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {/* Post-publish slug bar — shown once for owned pages until dismissed or slug saved.
           After the header, not in it: the settings panel and the account menu hang from the header's lower edge. */}

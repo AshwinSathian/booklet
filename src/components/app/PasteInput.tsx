@@ -1269,7 +1269,9 @@ export function PasteInput({
               "bg-transparent text-transparent placeholder:text-text-muted",
               "font-mono text-sm leading-[1.65]",
               "px-5 py-4",
-              "focus:outline-none",
+              // A rule down the left edge says the text has focus. The caret alone
+              // is a 1px line, and in an empty draft it is easy not to see at all.
+              "focus:outline-none focus:shadow-[inset_2px_0_0_var(--color-accent)]",
               "caret-accent",
             ].join(" ")}
           />

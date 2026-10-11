@@ -1,6 +1,6 @@
 import { assertVerified } from "@/server/verification";
 import type { PublishedDoc } from "@/lib/blocks";
-import { DEFAULT_SETTINGS } from "@/lib/blocks";
+import { resolveSettings } from "@/lib/blocks";
 import { BLOCKS } from "@/lib/constants";
 import { updatePageRecord, deletePageRecord, deletePageAssociatedRecords, setPageLinks } from "@/lib/db";
 import { assertVisibilityAllowed } from "@/server/access";
@@ -164,7 +164,9 @@ export const PATCH = v1("patch", 60, "pages:write", async (req: Request, userId:
     const doc: PublishedDoc = {
       v: BLOCKS.version,
       createdAt: record.created_at,
-      settings: payload.settings ?? DEFAULT_SETTINGS,
+      // What the request did not send stays as the author left it: the API, the
+      // CLI and the MCP server never send a theme or a typeface.
+      settings: resolveSettings(payload.settings, (await getDoc(record.id))?.settings),
       blocks,
       raw: payload.raw,
     };
