@@ -67,6 +67,12 @@ test("once the counter says the day is over, the Worker answers itself and sends
 });
 
 test("plain HTTP is redirected to HTTPS before anything is fetched", async () => {
+  // The Worker remembers what the counter last said; an earlier test left it closed. Tell it the day is open.
+  const open = { idFromName: () => "id", get: () => ({ fetch: async () => Response.json({ day: new Date().toISOString().slice(0, 10), total: 1, over: false }) }) };
+  const waits: Promise<unknown>[] = [];
+  const ctx = { waitUntil: (p: Promise<unknown>) => waits.push(p) };
+  for (let i = 0; i < 10 && !waits.length; i++) await worker.fetch(new Request("https://booklet.test/", { method: "HEAD" }), { ORIGIN: "http://127.0.0.1:9", COUNTER: open }, ctx);
+  await Promise.all(waits);
   const res = await worker.fetch(new Request("http://booklet.test/p/a?b=1"), {});
   expect(res.status).toBe(301);
   expect(res.headers.get("location")).toBe("https://booklet.test/p/a?b=1");

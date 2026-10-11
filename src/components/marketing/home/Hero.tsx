@@ -5,7 +5,7 @@ import { EXAMPLES_ORIGIN, ROUTES } from "@/lib/constants";
 
 export function Hero({ shot }: { shot: ShotData }) {
   return (
-    <section className="pb-16 pt-10 sm:pb-[4.5rem] sm:pt-12">
+    <section className="pb-14 pt-10 sm:pb-14 sm:pt-12">
       <Container>
         <div className="mx-auto max-w-4xl text-center">
           <p className="text-sm font-medium text-text-secondary">For incident reports, ADRs, RFCs and runbooks</p>

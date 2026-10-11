@@ -88,7 +88,7 @@ export function Close() {
         </div>
       </Section>
 
-      <section className="border-t border-border-default bg-accent py-16 text-accent-contrast sm:py-[4.5rem]">
+      <section className="border-t border-border-default bg-accent py-14 text-accent-contrast sm:py-14">
         <Container className="text-center">
           <h2 className="mx-auto max-w-3xl font-display text-h2 font-medium text-balance">
             Publish the next incident report as a page

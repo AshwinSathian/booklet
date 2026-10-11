@@ -48,7 +48,7 @@ export function Section({
   className?: string;
 }) {
   return (
-    <section id={id} className={cx("border-t border-border-default py-14 sm:py-16", className)}>
+    <section id={id} className={cx("border-t border-border-default py-14 sm:py-[3.75rem]", className)}>
       <Container>
         <div className="max-w-3xl">
           {eyebrow ? <Eyebrow>{eyebrow}</Eyebrow> : null}
