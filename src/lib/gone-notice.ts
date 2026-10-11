@@ -28,7 +28,7 @@ const GONE_STYLE =
   "a{color:inherit;text-underline-offset:3px}" +
   "@media (prefers-color-scheme:dark){body{background:#121110;color:#f4f1ea}p{color:#c9c5ba}}";
 
-/** A heading, one line and a way out. No page content, no title. Messages are fixed strings — nothing here is user input. */
+/** A heading, one line and a way out (target="_top": inside an embed the home page refuses to be framed). No page content, no title. Messages are fixed strings — nothing here is user input. */
 export function goneNoticeHtml(reason: GoneReason): string {
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Page unavailable</title><style>${GONE_STYLE}</style></head><body><main><h1>This page is not available</h1><p>${GONE_MESSAGES[reason]}</p><a href="/">Booklet home</a></main></body></html>`;
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Page unavailable</title><style>${GONE_STYLE}</style></head><body><main><h1>This page is not available</h1><p>${GONE_MESSAGES[reason]}</p><a href="/" target="_top">Booklet home</a></main></body></html>`;
 }

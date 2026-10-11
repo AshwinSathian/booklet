@@ -1110,6 +1110,7 @@ export function PasteInput({
               setCaretIndex(e.currentTarget.selectionStart);
             }}
             onClick={(e) => {
+              tabLeavesRef.current = false;
               const wikilink = updateWikilinkTrigger(e.currentTarget, e.currentTarget.value);
               updateSlashTrigger(e.currentTarget, e.currentTarget.value, wikilink);
               maybeTypewriterScroll(e.currentTarget);
@@ -1190,8 +1191,9 @@ export function PasteInput({
 
               // Tab indents, so Escape is the way out for a keyboard: the Tab
               // (or Shift+Tab) after it moves focus as it does everywhere else.
+              // Not when Escape was for something else: an IME, the shortcuts list, the toolbar's menu.
               if (e.key === "Escape") {
-                tabLeavesRef.current = true;
+                tabLeavesRef.current = !e.nativeEvent.isComposing && !showShortcuts && !toolbarSlashOpen;
                 return;
               }
               if (e.key !== "Tab") {
@@ -1245,7 +1247,7 @@ export function PasteInput({
             // Popup suggestions use onMouseDown+preventDefault (see
             // WikilinkAutocomplete) so selecting one never fires this —
             // only a genuine click elsewhere does.
-            onBlur={() => { setWikilinkTrigger(null); setSlashTrigger(null); }}
+            onBlur={() => { setWikilinkTrigger(null); setSlashTrigger(null); tabLeavesRef.current = false; }}
             placeholder="Write or paste Markdown…"
             spellCheck={false}
             className={[

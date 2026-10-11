@@ -13,7 +13,8 @@ Notable changes to the Booklet app and MCP server. The format follows
 
 The close-out of the redesign: what a last look at every screen, in both
 themes at 390, 768 and 1440, and a keyboard-only pass through the editor
-turned up. No routes or API changed.
+turned up. No routes changed. In stored and returned documents an ordered
+list block may now carry `start`.
 
 ### Fixed
 
@@ -26,9 +27,10 @@ turned up. No routes or API changed.
 - The custom URL bar shown after publishing lay over the Write and Preview
   tabs, the formatting toolbar and the first line of the draft. It is in the
   flow under the top bar now.
-- The drafts dialog and Import from URL were rendered inside the top bar,
-  whose `backdrop-filter` made it their containing block: on a phone they
-  were cut off at the top of the screen.
+- The drafts dialog was rendered inside the top bar, whose
+  `backdrop-filter` made it the dialog's containing block: on a phone it was
+  cut off at the top of the screen. It and Import from URL are outside the
+  bar now.
 - The editor pane kept a transform after its entrance animation, so the
   slash menu and link suggestions opened below the caret by the pane's
   offset and could run off the screen.
@@ -47,7 +49,8 @@ turned up. No routes or API changed.
 
 ### Changed
 
-- The 410 notice has a heading, a link home and a dark theme. The password
+- The 410 notice has a heading, a link home and follows the system's dark
+  setting. The password
   gate uses the sign-in card. The error page of a published page uses the
   site's header and footer.
 - Date-times are written "11 Oct 2026, 18:53".

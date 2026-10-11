@@ -219,7 +219,6 @@ export default async function SharePage({
   })().catch(() => {});
 
 
-  const createdAt = new Date(doc.createdAt);
   const { toc, anchorMap } = buildToc(doc.blocks ?? []);
   const showToc = toc.length >= MIN_TOC_HEADINGS;
   // anchorMap is always populated so all headings get IDs regardless of TOC visibility
@@ -355,7 +354,7 @@ export default async function SharePage({
               <div>
                 <div className="text-xs font-semibold text-text-primary">{APP_NAME}</div>
                 <div className="text-xs text-text-muted">
-                  Published {formatDateUTC(createdAt.toISOString())}
+                  Published {formatDateUTC(doc.createdAt)}
                   {readMins > 0 && <> · ~{readMins} min read</>}
                 </div>
               </div>

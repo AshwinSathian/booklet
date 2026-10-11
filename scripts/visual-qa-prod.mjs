@@ -69,11 +69,13 @@ const browser = await chromium.launch();
 const ctx = await browser.newContext({ baseURL: ORIGIN });
 const api = ctx.request;
 
+let created = false;
 let userId = null;
 const pageIds = [];
 try {
   const signup = await api.post("/api/auth/signup", { data: { email: EMAIL, password: PASSWORD } });
   if (signup.status() !== 201) throw new Error(`signup: ${signup.status()} ${(await signup.text()).slice(0, 200)}`);
+  created = true;
   userId = (await (await api.get("/api/auth/me")).json()).userId;
   console.log(`account ${EMAIL} (${userId})`);
   const verified = await db.collection("users").updateOne({ _id: userId, email: EMAIL }, { $set: { email_verified_at: new Date().toISOString() } });
@@ -125,31 +127,38 @@ try {
   fault(e.message.split("\n")[0]);
 } finally {
   // Delete the account, whatever happened above. The route wants a same-origin POST and the password.
-  if (userId) {
-    const res = await api.post("/api/account/delete", { headers: { origin: ORIGIN }, data: { password: PASSWORD } });
-    if (res.status() !== 200) fault(`DELETE FAILED: ${res.status()} ${(await res.text()).slice(0, 200)}. The account ${EMAIL} (${userId}) is still there.`);
-    else console.log("account deleted through /api/account/delete");
+  // Keyed on the signup, not on knowing the id: the route needs only the session it set.
+  if (created) {
+    try {
+      const res = await api.post("/api/account/delete", { headers: { origin: ORIGIN }, data: { password: PASSWORD } });
+      if (res.status() !== 200) fault(`DELETE FAILED: ${res.status()} ${(await res.text()).slice(0, 200)}. The account ${EMAIL} (${userId}) is still there.`);
+      else console.log("account deleted through /api/account/delete");
+    } catch (e) {
+      fault(`DELETE FAILED: ${e.message.split("\n")[0]}. The account ${EMAIL} (${userId}) is still there.`);
+    }
   }
-  await browser.close();
+  await browser.close().catch(() => {});
 
   // What is left under the account. Counts only.
+  // Without an id, only the address identifies the account: { user_id: null } would count every anonymous page.
+  const owned = (collection) => (userId ? db.collection(collection).countDocuments({ user_id: userId }) : 0);
   const pages = { $in: pageIds };
   const left = {
-    users: await db.collection("users").countDocuments({ $or: [{ _id: userId }, { email: EMAIL }] }),
-    sessions: await db.collection("sessions").countDocuments({ user_id: userId }),
-    pages: await db.collection("pages").countDocuments({ $or: [{ user_id: userId }, { _id: pages }] }),
+    users: await db.collection("users").countDocuments(userId ? { $or: [{ _id: userId }, { email: EMAIL }] } : { email: EMAIL }),
+    sessions: await owned("sessions"),
+    pages: await db.collection("pages").countDocuments(userId ? { $or: [{ user_id: userId }, { _id: pages }] } : { _id: pages }),
     docs: await db.collection("docs").countDocuments({ _id: pages }),
     page_versions: await db.collection("page_versions").countDocuments({ page_id: pages }),
-    drafts: await db.collection("drafts").countDocuments({ user_id: userId }),
-    email_verification_tokens: await db.collection("email_verification_tokens").countDocuments({ user_id: userId }),
+    drafts: await owned("drafts"),
+    email_verification_tokens: await owned("email_verification_tokens"),
     analytics_events: await db.collection("analytics_events").countDocuments({ page_id: pages }),
-    publish_events: await db.collection("publish_events").countDocuments({ $or: [{ user_id: userId }, { page_id: pages }] }),
+    publish_events: await db.collection("publish_events").countDocuments({ page_id: pages }),
     page_links: await db.collection("page_links").countDocuments({ $or: [{ source_id: pages }, { target_id: pages }] }),
-    api_keys: await db.collection("api_keys").countDocuments({ user_id: userId }),
+    api_keys: await owned("api_keys"),
   };
   await mongo.close();
   console.log(`left behind: ${JSON.stringify(left)}`);
-  if (userId && Object.values(left).some((n) => n > 0)) fault(`RESIDUE under ${userId}: ${JSON.stringify(left)}`);
+  if (Object.values(left).some((n) => n > 0)) fault(`RESIDUE under ${EMAIL} (${userId}): ${JSON.stringify(left)}`);
 }
 
 if (faults.length) {

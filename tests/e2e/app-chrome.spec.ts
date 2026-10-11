@@ -254,6 +254,7 @@ test("the custom URL bar after publishing covers no control, at phone, tablet an
     if (viewport === PHONE) {
       // What hangs from the header still opens right under it, not under the bar.
       await page.getByRole("button", { name: "Settings", exact: true }).click();
+      await expect(page.getByLabel("Close settings")).toBeVisible();
       const gap = await page.evaluate(() => {
         const header = document.getElementById("header")!.getBoundingClientRect();
         const panel = document.querySelector("[aria-label='Close settings']")!.closest(".absolute")!.getBoundingClientRect();
@@ -306,12 +307,19 @@ test("the find bar's case toggle looks pressed when it is, and not like a hovere
   await page.locator("button[title^='Find & replace']").click();
   const toggle = page.getByRole("button", { name: "Case sensitive" });
   await expect(toggle).toHaveAttribute("aria-pressed", "false");
-  await toggle.hover();
-  const hovered = await toggle.evaluate((el) => getComputedStyle(el).backgroundColor);
   await toggle.click();
   await expect(toggle).toHaveAttribute("aria-pressed", "true");
   await page.mouse.move(0, 0);
-  await expect.poll(() => toggle.evaluate((el) => getComputedStyle(el).backgroundColor)).not.toBe(hovered);
+  // On is the inverted chip: the ink of a primary button, which no hover state uses.
+  const ink = await page.evaluate(() => {
+    const probe = document.createElement("span");
+    probe.style.backgroundColor = "var(--color-accent)";
+    document.body.append(probe);
+    const colour = getComputedStyle(probe).backgroundColor;
+    probe.remove();
+    return colour;
+  });
+  await expect.poll(() => toggle.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(ink);
 });
 
 test("a menu item that is active with no label of its own shows a tick", async ({ browser }) => {
