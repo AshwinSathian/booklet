@@ -208,3 +208,22 @@ test("on a phone, every button in the editor's top bar can be reached and has a 
   await publish.click({ timeout: 3000 });
   await expect(page.getByRole("button", { name: /Copy link/ })).toBeVisible({ timeout: 15000 });
 });
+
+test("the editor's startup overlay goes away even when the browser holds back animation frames", async ({ browser }) => {
+  // A background tab gets no frames while its timers still run. The overlay's
+  // entrance waits on frames and its exit on timers; if the entrance lands
+  // last, it must not bring the overlay back.
+  const context = await browser.newContext({ extraHTTPHeaders: ip() });
+  await context.addInitScript(() => {
+    const raf = window.requestAnimationFrame.bind(window);
+    window.requestAnimationFrame = (cb) => raf(() => setTimeout(() => raf(cb), 1500)) as unknown as number;
+  });
+  const page = await context.newPage();
+  await page.goto("/app");
+  const editor = page.getByRole("textbox", { name: "Write or paste Markdown…" });
+  await expect(editor).toBeVisible();
+  // Long enough for both held-back frames to have fired.
+  await page.waitForTimeout(4000);
+  await editor.click({ timeout: 3000 });
+  await expect(editor).toBeFocused();
+});

@@ -33,7 +33,10 @@ export function AppLoader() {
 
     const timers: ReturnType<typeof setTimeout>[] = [];
     let rafId = requestAnimationFrame(() => {
-      rafId = requestAnimationFrame(() => setPhase("entering"));
+      // Only from "pre": frames can be held back (a background tab, a busy
+      // machine) until after the timers below have run, and entering then
+      // would bring the overlay back with nothing left to dismiss it.
+      rafId = requestAnimationFrame(() => setPhase((p) => (p === "pre" ? "entering" : p)));
     });
 
     timers.push(setTimeout(() => setPhase("exiting"), EXIT_MS));
