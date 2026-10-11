@@ -9,6 +9,13 @@ Notable changes to the Booklet app and MCP server. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- The editor's startup overlay could stay on screen for good, covering the
+  editor. Its entrance waited on animation frames and its exit on timers, so
+  when the browser held frames back (a tab opened in the background, a busy
+  machine) the entrance ran last and nothing was left to dismiss it.
+
 ## [3.1.0] - 2026-10-11
 
 The second half of the redesign: the signed-in app. No routes, API or data
