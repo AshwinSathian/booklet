@@ -59,18 +59,18 @@ export default function PricingPage() {
           </Button>
         </div>
 
-        <div tabIndex={0} role="region" aria-label="With and without an account" className="mt-14 max-w-4xl overflow-x-auto">
-          <table className="w-full min-w-[34rem] border-collapse text-left text-[15px]">
+        <div className="mt-14 max-w-4xl">
+          <table className="w-full table-fixed border-collapse text-left text-sm sm:text-[15px]">
             <caption className="sr-only">What you can do without an account and with a free account</caption>
             <thead>
               <tr className="border-b border-border-strong">
                 <th scope="col" className="py-3 pr-4 font-normal text-text-muted">
                   <span className="sr-only">Feature</span>
                 </th>
-                <th scope="col" className="w-[26%] py-3 pr-4 font-display text-lg font-medium">
+                <th scope="col" className="w-[24%] py-3 pr-3 align-bottom font-display text-base font-medium sm:text-lg">
                   Without an account
                 </th>
-                <th scope="col" className="w-[34%] py-3 font-display text-lg font-medium">
+                <th scope="col" className="w-[36%] py-3 align-bottom font-display text-base font-medium sm:text-lg">
                   With a free account
                 </th>
               </tr>
@@ -78,11 +78,11 @@ export default function PricingPage() {
             <tbody>
               {ROWS.map(([feature, without, withAccount]) => (
                 <tr key={feature} className="border-b border-border-default">
-                  <th scope="row" className="py-3.5 pr-4 font-medium text-text-primary">
+                  <th scope="row" className="py-3.5 pr-3 align-top font-medium text-text-primary">
                     {feature}
                   </th>
-                  <td className={`py-3.5 pr-4 ${without === "No" ? "text-text-muted" : "text-text-secondary"}`}>{without}</td>
-                  <td className="py-3.5 text-text-secondary">{withAccount}</td>
+                  <td className={`py-3.5 pr-3 align-top ${without === "No" ? "text-text-muted" : "text-text-secondary"}`}>{without}</td>
+                  <td className="py-3.5 align-top text-text-secondary">{withAccount}</td>
                 </tr>
               ))}
             </tbody>
