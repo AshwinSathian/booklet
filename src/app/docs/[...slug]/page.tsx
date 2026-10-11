@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!page) return buildMetadata({ title: "Not found", noIndex: true });
   return buildMetadata({
     // "CLI" or "Limits" alone says nothing in a search result.
-    title: `${page.title} — Docs`,
+    title: `${page.title} · Docs`,
     description: page.description,
     pathname: page.href,
     image: `/og${page.href}.png`,

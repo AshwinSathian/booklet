@@ -11,7 +11,7 @@ import { AccountClient } from "./AccountClient";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const metadata = {
-  title: "Account — Booklet",
+  title: "Account · Booklet",
   robots: { index: false, follow: false },
 };
 

@@ -128,7 +128,7 @@ export function DocumentSystem() {
         body={
           <p>
             A team space lists its pages by type: incidents by date, a decision log in ADR-number order, then RFCs and
-            runbooks. Invite a colleague by email address. A page set to Team only opens for members and answers 404 for
+            runbooks. Invite a colleague by email address. A page limited to the team opens for members and answers 404 for
             everyone else.
           </p>
         }

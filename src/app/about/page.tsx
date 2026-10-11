@@ -15,29 +15,25 @@ export default function AboutPage() {
   return (
     <ProsePage eyebrow="About" title={`Why ${APP_NAME} exists`}>
       <p>
-        {APP_NAME} started from a small frustration. Sharing technical writing, such as an incident report, an architecture
-        decision or release notes, meant either pasting raw Markdown into a chat, or opening a document tool and then
-        fighting its formatting and its access settings.
-      </p>
-      <p>
-        So {APP_NAME} does one thing. You write Markdown, and it gives you a page with a link. You do not need an account to
-        try it, and there are no ads on it.
+        {APP_NAME} began as a way to send technical writing (an incident report, an architecture decision, release notes)
+        without pasting raw Markdown into a chat or setting up a document tool&apos;s formatting and access. You write
+        Markdown and get a page with a link. You do not need an account to try it, and it carries no ads.
       </p>
 
       <h2>What it grew into</h2>
       <p>
         It has since grown towards the documents engineering teams pass around: incident reports, ADRs, RFCs, runbooks. A
-        document can carry its type, status and owners. One can link to another. And a team can keep them in a space of its
-        own, with some pages kept to its members.
+        document can carry its type, status and owners and link to other documents, and a team can keep its documents in
+        a space, with some pages limited to members.
       </p>
       <p>
-        The page itself is plain on purpose. A reading width you can change, dark and light themes, a table of contents when
-        the document is long enough to need one, code blocks that do not break.
+        The page is plain on purpose: a normal or wide reading width, dark and light themes, and a table of contents once
+        a document has three headings.
       </p>
 
       <h2>What it costs</h2>
       <p>
-        Nothing. Without an account you can publish ten pages a month and each is kept for 90 days; sign in and both limits
+        Nothing. Without an account you can publish 10 pages a month and each is kept for 90 days; sign in and both limits
         go away. Who pays for it, where it runs and how it is backed up are on the <Link href="/trust">Trust page</Link>.
       </p>
 

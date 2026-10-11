@@ -215,7 +215,7 @@ function SecretBanner({ reveal, onDismiss }: { reveal: SecretReveal; onDismiss: 
         <div>
           <p className="text-sm font-semibold text-text-primary">Webhook signing secret</p>
           <p className="mt-0.5 text-xs text-text-secondary">
-            Copy it now — it won&apos;t be shown again. Use it to verify{" "}
+            Copy it now. It is not shown again. Use it to verify{" "}
             <code className="text-xs font-mono">X-Booklet-Signature</code> on incoming requests.
           </p>
         </div>
@@ -349,7 +349,7 @@ export function WebhooksSection({ initialWebhooks }: { initialWebhooks: WebhookR
           <input
             ref={urlRef}
             type="url"
-            placeholder="https://your-server.com/webhook"
+            placeholder="https://example.com/webhook"
             aria-label="Webhook URL"
             className="min-w-0 flex-1 field"
           />

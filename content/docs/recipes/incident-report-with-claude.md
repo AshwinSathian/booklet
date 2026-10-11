@@ -38,9 +38,9 @@ Add the space to the request: "publish it to the payments space, for the team on
 
 ## Check it worked
 
-Open the link. The strip under the title shows Incident, the status, the severity and the date. The page is in [My pages](/my-pages), marked as published through MCP.
+Open the link. The strip above the title shows Incident, the status, the severity and the date. The page is in [My pages](/my-pages), marked as published through MCP.
 
-## If it does not
+## If it did not work
 
 - **Claude writes the report in the chat and publishes nothing.** Ask it to publish to Booklet by name. If it says it has no such tool, the connector is not attached to this conversation: see [When it does not work](/docs/guides/mcp#when-it-does-not-work).
 - **The header strip is missing.** The document was published without `type` in its frontmatter. Ask Claude to add `type: incident` and update the page.

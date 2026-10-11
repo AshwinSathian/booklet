@@ -10,7 +10,7 @@ import { MyPagesList } from "./MyPagesClient";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const metadata = {
-  title: "My Pages — Booklet",
+  title: "My pages · Booklet",
   robots: { index: false, follow: false },
 };
 
@@ -46,10 +46,10 @@ export default async function MyPagesPage() {
     <AppPage width="wide">
         <AppPageTitle
           title="My pages"
-          lede={pages.length === 0 ? "Everything you publish, in one list." : pages.length === 1 ? "1 page" : `${pages.length} pages`}
+          lede={pages.length === 0 ? "" : pages.length === 1 ? "1 page" : `${pages.length} pages`}
           action={
             <Button variant="primary" size="lg" href={ROUTES.app}>
-              New page
+              Write a page
             </Button>
           }
         />

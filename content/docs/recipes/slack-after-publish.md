@@ -15,7 +15,7 @@ A Booklet webhook sends a fixed JSON body (`event`, `page_id`, `page_url`, `titl
 
 ## Steps
 
-Capture the URL the CLI prints, then post it. The CLI command is run against a test instance; the workflow as a whole and the request to Slack are not.
+Capture the URL the CLI prints, then post it. Booklet's tests run the CLI command. They do not run the workflow as a whole or the request to Slack.
 
 ```yaml
       - name: Publish
@@ -42,7 +42,7 @@ Capture the URL the CLI prints, then post it. The CLI command is run against a t
 
 The channel gets the message. `set -o pipefail` and `jq -e` make the Publish step fail when the CLI fails or prints no URL, so the Slack step does not run and nobody is sent a link to a page that was not updated. Without those two, a failed publish would go unnoticed: with `--json` the CLI writes its error to stderr, and `jq` exits 0 on empty input.
 
-## If it does not
+## If it did not work
 
 - **The Publish step fails.** The CLI's error is in the step's log, as JSON, with an `exit_code`: see [CLI commands](/docs/reference/cli#exit-codes).
 - **Slack answers `invalid_payload`.** The body is not `{"text": "..."}`. Building it with `jq`, as above, keeps quotes in titles from breaking it.

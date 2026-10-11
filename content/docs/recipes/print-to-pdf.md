@@ -19,7 +19,7 @@ order: 7
 
 - The page header, table of contents, footer and buttons are left out.
 - Text is black on white, whichever theme you were reading in.
-- A link is followed by its address in brackets, so it survives on paper.
+- A link is followed by its address in brackets, so the address can be read on paper.
 - Code wraps instead of scrolling.
 
 ## Better results

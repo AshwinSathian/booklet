@@ -71,7 +71,7 @@ export async function checkRateLimit(
 ): Promise<NextResponse | null> {
   const state = await consumeRateLimit(discriminator, limitPerMin);
   if (!state.limited) return null;
-  return problem(429, "Too many requests. Please slow down and try again.", undefined, rateLimitHeaders(state));
+  return problem(429, "Too many requests. Wait for the time in Retry-After, then try again.", undefined, rateLimitHeaders(state));
 }
 
 /**

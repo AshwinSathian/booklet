@@ -20,7 +20,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const team = await getCollectionBySlug(slug);
-  if (!team) return buildMetadata({ title: "Team not found", noIndex: true });
+  if (!team) return buildMetadata({ title: "Space not found", noIndex: true });
   // The feed link is only advertised when there is a feed (see feed.xml/route.ts).
   // A space with nothing public in it has nothing for a search engine either.
   const hasFeed = await hasPublicSpacePage(team.id);

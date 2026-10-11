@@ -93,14 +93,14 @@ export function AuthForm({
       const data = (await res.json().catch(() => ({}))) as { detail?: string };
 
       if (!res.ok) {
-        setError(data.detail ?? "Something went wrong. Please try again.");
+        setError(data.detail ?? "Something went wrong. Try again.");
         setSubmitting(false);
         return;
       }
 
       await finish();
     } catch (e) {
-      setError(e instanceof Error && e.message.includes("robot") ? e.message : "Network error. Please try again.");
+      setError(e instanceof Error && e.message.includes("robot") ? e.message : "Network error. Try again.");
       setSubmitting(false);
     }
   }
@@ -140,7 +140,7 @@ export function AuthForm({
       {error && <p role="alert" className="text-sm text-danger">{error}</p>}
 
       <Button type="submit" variant="primary" size="lg" disabled={submitting} className="w-full justify-center">
-        {submitting ? "Please wait…" : mode === "sign-in" ? "Sign in" : "Create account"}
+        {submitting ? "One moment…" : mode === "sign-in" ? "Sign in" : "Create account"}
       </Button>
 
       {(providers.length > 0 || passkeys) && (

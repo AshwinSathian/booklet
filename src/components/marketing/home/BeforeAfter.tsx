@@ -24,8 +24,8 @@ export function BeforeAfter() {
       title="Pasted Markdown arrives as raw syntax"
       lede="Paste a report into chat, email or a ticket and the reader gets pound signs, asterisks and a table made of pipes. Send a link instead and they get the document."
     >
-      <div className="grid gap-6 lg:grid-cols-2">
-        <figure className="flex flex-col">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-2">
+        <figure className="flex min-w-0 flex-col">
           <figcaption className="mb-3 text-sm font-medium text-text-secondary">Pasted into a chat</figcaption>
           <div aria-hidden className="flex-1 rounded-xl border border-border-default bg-bg-soft p-5">
             <div className="flex items-center gap-2.5">
@@ -41,7 +41,7 @@ export function BeforeAfter() {
           <p className="sr-only">The summary as raw Markdown, with its syntax characters showing.</p>
         </figure>
 
-        <figure className="flex flex-col">
+        <figure className="flex min-w-0 flex-col">
           <figcaption className="mb-3 text-sm font-medium text-text-secondary">
             Sent as a <span className="rounded-sm bg-highlight px-1 text-on-highlight">Booklet link</span>
           </figcaption>

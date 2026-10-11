@@ -5,7 +5,7 @@ description: Ask readers for a password before a page opens, without changing it
 order: 6
 ---
 
-**You end up with** a page that asks for a password once per browser before showing its content.
+**You end up with** a page that asks for a password before showing its content, and not again in that browser for 8 hours.
 
 **You need** an account and a page you own. A password is set in the browser: the API, the CLI and the MCP server cannot set one.
 
@@ -19,9 +19,9 @@ order: 6
 ## What a password does and does not do
 
 - The link does not change.
-- A reader who enters the password is not asked again in that browser for a while.
+- A reader who enters the password is not asked again in that browser for 8 hours.
 - The page's Markdown address (`/p/<id>.md`) stops answering.
-- The page leaves Explore and the tag pages if it was public.
+- If the page was public, it is no longer listed among public pages or on tag pages, and is left out of the sitemap.
 - It is one password for everyone. To give access per person, use a `team` page in a [team space](/docs/guides/team-spaces).
 
 ## Remove it

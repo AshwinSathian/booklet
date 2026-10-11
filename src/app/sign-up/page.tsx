@@ -10,7 +10,7 @@ import type { Metadata } from "next";
 import { AuthForm } from "../sign-in/AuthForm";
 
 export const metadata: Metadata = buildMetadata({
-  title: "Create free account",
+  title: "Create an account",
   description:
     "Create a free Booklet account: no monthly cap, editing in place, team spaces, version history, analytics and the API. There is no paid plan.",
   pathname: "/sign-up",
@@ -37,8 +37,8 @@ export default async function SignUpPage({
       <div className="text-center">
         <p className="text-sm text-text-secondary">
           {redirectUrl?.startsWith("/cli-auth")
-            ? "Create a free account to authorize the Booklet CLI."
-            : "Create a free account. No monthly publish cap. Edit pages in place, from anywhere."}
+            ? "Create an account to authorize the Booklet CLI."
+            : "An account removes the monthly cap and lets you edit a page after publishing. You confirm your email address before the first publish."}
         </p>
       </div>
 
@@ -53,9 +53,9 @@ export default async function SignUpPage({
           Sign in
         </Link>
         <br />
-        Just want to share something quick?{" "}
+        Or{" "}
         <Link href={ROUTES.app} className="link">
-          Publish without an account →
+          publish without an account
         </Link>
       </p>
     </AuthLayout>

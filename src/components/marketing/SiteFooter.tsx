@@ -75,7 +75,7 @@ export function SiteFooter() {
       </div>
       <div className="border-t border-border-subtle">
         <p className="mx-auto w-full max-w-[72rem] px-5 py-6 text-xs text-text-muted sm:px-8">
-          © {new Date().getFullYear()} {APP_NAME}. The app is open source under AGPL-3.0.
+          © {new Date().getFullYear()} {APP_NAME}. In public beta. The app is open source under AGPL-3.0.
         </p>
       </div>
     </footer>

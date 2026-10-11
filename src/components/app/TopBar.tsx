@@ -109,7 +109,7 @@ function MoreActionsDrawer({
     <Sheet
       open={open}
       title={view === "menu" ? "More" : view === "drafts" ? "My drafts" : "Templates"}
-      description={view === "menu" ? "Draft actions, import/export tools, and navigation." : undefined}
+      description={undefined}
       onClose={onClose}
     >
       {view === "menu" ? (
@@ -261,7 +261,7 @@ function DrawerDraftsView({
         <div className="rounded-lg border border-border-subtle bg-bg-elevated p-5">
           <div className="text-sm font-semibold text-text-primary">No drafts yet.</div>
           <div className="mt-1.5 text-sm leading-relaxed text-text-secondary">
-            Drafts autosave to your browser. Publishing creates a shareable link; your draft stays here, ready to edit.
+            Drafts are saved in this browser as you type. A draft stays here after you publish it.
           </div>
         </div>
       ) : (
@@ -617,8 +617,8 @@ function VisibilityPicker({
   const close = useCallback(() => setOpen(false), []);
 
   const options: { value: PublishVisibility; icon: IconName; short: string; label: string; description: string }[] = [
-    { value: "unlisted", icon: "link", short: "Unlisted", label: "Unlisted", description: "Anyone with the link. Not on Explore, not in search engines." },
-    { value: "public", icon: "eye", short: "Public", label: "Public", description: "Listed on Explore and open to search engines." },
+    { value: "unlisted", icon: "link", short: "Unlisted", label: "Unlisted", description: "Anyone with the link. Search engines are told not to index it." },
+    { value: "public", icon: "eye", short: "Public", label: "Public", description: "Anyone. Open to search engines and listed among public pages." },
     ...spaces.map((space) => ({
       value: `team:${space.id}` as PublishVisibility,
       icon: "lock" as IconName,
@@ -744,7 +744,7 @@ function PublishArea({
         <button
           type="button"
           onClick={onCopyLink}
-          title="Copy share link"
+          title="Copy link"
           aria-label={publishedOwned ? "Your page · Copy link" : "Copy link"}
           className={[
             "inline-flex items-center gap-1.5 rounded-lg font-semibold transition h-8 px-3.5 text-xs",
@@ -830,7 +830,7 @@ function PublishArea({
           <ContextMenuItem
             icon="plus"
             label="Publish as new page"
-            description="Create a separate published URL from this draft"
+            description="A second page with its own link"
             onSelect={() => {
               onPublish();
               setShowPublishOptions(false);
@@ -960,11 +960,11 @@ function PostPublishSlugBar({
     const value = draft.trim().toLowerCase();
     if (!value) { onDismiss(); return; }
     if (!isValidSlug(value)) {
-      setError("Use 1–60 lowercase letters, digits, or hyphens.");
+      setError("Use 3 to 60 lowercase letters, digits or hyphens.");
       return;
     }
     if (availability === "taken") {
-      setError("That slug is already taken.");
+      setError("That URL is taken.");
       return;
     }
 
@@ -1024,7 +1024,7 @@ function PostPublishSlugBar({
               "transition-colors duration-fast",
               availability === "taken" ? "border-danger/60" : "border-border-default",
             ].join(" ")}
-            aria-label="Custom URL slug"
+            aria-label="Custom URL"
           />
         </div>
         {/* On a phone a message has its own line; it used to squeeze "Save URL" onto two. */}
@@ -1155,7 +1155,7 @@ export function TopBar({
   const onCopyMarkdown = useCallback(async () => {
     try {
       await copyTextToClipboard(raw ?? "");
-      toast.showCoalesced(TOAST_KEYS.copyMd, "success", "Copied", "Markdown copied.");
+      toast.showCoalesced(TOAST_KEYS.copyMd, "success", "Markdown copied");
     } catch (e) {
       toast.error("Copy failed", toErrorMessage(e));
     }
@@ -1165,7 +1165,7 @@ export function TopBar({
     try {
       const html = await markdownToHtml(raw ?? "");
       await copyTextToClipboard(html);
-      toast.showCoalesced(TOAST_KEYS.copyHtml, "success", "Copied", "HTML copied.");
+      toast.showCoalesced(TOAST_KEYS.copyHtml, "success", "HTML copied");
     } catch (e) {
       toast.error("Copy failed", toErrorMessage(e));
     }
@@ -1187,7 +1187,7 @@ export function TopBar({
     if (!file) return;
     try {
       if (file.size > UI.importMarkdown.maxFileBytes) {
-        toast.warn("File too large", "Please import a smaller Markdown file.");
+        toast.warn("File too large", "That file is over 500,000 bytes. Import a smaller one.");
         return;
       }
       const text = await file.text();
@@ -1218,7 +1218,7 @@ export function TopBar({
       items: [
         {
           label: "My pages",
-          detail: "Manage published pages, slugs, analytics, and history.",
+          detail: "Your published pages, their URLs, analytics and versions.",
           icon: "external" as IconName,
           onClick: () => { window.location.href = ROUTES.myPages; },
         },
@@ -1229,7 +1229,7 @@ export function TopBar({
       items: [
         { label: "New draft", detail: "Start with a blank local draft.", icon: "plus", shortcut: "⌘B", onClick: onNew },
         { label: "My drafts", detail: "Open saved local drafts.", icon: "list", shortcut: "⌘D", view: "drafts" },
-        { label: "Templates", detail: "Insert a structured starting point.", icon: "markdown", view: "templates" },
+        { label: "Templates", detail: "Start from a template's sections.", icon: "markdown", view: "templates" },
         { label: "Import Markdown", detail: "Create a draft from a .md file.", icon: "import", onClick: openImportPicker },
         { label: "Import from URL", detail: "Create a draft from a Markdown file on GitHub.", icon: "import", onClick: () => setImportUrlOpen(true) },
       ],
@@ -1239,13 +1239,13 @@ export function TopBar({
       items: [
         { label: "Copy as Markdown", detail: "Copy the current source text.", icon: "copy", onClick: () => void onCopyMarkdown() },
         { label: "Copy as HTML", detail: "Copy rendered HTML for the draft.", icon: "code", onClick: () => void onCopyHtml() },
-        { label: "Insert sample", detail: "Replace the draft with sample Markdown.", icon: "markdown", onClick: onInsertSample },
+        { label: "Replace with sample", detail: "Replaces everything in this draft.", icon: "markdown", onClick: onInsertSample },
       ],
     },
     {
       title: "Navigation",
       items: [
-        { label: "Go to homepage", detail: "Return to Booklet's public page.", icon: "home", onClick: () => router.push("/") },
+        { label: "Go to homepage", detail: undefined, icon: "home", onClick: () => router.push("/") },
       ],
     },
   ];
@@ -1371,7 +1371,7 @@ export function TopBar({
           <div className="flex w-full items-center justify-between gap-3">
             <p className="text-xs text-text-secondary">
               <span className="font-semibold text-text-primary">This page is kept for 90 days.</span>
-              {" "}Sign in (free) and claim it to keep it, edit it in place and track views.
+              {" "}Sign in and choose Keep this page to keep it, edit it and see its views.
             </p>
             <Button
               variant="primary"
@@ -1379,7 +1379,7 @@ export function TopBar({
               href={publishedId ? `${ROUTES.signIn}?redirect_url=${encodeURIComponent(`/p/${publishedId}`)}` : ROUTES.signIn}
               className="shrink-0"
             >
-              Sign in free
+              Sign in
             </Button>
           </div>
         </div>
@@ -1410,7 +1410,7 @@ export function TopBar({
           <div className="w-full">
             <div className="flex items-center justify-between gap-3 rounded-xl border border-warning/30 bg-warning/8 px-3 py-2">
               <span className="text-xs text-warning">
-                Couldn&apos;t save — browser storage may be full.
+                This draft could not be saved. Browser storage may be full.
               </span>
               <button
                 type="button"

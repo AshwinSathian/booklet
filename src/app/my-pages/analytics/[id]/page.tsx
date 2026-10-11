@@ -11,7 +11,7 @@ import { ViewsChart } from "./ViewsChart";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const metadata = {
-  title: "Page analytics — Booklet",
+  title: "Page analytics · Booklet",
   robots: { index: false, follow: false },
 };
 
@@ -66,14 +66,14 @@ export default async function PageAnalyticsPage({
 
         <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Stat label="Views" value={summary.total_views.toLocaleString()} />
-          <Stat label="Unique" value={summary.unique_views.toLocaleString()} />
-          <Stat label="Read 50%" value={`${summary.read_50_pct}%`} />
-          <Stat label="Read 100%" value={`${summary.read_100_pct}%`} />
+          <Stat label="Unique readers" value={summary.unique_views.toLocaleString()} />
+          <Stat label="Reached halfway" value={`${summary.read_50_pct}%`} />
+          <Stat label="Reached the end" value={`${summary.read_100_pct}%`} />
         </section>
 
         <section className="mt-6 rounded-xl border border-border-default bg-bg-elevated p-5">
           <div className="mb-4 flex items-center justify-between gap-3">
-            <h2 className="text-sm font-semibold">Views last 30 days</h2>
+            <h2 className="text-sm font-semibold">Views, last 30 days</h2>
             <span className="text-xs text-text-muted">{maxDayViews.toLocaleString()} peak day</span>
           </div>
           <ViewsChart data={summary.views_by_day} />

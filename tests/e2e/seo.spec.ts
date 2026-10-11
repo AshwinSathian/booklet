@@ -129,7 +129,7 @@ test("structured data says only what the page shows", async ({ page }) => {
   await expect(page).toHaveTitle(/template/i);
 
   await page.goto("/docs/reference/limits");
-  await expect(page).toHaveTitle("Limits — Docs — Booklet");
+  await expect(page).toHaveTitle("Limits · Docs · Booklet");
   const docs = JSON.parse((await page.locator('script[type="application/ld+json"]').first().textContent())!) as { "@graph": Array<{ "@type": string }> };
   expect(docs["@graph"].map((node) => node["@type"])).toEqual(["TechArticle", "BreadcrumbList"]);
 

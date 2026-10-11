@@ -10,9 +10,9 @@ const WAYS = [
   {
     id: "editor",
     label: "Editor",
-    text: "Write in the browser with the page beside you as you type. Publish with one key press. No account needed to try it.",
+    text: "Write in the browser with the page beside you as you type. Publish with ⌘ Enter, or Ctrl Enter on Windows and Linux. No account needed to try it.",
     file: "Keyboard",
-    code: "⌘ ↵     Publish\n⌘ K     Commands and drafts\n[[      Link to another document",
+    code: "⌘ ↵     Publish\n⌘ K     Commands and drafts\n[[      Link to one of your drafts by title",
     href: "/app",
     link: "Open the editor",
   },
@@ -36,12 +36,12 @@ const WAYS = [
   },
   {
     id: "action",
-    label: "GitHub",
+    label: "GitHub workflow",
     text: "Publish release notes when a release is published, or a runbook when it changes on the main branch. The link stays the same.",
     file: ".github/workflows/runbook.yml",
-    code: 'on:\n  push:\n    branches: [main]\n    paths: [docs/runbook.md]\njobs:\n  publish:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - run: npx booklet-cli publish docs/runbook.md --update "$PAGE_ID"\n        env:\n          BOOKLET_API_KEY: ${{ secrets.BOOKLET_API_KEY }}\n          PAGE_ID: ${{ vars.RUNBOOK_PAGE_ID }}',
+    code: 'on:\n  push:\n    branches: [main]\n    paths: [docs/runbook.md]\njobs:\n  publish:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v7\n      - run: npx booklet-cli publish docs/runbook.md --update "$PAGE_ID"\n        env:\n          BOOKLET_API_KEY: ${{ secrets.BOOKLET_API_KEY }}\n          PAGE_ID: ${{ vars.RUNBOOK_PAGE_ID }}',
     href: "/docs/guides/github-action",
-    link: "GitHub guide",
+    link: "GitHub workflow guide",
   },
   {
     id: "mcp",
@@ -61,8 +61,8 @@ export function PublishAnywhere() {
   return (
     <Section
       eyebrow="Five ways in"
-      title="Publish from where the document already is."
-      lede="The editor, a terminal, a workflow, an HTTP request or a conversation with Claude. Each one makes the same page."
+      title="Publish from where the document already is"
+      lede="The editor, a terminal, an HTTP request, a GitHub workflow or a conversation with Claude. Each one makes the same page."
     >
       <div className="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:gap-12">
         <div>

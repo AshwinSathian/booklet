@@ -46,7 +46,7 @@ export async function POST(req: Request) {
 
   const existing = await getApiKeysByUser(userId);
   if (existing.length >= MAX_KEYS_PER_USER) {
-    return problem(422, `Maximum of ${MAX_KEYS_PER_USER} API keys per account.`);
+    return problem(422, `An account can have ${MAX_KEYS_PER_USER} API keys. Delete one first.`);
   }
 
   const raw = generateRawKey();
@@ -62,7 +62,7 @@ export async function POST(req: Request) {
   const after = await getApiKeysByUser(userId);
   if (after.length > MAX_KEYS_PER_USER) {
     await deleteApiKey(id, userId);
-    return problem(422, `Maximum of ${MAX_KEYS_PER_USER} API keys per account.`);
+    return problem(422, `An account can have ${MAX_KEYS_PER_USER} API keys. Delete one first.`);
   }
 
   return NextResponse.json({ id, label, key: raw }, { status: 201 });

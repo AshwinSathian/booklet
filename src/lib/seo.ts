@@ -46,7 +46,7 @@ export function buildMetadata({
   imageAlt,
 }: BuildMetaArgs): Metadata {
   const resolvedTitle =
-    title && title !== APP_NAME ? `${title} — ${APP_NAME}` : DEFAULT_TITLE;
+    title && title !== APP_NAME ? `${title} · ${APP_NAME}` : DEFAULT_TITLE;
 
   const resolvedDesc = description ?? DEFAULT_DESC;
 

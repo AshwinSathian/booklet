@@ -8,7 +8,7 @@ import { WebhooksSection } from "./WebhooksClient";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const metadata = {
-  title: "Webhooks — Booklet",
+  title: "Webhooks · Booklet",
   robots: { index: false, follow: false },
 };
 

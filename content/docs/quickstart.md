@@ -1,6 +1,6 @@
 ---
 title: Quickstart
-description: Publish a first page from the editor, then from the terminal. Neither needs more than a couple of minutes.
+description: Publish a first page from the editor, then from the terminal. 
 order: 1
 ---
 
@@ -20,7 +20,7 @@ Without an account you can publish 10 pages a month, each is kept for 90 days, a
 
 The CLI needs an account and an API key.
 
-1. [Create an account](/sign-up), then create a key under [Settings, API keys](/settings/api-keys). The key starts with `bklt_` and is shown once.
+1. [Create an account](/sign-up), confirm your email address from the link we send, then create a key under [Settings, API keys](/settings/api-keys). The key starts with `bklt_` and is shown once.
 2. Give the key to the CLI and publish a file:
 
 ```bash
@@ -36,7 +36,7 @@ npx booklet-cli publish README.md --update Ab3k91QxZp
 
 ## Make it an engineering document
 
-Put a `type` in the frontmatter and the page shows its status, severity, date and owners in a strip under the title:
+Put a `type` in the frontmatter and the page shows its status, severity, date and owners in a strip above the title:
 
 ```markdown
 ---

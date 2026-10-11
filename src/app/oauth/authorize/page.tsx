@@ -13,7 +13,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Connect an app — Booklet",
+  title: "Connect an app · Booklet",
   robots: { index: false },
 };
 

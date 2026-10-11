@@ -47,4 +47,4 @@ The editor's templates and `booklet new` both start a document with this frontma
 
 ## In a team space
 
-A space's home lists its pages by type. The decision log is in ADR-number order when titles start with `ADR-` and a number; incidents are listed by date. See [Team spaces](/docs/guides/team-spaces).
+A space's home lists its pages by type. The decision log is in order of the first number in each title, so start titles with `ADR-012`; incidents are listed by date. See [Team spaces](/docs/guides/team-spaces).

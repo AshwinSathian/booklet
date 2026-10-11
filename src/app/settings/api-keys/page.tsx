@@ -8,7 +8,7 @@ import { ApiKeysSection } from "./ApiKeysClient";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const metadata = {
-  title: "API keys — Booklet",
+  title: "API keys · Booklet",
   robots: { index: false, follow: false },
 };
 

@@ -143,10 +143,10 @@ export async function generateMetadata({
   // `pages` record at all, so "not public" (rather than "is unlisted") is
   // what keeps them out of search engines too.
   const isPublic = pageRecord?.visibility === "public";
-  const title = extractDocTitle(doc.blocks) ?? "Shared page";
+  const title = extractDocTitle(doc.blocks) ?? "Untitled";
   const fmMeta = pageRecord?.frontmatter_meta as Record<string, unknown> | null | undefined;
   const fmDescription = typeof fmMeta?.description === "string" ? fmMeta.description : null;
-  const description = fmDescription ?? extractDocDescription(doc.blocks) ?? "A page published with Booklet.";
+  const description = fmDescription ?? extractDocDescription(doc.blocks) ?? "Published with Booklet.";
   const tags = Array.isArray(fmMeta?.tags) ? fmMeta.tags.filter((t): t is string => typeof t === "string") : [];
   // One address per page: its custom URL when it has one. The id still
   // opens it (and redirects, see SharePage), but is not what gets indexed
@@ -240,7 +240,7 @@ export default async function SharePage({
   // which left 29rem for the text and clipped every table.
   const wide = doc.settings?.width === "wide";
   const maxW = showToc ? (wide ? "max-w-4xl lg:max-w-[73rem]" : "max-w-3xl lg:max-w-[65rem]") : wide ? "max-w-4xl" : "max-w-3xl";
-  const pageTitle = extractDocTitle(doc.blocks) ?? "Shared page";
+  const pageTitle = extractDocTitle(doc.blocks) ?? "Untitled";
   const readMins = readingTimeMinutes(doc.blocks ?? []);
 
   const pageUrl = absoluteUrl(`/p/${pageRecord?.slug ?? resolvedId}`);
@@ -333,14 +333,14 @@ export default async function SharePage({
               baseUrl={absoluteUrl("")}
             />
             <ThemeToggle />
-            {/* The way to the editor, at every width: "Write" on a phone, "Make your own" from sm up */}
+            {/* The way to the editor, at every width: "Write" on a phone, "Write a page" from sm up */}
             <Button
               variant="primary"
               size="md"
               href={ROUTES.app}
               data-booklet-cta="make-your-own"
             >
-              <span className="hidden sm:inline">Make your own</span>
+              <span className="hidden sm:inline">Write a page</span>
               <span className="sm:hidden">Write</span>
               <svg width="11" height="11" fill="none" viewBox="0 0 11 11" aria-hidden>
                 <path d="M2 9 9 2M9 2H4.5M9 2v4.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
@@ -401,7 +401,7 @@ export default async function SharePage({
               Report this page
             </Link>
             <Button variant="secondary" size="md" href={ROUTES.app}>
-              Write your own page
+              Write a page
               <svg width="10" height="10" fill="none" viewBox="0 0 12 12" aria-hidden>
                 <path d="M2.5 9.5 9.5 2.5M9.5 2.5H4M9.5 2.5V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>

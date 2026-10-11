@@ -84,6 +84,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ ok: true, callbackUrl }, { status: 200 });
   } catch {
-    return problem(500, "We couldn't create your API key. Please try again.");
+    return problem(500, "The API key was not created. Try again.");
   }
 }

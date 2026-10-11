@@ -34,7 +34,7 @@ export async function GET(req: Request) {
   const doc = await getDoc(id);
   if (!doc || (await getGoneReason(id))) return problem(404, "No published page at that address.");
 
-  const title = extractDocTitle(doc.blocks) ?? "Shared page";
+  const title = extractDocTitle(doc.blocks) ?? "Untitled";
   const page = record?.slug ?? id;
   return Response.json(
     {

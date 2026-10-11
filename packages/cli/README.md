@@ -86,7 +86,7 @@ Options:
 | Flag | Description |
 |------|-------------|
 | `--slug <slug>` | Set a custom URL slug (e.g. `my-readme`) |
-| `--visibility <v>` | `unlisted` (default: reachable by link, not listed or indexed), `public` (listed on Explore) or `team` (members of `--space` only) |
+| `--visibility <v>` | `unlisted` (default: anyone with the link; search engines are told not to index it), `public` (open to search engines and listed among public pages) or `team` (members of `--space` only) |
 | `--space <slug>` | Publish into a team space (the slug in `/t/<slug>`). New pages only |
 | `--update <id>` | Update an existing page by ID |
 | `--watch` | Watch file and re-publish on change |

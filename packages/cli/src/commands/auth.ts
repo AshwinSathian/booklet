@@ -14,7 +14,7 @@ const CALLBACK_SUCCESS_HTML = `<!DOCTYPE html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Booklet CLI — Authorized</title>
+  <title>Booklet CLI: authorized</title>
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
@@ -99,11 +99,11 @@ function waitForCallback(port: number, expectedState: string): Promise<string> {
         server.close();
 
         if (returnedState !== expectedState) {
-          reject(new CliError("State mismatch — possible CSRF. Aborting."));
+          reject(new CliError("The browser sent back a different sign-in request. Run `booklet login` again."));
           return;
         }
         if (!key) {
-          reject(new Error("No API key received from server."));
+          reject(new Error("No API key came back from the server. Run `booklet login` again."));
           return;
         }
 
@@ -156,10 +156,10 @@ async function loginWithBrowser(base: string): Promise<{ key: string; pageCount:
 export function registerAuthCommands(program: Command) {
   program
     .command("login")
-    .description("Authenticate with Booklet")
-    .option("--key <key>", "Authenticate with an API key directly (for CI/scripts)")
+    .description("Sign in to Booklet")
+    .option("--key <key>", "Sign in with an API key (for CI and scripts)")
     .option("--api-url <url>", "Override API base URL")
-    .option("--force", "Re-authenticate even if already logged in")
+    .option("--force", "Sign in again even if a key is saved")
     .action(async (opts: { key?: string; apiUrl?: string; force?: boolean }) => {
       const existing = await readConfig();
       const base = opts.apiUrl?.replace(/\/$/, "") ?? existing.apiBase;
@@ -172,7 +172,7 @@ export function registerAuthCommands(program: Command) {
         }
         await writeConfig({ ...existing, apiBase: base });
         await setApiKey(opts.key);
-        success("Authenticated.");
+        success("Signed in.");
         info(`You have ${result.pageCount} page${result.pageCount === 1 ? "" : "s"}.`);
         emit({ authenticated: true, base, pages: result.pageCount });
         return;
@@ -201,7 +201,7 @@ export function registerAuthCommands(program: Command) {
           emit({ authenticated: true, base, pages: check.pageCount });
           return;
         }
-        info("Saved key is no longer valid — re-authenticating…");
+        info("The saved key no longer works. Signing in again…");
       }
 
       // ── Interactive: open browser ──────────────────────────────────────────
@@ -212,7 +212,7 @@ export function registerAuthCommands(program: Command) {
       await writeConfig({ ...existing, apiBase: base });
       await setApiKey(result.key);
       print();
-      success("Authenticated.");
+      success("Signed in.");
       info(`You have ${result.pageCount} page${result.pageCount === 1 ? "" : "s"}.`);
       emit({ authenticated: true, base, pages: result.pageCount });
     });
@@ -223,12 +223,12 @@ export function registerAuthCommands(program: Command) {
     .action(async () => {
       const source = await getApiKeySource();
       if (!source || source === "env") {
-        info(source === "env" ? "Key is set via BOOKLET_API_KEY — nothing to remove." : "No key stored.");
+        info(source === "env" ? "The key comes from BOOKLET_API_KEY, so there is nothing to remove." : "No key stored.");
         emit({ logged_out: false });
         return;
       }
       await clearApiKey();
-      success("Logged out. API key removed.");
+      success("Signed out. The saved key was removed.");
       emit({ logged_out: true });
     });
 

@@ -42,12 +42,12 @@ export function BacklinksPanel({
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Linked mentions"
+        aria-label="Referenced by"
         className="relative w-full max-w-md max-h-[70vh] flex flex-col rounded-card border border-border-default bg-bg-elevated shadow-glass animate-dialog-in"
       >
         <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-border-default/60 shrink-0">
           <div className="min-w-0">
-            <span className="text-sm font-semibold">Linked mentions</span>
+            <span className="text-sm font-semibold">Referenced by</span>
             <p className="mt-0.5 truncate text-xs text-text-muted">
               Drafts that reference “{draftTitle || "Untitled"}”
             </p>

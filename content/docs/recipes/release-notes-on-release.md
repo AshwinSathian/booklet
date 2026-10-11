@@ -46,8 +46,8 @@ jobs:
           fi
 ```
 
-4. Publish a release. The job log ends with the page's URL.
-5. Copy the ID from the end of that URL into a repository variable named `BOOKLET_PAGE_ID` (Settings, Secrets and variables, Actions, Variables).
+4. Publish a release. The job log shows the page's URL, and its ID on the line after.
+5. Copy the ID from the `ID:` line into a repository variable named `BOOKLET_PAGE_ID` (Settings, Secrets and variables, Actions, Variables).
 
 From the next release on, the same page is updated.
 
@@ -55,7 +55,7 @@ From the next release on, the same page is updated.
 
 The job log prints the URL. Open it: the header strip says Release notes. After the second release, the page's version history under [My pages](/my-pages) has two versions.
 
-## If it does not
+## If it did not work
 
 - **Exit code 3.** The key is missing or wrong. Check the secret's name.
 - **A new page on every release.** `BOOKLET_PAGE_ID` is not set, or was added as a secret. It has to be a variable: the workflow reads `vars.BOOKLET_PAGE_ID`.

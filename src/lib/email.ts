@@ -20,14 +20,14 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string): Prom
     subject: "Reset your Booklet password",
     html: `
       <div style="font-family: -apple-system, system-ui, sans-serif; max-width: 480px; margin: 0 auto; color: #1a1a1a;">
-        <p>Someone requested a password reset for this Booklet account.</p>
+        <p>Someone asked to reset the password of this Booklet account.</p>
         <p>
           <a href="${resetUrl}" style="display:inline-block;background:#16150f;color:#fbfaf7;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;">
             Reset password
           </a>
         </p>
         <p style="color:#666;font-size:13px;">
-          This link expires in 30 minutes. If you didn't request this, ignore this email — your password won't change.
+          This link works for 30 minutes. If you did not ask for it, ignore this email and your password stays as it is.
         </p>
       </div>
     `,
@@ -64,7 +64,7 @@ export async function sendEmailChangeEmail(to: string, confirmUrl: string): Prom
     subject: "Confirm your new email address for Booklet",
     html: `
       <div style="font-family: -apple-system, system-ui, sans-serif; max-width: 480px; margin: 0 auto; color: #1a1a1a;">
-        <p>Someone signed in to a Booklet account asked to change its email address to this one.</p>
+        <p>Someone who is signed in to a Booklet account asked to change its email address to this one.</p>
         <p>
           <a href="${confirmUrl}" style="display:inline-block;background:#16150f;color:#fbfaf7;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:600;">
             Use this address

@@ -312,13 +312,14 @@ test.describe("API health checks", () => {
 // ---------------------------------------------------------------------------
 
 test.describe("Security — client IP trust & /admin gating", () => {
-  test("GET /admin is forbidden without an authenticated admin session", async ({ request }) => {
+  test("GET /admin does not exist for an address that is not allowed", async ({ request }) => {
     // Playwright's `request` fixture carries no session cookie, so this
     // always hits the app unauthenticated — the IP allowlist in
-    // middleware.ts must reject it (403) before the session check in
-    // src/app/admin/layout.tsx is ever reached.
+    // middleware.ts must turn it away, with the site's 404, before the
+    // session check in src/app/admin/layout.tsx is ever reached.
     const res = await request.get(`${BASE}/admin`, { maxRedirects: 0 });
-    expect(res.status()).toBe(403);
+    expect(res.status()).toBe(404);
+    expect(await res.text()).not.toContain("Internal Metrics");
   });
 
   test("spoofed X-Forwarded-For does not grant a fresh rate-limit bucket", async ({ request }) => {

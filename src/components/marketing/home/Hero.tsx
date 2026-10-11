@@ -13,8 +13,9 @@ export function Hero({ shot }: { shot: ShotData }) {
             Write it in Markdown. <Mark>Publish it as a page.</Mark>
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-text-secondary">
-            Booklet turns an engineering document into a page with a link: typeset, linked to the documents around it,
-            and kept in your team&apos;s space. Free, and you can try it without an account.
+            Booklet publishes an engineering document as a page with a link. The page shows the document&apos;s type and
+            status, links to the documents it names, and can sit in a team space. Free, and you can try it without an
+            account.
           </p>
           <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
             <Button variant="primary" size="xl" href={ROUTES.app}>

@@ -37,7 +37,13 @@ export function SiteHeader() {
         Skip to content
       </a>
       <div className="mx-auto flex h-16 w-full max-w-[72rem] items-center gap-8 px-5 sm:px-8">
-        <AppLogo />
+        <div className="flex items-center gap-2.5">
+          <AppLogo />
+          {/* The Trust page says what "beta" means here. */}
+          <Link href="/trust" className="rounded-pill border border-border-strong px-2 py-px text-xs font-medium text-text-secondary hover:text-text-primary">
+            Public beta
+          </Link>
+        </div>
 
         <nav aria-label="Site" className="hidden items-center gap-7 md:flex">
           {NAV_LINKS.map((link) => {

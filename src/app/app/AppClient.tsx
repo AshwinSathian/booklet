@@ -181,8 +181,8 @@ function AppPageContent() {
           toast.showCoalesced(
             SAVE_WARNING_TOAST_KEY,
             "warn",
-            "Save issue",
-            "Could not save locally. Your browser storage may be full.",
+            "This draft could not be saved",
+            "Browser storage may be full. Copy it as Markdown so nothing is lost.",
           );
         }
         return;
@@ -436,7 +436,7 @@ function AppPageContent() {
       setSaveStateSmoothed("saved");
       setLastSavedAtLabel(formatTimeHHMM(new Date(draft.updatedAt)));
 
-      toast.info("New draft", "Fresh slate.");
+      toast.info("New draft");
       focusFnRef.current?.();
 
       return draft.id;
@@ -502,7 +502,7 @@ function AppPageContent() {
 
   const onInsertSample = useCallback(() => {
     setRaw(SAMPLE_MARKDOWN);
-    toast.info("Sample loaded", "Edit and publish when ready.");
+    toast.info("Sample loaded");
     focusFnRef.current?.();
   }, [toast]);
 
@@ -695,8 +695,8 @@ function AppPageContent() {
       toast.showCoalesced(
         "copy_link",
         "success",
-        "Copied",
-        "Link is on your clipboard.",
+        "Link copied",
+        undefined,
       );
     } catch (e) {
       toast.error("Copy failed", toErrorMessage(e));
@@ -848,7 +848,7 @@ function AppPageContent() {
             app with no visible page title (TopBar's DraftTitle is an inline
             rename control, not a heading), so screen reader users landed
             here via heading navigation had nothing to find. */}
-        <h1 className="sr-only">{draftTitle ? `${draftTitle} — Booklet editor` : "Booklet editor"}</h1>
+        <h1 className="sr-only">{draftTitle ? `${draftTitle} · Booklet editor` : "Booklet editor"}</h1>
         <AppShell
           focusMode={focusMode}
           left={

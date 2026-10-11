@@ -129,7 +129,7 @@ function SlugEditor({
       return;
     }
     if (availability === "taken") {
-      setError("That slug is already taken.");
+      setError("That URL is taken.");
       return;
     }
     setSaving(true);
@@ -142,7 +142,7 @@ function SlugEditor({
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({})) as { detail?: string };
-        throw new Error(body.detail ?? "Failed to save slug");
+        throw new Error(body.detail ?? "The URL was not saved. Try again.");
       }
       onSlugSaved(value);
       setEditing(false);
@@ -214,7 +214,7 @@ function SlugEditor({
             if (e.key === "Enter") { e.preventDefault(); void save(); }
             if (e.key === "Escape") { e.preventDefault(); cancel(); }
           }}
-          placeholder="my-custom-slug"
+          placeholder="payments-runbook"
           className={[
             "min-w-0 w-44 px-2 py-1 text-xs bg-bg border rounded-md sm:rounded-l-none sm:rounded-r-md text-text-primary placeholder:text-text-muted",
             "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-soft",
@@ -498,7 +498,7 @@ function PageCard({
         />
         <ContextMenuItem
           icon="code"
-          label={copyingEmbed ? "Copied!" : "Copy embed code"}
+          label={copyingEmbed ? "Copied" : "Copy embed code"}
           description="Get an <iframe> snippet to embed this page"
           onSelect={() => void handleCopyEmbed()}
           active={copyingEmbed}
@@ -518,10 +518,10 @@ function PageCard({
           label={page.visibility === "unlisted" ? "Make public" : "Make unlisted"}
           description={
             page.visibility === "public"
-              ? "Hide from search engines and explore"
+              ? "Only people with the link; search engines are told not to index it"
               : page.visibility === "team"
                 ? "Let anyone with the link read it"
-                : "Allow indexing and discovery"
+                : "Open to search engines"
           }
           active={page.visibility === "unlisted"}
           activeLabel="Unlisted"
@@ -534,7 +534,7 @@ function PageCard({
         {inTeamSpace && page.visibility !== "team" ? (
           <ContextMenuItem
             icon="lock"
-            label="Make team-only"
+            label="Make Team only"
             description="Only members of its team space can open it"
             disabled={togglingVisibility}
             onSelect={async () => {
@@ -559,7 +559,7 @@ function PageCard({
               type="password"
               value={passwordDraft}
               onChange={(e) => setPasswordDraft(e.target.value)}
-              placeholder="Set a password (min. 6 chars)"
+              placeholder="Password, at least 6 characters"
               autoFocus
               className="w-full field"
             />
@@ -751,7 +751,7 @@ export function MyPagesList({
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({})) as { detail?: string };
-        toast.error("Couldn't create folder", body.detail ?? "Try again.");
+        toast.error("The folder was not created", body.detail ?? "Try again.");
         return;
       }
       const body = (await res.json()) as { collection: CollectionRow };
@@ -784,7 +784,7 @@ export function MyPagesList({
       toast.warn(
         "Delete this folder?",
         parts.length > 0
-          ? `Contains ${parts.join(" and ")}. Sub-folders will be deleted; pages become Uncollected — pages themselves are never deleted. Click delete again to confirm.`
+          ? `It contains ${parts.join(" and ")}. Its sub-folders are deleted too. Pages are not deleted: they move to Uncollected. Click Delete again to confirm.`
           : "This folder is empty. Click delete again to confirm.",
       );
       setTimeout(() => setConfirmingDeleteFolderId((prev) => (prev === collectionId ? null : prev)), 4000);
@@ -794,7 +794,7 @@ export function MyPagesList({
     setConfirmingDeleteFolderId(null);
     const res = await fetch(`/api/collections/${collectionId}`, { method: "DELETE" });
     if (!res.ok) {
-      toast.error("Couldn't delete folder", "Try again in a moment.");
+      toast.error("The folder was not deleted", "Try again.");
       return;
     }
     const removedIds = new Set([collectionId, ...collections.filter((c) => c.parent_id === collectionId).map((c) => c.id)]);
@@ -817,7 +817,7 @@ export function MyPagesList({
     });
     if (!res.ok) {
       const body = await res.json().catch(() => ({})) as { detail?: string };
-      toast.error("Couldn't rename folder", body.detail ?? "Try again.");
+      toast.error("The folder was not renamed", body.detail ?? "Try again.");
       return;
     }
     setCollections((prev) => prev.map((c) => (c.id === id ? { ...c, name: trimmed } : c)));
@@ -835,7 +835,7 @@ export function MyPagesList({
     });
     if (!res.ok) {
       const body = await res.json().catch(() => ({})) as { detail?: string };
-      toast.error("Couldn't move folder", body.detail ?? "Try again.");
+      toast.error("The folder was not moved", body.detail ?? "Try again.");
       setCollections((prev) => prev.map((c) => (c.id === id ? { ...c, parent_id: previousParentId } : c)));
     }
   }, [collections, toast]);
@@ -1006,7 +1006,7 @@ export function MyPagesList({
         {bulkDeleteConfirming ? (
           <div className="flex items-center gap-3 rounded-xl border border-danger/30 bg-danger/8 px-4 py-3">
             <span className="flex-1 text-sm text-text-secondary">
-              Delete {selectedIds.size} selected item{selectedIds.size === 1 ? "" : "s"}? Pages are deleted permanently; folders only unlink their pages.
+              Delete {selectedIds.size} selected item{selectedIds.size === 1 ? "" : "s"}? Pages are deleted for good. A deleted folder&apos;s pages move to Uncollected.
             </span>
             <Button variant="danger" size="sm" onClick={() => void handleBulkDelete()}>Delete</Button>
             <Button variant="secondary" size="sm" onClick={() => setBulkDeleteConfirming(false)}>Cancel</Button>
@@ -1111,7 +1111,7 @@ export function MyPagesList({
           </div>
         ) : (
           <div className="rounded-xl border border-dashed border-border-default px-4 py-12 text-center text-sm text-text-secondary">
-            {searchQuery ? `No pages match "${searchQuery}"` : "No pages in this collection."}
+            {searchQuery ? `No pages match "${searchQuery}"` : "No pages in this folder."}
           </div>
         )}
       </div>

@@ -222,7 +222,7 @@ export function VersionsClient({
           ))
         ) : (
           <div className="px-4 py-10 text-sm text-text-muted">
-            No versions have been captured for this page yet.
+            This page has no earlier versions. One is kept each time you update it.
           </div>
         )}
       </div>
@@ -233,7 +233,7 @@ export function VersionsClient({
             <div className="flex items-center justify-between gap-3 border-b border-border-default px-4 py-3">
               <div>
                 <div className="text-sm font-semibold">Preview v{preview.version}</div>
-                <div className="text-xs text-text-muted">This is a saved snapshot.</div>
+                <div className="text-xs text-text-muted">An earlier version.</div>
               </div>
               <Button variant="ghost" size="md" iconOnly onClick={() => setPreview(null)} aria-label="Close preview">
                 <Icon name="close" size={14} />

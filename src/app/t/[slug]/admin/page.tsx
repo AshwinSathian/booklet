@@ -58,7 +58,7 @@ function AdminPageInner({ slug }: { slug: string }) {
           setMembers(mData.members);
         }
       } catch {
-        setError("Failed to load team data.");
+        setError("The space could not be loaded. Reload the page.");
       } finally {
         setLoading(false);
       }
@@ -149,7 +149,7 @@ function AdminPageInner({ slug }: { slug: string }) {
     return (
       // Inside AppPage, so the header is there from the first paint.
       <AppPage>
-        <div className="flex justify-center py-24" role="status" aria-label="Loading team settings">
+        <div className="flex justify-center py-24" role="status" aria-label="Loading space settings">
           <svg width="24" height="24" viewBox="0 0 13 13" fill="none" className="animate-spin text-text-muted" aria-hidden>
             <path d="M6.5 1a5.5 5.5 0 1 0 5.5 5.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
@@ -164,7 +164,7 @@ function AdminPageInner({ slug }: { slug: string }) {
         <AppPageTitle
           back={{ href: "/t", label: "Spaces" }}
           eyebrow="Space"
-          title="Team not found"
+          title="Space not found"
           lede="There is no team space at this address, or you are not a member of it."
         />
         <Button variant="secondary" size="lg" href="/t">All spaces</Button>
@@ -178,7 +178,7 @@ function AdminPageInner({ slug }: { slug: string }) {
         <AppPageTitle
           back={{ href: `/t/${slug}`, label: team.name }}
           eyebrow="Space"
-          title="Only the owner can change this team"
+          title="Only the owner can change this space"
           lede="You are a member of this space. Its name, members and deletion are the owner's to manage."
         />
         <Button variant="secondary" size="lg" href={`/t/${slug}`}>Back to the space</Button>
@@ -191,13 +191,13 @@ function AdminPageInner({ slug }: { slug: string }) {
 
   return (
     <AppPage>
-        <AppPageTitle back={{ href: `/t/${slug}`, label: team.name }} eyebrow="Space" title="Team settings" />
+        <AppPageTitle back={{ href: `/t/${slug}`, label: team.name }} eyebrow="Space" title="Space settings" />
 
         {error && <p className="text-sm text-danger mb-4">{error}</p>}
 
         {/* Rename */}
         <section className="mb-10">
-          <h2 className="mb-3 text-[0.9375rem] font-semibold">Team name</h2>
+          <h2 className="mb-3 text-[0.9375rem] font-semibold">Space name</h2>
           <div className="flex items-center gap-2">
             <input
               value={teamName}
@@ -291,14 +291,14 @@ function AdminPageInner({ slug }: { slug: string }) {
 
         {/* Danger zone */}
         <section className="border-t border-border-default pt-8">
-          <h2 className="mb-1 text-[0.9375rem] font-semibold">Delete this team</h2>
+          <h2 className="mb-1 text-[0.9375rem] font-semibold">Delete this space</h2>
           <p className="mb-4 text-sm text-text-secondary">
-            Deleting a team is permanent. Pages are kept but removed from this team.
+            Deleting a space cannot be undone. Its pages are kept and leave the space, and its members lose access. A Team only page stays Team only, which then means only its author can open it until they change who can read it.
           </p>
           {confirmDelete ? (
             <div className="flex items-center gap-2">
               <Button variant="danger" size="lg" onClick={() => void handleDelete()} disabled={deleting}>
-                {deleting ? "Deleting…" : "Yes, delete team"}
+                {deleting ? "Deleting…" : "Yes, delete the space"}
               </Button>
               <Button variant="ghost" size="lg" onClick={() => setConfirmDelete(false)}>
                 Cancel
@@ -306,7 +306,7 @@ function AdminPageInner({ slug }: { slug: string }) {
             </div>
           ) : (
             <Button variant="danger" size="lg" onClick={() => setConfirmDelete(true)}>
-              Delete team
+              Delete space
             </Button>
           )}
         </section>

@@ -128,6 +128,43 @@ test.describe("deleteCollectionRecord cascade", () => {
   });
 });
 
+test.describe("deleting a team space", () => {
+  test("every member's page leaves the space, and the membership rows go with it", async () => {
+    const owner = `testuser${createId(8)}`;
+    const member = `testuser${createId(8)}`;
+    const spaceId = createId(10);
+    const ownerPage = createId(10);
+    const memberPage = createId(10);
+    const db = await getDb();
+    try {
+      await createCollectionRecord(spaceId, owner, "Space", true);
+      const now = new Date().toISOString();
+      const page = { visibility: "team", collection_id: spaceId, team_id: spaceId, view_count: 0, password_hash: null, frontmatter_meta: null, created_at: now, updated_at: now };
+      await db.collection("pages").insertMany([
+        { ...page, _id: ownerPage, user_id: owner, title: "Owner's" },
+        { ...page, _id: memberPage, user_id: member, title: "Member's" },
+      ] as never);
+      await db.collection("collection_members").insertOne({ _id: createId(10), collection_id: spaceId, user_id: member, email: "m@example.test", role: "editor", invited_by: owner, created_at: now } as never);
+
+      // Someone who does not own it deletes nothing.
+      await deleteCollectionRecord(spaceId, member);
+      expect(await getCollectionRecord(spaceId)).not.toBeNull();
+
+      await deleteCollectionRecord(spaceId, owner);
+      expect(await getCollectionRecord(spaceId)).toBeNull();
+      for (const id of [ownerPage, memberPage]) {
+        const row = (await db.collection("pages").findOne({ _id: id } as never)) as { collection_id: unknown } | null;
+        expect(row?.collection_id, id).toBeNull();
+      }
+      expect(await db.collection("collection_members").countDocuments({ collection_id: spaceId })).toBe(0);
+    } finally {
+      await db.collection("pages").deleteMany({ _id: { $in: [ownerPage, memberPage] } } as never);
+      await db.collection("collection_members").deleteMany({ collection_id: spaceId });
+      await cleanup([spaceId]);
+    }
+  });
+});
+
 test.describe("getPagesByCollection", () => {
   test("a public page with a password is not listed", async () => {
     const userId = `testuser${createId(8)}`;

@@ -524,17 +524,17 @@ export async function updateCollectionRecord(
 
 export async function deleteCollectionRecord(collectionId: string, userId: string): Promise<void> {
   const db = await getDb();
-  const children = await getCollectionChildren(collectionId);
-  for (const child of children) {
-    await db
-      .collection<PageDoc>("pages")
-      .updateMany({ user_id: userId, collection_id: child.id }, { $set: { collection_id: null } });
-    await db.collection<CollectionDoc>("collections").deleteOne({ _id: child.id, user_id: userId });
-  }
-  await db
-    .collection<PageDoc>("pages")
-    .updateMany({ user_id: userId, collection_id: collectionId }, { $set: { collection_id: null } });
-  await db.collection<CollectionDoc>("collections").deleteOne({ _id: collectionId, user_id: userId });
+  // Only its owner deletes a collection. Checked here too, because what
+  // follows touches pages that belong to other people.
+  const owned = await db.collection<CollectionDoc>("collections").findOne({ _id: collectionId, user_id: userId }, { projection: { _id: 1 } });
+  if (!owned) return;
+  const ids = [collectionId, ...(await getCollectionChildren(collectionId)).map((child) => child.id)];
+  // Every page in it leaves, whoever published it: in a team space the
+  // members' pages are there too, and one left pointing at a deleted space
+  // could be opened by nobody but its author, with nothing saying why.
+  await db.collection<PageDoc>("pages").updateMany({ collection_id: { $in: ids } }, { $set: { collection_id: null, team_id: null } });
+  await db.collection<CollectionMemberDoc>("collection_members").deleteMany({ collection_id: { $in: ids } });
+  await db.collection<CollectionDoc>("collections").deleteMany({ _id: { $in: ids }, user_id: userId });
 }
 
 // ---------------------------------------------------------------------------

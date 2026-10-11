@@ -55,17 +55,17 @@ export function PreviewPane({
             <button
               type="button"
               onClick={onOpenBacklinks}
-              title="Linked mentions — drafts that reference this one via [[wikilinks]]"
+              title="Drafts that link to this one with [[its title]]"
               className="text-xs text-text-muted transition hover:text-text-primary"
             >
-              {backlinksCount > 0 ? `${backlinksCount} linked mention${backlinksCount === 1 ? "" : "s"}` : "Backlinks"}
+              {backlinksCount > 0 ? `Referenced by ${backlinksCount}` : "Referenced by"}
             </button>
           )}
           {onOpenGraph && (
             <button
               type="button"
               onClick={onOpenGraph}
-              title="Graph — private visualization of your linked drafts"
+              title="Graph of your linked drafts. Only you see it."
               className="text-xs text-text-muted transition hover:text-text-primary"
             >
               Graph
@@ -113,10 +113,10 @@ function EmptyState({
   return (
     <div className="flex h-full items-center justify-center p-6">
       <div className="w-full max-w-sm text-center">
-        <div className="font-display text-xl font-medium">Write. Preview. Publish.</div>
+        <div className="font-display text-xl font-medium">Nothing to preview yet</div>
         <div className="mt-2 text-sm leading-[1.7] text-text-secondary">
           Type or paste Markdown <span className="lg:hidden">in the Write tab</span>
-          <span className="max-lg:hidden">on the left</span>. Your formatted page appears here live.
+          <span className="max-lg:hidden">on the left</span>. The page appears here as you type.
         </div>
 
         {/* Sample Markdown teaser */}
@@ -138,7 +138,7 @@ function EmptyState({
                 title="Copy sample"
                 className={copyState === "failed" ? "border-danger/40 text-danger" : ""}
               >
-                {copyState === "copied" ? "Copied!" : copyState === "failed" ? "Failed" : "Copy"}
+                {copyState === "copied" ? "Copied" : copyState === "failed" ? "Not copied" : "Copy"}
               </Button>
             </div>
           </div>

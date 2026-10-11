@@ -330,7 +330,7 @@ test("a menu item that is active with no label of its own shows a tick", async (
   const item = page.getByRole("menuitem", { name: /Copy embed code/ });
   await expect(item.locator("svg")).toHaveCount(1);
   await item.click();
-  const copied = page.getByRole("menuitem", { name: /Copied!/ });
+  const copied = page.getByRole("menuitem", { name: /Copied/ });
   await expect(copied.locator("svg")).toHaveCount(2);
 });
 
@@ -343,14 +343,14 @@ test("team settings keeps the header while it loads, and its refusals have a hea
     await route.continue();
   });
   await page.goto(`/t/${spaceSlug}/admin`);
-  await expect(page.getByRole("status", { name: "Loading team settings" })).toBeVisible();
+  await expect(page.getByRole("status", { name: "Loading space settings" })).toBeVisible();
   await expect(page.locator("header[data-app-header]")).toBeVisible();
   release();
-  await expect(page.getByRole("heading", { level: 1, name: "Team settings" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Space settings" })).toBeVisible();
   await page.unroute("**/api/teams");
 
   await page.goto("/t/no-such-space-here/admin");
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Team not found");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Space not found");
   await expect(page.locator("header[data-app-header]")).toHaveCount(1);
 });
 

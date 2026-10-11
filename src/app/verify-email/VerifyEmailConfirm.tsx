@@ -81,7 +81,7 @@ export function VerifyEmailConfirm({ token }: { token: string }) {
         onClick={() => void confirm()}
         className="w-full justify-center"
       >
-        {state === "sending" ? "Please wait…" : "Confirm email"}
+        {state === "sending" ? "One moment…" : "Confirm email"}
       </Button>
     </div>
   );

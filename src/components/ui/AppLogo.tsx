@@ -23,7 +23,7 @@ export function AppLogo({ onlyIcon = false, href = ROUTES.home }: { onlyIcon?: b
   return (
     <Link
       href={href}
-      aria-label={href === ROUTES.home ? `${APP_NAME} — go to homepage` : `${APP_NAME} — go to the editor`}
+      aria-label={href === ROUTES.home ? `${APP_NAME} home` : `${APP_NAME} editor`}
       className="flex items-center gap-2 rounded-sm"
     >
       <BookletMark size={28} />

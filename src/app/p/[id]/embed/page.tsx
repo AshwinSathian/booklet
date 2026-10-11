@@ -79,7 +79,7 @@ export async function generateMetadata({
     };
   }
 
-  const title = extractTitle(doc.blocks as Parameters<typeof extractTitle>[0]) ?? "Shared page";
+  const title = extractTitle(doc.blocks as Parameters<typeof extractTitle>[0]) ?? "Untitled";
   return {
     ...buildMetadata({ title, pathname, noIndex: true }),
     robots: { index: false, follow: false },

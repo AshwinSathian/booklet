@@ -8,7 +8,7 @@
 export type GoneReason = "taken_down" | "expired";
 
 export const GONE_MESSAGES: Record<GoneReason, string> = {
-  taken_down: "This page was taken down for breaking the terms of use.",
+  taken_down: "This page was taken down for breaking the terms of service.",
   expired: "This page has expired. Pages published without an account are kept for 90 days.",
 };
 

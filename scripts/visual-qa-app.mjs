@@ -278,7 +278,7 @@ async function states(page, tag) {
   // The preview pane's two panels. Below lg the pane is behind its tab.
   const previewTab = page.getByRole("tab", { name: "Preview" });
   if (await previewTab.isVisible()) await previewTab.click();
-  await step("backlinks", async () => { await page.locator("button[title^='Linked mentions']").click({ timeout: 3000 }); await page.getByRole("dialog", { name: "Linked mentions" }).waitFor({ timeout: 3000 }); await page.waitForTimeout(300); });
+  await step("backlinks", async () => { await page.locator("button[title^='Drafts that link']").click({ timeout: 3000 }); await page.getByRole("dialog", { name: "Referenced by" }).waitFor({ timeout: 3000 }); await page.waitForTimeout(300); });
   await esc();
   await step("graph", async () => { await page.locator("button[title^='Graph']").click({ timeout: 3000 }); await page.getByRole("dialog", { name: "Draft graph" }).waitFor({ timeout: 3000 }); await page.waitForTimeout(600); });
   await esc();
