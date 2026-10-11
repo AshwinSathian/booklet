@@ -1,7 +1,7 @@
-import { AppLogo } from "@/components/ui/AppLogo";
+import { Container, PageShell } from "@/components/marketing/primitives";
 import { buildMetadata } from "@/lib/seo";
-import Link from "next/link";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { ReportForm } from "./ReportForm";
 
 export const metadata: Metadata = buildMetadata({
@@ -11,43 +11,32 @@ export const metadata: Metadata = buildMetadata({
   noIndex: true,
 });
 
-export default async function ReportPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ page?: string | string[] }>;
-}) {
+export default async function ReportPage({ searchParams }: { searchParams: Promise<{ page?: string | string[] }> }) {
   const { page } = await searchParams;
   const pageId = typeof page === "string" ? page.trim().slice(0, 80) : "";
 
   return (
-    <div className="min-h-screen bg-bg text-text-primary flex flex-col">
-      <header className="border-b border-border-subtle">
-        <div className="mx-auto w-full max-w-2xl px-4 py-3">
-          <AppLogo onlyIcon={false} />
-        </div>
-      </header>
-      <main className="flex-1 px-4 py-12">
-        <div className="mx-auto flex max-w-md flex-col gap-5">
-          <h1 className="text-xl font-medium">Report this page</h1>
+    <PageShell>
+      <Container className="py-14 sm:py-20">
+        <div className="max-w-md">
+          <h1 className="font-display text-4xl font-medium tracking-[-0.02em]">Report this page</h1>
           {pageId ? (
             <>
-              <p className="text-sm text-text-secondary leading-relaxed">
-                You are reporting <span className="font-mono text-text-primary">/p/{pageId}</span>. Reports go to
-                the person who runs Booklet. What is and is not allowed is in the{" "}
-                <Link href="/terms" className="text-accent underline underline-offset-2">
-                  terms
-                </Link>
-                .
+              <p className="prose-typeset mt-4 leading-relaxed text-text-secondary">
+                You are reporting <span className="font-mono text-text-primary">/p/{pageId}</span>. Reports go to the
+                person who runs Booklet. What is and is not allowed is in the <Link href="/terms">terms</Link>.
               </p>
-              <ReportForm pageId={pageId} />
+              <div className="mt-6">
+                <ReportForm pageId={pageId} />
+              </div>
             </>
           ) : (
-            <p className="text-sm text-text-secondary leading-relaxed">
+            <p className="mt-4 leading-relaxed text-text-secondary">
               Open the page you want to report and use the &ldquo;Report this page&rdquo; link in its footer.
             </p>
           )}
         </div>
-      </main>
-    </div>
+      </Container>
+    </PageShell>
   );
 }

@@ -1,7 +1,4 @@
-import { SiteFooter } from "@/components/marketing/SiteFooter";
-import { SiteHeader } from "@/components/marketing/SiteHeader";
-import { Button } from "@/components/ui/Button";
-import { APP_NAME, ROUTES } from "@/lib/constants";
+import { Container, PageShell, PageTitle } from "@/components/marketing/primitives";
 import { getRecentPublicPages } from "@/lib/db";
 import { buildMetadata } from "@/lib/seo";
 import type { Metadata } from "next";
@@ -10,47 +7,28 @@ import { ExploreClient } from "./ExploreClient";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+// Not indexed, and not linked from the site's navigation: this is a list of
+// whatever authors chose to make public, not an editorial page.
 export const metadata: Metadata = buildMetadata({
-  title: "Explore",
-  description:
-    "Browse recently published pages from the Booklet community — incident reports, docs, changelogs, and more.",
+  title: "Public pages",
+  description: "Pages whose authors set them to Public, newest first.",
   pathname: "/explore",
+  noIndex: true,
 });
 
 export default async function ExplorePage() {
   const pages = await getRecentPublicPages(96);
-
   return (
-    <div className="min-h-screen bg-bg text-text-primary flex flex-col">
-      <SiteHeader ctaLabel="Create a page" />
-
-      <main className="flex-1 mx-auto w-full max-w-4xl px-4 py-10">
-        <div className="mb-8">
-          <h1 className="text-[clamp(22px,3vw,28px)] font-display">Explore</h1>
-          <p className="mt-1 text-sm text-text-secondary">
-            Pages from the {APP_NAME} community.
-          </p>
+    <PageShell>
+      <Container className="py-14 sm:py-20">
+        <PageTitle
+          title="Public pages"
+          lede="A page is listed here when its author sets it to Public. New pages are unlisted, so most never appear."
+        />
+        <div className="mt-10">
+          <ExploreClient pages={pages} />
         </div>
-
-        <ExploreClient pages={pages} />
-
-        <div className="mt-16 rounded-2xl border border-border-subtle bg-bg-elevated px-6 py-10 text-center">
-          <p className="text-base font-semibold text-text-primary mb-1.5">
-            Add a page of your own
-          </p>
-          <p className="text-sm text-text-muted mb-5 max-w-xs mx-auto">
-            Publish a page, choose Public, and it is listed here.
-          </p>
-          <Button variant="primary" size="lg" href={ROUTES.app}>
-            Start writing
-            <svg width="11" height="11" fill="none" viewBox="0 0 11 11" aria-hidden>
-              <path d="M2 9 9 2M9 2H4.5M9 2v4.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </Button>
-        </div>
-      </main>
-
-      <SiteFooter className="mt-8" />
-    </div>
+      </Container>
+    </PageShell>
   );
 }

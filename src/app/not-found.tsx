@@ -1,22 +1,30 @@
-import { AppLogo } from "@/components/ui/AppLogo";
+import { Container, PageShell } from "@/components/marketing/primitives";
 import { Button } from "@/components/ui/Button";
 import { ROUTES } from "@/lib/constants";
 
 export default function NotFound() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-6 bg-bg px-6 text-center">
-      <AppLogo />
-      <div>
+    <PageShell>
+      <Container className="py-24 sm:py-32">
         <p className="font-mono text-sm text-text-muted">404</p>
-        <h1 className="mt-2 font-display text-2xl font-semibold text-text-primary">Page not found</h1>
-        <p className="mt-2 text-sm text-text-secondary">
-          This page doesn&apos;t exist, or it was never published.
+        <h1 className="mt-3 font-display text-[clamp(2.25rem,5vw,3.5rem)] font-medium leading-[1.05] tracking-[-0.025em]">
+          There is no page here.
+        </h1>
+        <p className="mt-4 max-w-xl text-lg leading-relaxed text-text-secondary">
+          The address may be mistyped, or the page was never published.
         </p>
-      </div>
-      <div className="flex gap-3">
-        <Button variant="primary" size="md" href={ROUTES.home}>Go home</Button>
-        <Button variant="secondary" size="md" href={ROUTES.app}>Write a page</Button>
-      </div>
-    </main>
+        <div className="mt-8 flex flex-wrap gap-3">
+          <Button variant="primary" size="lg" href={ROUTES.home}>
+            Go to the homepage
+          </Button>
+          <Button variant="secondary" size="lg" href={ROUTES.docs}>
+            Read the docs
+          </Button>
+          <Button variant="secondary" size="lg" href={ROUTES.app}>
+            Write a page
+          </Button>
+        </div>
+      </Container>
+    </PageShell>
   );
 }
