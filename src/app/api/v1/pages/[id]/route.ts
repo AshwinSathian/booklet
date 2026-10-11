@@ -12,7 +12,6 @@ import { getDoc, putDoc, deleteDoc } from "@/lib/storage";
 import { ROUTES } from "@/lib/constants";
 import { logError } from "@/lib/logger";
 import {
-  getOwnedPage,
   getOwnedPageByIdOrSlug,
   assertNotTakenDown,
   assertSlugAvailable,
@@ -98,12 +97,14 @@ export const GET = v1("page_get", 120, "pages:read", async (req: Request, userId
 export const PATCH = v1("patch", 60, "pages:write", async (req: Request, userId: string, { params }: Ctx) => {
   await assertVerified(userId);
 
-  const { id } = await params;
-  if (!id?.trim()) {
+  const { id: key } = await params;
+  if (!key?.trim()) {
     return problem(400, "Missing page id");
   }
 
-  const record = await getOwnedPage(id, userId);
+  // A page ID or a custom URL, as GET takes.
+  const record = await getOwnedPageByIdOrSlug(key, userId);
+  const id = record.id;
   assertNotTakenDown(record);
   assertIfMatch(req, record);
 
@@ -238,14 +239,16 @@ export const PATCH = v1("patch", 60, "pages:write", async (req: Request, userId:
 
 export const DELETE = v1("delete", 60, "pages:write", async (req: Request, userId: string, { params }: Ctx) => {
 
-  const { id } = await params;
-  if (!id?.trim()) {
+  const { id: key } = await params;
+  if (!key?.trim()) {
     return problem(400, "Missing page id");
   }
 
   // Deleting would free the slug for a fresh copy at the same URL and
   // destroy the record of what was taken down.
-  const record = await getOwnedPage(id, userId);
+  // A page ID or a custom URL, as GET takes.
+  const record = await getOwnedPageByIdOrSlug(key, userId);
+  const id = record.id;
   assertNotTakenDown(record);
   assertIfMatch(req, record);
 

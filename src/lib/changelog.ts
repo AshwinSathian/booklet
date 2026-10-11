@@ -34,6 +34,7 @@ export const RELEASES: Release[] = [
       { date: "2026-10-11", tag: "Fixed", text: "Deleting a team space left other members' pages attached to a space that no longer existed" },
       { date: "2026-10-11", tag: "Fixed", text: "The Toggle and Columns items in the editor's insert menu inserted text that did not become a toggle or columns" },
       { date: "2026-10-11", tag: "Fixed", text: "The custom URL rule said 1 to 60 characters; it is 3 to 60" },
+      { date: "2026-10-11", tag: "Fixed", text: "Updating or deleting a page through the API, the CLI or an MCP client works with its custom URL as well as its ID. It answered Page not found" },
     ],
   },
   {

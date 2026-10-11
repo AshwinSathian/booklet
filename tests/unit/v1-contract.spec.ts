@@ -253,3 +253,14 @@ test("cursor pagination returns each of 250 pages exactly once while pages are i
 
   expect((await listPages(call(rawKey, "/pages?cursor=not-a-cursor"))).status).toBe(400);
 });
+
+test("PATCH and DELETE take a page's custom URL as well as its ID", async () => {
+  const { rawKey } = await newUser();
+  const slug = `by-slug-${createId(10).toLowerCase()}`;
+  const { body } = await publishRaw(rawKey, `---\nslug: ${slug}\n---\n# One`);
+  const patched = await patchPage(call(rawKey, `/pages/${slug}`, { method: "PATCH", body: JSON.stringify({ raw: "# Two" }) }), params(slug));
+  expect(patched.status, await patched.clone().text()).toBe(200);
+  expect((await getDoc(body.id))?.raw).toBe("# Two");
+  expect((await deletePage(call(rawKey, `/pages/${slug}`, { method: "DELETE" }), params(slug))).status).toBeLessThan(300);
+  expect(await getPageRecord(body.id)).toBeNull();
+});

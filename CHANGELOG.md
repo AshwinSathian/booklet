@@ -74,6 +74,8 @@ packages are released separately.
 - `:::toggle Label` in the docs and the editor's Toggle snippet did not
   parse (the label goes in brackets); the Columns snippet became a heading
   as soon as text was typed into it.
+- `PATCH` and `DELETE /api/v1/pages/<id>` take a custom URL as well as an
+  ID, as `GET` does and as the CLI and the MCP tools say. They answered 404.
 - `/p/<missing>/embed` answered 200; a path with a malformed escape
   answered 500; the published page's fallback description praised itself.
 - Many statements in the docs and on Trust, Privacy and Terms that did not
