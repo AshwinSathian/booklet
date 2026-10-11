@@ -96,7 +96,7 @@ export function createMcpServer(apiBase: string, apiKey: string, siteUrl = "http
     {
       title: "Update Page",
       description:
-        "Update an existing Booklet page's content or metadata. The URL stays the same. Use list_pages to find page IDs.",
+        "Update an existing Booklet page's content, slug or visibility, or move it into or out of a team space. The URL stays the same. Use list_pages to find page IDs.",
       inputSchema: UpdatePageInputSchema,
       outputSchema: UpdatePageOutputSchema,
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },

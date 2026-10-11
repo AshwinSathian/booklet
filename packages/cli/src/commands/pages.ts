@@ -97,6 +97,35 @@ export function registerPagesCommand(program: Command) {
     });
 
   pages
+    .command("move <id>")
+    .description("Move a page into a team space, or out of its space")
+    .option("--space <slug>", "Team space to move the page into (you must be able to publish there)")
+    .option("--no-space", "Take the page out of the space it is in")
+    .option("--visibility <visibility>", "Set visibility in the same step: public, unlisted or team")
+    .action(async (id: string, opts: { space?: string | false; visibility?: string }) => {
+      // commander: `--space x` gives the slug, `--no-space` gives false, neither gives undefined.
+      if (opts.space === undefined) {
+        throw new CliError("Say where: --space <slug>, or --no-space to take it out of its space.", EXIT.USAGE);
+      }
+      if (opts.visibility !== undefined && !["public", "unlisted", "team"].includes(opts.visibility)) {
+        throw new CliError("--visibility must be public, unlisted or team.", EXIT.USAGE);
+      }
+      const client = await requireClient();
+      // PATCH takes a page ID; this resolves a slug to one.
+      const page = await client.getPage(id);
+      const space = opts.space === false ? null : opts.space;
+      const updated = await client
+        .updatePage(page.id, { space, ...(opts.visibility ? { visibility: opts.visibility as "public" | "unlisted" | "team" } : {}) })
+        .catch((e) => {
+          throw toCliError(e, "Move failed");
+        });
+
+      success(space === null ? `Took ${page.id} out of its space` : `Moved ${page.id} into ${space}`);
+      print(bold(updated.url));
+      emit({ id: page.id, url: updated.url, space });
+    });
+
+  pages
     .command("delete <id>")
     .description("Delete a page by ID or slug")
     .option("-y, --yes", "Skip confirmation prompt")

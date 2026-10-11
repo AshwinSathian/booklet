@@ -18,6 +18,7 @@ import {
   assertSlugAvailable,
   buildDocument,
   relinkPage,
+  resolveSpaceMove,
   spaceSlugs,
   assertIfMatch,
   ifNoneMatchHits,
@@ -41,6 +42,8 @@ type ContentPayload = {
 type MetadataPayload = {
   slug?: string | null;
   visibility?: "public" | "unlisted" | "team";
+  /** Slug of the team space to move the page into, or null to take it out of its space. */
+  space?: string | null;
 };
 
 type PatchPayload = ContentPayload & MetadataPayload;
@@ -112,13 +115,28 @@ export const PATCH = v1("patch", 60, "pages:write", async (req: Request, userId:
   }
 
   const hasContent = Boolean(payload?.raw && typeof payload.raw === "string" && payload.raw.trim());
-  const hasMetadata = payload !== null && ("slug" in payload || "visibility" in payload);
+  const hasMetadata = payload !== null && ("slug" in payload || "visibility" in payload || "space" in payload);
 
   if (!hasContent && !hasMetadata) {
-    return problem(400, "Provide `raw`, `slug`, or `visibility`.");
+    return problem(400, "Provide `raw`, `slug`, `visibility` or `space`.");
   }
 
   const metaPatch: Parameters<typeof updatePageRecord>[1] = {};
+
+  if (payload && "visibility" in payload && payload.visibility !== "public" && payload.visibility !== "unlisted" && payload.visibility !== "team") {
+    return problem(422, "visibility must be 'public', 'unlisted' or 'team'");
+  }
+
+  // `space` moves the page: a team space's slug, or null for no space. It is
+  // settled before visibility, so `{ space, visibility: "team" }` in one
+  // request is judged against the space the page is going to.
+  let collectionId = record.collection_id;
+  if (payload && "space" in payload) {
+    if (payload.space !== null && typeof payload.space !== "string") return problem(422, "space must be a team space's slug, or null.");
+    collectionId = await resolveSpaceMove(record, payload.space, userId, payload.visibility ?? record.visibility);
+    if (collectionId !== record.collection_id) metaPatch.collection_id = collectionId;
+  }
+  const moved = collectionId !== record.collection_id;
 
   if (hasMetadata && payload) {
     if ("slug" in payload) {
@@ -130,10 +148,7 @@ export const PATCH = v1("patch", 60, "pages:write", async (req: Request, userId:
       metaPatch.slug = slug;
     }
     if ("visibility" in payload) {
-      if (payload.visibility !== "public" && payload.visibility !== "unlisted" && payload.visibility !== "team") {
-        return problem(422, "visibility must be 'public', 'unlisted' or 'team'");
-      }
-      await assertVisibilityAllowed(payload.visibility, record.collection_id, userId);
+      await assertVisibilityAllowed(payload.visibility, collectionId, userId);
       metaPatch.visibility = payload.visibility;
     }
   }
@@ -141,7 +156,7 @@ export const PATCH = v1("patch", 60, "pages:write", async (req: Request, userId:
   if (hasContent && payload?.raw) {
     const built = await buildDocument(
       payload.raw,
-      { id, userId, collectionId: record.collection_id, visibility: metaPatch.visibility ?? record.visibility },
+      { id, userId, collectionId, visibility: metaPatch.visibility ?? record.visibility },
       getSiteOrigin(req),
     );
     const { blocks } = built;
@@ -185,10 +200,12 @@ export const PATCH = v1("patch", 60, "pages:write", async (req: Request, userId:
 
     // The title, type and frontmatter fields follow the document.
     Object.assign(metaPatch, built.record, { updated_at: new Date().toISOString() });
-  } else if (metaPatch.visibility && metaPatch.visibility !== record.visibility) {
+  } else if (moved || (metaPatch.visibility && metaPatch.visibility !== record.visibility)) {
     // Before the record changes, so the page is never public while it
-    // still carries links only a less visible page may have.
-    await relinkPage(record, metaPatch.visibility, getSiteOrigin(req));
+    // still carries links only a less visible page may have. A move
+    // changes which pages its `[[Title]]`s may point at, too.
+    await relinkPage({ ...record, collection_id: collectionId }, metaPatch.visibility ?? record.visibility, getSiteOrigin(req));
+    if (!metaPatch.updated_at) metaPatch.updated_at = new Date().toISOString();
   }
 
   if (Object.keys(metaPatch).length > 0) {

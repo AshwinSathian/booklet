@@ -94,6 +94,12 @@ export const PatchPageRequestSchema = z
     raw: z.string().max(MAX_RAW_CHARS).optional(),
     slug: z.string().nullable().optional(),
     visibility: VisibilitySchema.optional(),
+    /**
+     * Moves the page: the slug of a team space you can publish to, or null
+     * to take it out of its space. A team-only page stays where it is
+     * unless `visibility` changes in the same request.
+     */
+    space: z.string().nullable().optional(),
   })
   .meta({
     examples: [
@@ -101,6 +107,8 @@ export const PatchPageRequestSchema = z
       { slug: "my-custom-slug" },
       { slug: null },
       { visibility: "public" },
+      { space: "platform-team", visibility: "team" },
+      { space: null },
     ],
   });
 export type PatchPageRequest = z.infer<typeof PatchPageRequestSchema>;
