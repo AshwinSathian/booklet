@@ -56,20 +56,12 @@ const jsonLd = {
       description:
         "Publish Markdown incident reports, ADRs, RFCs and runbooks as web pages, with team spaces.",
       inLanguage: "en-US",
-      potentialAction: {
-        "@type": "SearchAction",
-        target: {
-          "@type": "EntryPoint",
-          urlTemplate: `${SITE_URL}/app`,
-        },
-        "query-input": "required name=search_term_string",
-      },
     },
     {
       "@type": "WebPage",
       "@id": `${SITE_URL}/#webpage`,
       url: SITE_URL,
-      name: `${APP_NAME} — Engineering Documents, Published as Pages`,
+      name: `${APP_NAME}: Markdown incident reports, ADRs, RFCs and runbooks, published as pages`,
       isPartOf: { "@id": `${SITE_URL}/#website` },
       about: { "@id": `${SITE_URL}/#app` },
       description:

@@ -195,7 +195,7 @@ html.dark {
   --text-xs:  0.6875rem;    /* 11px — secondary chrome, save indicator       */
   --text-sm:  0.8125rem;    /* 13px — body-small, menu items, captions       */
   /* Marketing and docs display scale. */
-  --text-display: clamp(2.5rem, 6.2vw, 4.75rem);
+  --text-display: clamp(2.5rem, 5.6vw, 4.25rem);
   --text-display--line-height: 1.02;
   --text-display--letter-spacing: -0.03em;
   --text-h2: clamp(1.875rem, 3.6vw, 2.75rem);
@@ -295,14 +295,28 @@ button {
   text-decoration-thickness: 2px;
 }
 
+/* A docs page body: the renderer's output, with the site's serif headings. */
+.docs-body :is(h2, h3) {
+  font-family: var(--font-display);
+  font-weight: 500;
+}
+.docs-body h2 {
+  margin-top: 1.75rem;
+  padding-top: 1.75rem;
+  border-top: 1px solid var(--color-border-default);
+}
+
 /* The highlighter mark. */
 .mark {
-  background: var(--color-highlight);
-  color: var(--color-on-highlight);
-  padding: 0 0.12em;
-  border-radius: 0.12em;
+  /* Drawn across the lower part of the line, the way a marker is. */
+  background: linear-gradient(transparent 52%, var(--color-highlight) 52%, var(--color-highlight) 92%, transparent 92%);
+  padding: 0 0.08em;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
+}
+/* On a dark page the marker sits behind light text, so it is thinned to a rule under it. */
+html.dark .mark {
+  background: linear-gradient(transparent 84%, var(--color-highlight) 84%, var(--color-highlight) 94%, transparent 94%);
 }
 
 /* ponytail: bridge for app surfaces that still use the accent as a colour
