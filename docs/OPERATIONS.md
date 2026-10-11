@@ -538,11 +538,9 @@ bypassed by re-parse" bug class).
   reason (nothing in the codebase calls `eval`/`new Function`) and had no
   `Strict-Transport-Security` header at all. Dropped `unsafe-eval` (kept
   `wasm-unsafe-eval` for `@viz-js/viz`'s WASM Graphviz renderer) and added
-  HSTS. `'unsafe-inline'` on `script-src` deliberately stays — closing that
-  needs a per-request nonce, which per Next's own CSP guide forces dynamic
-  rendering on every page that reads it, a real caching cost for the public
-  `/p/[id]` share pages this app's value prop depends on. Flagged, not
-  changed unilaterally.
+  HSTS. `'unsafe-inline'` on `script-src` stayed until 2026-10-11, when the
+  policy moved to a per-request nonce with `'strict-dynamic'` (see "Content
+  Security Policy" below).
 - Raw DB/driver error messages (`e.message`) were forwarded straight to API
   clients on several unhappy paths (`api/publish`, `api/v1/publish`,
   `api/pages/[id]`, `api/v1/pages/[id]`) and in the shared `toErrorResponse`
@@ -858,6 +856,27 @@ single Node process OOM-ing or crashing under load — a real, if partial,
 reliability improvement with no new moving parts. Recommended as the
 practical next step unless a Cloudflare Workers (or other managed-host)
 migration is actually imminent.
+
+## Content Security Policy
+
+`src/middleware.ts` builds the policy per request. Scripts run only with
+that request's nonce (`script-src 'self' 'nonce-…' 'strict-dynamic'
+'wasm-unsafe-eval'`); there is no `'unsafe-inline'` for scripts. The nonce is
+set on the request too, as `x-nonce` and in a `Content-Security-Policy`
+request header: Next.js reads the header to put the nonce on its own
+scripts, and the root layout reads `x-nonce` for the theme script.
+
+Consequences:
+
+- No page is prerendered. A nonce differs per request, so every page is
+  rendered when asked for. Most already were.
+- A `<script>` added to a page by hand needs `nonce={nonce}` from
+  `headers().get("x-nonce")`. JSON-LD blocks do not: they are data.
+- Cloudflare's injected script (`/cdn-cgi/challenge-platform/…`) is given
+  the nonce by Cloudflare, which reads it from the response header. If the
+  browser console shows it blocked, that is where to look.
+- Styles still allow `'unsafe-inline'`: the document themes and KaTeX set
+  inline styles.
 
 ## OAuth for MCP clients
 

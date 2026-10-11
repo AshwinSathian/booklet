@@ -5,6 +5,7 @@ import { Source_Serif_4 } from "next/font/google";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { ThemeProvider } from "next-themes";
+import { headers } from "next/headers";
 import "./globals.css";
 
 // Distinct reading typeface for published-page body content — see
@@ -107,16 +108,19 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // The request's script nonce (src/middleware.ts). Reading it is also what
+  // makes every page render per request, which a nonce requires.
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     <SessionProvider>
       <html lang="en" suppressHydrationWarning className={`${GeistSans.variable} ${GeistMono.variable} ${sourceSerif4.variable}`}>
         <body>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem nonce={nonce}>
             {children}
           </ThemeProvider>
         </body>
