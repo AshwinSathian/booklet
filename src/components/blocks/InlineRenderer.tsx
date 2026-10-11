@@ -42,7 +42,7 @@ export function InlineRenderer({
             return (
               <code
                 key={i}
-                className="px-1.5 py-0.5 rounded-sm bg-accent-dim border border-border-default font-mono text-[0.9em] text-accent-soft"
+                className="px-1.5 py-0.5 rounded-sm bg-accent-dim border border-border-default font-mono text-[0.9em] text-accent-soft [overflow-wrap:anywhere]"
               >
                 {node.v}
               </code>

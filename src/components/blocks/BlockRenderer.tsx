@@ -4,7 +4,7 @@ import type { Block, DocSettings, TableAlign } from "@/lib/blocks";
 import { sanitizeImageUrl } from "@/lib/render-shared";
 import type { WikilinkRenderCtx } from "@/lib/wikilinks/render-context";
 import dynamic from "next/dynamic";
-import type { JSX } from "react";
+import { Fragment, type JSX, type ReactNode } from "react";
 import { Callout } from "./Callout";
 import { CodeBlock } from "./CodeBlock";
 import { Columns } from "./Columns";
@@ -69,6 +69,8 @@ export function BlockRenderer({
   headingAnchors,
   keyPrefix,
   wikilinkCtx,
+  headingOffset = 0,
+  renderCode,
 }: {
   blocks: Block[];
   settings: DocSettings;
@@ -76,6 +78,18 @@ export function BlockRenderer({
   keyPrefix?: string;
   /** Editor live-preview only — see InlineRenderer's doc comment. */
   wikilinkCtx?: WikilinkRenderCtx;
+  /**
+   * Shifts top-level heading tags down by this many levels while keeping
+   * their look. A document shown inside another page (a preview, a docs
+   * page with its own title) passes 1, so the page keeps a single h1.
+   */
+  headingOffset?: number;
+  /**
+   * Lets the host draw a top-level code block itself (the docs pages swap
+   * `booklet-embed` blocks for components). Return undefined to get the
+   * normal code block.
+   */
+  renderCode?: (block: Extract<Block, { t: "code" }>) => ReactNode | undefined;
 }) {
   const serif = isSerifMode(settings);
   // First top-level paragraph (either the very first block, or the first
@@ -100,9 +114,7 @@ export function BlockRenderer({
 
           switch (b.t) {
             case "heading": {
-              const Tag = (
-                b.level === 1 ? "h1" : b.level === 2 ? "h2" : b.level === 3 ? "h3" : "h4"
-              ) as keyof JSX.IntrinsicElements;
+              const Tag = `h${Math.min(b.level + headingOffset, 6)}` as keyof JSX.IntrinsicElements;
 
               // weight/tracking/leading from @layer base; only size is per-level
               const cls =
@@ -319,10 +331,13 @@ export function BlockRenderer({
                 />
               );
 
-            case "code":
+            case "code": {
+              const custom = renderCode?.(b);
+              if (custom !== undefined) return <Fragment key={idx}>{custom}</Fragment>;
               return (
                 <CodeBlock key={idx} lang={b.lang} code={b.code} settings={settings} />
               );
+            }
 
             case "table":
               return (
