@@ -56,6 +56,6 @@ export async function POST(req: Request) {
 
   // Any other link confirms the address it was sent to, nothing else.
   if (user.email !== record.email) return problem(400, INVALID);
-  await markEmailVerified(user.id);
+  await markEmailVerified(user.id, record.email);
   return NextResponse.json({ ok: true });
 }

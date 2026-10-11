@@ -38,9 +38,10 @@ export async function POST(req: Request) {
   const passwordHash = await hashUserPassword(password);
   await setUserPassword(resetToken.user_id, passwordHash);
   await deletePasswordResetToken(tokenHash);
-  // The reset link went to the account's address, so completing a reset
-  // proves the same thing a verification link does.
-  await markEmailVerified(resetToken.user_id);
+  // The reset link went to the address on the token, so completing a reset
+  // proves that address, and only that one: the account may have moved to
+  // another since the link was sent.
+  await markEmailVerified(resetToken.user_id, resetToken.email);
   // A password reset is a strong signal of compromise recovery — kill every
   // existing session so a stolen cookie doesn't outlive the password it was
   // issued under.

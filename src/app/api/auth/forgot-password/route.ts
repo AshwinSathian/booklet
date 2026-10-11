@@ -40,7 +40,7 @@ export async function POST(req: Request) {
   if (user && user.email) {
     const raw = generatePasswordResetToken();
     const tokenHash = await hashPasswordResetToken(raw);
-    await createPasswordResetToken(user.id, tokenHash, new Date(Date.now() + RESET_TTL_MS));
+    await createPasswordResetToken(user.id, user.email, tokenHash, new Date(Date.now() + RESET_TTL_MS));
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://booklet.ashwinsathian.com";
     const resetUrl = `${siteUrl}/reset-password?token=${encodeURIComponent(raw)}`;

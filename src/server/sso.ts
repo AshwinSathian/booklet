@@ -84,7 +84,7 @@ export async function linkIdentity(userId: string, provider: SsoProvider, profil
     }
   }
   // Only the account's own address is vouched for.
-  if (user.email === profile.email) await markEmailVerified(userId);
+  await markEmailVerified(userId, profile.email);
 }
 
 /** How many ways this account can sign in. The last one cannot be removed. */
