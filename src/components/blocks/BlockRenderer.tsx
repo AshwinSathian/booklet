@@ -436,7 +436,9 @@ export function BlockRenderer({
                   <ol className="list-decimal space-y-2 pl-5">
                     {b.items.map((item, i) => (
                       <li key={item.id} id={`fn-${encodeURIComponent(item.id)}`}>
-                        <span className="[&>div]:inline [&_p]:inline">
+                        {/* Every wrapper inline, not only the first: the note's text is two divs deep, and
+                            the way back dropped to a line of its own. */}
+                        <span className="[&_div]:inline [&_p]:inline">
                           <BlockRenderer
                             blocks={item.blocks}
                             settings={settings}
