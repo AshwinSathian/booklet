@@ -390,6 +390,11 @@ read at build time and adds `challenges.cloudflare.com` to the CSP, so
 changing it needs `npm run deploy`. If Cloudflare's verification endpoint
 cannot be reached, those three forms refuse until it can: remove
 `TURNSTILE_SECRET_KEY` and reload PM2 to switch the check off.
+The widget is made with `npx wrangler turnstile widget create` (mode
+managed, the site's hostname). The deploy's own checks sign up through the
+live site and cannot solve a challenge: set `TURNSTILE_BYPASS_TOKEN` in
+`.env.local` (`openssl rand -hex 32`) and they send it in place of a solved
+one. Without it, a deploy with Turnstile on ends with exit 2.
 
 **Account page.** `/settings/account`: change or set a password (signs out
 other browsers and disconnects apps), connect or disconnect providers, add

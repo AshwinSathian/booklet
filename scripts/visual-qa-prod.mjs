@@ -73,7 +73,7 @@ let created = false;
 let userId = null;
 const pageIds = [];
 try {
-  const signup = await api.post("/api/auth/signup", { data: { email: EMAIL, password: PASSWORD } });
+  const signup = await api.post("/api/auth/signup", { data: { email: EMAIL, password: PASSWORD, turnstile_token: process.env.TURNSTILE_BYPASS_TOKEN } });
   if (signup.status() !== 201) throw new Error(`signup: ${signup.status()} ${(await signup.text()).slice(0, 200)}`);
   created = true;
   userId = (await (await api.get("/api/auth/me")).json()).userId;

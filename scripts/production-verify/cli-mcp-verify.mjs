@@ -92,7 +92,8 @@ async function main() {
     const signupRes = await fetch(`${BASE}/api/auth/signup`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Origin: BASE },
-      body: JSON.stringify({ email: EMAIL, password: PASSWORD }),
+      // With Turnstile on, the site lets this token through in place of a solved challenge (src/lib/turnstile.ts).
+      body: JSON.stringify({ email: EMAIL, password: PASSWORD, turnstile_token: process.env.TURNSTILE_BYPASS_TOKEN }),
     });
     ok("signup returns 201", signupRes.status === 201, `got ${signupRes.status}: ${await signupRes.clone().text()}`);
     const setCookie = signupRes.headers.get("set-cookie");
